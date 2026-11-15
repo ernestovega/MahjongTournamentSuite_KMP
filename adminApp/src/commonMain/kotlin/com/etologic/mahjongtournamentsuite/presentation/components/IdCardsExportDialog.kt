@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -173,6 +174,8 @@ fun IdCardsExportDialog(
     val widthInvalid = widthValue == null || widthValue < minWidthMm - 0.05 || widthValue > maxWidthMm + 0.05
     val heightInvalid = heightValue == null || heightValue < minHeightMm - 0.05 || heightValue > maxHeightMm + 0.05
 
+    val compact = LocalCompactLayout.current
+
     TrackedDialog("CreateIdCards") {
         AlertDialog(
             onDismissRequest = onDismiss,
@@ -182,16 +185,25 @@ fun IdCardsExportDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(stringResource(Res.string.create_id_cards))
-                    FocusedTextButton(
-                        onClick = {
-                            layout = IdCardSheetLayout()
-                            widthText = layout.cardWidthMm().oneDecimal()
-                            heightText = layout.cardHeightMm().oneDecimal()
-                        },
-                    ) {
-                        Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                    Text(stringResource(Res.string.create_id_cards), modifier = Modifier.weight(1f, fill = false))
+                    val restore = {
+                        layout = IdCardSheetLayout()
+                        widthText = layout.cardWidthMm().oneDecimal()
+                        heightText = layout.cardHeightMm().oneDecimal()
+                    }
+                    val restoreLabel = stringResource(Res.string.restore_settings)
+                    if (compact) {
+                        // On a phone the title takes the width, so the button keeps only its icon.
+                        AppTooltipBox(restoreLabel) {
+                            FocusedIconButton(onClick = restore) {
+                                Icon(Icons.Default.RestartAlt, contentDescription = restoreLabel)
+                            }
+                        }
+                    } else {
+                        FocusedTextButton(onClick = restore) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Text(restoreLabel, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                        }
                     }
                 }
             },
@@ -220,8 +232,7 @@ fun IdCardsExportDialog(
                         steps = 0,
                         thumbText = "${layout.scalePercent.roundToInt()}%",
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(20.dp))
+                    val sizeFields: @Composable RowScope.() -> Unit = {
                         OutlinedTextField(
                             value = widthText,
                             onValueChange = { text ->
@@ -264,6 +275,8 @@ fun IdCardsExportDialog(
                             },
                             modifier = Modifier.weight(1f),
                         )
+                    }
+                    val orientation: @Composable () -> Unit = {
                         Row {
                             FilledTonalIconToggleButton(
                                 checked = !layout.landscape,
@@ -277,6 +290,17 @@ fun IdCardsExportDialog(
                             ) {
                                 Icon(Icons.Default.CropLandscape, contentDescription = stringResource(Res.string.landscape))
                             }
+                        }
+                    }
+                    if (compact) {
+                        // On a phone the fields need the whole width, so the orientation goes to a line of its own.
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { sizeFields() }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { orientation() }
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(20.dp))
+                            sizeFields()
+                            orientation()
                         }
                     }
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {

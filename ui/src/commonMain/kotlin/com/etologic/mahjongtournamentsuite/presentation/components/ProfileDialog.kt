@@ -10,8 +10,9 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -121,8 +122,9 @@ fun ProfileDialog(
                 }
             },
             text = {
+                // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -189,20 +191,26 @@ fun ProfileDialog(
                     }
                 }
             },
-            // Logout is at the left of the button row. Close and Save are at the right.
+            // Logout is at the left of the button row. Close and Save are at the right. On a small phone Logout goes above.
             confirmButton = {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    if (onSignOut != null) {
-                        FocusedTextButton(
-                            enabled = !saving,
-                            onClick = onSignOut,
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        ) { Text(stringResource(Res.string.action_logout)) }
-                    }
-                    Spacer(Modifier.weight(1f))
+                val buttons: @Composable RowScope.() -> Unit = {
                     FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
-                    Spacer(Modifier.width(8.dp))
                     FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
+                }
+                if (onSignOut != null) {
+                    DialogButtonRow(
+                        start = {
+                            FocusedTextButton(
+                                enabled = !saving,
+                                onClick = onSignOut,
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            ) { Text(stringResource(Res.string.action_logout)) }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        end = buttons,
+                    )
+                } else {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), content = buttons)
                 }
             },
         )

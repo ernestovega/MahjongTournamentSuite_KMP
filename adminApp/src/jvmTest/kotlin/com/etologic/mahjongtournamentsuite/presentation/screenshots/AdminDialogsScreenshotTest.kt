@@ -1,7 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
+import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
@@ -37,10 +40,12 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdateNotice
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdatesDialog
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
+import org.koin.compose.koinInject
 import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
@@ -52,7 +57,12 @@ class AdminDialogsScreenshotTest {
     private fun nameOf(id: Int) = ScreenshotData.players[id - 1].displayName
 
     @Test
-    fun editTournament() = dialog("edit-tournament") { EditTournamentDialog(ScreenshotData.tournament(ONGOING), onDismiss = {}) }
+    fun editTournament() = dialog("edit-tournament") {
+        // The user is an administrator, so the dialog shows the Delete button. The app loads the role on the tournaments screen.
+        val store = koinInject<AppMemoryStore>()
+        remember { store.adminStatus.value = AdminStatus("admin-1", GlobalUserRole.ADMIN) }
+        EditTournamentDialog(ScreenshotData.tournament(ONGOING), onDismiss = {})
+    }
 
     @Test
     fun createTournament() = dialog("create-tournament") { CreateTournamentDialog(onDismiss = {}, onCreated = {}) }

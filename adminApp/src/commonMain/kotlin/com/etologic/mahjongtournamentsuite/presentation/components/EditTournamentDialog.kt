@@ -738,24 +738,26 @@ fun EditTournamentDialog(
                     }
                 }
             },
+            // Delete is at the left of the button row. Cancel and Save are at the right. On a small phone Delete goes above.
             confirmButton = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (canDeleteTournaments) {
-                        FocusedTextButton(
-                            enabled = !isLoading,
-                            onClick = { deleteDialogTournament = tournament },
-                            focusRequester = editDeleteFocusRequester,
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error,
-                            ),
-                        ) {
-                            Text(stringResource(Res.string.delete))
+                DialogButtonRow(
+                    start = {
+                        if (canDeleteTournaments) {
+                            FocusedTextButton(
+                                enabled = !isLoading,
+                                onClick = { deleteDialogTournament = tournament },
+                                focusRequester = editDeleteFocusRequester,
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error,
+                                ),
+                            ) {
+                                Text(stringResource(Res.string.delete))
+                            }
                         }
-                    }
-                    Spacer(Modifier.weight(1f))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    spacing = 0.dp,
+                ) {
                     FocusedTextButton(
                         enabled = !isLoading,
                         onClick = {

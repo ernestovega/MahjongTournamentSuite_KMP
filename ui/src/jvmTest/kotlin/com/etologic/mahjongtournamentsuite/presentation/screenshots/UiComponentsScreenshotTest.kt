@@ -73,6 +73,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import com.etologic.mahjongtournamentsuite.screenshots.Variant
+import com.etologic.mahjongtournamentsuite.screenshots.componentDialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import kotlin.test.Test
@@ -81,7 +83,12 @@ import kotlin.test.Test
 @OptIn(ExperimentalTestApi::class)
 class UiComponentsScreenshotTest {
     /** A component in the theme of the apps. [scroll] false is for content that fills the window itself. */
-    private fun component(name: String, scroll: Boolean = true, content: @Composable () -> Unit) = screenshots("components/$name", componentVariants) { variant ->
+    private fun component(
+        name: String,
+        scroll: Boolean = true,
+        variants: List<Variant> = componentVariants,
+        content: @Composable () -> Unit,
+    ) = screenshots("components/$name", variants) { variant ->
         val preference = if (variant.dark) ThemePreference.Dark else ThemePreference.Light
         CompositionLocalProvider(LocalThemeController provides ThemeController(preference, variant.dark, {})) {
             MtsTheme(useDarkTheme = variant.dark) {
@@ -262,19 +269,19 @@ class UiComponentsScreenshotTest {
     }
 
     @Test
-    fun errorDialog() = component("dialog-error") { AppErrorDialog(message = "The server did not answer. Try again in a moment.", onDismiss = {}) }
+    fun errorDialog() = component("dialog-error", variants = componentDialogVariants) { AppErrorDialog(message = "The server did not answer. Try again in a moment.", onDismiss = {}) }
 
     @Test
-    fun successDialog() = component("dialog-success") { AppSuccessDialog(message = "The invitations are sent.", onDismiss = {}) }
+    fun successDialog() = component("dialog-success", variants = componentDialogVariants) { AppSuccessDialog(message = "The invitations are sent.", onDismiss = {}) }
 
     @Test
-    fun signOutDialog() = component("dialog-sign-out") { SignOutConfirmDialog(onConfirm = {}, onDismiss = {}) }
+    fun signOutDialog() = component("dialog-sign-out", variants = componentDialogVariants) { SignOutConfirmDialog(onConfirm = {}, onDismiss = {}) }
 
     @Test
-    fun appChooserDialog() = component("dialog-app-chooser") { SuiteAppChooserDialog(onChoose = {}) }
+    fun appChooserDialog() = component("dialog-app-chooser", variants = componentDialogVariants) { SuiteAppChooserDialog(onChoose = {}) }
 
     @Test
-    fun profileDialog() = component("dialog-profile") {
+    fun profileDialog() = component("dialog-profile", variants = componentDialogVariants) {
         ProfileDialog(
             profile = UserProfile(uid = "player-1", email = "lucia@example.test", alias = "Lucía", emaId = "04010001"),
             onSaveAlias = { AppResult.Success(it.let { alias -> UserProfile("player-1", "lucia@example.test", alias) }) },
