@@ -139,6 +139,8 @@ fun PlayerApp(
     appVersion: String = AppVersion.admin,
     /** True when the admin app sent the user here to sign in. */
     openSignIn: Boolean = false,
+    /** True when the address was `/support`: the app opens the support form over the tournaments. */
+    openSupport: Boolean = false,
     /** True on a phone or a tablet app: the score of a hand is typed on a numpad of the app, not on the system keyboard. */
     numpadEntry: Boolean = false,
     /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */
@@ -164,7 +166,7 @@ fun PlayerApp(
                 ConsentGate {
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn)
+                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport)
                         }
                     }
                 }
@@ -174,7 +176,12 @@ fun PlayerApp(
 }
 
 @Composable
-private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionStateStorage?, openSignIn: Boolean) {
+private fun PlayerNavigation(
+    openTournamentId: String?,
+    sessionStorage: SessionStateStorage?,
+    openSignIn: Boolean,
+    openSupport: Boolean,
+) {
     val navController = rememberNavController()
     val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
     // The saved routes are read one time, before the first navigation changes them.
@@ -185,7 +192,7 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
     }
 
     Box(Modifier.fillMaxSize()) {
-        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn)
+        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn, openSupport)
         // On the web the back and forward of the browser move through the screens like the back of the app.
         BrowserHistory(navController)
         // Over every screen: the table of the player when a round of the player starts soon or is in play.
@@ -199,9 +206,10 @@ private fun PlayerNavHost(
     openTournamentId: String?,
     restoredRoutes: List<Any>,
     openSignIn: Boolean,
+    openSupport: Boolean,
 ) {
     NavHost(navController = navController, startDestination = SplashRoute) {
-        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn) }
+        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn, openSupport) }
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)

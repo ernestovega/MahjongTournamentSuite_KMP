@@ -37,16 +37,28 @@ private fun signInFromUrl(): Boolean {
     return true
 }
 
+/**
+ * True for `/support`: the public address of the support form, linked from the privacy policy.
+ * The address goes back to `/`, so Back of the browser returns to the tournaments.
+ */
+private fun supportFromUrl(): Boolean {
+    if (window.location.pathname.trim('/') != "support") return false
+    window.history.replaceState(null, "", "/" + window.location.search + window.location.hash)
+    return true
+}
+
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     loadTimeZones()
     val openSignIn = signInFromUrl()
+    val openSupport = supportFromUrl()
     ComposeViewport {
         PlayerApp(
             openTournamentId = tournamentFromUrl(),
             sessionStorage = remember { BrowserSessionStorage("playerApp") },
             appVersion = AppVersion.web,
             openSignIn = openSignIn,
+            openSupport = openSupport,
         )
     }
 }

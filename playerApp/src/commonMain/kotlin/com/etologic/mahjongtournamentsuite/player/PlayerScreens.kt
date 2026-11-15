@@ -248,6 +248,8 @@ fun SplashScreen(
     restoredRoutes: List<Any> = emptyList(),
     /** True when the admin app sent the user here to sign in. The site has one sign-in, the one of this app. */
     openSignIn: Boolean = false,
+    /** True when the address was `/support`, the link of the privacy policy. */
+    openSupport: Boolean = false,
 ) {
     val session = koinInject<PlayerSessionPresenter>()
     LaunchedEffect(Unit) {
@@ -255,7 +257,10 @@ fun SplashScreen(
         // Everything is public, so the app opens on the tournaments with or without an account.
         navController.navigate(TournamentsRoute) { popUpTo(SplashRoute) { inclusive = true } }
         val restored = restoredRoutes.filterNot { it == TournamentsRoute }
-        if (signInFirst) {
+        if (openSupport) {
+            // The support form over the tournaments, so Back returns to the list.
+            navController.navigate(SupportRoute())
+        } else if (signInFirst) {
             navController.navigate(SignInRoute())
         } else if (restored.isNotEmpty()) {
             // A page refresh returns to the screen that was open.
