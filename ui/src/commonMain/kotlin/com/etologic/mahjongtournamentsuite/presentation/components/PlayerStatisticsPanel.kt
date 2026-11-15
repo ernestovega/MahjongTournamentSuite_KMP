@@ -1237,7 +1237,11 @@ fun PlayerTournamentsSection(
                     .onGloballyPositioned { cardTops[tournament.id] = contentY(it) },
                 expanded = open,
                 onToggle = { expanded[tournament.id] = !open },
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                // In the dark theme the line is darker than the card, not lighter.
+                border = BorderStroke(
+                    1.dp,
+                    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color.Black.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant,
+                ),
             ) {
                 val hasHands = stats.tablesWithHands > 0
                 StatGrid(Modifier.fillMaxWidth()) {
