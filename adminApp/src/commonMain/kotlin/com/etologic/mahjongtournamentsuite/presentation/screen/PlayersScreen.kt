@@ -108,6 +108,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
@@ -1479,7 +1480,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 PlayerRoundTablesStrip(
                                     roundTables = roundTables,
                                     titleWidth = if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth,
-                                    modifier = Modifier.padding(bottom = 10.dp),
+                                    modifier = Modifier.padding(bottom = MtsTheme.spacing.sm),
                                 )
                             }
                             DataTableDivider()
@@ -1626,7 +1627,7 @@ private fun RoundTableCell(
                 .fillMaxWidth()
                 .height(RoundTableCellHeight)
                 .background(colors.surfaceVariant)
-                .padding(horizontal = 6.dp),
+                .padding(horizontal = MtsTheme.spacing.xs),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -1640,7 +1641,7 @@ private fun RoundTableCell(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(RoundTableCellHeight)
-                .padding(horizontal = 6.dp),
+                .padding(horizontal = MtsTheme.spacing.xs),
             contentAlignment = Alignment.Center,
         ) {
             Text(
