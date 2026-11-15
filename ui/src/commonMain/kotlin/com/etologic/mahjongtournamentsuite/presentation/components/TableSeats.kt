@@ -459,7 +459,7 @@ private fun DiffsRow(label: String, self: String, him: String, other: String, he
     Row(Modifier.widthIn(max = 180.dp).fillMaxWidth()) {
         Text(label, Modifier.weight(0.8f), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
         listOf(self, him, other).forEach { cell ->
-            Text(cell, Modifier.weight(1f), style = style, color = color, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(cell, Modifier.weight(1f), style = style, color = color, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
