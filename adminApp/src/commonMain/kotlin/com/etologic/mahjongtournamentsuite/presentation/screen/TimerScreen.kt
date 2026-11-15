@@ -177,7 +177,11 @@ internal fun TimerContent(
     // Stop ends a started round before its time is over. A Timer without a tournament has no round to end.
     val canStop = isStarted && !hasFinished && !state.independent && state.canControl
     // Only a Timer without a tournament picks its round. The Timer of a tournament follows the tournament.
-    val showRoundButtons = state.independent && !isRunning
+    val showRoundButtons = state.independent && (!isRunning || hasFinished)
+    // Once the time is over, Pause and the gong have nothing to do. Reset and "Set time" stay, to fix the clock.
+    val showControls = !isRunning || hasFinished
+    // The first control takes the focus of the gong when the gong is hidden.
+    val resetRequester = if (hasFinished) startFocusRequester else resetFocusRequester
 
     var dialog by remember { mutableStateOf<TimerDialog?>(null) }
 
@@ -418,7 +422,9 @@ internal fun TimerContent(
                     isRunning -> startFocusRequester
                     else -> resetFocusRequester
                 }
-                if (isRunning) {
+                if (hasFinished) {
+                    // The time is over: no Pause and no gong.
+                } else if (isRunning) {
                     FocusedIconButton(
                         focusRequester = startFocusRequester,
                         showFocusHighlight = false,
@@ -478,7 +484,7 @@ internal fun TimerContent(
                     }
                 }
 
-                if (!isRunning) {
+                if (showControls) {
                     Row(
                         modifier = Modifier.align(Alignment.CenterEnd),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -500,10 +506,14 @@ internal fun TimerContent(
                             }
                         }
                         FocusedIconButton(
-                            focusRequester = resetFocusRequester,
+                            focusRequester = resetRequester,
                             enabled = isStarted,
                             buttonModifier = Modifier.focusLoop(
-                                previous = if (canStop) stopFocusRequester else startFocusRequester,
+                                previous = when {
+                                    canStop -> stopFocusRequester
+                                    hasFinished -> if (showRoundButtons) roundUpFocusRequester else themeFocusRequester
+                                    else -> startFocusRequester
+                                },
                                 next = setTimeFocusRequester,
                             ),
                             onClick = { scope.launch { controller.reset() } },
@@ -518,7 +528,7 @@ internal fun TimerContent(
                             focusRequester = setTimeFocusRequester,
                             enabled = state.canControl,
                             buttonModifier = Modifier.focusLoop(
-                                previous = resetFocusRequester,
+                                previous = resetRequester,
                                 next = themeFocusRequester,
                             ),
                             onClick = { dialog = if (isStarted) TimerDialog.SetTime else TimerDialog.StartedAgo },

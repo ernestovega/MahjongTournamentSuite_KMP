@@ -382,7 +382,7 @@ fun TournamentScreen(
                     },
                 )
             }
-            RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands(), allTables.roundsInPlay()) ?: 1)
+            RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
             RoundEditorAction.Activity -> navController.navigate(ActivityRoute(tournamentId))
         }
@@ -548,27 +548,19 @@ fun TournamentScreen(
 }
 
 /**
- * The round that the Timer opens at:
- * 1. the round whose clock runs (or is paused);
- * 2. else a round whose time is over but whose tables are still being played ([roundsInPlay]: open tables with hands).
- *    A round that started late can still be in play when the next round should start by the schedule;
- * 3. else the round after the last round that started or has hands. A round with hands was played, even when its clock
- *    is missing (hands entered in the editor without the Timer). After the last round it opens at the last round.
+ * The round that the Timer opens at: the round whose clock runs (or is paused), or else the round after the last round
+ * that started or has hands. A round whose time is over counts as played, even when its tables are still open, so the
+ * Timer is ready for the gong of the next round. A round with hands was played, even when its clock is missing (hands
+ * entered in the editor without the Timer). After the last round it opens at the last round.
  */
 internal fun Tournament.timerRound(
     roundsWithHands: Set<Int> = emptySet(),
-    roundsInPlay: Set<Int> = emptySet(),
     nowMs: Long = kotlin.time.Clock.System.now().toEpochMilliseconds(),
 ): Int {
     val running = roundClocks.runningRound(matchDurationMinutes, nowMs)
     if (running != null) return running
-    val inPlay = roundClocks.map { it.roundId }.filter { it in roundsInPlay }.maxOrNull()
-    if (inPlay != null) return inPlay
     val lastPlayed = (roundClocks.map { it.roundId } + roundsWithHands).maxOrNull() ?: 0
     return (lastPlayed + 1).coerceAtMost(numRounds).coerceAtLeast(1)
 }
 
 private fun List<TournamentTable>.roundsWithHands(): Set<Int> = filter { it.hasProgress }.map { it.roundId }.toSet()
-
-/** Rounds with open tables that have hands: their players are still playing. */
-private fun List<TournamentTable>.roundsInPlay(): Set<Int> = filter { it.hasProgress && !it.isCompleted }.map { it.roundId }.toSet()

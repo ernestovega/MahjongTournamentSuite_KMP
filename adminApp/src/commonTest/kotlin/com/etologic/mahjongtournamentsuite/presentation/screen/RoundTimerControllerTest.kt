@@ -172,17 +172,17 @@ class RoundTimerControllerTest {
     }
 
     @Test
-    fun aLateRoundStillInPlayWinsOverTheNextRound() {
+    fun aRoundWhoseTimeIsOverOpensTheNextRoundEvenWithOpenTables() {
         val base = Tournament(id = "t", name = "T", isTeams = false, numPlayers = 8, numRounds = 4, matchDurationMinutes = 120)
         val now = 10 * 60 * minute
-        // Round 2 started late: its time is over, but tables with hands are still open.
-        val lateRound = base.copy(roundClocks = listOf(RoundClock(1, now - 1000 * minute), RoundClock(2, now - 125 * minute)))
-
-        assertEquals(2, lateRound.timerRound(roundsWithHands = setOf(1, 2), roundsInPlay = setOf(2), nowMs = now))
-        // Once its tables close, the Timer moves on to round 3.
-        assertEquals(3, lateRound.timerRound(roundsWithHands = setOf(1, 2), nowMs = now))
-        // Hands entered in the editor for round 3 without a clock: round 3 was played, so the Timer opens at 4.
-        assertEquals(4, lateRound.timerRound(roundsWithHands = setOf(1, 2, 3), roundsInPlay = setOf(3), nowMs = now))
+        // Round 2 started late and still runs: the Timer opens at it, not at round 3.
+        val late = base.copy(roundClocks = listOf(RoundClock(1, now - 1000 * minute), RoundClock(2, now - 100 * minute)))
+        assertEquals(2, late.timerRound(roundsWithHands = setOf(1, 2), nowMs = now))
+        // Its time is over (or the Timer stopped it): the Timer waits for the gong of round 3.
+        val over = base.copy(roundClocks = listOf(RoundClock(1, now - 1000 * minute), RoundClock(2, now - 125 * minute)))
+        assertEquals(3, over.timerRound(roundsWithHands = setOf(1, 2), nowMs = now))
+        val stopped = base.copy(roundClocks = listOf(RoundClock(2, now - 30 * minute).stoppedAt(now, 120, extraMs = 15 * minute)))
+        assertEquals(3, stopped.timerRound(roundsWithHands = setOf(2), nowMs = now))
     }
 
     @Test

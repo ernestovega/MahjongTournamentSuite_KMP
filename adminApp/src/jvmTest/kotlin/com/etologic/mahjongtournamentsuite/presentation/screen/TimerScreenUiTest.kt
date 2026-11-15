@@ -100,6 +100,32 @@ class TimerScreenUiTest {
 
         onNodeWithText("Time is up.").assertExists()
         onNodeWithText("0:00:00").assertExists()
+        // Nothing to pause or start any more. Reset and "Set time" stay, to fix the clock.
+        onNodeWithContentDescription("Pause timer").assertDoesNotExist()
+        onNodeWithContentDescription("Start timer").assertDoesNotExist()
+        onNodeWithContentDescription("Reset timer").assertIsEnabled()
+        onNodeWithContentDescription("Set time").assertIsEnabled()
+    }
+
+    @Test
+    fun aRunningRoundHidesPauseWhenItsTimeRunsOut() = runComposeUiTest {
+        var deviceNow = now
+        val controller = RoundTimerController(server(RoundClock(roundId = 1, startedAtMs = now - 120 * min + 2_000)), "t1", 1, deviceNowMs = { deviceNow })
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                TimerContent(controller = controller, themePreference = ThemePreference.Light, onToggleTheme = {}, deviceNowMs = { deviceNow })
+            }
+        }
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithContentDescription("Pause timer").assertExists()
+
+        deviceNow += 5_000
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        onNodeWithText("Time is up.").assertExists()
+        onNodeWithContentDescription("Pause timer").assertDoesNotExist()
     }
 
     @Test
@@ -139,6 +165,7 @@ class TimerScreenUiTest {
         onNodeWithText("Time is up.").assertExists()
         onNodeWithText("0:00:00").assertExists()
         onNodeWithContentDescription("Stop the round").assertDoesNotExist()
+        onNodeWithContentDescription("Pause timer").assertDoesNotExist()
     }
 
     @Test
