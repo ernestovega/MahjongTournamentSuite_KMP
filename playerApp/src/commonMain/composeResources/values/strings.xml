@@ -126,6 +126,9 @@
     <string name="entry_extra_time_last">The time is over. This hand is the last hand of the table.</string>
     <string name="entry_last_hand">Last hand of the table</string>
     <string name="entry_back">Back</string>
+    <string name="entry_numpad_delete">Delete</string>
+    <string name="entry_numpad_clear">Clear</string>
+    <string name="entry_last_hand_short">Last hand</string>
     <string name="entry_review">Review</string>
     <string name="entry_check_hand">Check hand</string>
     <string name="entry_saving_hand">Saving the hand...</string>

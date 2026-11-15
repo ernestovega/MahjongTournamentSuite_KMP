@@ -16,6 +16,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.ui.window.DialogProperties
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.HorizontalDivider
@@ -105,7 +115,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time
 import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time_last
 import mahjongtournamentsuite.playerapp.generated.resources.entry_from
 import mahjongtournamentsuite.playerapp.generated.resources.entry_hand_score
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand
+import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_short
 import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_note
 import mahjongtournamentsuite.playerapp.generated.resources.entry_loser
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_each
@@ -451,11 +461,15 @@ fun HandEntryPanel(
                             }
                             WinStep.SCORE -> {
                                 WinSoFar(view, winner, ::windOf, loser = if (selfDraw) null else loser, selfDraw = selfDraw)
+                                // On a phone or a tablet app the numpad below types the score, so the system keyboard never
+                                // opens: the field cannot take the focus.
+                                val numpad = LocalNumpadEntry.current
                                 OutlinedTextField(
                                     value = score,
                                     onValueChange = { score = it.filter(Char::isDigit) },
                                     label = { Text(stringResource(Res.string.entry_hand_score)) },
                                     singleLine = true,
+                                    readOnly = numpad,
                                     isError = chickenTooHigh,
                                     supportingText = if (chickenTooHigh) {
                                         { Text(stringResource(Res.string.entry_chicken_limit)) }
@@ -463,10 +477,11 @@ fun HandEntryPanel(
                                         null
                                     },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().then(if (numpad) Modifier.focusProperties { canFocus = false } else Modifier),
                                 )
                                 // A self-drawn hand is never a chicken hand.
                                 if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
+                                if (numpad) ScoreNumpad(score) { score = it }
                             }
                         }
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
@@ -496,6 +511,9 @@ fun HandEntryPanel(
                         message = null
                     }
                 },
+                // Wider than a usual dialog on a phone, so the last-hand box fits on the line of the buttons.
+                modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 560.dp),
+                properties = DialogProperties(usePlatformDefaultWidth = false),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(Res.string.entry_check_hand))
@@ -505,51 +523,73 @@ fun HandEntryPanel(
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
-                        // The last hand is marked here, with the result in sight. In the extra time it is always the last.
-                        if (extraTime) {
-                            Text(stringResource(Res.string.entry_extra_time_last))
-                        } else if (review.handId < 16) {
-                            CheckRow(stringResource(Res.string.entry_last_hand), lastHand) {
-                                if (!saving) {
-                                    lastHand = it
-                                    requestPreview()
-                                }
-                            }
-                        }
+                        // In the extra time the hand is always the last one. Otherwise the box is next to the buttons.
+                        if (extraTime) Text(stringResource(Res.string.entry_extra_time_last))
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
                 },
+                // The last hand is marked with the result in sight, at the bottom left, on the line of the buttons.
                 confirmButton = {
-                    Button(
-                        enabled = !saving,
-                        onClick = {
-                            scope.launch {
-                                busy = true
-                                message = null
-                                when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
-                                    is AppResult.Success -> {
-                                        awaitingKey = progressKey
-                                        onSaved()
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) {
+                            if (!extraTime && review.handId < 16) {
+                                Row(
+                                    Modifier.clickable(enabled = !saving) {
+                                        lastHand = !lastHand
+                                        requestPreview()
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    // The whole row takes the tap, so the box needs no extra touch margin of its own.
+                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                                        Checkbox(
+                                            checked = lastHand,
+                                            enabled = !saving,
+                                            onCheckedChange = {
+                                                lastHand = it
+                                                requestPreview()
+                                            },
+                                            modifier = Modifier.padding(end = MtsTheme.spacing.sm),
+                                        )
                                     }
-                                    is AppResult.Failure ->
-                                        if (result.error is AppError.Conflict) {
-                                            tableChanged(result.error.toUiText())
-                                        } else {
-                                            message = result.error.toUiText()
-                                            preview = null
-                                        }
+                                    Text(
+                                        stringResource(Res.string.entry_last_hand_short),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 2,
+                                    )
                                 }
-                                busy = false
                             }
-                        },
-                    ) { Text(stringResource(Res.string.entry_confirm_save)) }
-                },
-                dismissButton = {
-                    TextButton(enabled = !saving, onClick = {
-                        preview = null
-                        message = null
-                    }) { Text(stringResource(Res.string.entry_edit)) }
+                        }
+                        TextButton(enabled = !saving, onClick = {
+                            preview = null
+                            message = null
+                        }) { Text(stringResource(Res.string.entry_edit)) }
+                        Button(
+                            enabled = !saving,
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    message = null
+                                    when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
+                                        is AppResult.Success -> {
+                                            awaitingKey = progressKey
+                                            onSaved()
+                                        }
+                                        is AppResult.Failure ->
+                                            if (result.error is AppError.Conflict) {
+                                                tableChanged(result.error.toUiText())
+                                            } else {
+                                                message = result.error.toUiText()
+                                                preview = null
+                                            }
+                                    }
+                                    busy = false
+                                }
+                            },
+                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                    }
                 },
             )
         }
@@ -678,6 +718,66 @@ private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats
 private fun SectionLabel(text: String) {
     Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
+
+/** True where the score of a hand is typed on [ScoreNumpad]: the phone and tablet apps, not the web. */
+val LocalNumpadEntry = staticCompositionLocalOf { false }
+
+/** The longest score the numpad types. */
+private const val NUMPAD_MAX_DIGITS = 4
+
+/**
+ * A numpad for the score of a hand: 1 to 9, then clear, 0 and delete. The keys answer at once, with no debounce,
+ * so fast typing keeps every digit.
+ */
+@Composable
+private fun ScoreNumpad(value: String, onChange: (String) -> Unit) {
+    val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", NUMPAD_CLEAR, "0", NUMPAD_DELETE)
+    Column(Modifier.fillMaxWidth().testTag(SCORE_NUMPAD_TAG), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        keys.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { key ->
+                    val isDigit = key.first().isDigit()
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .clickable {
+                                onChange(
+                                    when (key) {
+                                        NUMPAD_CLEAR -> ""
+                                        NUMPAD_DELETE -> value.dropLast(1)
+                                        // No leading zero, and no more digits than a score has.
+                                        else -> if (value.length >= NUMPAD_MAX_DIGITS || (value.isEmpty() && key == "0")) value else value + key
+                                    },
+                                )
+                            },
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (isDigit) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            when (key) {
+                                NUMPAD_DELETE -> Icon(
+                                    Icons.AutoMirrored.Filled.Backspace,
+                                    contentDescription = stringResource(Res.string.entry_numpad_delete),
+                                    Modifier.size(24.dp),
+                                )
+                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                else -> Text(key, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val NUMPAD_CLEAR = "C"
+private const val NUMPAD_DELETE = "DEL"
+
+/** The tag of the numpad of the score, for the tests. */
+const val SCORE_NUMPAD_TAG = "score-numpad"
 
 /** The question of a step of a win. */
 @Composable

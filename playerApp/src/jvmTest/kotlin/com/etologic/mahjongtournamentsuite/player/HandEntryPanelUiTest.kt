@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -158,8 +159,8 @@ class HandEntryPanelUiTest {
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
         // The last hand is marked in the review. The mark asks the server for the result again.
-        awaitText("Last hand of the table")
-        onNodeWithText("Last hand of the table").performClick()
+        awaitText("Last hand")
+        onNodeWithText("Last hand").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.size == 2 }
 
         assertEquals(listOf(false, true), repository.previews.map { it.isLastHand })
@@ -175,7 +176,7 @@ class HandEntryPanelUiTest {
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
         awaitText("The time is over. This hand is the last hand of the table.")
-        onNodeWithText("Last hand of the table").assertDoesNotExist()
+        onNodeWithText("Last hand").assertDoesNotExist()
 
         assertEquals(listOf(true), repository.previews.map { it.isLastHand })
     }
@@ -362,5 +363,40 @@ class HandEntryPanelUiTest {
         onAllNodesWithText("Player 1").onFirst().performClick()
         awaitText("Hand score")
         onNodeWithText("Chicken hand").assertIsDisplayed()
+    }
+
+    @Test
+    fun onAPhoneTheScoreIsTypedOnTheNumpad() = runComposeUiTest {
+        val view = view(MatchEndMode.FINISH_HAND, 0, "11:00")
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                KoinApplication(application = { modules(module { single { PlayerTablePresenter(RecordingHandRepository()) } }) }) {
+                    androidx.compose.runtime.CompositionLocalProvider(LocalNumpadEntry provides true) {
+                        HandEntryPanel(
+                            tournamentId = "t",
+                            roundId = 1,
+                            tableId = 1,
+                            view = view,
+                            table = view.tables.single(),
+                            now = LocalDateTime.parse("2026-10-10T11:00"),
+                            onSaved = {},
+                        )
+                    }
+                }
+            }
+        }
+        awaitText("Add win")
+        onNodeWithText("Add win").performClick()
+        awaitText("Who won?")
+        onAllNodesWithText("Player 2").onFirst().performClick()
+        awaitText("Who discarded?")
+        onNodeWithText("Self-draw").performClick()
+        awaitText("Hand score")
+        // A leading zero does nothing. Delete takes the last digit away.
+        listOf("0", "1", "2", "5").forEach { key -> onAllNodesWithText(key).let { nodes -> nodes[nodes.fetchSemanticsNodes().size - 1] }.performClick() }
+        onNodeWithContentDescription("Delete").performClick()
+        onAllNodesWithText("12").onFirst().assertIsDisplayed()
+        onNodeWithText("Clear").performClick()
+        assertEquals(0, onAllNodesWithText("12").fetchSemanticsNodes().size)
     }
 }

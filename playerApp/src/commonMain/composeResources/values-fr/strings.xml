@@ -126,6 +126,9 @@
     <string name="entry_extra_time_last">Le temps est écoulé. Cette main est la dernière main de la table.</string>
     <string name="entry_last_hand">Dernière main de la table</string>
     <string name="entry_back">Retour</string>
+    <string name="entry_numpad_delete">Effacer</string>
+    <string name="entry_numpad_clear">Vider</string>
+    <string name="entry_last_hand_short">Dernière main</string>
     <string name="entry_review">Vérifier</string>
     <string name="entry_check_hand">Vérifier la main</string>
     <string name="entry_saving_hand">Enregistrement de la main...</string>

@@ -11,6 +11,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AndroidPlatformContext.init(applicationContext)
-        setContent { PlayerApp() }
+        // Phones and tablets type the score of a hand on the numpad of the app, not on the system keyboard.
+        setContent { PlayerApp(numpadEntry = true) }
     }
 }

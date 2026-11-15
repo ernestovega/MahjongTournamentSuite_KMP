@@ -126,6 +126,9 @@
     <string name="entry_extra_time_last">El tiempo ha terminado. Esta mano es la última de la mesa.</string>
     <string name="entry_last_hand">Última mano de la mesa</string>
     <string name="entry_back">Atrás</string>
+    <string name="entry_numpad_delete">Borrar</string>
+    <string name="entry_numpad_clear">Limpiar</string>
+    <string name="entry_last_hand_short">Última mano</string>
     <string name="entry_review">Revisar</string>
     <string name="entry_check_hand">Comprobar la mano</string>
     <string name="entry_saving_hand">Guardando la mano...</string>
