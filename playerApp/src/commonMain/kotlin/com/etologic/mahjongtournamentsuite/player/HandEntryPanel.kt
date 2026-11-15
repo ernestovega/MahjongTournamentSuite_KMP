@@ -16,6 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
@@ -23,8 +27,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -90,6 +92,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.chicken_hand
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_another_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_draw
+import mahjongtournamentsuite.playerapp.generated.resources.entry_back
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_win
 import mahjongtournamentsuite.playerapp.generated.resources.entry_check_hand
@@ -145,6 +148,9 @@ private const val MAX_PENALTIES = 5
 /** The three things that a player can add to the table. */
 private enum class EntryMode { WIN, DRAW, PENALTY }
 
+/** The steps of a win: one small dialog each. The review comes after the score. */
+private enum class WinStep { WINNER, LOSER, SCORE }
+
 /**
  * Entry for the player who writes the scores down. It has three buttons: add a win, add a draw and add a penalty.
  * A win or a draw ends the hand in play. A penalty does not end it.
@@ -196,6 +202,7 @@ fun HandEntryPanel(
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var modeName by rememberSaveable { mutableStateOf("") }
+    var winStep by remember { mutableStateOf(WinStep.WINNER) }
     val mode = EntryMode.entries.firstOrNull { it.name == modeName }
     val isDraw = mode == EntryMode.DRAW
     // What the table shows when the server accepted the data. The dialog stays open until the table shows something new.
@@ -236,6 +243,7 @@ fun HandEntryPanel(
         awaitingKey = null
         message = null
         modeName = ""
+        winStep = WinStep.WINNER
     }
 
     // The table is not what the player saw, for example because a staff member saved a hand.
@@ -344,94 +352,138 @@ fun HandEntryPanel(
             winner = slot
             if (loser == slot) loser = null
             modeName = EntryMode.WIN.name
+            // The tap on the seat already says who won.
+            winStep = WinStep.LOSER
         }
         onPreselectHandled()
     }
 
     val review = preview
     val saving = busy || awaitingKey != null
-    if ((mode == EntryMode.WIN || mode == EntryMode.DRAW) && review == null) {
+
+    // The server computes the result of the hand. The review shows it, and a change of "last hand" asks again,
+    // because the last hand also gives the points of the table.
+    fun requestPreview() {
+        scope.launch {
+            busy = true
+            message = null
+            when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
+                is AppResult.Success -> preview = result.value
+                is AppResult.Failure ->
+                    if (result.error is AppError.Conflict) {
+                        tableChanged(result.error.toUiText())
+                    } else {
+                        message = result.error.toUiText()
+                    }
+            }
+            busy = false
+        }
+    }
+
+    val entryTitle: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
+            HandLabel(handInPlay)
+        }
+    }
+    val cancelButton: @Composable () -> Unit = {
+        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+    }
+    fun backButton(to: WinStep): @Composable () -> Unit = {
+        TextButton(onClick = { winStep = to }) { Text(stringResource(Res.string.entry_back)) }
+    }
+    if (mode == EntryMode.DRAW && review == null) {
         TrackedDialog("EntryAddDraw") {
             AlertDialog(
                 onDismissRequest = { finishEntry() },
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
-                        HandLabel(handInPlay)
-                    }
-                },
+                title = entryTitle,
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (!isDraw) {
-                            SectionLabel(stringResource(Res.string.entry_winner))
-                            PlayerChoices(seatIds, winner, view, ::windOf) { slot ->
-                                winner = slot
-                                if (loser == slot) loser = null
+                        Text(stringResource(Res.string.entry_draw_explanation))
+                        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    }
+                },
+                confirmButton = {
+                    Button(enabled = !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                },
+                dismissButton = cancelButton,
+            )
+        }
+    }
+    // A win is asked in small steps: who won, who discarded, and the score. A tap on a player goes to the next step.
+    if (mode == EntryMode.WIN && review == null) {
+        TrackedDialog(
+            when (winStep) {
+                WinStep.WINNER -> "EntryWinWinner"
+                WinStep.LOSER -> "EntryWinLoser"
+                WinStep.SCORE -> "EntryWinScore"
+            },
+        ) {
+            AlertDialog(
+                onDismissRequest = { finishEntry() },
+                title = entryTitle,
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        when (winStep) {
+                            WinStep.WINNER -> {
+                                StepQuestion(stringResource(Res.string.entry_winner))
+                                PlayerChoices(seatIds, winner, view, ::windOf) { slot ->
+                                    winner = slot
+                                    if (loser == slot) loser = null
+                                    winStep = WinStep.LOSER
+                                }
                             }
-                            // Self-draw is the first choice of who discarded: nobody did.
-                            SectionLabel(stringResource(Res.string.entry_loser))
-                            PlayerChoices(
-                                seatIds.filter { it != winner },
-                                if (selfDraw) null else loser,
-                                view,
-                                ::windOf,
-                                selfDraw = SelfDrawChoice(stringResource(Res.string.entry_self_draw), selfDraw) {
+                            WinStep.LOSER -> {
+                                WinSoFar(view, winner, ::windOf)
+                                StepQuestion(stringResource(Res.string.entry_loser))
+                                SelfDrawButton(stringResource(Res.string.entry_self_draw), selected = selfDraw) {
                                     selfDraw = true
                                     loser = null
                                     chicken = false
-                                },
-                            ) {
-                                selfDraw = false
-                                loser = it
+                                    winStep = WinStep.SCORE
+                                }
+                                HorizontalDivider()
+                                PlayerChoices(seatIds.filter { it != winner }, if (selfDraw) null else loser, view, ::windOf, columns = 1) {
+                                    selfDraw = false
+                                    loser = it
+                                    winStep = WinStep.SCORE
+                                }
                             }
-                            OutlinedTextField(
-                                value = score,
-                                onValueChange = { score = it.filter(Char::isDigit) },
-                                label = { Text(stringResource(Res.string.entry_hand_score)) },
-                                singleLine = true,
-                                isError = chickenTooHigh,
-                                supportingText = if (chickenTooHigh) {
-                                    { Text(stringResource(Res.string.entry_chicken_limit)) }
-                                } else {
-                                    null
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
-                        } else {
-                            Text(stringResource(Res.string.entry_draw_explanation))
-                        }
-                        if (extraTime) {
-                            Text(stringResource(Res.string.entry_extra_time_last))
-                        } else if (handInPlay < 16) {
-                            CheckRow(stringResource(Res.string.entry_last_hand), lastHand) { lastHand = it }
+                            WinStep.SCORE -> {
+                                WinSoFar(view, winner, ::windOf, loser = if (selfDraw) null else loser, selfDraw = selfDraw)
+                                OutlinedTextField(
+                                    value = score,
+                                    onValueChange = { score = it.filter(Char::isDigit) },
+                                    label = { Text(stringResource(Res.string.entry_hand_score)) },
+                                    singleLine = true,
+                                    isError = chickenTooHigh,
+                                    supportingText = if (chickenTooHigh) {
+                                        { Text(stringResource(Res.string.entry_chicken_limit)) }
+                                    } else {
+                                        null
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                // A self-drawn hand is never a chicken hand.
+                                if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
+                            }
                         }
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
                 },
                 confirmButton = {
-                    Button(
-                        enabled = valid && !busy,
-                        onClick = {
-                            scope.launch {
-                                busy = true
-                                message = null
-                                when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
-                                    is AppResult.Success -> preview = result.value
-                                    is AppResult.Failure ->
-                                        if (result.error is AppError.Conflict) {
-                                            tableChanged(result.error.toUiText())
-                                        } else {
-                                            message = result.error.toUiText()
-                                        }
-                                }
-                                busy = false
-                            }
-                        },
-                    ) { Text(stringResource(Res.string.entry_review)) }
+                    if (winStep == WinStep.SCORE) {
+                        Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                    } else {
+                        cancelButton()
+                    }
                 },
-                dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
+                dismissButton = when (winStep) {
+                    WinStep.WINNER -> null
+                    WinStep.LOSER -> backButton(WinStep.WINNER)
+                    WinStep.SCORE -> backButton(WinStep.LOSER)
+                },
             )
         }
     }
@@ -453,6 +505,17 @@ fun HandEntryPanel(
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
+                        // The last hand is marked here, with the result in sight. In the extra time it is always the last.
+                        if (extraTime) {
+                            Text(stringResource(Res.string.entry_extra_time_last))
+                        } else if (review.handId < 16) {
+                            CheckRow(stringResource(Res.string.entry_last_hand), lastHand) {
+                                if (!saving) {
+                                    lastHand = it
+                                    requestPreview()
+                                }
+                            }
+                        }
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
@@ -616,48 +679,81 @@ private fun SectionLabel(text: String) {
     Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** Two players per row. Each choice shows the wind icon and the first name. */
+/** The question of a step of a win. */
+@Composable
+private fun StepQuestion(text: String) {
+    Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+}
+
+/** What the steps before chose: the winner, and on the score step who discarded or Self-draw. */
+@Composable
+private fun WinSoFar(view: PlayerTournamentView, winner: Int?, windOf: (Int) -> SeatWind, loser: Int? = null, selfDraw: Boolean = false) {
+    val slot = winner ?: return
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.gain)
+        WindIcon(windOf(slot), size = 20.dp)
+        Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        if (selfDraw) {
+            Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.selfPick)
+            Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
+        } else if (loser != null) {
+            Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            WindIcon(windOf(loser), size = 20.dp)
+            Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        }
+    }
+}
+
+/**
+ * Self-draw, centered above the players who could have discarded. It is a pill in the color of self-draw hands, like the
+ * self-draw chip of the list of hands, so it never looks like a player.
+ */
+@Composable
+private fun SelfDrawButton(label: String, selected: Boolean, onClick: () -> Unit) {
+    val color = MtsTheme.colors.selfPick
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.widthIn(min = 200.dp).clickable(onClick = onClick),
+            shape = MtsTheme.shapes.pill,
+            color = if (selected) color else color.copy(alpha = 0.18f),
+            contentColor = if (selected) Color.White else color,
+            border = BorderStroke(if (selected) 2.dp else 1.dp, color),
+        ) {
+            Row(
+                Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            ) {
+                Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
+                Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** The players to choose from, [columns] per row. Each choice shows the wind icon and the first name. */
 @Composable
 private fun PlayerChoices(
     slots: List<Int>,
     selected: Int?,
     view: PlayerTournamentView,
     windOf: (Int) -> SeatWind,
-    /** When set, the first choice is Self-draw and the players follow it. */
-    selfDraw: SelfDrawChoice? = null,
+    columns: Int = 2,
     onSelect: (Int) -> Unit,
 ) {
-    val choices: List<Int?> = (if (selfDraw != null) listOf(null) else emptyList()) + slots
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        choices.chunked(2).forEach { pair ->
+        slots.chunked(columns).forEach { group ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEach { slot ->
-                    val isSelected = if (slot == null) selfDraw?.selected == true else slot == selected
-                    // Self-draw is not a player, so it looks different at a glance: a pill in the color of self-draw
-                    // hands, tinted like that chip, and solid with white text when chosen.
-                    val selfPick = MtsTheme.colors.selfPick
-                    val background = when {
-                        slot == null && isSelected -> selfPick
-                        slot == null -> selfPick.copy(alpha = 0.18f)
-                        isSelected -> MaterialTheme.colorScheme.primaryContainer
-                        else -> MaterialTheme.colorScheme.surface
-                    }
+                group.forEach { slot ->
+                    val isSelected = slot == selected
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { if (slot == null) selfDraw?.onSelect?.invoke() else onSelect(slot) },
-                        shape = if (slot == null) MtsTheme.shapes.pill else MaterialTheme.shapes.medium,
-                        color = background,
-                        contentColor = when {
-                            slot == null && isSelected -> Color.White
-                            slot == null -> selfPick
-                            else -> contentColorFor(background)
-                        },
+                        modifier = Modifier.weight(1f).clickable { onSelect(slot) },
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
                             if (isSelected) 2.dp else 1.dp,
-                            when {
-                                slot == null -> selfPick
-                                isSelected -> MaterialTheme.colorScheme.primary
-                                else -> MaterialTheme.colorScheme.outlineVariant
-                            },
+                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                         ),
                     ) {
                         Row(
@@ -665,30 +761,21 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            if (slot == null) {
-                                Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
-                            } else {
-                                WindIcon(windOf(slot), size = 24.dp)
-                            }
+                            WindIcon(windOf(slot), size = 24.dp)
                             Text(
-                                if (slot == null) selfDraw?.label.orEmpty() else view.firstNameOf(slot),
-                                // Self-draw uses the font of the self-draw chip of the list of hands.
-                                style = if (slot == null) MaterialTheme.typography.labelLarge else LocalTextStyle.current,
-                                fontWeight = if (isSelected || slot == null) FontWeight.Bold else FontWeight.Normal,
+                                view.firstNameOf(slot),
+                                fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                             )
                         }
                     }
                 }
-                // An odd last row keeps the width of one choice.
-                if (pair.size == 1) Box(Modifier.weight(1f))
+                // A short last row keeps the width of the other choices.
+                repeat(columns - group.size) { Box(Modifier.weight(1f)) }
             }
         }
     }
 }
-
-/** The Self-draw choice that comes before the players in [PlayerChoices]. */
-private class SelfDrawChoice(val label: String, val selected: Boolean, val onSelect: () -> Unit)
 
 /**
  * One penalty. The player chooses who is penalized and the amount. The amount is positive and the app

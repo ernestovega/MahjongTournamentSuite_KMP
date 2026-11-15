@@ -155,11 +155,14 @@ class HandEntryPanelUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00", repository)
 
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("Last hand of the table").assertIsDisplayed()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
+        // The last hand is marked in the review. The mark asks the server for the result again.
+        awaitText("Last hand of the table")
+        onNodeWithText("Last hand of the table").performClick()
+        waitUntil(timeoutMillis = 5_000) { repository.previews.size == 2 }
 
-        assertEquals(listOf(false), repository.previews.map { it.isLastHand })
+        assertEquals(listOf(false, true), repository.previews.map { it.isLastHand })
     }
 
     @Test
@@ -169,10 +172,10 @@ class HandEntryPanelUiTest {
 
         onNodeWithText("The time is over. You can add the hand in play. After it, the table is completed.").assertIsDisplayed()
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("The time is over. This hand is the last hand of the table.").assertIsDisplayed()
-        onNodeWithText("Last hand of the table").assertDoesNotExist()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
+        awaitText("The time is over. This hand is the last hand of the table.")
+        onNodeWithText("Last hand of the table").assertDoesNotExist()
 
         assertEquals(listOf(true), repository.previews.map { it.isLastHand })
     }
@@ -236,7 +239,7 @@ class HandEntryPanelUiTest {
 
         awaitText("Añadir empate")
         onNodeWithText("Añadir empate").performClick()
-        awaitText("Última mano de la mesa")
+        awaitText("Revisar")
         onNodeWithText("Ningún jugador gana esta mano. Todos los asientos puntúan cero.").assertIsDisplayed()
         onNodeWithText("Revisar").assertIsDisplayed()
         onNodeWithText("Cancelar").assertIsDisplayed()
@@ -339,18 +342,25 @@ class HandEntryPanelUiTest {
     }
 
     @Test
-    fun selfDrawIsTheFirstChoiceOfWhoDiscarded() = runComposeUiTest {
+    fun aWinIsAskedInSmallSteps() = runComposeUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00")
 
         awaitText("Add win")
         onNodeWithText("Add win").performClick()
-        awaitText("Who discarded")
-        onNodeWithText("Self-draw").assertIsDisplayed()
+        // Step 1: a tap on the winner goes on, with no OK button.
+        awaitText("Who won?")
+        onNodeWithText("Who discarded?").assertDoesNotExist()
         onAllNodesWithText("Player 2").onFirst().performClick()
-        onNodeWithText("Hand score").assertIsDisplayed()
-        // A self-drawn hand is never a chicken hand, so the choice hides it.
-        onNodeWithText("Chicken hand").assertIsDisplayed()
+        // Step 2: Self-draw or one of the other three players.
+        awaitText("Who discarded?")
         onNodeWithText("Self-draw").performClick()
+        // Step 3: the score. A self-drawn hand is never a chicken hand.
+        awaitText("Hand score")
         onNodeWithText("Chicken hand").assertDoesNotExist()
+        onNodeWithText("Back").performClick()
+        awaitText("Who discarded?")
+        onAllNodesWithText("Player 1").onFirst().performClick()
+        awaitText("Hand score")
+        onNodeWithText("Chicken hand").assertIsDisplayed()
     }
 }

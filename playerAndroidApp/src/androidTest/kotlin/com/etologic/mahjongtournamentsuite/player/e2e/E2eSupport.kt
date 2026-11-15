@@ -299,15 +299,11 @@ fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
 }
 
 /**
- * Chooses a seat in a hand dialog. The dialog lists the seats of the winner first and then the seats of the loser.
- * The wind icons carry the wind name as description. The page behind the dialog has icons too, so the dialog entries
- * are the last ones in the tree.
- * [which] is 0 for the winner list and 1 for the loser list.
+ * Chooses a seat in a step of a win: the winner or who discarded. The wind icons carry the wind name as description.
+ * The page behind the dialog has icons too, so the dialog entries are the last ones in the tree.
  */
-fun ComposeTestRule.pickSeat(wind: String, which: Int) {
-    val nodes = onAllNodes(hasContentDescription(wind), useUnmergedTree = true)
-    val count = nodes.fetchSemanticsNodes().size
-    nodes[count - 2 + which].performClick()
+fun ComposeTestRule.pickSeat(wind: String) {
+    onAllNodes(hasContentDescription(wind), useUnmergedTree = true).onLast().performClick()
 }
 
 /** Presses the last button with this text. A dialog is the last one in the tree, so this reaches its button, not the page's. */

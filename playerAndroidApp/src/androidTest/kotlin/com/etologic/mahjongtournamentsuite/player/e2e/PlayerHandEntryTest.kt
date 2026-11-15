@@ -79,8 +79,9 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun savedSelfDrawWinMovesTheTableToTheNextHand() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        c.waitForText("Winner")
-        c.pickSeat("South", which = 0)
+        c.waitForText("Who won?")
+        c.pickSeat("South")
+        c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
         c.field("Hand score").performTextInput("12")
         c.clickButton("Review")
@@ -93,9 +94,10 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun savedDiscardWinMovesTheTableToTheNextHand() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        c.waitForText("Who discarded")
-        c.pickSeat("South", which = 0)
-        c.pickSeat("East", which = 1)
+        c.waitForText("Who won?")
+        c.pickSeat("South")
+        c.waitForText("Who discarded?")
+        c.pickSeat("East")
         c.field("Hand score").performTextInput("10")
         c.clickButton("Review")
         c.waitForText("Check hand")
@@ -104,10 +106,14 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     }
 
     @Test
-    fun winDialogShowsWinnerLoserScoreAndChickenFields() {
+    fun winDialogAsksWinnerLoserAndScoreInSteps() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        listOf("Winner", "Self-draw", "Who discarded", "Hand score", "Chicken hand").forEach { c.waitForText(it) }
+        c.waitForText("Who won?")
+        c.pickSeat("South")
+        listOf("Who discarded?", "Self-draw").forEach { c.waitForText(it) }
+        c.pickSeat("East")
+        listOf("Hand score", "Chicken hand").forEach { c.waitForText(it) }
     }
 
     @Test
