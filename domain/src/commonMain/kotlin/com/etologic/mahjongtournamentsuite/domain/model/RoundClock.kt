@@ -49,6 +49,8 @@ data class RoundClock(
 data class RoundClocks(
     val clocks: List<RoundClock>,
     val serverNowMs: Long,
+    /** The manual controls of the rounds (the plan B of the Timer). */
+    val controls: List<RoundControl> = emptyList(),
 ) {
     fun of(roundId: Int): RoundClock? = clocks.firstOrNull { it.roundId == roundId }
 }
@@ -78,3 +80,39 @@ sealed interface RoundClockAction {
 
 /** The message of the [AppError.Conflict] of a reset of a round with saved hands. The Timer asks for a confirmation. */
 const val ROUND_HAS_HANDS = "ROUND_HAS_HANDS"
+
+/** A manual control of the plan B of the Timer. Automatic follows the clock of the round, as always. */
+enum class ControlMode { AUTO, OPEN, CLOSED }
+
+/**
+ * The manual control of a round. An admin opens or closes the hand entry and the seats of the players, whatever the
+ * clock says, for the whole round or for one table. It does not change the settings of the tournament.
+ */
+data class RoundControl(
+    val roundId: Int,
+    /** Hand entry at every table of the round. */
+    val hands: ControlMode = ControlMode.AUTO,
+    /** The seats of the tables, before their first hand. */
+    val seats: ControlMode = ControlMode.AUTO,
+    /** Hand entry of one table, by table id. It wins over [hands]. Only OPEN or CLOSED. */
+    val tables: Map<Int, ControlMode> = emptyMap(),
+) {
+    /** The hand entry of a table: its own control, else the control of the round. */
+    fun handsAt(tableId: Int): ControlMode = tables[tableId]?.takeIf { it != ControlMode.AUTO } ?: hands
+
+    /** True when something is manual, so the screens warn. */
+    val isManual: Boolean get() = hands != ControlMode.AUTO || seats != ControlMode.AUTO || tables.values.any { it != ControlMode.AUTO }
+}
+
+/** The control of a round in a list, or an automatic one. */
+fun List<RoundControl>.of(roundId: Int): RoundControl = firstOrNull { it.roundId == roundId } ?: RoundControl(roundId)
+
+/** What an admin changes in the control of a round. Null keeps the value. */
+data class RoundControlChange(
+    val hands: ControlMode? = null,
+    val seats: ControlMode? = null,
+    /** The hand entry of one table: its id and its mode. AUTO removes the control of the table. */
+    val table: Pair<Int, ControlMode>? = null,
+    /** Tables that the end of the time closed, to open again so their players go on. */
+    val reopenTables: List<Int> = emptyList(),
+)

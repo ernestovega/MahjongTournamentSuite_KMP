@@ -118,7 +118,7 @@ class PlayerTournamentPresenter(
                 ?: return@coroutineScope AppResult.Failure(AppError.Unexpected("Tournament not found"))
             is AppResult.Failure -> return@coroutineScope result
         }
-        val tournament = clocksRequest.await()?.let { listed.copy(roundClocks = it.value.clocks) } ?: listed
+        val tournament = clocksRequest.await()?.let { listed.copy(roundClocks = it.value.clocks, roundControls = it.value.controls) } ?: listed
         // Only a team tournament has teams, so this request waits for the tournament.
         val teamsRequest = async {
             if (tournament.isTeams) {

@@ -9,8 +9,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -303,5 +305,19 @@ class TimerScreenUiTest {
         // While it runs the round stays fixed.
         onNodeWithContentDescription("Increase round").assertDoesNotExist()
         assertEquals(emptyList<Pair<Int, RoundClockAction>>(), server.clockActions.toList())
+    }
+
+    @Test
+    fun aRoundInManualModeWarnsOnTheTimer() = runComposeUiTest {
+        show(server().apply { roundControls = listOf(RoundControl(roundId = 1, hands = ControlMode.OPEN)) })
+
+        onNodeWithText("Manual round control is on", substring = true).assertExists()
+    }
+
+    @Test
+    fun anAutomaticRoundHasNoManualWarning() = runComposeUiTest {
+        show(server().apply { roundControls = listOf(RoundControl(roundId = 2, seats = ControlMode.CLOSED)) })
+
+        onNodeWithText("Manual round control is on", substring = true).assertDoesNotExist()
     }
 }

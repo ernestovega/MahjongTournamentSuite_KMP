@@ -1,0 +1,164 @@
+package com.etologic.mahjongtournamentsuite.presentation.screen
+
+import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.runComposeUiTest
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+
+/**
+ * Round control, the plan B of the Timer: an admin runs the clock of a round without the Timer and decides by hand
+ * what the players can do, for the round or for one table.
+ */
+@OptIn(ExperimentalTestApi::class)
+class RoundControlScreenUiTest {
+    private val now = 1_000_000_000L
+    private val min = 60_000L
+
+    private fun server(vararg clocks: RoundClock) = FakeTournamentRepository().apply {
+        tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 3, matchDurationMinutes = 120))
+        roundClocks = clocks.toList()
+        serverNowMs = now
+        seed(syncTable(tableId = 1))
+        seed(syncTable(tableId = 2, isCompleted = true))
+    }
+
+    private fun ComposeUiTest.show(server: FakeTournamentRepository, round: Int = 1): RoundTimerController {
+        val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                RoundControlContent(
+                    controller = controller,
+                    loadTables = { roundId, mode -> server.listTournamentTables("t1", roundId, mode) },
+                    deviceNowMs = { now },
+                )
+            }
+        }
+        settle()
+        return controller
+    }
+
+    private fun ComposeUiTest.settle() {
+        mainClock.advanceTimeBy(600)
+        waitForIdle()
+    }
+
+    @Test
+    fun aRoundThatHasNotStartedOffersStartAndShowsItsTables() = runComposeUiTest {
+        show(server())
+
+        onNodeWithText("Not started").assertExists()
+        onNodeWithText("2:00:00").assertExists()
+        onNodeWithText("Start").assertExists()
+        onNodeWithText("Table 1").assertExists()
+        onNodeWithText("Table 2").assertExists()
+        onNodeWithTag("hands_auto").assertIsSelected()
+        onNodeWithTag("seats_auto").assertIsSelected()
+        onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun startRunsTheClockOfTheRoundWithoutTheTimer() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithText("Start").performClick()
+        settle()
+
+        assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Start()), server.clockActions.toList())
+        onNodeWithText("Running").assertExists()
+        onNodeWithText("Pause timer").assertExists()
+    }
+
+    @Test
+    fun stopAsksFirstAndThenEndsTheRound() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithText("Stop the round").performClick()
+        settle()
+        onNodeWithText("Stop the round?").assertExists()
+        onNodeWithText("Stop").performClick()
+        settle()
+
+        assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Stop), server.clockActions.toList())
+        onNodeWithText("Time is over").assertExists()
+    }
+
+    @Test
+    fun closingTheHandEntryOfTheRoundWarnsThatTheRoundIsManual() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithTag("hands_closed").performClick()
+        settle()
+
+        assertEquals(listOf(1 to RoundControlChange(hands = ControlMode.CLOSED)), server.controlChanges.toList())
+        onNodeWithTag("hands_closed").assertIsSelected()
+        onNodeWithText("This round is in manual mode", substring = true).assertExists()
+
+        onNodeWithTag("hands_auto").performClick()
+        settle()
+        onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun aTableTakesItsOwnMode() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithTag("table_1_open").performScrollTo().performClick()
+        settle()
+
+        assertEquals(listOf(1 to RoundControlChange(table = 1 to ControlMode.OPEN)), server.controlChanges.toList())
+        onNodeWithTag("table_1_open").assertIsSelected()
+        onNodeWithTag("table_2_auto").assertIsSelected()
+    }
+
+    @Test
+    fun reopenOpensACompletedTableAndItsHandEntry() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 130 * min))
+        show(server)
+
+        onNodeWithTag("reopen_1").assertDoesNotExist()
+        onNodeWithTag("reopen_2").performScrollTo().performClick()
+        settle()
+
+        assertEquals(
+            listOf(1 to RoundControlChange(table = 2 to ControlMode.OPEN, reopenTables = listOf(2))),
+            server.controlChanges.toList(),
+        )
+        assertFalse(server.tables.getValue(TableKey(1, 2)).first.isCompleted)
+        onNodeWithTag("reopen_2").assertDoesNotExist()
+        onNodeWithTag("table_2_open").assertIsSelected()
+    }
+
+    @Test
+    fun theManualModeOfARoundDoesNotReachTheNextRound() = runComposeUiTest {
+        val server = server().apply { roundControls = listOf(RoundControl(roundId = 1, seats = ControlMode.OPEN)) }
+        show(server)
+
+        onNodeWithText("This round is in manual mode", substring = true).assertExists()
+        onNodeWithContentDescription("Increase round").performClick()
+        settle()
+
+        onNodeWithText("Round 2").assertExists()
+        onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
+        onNodeWithTag("seats_auto").assertIsSelected()
+    }
+}

@@ -8,6 +8,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.of
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -34,6 +37,8 @@ data class RoundTimerState(
     val roundId: Int = 1,
     /** The clocks of the rounds, as the server sent them, or as the Timer applied an action that waits for the network. */
     val clocks: List<RoundClock> = emptyList(),
+    /** The manual controls of the rounds (the plan B of the Timer), as the server sent them. */
+    val controls: List<RoundControl> = emptyList(),
     /** The clock of the server minus the clock of this device. */
     val serverOffsetMs: Long = 0,
     /** An action that could not reach the server yet. The Timer shows it at once and sends it again. */
@@ -56,6 +61,9 @@ data class RoundTimerState(
     /** The extra time to finish the hand after the match time, or zero when the match stops at the end. */
     val extraMs: Long get() = tournament?.takeIf { it.matchEndMode == MatchEndMode.FINISH_HAND }?.let { it.matchExtraMinutes * 60_000L } ?: 0L
     val clock: RoundClock? get() = clocks.firstOrNull { it.roundId == roundId }
+
+    /** The manual control of the selected round. Automatic when an admin did not change it. */
+    val control: RoundControl get() = controls.of(roundId)
     val isStarted: Boolean get() = clock != null
     val isRunning: Boolean get() = clock?.isPaused == false
     val isOffline: Boolean get() = pending != null
@@ -192,6 +200,23 @@ class RoundTimerController(
         if (tournamentId == null) reset() else mutableState.update { it.copy(confirmReset = true) }
     }
 
+    /**
+     * Changes the manual control of the selected round (the plan B of the Timer). Admins only: the server refuses
+     * anyone else. The answer brings the clocks and the controls, so the screen shows the change at once.
+     */
+    suspend fun changeControl(change: RoundControlChange): AppResult<Unit> {
+        val tournamentId = tournamentId ?: return AppResult.Failure(AppError.Unexpected("A Timer without a tournament has no control"))
+        followRunningRound = false
+        val sentAt = deviceNowMs()
+        return when (val result = repository.updateRoundControl(tournamentId, mutableState.value.roundId, change)) {
+            is AppResult.Success -> {
+                apply(result.value, sentAt)
+                AppResult.Success(Unit)
+            }
+            is AppResult.Failure -> result
+        }
+    }
+
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
     private suspend fun perform(action: RoundClockAction) {
@@ -266,6 +291,7 @@ class RoundTimerController(
             val running = if (follow) clocks.clocks.runningRound(state.durationMinutes, clocks.serverNowMs) else null
             state.copy(
                 clocks = clocks.clocks,
+                controls = clocks.controls,
                 serverOffsetMs = offset,
                 loadFailed = false,
                 roundId = running?.coerceIn(1, state.numRounds.coerceAtLeast(1)) ?: state.roundId,

@@ -205,7 +205,7 @@ internal class FakeTournamentRepository : TournamentRepository {
     override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> {
         calls += "round clocks"
         clockError?.let { return AppResult.Failure(it) }
-        return AppResult.Success(RoundClocks(roundClocks, serverNowMs))
+        return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 
     override suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> {
@@ -229,7 +229,26 @@ internal class FakeTournamentRepository : TournamentRepository {
             RoundClockAction.Stop -> current?.stoppedAt(serverNowMs, duration, extraMs = 0)
         }
         roundClocks = (roundClocks.filter { it.roundId != roundId } + listOfNotNull(updated)).sortedBy { it.roundId }
-        return AppResult.Success(RoundClocks(roundClocks, serverNowMs))
+        return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
+    }
+
+    var roundControls: List<RoundControl> = emptyList()
+    val controlChanges = mutableListOf<Pair<Int, RoundControlChange>>()
+
+    override suspend fun updateRoundControl(tournamentId: String, roundId: Int, change: RoundControlChange): AppResult<RoundClocks> {
+        clockError?.let { return AppResult.Failure(it) }
+        controlChanges += roundId to change
+        val current = roundControls.of(roundId)
+        val tables = change.table?.let { (tableId, mode) ->
+            if (mode == ControlMode.AUTO) current.tables - tableId else current.tables + (tableId to mode)
+        } ?: current.tables
+        val updated = current.copy(hands = change.hands ?: current.hands, seats = change.seats ?: current.seats, tables = tables)
+        roundControls = (roundControls.filter { it.roundId != roundId } + updated).filter { it.isManual }.sortedBy { it.roundId }
+        change.reopenTables.forEach { tableId ->
+            val key = TableKey(roundId, tableId)
+            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = false) to hands }
+        }
+        return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> {

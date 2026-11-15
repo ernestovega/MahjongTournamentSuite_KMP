@@ -95,7 +95,7 @@ fun Tournament.reminderMoment(roundId: Int, now: LocalDateTime): RoundMoment? {
     val nowMs = epochMsAt(now)
     return when (matchPhase(roundId, now)) {
         MatchPhase.PLAYING, MatchPhase.EXTRA_TIME -> clockOf(roundId)?.let { RoundMoment.StartedAgo(it.elapsedMs(nowMs)) }
-        MatchPhase.OVER -> null
+        MatchPhase.OVER, MatchPhase.CLOSED -> null
         MatchPhase.NOT_STARTED -> {
             val planned = roundStartTime(roundId) ?: return null
             val untilStart = epochMsAt(planned) - nowMs
@@ -140,8 +140,7 @@ class MyTableReminderPresenter(private val tournamentRepository: TournamentRepos
             // The listed tournament can be a minute old. The clocks come fresh, as on the tournament screen.
             val answer = (tournamentRepository.getRoundClocks(listed.id) as? AppResult.Success)?.value
             answer?.let { ServerTime.learn(it.serverNowMs) }
-            val clocks = answer?.clocks ?: listed.roundClocks
-            val tournament = listed.copy(roundClocks = clocks)
+            val tournament = answer?.let { listed.copy(roundClocks = it.clocks, roundControls = it.controls) } ?: listed
             val roundId = tournament.reminderRound(tournament.currentVenueDateTime()) ?: continue
             val tables = (tournamentRepository.listTournamentTables(tournament.id, roundId) as? AppResult.Success)?.value ?: continue
             val table = tables.firstOrNull { it.roundId == roundId && slot.playerId in it.playerIds && !it.isCompleted } ?: continue

@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
@@ -53,6 +54,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionS
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.DesignSystemScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
@@ -231,6 +233,10 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<ErrorsRoute> { ErrorsScreen(navController) }
                     screen<ActivityRoute> { backStackEntry ->
                         ActivityScreen(navController, initialTournamentId = backStackEntry.toRoute<ActivityRoute>().tournamentId)
+                    }
+                    screen<RoundControlRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<RoundControlRoute>()
+                        RoundControlScreen(navController, tournamentId = args.tournamentId, initialRound = args.roundId)
                     }
                     screen<DesignSystemRoute> { DesignSystemScreen(navController) }
                     screen<StatisticsRoute> { backStackEntry ->

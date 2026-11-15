@@ -27,6 +27,8 @@ data class Tournament(
     val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
     /** The clocks of the rounds that started. */
     val roundClocks: List<RoundClock> = emptyList(),
+    /** The manual controls of the rounds (the plan B of the Timer). A round without one follows its clock. */
+    val roundControls: List<RoundControl> = emptyList(),
     val agendaItems: List<TournamentAgendaItem> = emptyList(),
     /** Minutes that a match lasts, from the Play of the Timer. */
     val matchDurationMinutes: Int = DEFAULT_MATCH_DURATION_MINUTES,

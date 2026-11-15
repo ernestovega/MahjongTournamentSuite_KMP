@@ -51,8 +51,9 @@ import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../../services/tourn
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 import { normalizeVenue, venueRequiredProblems } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
-import { getRoundClocks, updateRoundClock } from "../../services/roundClockService";
+import { getRoundClocks, updateRoundClock, updateRoundControl } from "../../services/roundClockService";
 import { parseRoundClockAction } from "../../services/roundClock";
+import { parseRoundControlChange } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
@@ -911,6 +912,28 @@ export function tournamentsRouter(): Router {
           roundId,
           action: parseRoundClockAction(req.body),
           force: req.body?.force === true,
+          actor: actorFromToken(res.locals.auth),
+        });
+        res.status(200).json(answer);
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // The plan B of the Timer: an admin opens or closes the hand entry and the seats by hand, and opens closed tables.
+  router.post(
+    "/:tournamentId/rounds/:roundId/control",
+    requireAuth,
+    requireAdmin,
+    async (req, res, next) => {
+      try {
+        const roundId = Number(pathParam(req, "roundId"));
+        if (!Number.isInteger(roundId) || roundId <= 0) throw badRequest("roundId must be a positive integer");
+        const answer = await updateRoundControl({
+          tournamentId: pathParam(req, "tournamentId"),
+          roundId,
+          change: parseRoundControlChange(req.body),
           actor: actorFromToken(res.locals.auth),
         });
         res.status(200).json(answer);

@@ -25,6 +25,7 @@ data class TournamentDto(
     val eventEndDate: String? = null,
     val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
     val roundClocks: List<RoundClockDto> = emptyList(),
+    val roundControls: List<RoundControlDto> = emptyList(),
     val agendaItems: List<TournamentAgendaItemDto> = emptyList(),
     val matchDurationMinutes: Int = 120,
     /** "STOP" or "FINISH_HAND". */
@@ -481,6 +482,30 @@ data class RoundClockDto(
 data class RoundClocksResponseDto(
     val roundClocks: List<RoundClockDto> = emptyList(),
     val serverNowMs: Long,
+    val roundControls: List<RoundControlDto> = emptyList(),
+)
+
+/** A manual control of a round. Modes are "auto", "open" or "closed". */
+@Serializable
+data class RoundControlDto(
+    val roundId: Int,
+    val hands: String = "auto",
+    val seats: String = "auto",
+    val tables: List<TableControlDto> = emptyList(),
+)
+
+@Serializable
+data class TableControlDto(
+    val tableId: Int,
+    val hands: String,
+)
+
+@Serializable
+data class RoundControlRequestDto(
+    val hands: String? = null,
+    val seats: String? = null,
+    val table: TableControlDto? = null,
+    val reopenTables: List<Int>? = null,
 )
 
 @Serializable

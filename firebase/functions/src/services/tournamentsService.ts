@@ -17,6 +17,7 @@ import {
 import { closeRoundsEndedByChange } from "./matchTimeCloseService";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { roundClockViews, type RoundClockView } from "./roundClock";
+import { roundControlViews, type RoundControlView } from "./roundControl";
 import { defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "./tableManagerService";
 import {
   normalizeAgendaItems,
@@ -59,6 +60,8 @@ export type Tournament = {
   roundSchedules: TournamentRoundSchedule[];
   /** The clocks of the rounds that started. The Play of the Timer starts a round. */
   roundClocks: RoundClockView[];
+  /** The manual controls of the rounds (the plan B of the Timer). A round without one follows its clock. */
+  roundControls: RoundControlView[];
   agendaItems: TournamentAgendaItem[];
   /** Minutes that a match lasts. The end of a table is the start of its round plus this time. */
   matchDurationMinutes: number;
@@ -147,6 +150,7 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     eventEndDate,
     roundSchedules: readStoredRoundSchedules(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
     roundClocks: roundClockViews({ numRounds, roundClocks: d.get("roundClocks") }),
+    roundControls: roundControlViews({ numRounds, roundControls: d.get("roundControls") }),
     agendaItems: readStoredAgendaItems(d.get("agendaItems")),
     matchDurationMinutes: readStoredMatchDuration(d.get("matchDurationMinutes")),
     matchEndMode: readStoredMatchEndMode(d.get("matchEndMode")),

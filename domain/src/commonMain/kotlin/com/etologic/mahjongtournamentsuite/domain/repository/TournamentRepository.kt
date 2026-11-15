@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
@@ -218,6 +219,9 @@ interface TournamentRepository {
 
     /** Play, Pause, Resume, Reset or "Set time" of the Timer. A reset of a round with hands fails with [AppError.Conflict]. */
     suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> = AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
+
+    /** The plan B of the Timer: an admin opens or closes the players' hand entry or seats, or opens closed tables. */
+    suspend fun updateRoundControl(tournamentId: String, roundId: Int, change: RoundControlChange): AppResult<RoundClocks> = AppResult.Failure(AppError.Unexpected("The round controls are not available"))
 
     /** The tournaments where the signed-in account plays, with its slot and team. Empty without an account. */
     suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = AppResult.Success(emptyList())

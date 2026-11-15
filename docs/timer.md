@@ -73,6 +73,25 @@ The Play button gets initial keyboard focus. The controls support Tab, Shift+Tab
 
 While the clock runs, the screen hides all controls except Pause. The other controls return after a pause.
 
+## Round control (plan B, admins only)
+
+The "Round control" button of the tournament screen (admins only) opens a screen that works without the Timer. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
+
+The control lives in the tournament document, apart from the settings:
+
+```
+roundControls: { "<roundId>": { hands?: "open"|"closed", seats?: "open"|"closed", tables?: { "<tableId>": "open"|"closed" } } }
+```
+
+A missing value is automatic: the clock decides, as above. `POST /tournaments/{id}/rounds/{roundId}/control` (admins only) takes `{"hands":"auto|open|closed"}`, `{"seats":...}`, `{"table":{"tableId":T,"hands":...}}` and `{"reopenTables":[T,...]}` in any mix, and answers like the clocks route (it includes `roundControls`). "auto" removes the value.
+
+- **Hand entry.** A table uses its own mode, else the mode of the round. "open" lets the players add hands whatever the clock says (before the gong, during a pause, after the time); "closed" refuses them (409, and the player app says that an organizer closed the hand entry). The close at the end of the time skips a table whose hand entry is open.
+- **Seats.** "open" lets the players set the seats at any time before the first hand; "closed" refuses them.
+- **Reopen.** A completed table becomes open again (`isCompleted:false`, the close mark stays, so the end of the time does not close it twice). The screen sends it together with the open hand entry of that table, or the clock would keep it shut. It works in a completed tournament too.
+- The mode is per round and stays until an admin sets it back to automatic. The next round stays automatic. The round control screen and the Timer warn while a round is manual.
+- Each change bumps the `rounds` version and the `tournaments` revision, and writes a `round.control` entry in the activity log.
+- The player app works with the time of the server (`ServerTime`), learned from each answer of the clocks, so a wrong device clock does not change what it shows.
+
 ## Display behavior
 
 The timer uses the `hours:minutes:seconds` format. The time text scales to use the available display area. A round that has not started shows the whole match.
@@ -105,7 +124,8 @@ Closing a Timer does not stop the round: the clock lives on the server.
 
 ## Main source files
 
-- `firebase/functions/src/services/roundClock.ts`, `roundClockService.ts`, `matchTime.ts`, `matchTimeTaskService.ts`
+- `firebase/functions/src/services/roundClock.ts`, `roundClockService.ts`, `roundControl.ts`, `matchTime.ts`, `matchTimeTaskService.ts`
+- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundControlScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundTimerController.kt`
 - `playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTime.kt`, `SeatsAssignment.kt`, `HandEntryPanel.kt`

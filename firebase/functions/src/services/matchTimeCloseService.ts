@@ -1,5 +1,6 @@
 import { db } from "../firebase";
 import { matchPhaseAt, matchTimeOfTournament } from "./matchTime";
+import { manualHands } from "./roundControl";
 import { tableVersionKey } from "./dataVersionsService";
 import { HANDS_PER_TABLE, saveTableStateInTransaction, type TableState } from "./tableManagerService";
 
@@ -65,7 +66,10 @@ export async function closeRoundTables(tournamentId: string, roundId: number, no
     .where("isCompleted", "==", false)
     .where("hasProgress", "==", true)
     .get();
-  const candidates = started.docs.filter((doc) => doc.get("matchTimeChecked") !== true);
+  // A table whose hand entry an admin opened by hand stays open: its players go on after the time.
+  const data = tournament.data() ?? {};
+  const candidates = started.docs.filter((doc) =>
+    doc.get("matchTimeChecked") !== true && manualHands(data, roundId, Number(doc.get("tableId"))) !== "open");
   if (candidates.length === 0) return result;
   result.tournaments = 1;
   for (const doc of candidates) {

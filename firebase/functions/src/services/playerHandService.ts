@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
 import { handSeatScores, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
 import { seatingIsOpen, tournamentMatchPhase } from "./matchTime";
+import { manualHands, manualSeats } from "./roundControl";
 import { getPlayerRegistration } from "./playerAccountsService";
 import {
   HANDS_PER_TABLE,
@@ -146,6 +147,10 @@ async function loadFor(
   const seats = seatIdsOf(table);
   if (seats == null) throw conflict("The seats of this table are not assigned yet");
   if (!seats.includes(String(registration.playerId))) throw forbidden("You do not play at this table");
+  // An admin can open or close the hand entry by hand (the plan B of the Timer). It wins over the clock.
+  const manual = manualHands(tournament, key.roundId, key.tableId);
+  if (manual === "closed") throw conflict("An organizer closed the hand entry of this table");
+  if (manual === "open") return { registration, table, seats, hands, phase: "PLAYING" };
   // Players write only while the match is on: from the Play of the Timer to the end of the match time.
   // Before or after it, an organizer enters the data.
   const phase = tournamentMatchPhase(tournament, key.roundId, Date.now());
@@ -367,7 +372,10 @@ export async function assignSeats(
       if (hands.some((hand) => hand.isDone || penalized(hand))) {
         throw conflict("The seats cannot change after the first hand or penalty");
       }
-      if (!seatingIsOpen(tournament, params.roundId, Date.now())) {
+      // An admin can open or close the seats by hand (the plan B of the Timer). It wins over the planned start.
+      const manual = manualSeats(tournament, params.roundId);
+      if (manual === "closed") throw conflict("An organizer closed the seats of this round");
+      if (manual == null && !seatingIsOpen(tournament, params.roundId, Date.now())) {
         throw conflict("The seats open a few minutes before the start of the round");
       }
       const version = Number(table.version ?? 0);

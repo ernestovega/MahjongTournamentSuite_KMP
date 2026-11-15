@@ -23,6 +23,7 @@ import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import mahjongtournamentsuite.adminapp.generated.resources.timer_late_start
+import mahjongtournamentsuite.adminapp.generated.resources.timer_manual_warning
 import mahjongtournamentsuite.adminapp.generated.resources.timer_load_failed
 import mahjongtournamentsuite.adminapp.generated.resources.timer_tournament_completed
 import mahjongtournamentsuite.adminapp.generated.resources.timer_offline
@@ -415,6 +416,15 @@ internal fun TimerContent(
                     textAlign = TextAlign.Center,
                 )
             }
+            // The plan B of the Timer: an admin decides by hand what the players can do in this round.
+            if (!state.independent && state.control.isManual) {
+                Text(
+                    text = stringResource(Res.string.timer_manual_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 val startPreviousWhenRunning = if (canStop) stopFocusRequester else startFocusRequester
@@ -568,7 +578,7 @@ private enum class TimerDialog { SetTime, StartedAgo, ConfirmStop }
 
 /** Asks for a whole number of minutes. Enter, Numpad Enter and the Done action apply it. */
 @Composable
-private fun MinutesDialog(
+internal fun MinutesDialog(
     name: String,
     title: String,
     message: String,
@@ -718,7 +728,7 @@ private fun findLargestFittingFontSize(
     return low.sp
 }
 
-private fun formatHms(totalSeconds: Long): String {
+internal fun formatHms(totalSeconds: Long): String {
     val seconds = totalSeconds.coerceAtLeast(0L)
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60

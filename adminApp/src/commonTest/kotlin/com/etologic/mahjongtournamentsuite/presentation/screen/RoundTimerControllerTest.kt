@@ -1,10 +1,14 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
@@ -310,5 +314,55 @@ class RoundTimerControllerTest {
         controller.reset(force = true)
 
         assertEquals(listOf("started" to "tournament", "reset" to "tournament"), telemetry.clockWords())
+    }
+
+    @Test
+    fun theControlsOfTheServerArriveWithTheClocks() = runTest {
+        val (repository, controller) = setup()
+        repository.roundControls = listOf(RoundControl(roundId = 1, hands = ControlMode.CLOSED))
+        controller.refresh()
+
+        assertEquals(ControlMode.CLOSED, controller.state.value.control.hands)
+        assertTrue(controller.state.value.control.isManual)
+        controller.selectRound(2)
+        assertFalse(controller.state.value.control.isManual)
+    }
+
+    @Test
+    fun changeControlChangesTheSelectedRoundOnly() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        controller.selectRound(2)
+
+        val result = controller.changeControl(RoundControlChange(seats = ControlMode.OPEN, table = 3 to ControlMode.CLOSED))
+
+        assertTrue(result is AppResult.Success)
+        assertEquals(listOf(2 to RoundControlChange(seats = ControlMode.OPEN, table = 3 to ControlMode.CLOSED)), repository.controlChanges)
+        val control = controller.state.value.control
+        assertEquals(ControlMode.OPEN, control.seats)
+        assertEquals(ControlMode.CLOSED, control.handsAt(3))
+        assertEquals(ControlMode.AUTO, control.handsAt(4))
+        // Back to automatic removes the control.
+        controller.changeControl(RoundControlChange(seats = ControlMode.AUTO, table = 3 to ControlMode.AUTO))
+        assertFalse(controller.state.value.control.isManual)
+    }
+
+    @Test
+    fun aRefusedControlChangesNothing() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        repository.clockError = AppError.Unexpected("Admins only")
+
+        val result = controller.changeControl(RoundControlChange(hands = ControlMode.OPEN))
+
+        assertTrue(result is AppResult.Failure)
+        assertFalse(controller.state.value.control.isManual)
+    }
+
+    @Test
+    fun aTimerWithoutTournamentHasNoControl() = runTest {
+        val controller = RoundTimerController(FakeTournamentRepository(), null, 1) { deviceNow }
+
+        assertTrue(controller.changeControl(RoundControlChange(hands = ControlMode.OPEN)) is AppResult.Failure)
     }
 }

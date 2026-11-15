@@ -37,6 +37,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
@@ -904,6 +905,22 @@ class DefaultTournamentRepository(
             val roundHasHands = (throwable as? BackendHttpException)
                 ?.takeIf { it.status == HttpStatusCode.Conflict && it.responseBody.contains(ROUND_HAS_HANDS) }
             AppResult.Failure(if (roundHasHands != null) AppError.Conflict(ROUND_HAS_HANDS) else throwable.toAppError())
+        },
+    )
+
+    override suspend fun updateRoundControl(
+        tournamentId: String,
+        roundId: Int,
+        change: RoundControlChange,
+    ): AppResult<RoundClocks> = runCatching {
+        withFreshIdToken { token -> backendApi.updateRoundControl(token, tournamentId, roundId, change.toDto()).toDomain() }
+            // The tournament list carries the controls too.
+            .also { cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the round control failed." }
+            AppResult.Failure(throwable.toAppError())
         },
     )
 

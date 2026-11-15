@@ -1,10 +1,12 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.of
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -24,6 +26,9 @@ enum class MatchPhase {
 
     /** The time is over. The players cannot change the table. Only the organizers can. */
     OVER,
+
+    /** An admin closed the hand entry by hand (the plan B of the Timer), whatever the clock says. */
+    CLOSED,
 }
 
 /** Minutes before the planned start of a round in which the players can set the seats of their table, as on the server. */
@@ -60,8 +65,8 @@ fun Tournament.roundStartTime(roundId: Int): LocalDateTime? {
 
 fun Tournament.clockOf(roundId: Int): RoundClock? = roundClocks.firstOrNull { it.roundId == roundId }
 
-/** The phase of the matches of a round at [now], a local time of the venue. A round without a clock has not started. */
-fun Tournament.matchPhase(roundId: Int, now: LocalDateTime): MatchPhase {
+/** The phase of the clock of a round at [now], a local time of the venue. A round without a clock has not started. */
+fun Tournament.clockPhase(roundId: Int, now: LocalDateTime): MatchPhase {
     val clock = clockOf(roundId) ?: return MatchPhase.NOT_STARTED
     val nowMs = epochMsAt(now)
     val elapsed = clock.elapsedMs(nowMs)
@@ -80,7 +85,12 @@ fun Tournament.remainingMs(roundId: Int, now: LocalDateTime): Long? =
  * planned start, or as soon as the round started, until its time is over. The first hand of a table closes its seats.
  */
 fun Tournament.seatingIsOpen(roundId: Int, now: LocalDateTime): Boolean {
-    val phase = matchPhase(roundId, now)
+    when (roundControls.of(roundId).seats) {
+        ControlMode.OPEN -> return true
+        ControlMode.CLOSED -> return false
+        ControlMode.AUTO -> Unit
+    }
+    val phase = clockPhase(roundId, now)
     if (phase == MatchPhase.OVER) return false
     if (phase != MatchPhase.NOT_STARTED) return true
     val planned = roundStartTime(roundId) ?: return true
@@ -95,6 +105,20 @@ fun Tournament.closeExpiredTables(
     tables: List<Pair<TableState, List<TableHand>>>,
     now: LocalDateTime,
 ): List<Pair<TableState, List<TableHand>>> = tables.map { (table, hands) ->
-    val expired = !table.isCompleted && hands.any { it.isDone } && matchPhase(table.roundId, now) == MatchPhase.OVER
+    val expired = !table.isCompleted && hands.any { it.isDone } && matchPhase(table.roundId, now, table.tableId) == MatchPhase.OVER
     if (expired) table.copy(isCompleted = true) to hands else table to hands
+}
+
+/**
+ * The phase of the matches of a round at [now], a local time of the venue, for the hand entry of the players.
+ * A manual control of an admin (the plan B of the Timer) wins over the clock: open counts as playing, closed is
+ * [MatchPhase.CLOSED]. With [tableId], the control of that table wins over the control of the round.
+ */
+fun Tournament.matchPhase(roundId: Int, now: LocalDateTime, tableId: Int? = null): MatchPhase {
+    val control = roundControls.of(roundId)
+    return when (if (tableId == null) control.hands else control.handsAt(tableId)) {
+        ControlMode.OPEN -> MatchPhase.PLAYING
+        ControlMode.CLOSED -> MatchPhase.CLOSED
+        ControlMode.AUTO -> clockPhase(roundId, now)
+    }
 }

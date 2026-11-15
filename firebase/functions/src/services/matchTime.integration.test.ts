@@ -7,7 +7,8 @@ import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { readChanges, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
 import { startedClock } from "../testing/schedule";
 import { closeRoundTables } from "./matchTimeCloseService";
-import { parseHandInput, recordHand } from "./playerHandService";
+import { assignSeats, parseHandInput, recordHand } from "./playerHandService";
+import { updateRoundControl } from "./roundClockService";
 
 type Mode = "STOP" | "FINISH_HAND";
 
@@ -141,5 +142,83 @@ describe("match time", () => {
 
     assert.equal((await readTable(notStarted.tournamentId, 1, 1)).isCompleted, false);
     assert.equal((await readTable(paused.tournamentId, 1, 1)).isCompleted, false);
+  });
+
+  describe("manual control (plan B of the Timer)", () => {
+    const control = (tournamentId: string, change: Parameters<typeof updateRoundControl>[0]["change"]) =>
+      updateRoundControl({ tournamentId, roundId: 1, change, actor: null });
+    const refused = (error: unknown) => error instanceof HttpError && error.status === 409;
+
+    it("an open round takes hands before the Play and after the end of the time", async () => {
+      const before = await seedTimedTable(30, "STOP");
+      await db.doc(`tournaments/${before.tournamentId}`).update({ roundClocks: {} });
+      const after = await seedTimedTable(200, "STOP");
+
+      await control(before.tournamentId, { hands: "open" });
+      await control(after.tournamentId, { hands: "open" });
+
+      await recordHand({ tournamentId: before.tournamentId, roundId: 1, tableId: 1, uid: before.uid, input: win(), expectedVersion: 0 });
+      await recordHand({ tournamentId: after.tournamentId, roundId: 1, tableId: 1, uid: after.uid, input: win(), expectedVersion: 0 });
+      assert.equal((await readTable(after.tournamentId, 1, 1)).isCompleted, false);
+    });
+
+    it("a closed round refuses hands while the clock runs, and auto gives the clock back", async () => {
+      const { tournamentId, uid } = await seedTimedTable(30, "STOP");
+      await control(tournamentId, { hands: "closed" });
+
+      await assert.rejects(recordHand({ tournamentId, roundId: 1, tableId: 1, uid, input: win(), expectedVersion: 0 }), refused);
+
+      await control(tournamentId, { hands: "auto" });
+      await recordHand({ tournamentId, roundId: 1, tableId: 1, uid, input: win(), expectedVersion: 0 });
+    });
+
+    it("a table control wins over the round", async () => {
+      const { tournamentId, uid } = await seedTimedTable(200, "STOP");
+      await control(tournamentId, { hands: "closed", table: { tableId: 1, hands: "open" } });
+
+      await recordHand({ tournamentId, roundId: 1, tableId: 1, uid, input: win(), expectedVersion: 0 });
+    });
+
+    it("an open table in extra time is not forced to its last hand", async () => {
+      const { tournamentId, uid } = await seedTimedTable(125, "FINISH_HAND");
+      await control(tournamentId, { table: { tableId: 1, hands: "open" } });
+
+      await recordHand({ tournamentId, roundId: 1, tableId: 1, uid, input: win(), expectedVersion: 0 });
+
+      assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
+    });
+
+    it("the end of the time does not close an open table, and a closed table opens again", async () => {
+      const open = await seedTimedTable(200, "STOP", 3);
+      await control(open.tournamentId, { hands: "open" });
+      await closeRoundTables(open.tournamentId, 1);
+      assert.equal((await readTable(open.tournamentId, 1, 1)).isCompleted, false);
+
+      const closed = await seedTimedTable(200, "STOP", 3);
+      await closeRoundTables(closed.tournamentId, 1);
+      assert.equal((await readTable(closed.tournamentId, 1, 1)).isCompleted, true);
+      const answer = await control(closed.tournamentId, { reopenTables: [1], table: { tableId: 1, hands: "open" } });
+      assert.equal(answer.reopened, 1);
+      assert.equal((await readTable(closed.tournamentId, 1, 1)).isCompleted, false);
+      assert.deepEqual(answer.roundControls, [{ roundId: 1, hands: "auto", seats: "auto", tables: [{ tableId: 1, hands: "open" }] }]);
+      await recordHand({ tournamentId: closed.tournamentId, roundId: 1, tableId: 1, uid: closed.uid, input: win(), expectedVersion: 2 });
+    });
+
+    it("open seats ignore the planned start, closed seats refuse them", async () => {
+      const early = await seedTimedTable(30, "STOP");
+      const later = new Date(Date.now() + 5 * 60 * 60_000).toISOString();
+      await db.doc(`tournaments/${early.tournamentId}`).update({
+        roundClocks: {},
+        roundSchedules: [{ roundId: 1, date: later.slice(0, 10), startTime: later.slice(11, 16) }],
+      });
+      const seats: [string, string, string, string] = ["2", "1", "3", "4"];
+      await assert.rejects(assignSeats({ tournamentId: early.tournamentId, roundId: 1, tableId: 1, uid: early.uid, seats, expectedVersion: 0 }), refused);
+      await control(early.tournamentId, { seats: "open" });
+      await assignSeats({ tournamentId: early.tournamentId, roundId: 1, tableId: 1, uid: early.uid, seats, expectedVersion: 0 });
+
+      const playing = await seedTimedTable(30, "STOP");
+      await control(playing.tournamentId, { seats: "closed" });
+      await assert.rejects(assignSeats({ tournamentId: playing.tournamentId, roundId: 1, tableId: 1, uid: playing.uid, seats, expectedVersion: 0 }), refused);
+    });
   });
 });

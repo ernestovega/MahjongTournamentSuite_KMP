@@ -130,6 +130,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_self_draw
 import mahjongtournamentsuite.playerapp.generated.resources.entry_share
 import mahjongtournamentsuite.playerapp.generated.resources.entry_shared_multiple
+import mahjongtournamentsuite.playerapp.generated.resources.entry_closed_by_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.entry_time_over
 import mahjongtournamentsuite.playerapp.generated.resources.entry_totals_only
 import mahjongtournamentsuite.playerapp.generated.resources.entry_updating_table
@@ -185,7 +186,7 @@ fun HandEntryPanel(
     if (mine == null || mine !in table.table.playerIds) return
     if (table.isComplete) {
         // The app closes a table with hands left when its time is over. The player learns why the buttons are gone.
-        val closedByTime = table.doneHands < table.hands.size && view.matchPhaseOf(table.roundId, now) == MatchPhase.OVER
+        val closedByTime = table.doneHands < table.hands.size && view.matchPhaseOf(table.roundId, now, table.table.tableId) == MatchPhase.OVER
         if (closedByTime) Text(stringResource(Res.string.entry_time_over), color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
@@ -201,7 +202,7 @@ fun HandEntryPanel(
     var score by remember { mutableStateOf("") }
     var chicken by remember { mutableStateOf(false) }
     // When the time is over, the players can record the hand in play. That hand is the last hand of the table.
-    val phase = view.matchPhaseOf(table.roundId, now)
+    val phase = view.matchPhaseOf(table.roundId, now, table.table.tableId)
     val extraTime = phase == MatchPhase.EXTRA_TIME
     var preview by remember { mutableStateOf<HandPreview?>(null) }
     var busy by remember { mutableStateOf(false) }
@@ -292,11 +293,12 @@ fun HandEntryPanel(
         if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
         return
     }
-    if (phase == MatchPhase.OVER) {
+    if (phase == MatchPhase.OVER || phase == MatchPhase.CLOSED) {
         Text(
-            stringResource(Res.string.entry_time_over),
+            stringResource(if (phase == MatchPhase.CLOSED) Res.string.entry_closed_by_organizer else Res.string.entry_time_over),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (phase == MatchPhase.CLOSED && seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
         return
     }
     if (!seatsAssigned) {

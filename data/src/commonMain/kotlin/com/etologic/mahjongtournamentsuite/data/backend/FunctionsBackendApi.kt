@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.data.backend
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
@@ -549,6 +550,17 @@ class FunctionsBackendApi(
         request: RoundClockActionRequestDto,
     ): RoundClocksResponseDto = post(
         path = "/tournaments/$tournamentId/rounds/$roundId/clock",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updateRoundControl(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        request: RoundControlRequestDto,
+    ): RoundClocksResponseDto = post(
+        path = "/tournaments/$tournamentId/rounds/$roundId/control",
         requestBody = request,
         idToken = idToken,
     )

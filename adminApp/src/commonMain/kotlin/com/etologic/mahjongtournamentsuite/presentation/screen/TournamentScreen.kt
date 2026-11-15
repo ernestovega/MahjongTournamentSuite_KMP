@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
@@ -92,6 +94,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -107,6 +110,7 @@ private sealed class RoundEditorAction {
     data object Statistics : RoundEditorAction()
     data object Timer : RoundEditorAction()
     data object Activity : RoundEditorAction()
+    data object RoundControl : RoundEditorAction()
     data object Export : RoundEditorAction()
 }
 
@@ -385,6 +389,9 @@ fun TournamentScreen(
             RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
             RoundEditorAction.Activity -> navController.navigate(ActivityRoute(tournamentId))
+            RoundEditorAction.RoundControl -> navController.navigate(
+                RoundControlRoute(tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1),
+            )
         }
     }
 
@@ -472,6 +479,14 @@ fun TournamentScreen(
             )
         },
         actions = {
+            if (adminStatus?.isAdmin == true) {
+                AppTopBarButton(
+                    text = stringResource(Res.string.round_control_title),
+                    icon = Icons.Default.Tune,
+                    onClick = { requestAction(RoundEditorAction.RoundControl) },
+                    enabled = !isLoading,
+                )
+            }
             if (tournament?.isTeams == true) {
                 AppTopBarButton(
                     text = stringResource(Res.string.teams),

@@ -87,6 +87,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/tournaments/:tournamentId/rounds", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/round-clocks", "MEMBER"],
   ["POST", "/tournaments/:tournamentId/rounds/:roundId/clock", "MEMBER"],
+  ["POST", "/tournaments/:tournamentId/rounds/:roundId/control", "ADMIN"],
   ["GET", "/tournaments/:tournamentId/tables", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/tables-with-hands", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "MEMBER"],

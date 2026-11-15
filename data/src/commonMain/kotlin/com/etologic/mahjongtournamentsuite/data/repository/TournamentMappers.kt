@@ -4,9 +4,15 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableControlDto
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
@@ -45,6 +51,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
         )
     },
     roundClocks = roundClocks.map { it.toDomain() },
+    roundControls = roundControls.map { it.toDomain() },
     agendaItems = agendaItems.map { item ->
         TournamentAgendaItem(
             title = item.title.trim(),
@@ -79,6 +86,29 @@ internal fun RoundClockDto.toDomain() = RoundClock(
 internal fun RoundClocksResponseDto.toDomain() = RoundClocks(
     clocks = roundClocks.map { it.toDomain() },
     serverNowMs = serverNowMs,
+    controls = roundControls.map { it.toDomain() },
+)
+
+private fun controlModeOf(value: String): ControlMode = when (value) {
+    "open" -> ControlMode.OPEN
+    "closed" -> ControlMode.CLOSED
+    else -> ControlMode.AUTO
+}
+
+private fun ControlMode.toDto(): String = name.lowercase()
+
+internal fun RoundControlDto.toDomain() = RoundControl(
+    roundId = roundId,
+    hands = controlModeOf(hands),
+    seats = controlModeOf(seats),
+    tables = tables.associate { it.tableId to controlModeOf(it.hands) },
+)
+
+internal fun RoundControlChange.toDto() = RoundControlRequestDto(
+    hands = hands?.toDto(),
+    seats = seats?.toDto(),
+    table = table?.let { (tableId, mode) -> TableControlDto(tableId, mode.toDto()) },
+    reopenTables = reopenTables.ifEmpty { null },
 )
 
 internal fun RoundClockAction.toDto(): RoundClockActionRequestDto = when (this) {

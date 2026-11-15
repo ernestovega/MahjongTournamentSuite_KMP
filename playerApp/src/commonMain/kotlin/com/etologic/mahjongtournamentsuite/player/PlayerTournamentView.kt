@@ -171,18 +171,18 @@ data class PlayerTournamentView(
     /** The first name of a player, without the surname. */
     fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName }?.let(PlaceholderNames::localize) ?: "-"
 
-    fun matchPhaseOf(roundId: Int, now: LocalDateTime): MatchPhase = tournament.matchPhase(roundId, now)
+    fun matchPhaseOf(roundId: Int, now: LocalDateTime, tableId: Int? = null): MatchPhase = tournament.matchPhase(roundId, now, tableId)
 
     /** True when the table is complete, or when its time is over and the players played hands. */
     fun isFinished(table: PlayerTable, now: LocalDateTime): Boolean =
-        table.isComplete || (table.doneHands > 0 && matchPhaseOf(table.roundId, now) == MatchPhase.OVER)
+        table.isComplete || (table.doneHands > 0 && matchPhaseOf(table.roundId, now, table.table.tableId) == MatchPhase.OVER)
 
     /**
      * A table is ongoing from the start of its round until it is finished or its time is over.
      * Players enter hands only then.
      */
     fun isOngoing(table: PlayerTable, now: LocalDateTime): Boolean =
-        !table.isComplete && matchPhaseOf(table.roundId, now).let { it == MatchPhase.PLAYING || it == MatchPhase.EXTRA_TIME }
+        !table.isComplete && matchPhaseOf(table.roundId, now, table.table.tableId).let { it == MatchPhase.PLAYING || it == MatchPhase.EXTRA_TIME }
 
     /** True when the signed-in player can add hands to the table now. */
     fun canAddHands(table: PlayerTable, now: LocalDateTime): Boolean {
