@@ -173,6 +173,7 @@
     <string name="progress_ongoing_label">En curso</string>
     <string name="tab_stats">Estadísticas</string>
     <string name="menu_sign_in">Entrar</string>
+    <string name="menu_contact">Contacto</string>
     <string name="tournaments_title">Torneos</string>
     <string name="tournaments_no_match">Ningún torneo coincide con los filtros.</string>
     <string name="tournament_you_play">Juegas en este torneo</string>
