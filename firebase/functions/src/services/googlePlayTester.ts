@@ -1,8 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { FieldValue } from "firebase-admin/firestore";
 
 import { auth, db } from "../firebase";
 import { bumpGlobalDataVersion } from "./dataVersionsService";
 import { setAccountEmaId } from "./playerAccountsService";
+import { updatePlayerPhoto } from "./playersService";
 import { createUserProfile, setGlobalUserRole } from "./usersService";
 
 /**
@@ -21,6 +25,22 @@ export const GOOGLE_PLAY_TESTER = {
     hiddenFromPublic: true,
   },
 };
+
+/**
+ * The photo of the EMA player (the Play Console icon). The account has no photo of its own, so it shows this one.
+ * The path works from lib/services and from src/services.
+ */
+const PHOTO_PATH = resolve(__dirname, "../../assets/google-play-tester.webp");
+const PHOTO_CONTENT_TYPE = "image/webp";
+
+function photoBase64(): string {
+  return readFileSync(PHOTO_PATH).toString("base64");
+}
+
+function hasPhoto(document: FirebaseFirestore.DocumentSnapshot): boolean {
+  const url = document.get("photoUrl");
+  return typeof url === "string" && url !== "";
+}
 
 export type GooglePlayTesterReport = {
   emaPlayer: "CREATE" | "UPDATE" | "OK";
@@ -44,10 +64,12 @@ export async function ensureGooglePlayTester(params: { apply: boolean; password?
   };
   const playerAction = !player.exists
     ? "CREATE"
-    : Object.entries(playerFields).every(([key, value]) => player.get(key) === value) ? "OK" : "UPDATE";
+    : hasPhoto(player) && Object.entries(playerFields).every(([key, value]) => player.get(key) === value) ? "OK" : "UPDATE";
   if (params.apply && playerAction !== "OK") {
     await playerRef.set({ ...playerFields, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    await bumpGlobalDataVersion("emaPlayers");
+    // A photo that someone chose stays. updatePlayerPhoto bumps the EMA players.
+    if (!hasPhoto(player)) await updatePlayerPhoto({ emaId: emaPlayer.emaId, contentType: PHOTO_CONTENT_TYPE, dataBase64: photoBase64() });
+    else await bumpGlobalDataVersion("emaPlayers");
   }
 
   const existing = await auth.getUserByEmail(GOOGLE_PLAY_TESTER.email).catch(() => null);

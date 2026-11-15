@@ -14,7 +14,7 @@ EMA player (Players > EMA players):
 | Last name | Testers |
 | Country | USA |
 | Hide from the public | yes |
-| Photo | none |
+| Photo | `firebase/functions/assets/google-play-tester.webp` (the Play Console icon) |
 
 Account (Users):
 
@@ -24,7 +24,7 @@ Account (Users):
 | Alias | Google Play Testers |
 | EMA number | `00000000` |
 | Global role | Admin |
-| Photo | none |
+| Photo | none of its own: it shows the photo of its EMA player |
 
 The password is only in Play Console (App access). Never write it in the repository.
 
@@ -41,7 +41,7 @@ npm run seed:google-play-tester:apply              # writes what differs
 GOOGLE_PLAY_TESTER_PASSWORD='…' npm run seed:google-play-tester:apply   # also creates a deleted account
 ```
 
-It creates or fixes the EMA player, and fixes the alias, the role and the EMA number of the account. An existing account
+It creates or fixes the EMA player (with the photo when it has none), and fixes the alias, the role and the EMA number of the account. A photo that someone chose stays. An existing account
 keeps its password. Run it after `resetAccess` (which deletes every account but one admin) or any data reset.
 
 ## Notes
