@@ -51,6 +51,14 @@ class AdminScreensScreenshotTest {
         ready = { waitForText("04010001", substring = true) },
     ) { nav -> PlayersScreen(nav, ONGOING) }
 
+    /** Seven rounds, the most usual length: the strip fits without scrolling. */
+    @Test
+    fun playersSevenRounds() = adminScreenshots(
+        "players-seven-rounds",
+        modules = { adminModules(tournaments = ManyRoundsTournamentRepository(rounds = 7)) },
+        ready = { waitForText("04010001", substring = true) },
+    ) { nav -> PlayersScreen(nav, ONGOING) }
+
     @Test
     fun teams() = adminScreenshots("teams", ready = { waitForText("Red Dragons", substring = true) }) { nav -> TeamsScreen(nav, ONGOING) }
 
@@ -96,11 +104,11 @@ private object FixedClock : Clock {
     override fun now(): Instant = Instant.parse("2026-05-16T10:00:00Z")
 }
 
-/** The tables of [ONGOING] repeated over 24 rounds, with the table numbers shuffled so every round differs. */
-private class ManyRoundsTournamentRepository : ScreenshotTournamentRepository() {
+/** The tables of [ONGOING] repeated over [rounds] rounds, with the table numbers shuffled so every round differs. */
+private class ManyRoundsTournamentRepository(private val rounds: Int = 24) : ScreenshotTournamentRepository() {
     override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode): AppResult<List<TournamentTable>> {
         val base = ScreenshotData.tables(tournamentId)
-        val tables = (1..24).flatMap { round ->
+        val tables = (1..rounds).flatMap { round ->
             base.filter { it.roundId == (round - 1) % 4 + 1 }.map { table ->
                 table.copy(roundId = round, tableId = (table.tableId * 7 + round * 5) % 40 + 1)
             }

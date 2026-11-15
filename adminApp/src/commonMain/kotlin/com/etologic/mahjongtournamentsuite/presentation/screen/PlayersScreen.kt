@@ -155,6 +155,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
 import mahjongtournamentsuite.adminapp.generated.resources.round
 import mahjongtournamentsuite.adminapp.generated.resources.table
+import mahjongtournamentsuite.adminapp.generated.resources.tables
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
 import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
@@ -1192,7 +1193,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     TournamentPlayerPhoto(
                                         photoUrl = assigned?.photoUrl,
                                         playerName = playerName.orEmpty(),
-                                        columnWidth = 44.dp,
+                                        columnWidth = TournamentPlayerCompactLeadingWidth,
                                     )
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
@@ -1268,12 +1269,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             columnWidth = TournamentPlayerPhotoColumnWidth,
                                         )
                                     }
-                                    // The first name is on the first line and the last name on the second line.
+                                    // The whole name on one line. A very long name wraps to a second line.
                                     Text(
                                         if (assigned == null) {
                                             stringResource(Res.string.not_assigned)
                                         } else {
-                                            assigned.firstName.trim() + "\n" + assigned.lastName.trim()
+                                            assigned.firstName.trim() + " " + assigned.lastName.trim()
                                         } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
@@ -1473,14 +1474,29 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             }
                             // A second line under the player: the table of every round, side by side.
                             if (roundTables.isNotEmpty()) {
-                                PlayerRoundTablesStrip(
-                                    roundTables = roundTables,
-                                    modifier = Modifier.padding(
-                                        start = if (compact) TournamentPlayerCompactStripStart else TournamentPlayerStripStart,
-                                        end = 12.dp,
-                                        bottom = 10.dp,
-                                    ),
-                                )
+                                Row(
+                                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 10.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.Top,
+                                ) {
+                                    // The title sits under the ID (desktop) or the photo (phone).
+                                    Box(
+                                        modifier = Modifier
+                                            .width(if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth)
+                                            .height(RoundTableCellHeight * 2),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.tables),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                        )
+                                    }
+                                    PlayerRoundTablesStrip(roundTables = roundTables, modifier = Modifier.weight(1f))
+                                }
                             }
                             DataTableDivider()
                         }
@@ -1498,9 +1514,8 @@ private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
 private val TournamentPlayerTeamColumnWidth = 144.dp
 
-// The strip starts after the ID column (desktop) or after the photo (phone), so it reads as part of the player.
-private val TournamentPlayerStripStart = 12.dp + TournamentPlayerIdColumnWidth + 12.dp
-private val TournamentPlayerCompactStripStart = 12.dp + 44.dp + 12.dp
+// The photo column of a phone. The tables title below it takes the same width.
+private val TournamentPlayerCompactLeadingWidth = 44.dp
 private val RoundTableCellWidth = 36.dp
 
 /** One round and the table where a player sits in it. */
@@ -1551,7 +1566,7 @@ private fun PlayerRoundTablesStrip(
     }
 }
 
-private val RoundTableCellHeight = 22.dp
+private val RoundTableCellHeight = 28.dp
 
 @Composable
 private fun RoundTableCell(
@@ -1561,7 +1576,8 @@ private fun RoundTableCell(
 ) {
     val colors = MaterialTheme.colorScheme
     Column(
-        modifier = if (isLabel) Modifier.width(IntrinsicSize.Max) else Modifier.widthIn(min = RoundTableCellWidth),
+        // Every cell is as wide as its widest text, so the round row background fills the whole cell.
+        modifier = Modifier.widthIn(min = if (isLabel) 0.dp else RoundTableCellWidth).width(IntrinsicSize.Max),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
