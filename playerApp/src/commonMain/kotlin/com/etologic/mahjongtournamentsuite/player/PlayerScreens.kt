@@ -1755,8 +1755,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
                 showIds = details,
-                // The differences need hands, also on a finished table. The organizers can hide them for the whole tournament.
-                diffsAvailable = view.tournament.showTableDiffs && table.doneHands > 0,
+                // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
+                diffsAvailable = view.tournament.showTableDiffs,
                 // The time left of the round is at the top left, above the seats.
                 leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
                 // On a table that takes hands, a tap on a player starts a hand won by that player.

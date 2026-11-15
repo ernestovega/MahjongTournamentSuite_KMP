@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -67,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
@@ -819,7 +819,7 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
         Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (selfDraw) {
             Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.selfPick)
+            SelfDrawIcon(18.dp)
             Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
         } else if (loser != null) {
             Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -848,7 +848,7 @@ private fun SelfDrawButton(label: String, selected: Boolean, onClick: () -> Unit
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
-                Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
+                SelfDrawIcon(24.dp)
                 Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
@@ -1023,7 +1023,7 @@ private fun ReviewHand(
                 // Who paid is as large as who won, so both read at a glance.
                 if (selfDraw) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-                        Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
+                        SelfDrawIcon(24.dp)
                         Text(stringResource(Res.string.entry_self_draw), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 } else {
