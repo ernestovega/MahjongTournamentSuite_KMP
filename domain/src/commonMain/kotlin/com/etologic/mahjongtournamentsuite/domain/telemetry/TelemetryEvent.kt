@@ -220,8 +220,11 @@ object TelemetryClockAction {
     const val TIME_SET = "time_set"
     const val RESET = "reset"
 
+    /** Stop: the round ends before its time is over. */
+    const val STOPPED = "stopped"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
-    val all: List<String> = listOf(STARTED, PAUSED, RESUMED, STARTED_AGO, TIME_SET, RESET)
+    val all: List<String> = listOf(STARTED, PAUSED, RESUMED, STARTED_AGO, TIME_SET, RESET, STOPPED)
 }
 
 /** The values of [TelemetryParam.KIND] in `round_clock`. */

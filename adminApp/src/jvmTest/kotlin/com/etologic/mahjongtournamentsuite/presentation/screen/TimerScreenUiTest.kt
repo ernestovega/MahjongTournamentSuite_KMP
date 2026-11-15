@@ -16,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The Timer of a tournament follows the clock of the round on the server. Play starts the round for every Timer and
@@ -119,6 +120,54 @@ class TimerScreenUiTest {
         assertEquals(RoundClockAction.Reset(force = true), server.clockActions.last().second)
         assertEquals(emptyList<RoundClock>(), server.roundClocks)
         onNodeWithText("Press Start when the starting gong sounds", substring = true).assertExists()
+    }
+
+    @Test
+    fun stopEndsARunningRoundAfterAConfirmation() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithContentDescription("Stop the round").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Stop the round?").assertExists()
+        onNodeWithText("Stop").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        assertEquals(RoundClockAction.Stop, server.clockActions.last().second)
+        onNodeWithText("Time is up.").assertExists()
+        onNodeWithText("0:00:00").assertExists()
+        onNodeWithContentDescription("Stop the round").assertDoesNotExist()
+    }
+
+    @Test
+    fun cancelingTheStopKeepsTheRoundRunning() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithContentDescription("Stop the round").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Cancel").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        onNodeWithText("Stop the round?").assertDoesNotExist()
+        assertTrue(server.clockActions.isEmpty())
+        onNodeWithText("1:30:00").assertExists()
+    }
+
+    @Test
+    fun aPausedRoundCanBeStoppedButAnUnstartedOneCannot() = runComposeUiTest {
+        show(server(RoundClock(roundId = 1, startedAtMs = now - 40 * min, pausedAtMs = now - 10 * min)))
+        onNodeWithContentDescription("Stop the round").assertExists()
+    }
+
+    @Test
+    fun aRoundThatHasNotStartedHasNoStop() = runComposeUiTest {
+        show(server())
+        onNodeWithContentDescription("Stop the round").assertDoesNotExist()
     }
 
     @Test

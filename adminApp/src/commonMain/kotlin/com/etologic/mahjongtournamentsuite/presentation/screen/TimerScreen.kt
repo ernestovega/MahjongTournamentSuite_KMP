@@ -28,6 +28,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.timer_paused
 import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm
 import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_message
 import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_title
 import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago
 import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_message
 import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_title
@@ -35,6 +39,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.timer_waiting_gong
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -146,6 +151,7 @@ internal fun TimerContent(
     val roundUpFocusRequester = remember { FocusRequester() }
     val startFocusRequester = remember { FocusRequester() }
     val resetFocusRequester = remember { FocusRequester() }
+    val stopFocusRequester = remember { FocusRequester() }
     val setTimeFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
 
@@ -168,6 +174,8 @@ internal fun TimerContent(
     val maxTimeSeconds = state.totalSeconds()
     val timeLeftSeconds = state.remainingSeconds(now)
     val hasFinished = isStarted && timeLeftSeconds <= 0L
+    // Stop ends a started round before its time is over. A Timer without a tournament has no round to end.
+    val canStop = isStarted && !hasFinished && !state.independent && state.canControl
     // Only a Timer without a tournament picks its round. The Timer of a tournament follows the tournament.
     val showRoundButtons = state.independent && !isRunning
 
@@ -219,6 +227,29 @@ internal fun TimerContent(
             },
             onDismiss = { dialog = null },
         )
+        TimerDialog.ConfirmStop -> TrackedDialog("ConfirmRoundStop") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = { dialog = null },
+                title = { Text(stringResource(Res.string.timer_stop_confirm_title)) },
+                text = { Text(stringResource(Res.string.timer_stop_confirm_message)) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            dialog = null
+                            scope.launch { controller.stop() }
+                        },
+                    ) {
+                        Text(stringResource(Res.string.timer_stop_confirm))
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { dialog = null }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                },
+            )
+        }
         null -> Unit
     }
 
@@ -376,12 +407,17 @@ internal fun TimerContent(
             }
 
             Box(modifier = Modifier.fillMaxWidth()) {
+                val startPreviousWhenRunning = if (canStop) stopFocusRequester else startFocusRequester
                 val startPrevious = when {
-                    isRunning -> startFocusRequester
+                    isRunning -> startPreviousWhenRunning
                     showRoundButtons -> roundUpFocusRequester
                     else -> themeFocusRequester
                 }
-                val startNext = if (isRunning) startFocusRequester else resetFocusRequester
+                val startNext = when {
+                    canStop -> stopFocusRequester
+                    isRunning -> startFocusRequester
+                    else -> resetFocusRequester
+                }
                 if (isRunning) {
                     FocusedIconButton(
                         focusRequester = startFocusRequester,
@@ -426,17 +462,48 @@ internal fun TimerContent(
                     }
                 }
 
+                if (isRunning && canStop) {
+                    FocusedIconButton(
+                        focusRequester = stopFocusRequester,
+                        onClick = { dialog = TimerDialog.ConfirmStop },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .alpha(0.5f),
+                        buttonModifier = Modifier.focusLoop(previous = startFocusRequester, next = startFocusRequester),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Stop,
+                            contentDescription = stringResource(Res.string.timer_stop),
+                        )
+                    }
+                }
+
                 if (!isRunning) {
                     Row(
                         modifier = Modifier.align(Alignment.CenterEnd),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        if (canStop) {
+                            FocusedIconButton(
+                                focusRequester = stopFocusRequester,
+                                buttonModifier = Modifier.focusLoop(
+                                    previous = startFocusRequester,
+                                    next = resetFocusRequester,
+                                ),
+                                onClick = { dialog = TimerDialog.ConfirmStop },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Stop,
+                                    contentDescription = stringResource(Res.string.timer_stop),
+                                )
+                            }
+                        }
                         FocusedIconButton(
                             focusRequester = resetFocusRequester,
                             enabled = isStarted,
                             buttonModifier = Modifier.focusLoop(
-                                previous = startFocusRequester,
+                                previous = if (canStop) stopFocusRequester else startFocusRequester,
                                 next = setTimeFocusRequester,
                             ),
                             onClick = { scope.launch { controller.reset() } },
@@ -481,7 +548,7 @@ internal fun TimerContent(
     }
 }
 
-private enum class TimerDialog { SetTime, StartedAgo }
+private enum class TimerDialog { SetTime, StartedAgo, ConfirmStop }
 
 /** Asks for a whole number of minutes. Enter, Numpad Enter and the Done action apply it. */
 @Composable

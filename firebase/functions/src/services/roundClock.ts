@@ -25,7 +25,9 @@ export type RoundClockAction =
   | { kind: "pause"; agoMs: number }
   | { kind: "resume"; agoMs: number }
   | { kind: "reset" }
-  | { kind: "setRemaining"; remainingMs: number };
+  | { kind: "setRemaining"; remainingMs: number }
+  /** Stop: the round ends now, before its time is over, with no extra time. */
+  | { kind: "stop" };
 
 /** An action made offline reaches the server later. The server accepts this delay for a pause or a resume. */
 export const MAX_ACTION_DELAY_MS = 10 * 60_000;
@@ -107,12 +109,14 @@ function actionTime(nowMs: number, agoMs: number, maxAgoMs: number): number {
  * The clock after an action. Null means that the round has no clock any more (a reset).
  * Every action can be sent twice: a second Play, Pause or Resume changes nothing, so two Timers of the same round
  * never fight. The first Play wins.
+ * [extraMs] is the extra time after the match time (zero when the match stops at the end): a Stop skips it too.
  */
 export function applyRoundClockAction(
   clock: RoundClock | null,
   action: RoundClockAction,
   durationMinutes: number,
   nowMs: number,
+  extraMs: number = 0,
 ): RoundClock | null {
   switch (action.kind) {
     case "start": {
@@ -143,6 +147,18 @@ export function applyRoundClockAction(
       const remaining = Math.round(action.remainingMs);
       return { ...clock, adjustMs: clockElapsedMs(clock, nowMs) + remaining - durationMinutes * 60_000 };
     }
+    case "stop": {
+      if (clock == null) throw conflict("This round has not started yet");
+      // A round that is already over stays as it is.
+      if (clock.pausedAtMs == null && clockElapsedMs(clock, nowMs) >= clockDurationMs(clock, durationMinutes) + extraMs) return clock;
+      // A paused clock runs again, so the end is now. The match time becomes what was played minus the extra time,
+      // so the match time and the extra time are both over now. A round stopped within its first minutes starts earlier.
+      const pausedMs = clock.pausedAtMs == null ? clock.pausedMs : clock.pausedMs + Math.max(0, nowMs - clock.pausedAtMs);
+      const played = Math.max(0, nowMs - clock.startedAtMs - pausedMs);
+      const startedAtMs = clock.startedAtMs - Math.max(0, extraMs - played);
+      const elapsed = Math.max(played, extraMs);
+      return { startedAtMs, pausedAtMs: null, pausedMs, adjustMs: elapsed - extraMs - durationMinutes * 60_000 };
+    }
   }
 }
 
@@ -165,11 +181,13 @@ export function parseRoundClockAction(body: unknown): RoundClockAction {
       return { kind: "resume", agoMs: seconds("agoSeconds") };
     case "reset":
       return { kind: "reset" };
+    case "stop":
+      return { kind: "stop" };
     case "setRemaining": {
       if (data.remainingSeconds == null) throw badRequest("remainingSeconds is required");
       return { kind: "setRemaining", remainingMs: seconds("remainingSeconds") };
     }
     default:
-      throw badRequest("action must be start, pause, resume, reset or setRemaining");
+      throw badRequest("action must be start, pause, resume, reset, setRemaining or stop");
   }
 }

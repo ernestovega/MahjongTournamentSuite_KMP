@@ -739,6 +739,10 @@
     <string name="timer_reset_confirm_title">Azzerare l'orologio del turno?</string>
     <string name="timer_reset_confirm_message">Questo turno ha mani salvate. Restano, ma i giocatori non possono aggiungerne altre finché non premi di nuovo Play.</string>
     <string name="timer_reset_confirm">Azzera</string>
+    <string name="timer_stop">Termina il turno</string>
+    <string name="timer_stop_confirm_title">Terminare il turno?</string>
+    <string name="timer_stop_confirm_message">Il turno finisce ora, prima della fine del suo tempo e senza tempo extra. I tavoli con mani si chiudono e i giocatori non possono aggiungere altre mani.</string>
+    <string name="timer_stop_confirm">Termina</string>
     <string name="activity_action_round_clock">Orologio del turno modificato</string>
     <string name="activity_origin_all">Tutte le origini</string>
     <string name="activity_period_clear">Cancella date</string>

@@ -87,4 +87,5 @@ internal fun RoundClockAction.toDto(): RoundClockActionRequestDto = when (this) 
     is RoundClockAction.Resume -> RoundClockActionRequestDto(action = "resume", agoSeconds = agoSeconds)
     is RoundClockAction.Reset -> RoundClockActionRequestDto(action = "reset", force = force)
     is RoundClockAction.SetRemaining -> RoundClockActionRequestDto(action = "setRemaining", remainingSeconds = remainingSeconds)
+    RoundClockAction.Stop -> RoundClockActionRequestDto(action = "stop")
 }
