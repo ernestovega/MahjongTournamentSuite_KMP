@@ -33,6 +33,9 @@ together.
 
 ## Restore it
 
+Both exist in production since 2026-11-15 (created by hand). Run this when production is cleaned of test data
+before the launch, or after any reset that deletes them.
+
 `firebase/functions`, with production credentials and the owner's OK (it writes to production):
 
 ```bash
