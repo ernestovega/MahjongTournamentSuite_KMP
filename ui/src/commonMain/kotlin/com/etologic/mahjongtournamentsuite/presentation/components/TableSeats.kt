@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -65,7 +64,6 @@ import mahjongtournamentsuite.ui.generated.resources.icon_wind_south
 import mahjongtournamentsuite.ui.generated.resources.icon_wind_west
 import mahjongtournamentsuite.ui.generated.resources.penalty_n
 import mahjongtournamentsuite.ui.generated.resources.place_1st
-import mahjongtournamentsuite.ui.generated.resources.place_1st_long
 import mahjongtournamentsuite.ui.generated.resources.place_2nd
 import mahjongtournamentsuite.ui.generated.resources.place_3rd
 import mahjongtournamentsuite.ui.generated.resources.points_short
@@ -444,10 +442,8 @@ private fun DiffsTable(diffs: SeatDiffs) {
         stringResource(Res.string.place_2nd) to diffs.pointsToBeSecond,
         stringResource(Res.string.place_3rd) to diffs.pointsToBeThird,
     ).mapNotNull { (label, value) -> value?.let { label to it } }
-    if (rows.isEmpty()) {
-        Text(stringResource(Res.string.place_1st_long), style = MaterialTheme.typography.labelMedium, color = MtsTheme.colors.gain)
-        return
-    }
+    // The first player has nothing to catch up, so the card shows nothing.
+    if (rows.isEmpty()) return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         DiffsRow("", stringResource(Res.string.diffs_self), stringResource(Res.string.diffs_him), stringResource(Res.string.diffs_other), header = true)
         rows.forEach { (label, value) -> DiffsRow(label, "${value.bySelfPick}", "${value.byDirectHu}", "${value.byIndirectHu}") }
@@ -458,10 +454,12 @@ private fun DiffsTable(diffs: SeatDiffs) {
 private fun DiffsRow(label: String, self: String, him: String, other: String, header: Boolean = false) {
     val style = MaterialTheme.typography.labelSmall
     val color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, Modifier.width(26.dp), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    // The four columns share the width of the card with no gap between them, and every text keeps to one line,
+    // so the table stays short on the narrow cards of a phone.
+    Row(Modifier.widthIn(max = 180.dp).fillMaxWidth()) {
+        Text(label, Modifier.weight(0.8f), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
         listOf(self, him, other).forEach { cell ->
-            Text(cell, Modifier.width(34.dp), style = style, color = color, textAlign = TextAlign.End)
+            Text(cell, Modifier.weight(1f), style = style, color = color, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
