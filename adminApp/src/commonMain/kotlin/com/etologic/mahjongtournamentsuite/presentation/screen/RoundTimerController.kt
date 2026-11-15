@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -43,6 +44,9 @@ data class RoundTimerState(
     /** Play, Pause and the other buttons work once the tournament loaded, or at once without a tournament. */
     val canControl: Boolean get() = independent || tournament != null
     val durationMinutes: Int get() = tournament?.matchDurationMinutes ?: DEFAULT_MATCH_DURATION_MINUTES
+
+    /** The extra time to finish the hand after the match time, or zero when the match stops at the end. */
+    val extraMs: Long get() = tournament?.takeIf { it.matchEndMode == MatchEndMode.FINISH_HAND }?.let { it.matchExtraMinutes * 60_000L } ?: 0L
     val clock: RoundClock? get() = clocks.firstOrNull { it.roundId == roundId }
     val isStarted: Boolean get() = clock != null
     val isRunning: Boolean get() = clock?.isPaused == false
@@ -145,6 +149,9 @@ class RoundTimerController(
         perform(RoundClockAction.Reset(force = force))
     }
 
+    /** Stop: the round ends now, before its time is over. The screen asks for a confirmation first. */
+    suspend fun stop() = perform(RoundClockAction.Stop)
+
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
     private suspend fun perform(action: RoundClockAction) {
@@ -153,7 +160,7 @@ class RoundTimerController(
         if (tournamentId == null) {
             val nowMs = deviceNowMs()
             val pending = PendingClockAction(mutableState.value.roundId, action, nowMs)
-            mutableState.update { it.copy(clocks = it.clocks.applyLocally(pending, it.durationMinutes, nowMs)) }
+            mutableState.update { it.copy(clocks = it.clocks.applyLocally(pending, it.durationMinutes, nowMs, it.extraMs)) }
             return
         }
         val pending = PendingClockAction(mutableState.value.roundId, action, deviceNowMs())
@@ -167,6 +174,7 @@ class RoundTimerController(
             is RoundClockAction.Pause -> TelemetryClockAction.PAUSED
             is RoundClockAction.Resume -> TelemetryClockAction.RESUMED
             is RoundClockAction.SetRemaining -> TelemetryClockAction.TIME_SET
+            RoundClockAction.Stop -> TelemetryClockAction.STOPPED
             // The confirmation of a reset is the same press again.
             is RoundClockAction.Reset -> if (action.force) return else TelemetryClockAction.RESET
         }
@@ -182,7 +190,7 @@ class RoundTimerController(
             is RoundClockAction.Pause -> action.copy(agoSeconds = agoSeconds)
             is RoundClockAction.Resume -> action.copy(agoSeconds = agoSeconds)
             is RoundClockAction.SetRemaining -> action.copy(remainingSeconds = (action.remainingSeconds - agoSeconds).coerceAtLeast(0))
-            is RoundClockAction.Reset -> action
+            is RoundClockAction.Reset, RoundClockAction.Stop -> action
         }
         val sentAt = deviceNowMs()
         when (val result = repository.updateRoundClock(tournamentId, pending.roundId, action)) {
@@ -197,7 +205,7 @@ class RoundTimerController(
                 // The first failure shows the action at once. A later failure keeps what the screen shows.
                 AppError.Network -> mutableState.update { state ->
                     val clocks = if (state.pending == null) {
-                        state.clocks.applyLocally(pending, state.durationMinutes, state.serverNow(pending.pressedAtDeviceMs))
+                        state.clocks.applyLocally(pending, state.durationMinutes, state.serverNow(pending.pressedAtDeviceMs), state.extraMs)
                     } else {
                         state.clocks
                     }
@@ -231,7 +239,12 @@ internal fun List<RoundClock>.runningRound(durationMinutes: Int, nowMs: Long): I
     .maxOfOrNull { it.roundId }
 
 /** The clocks after an action that the server did not take yet. The server does the same on its side later. */
-internal fun List<RoundClock>.applyLocally(pending: PendingClockAction, durationMinutes: Int, serverNowMs: Long): List<RoundClock> {
+internal fun List<RoundClock>.applyLocally(
+    pending: PendingClockAction,
+    durationMinutes: Int,
+    serverNowMs: Long,
+    extraMs: Long = 0,
+): List<RoundClock> {
     val current = firstOrNull { it.roundId == pending.roundId }
     val others = filter { it.roundId != pending.roundId }
     val updated: RoundClock? = when (val action = pending.action) {
@@ -244,6 +257,7 @@ internal fun List<RoundClock>.applyLocally(pending: PendingClockAction, duration
         is RoundClockAction.SetRemaining -> current?.let {
             it.copy(adjustMs = it.elapsedMs(serverNowMs) + action.remainingSeconds * 1000 - durationMinutes * 60_000L)
         }
+        RoundClockAction.Stop -> current?.stoppedAt(serverNowMs, durationMinutes, extraMs)
     }
     return (others + listOfNotNull(updated)).sortedBy { it.roundId }
 }

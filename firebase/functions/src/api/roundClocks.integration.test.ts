@@ -207,6 +207,21 @@ describe("a change that ends the round at once", () => {
     assert.deepEqual(tasks.map((task) => task.at.getTime()), [now - 30 * MIN + 135 * MIN, now + 15 * MIN]);
   });
 
+  it("closes the tables at once when the Timer stops the round, with no extra time", async () => {
+    const tournamentId = await seedClockTournament();
+    await db.doc(`tournaments/${tournamentId}`).update({ matchEndMode: "FINISH_HAND" });
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+    await playOneHand(tournamentId, 1);
+
+    const answer = await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "stop" }, actor: null, nowMs: now });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: true, checked: true });
+    assert.equal(answer.roundClocks[0].pausedAtMs, null);
+    // Only the Play planned a close. The end of the Stop is now, so it planned none.
+    assert.equal(tasks.length, 1);
+  });
+
   it("never closes a round that was already over, so an organizer can fill it later", async () => {
     const tournamentId = await seedClockTournament();
     const now = Date.now();
@@ -289,7 +304,7 @@ describe("the clock routes", () => {
   it("refuses a player, an editor of another tournament and an unknown action", async () => {
     assert.equal((await call("POST", `/tournaments/${tournamentId}/rounds/1/clock`, player.token, { action: "start" })).status, 403);
     assert.equal((await call("POST", `/tournaments/${otherTournamentId}/rounds/1/clock`, editor.token, { action: "start" })).status, 403);
-    assert.equal((await call("POST", `/tournaments/${tournamentId}/rounds/1/clock`, editor.token, { action: "stop" })).status, 400);
+    assert.equal((await call("POST", `/tournaments/${tournamentId}/rounds/1/clock`, editor.token, { action: "halt" })).status, 400);
     assert.equal((await call("POST", `/tournaments/${tournamentId}/rounds/1/clock`, null, { action: "start" })).status, 401);
   });
 });

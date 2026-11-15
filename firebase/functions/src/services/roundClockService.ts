@@ -6,6 +6,7 @@ import { recordActivity } from "./activityLog";
 import type { ChangeActor } from "./changeLog";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
 import { closeRoundsEndedByChange } from "./matchTimeCloseService";
+import { matchTimeOfTournament } from "./matchTime";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { readStoredMatchDuration } from "./tournamentSchedule";
 import {
@@ -69,11 +70,13 @@ export async function updateRoundClock(params: {
     if (params.roundId < 1 || params.roundId > numRounds) throw notFound("Round not found");
     const nowMs = params.nowMs ?? Date.now();
     const before = readStoredRoundClocks(tournament).get(params.roundId) ?? null;
+    const { rules } = matchTimeOfTournament(tournament, params.roundId);
     const after = applyRoundClockAction(
       before,
       params.action,
       readStoredMatchDuration(tournament.matchDurationMinutes),
       nowMs,
+      rules.endMode === "FINISH_HAND" ? rules.extraMinutes * 60_000 : 0,
     );
     const changed = JSON.stringify(before) !== JSON.stringify(after);
     if (changed) {

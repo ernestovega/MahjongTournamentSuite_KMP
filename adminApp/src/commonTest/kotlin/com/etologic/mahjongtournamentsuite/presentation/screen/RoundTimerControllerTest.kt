@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -210,6 +211,31 @@ class RoundTimerControllerTest {
     }
 
     @Test
+    fun stopEndsThePausedRoundOnTheServerAndOfflineAtOnce() = runTest {
+        val (repository, controller) = setup()
+        repository.tournaments = listOf(repository.tournaments.single().copy(matchEndMode = MatchEndMode.FINISH_HAND, matchExtraMinutes = 15))
+        controller.refresh()
+        controller.play()
+        deviceNow += 20 * minute
+        repository.serverNowMs += 20 * minute
+        controller.pause()
+
+        // Without network the Timer ends the round at once, with the extra time too.
+        repository.clockError = AppError.Network
+        controller.stop()
+        val state = controller.state.value
+        assertTrue(state.isOffline)
+        assertTrue(state.isRunning)
+        assertEquals(0L, state.remainingSeconds(deviceNow))
+        assertTrue(state.clock!!.elapsedMs(state.serverNow(deviceNow)) >= state.clock!!.durationMs(120) + 15 * minute)
+
+        repository.clockError = null
+        controller.refresh()
+        assertEquals(RoundClockAction.Stop, repository.clockActions.last().second)
+        assertFalse(controller.state.value.isOffline)
+    }
+
+    @Test
     fun aTimerWithoutTournamentKeepsItsClockOnTheDeviceAndNeverCallsTheServer() = runTest {
         val repository = FakeTournamentRepository()
         val controller = RoundTimerController(repository, null, 1) { deviceNow }
@@ -262,10 +288,11 @@ class RoundTimerControllerTest {
         controller.setRemainingMinutes(10)
         controller.reset()
         controller.startedMinutesAgo(5)
+        controller.stop()
 
         val kind = "independent"
         assertEquals(
-            listOf("started", "paused", "resumed", "time_set", "reset", "started_ago").map { it to kind },
+            listOf("started", "paused", "resumed", "time_set", "reset", "started_ago", "stopped").map { it to kind },
             telemetry.clockWords(),
         )
     }

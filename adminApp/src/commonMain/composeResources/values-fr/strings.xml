@@ -739,6 +739,10 @@
     <string name="timer_reset_confirm_title">Réinitialiser l'horloge du tour ?</string>
     <string name="timer_reset_confirm_message">Ce tour a des mains enregistrées. Elles restent, mais les joueurs ne peuvent plus en ajouter avant un nouveau Play.</string>
     <string name="timer_reset_confirm">Réinitialiser</string>
+    <string name="timer_stop">Terminer le tour</string>
+    <string name="timer_stop_confirm_title">Terminer le tour ?</string>
+    <string name="timer_stop_confirm_message">Le tour se termine maintenant, avant la fin de son temps et sans temps supplémentaire. Les tables avec des mains se ferment et les joueurs ne peuvent plus ajouter de mains.</string>
+    <string name="timer_stop_confirm">Terminer</string>
     <string name="activity_action_round_clock">Horloge du tour modifiée</string>
     <string name="activity_origin_all">Toutes les origines</string>
     <string name="activity_period_clear">Effacer les dates</string>

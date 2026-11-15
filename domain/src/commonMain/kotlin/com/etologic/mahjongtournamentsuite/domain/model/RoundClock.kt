@@ -23,6 +23,24 @@ data class RoundClock(
     /** Milliseconds that the match lasts with the adjustment of "Set time". */
     fun durationMs(durationMinutes: Int): Long = (durationMinutes * 60_000L + adjustMs).coerceAtLeast(0)
 
+    /**
+     * The clock after a Stop at [nowMs], as the server writes it: running, with the match time and the [extraMs] both
+     * over at [nowMs]. A paused clock runs again. A round stopped within its first minutes starts earlier.
+     */
+    fun stoppedAt(nowMs: Long, durationMinutes: Int, extraMs: Long): RoundClock {
+        if (pausedAtMs == null && elapsedMs(nowMs) >= durationMs(durationMinutes) + extraMs) return this
+        val pauses = pausedAtMs?.let { pausedMs + (nowMs - it).coerceAtLeast(0) } ?: pausedMs
+        val played = (nowMs - startedAtMs - pauses).coerceAtLeast(0)
+        val elapsed = maxOf(played, extraMs)
+        return RoundClock(
+            roundId = roundId,
+            startedAtMs = startedAtMs - (extraMs - played).coerceAtLeast(0),
+            pausedAtMs = null,
+            pausedMs = pauses,
+            adjustMs = elapsed - extraMs - durationMinutes * 60_000L,
+        )
+    }
+
     /** Milliseconds left of the match time at [nowMs]. Zero after the end. */
     fun remainingMs(durationMinutes: Int, nowMs: Long): Long = (durationMs(durationMinutes) - elapsedMs(nowMs)).coerceAtLeast(0)
 }
@@ -50,6 +68,12 @@ sealed interface RoundClockAction {
 
     /** "Set time": the remaining time from now on. */
     data class SetRemaining(val remainingSeconds: Long) : RoundClockAction
+
+    /**
+     * Stop: the round ends now, before its time is over, with no extra time. The server closes the tables with hands.
+     * The clock stays, over, so the round counts as played.
+     */
+    data object Stop : RoundClockAction
 }
 
 /** The message of the [AppError.Conflict] of a reset of a round with saved hands. The Timer asks for a confirmation. */
