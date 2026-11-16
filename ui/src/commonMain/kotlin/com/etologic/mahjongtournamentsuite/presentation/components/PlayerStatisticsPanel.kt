@@ -1409,7 +1409,9 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
     // with the short name of the tournament on top, so the chart shows where each tournament starts and ends.
     val groups = tournamentRuns(results)
     val grouped = groups.size > 1
-    val bandColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary)
+    // Three clearly different hues (green, pink, blue). Bands take them in turn, so two tournaments next to each other
+    // never share a color. The secondary green of the theme is not used: it looked the same as the primary one.
+    val bandColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MtsTheme.colors.info)
     val groupNames = groups.map { run ->
         tournaments.firstOrNull { it.id == run.tournamentId }?.let { it.shortName.ifBlank { it.name } }.orEmpty()
     }
