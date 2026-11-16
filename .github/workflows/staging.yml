@@ -1,0 +1,165 @@
+# Deploys main to the staging Firebase project, a copy of production with test data only. Run it by hand from
+# Actions > Deploy staging. It never touches the production project. See docs/staging.md.
+# Needs the repository variables STAGING_FIREBASE_PROJECT, STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER and
+# STAGING_GCP_DEPLOY_SERVICE_ACCOUNT, and the secrets MTS_SMTP_URI, PLACES_API_KEY and MTS_ID_TOOLKIT_API_KEY in the
+# Secret Manager of the staging project.
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "deploy: publish main on staging. seed: admin account, countries and the EMA players of the rehearsal."
+        type: choice
+        options: [deploy, seed]
+        default: deploy
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to staging
+    if: github.ref == 'refs/heads/main' && inputs.action == 'deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
+    steps:
+      - name: Check the staging project
+        run: |
+          if [ -z "$STAGING" ] || [ "$STAGING" = "mahjong-tournament-suite" ]; then
+            echo "STAGING_FIREBASE_PROJECT is empty or names the production project." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            firebase/functions/package-lock.json
+
+      - name: Install Firebase CLI and functions dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix firebase/functions
+
+      # The web apps of staging send no Analytics and no App Check token to the production project.
+      - name: Build the web apps for staging
+        run: |
+          ./scripts/assemble-web-hosting.sh
+          for file in $(find build/hosting -name 'telemetry.js' -o -name 'appcheck.js'); do
+            sed -i -E 's/(apiKey|appId|siteKey|measurementId): "[^"]*"/\1: ""/g' "$file"
+            sed -i "s/mahjong-tournament-suite/$STAGING/g" "$file"
+          done
+          ! grep -rl 'AIzaSyDf4pvgE_iwfbo2Yo4nEmMN0Ch0qvb1T_c' build/hosting
+
+      # firebase.json names the production hosting site and builds the web apps itself. The staging copy names the
+      # staging site and uses the build above. The functions read their settings from .env.<project>, which wins over
+      # .env: the player links, and the photo bucket of staging instead of the production one.
+      - name: Write the staging configuration
+        run: |
+          jq --arg site "$STAGING" '.hosting[0].site = $site | del(.hosting[0].predeploy)' firebase.json > firebase.staging.json
+          cat > "firebase/functions/.env.$STAGING" <<EOF
+          PLAYER_APP_URL=https://$STAGING.web.app
+          EMA_FIREBASE_STORAGE_BUCKET=$STAGING.firebasestorage.app
+          APP_CHECK_MODE=monitor
+          EOF
+          sed -i 's/^ *//' "firebase/functions/.env.$STAGING"
+          cat "firebase/functions/.env.$STAGING"
+          jq --arg site "https://$STAGING.web.app" '.[0].origin += [$site]' firebase/storage.cors.json > storage.cors.staging.json
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Deploy
+        run: >
+          npx firebase deploy
+          --config firebase.staging.json
+          --only hosting,functions,firestore,storage
+          --project "$STAGING"
+          --non-interactive
+          --force
+
+      - name: Set the CORS rules of the photo bucket
+        run: gcloud storage buckets update "gs://$STAGING.firebasestorage.app" --cors-file=storage.cors.staging.json
+
+      - name: Show the addresses
+        run: |
+          {
+            echo "### Staging deployed"
+            echo "- Player web: https://$STAGING.web.app"
+            echo "- Admin web: https://$STAGING.web.app/admin/"
+            echo "- API: https://europe-southwest1-$STAGING.cloudfunctions.net/api"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # The data that a rehearsal needs before Ernesto prepares the tournament by hand (docs/staging.md).
+  # Needs the repository secret STAGING_ADMIN_EMAIL.
+  seed:
+    name: Seed staging
+    if: github.ref == 'refs/heads/main' && inputs.action == 'seed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
+    steps:
+      - name: Check the staging project
+        run: |
+          if [ -z "$STAGING" ] || [ "$STAGING" = "mahjong-tournament-suite" ]; then
+            echo "STAGING_FIREBASE_PROJECT is empty or names the production project." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - run: npm ci --no-audit --no-fund --prefix firebase/functions
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # The scripts use the default project of ../firebase, so every variable below names staging.
+      - name: Seed countries, admin and EMA players
+        working-directory: firebase/functions
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+        run: |
+          export GCLOUD_PROJECT="$STAGING" EMA_FIREBASE_PROJECT="$STAGING"
+          export EMA_FIREBASE_STORAGE_BUCKET="$STAGING.firebasestorage.app"
+          MTS_ID_TOOLKIT_API_KEY="$(gcloud secrets versions access latest --secret=MTS_ID_TOOLKIT_API_KEY --project="$STAGING")"
+          echo "::add-mask::$MTS_ID_TOOLKIT_API_KEY"
+          export MTS_ID_TOOLKIT_API_KEY
+          npm run seed:countries
+          npm run seed:staging -- --apply --project="$STAGING"
