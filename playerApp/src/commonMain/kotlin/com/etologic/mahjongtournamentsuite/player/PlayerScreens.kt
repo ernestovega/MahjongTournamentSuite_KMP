@@ -1774,6 +1774,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 icon = Icons.Default.Gavel,
                 onClick = { navController.navigate(PenaltiesRoute) },
             )
+            GreenBookButton()
         },
     ) {
         ScreenColumn(

@@ -13,8 +13,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
+import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.RoundMoment
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
@@ -123,6 +125,12 @@ class PlayerScreensScreenshotTest {
     fun tableInPlay() = playerScreenshots("table-in-play", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav ->
         TableScreen(nav, ONGOING, roundId = 3, tableId = 1)
     }
+
+    @Test
+    fun combinations() = playerScreenshots("combinations", ready = { waitForText("Pure double chow") }) { nav -> CombinationsScreen(nav) }
+
+    @Test
+    fun penalties() = playerScreenshots("penalties", ready = { waitForText("Dead hand") }) { nav -> PenaltiesScreen(nav) }
 
     @Test
     fun statisticsTournament() = playerScreenshots("statistics-tournament", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->
