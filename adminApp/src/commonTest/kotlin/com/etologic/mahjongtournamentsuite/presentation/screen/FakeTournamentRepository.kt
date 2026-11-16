@@ -234,9 +234,13 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     val completedTableRequests = mutableListOf<List<TableKey>>()
 
+    /** Runs inside each close of tables, before the tables change: a test can hold the close there. */
+    var beforeCompleteTables: suspend () -> Unit = {}
+
     override suspend fun completeTables(tournamentId: String, tables: List<TableKey>): AppResult<Int> {
         clockError?.let { return AppResult.Failure(it) }
         completedTableRequests += tables
+        beforeCompleteTables()
         var completed = 0
         tables.forEach { key ->
             this.tables[key]?.takeIf { (table, _) -> !table.isCompleted }?.let { (table, hands) ->

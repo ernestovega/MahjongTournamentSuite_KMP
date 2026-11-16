@@ -3,8 +3,13 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -22,6 +27,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -42,6 +48,15 @@ class RoundControlDialogUiTest {
         serverNowMs = now
         seed(syncTable(tableId = 1))
         seed(syncTable(tableId = 2, isCompleted = true))
+    }
+
+    /** Round 1 is over and its tables 1, 3 and 4 stayed open; round 2 is in play. */
+    private fun serverWithThreeOpenTables() = server(
+        RoundClock(roundId = 1, startedAtMs = now - 200 * min),
+        RoundClock(roundId = 2, startedAtMs = now - 10 * min),
+    ).apply {
+        seed(syncTable(tableId = 3))
+        seed(syncTable(tableId = 4))
     }
 
     private fun ComposeUiTest.show(server: FakeTournamentRepository, round: Int = 1): RoundTimerController {
@@ -378,6 +393,86 @@ class RoundControlDialogUiTest {
         onNodeWithTag("round_chip_1").assertIsSelected()
         onNodeWithTag("table_row_1").assertIsDisplayed()
         assertTrue(server.completedTableRequests.isEmpty())
+    }
+
+    @Test
+    fun closeSelectedClosesTheCheckedTablesAndKeepsTheReviewOpen() = runComposeUiTest {
+        val server = serverWithThreeOpenTables()
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+        onNodeWithTag("open_tables_close_selected").assertIsNotEnabled()
+        onNodeWithTag("open_table_1_1_check").performClick()
+        onNodeWithTag("open_table_1_4_check").performClick()
+        onNodeWithTag("open_tables_close_selected").performClick()
+        settle()
+
+        assertEquals(listOf(listOf(TableKey(1, 1), TableKey(1, 4))), server.completedTableRequests.toList())
+        onNodeWithText("Open tables in ended rounds").assertExists()
+        onNodeWithTag("open_table_1_1").assertDoesNotExist()
+        onNodeWithTag("open_table_1_4").assertDoesNotExist()
+        onNodeWithTag("open_table_1_3").assertExists()
+        onNodeWithTag("open_tables_close_selected").assertIsNotEnabled()
+    }
+
+    @Test
+    fun selectAllThenCloseSelectedEndsTheReviewWhenNothingIsLeft() = runComposeUiTest {
+        val server = serverWithThreeOpenTables()
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+        onNodeWithTag("open_tables_select_all").performClick()
+        onNodeWithTag("open_tables_close_selected").performClick()
+        settle()
+
+        assertEquals(listOf(listOf(TableKey(1, 1), TableKey(1, 3), TableKey(1, 4))), server.completedTableRequests.toList())
+        onNodeWithText("Open tables in ended rounds").assertDoesNotExist()
+        onNodeWithTag("finished_rounds_open_tables").assertDoesNotExist()
+    }
+
+    @Test
+    fun theReviewWaitsWithASpinnerWhileTheTablesClose() = runComposeUiTest {
+        val server = serverWithThreeOpenTables()
+        val gate = CompletableDeferred<Unit>()
+        server.beforeCompleteTables = { gate.await() }
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+        onNodeWithTag("open_table_1_3_check").performClick()
+        onNodeWithTag("open_tables_close_selected").performClick()
+        settle()
+
+        onNodeWithTag("open_tables_closing", useUnmergedTree = true).assertExists()
+        onNodeWithTag("open_tables_close_selected").assertIsNotEnabled()
+        onNodeWithTag("open_table_1_1_check").assertIsNotEnabled()
+        onNodeWithTag("open_table_1_1_go").assertIsNotEnabled()
+
+        gate.complete(Unit)
+        settle()
+
+        onNodeWithTag("open_tables_closing", useUnmergedTree = true).assertDoesNotExist()
+        onNodeWithTag("open_table_1_3").assertDoesNotExist()
+        onNodeWithTag("open_table_1_1_check").assertIsEnabled()
+        onNodeWithText("Open tables in ended rounds").assertExists()
+    }
+
+    @Test
+    fun theReviewCountsTheHandsEnteredOfEachOpenTable() = runComposeUiTest {
+        val server = serverWithThreeOpenTables().apply {
+            val key = TableKey(1, 3)
+            val (table, hands) = tables.getValue(key)
+            tables[key] = table to hands.mapIndexed { index, hand -> hand.copy(isDone = index < 5) }
+        }
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+
+        onNodeWithTag("open_table_1_3").onChildren().filterToOne(hasText("5")).assertExists()
+        onNodeWithTag("open_table_1_1").onChildren().filterToOne(hasText("0")).assertExists()
     }
 
     @Test

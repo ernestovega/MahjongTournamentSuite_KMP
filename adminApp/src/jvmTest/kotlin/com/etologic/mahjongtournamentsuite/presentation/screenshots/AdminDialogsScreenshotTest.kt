@@ -139,8 +139,10 @@ class AdminDialogsScreenshotTest {
     fun roundControlOpenTablesReview() = dialog("round-control-open-tables-review") {
         OpenTablesReviewDialog(
             tables = listOf(TableKey(2, 1), TableKey(2, 3), TableKey(4, 2)),
+            busy = false,
             loadRoundHands = { roundId -> openRoundHands(roundId) },
             onGoTo = {},
+            onCloseSelected = {},
             onCloseAll = {},
             onDismiss = {},
         )

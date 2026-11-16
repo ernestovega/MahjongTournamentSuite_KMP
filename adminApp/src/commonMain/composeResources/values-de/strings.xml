@@ -802,6 +802,7 @@
     <string name="round_control_finished_col_table">Tisch</string>
     <string name="round_control_finished_col_hands">Hände</string>
     <string name="round_control_finished_go">Öffnen</string>
+    <string name="round_control_finished_close_selected">Ausgewählte schließen</string>
     <string name="round_control_finished_close_all">Alle schließen</string>
     <string name="round_control_finished_badge">Offene Tische: %1$d</string>
     <string name="timer_manual_warning">Die manuelle Rundensteuerung ist aktiv: Die Uhr entscheidet nicht, was die Spieler tun können.\nÄndere das in der Rundensteuerung.</string>

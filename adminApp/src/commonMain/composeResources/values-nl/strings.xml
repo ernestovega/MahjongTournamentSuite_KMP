@@ -802,6 +802,7 @@
     <string name="round_control_finished_col_table">Tafel</string>
     <string name="round_control_finished_col_hands">Handen</string>
     <string name="round_control_finished_go">Ga</string>
+    <string name="round_control_finished_close_selected">Geselecteerde sluiten</string>
     <string name="round_control_finished_close_all">Alles sluiten</string>
     <string name="round_control_finished_badge">Open tafels: %1$d</string>
     <string name="timer_manual_warning">Handmatige rondebesturing staat aan: de klok beslist niet wat de spelers kunnen doen.\nWijzig dit in Rondebesturing.</string>

@@ -4,17 +4,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -36,6 +44,7 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_close_all
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_close_selected
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_round
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_table
@@ -45,20 +54,29 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * The review of the open tables of the rounds that are over, from the round control. One row per table: its round,
- * its number, the hands entered and a button that goes to its round. At the end, Cancel and Close all.
+ * its number, the hands entered and a button that goes to its round. The checkboxes and "Close selected" close some
+ * tables and keep the dialog open, so the admin sees the ones left and can go to them. At the end, Cancel and Close all.
  */
 @Composable
 internal fun OpenTablesReviewDialog(
+    /** The open tables of the finished rounds, kept current: a closed table leaves the list. */
     tables: List<TableKey>,
+    /** True while tables close: the dialog waits and takes no new action. */
+    busy: Boolean,
     loadRoundHands: suspend (roundId: Int) -> AppResult<List<Pair<TableState, List<TableHand>>>>,
     onGoTo: (TableKey) -> Unit,
+    onCloseSelected: (List<TableKey>) -> Unit,
     onCloseAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var picked by remember { mutableStateOf(emptySet<TableKey>()) }
+    // A closed table leaves the list, and leaves the selection too.
+    val selected = picked.intersect(tables.toSet())
     // Hands entered by table. Null while they load; a table missing from the map could not be read.
-    val handsByTable by produceState<Map<TableKey, Int>?>(null, tables) {
+    val rounds = tables.map { it.roundId }.toSet()
+    val handsByTable by produceState<Map<TableKey, Int>?>(null, rounds) {
         val counts = mutableMapOf<TableKey, Int>()
-        tables.map { it.roundId }.distinct().forEach { roundId ->
+        rounds.sorted().forEach { roundId ->
             (loadRoundHands(roundId) as? AppResult.Success)?.value?.forEach { (table, hands) ->
                 counts[TableKey(table.roundId, table.tableId)] = hands.count { it.isDone }
             }
@@ -73,6 +91,14 @@ internal fun OpenTablesReviewDialog(
             text = {
                 Column {
                     TableRow(
+                        checkbox = {
+                            Checkbox(
+                                checked = tables.isNotEmpty() && selected.size == tables.size,
+                                enabled = !busy,
+                                onCheckedChange = { all -> picked = if (all) tables.toSet() else emptySet() },
+                                modifier = Modifier.testTag("open_tables_select_all"),
+                            )
+                        },
                         round = stringResource(Res.string.round_control_finished_col_round),
                         table = stringResource(Res.string.round_control_finished_col_table),
                         hands = stringResource(Res.string.round_control_finished_col_hands),
@@ -91,6 +117,14 @@ internal fun OpenTablesReviewDialog(
                             tables.forEachIndexed { index, table ->
                                 if (index > 0) HorizontalDivider()
                                 TableRow(
+                                    checkbox = {
+                                        Checkbox(
+                                            checked = table in selected,
+                                            enabled = !busy,
+                                            onCheckedChange = { on -> picked = if (on) selected + table else selected - table },
+                                            modifier = Modifier.testTag("open_table_${table.roundId}_${table.tableId}_check"),
+                                        )
+                                    },
                                     round = table.roundId.toString(),
                                     table = table.tableId.toString(),
                                     hands = handsByTable?.let { counts -> counts[table]?.toString() ?: "?" } ?: "…",
@@ -99,16 +133,31 @@ internal fun OpenTablesReviewDialog(
                                 ) {
                                     FocusedOutlinedButton(
                                         onClick = { onGoTo(table) },
-                                        modifier = Modifier.testTag("open_table_${table.roundId}_${table.tableId}_go"),
+                                        enabled = !busy,
+                                        buttonModifier = Modifier.testTag("open_table_${table.roundId}_${table.tableId}_go"),
                                     ) { Text(stringResource(Res.string.round_control_finished_go), maxLines = 1, softWrap = false) }
                                 }
                             }
                         }
                     }
+                    HorizontalDivider()
+                    // Closes the checked tables and keeps the dialog open, with a spinner while they close.
+                    FocusedOutlinedButton(
+                        onClick = { onCloseSelected(selected.sortedWith(compareBy(TableKey::roundId, TableKey::tableId))) },
+                        enabled = !busy && selected.isNotEmpty(),
+                        modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
+                        buttonModifier = Modifier.testTag("open_tables_close_selected"),
+                    ) {
+                        if (busy) {
+                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(16.dp).testTag("open_tables_closing"))
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(stringResource(Res.string.round_control_finished_close_selected))
+                    }
                 }
             },
             confirmButton = {
-                FocusedButton(onClick = onCloseAll) { Text(stringResource(Res.string.round_control_finished_close_all)) }
+                FocusedButton(onClick = onCloseAll, enabled = !busy) { Text(stringResource(Res.string.round_control_finished_close_all)) }
             },
             dismissButton = {
                 FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
@@ -117,9 +166,10 @@ internal fun OpenTablesReviewDialog(
     }
 }
 
-/** One row of the review: three short columns and the button of the fourth. */
+/** One row of the review: a checkbox, three short columns and the button of the last one. */
 @Composable
 private fun TableRow(
+    checkbox: @Composable () -> Unit,
     round: String,
     table: String,
     hands: String,
@@ -127,13 +177,14 @@ private fun TableRow(
     modifier: Modifier = Modifier,
     action: @Composable () -> Unit,
 ) {
-    val style = if (header) MaterialTheme.typography.labelLarge else MaterialTheme.typography.bodyMedium
+    val style = if (header) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium
     val weight = if (header) FontWeight.SemiBold else FontWeight.Normal
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        checkbox()
         Text(round, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         Text(table, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         Text(hands, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))

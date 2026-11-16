@@ -806,6 +806,7 @@
     <string name="round_control_finished_col_table">Стол</string>
     <string name="round_control_finished_col_hands">Раздачи</string>
     <string name="round_control_finished_go">Перейти</string>
+    <string name="round_control_finished_close_selected">Закрыть выбранные</string>
     <string name="round_control_finished_close_all">Закрыть все</string>
     <string name="round_control_finished_badge">Открытых столов: %1$d</string>
     <string name="timer_manual_warning">Включено ручное управление раундом: часы не решают, что могут делать игроки.\nИзмените это в Управлении раундом.</string>

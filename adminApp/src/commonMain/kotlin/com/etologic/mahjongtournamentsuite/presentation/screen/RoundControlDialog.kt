@@ -179,8 +179,8 @@ internal fun RoundControlDialogContent(
     var error by remember { mutableStateOf<AppError?>(null) }
     var prompt by remember { mutableStateOf<RoundControlPrompt?>(null) }
     var busy by remember { mutableStateOf(false) }
-    // The open tables of the finished rounds under review, frozen when the review opens.
-    var tablesToReview by remember { mutableStateOf<List<TableKey>?>(null) }
+    // The review of the open tables of the finished rounds. It follows the tables, so the closed ones leave it.
+    var reviewing by remember { mutableStateOf(false) }
     // The table to scroll to after "Go to the round" in the review.
     var scrollToTable by remember { mutableStateOf<TableKey?>(null) }
     // Bumped after a table changes its completed mark, so the tables load again at once.
@@ -219,11 +219,13 @@ internal fun RoundControlDialogContent(
         }
     }
 
+    // Busy until the tables load again, so the review never shows a closed table as open.
     fun closeTables(tables: List<TableKey>) {
         if (busy) return
         busy = true
         scope.launch {
             val result = controller.completeTables(tables)
+            (loadTables(RefreshMode.FORCE) as? AppResult.Success)?.let { loaded -> allTables = loaded.value }
             busy = false
             if (result is AppResult.Failure) error = result.error
             tablesRevision += 1
@@ -294,20 +296,24 @@ internal fun RoundControlDialogContent(
         )
         null -> Unit
     }
-    tablesToReview?.let { tables ->
+    // Once every table is closed, the review has nothing left to show.
+    if (reviewing && finishedOpenTables.isEmpty() && !busy) reviewing = false
+    if (reviewing) {
         OpenTablesReviewDialog(
-            tables = tables,
+            tables = finishedOpenTables,
+            busy = busy,
             loadRoundHands = loadRoundHands,
             onGoTo = { table ->
-                tablesToReview = null
+                reviewing = false
                 controller.selectRound(table.roundId)
                 scrollToTable = table
             },
+            onCloseSelected = { selected -> closeTables(selected) },
             onCloseAll = {
-                tablesToReview = null
-                closeTables(tables)
+                reviewing = false
+                closeTables(finishedOpenTables)
             },
-            onDismiss = { tablesToReview = null },
+            onDismiss = { reviewing = false },
         )
     }
     if (state.confirmReset) {
@@ -344,7 +350,7 @@ internal fun RoundControlDialogContent(
                         FinishedRoundsNotice(
                             openTables = finishedOpenTables,
                             enabled = !busy,
-                            onReview = { tablesToReview = finishedOpenTables },
+                            onReview = { reviewing = true },
                         )
                     }
                     // The rounds stay on top while the rest scrolls.
