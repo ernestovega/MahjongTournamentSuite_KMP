@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +57,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -69,6 +71,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold_all
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_search_hint
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_tiles_credit
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_unfold
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_unfold_all
@@ -199,7 +202,7 @@ private val ListMaxWidth = 960.dp
 @Composable
 fun CombinationsScreen(navController: NavHostController) {
     var query by rememberSaveable { mutableStateOf("") }
-    var showAll by rememberSaveable { mutableStateOf(false) }
+    var showAll by rememberSaveable { mutableStateOf(true) }
     // The combinations that a tap on their arrow turned the other way from [showAll].
     var toggled by rememberSaveable { mutableStateOf(emptyList<String>()) }
     // No value chosen shows every value.
@@ -272,12 +275,31 @@ fun CombinationsScreen(navController: NavHostController) {
                     )
                 }
             }
+            item(key = "credit") { TilesCredit(rowModifier) }
         }
     }
     Combinations.withIndex().firstOrNull { it.value.id == opened }?.let { (index, combination) ->
         CombinationDialog(index + 1, combination, onDismiss = { opened = null })
     }
 }
+
+/** The link that the licence of the clear tiles asks for. */
+@Composable
+private fun TilesCredit(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    Row(modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Text(
+            stringResource(Res.string.combinations_tiles_credit),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) {
+            Text("martinpersson.org", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+private const val MARTIN_PERSSON_URL = "http://www.martinpersson.org"
 
 /** A combination matches the text when its name, its description or its points have it. */
 internal fun Combination.matches(query: String, name: String, description: String?): Boolean {
@@ -462,46 +484,74 @@ private fun CombinationRow(
     }
 }
 
-/** A combination in large: its tiles as big as the dialog allows, its description and the explanation of the rules. */
+/**
+ * A combination in large: its name, value and tiles centered, and the explanation of the rules.
+ * The first paragraph of the explanation, the definition, is bold. The others, such as what it does not combine with, are not.
+ * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
+ */
 @Composable
 private fun CombinationDialog(position: Int, combination: Combination, onDismiss: () -> Unit) {
+    val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            // Wider than a usual dialog, so that the tiles of a long hand show large.
-            modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 840.dp).testTag(COMBINATION_DIALOG_TAG),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(combination.name), Modifier.weight(1f, fill = false))
-                    Text(
-                        "#$position",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(
-                        pluralStringResource(Res.plurals.combinations_points, combination.points, combination.points),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    if (combination.groups.isNotEmpty()) {
-                        TileGroupsRow(combination.groups, Modifier.fillMaxWidth(), maxTileWidth = LargeTileWidth)
+        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Surface(
+                // Wide on a big screen, so that the tiles of a long hand show large.
+                modifier = Modifier.padding(16.dp).widthIn(max = 1200.dp).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) {
+                Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    ) {
+                        Text(
+                            stringResource(combination.name),
+                            Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text("#$position", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    val description = stringResource(combination.description)
-                    val detail = stringResource(combination.detail)
-                    Text(description, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                    // Some sources explain a simple combination with the same words as its description.
-                    if (detail != description) Text(detail, style = MaterialTheme.typography.bodyLarge)
+                    Column(
+                        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text(
+                            pluralStringResource(Res.plurals.combinations_points, combination.points, combination.points),
+                            Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center,
+                        )
+                        if (combination.groups.isNotEmpty()) {
+                            // A big screen shows the detailed tiles large. A phone keeps the clear ones, which read better small.
+                            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                                val large = maxWidth >= 600.dp
+                                TileGroupsRow(
+                                    combination.groups,
+                                    Modifier.fillMaxWidth(),
+                                    maxTileWidth = if (large) LargeTileWidth else 64.dp,
+                                    alignment = Alignment.TopCenter,
+                                    set = if (large) TileSet.Luxury else TileSet.Simple,
+                                )
+                            }
+                        }
+                        paragraphs.forEachIndexed { index, paragraph ->
+                            Text(
+                                paragraph,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                            )
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
+                    }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
-            },
-        )
+            }
+        }
     }
 }

@@ -7,6 +7,7 @@
     <string name="combinations_unfold_all">Espandi tutte</string>
     <string name="combinations_fold_all">Comprimi tutte</string>
     <string name="combinations_unfold">Espandi</string>
+    <string name="combinations_tiles_credit">Pedine dell'elenco di Martin Persson:</string>
     <string name="combinations_close">Chiudi</string>
     <string name="combinations_fold">Comprimi</string>
     <plurals name="combinations_points">

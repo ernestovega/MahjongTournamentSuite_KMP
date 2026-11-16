@@ -30,14 +30,15 @@ class CombinationsUiTest {
     fun restore() = Locale.setDefault(original)
 
     @Test
-    fun theSearchFiltersByNameAndTheArrowShowsTheDescription() = runComposeUiTest {
+    fun theSearchFiltersByNameAndTheArrowFoldsTheDescription() = runComposeUiTest {
         setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
         onNodeWithTag(COMBINATIONS_SEARCH_TAG).performTextInput("edge")
         onAllNodesWithTag(COMBINATION_ROW_TAG).assertCountEquals(1)
-        onNodeWithText("Waiting only for a 3 to make 1-2-3, or only for a 7 to make 7-8-9. Not valid if waiting on more than one tile.").assertDoesNotExist()
-        onNodeWithContentDescription("Unfold").performClick()
+        // The combinations start unfolded.
         onNodeWithText("Waiting only for a 3 to make 1-2-3, or only for a 7 to make 7-8-9. Not valid if waiting on more than one tile.").assertExists()
-        onNodeWithContentDescription("Fold").assertExists()
+        onNodeWithContentDescription("Fold").performClick()
+        onNodeWithText("Waiting only for a 3 to make 1-2-3, or only for a 7 to make 7-8-9. Not valid if waiting on more than one tile.").assertDoesNotExist()
+        onNodeWithContentDescription("Unfold").assertExists()
     }
 
     @Test
@@ -55,6 +56,8 @@ class CombinationsUiTest {
     fun theSearchFindsTheCombinationsOfSomePoints() = runComposeUiTest {
         setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
         onNodeWithTag(COMBINATIONS_SEARCH_TAG).performTextInput("88")
+        // Folded, so that all the rows fit on the screen.
+        onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
         onAllNodesWithTag(COMBINATION_ROW_TAG).assertCountEquals(7)
         // One header for the value, above its seven combinations.
         onAllNodesWithTag(POINTS_HEADER_TAG).assertCountEquals(1)
@@ -64,6 +67,7 @@ class CombinationsUiTest {
     @Test
     fun aValueChipShowsOnlyTheCombinationsOfThatValue() = runComposeUiTest {
         setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
+        onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
         onNodeWithText("64 points (6)").performScrollTo().performClick()
         onAllNodesWithTag(COMBINATION_ROW_TAG).assertCountEquals(6)
         onAllNodesWithTag(POINTS_HEADER_TAG).assertCountEquals(1)
@@ -73,8 +77,8 @@ class CombinationsUiTest {
     fun theButtonShowsAndHidesAllCombinations() = runComposeUiTest {
         setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
         onNodeWithTag(COMBINATIONS_SEARCH_TAG).performTextInput("self")
-        onNodeWithText("Going out on a tile drawn from the wall.").assertDoesNotExist()
-        onNode(hasText("Unfold all") or hasContentDescription("Unfold all")).performClick()
         onNodeWithText("Going out on a tile drawn from the wall.").assertExists()
+        onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
+        onNodeWithText("Going out on a tile drawn from the wall.").assertDoesNotExist()
     }
 }
