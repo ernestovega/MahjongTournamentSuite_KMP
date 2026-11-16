@@ -260,7 +260,7 @@ class RoleGatingUiTest {
         onNodeWithText("Delete EMA players?").assertExists()
         assertEquals(emptyList(), registry.deleteRequests)
         onAllNodesWithText("Delete (2)").onLast().performClick()
-        awaitText("Players deleted: 1. Not deleted: 1.")
+        awaitText("Players deleted: 1\nNot deleted: 1")
 
         assertEquals(listOf(listOf("10002", "10003")), registry.deleteRequests)
         onNodeWithText("The player is in a tournament.", substring = true).assertExists()

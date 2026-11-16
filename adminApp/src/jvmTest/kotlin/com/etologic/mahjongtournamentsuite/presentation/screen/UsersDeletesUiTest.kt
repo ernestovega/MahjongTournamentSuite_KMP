@@ -89,7 +89,7 @@ class UsersDeletesUiTest {
         onNodeWithText("Delete accounts?").assertExists()
         assertEquals(emptyList(), admin.deleteRequests)
         onAllNodesWithText("Delete (2)").onLast().performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Accounts deleted: 2. Not deleted: 0.").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Accounts deleted: 2\nNot deleted: 0").fetchSemanticsNodes().isNotEmpty() }
 
         assertEquals(listOf(listOf("p1", "p2")), admin.deleteRequests)
         onNodeWithText("OK").performClick()
@@ -142,7 +142,7 @@ class UsersDeletesUiTest {
         onNodeWithContentDescription("bob@example.test").performClick()
         onNodeWithText("Delete (2)").performClick()
         onAllNodesWithText("Delete (2)").onLast().performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Accounts deleted: 1. Not deleted: 1.").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Accounts deleted: 1\nNot deleted: 1").fetchSemanticsNodes().isNotEmpty() }
 
         onNodeWithText("• bob@example.test: It is the last enabled admin.").assertExists()
         onNodeWithText("OK").performClick()
