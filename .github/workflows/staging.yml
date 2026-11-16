@@ -16,7 +16,8 @@ on:
         default: deploy
 
 concurrency:
-  group: staging-deploy
+  # One queue per action: a pending run of one action never cancels a run of another.
+  group: staging-${{ inputs.action }}
   cancel-in-progress: false
 
 permissions:
