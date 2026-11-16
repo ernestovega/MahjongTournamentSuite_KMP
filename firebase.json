@@ -47,6 +47,13 @@
           }
         },
         {
+          "source": "/version",
+          "function": {
+            "functionId": "api",
+            "region": "europe-southwest1"
+          }
+        },
+        {
           "source": "/admin/**",
           "destination": "/admin/index.html"
         },
