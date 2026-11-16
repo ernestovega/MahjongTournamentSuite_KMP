@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -231,62 +232,66 @@ fun CombinationsScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = { ContactTopBarButton(navController) },
     ) {
-        LazyColumnWithScrollbar(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize(),
-            // No top padding, so that a value header sticks right at the top.
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            item(key = "search") {
-                CombinationTools(
-                    query = query,
-                    onQuery = { query = it },
-                    showAll = showAll,
-                    onShowAll = {
-                        showAll = !showAll
-                        toggled = emptyList()
-                    },
-                    modifier = rowModifier.padding(top = 12.dp),
-                )
-            }
-            item(key = "values") {
-                PointsChips(
-                    counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
-                    selected = values,
-                    onToggle = { value -> values = if (value in values) values - value else values + value },
-                    modifier = rowModifier,
-                )
-            }
-            if (shown.isEmpty()) {
-                item(key = "empty") {
-                    Text(
-                        stringResource(Res.string.combinations_empty),
-                        Modifier.padding(24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+        // The credit of the tiles stays in the bottom right corner, over the list.
+        Box(Modifier.fillMaxSize()) {
+            LazyColumnWithScrollbar(
+                state = rememberLazyListState(),
+                modifier = Modifier.fillMaxSize(),
+                // No top padding, so that a value header sticks right at the top.
+                // The bottom padding leaves room for the credit, so it never covers the last combination.
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 56.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                item(key = "search") {
+                    CombinationTools(
+                        query = query,
+                        onQuery = { query = it },
+                        showAll = showAll,
+                        onShowAll = {
+                            showAll = !showAll
+                            toggled = emptyList()
+                        },
+                        modifier = rowModifier.padding(top = 12.dp),
                     )
                 }
-            }
-            // One group for each value, under a header that stays at the top while its combinations scroll.
-            shown.groupBy { it.points }.forEach { (points, group) ->
-                stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
-                items(group, key = { it.id }) { combination ->
-                    CombinationRow(
-                        combination = combination,
-                        name = names.getValue(combination.id),
-                        description = descriptions.getValue(combination.id),
-                        expanded = showAll != (combination.id in toggled),
-                        onFold = {
-                            toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
-                        },
-                        onOpen = { opened = combination.id },
+                item(key = "values") {
+                    PointsChips(
+                        counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
+                        selected = values,
+                        onToggle = { value -> values = if (value in values) values - value else values + value },
                         modifier = rowModifier,
                     )
                 }
+                if (shown.isEmpty()) {
+                    item(key = "empty") {
+                        Text(
+                            stringResource(Res.string.combinations_empty),
+                            Modifier.padding(24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                // One group for each value, under a header that stays at the top while its combinations scroll.
+                shown.groupBy { it.points }.forEach { (points, group) ->
+                    stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
+                    items(group, key = { it.id }) { combination ->
+                        CombinationRow(
+                            combination = combination,
+                            name = names.getValue(combination.id),
+                            description = descriptions.getValue(combination.id),
+                            expanded = showAll != (combination.id in toggled),
+                            onFold = {
+                                toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
+                            },
+                            onOpen = { opened = combination.id },
+                            modifier = rowModifier,
+                        )
+                    }
+                }
             }
-            item(key = "credit") { TilesCredit(rowModifier) }
+            TilesCredit(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 12.dp))
         }
     }
     Combinations.firstOrNull { it.id == opened }?.let { combination ->
@@ -294,18 +299,29 @@ fun CombinationsScreen(navController: NavHostController) {
     }
 }
 
-/** The link that the licence of the clear tiles asks for. */
+/** The link that the licence of the tiles asks for. It is always visible, small but readable, and opens the page of the author. */
 @Composable
 private fun TilesCredit(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
-    Row(modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-        Text(
-            stringResource(Res.string.combinations_tiles_credit),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) {
-            Text("martinpersson.org", style = MaterialTheme.typography.bodySmall)
+    Surface(
+        onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 2.dp,
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(Res.string.combinations_tiles_credit),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                " martinpersson.org",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+            )
         }
     }
 }
