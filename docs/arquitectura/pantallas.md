@@ -1,0 +1,120 @@
+# Mapa de pantallas (wireframe)
+
+Cómo se navega por las apps y qué ve cada rol. Las capturas son las de los tests de capturas (`*/screenshots/*/phone-light.png`, datos de ejemplo), así que se actualizan solas cuando se graban de nuevo. Hay versiones de escritorio, tablet y modo oscuro en las mismas carpetas.
+
+## Cómo encajan las apps
+
+```mermaid
+flowchart LR
+  subgraph Android["📱 App Android «MTS» (una sola app)"]
+    AP["Parte jugador<br/>(playerApp)"] -- "botón «Gestión»<br/>(solo admin/editor)" --> AA["Parte gestión<br/>(adminApp)"]
+    AA -- "botón «Vista jugador» / atrás" --> AP
+  end
+  subgraph Web["🌐 mts.mahjongmadrid.com"]
+    WP["/ → web jugador"] -- "tras iniciar sesión,<br/>admin/editor elige" --> WA["/admin/ → web gestión"]
+    WA -- "«Vista jugador»" --> WP
+  end
+  D["🖥️ Escritorio"] --> DA["solo gestión"]
+```
+
+## App de jugador
+
+Empieza siempre en la lista de torneos. No hace falta cuenta para ver nada; la cuenta solo sirve para marcar «yo» y para apuntar manos en la propia mesa.
+
+```mermaid
+flowchart TD
+  S([Arranque]) --> T["Torneos<br/>🌐 todos"]
+  T -- "abrir torneo / enlace /t/id" --> TT
+  subgraph Torneo["Torneo (pestañas)"]
+    TT["Mesas<br/>Yo · Equipo · Todas"]
+    TR["Clasificación"]
+    TP["Jugadores"]
+    TE["Equipos<br/>(si es por equipos)"]
+    TS["Estadísticas"]
+    TI["Info"]
+  end
+  TT -- "mesa" --> M["Mesa<br/>🌐 ver · 🀄 apuntar manos"]
+  TP -- "jugador" --> J["Ficha de jugador<br/>Mesas · Estadísticas"]
+  TR -- "jugador" --> J
+  J -- "mesa" --> M
+  T -- "pestaña Estadísticas" --> E["Estadísticas globales<br/>Yo · Mis torneos · Torneo · Jugador"]
+  T -- "menú" --> C["Combinaciones"] & P["Penalizaciones"] & GB["Green Book (PDF)"] & SUP["Ayuda / soporte"]
+  T -- "menú «Iniciar sesión»<br/>o «Inicia sesión para apuntar manos»" --> L["Iniciar sesión"]
+  L --> T
+  M -. "recordatorio «tu mesa»" .-> M
+```
+
+| Pantalla | Quién | Qué hace | Captura |
+|---|---|---|---|
+| **Torneos (sin cuenta)** | Todos | Lista de torneos públicos con filtros (estado, país, año). Botón de iniciar sesión. | <img src="../../playerApp/screenshots/tournaments-guest/phone-light.png" width="140" alt="Torneos (sin cuenta)"> |
+| **Torneos (con cuenta)** | Jugador | Igual, más el filtro «Mis torneos». | <img src="../../playerApp/screenshots/tournaments/phone-light.png" width="140" alt="Torneos (con cuenta)"> |
+| **Torneo › Mesas** | Todos | Pestañas Yo / Equipo / Todas. Mesas por ronda con resultados en vivo. | <img src="../../playerApp/screenshots/tournament-tables/phone-light.png" width="140" alt="Torneo › Mesas"> |
+| **Torneo › Clasificación** | Todos | Jugadores, equipos, manos pollo y mejor mano. | <img src="../../playerApp/screenshots/tournament-ranking/phone-light.png" width="140" alt="Torneo › Clasificación"> |
+| **Torneo › Jugadores** | Todos | Buscador; abre la ficha del jugador. | <img src="../../playerApp/screenshots/tournament-players/phone-light.png" width="140" alt="Torneo › Jugadores"> |
+| **Torneo › Equipos** | Todos | Solo en torneos por equipos. | <img src="../../playerApp/screenshots/tournament-teams/phone-light.png" width="140" alt="Torneo › Equipos"> |
+| **Torneo › Estadísticas** | Todos | Totales y reparto de manos, por ronda. | <img src="../../playerApp/screenshots/tournament-statistics/phone-light.png" width="140" alt="Torneo › Estadísticas"> |
+| **Torneo › Info** | Todos | Progreso, horario de rondas, sede, agenda y contacto. | <img src="../../playerApp/screenshots/tournament-info/phone-light.png" width="140" alt="Torneo › Info"> |
+| **Ficha de jugador › Mesas** | Todos | Sus mesas en el torneo. | <img src="../../playerApp/screenshots/tournament-player-tables/phone-light.png" width="140" alt="Ficha de jugador › Mesas"> |
+| **Ficha de jugador › Estadísticas** | Todos | Puesto, habilidades y totales. | <img src="../../playerApp/screenshots/tournament-player-statistics/phone-light.png" width="140" alt="Ficha de jugador › Estadísticas"> |
+| **Mesa (en juego)** | Todos ver · Jugador de la mesa apunta | Asientos, puntos y manos. El jugador de la mesa apunta manos, asientos y penalizaciones cuando la ronda está abierta. | <img src="../../playerApp/screenshots/table-in-play/phone-light.png" width="140" alt="Mesa (en juego)"> |
+| **Mesa (terminada)** | Todos | Resultado final y detalle de manos. | <img src="../../playerApp/screenshots/table-completed/phone-light.png" width="140" alt="Mesa (terminada)"> |
+| **Estadísticas globales** | Todos | Pestañas Yo / Mis torneos / Torneo / Jugador. | <img src="../../playerApp/screenshots/statistics-player/phone-light.png" width="140" alt="Estadísticas globales"> |
+| **Combinaciones** | Todos | Las 81 combinaciones MCR con ejemplos de fichas. | <img src="../../playerApp/screenshots/combinations/phone-light.png" width="140" alt="Combinaciones"> |
+| **Penalizaciones** | Todos | Tabla de penalizaciones. | <img src="../../playerApp/screenshots/penalties/phone-light.png" width="140" alt="Penalizaciones"> |
+| **Iniciar sesión** | Todos | Email y contraseña, «¿Olvidaste la contraseña?», «¿Necesitas ayuda?». | <img src="../../playerApp/screenshots/sign-in/phone-light.png" width="140" alt="Iniciar sesión"> |
+
+## App de gestión (admin y editor)
+
+```mermaid
+flowchart TD
+  S([Arranque]) --> L{"¿sesión?"}
+  L -- no --> SI["Iniciar sesión"] --> TL
+  L -- sí --> TL["Torneos<br/>🛡️ todos · ✏️ asignados"]
+  TL -- "abrir torneo" --> TO["Torneo<br/>editor de rondas y mesas"]
+  TL -- "jugadores del torneo" --> PL
+  TL -- "barra superior" --> U["Cuentas<br/>🛡️ todas · ✏️ la suya"]
+  TL -- "barra superior" --> RB["Registro EMA"]
+  TL -- "barra superior" --> TM["Reloj"]
+  TL -- "barra superior 🛡️" --> AC["Actividad"] & ER["Errores"]
+  TL -- "perfil 🛡️" --> DS["Design system"]
+  TO -- menú --> PL["Jugadores del torneo"] --> U
+  TO -- menú --> TE["Equipos"]
+  TO -- menú --> TM
+  TO -- menú --> RK["Clasificación<br/>(pantalla grande)"]
+  TO -- menú --> ST["Estadísticas"]
+  TO -- "menú 🛡️" --> RC["Control de ronda<br/>(diálogo)"] & AC
+  TO -- menú --> EX["Exportar<br/>(acreditaciones PDF, lista Excel, informe EMA)"]
+  TO --> TB["Mesas"] --> ST
+```
+
+| Pantalla | Quién | Qué hace | Captura |
+|---|---|---|---|
+| **Iniciar sesión** | Admin, editor | Web: si la cuenta es admin/editor elige «Vista jugador» o «Gestión». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Iniciar sesión"> |
+| **Torneos** | Admin: todos · Editor: asignados | Crear (admin), editar, abrir. Barra superior: cuentas, registro EMA, reloj, actividad y errores (admin). | <img src="../../adminApp/screenshots/tournaments/phone-light.png" width="140" alt="Torneos"> |
+| **Torneo (editor de rondas)** | Admin, editor asignado | Ronda › mesa: jugadores, asientos, puntos y las 16 manos. Menú: reloj, clasificación, estadísticas, exportar, control de ronda (admin), actividad (admin). | <img src="../../adminApp/screenshots/tournament/phone-light.png" width="140" alt="Torneo (editor de rondas)"> |
+| **Mesas** | Admin, editor asignado | Todas las mesas con su estado y filtros. | <img src="../../adminApp/screenshots/tables/phone-light.png" width="140" alt="Mesas"> |
+| **Jugadores del torneo** | Admin, editor asignado | Huecos, EMA ids, invitaciones, importación, sustituciones, tira de mesas por ronda. | <img src="../../adminApp/screenshots/players/phone-light.png" width="140" alt="Jugadores del torneo"> |
+| **Equipos** | Admin, editor asignado | Nombre y miembros de cada equipo. | <img src="../../adminApp/screenshots/teams/phone-light.png" width="140" alt="Equipos"> |
+| **Clasificación (pantalla grande)** | Admin, editor asignado | Para proyectar en la sala; pasa páginas sola. | <img src="../../adminApp/screenshots/ranking-standalone/phone-light.png" width="140" alt="Clasificación (pantalla grande)"> |
+| **Reloj de ronda** | Admin, editor asignado | Inicia, pausa y ajusta el tiempo de la ronda; abre las manos a los jugadores. | <img src="../../adminApp/screenshots/timer/phone-light.png" width="140" alt="Reloj de ronda"> |
+| **Estadísticas** | Admin, editor | Del torneo o de una persona. | <img src="../../adminApp/screenshots/statistics/phone-light.png" width="140" alt="Estadísticas"> |
+| **Cuentas** | Admin: todas · Editor: la suya | Crear, editar, desactivar, borrar, enviar email de contraseña. | <img src="../../adminApp/screenshots/users/phone-light.png" width="140" alt="Cuentas"> |
+| **Registro EMA** | Admin edita · Editor consulta | Jugadores EMA, fotos, ocultar del público, borrar cuentas de jugadores. | <img src="../../adminApp/screenshots/player-base/phone-light.png" width="140" alt="Registro EMA"> |
+| **Actividad** | Admin | Quién cambió qué y cuándo, con filtros. | <img src="../../adminApp/screenshots/activity/phone-light.png" width="140" alt="Actividad"> |
+| **Errores de las apps** | Admin | Errores agrupados de todas las apps. | <img src="../../adminApp/screenshots/errors/phone-light.png" width="140" alt="Errores de las apps"> |
+| **Design system** | Admin | Catálogo de colores y componentes (enlace en el perfil). | <img src="../../adminApp/screenshots/design-system/phone-light.png" width="140" alt="Design system"> |
+
+Los diálogos (crear/editar torneo, invitar, importar jugadores, control de ronda, perfil…) tienen sus capturas en `adminApp/screenshots/dialogs/` y `playerApp/screenshots/dialogs/`.
+
+## Qué rol ve qué (resumen)
+
+| | Sin cuenta | Jugador | Editor | Admin |
+|---|:-:|:-:|:-:|:-:|
+| Ver torneos públicos, mesas, clasificaciones, estadísticas | ✅ | ✅ | ✅ | ✅ |
+| Marcar «yo», «mis torneos» | | ✅ | ✅* | ✅* |
+| Apuntar manos/asientos en su mesa (ronda abierta) | | ✅ | ✅* | ✅* |
+| Gestionar torneos asignados (jugadores, mesas, manos, reloj, exportar) | | | ✅ | ✅ |
+| Crear/borrar/configurar torneos, control de ronda, vaciar mesa | | | | ✅ |
+| Cuentas de otros, registro EMA (editar), actividad, errores | | | | ✅ |
+
+\* si la cuenta también tiene EMA id. La matriz detallada está en [user-roles-matrix.md](../user-roles-matrix.md).

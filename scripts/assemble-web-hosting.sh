@@ -17,6 +17,10 @@ if find "$out" -name '*.wasm' | grep -Ev '/[0-9a-f]{16,}\.wasm$'; then
   echo "A .wasm file above has no content hash in its name. Fix the build or the cache rule in firebase.json." >&2
   exit 1
 fi
+# The API page (Swagger UI) at /api-docs/. See docs/arquitectura/api.md.
+mkdir -p "$out/api-docs"
+cp docs/api/index.html docs/api/swagger-init.js docs/api/openapi.json "$out/api-docs/"
+cp third_party/swagger-ui/swagger-ui-bundle.js third_party/swagger-ui/swagger-ui.css "$out/api-docs/"
 # The published web version, for python3 scripts/versions.py status. See docs/versioning.md.
 web_version=$(sed -n 's/^web-versionName *= *"\([^"]*\)".*/\1/p' gradle/libs.versions.toml)
 [ -n "$web_version" ] || { echo "web-versionName is missing in gradle/libs.versions.toml" >&2; exit 1; }

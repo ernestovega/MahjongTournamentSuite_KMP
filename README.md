@@ -6,6 +6,11 @@ Kotlin Multiplatform project targeting:
 - Desktop (JVM)
 - Web (Wasm)
 
+## Architecture and API
+
+- [docs/arquitectura/](docs/arquitectura/README.md): diagrams of the system, the data model, deploys and versions, and the screen map of the apps (in Spanish).
+- API reference (OpenAPI / Swagger UI): https://mts.mahjongmadrid.com/api-docs/ (source [docs/api/openapi.json](docs/api/openapi.json), written by `python3 scripts/generate-openapi.py`).
+
 ## Project Structure
 
 - [`androidApp`](./androidApp)  

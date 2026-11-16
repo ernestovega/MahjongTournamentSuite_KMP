@@ -1,0 +1,9175 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Mahjong Tournament Suite API",
+  "version": "1.0.8",
+  "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
+ },
+ "servers": [
+  {
+   "url": "https://mts.mahjongmadrid.com/api",
+   "description": "Producción (web, vía Firebase Hosting)"
+  },
+  {
+   "url": "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api",
+   "description": "Producción (Android y escritorio, directo a la función)"
+  },
+  {
+   "url": "http://localhost:5055/api",
+   "description": "Entorno de pruebas local (emuladores)"
+  }
+ ],
+ "tags": [
+  {
+   "name": "Sistema"
+  },
+  {
+   "name": "Sesión"
+  },
+  {
+   "name": "Público"
+  },
+  {
+   "name": "Jugador en mesa"
+  },
+  {
+   "name": "Torneos"
+  },
+  {
+   "name": "Jugadores del torneo"
+  },
+  {
+   "name": "Editores del torneo"
+  },
+  {
+   "name": "Rondas y mesas"
+  },
+  {
+   "name": "Exportaciones"
+  },
+  {
+   "name": "Estadísticas"
+  },
+  {
+   "name": "Registro EMA"
+  },
+  {
+   "name": "Admin"
+  }
+ ],
+ "paths": {
+  "/health": {
+   "get": {
+    "tags": [
+     "Sistema"
+    ],
+    "summary": "Estado y versión del backend",
+    "description": "🌐 Público: sin cuenta.\n\nResponde `{ ok: true, version }`. Lo usa `python3 scripts/versions.py status`. No pasa por App Check.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean"
+          },
+          "version": {
+           "type": "string",
+           "example": "1.0.12"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/version": {
+   "get": {
+    "tags": [
+     "Sistema"
+    ],
+    "summary": "Página HTML de versiones",
+    "description": "🌐 Público: sin cuenta.\n\nTabla con la versión de la web, del backend y de la app Android: la de `main` frente a la publicada. En el sitio también se sirve en `https://mts.mahjongmadrid.com/version`.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/config": {
+   "get": {
+    "tags": [
+     "Sistema"
+    ],
+    "summary": "Interruptores de funciones (feature flags)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeatureFlags"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/telemetry/errors": {
+   "post": {
+    "tags": [
+     "Sistema"
+    ],
+    "summary": "Enviar un informe de error de una app",
+    "description": "🌐 Público: sin cuenta.\n\nPúblico porque un fallo puede ocurrir antes de iniciar sesión. Límite: 30 por minuto y dirección. El servidor borra emails, números largos y tokens del texto. Responde 204 sin cuerpo.",
+    "security": [],
+    "responses": {
+     "204": {
+      "description": "Hecho, sin cuerpo."
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "app",
+         "platform",
+         "kind",
+         "errorType"
+        ],
+        "properties": {
+         "app": {
+          "type": "string",
+          "enum": [
+           "admin",
+           "player"
+          ]
+         },
+         "platform": {
+          "type": "string",
+          "enum": [
+           "android",
+           "web",
+           "desktop"
+          ]
+         },
+         "kind": {
+          "type": "string",
+          "enum": [
+           "crash",
+           "handled"
+          ]
+         },
+         "env": {
+          "type": "string",
+          "enum": [
+           "prod",
+           "dev",
+           "debug"
+          ]
+         },
+         "role": {
+          "type": "string",
+          "enum": [
+           "admin",
+           "editor",
+           "player"
+          ]
+         },
+         "appVersion": {
+          "type": "string"
+         },
+         "errorType": {
+          "type": "string"
+         },
+         "area": {
+          "type": "string"
+         },
+         "message": {
+          "type": "string"
+         },
+         "stackTrace": {
+          "type": "string"
+         },
+         "reason": {
+          "type": "string"
+         },
+         "httpStatus": {
+          "type": "integer"
+         },
+         "language": {
+          "type": "string"
+         },
+         "reportId": {
+          "type": "string"
+         },
+         "sessionId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/support/message": {
+   "post": {
+    "tags": [
+     "Sistema"
+    ],
+    "summary": "Formulario «¿Necesitas ayuda?»",
+    "description": "🌐 Público: sin cuenta.\n\nEnvía un email al buzón de soporte. Límite: 3 mensajes cada 15 minutos por dirección.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SupportMessageRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/auth/signIn": {
+   "post": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Iniciar sesión con email y contraseña",
+    "description": "🌐 Público: sin cuenta.\n\nEl backend llama a Firebase Auth y devuelve el ID token (1 h) y el refresh token. Límite: 30 por minuto.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SignInResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SignInRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/auth/refresh": {
+   "post": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Renovar el ID token",
+    "description": "🌐 Público: sin cuenta.\n\nLas apps lo llaman al recibir `401 unauthenticated`.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RefreshResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RefreshRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/auth/passwordReset": {
+   "post": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Pedir el email de cambio de contraseña",
+    "description": "🌐 Público: sin cuenta.\n\nFirebase envía el email. Siempre responde `ok` para no revelar qué emails existen.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PasswordResetRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/auth/me": {
+   "get": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Mi perfil",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nAlias, EMA id, foto y roles de la cuenta.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Cambiar mi alias",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\n1 a 60 caracteres.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateOwnAliasRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Borrar mi cuenta",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nBorra la cuenta y su perfil. El registro EMA y los resultados de los torneos se quedan.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/auth/me/photo": {
+   "put": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Subir mi foto",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nJPEG o PNG en Base64. Se guarda en Storage `userPhotos/{uid}`.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePlayerPhotoRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Quitar mi foto",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/me": {
+   "get": {
+    "tags": [
+     "Sesión"
+    ],
+    "summary": "Mis huecos en los torneos",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nEMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyTournamentsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/public/tournaments": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Lista de torneos públicos",
+    "description": "🌐 Público: sin cuenta.\n\nTorneos con `isPublic != false`. Caché CDN de 60 s.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/public/tournaments/{tournamentId}": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Un torneo público",
+    "description": "🌐 Público: sin cuenta.\n\n404 si no existe o no es público. Caché 15 s en juego, 300 s terminado.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tournament"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/sync/manifest": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Revisiones de los datos de un torneo",
+    "description": "🌐 Público: sin cuenta.\n\nLas apps comparan revisiones para pedir solo lo que cambió.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataVersionsManifest"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/players": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Jugadores de un torneo",
+    "description": "🌐 Público: sin cuenta.\n\nSin emails ni cuentas. Un jugador con `hiddenFromPublic` aparece como «#N».",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentPlayersResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/teams": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Equipos de un torneo",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentTeamsResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/round-clocks": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Relojes y control de las rondas",
+    "description": "🌐 Público: sin cuenta.\n\nIncluye `serverNowMs` para que la app ajuste su reloj.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundClocksResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/rounds": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Rondas",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentRoundsResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/tables": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Mesas (resumen)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentTablesResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Solo las mesas de esta ronda."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/tables-with-hands": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Todas las mesas con sus 16 manos",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundTablesWithHandsResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/rounds/{roundId}/tables-with-hands": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Mesas de una ronda con sus manos",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundTablesWithHandsResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     }
+    ]
+   }
+  },
+  "/public/tournaments/{tournamentId}/tables/{roundId}/{tableId}": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Una mesa con sus manos",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TableWithHandsResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ]
+   }
+  },
+  "/public/statistics/overview": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Estadísticas globales",
+    "description": "🌐 Público: sin cuenta.\n\nSumas de todos los torneos públicos.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StatisticsOverview"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/public/statistics/persons/{emaId}": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Estadísticas de una persona",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PersonStatistics"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ]
+   }
+  },
+  "/public/statistics/persons/{emaId}/standings": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Puestos de una persona en varios torneos",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StandingsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     },
+     {
+      "name": "tournaments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Ids de torneo separados por comas."
+     }
+    ]
+   }
+  },
+  "/public/players": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Registro EMA público",
+    "description": "🌐 Público: sin cuenta.\n\nSin fotos. Caché 1 h.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayersResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/public/countries": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Países",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CountriesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/public/sync/manifest": {
+   "get": {
+    "tags": [
+     "Público"
+    ],
+    "summary": "Revisiones globales (lista de torneos, registro…)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataVersionsManifest"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/seats": {
+   "post": {
+    "tags": [
+     "Jugador en mesa"
+    ],
+    "summary": "Sentar a los jugadores",
+    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nFija Este/Sur/Oeste/Norte. `expectedVersion` evita pisar cambios de otro dispositivo (409 si la mesa cambió).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SeatsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SeatsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/hands/preview": {
+   "post": {
+    "tags": [
+     "Jugador en mesa"
+    ],
+    "summary": "Calcular una mano sin guardarla",
+    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nDevuelve cómo quedaría la mesa.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HandPreview"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/HandRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/hands": {
+   "post": {
+    "tags": [
+     "Jugador en mesa"
+    ],
+    "summary": "Apuntar una mano",
+    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nSolo con la ronda abierta para manos (reloj iniciado o control `open`). 409 si la mesa cambió.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HandPreview"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/HandRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/penalties": {
+   "post": {
+    "tags": [
+     "Jugador en mesa"
+    ],
+    "summary": "Apuntar penalizaciones",
+    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PenaltiesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments": {
+   "get": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Torneos que gestiono",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nAdmin: todos. Editor: los asignados. Cuenta solo jugador: lista vacía (usa `/public`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Crear un torneo",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nLa app genera rondas y mesas (sorteo) y las envía aquí; el backend valida y guarda. Sede y email de contacto obligatorios.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tournament"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateTournamentRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}": {
+   "put": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Renombrar un torneo",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RenameTournamentRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Borrar un torneo",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nBorra el torneo y todas sus subcolecciones.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/settings": {
+   "put": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Editar los ajustes del torneo",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nNombre, fechas, sede, colores, logo, horarios de rondas, agenda, público/privado, duración de partida…",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tournament"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateTournamentSettingsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/sync/manifest": {
+   "get": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Revisiones de los datos del torneo",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataVersionsManifest"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/sync/manifest": {
+   "get": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Revisiones globales",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataVersionsManifest"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/integrity": {
+   "get": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Comprobar la integridad del torneo",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nBusca incoherencias (huecos, copias de manos, horarios…). Solo lee.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/complete-open-tables": {
+   "post": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Completar mesas abiertas",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CompleteTablesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CompleteTablesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/players": {
+   "get": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Huecos del torneo",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEl email solo llega a admins; los editores reciben `hasAccount` y `hasEmail`.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentPlayersResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/players/{playerId}": {
+   "put": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Asignar un EMA id a un hueco",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`emaId` vacío o null deja el hueco libre.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "playerId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de hueco (slot) del jugador en el torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssignTournamentPlayerRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/players/{playerId}/substitution": {
+   "put": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Marcar una sustitución",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`reason`: LATE, ILLNESS o DISQUALIFIED.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "playerId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de hueco (slot) del jugador en el torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerSubstitution"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Quitar la sustitución",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "playerId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de hueco (slot) del jugador en el torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/teams": {
+   "get": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Equipos",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentTeamsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/teams/{teamId}": {
+   "put": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Editar un equipo",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nNombre y EMA ids de sus miembros.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "teamId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateTournamentTeamRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/player-accounts/send": {
+   "post": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Invitar o recordar",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nPor cada jugador: sin cuenta → crea la cuenta y envía el email de contraseña (`INVITED`); con cuenta → email recordatorio (`REMINDED`). Hasta 200.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerAccountActionResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerAccountActionRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/player-emails": {
+   "put": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Guardar emails pendientes de huecos",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nHasta 200. Resultado por jugador: SAVED, CLEARED o FAILED.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerEmailsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerEmailsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/player-import/export": {
+   "get": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Exportar jugadores a Excel",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEl Excel va en Base64 dentro del JSON.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerExport"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/player-import/preview": {
+   "post": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Previsualizar una importación",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nLee un CSV o Excel y dice qué cambiaría. No escribe nada.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerImportPreview"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerImportRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/player-import/apply": {
+   "post": {
+    "tags": [
+     "Jugadores del torneo"
+    ],
+    "summary": "Aplicar una importación",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nSustituye todos los jugadores y equipos. 409 `FILE_HAS_ERRORS` o `TOURNAMENT_STARTED`.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerImportResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerImportRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/members": {
+   "get": {
+    "tags": [
+     "Editores del torneo"
+    ],
+    "summary": "Editores asignados",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MembersResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/members/{uid}": {
+   "put": {
+    "tags": [
+     "Editores del torneo"
+    ],
+    "summary": "Asignar un editor",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpsertMemberRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Editores del torneo"
+    ],
+    "summary": "Quitar un editor",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/users/lookup": {
+   "get": {
+    "tags": [
+     "Editores del torneo"
+    ],
+    "summary": "Buscar una cuenta por email",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "email",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Email de la cuenta."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/rounds": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Rondas",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentRoundsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/round-clocks": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Relojes de las rondas",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundClocksResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/rounds/{roundId}/clock": {
+   "post": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Manejar el reloj de una ronda",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`action`: start, pause, resume, reset, setRemaining o stop. `agoSeconds` permite acciones hechas sin conexión (hasta 10 min).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundClocksResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RoundClockActionRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/rounds/{roundId}/control": {
+   "post": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Control manual de la ronda",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nAbre o cierra manos y asientos (`auto`, `open`, `closed`), por ronda o por mesa; reabre o completa mesas.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundClocksResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RoundControlRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/tables": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Mesas (resumen)",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TournamentTablesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Solo las mesas de esta ronda."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/tables-with-hands": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Todas las mesas con manos",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundTablesWithHandsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/rounds/{roundId}/tables-with-hands": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Mesas de una ronda con manos",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RoundTablesWithHandsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/tables/{roundId}/{tableId}": {
+   "get": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Una mesa con sus manos",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TableWithHandsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/tables/{roundId}/{tableId}/state": {
+   "put": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Guardar una mesa (editor)",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nParche de la mesa y de sus manos en una transacción. `expectedVersion` debe ser la versión actual: si otro guardó antes, 409 con los datos del servidor. Actualiza estadísticas y registro de cambios en la misma transacción.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TableWithHandsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveTableStateRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/tables/{roundId}/{tableId}/reset": {
+   "post": {
+    "tags": [
+     "Rondas y mesas"
+    ],
+    "summary": "Vaciar una mesa",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TableWithHandsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "roundId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de ronda (desde 1)."
+     },
+     {
+      "name": "tableId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Número de mesa en la ronda (desde 1)."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/id-cards": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "PDF de acreditaciones (ID cards)",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nRechaza torneos con huecos sin asignar.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "layout",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`sheet` para varias por hoja A4; sin valor, una por página."
+     },
+     {
+      "name": "cardsPerSheet",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "1 a 40 (por defecto 10)."
+     },
+     {
+      "name": "scalePercent",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Tamaño de la tarjeta."
+     },
+     {
+      "name": "landscape",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false"
+     },
+     {
+      "name": "doubleSided",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false"
+     },
+     {
+      "name": "cutMarks",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false"
+     }
+    ]
+   }
+  },
+  "/tournaments/id-card-proof": {
+   "post": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "PDF de prueba de una acreditación",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/IdCardProofRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/id-card-preview": {
+   "post": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Vista previa de una acreditación",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nIgual que id-card-proof.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/IdCardProofRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/id-list": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Excel con la lista de jugadores",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/ema-report": {
+   "post": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Excel de resultados para la EMA",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nLa app envía la clasificación final.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EmaReportRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/statistics/overview": {
+   "get": {
+    "tags": [
+     "Estadísticas"
+    ],
+    "summary": "Estadísticas globales (todas)",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StatisticsOverview"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/tournaments/statistics/me": {
+   "get": {
+    "tags": [
+     "Estadísticas"
+    ],
+    "summary": "Mis estadísticas",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PersonStatistics"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/tournaments/statistics/me/standings": {
+   "get": {
+    "tags": [
+     "Estadísticas"
+    ],
+    "summary": "Mis puestos",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StandingsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournaments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Ids de torneo separados por comas."
+     }
+    ]
+   }
+  },
+  "/tournaments/statistics/persons/{emaId}": {
+   "get": {
+    "tags": [
+     "Estadísticas"
+    ],
+    "summary": "Estadísticas de una persona",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PersonStatistics"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ]
+   }
+  },
+  "/tournaments/statistics/persons/{emaId}/standings": {
+   "get": {
+    "tags": [
+     "Estadísticas"
+    ],
+    "summary": "Puestos de una persona",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StandingsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     },
+     {
+      "name": "tournaments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Ids de torneo separados por comas."
+     }
+    ]
+   }
+  },
+  "/ema-player-registry": {
+   "get": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Registro EMA completo",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayersResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Crear un jugador EMA",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Player"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreatePlayerRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ema-player-registry/{emaId}": {
+   "put": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Editar un jugador EMA",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nIncluye `hiddenFromPublic` (en público sale como «#N»).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePlayerRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ema-player-registry/{emaId}/photo": {
+   "put": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Foto de un jugador EMA",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nStorage `playerPhotos/{emaId}`.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Player"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePlayerPhotoRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ema-player-registry/accounts/delete": {
+   "post": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Borrar cuentas de jugadores EMA",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nBorra las cuentas que tienen esos EMA id. El registro EMA nunca se borra.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerAccountDeletesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerAccountDeletesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/countries": {
+   "get": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Países",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CountriesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/venues/resolve-link": {
+   "post": {
+    "tags": [
+     "Registro EMA"
+    ],
+    "summary": "Resolver un enlace corto de Google Maps",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nSigue hasta 5 redirecciones de Google y devuelve el enlace completo y, si puede, nombre, dirección, ciudad, país y zona horaria.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResolveVenueLinkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResolveVenueLinkRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/whoami": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Quién soy",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\n`role` es la capacidad más alta; `roles` todas.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WhoAmIResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/admin/users": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Cuentas",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nAdmin: todas. Editor: la suya.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUsersResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Crear una cuenta",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nResponde 201.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveManagedUserRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/users/{uid}": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Editar una cuenta",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nUn editor solo edita la suya. Un EMA id de otra cuenta da 409.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveManagedUserRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Borrar una cuenta",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ]
+   }
+  },
+  "/admin/users/{uid}/photo": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Foto de una cuenta",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePlayerPhotoRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Quitar la foto de una cuenta",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ]
+   }
+  },
+  "/admin/users/{uid}/disabled": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Desactivar o activar una cuenta",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SetUserDisabledRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/users/delete": {
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Borrar varias cuentas",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserDeletesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UserDeletesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/users/password-resets": {
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Enviar emails de contraseña",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nHasta 200 uids.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PasswordResetsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PasswordResetsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/users/lookup": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Buscar una cuenta",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "identifier",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Email, uid o EMA id."
+     }
+    ]
+   }
+  },
+  "/admin/activity": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Registro de actividad",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nCambios de mesas y acciones de gestión, del más nuevo al más viejo.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ActivityPage"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Tamaño de página (máx. 50)."
+     },
+     {
+      "name": "source",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "all, tables u other."
+     },
+     {
+      "name": "tournamentId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Filtrar por torneo."
+     },
+     {
+      "name": "uid",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Filtrar por cuenta."
+     },
+     {
+      "name": "origin",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "admin, player o system."
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Desde (ms epoch)."
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Hasta (ms epoch)."
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Texto libre (sin mayúsculas ni acentos)."
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`nextCursor` de la página anterior."
+     }
+    ]
+   }
+  },
+  "/admin/error-groups": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Errores de las apps agrupados",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorGroupsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Máx. 200."
+     },
+     {
+      "name": "since",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Desde (ms epoch)."
+     },
+     {
+      "name": "cursorAt",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Del `nextCursor`."
+     },
+     {
+      "name": "cursorId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Del `nextCursor`."
+     }
+    ]
+   }
+  },
+  "/admin/error-groups/{id}": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Un grupo de errores con sus informes",
+    "description": "🛡️ Solo admin (claim `admin`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorGroupDetail"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Máx. 50."
+     },
+     {
+      "name": "cursorAt",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": ""
+     },
+     {
+      "name": "cursorId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": ""
+     }
+    ]
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "bearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "bearerFormat": "Firebase ID token (JWT)"
+   }
+  },
+  "responses": {
+   "E400": {
+    "description": "Petición no válida (`bad_request`). `details` dice qué campo falla.",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "E401": {
+    "description": "Sin token, token caducado (`unauthenticated`) o App Check rechazado (`app_check_failed`, solo en modo enforce).",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "E403": {
+    "description": "La cuenta no tiene permiso (`forbidden`).",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "E404": {
+    "description": "No existe (`not_found`).",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "E409": {
+    "description": "Conflicto (`conflict`): la mesa cambió en el servidor, el EMA id ya tiene dueño, el fichero tiene errores…",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "E429": {
+    "description": "Demasiadas peticiones (`too_many_requests`).",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "ActivityDetail": {
+    "type": "object",
+    "properties": {
+     "key": {
+      "type": "string"
+     },
+     "value": {
+      "type": "string"
+     }
+    }
+   },
+   "ActivityEntry": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string"
+     },
+     "at": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "action": {
+      "type": "string"
+     },
+     "uid": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "name": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "source": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "tournamentId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "tournamentName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "target": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "details": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ActivityDetail"
+      }
+     },
+     "roundId": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "tableId": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "version": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "changes": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ActivityFieldChange"
+      }
+     },
+     "players": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "ActivityFieldChange": {
+    "type": "object",
+    "properties": {
+     "field": {
+      "type": "string"
+     },
+     "from": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "to": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "handId": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     }
+    }
+   },
+   "ActivityPage": {
+    "type": "object",
+    "properties": {
+     "entries": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ActivityEntry"
+      }
+     },
+     "nextCursor": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "AssignTournamentPlayerRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "CompleteTablesRequest": {
+    "type": "object",
+    "properties": {
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TableRef"
+      }
+     }
+    },
+    "required": [
+     "tables"
+    ]
+   },
+   "CompleteTablesResponse": {
+    "type": "object",
+    "properties": {
+     "completed": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "CountriesResponse": {
+    "type": "object",
+    "properties": {
+     "countries": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Country"
+      }
+     }
+    },
+    "required": [
+     "countries"
+    ]
+   },
+   "Country": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "name"
+    ]
+   },
+   "CreatePlayerRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "firstName": {
+      "type": "string"
+     },
+     "lastName": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "emaId",
+     "firstName",
+     "lastName",
+     "country"
+    ]
+   },
+   "CreateTournamentRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "eventStartDate": {
+      "type": "string"
+     },
+     "eventEndDate": {
+      "type": "string"
+     },
+     "isTeams": {
+      "type": "boolean"
+     },
+     "numPlayers": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "numRounds": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "numTries": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "countBestHands": {
+      "type": "boolean"
+     },
+     "countChickenHands": {
+      "type": "boolean"
+     },
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentPlayer"
+      }
+     },
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentTable"
+      }
+     },
+     "shortName": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "associationLogoContentType": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoDataBase64": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoSourceTournamentId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hostCountry": {
+      "type": "string"
+     },
+     "hostCity": {
+      "type": "string"
+     },
+     "venueName": {
+      "type": "string"
+     },
+     "venueAddress": {
+      "type": "string"
+     },
+     "venueMapUrl": {
+      "type": "string"
+     },
+     "contactEmail": {
+      "type": "string"
+     },
+     "roundSchedules": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "$ref": "#/components/schemas/TournamentRoundSchedule"
+      }
+     },
+     "agendaItems": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "$ref": "#/components/schemas/TournamentAgendaItem"
+      }
+     },
+     "matchDurationMinutes": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "matchEndMode": {
+      "type": "string"
+     },
+     "matchExtraMinutes": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "timeZone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "name",
+     "eventStartDate",
+     "eventEndDate",
+     "isTeams",
+     "numPlayers",
+     "numRounds",
+     "numTries",
+     "players",
+     "tables",
+     "shortName",
+     "primaryColor",
+     "hostCountry",
+     "hostCity"
+    ]
+   },
+   "DataVersion": {
+    "type": "object",
+    "properties": {
+     "revision": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "changedAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "DataVersionsManifest": {
+    "type": "object",
+    "properties": {
+     "resources": {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/DataVersion"
+      }
+     },
+     "globalResources": {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/DataVersion"
+      },
+      "description": "Revisions shared by all tournaments. Only the tournament manifest has them."
+     },
+     "tableVersions": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "format": "int64"
+      },
+      "description": "Exact version of each saved table. The key is `<roundId>_<tableId>`. Only tournaments have it."
+     }
+    }
+   },
+   "DigestResult": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "slotId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "seat": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "position": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "score": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "points": {
+      "type": "number",
+      "format": "double"
+     },
+     "hasHands": {
+      "type": "boolean"
+     },
+     "handsPlayed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsWon": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "dealIns": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "drawnHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "bestHand": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "chickenHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "dealInScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "lostToSelfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "otherWins": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyPoints": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "maxPenalty": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "rivals": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DigestRival"
+      }
+     },
+     "winRun": {
+      "$ref": "#/components/schemas/HandRun"
+     },
+     "noDealInRun": {
+      "$ref": "#/components/schemas/HandRun"
+     }
+    }
+   },
+   "DigestRival": {
+    "type": "object",
+    "properties": {
+     "opponent": {
+      "type": "string"
+     },
+     "tablesBehind": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "discardLosses": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDrawLosses": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "othersDiscardWins": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "EmaReportRankingRow": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "place": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablePoints": {
+      "type": "number",
+      "format": "double"
+     },
+     "score": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "playerId",
+     "place",
+     "tablePoints",
+     "score"
+    ]
+   },
+   "EmaReportRequest": {
+    "type": "object",
+    "properties": {
+     "rows": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EmaReportRankingRow"
+      }
+     }
+    },
+    "required": [
+     "rows"
+    ]
+   },
+   "Error": {
+    "type": "object",
+    "required": [
+     "error",
+     "message"
+    ],
+    "properties": {
+     "error": {
+      "type": "string",
+      "example": "conflict",
+      "description": "Código estable del error."
+     },
+     "message": {
+      "type": "string",
+      "description": "Texto para personas (en inglés)."
+     },
+     "details": {
+      "description": "Datos extra, p. ej. `{ code: \"FILE_HAS_ERRORS\" }` o el estado actual de la mesa."
+     }
+    }
+   },
+   "ErrorGroup": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "errorType": {
+      "type": "string"
+     },
+     "area": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     },
+     "count": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "firstSeen": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "lastSeen": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "lastKind": {
+      "type": "string"
+     },
+     "lastApp": {
+      "type": "string"
+     },
+     "lastPlatform": {
+      "type": "string"
+     },
+     "lastVersion": {
+      "type": "string"
+     },
+     "lastEnv": {
+      "type": "string"
+     },
+     "platforms": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "apps": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "format": "int32"
+      }
+     }
+    }
+   },
+   "ErrorGroupDetail": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "errorType": {
+      "type": "string"
+     },
+     "area": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     },
+     "stackTrace": {
+      "type": "string"
+     },
+     "count": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "firstSeen": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "lastSeen": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "lastKind": {
+      "type": "string"
+     },
+     "lastApp": {
+      "type": "string"
+     },
+     "lastPlatform": {
+      "type": "string"
+     },
+     "lastVersion": {
+      "type": "string"
+     },
+     "lastEnv": {
+      "type": "string"
+     },
+     "platforms": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "apps": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "reports": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ErrorReport"
+      }
+     },
+     "nextReportCursor": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ErrorLogCursor"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   },
+   "ErrorGroupsResponse": {
+    "type": "object",
+    "properties": {
+     "groups": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ErrorGroup"
+      }
+     },
+     "nextCursor": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ErrorLogCursor"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   },
+   "ErrorLogCursor": {
+    "type": "object",
+    "properties": {
+     "at": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "ErrorReport": {
+    "type": "object",
+    "properties": {
+     "reportId": {
+      "type": "string"
+     },
+     "createdAt": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "app": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string"
+     },
+     "env": {
+      "type": "string"
+     },
+     "role": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "appVersion": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "httpStatus": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "message": {
+      "type": "string"
+     },
+     "language": {
+      "type": "string"
+     }
+    }
+   },
+   "FeatureFlags": {
+    "type": "object",
+    "properties": {
+     "levelsEnabled": {
+      "type": "boolean"
+     }
+    }
+   },
+   "GlobalUserRole": {
+    "type": "string",
+    "enum": [
+     "EDITOR",
+     "ADMIN",
+     "PLAYER"
+    ]
+   },
+   "HandPatchRequest": {
+    "type": "object",
+    "properties": {
+     "playerWinnerId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerLooserId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "handScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "isChickenHand": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "isDone": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "playerEastPenalty": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerSouthPenalty": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerWestPenalty": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerNorthPenalty": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "HandPreview": {
+    "type": "object",
+    "properties": {
+     "handId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "seats": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "handScores": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "tableScores": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "tablePoints": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "tableVersion": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "handId",
+     "seats",
+     "handScores",
+     "tableScores",
+     "tablePoints",
+     "tableVersion"
+    ]
+   },
+   "HandRequest": {
+    "type": "object",
+    "properties": {
+     "playerWinnerId": {
+      "type": "string"
+     },
+     "playerLooserId": {
+      "type": "string"
+     },
+     "handScore": {
+      "type": "string"
+     },
+     "isChickenHand": {
+      "type": "boolean"
+     },
+     "isDraw": {
+      "type": "boolean"
+     },
+     "isLastHand": {
+      "type": "boolean"
+     },
+     "expectedVersion": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     }
+    },
+    "required": [
+     "playerWinnerId",
+     "playerLooserId",
+     "handScore",
+     "isChickenHand"
+    ]
+   },
+   "HandRun": {
+    "type": "object",
+    "properties": {
+     "best": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "start": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "end": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "IdCardProofRequest": {
+    "type": "object",
+    "properties": {
+     "shortName": {
+      "type": "string"
+     },
+     "year": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "associationLogoContentType": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoDataBase64": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "roundSchedules": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentRoundSchedule"
+      }
+     }
+    },
+    "required": [
+     "shortName",
+     "year",
+     "primaryColor"
+    ]
+   },
+   "ImportFileValues": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "emaId": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "team": {
+      "type": "string"
+     }
+    }
+   },
+   "ImportIssue": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "severity": {
+      "type": "string"
+     },
+     "args": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "code",
+     "severity"
+    ]
+   },
+   "ImportRemovedPlayer": {
+    "type": "object",
+    "properties": {
+     "slotId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "emaId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "slotId",
+     "emaId"
+    ]
+   },
+   "ImportRowPlan": {
+    "type": "object",
+    "properties": {
+     "row": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "file": {
+      "$ref": "#/components/schemas/ImportFileValues"
+     },
+     "slotId": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "emaId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "email": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "team": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "issues": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ImportIssue"
+      }
+     },
+     "changes": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "row"
+    ]
+   },
+   "ManagedUser": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "alias": {
+      "type": "string"
+     },
+     "emaId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "photoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hasOwnPhoto": {
+      "type": "boolean"
+     },
+     "role": {
+      "$ref": "#/components/schemas/GlobalUserRole"
+     },
+     "roles": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GlobalUserRole"
+      }
+     },
+     "disabled": {
+      "type": "boolean"
+     },
+     "tournamentAssignments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentAssignment"
+      }
+     }
+    },
+    "required": [
+     "uid",
+     "email",
+     "role",
+     "disabled"
+    ]
+   },
+   "ManagedUsersResponse": {
+    "type": "object",
+    "properties": {
+     "users": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ManagedUser"
+      }
+     }
+    },
+    "required": [
+     "users"
+    ]
+   },
+   "MembersResponse": {
+    "type": "object",
+    "properties": {
+     "members": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentMember"
+      }
+     }
+    },
+    "required": [
+     "members"
+    ]
+   },
+   "MyTournamentSlot": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "teamId": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "tournamentId",
+     "playerId"
+    ]
+   },
+   "MyTournamentsResponse": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "tournaments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/MyTournamentSlot"
+      }
+     }
+    }
+   },
+   "OkResponse": {
+    "type": "object",
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "ok"
+    ]
+   },
+   "PasswordResetRequest": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "email"
+    ]
+   },
+   "PasswordResetResult": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "uid",
+     "outcome"
+    ]
+   },
+   "PasswordResetsRequest": {
+    "type": "object",
+    "properties": {
+     "uids": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "uids"
+    ]
+   },
+   "PasswordResetsResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PasswordResetResult"
+      }
+     }
+    }
+   },
+   "PenaltiesRequest": {
+    "type": "object",
+    "properties": {
+     "playerEastPenalty": {
+      "type": "string"
+     },
+     "playerSouthPenalty": {
+      "type": "string"
+     },
+     "playerWestPenalty": {
+      "type": "string"
+     },
+     "playerNorthPenalty": {
+      "type": "string"
+     },
+     "expectedVersion": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "playerEastPenalty",
+     "playerSouthPenalty",
+     "playerWestPenalty",
+     "playerNorthPenalty",
+     "expectedVersion"
+    ]
+   },
+   "PersonStatistics": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "tournaments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PersonTournament"
+      }
+     }
+    }
+   },
+   "PersonTournament": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DigestResult"
+      }
+     }
+    }
+   },
+   "Player": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "firstName": {
+      "type": "string"
+     },
+     "lastName": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "photoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hiddenFromPublic": {
+      "type": "boolean"
+     },
+     "createdAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "updatedAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "emaId",
+     "firstName",
+     "lastName"
+    ]
+   },
+   "PlayerAccountActionRequest": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerAccountItem"
+      }
+     }
+    },
+    "required": [
+     "players"
+    ]
+   },
+   "PlayerAccountActionResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerAccountResult"
+      }
+     }
+    }
+   },
+   "PlayerAccountDeleteResult": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "emaId",
+     "outcome"
+    ]
+   },
+   "PlayerAccountDeletesRequest": {
+    "type": "object",
+    "properties": {
+     "emaIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "emaIds"
+    ]
+   },
+   "PlayerAccountDeletesResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerAccountDeleteResult"
+      }
+     }
+    }
+   },
+   "PlayerAccountItem": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "playerId"
+    ]
+   },
+   "PlayerAccountResult": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "sentAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "playerId",
+     "outcome"
+    ]
+   },
+   "PlayerEmailItem": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "email": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "playerId",
+     "email"
+    ]
+   },
+   "PlayerEmailResult": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "playerId",
+     "outcome"
+    ]
+   },
+   "PlayerEmailsRequest": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerEmailItem"
+      }
+     }
+    },
+    "required": [
+     "players"
+    ]
+   },
+   "PlayerEmailsResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerEmailResult"
+      }
+     }
+    }
+   },
+   "PlayerExport": {
+    "type": "object",
+    "properties": {
+     "fileName": {
+      "type": "string"
+     },
+     "dataBase64": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "fileName",
+     "dataBase64"
+    ]
+   },
+   "PlayerImportPreview": {
+    "type": "object",
+    "properties": {
+     "rows": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ImportRowPlan"
+      }
+     },
+     "removed": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ImportRemovedPlayer"
+      }
+     },
+     "valid": {
+      "type": "boolean"
+     },
+     "isTeams": {
+      "type": "boolean"
+     },
+     "tournamentStarted": {
+      "type": "boolean"
+     },
+     "existingPlayers": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "importedPlayers": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "hasEmailColumn": {
+      "type": "boolean"
+     },
+     "hasTeamColumn": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "rows"
+    ]
+   },
+   "PlayerImportRequest": {
+    "type": "object",
+    "properties": {
+     "fileName": {
+      "type": "string"
+     },
+     "dataBase64": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "fileName",
+     "dataBase64"
+    ]
+   },
+   "PlayerImportResult": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "changedSlots": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "emptiedSlots": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "players",
+     "changedSlots",
+     "emptiedSlots"
+    ]
+   },
+   "PlayerSubstitution": {
+    "type": "object",
+    "properties": {
+     "reason": {
+      "type": "string"
+     },
+     "fromRound": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "duringSession": {
+      "type": "boolean"
+     },
+     "excludedFromEma": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "reason",
+     "fromRound"
+    ]
+   },
+   "PlayerTotals": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "tables": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "points": {
+      "type": "number",
+      "format": "double"
+     },
+     "score": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablesWithHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsPlayed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsWon": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "dealIns": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyCount": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "PlayersResponse": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Player"
+      }
+     }
+    },
+    "required": [
+     "players"
+    ]
+   },
+   "RefreshRequest": {
+    "type": "object",
+    "properties": {
+     "refreshToken": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "refreshToken"
+    ]
+   },
+   "RefreshResponse": {
+    "type": "object",
+    "properties": {
+     "idToken": {
+      "type": "string"
+     },
+     "refreshToken": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "idToken",
+     "refreshToken"
+    ]
+   },
+   "RenameTournamentRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ]
+   },
+   "ResolveVenueLinkRequest": {
+    "type": "object",
+    "properties": {
+     "url": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "url"
+    ]
+   },
+   "ResolveVenueLinkResponse": {
+    "type": "object",
+    "properties": {
+     "url": {
+      "type": "string"
+     },
+     "place": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/VenueLinkPlace"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "url"
+    ]
+   },
+   "RoundClock": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "startedAtMs": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "pausedAtMs": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     },
+     "pausedMs": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "adjustMs": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "roundId",
+     "startedAtMs"
+    ]
+   },
+   "RoundClockActionRequest": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string"
+     },
+     "agoSeconds": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     },
+     "remainingSeconds": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     },
+     "force": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "RoundClocksResponse": {
+    "type": "object",
+    "properties": {
+     "roundClocks": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoundClock"
+      }
+     },
+     "serverNowMs": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "roundControls": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoundControl"
+      }
+     }
+    },
+    "required": [
+     "serverNowMs"
+    ]
+   },
+   "RoundControl": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "hands": {
+      "type": "string"
+     },
+     "seats": {
+      "type": "string"
+     },
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TableControl"
+      }
+     }
+    },
+    "required": [
+     "roundId"
+    ]
+   },
+   "RoundControlRequest": {
+    "type": "object",
+    "properties": {
+     "hands": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "seats": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "table": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TableControl"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "reopenTables": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "completeTables": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     }
+    }
+   },
+   "RoundTablesWithHandsResponse": {
+    "type": "object",
+    "properties": {
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TableWithHandsResponse"
+      }
+     }
+    },
+    "required": [
+     "tables"
+    ]
+   },
+   "SaveManagedUserRequest": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": "string"
+     },
+     "alias": {
+      "type": "string"
+     },
+     "role": {
+      "$ref": "#/components/schemas/GlobalUserRole"
+     },
+     "tournamentAssignments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentAssignment"
+      }
+     },
+     "emaId": {
+      "type": "string",
+      "description": "The EMA ID of the account. An empty text clears it."
+     }
+    },
+    "required": [
+     "email",
+     "role",
+     "tournamentAssignments"
+    ]
+   },
+   "SaveTableStateRequest": {
+    "type": "object",
+    "properties": {
+     "expectedVersion": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "tablePatch": {
+      "$ref": "#/components/schemas/TablePatchRequest"
+     },
+     "handPatches": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TableHandPatch"
+      }
+     }
+    },
+    "required": [
+     "expectedVersion",
+     "tablePatch",
+     "handPatches"
+    ]
+   },
+   "SeatsRequest": {
+    "type": "object",
+    "properties": {
+     "playerEastId": {
+      "type": "string"
+     },
+     "playerSouthId": {
+      "type": "string"
+     },
+     "playerWestId": {
+      "type": "string"
+     },
+     "playerNorthId": {
+      "type": "string"
+     },
+     "expectedVersion": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "playerEastId",
+     "playerSouthId",
+     "playerWestId",
+     "playerNorthId",
+     "expectedVersion"
+    ]
+   },
+   "SeatsResponse": {
+    "type": "object",
+    "properties": {
+     "tableVersion": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "tableVersion"
+    ]
+   },
+   "SetUserDisabledRequest": {
+    "type": "object",
+    "properties": {
+     "disabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "disabled"
+    ]
+   },
+   "SignInRequest": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": "string"
+     },
+     "password": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "email",
+     "password"
+    ]
+   },
+   "SignInResponse": {
+    "type": "object",
+    "properties": {
+     "idToken": {
+      "type": "string"
+     },
+     "refreshToken": {
+      "type": "string"
+     },
+     "uid": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "idToken",
+     "refreshToken",
+     "uid"
+    ]
+   },
+   "Standing": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "rank": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "of": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "points": {
+      "type": "number",
+      "format": "double"
+     },
+     "score": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "teamRank": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "teamOf": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "chickenRank": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "bestHandRank": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     }
+    }
+   },
+   "StandingsResponse": {
+    "type": "object",
+    "properties": {
+     "standings": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Standing"
+      }
+     }
+    }
+   },
+   "StatisticsOverview": {
+    "type": "object",
+    "properties": {
+     "tournaments": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablesCompleted": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablesWithHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsPlayed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "drawnHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "chickenHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "highestHand": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "playerCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PlayerTotals"
+      }
+     }
+    }
+   },
+   "SupportMessageRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     },
+     "app": {
+      "type": "string"
+     },
+     "appVersion": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "email",
+     "message",
+     "app",
+     "appVersion",
+     "platform"
+    ]
+   },
+   "TableControl": {
+    "type": "object",
+    "properties": {
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "hands": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "tableId",
+     "hands"
+    ]
+   },
+   "TableHand": {
+    "type": "object",
+    "properties": {
+     "handId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "playerWinnerId": {
+      "type": "string"
+     },
+     "playerLooserId": {
+      "type": "string"
+     },
+     "handScore": {
+      "type": "string"
+     },
+     "isChickenHand": {
+      "type": "boolean"
+     },
+     "isDone": {
+      "type": "boolean"
+     },
+     "playerEastPenalty": {
+      "type": "string"
+     },
+     "playerSouthPenalty": {
+      "type": "string"
+     },
+     "playerWestPenalty": {
+      "type": "string"
+     },
+     "playerNorthPenalty": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "handId"
+    ]
+   },
+   "TableHandPatch": {
+    "type": "object",
+    "properties": {
+     "handId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "patch": {
+      "$ref": "#/components/schemas/HandPatchRequest"
+     }
+    },
+    "required": [
+     "handId",
+     "patch"
+    ]
+   },
+   "TablePatchRequest": {
+    "type": "object",
+    "properties": {
+     "isCompleted": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "useTotalsOnly": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "playerEastId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerSouthId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerWestId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerNorthId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerEastScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerSouthScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerWestScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "playerNorthScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "manualPlayerEastScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "manualPlayerSouthScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "manualPlayerWestScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "manualPlayerNorthScore": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "TableRef": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "roundId",
+     "tableId"
+    ]
+   },
+   "TableState": {
+    "type": "object",
+    "properties": {
+     "version": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "playerIds": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "playerEastId": {
+      "type": "string"
+     },
+     "playerSouthId": {
+      "type": "string"
+     },
+     "playerWestId": {
+      "type": "string"
+     },
+     "playerNorthId": {
+      "type": "string"
+     },
+     "playerEastScore": {
+      "type": "string"
+     },
+     "playerSouthScore": {
+      "type": "string"
+     },
+     "playerWestScore": {
+      "type": "string"
+     },
+     "playerNorthScore": {
+      "type": "string"
+     },
+     "manualPlayerEastScore": {
+      "type": "string"
+     },
+     "manualPlayerSouthScore": {
+      "type": "string"
+     },
+     "manualPlayerWestScore": {
+      "type": "string"
+     },
+     "manualPlayerNorthScore": {
+      "type": "string"
+     },
+     "isCompleted": {
+      "type": "boolean"
+     },
+     "useTotalsOnly": {
+      "type": "boolean"
+     },
+     "forcedZeroPlayerId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "roundId",
+     "tableId",
+     "playerIds"
+    ]
+   },
+   "TableWithHandsResponse": {
+    "type": "object",
+    "properties": {
+     "table": {
+      "$ref": "#/components/schemas/TableState"
+     },
+     "hands": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TableHand"
+      }
+     }
+    },
+    "required": [
+     "table",
+     "hands"
+    ]
+   },
+   "Tournament": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "isTeams": {
+      "type": "boolean"
+     },
+     "numPlayers": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "numRounds": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "countBestHands": {
+      "type": "boolean"
+     },
+     "countChickenHands": {
+      "type": "boolean"
+     },
+     "shortName": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "associationLogoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoHash": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hostCountry": {
+      "type": "string"
+     },
+     "hostCity": {
+      "type": "string"
+     },
+     "venueName": {
+      "type": "string"
+     },
+     "venueAddress": {
+      "type": "string"
+     },
+     "venueMapUrl": {
+      "type": "string"
+     },
+     "contactEmail": {
+      "type": "string"
+     },
+     "eventStartDate": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "eventEndDate": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "roundSchedules": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentRoundSchedule"
+      }
+     },
+     "roundClocks": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoundClock"
+      }
+     },
+     "roundControls": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoundControl"
+      }
+     },
+     "agendaItems": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentAgendaItem"
+      }
+     },
+     "matchDurationMinutes": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "matchEndMode": {
+      "type": "string",
+      "description": "\"STOP\" or \"FINISH_HAND\"."
+     },
+     "matchExtraMinutes": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "timeZone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "numTries": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "isCompleted": {
+      "type": "boolean"
+     },
+     "isPublic": {
+      "type": "boolean",
+      "description": "False hides the tournament from everyone without an account in it."
+     },
+     "showTableDiffs": {
+      "type": "boolean",
+      "description": "False hides the differences button on the table screen of the player app."
+     },
+     "createdByUid": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "createdByName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "createdAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "updatedAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "isTeams",
+     "numPlayers",
+     "numRounds"
+    ]
+   },
+   "TournamentAgendaItem": {
+    "type": "object",
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "date": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "startTime": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "title"
+    ]
+   },
+   "TournamentAssignment": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "tournamentName": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "tournamentId"
+    ]
+   },
+   "TournamentMember": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "role": {
+      "$ref": "#/components/schemas/GlobalUserRole"
+     }
+    },
+    "required": [
+     "uid",
+     "role"
+    ]
+   },
+   "TournamentPlayer": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "name": {
+      "type": "string"
+     },
+     "team": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "country": {
+      "type": "string"
+     },
+     "assignedEmaId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "accountUid": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hasAccount": {
+      "type": "boolean"
+     },
+     "email": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hasEmail": {
+      "type": "boolean"
+     },
+     "substitution": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PlayerSubstitution"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "displayName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "createdAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "updatedAt": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "team"
+    ]
+   },
+   "TournamentPlayersResponse": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentPlayer"
+      }
+     }
+    },
+    "required": [
+     "players"
+    ]
+   },
+   "TournamentRound": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "roundId"
+    ]
+   },
+   "TournamentRoundSchedule": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "date": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "startTime": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "roundId"
+    ]
+   },
+   "TournamentRoundsResponse": {
+    "type": "object",
+    "properties": {
+     "rounds": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentRound"
+      }
+     }
+    },
+    "required": [
+     "rounds"
+    ]
+   },
+   "TournamentTable": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "playerIds": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "isCompleted": {
+      "type": "boolean"
+     },
+     "useTotalsOnly": {
+      "type": "boolean"
+     },
+     "hasProgress": {
+      "type": "boolean"
+     },
+     "hasValidManualTotals": {
+      "type": "boolean"
+     },
+     "completionStatus": {
+      "type": "string"
+     },
+     "bestHandScores": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "chickenHandCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "version": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "roundId",
+     "tableId",
+     "playerIds"
+    ]
+   },
+   "TournamentTablesResponse": {
+    "type": "object",
+    "properties": {
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentTable"
+      }
+     }
+    },
+    "required": [
+     "tables"
+    ]
+   },
+   "TournamentTeam": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "name": {
+      "type": "string"
+     },
+     "playerIds": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "playerIds"
+    ]
+   },
+   "TournamentTeamsResponse": {
+    "type": "object",
+    "properties": {
+     "teams": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentTeam"
+      }
+     }
+    },
+    "required": [
+     "teams"
+    ]
+   },
+   "TournamentsResponse": {
+    "type": "object",
+    "properties": {
+     "tournaments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Tournament"
+      }
+     }
+    },
+    "required": [
+     "tournaments"
+    ]
+   },
+   "UpdateOwnAliasRequest": {
+    "type": "object",
+    "properties": {
+     "alias": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "alias"
+    ]
+   },
+   "UpdatePlayerPhotoRequest": {
+    "type": "object",
+    "properties": {
+     "contentType": {
+      "type": "string"
+     },
+     "dataBase64": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "contentType",
+     "dataBase64"
+    ]
+   },
+   "UpdatePlayerRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "firstName": {
+      "type": "string"
+     },
+     "lastName": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "hiddenFromPublic": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "emaId",
+     "firstName",
+     "lastName",
+     "country"
+    ]
+   },
+   "UpdateTournamentSettingsRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "shortName": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "eventStartDate": {
+      "type": "string"
+     },
+     "eventEndDate": {
+      "type": "string"
+     },
+     "hostCountry": {
+      "type": "string"
+     },
+     "hostCity": {
+      "type": "string"
+     },
+     "venueName": {
+      "type": "string"
+     },
+     "venueAddress": {
+      "type": "string"
+     },
+     "venueMapUrl": {
+      "type": "string"
+     },
+     "contactEmail": {
+      "type": "string"
+     },
+     "countBestHands": {
+      "type": [
+       "boolean",
+       "null"
+      ],
+      "description": "Null keeps the stored value."
+     },
+     "countChickenHands": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "isPublic": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "showTableDiffs": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "associationLogoContentType": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoDataBase64": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "associationLogoSourceTournamentId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "removeAssociationLogo": {
+      "type": "boolean"
+     },
+     "roundSchedules": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "$ref": "#/components/schemas/TournamentRoundSchedule"
+      }
+     },
+     "agendaItems": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "$ref": "#/components/schemas/TournamentAgendaItem"
+      }
+     },
+     "matchDurationMinutes": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32",
+      "description": "Null keeps the stored value."
+     },
+     "matchEndMode": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "matchExtraMinutes": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "timeZone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "name",
+     "shortName",
+     "primaryColor",
+     "eventStartDate",
+     "eventEndDate",
+     "hostCountry",
+     "hostCity"
+    ]
+   },
+   "UpdateTournamentTeamRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "emaIds": {
+      "type": "array",
+      "items": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     }
+    },
+    "required": [
+     "name",
+     "emaIds"
+    ]
+   },
+   "UpsertMemberRequest": {
+    "type": "object",
+    "properties": {
+     "assigned": {
+      "type": "boolean"
+     }
+    }
+   },
+   "UserDeleteResult": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "uid",
+     "outcome"
+    ]
+   },
+   "UserDeletesRequest": {
+    "type": "object",
+    "properties": {
+     "uids": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "uids"
+    ]
+   },
+   "UserDeletesResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/UserDeleteResult"
+      }
+     }
+    }
+   },
+   "UserProfile": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "alias": {
+      "type": "string"
+     },
+     "emaId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "photoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "hasOwnPhoto": {
+      "type": "boolean"
+     },
+     "roles": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GlobalUserRole"
+      }
+     }
+    },
+    "required": [
+     "uid",
+     "email"
+    ]
+   },
+   "VenueLinkPlace": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "address": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "city": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "countryCode": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "timeZone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "WhoAmIResponse": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "role": {
+      "$ref": "#/components/schemas/GlobalUserRole"
+     },
+     "roles": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GlobalUserRole"
+      }
+     }
+    },
+    "required": [
+     "uid",
+     "role"
+    ]
+   }
+  }
+ }
+}

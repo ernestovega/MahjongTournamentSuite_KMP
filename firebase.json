@@ -182,6 +182,26 @@
               "value": "no-cache"
             }
           ]
+        },
+        {
+          "source": "/api-docs/**",
+          "headers": [
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ],
+      "redirects": [
+        {
+          "source": "/api-docs",
+          "destination": "/api-docs/",
+          "type": 301
         }
       ]
     }
