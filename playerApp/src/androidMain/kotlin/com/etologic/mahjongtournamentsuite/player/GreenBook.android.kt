@@ -14,9 +14,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.core.content.FileProvider
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
-import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,11 +21,14 @@ import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.green_book_downloading
 import mahjongtournamentsuite.playerapp.generated.resources.green_book_offline
 import org.jetbrains.compose.resources.stringResource
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 private const val SITE = "https://mts.mahjongmadrid.com"
 
 /**
- * The first time, the app downloads the edition of its language from the site and keeps it, so it opens without
+ * The first time, the app downloads the edition of its language and keeps it on the phone, so it opens without
  * internet after that. Without internet the first time, it opens the short English edition inside the app.
  * Other apps cannot read the files of the app, so the FileProvider of the manifest of playerApp shares the PDF
  * with the PDF app of the phone.
@@ -61,7 +61,7 @@ internal actual fun rememberOpenGreenBook(): () -> Unit {
                     val opened = runCatching { openPdf(context, file) }
                     if (opened.exceptionOrNull() is ActivityNotFoundException) {
                         // A phone without a PDF app: the browser downloads it from the site.
-                        runCatching { uriHandler.openUri(SITE + greenBookWebPath(edition)) }
+                        runCatching { uriHandler.openUri(greenBookUrl(edition)) }
                     }
                 } finally {
                     busy = false
@@ -71,19 +71,25 @@ internal actual fun rememberOpenGreenBook(): () -> Unit {
     }
 }
 
-private fun keptEdition(context: Context, edition: String): File =
-    File(File(context.filesDir, "greenbook").apply { mkdirs() }, greenBookFileName(edition))
+private fun greenBookUrl(edition: String): String = greenBookAddress(edition).let { if (it.startsWith("/")) SITE + it else it }
+
+private fun keptEdition(context: Context, edition: String): File = File(File(context.filesDir, "greenbook").apply { mkdirs() }, greenBookFileName(edition))
 
 /** Downloads to a temporary file first, so a cut download never stays as the kept edition. */
 private fun download(edition: String, target: File): File {
-    val connection = URL(SITE + greenBookWebPath(edition)).openConnection() as HttpURLConnection
+    val connection = URL(greenBookUrl(edition)).openConnection() as HttpURLConnection
     connection.connectTimeout = 15_000
     connection.readTimeout = 30_000
     try {
         check(connection.responseCode == HttpURLConnection.HTTP_OK) { "HTTP ${connection.responseCode}" }
-        check(connection.contentType?.startsWith("application/pdf") == true) { "Not a PDF: ${connection.contentType}" }
         val partial = File(target.parentFile, target.name + ".part")
         connection.inputStream.use { input -> partial.outputStream().use { input.copyTo(it) } }
+        // A missing file can come back as the web page of the site, so the file must start like a PDF.
+        val isPdf = partial.inputStream().use { input -> ByteArray(5).also { input.read(it) }.decodeToString() == "%PDF-" }
+        if (!isPdf) {
+            partial.delete()
+            error("Not a PDF")
+        }
         check(partial.renameTo(target)) { "Cannot keep ${target.name}" }
         return target
     } finally {
