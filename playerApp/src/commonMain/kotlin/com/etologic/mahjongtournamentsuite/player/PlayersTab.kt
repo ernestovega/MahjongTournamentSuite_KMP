@@ -249,7 +249,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab row hides when the content scrolls down and shows when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
-    // Only the back button: the profile stays on the screens of the tournaments and of the tournament.
+    // Back and the contact button: the profile stays on the screens of the tournaments and of the tournament.
     AppScaffold(
         title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: profile?.name ?: stringResource(Res.string.scope_player),
         // Photo on the left, name as the title, flag and EMA number under it.
@@ -258,6 +258,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
         isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
+        actions = { ContactTopBarButton(navController) },
     ) {
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
             ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
