@@ -599,8 +599,8 @@
     <string name="send_reminder">Herinneren</string>
     <string name="send_password_reset_count">Nieuw wachtwoord sturen (%1$d)</string>
     <string name="password_resets_confirm_title">E-mails voor nieuw wachtwoord sturen?</string>
-    <string name="password_resets_confirm_text">De app stuurt een e-mail naar %1$d accounts. Iedereen krijgt een link om een nieuw wachtwoord te kiezen.</string>
-    <string name="password_resets_summary">Verstuurde e-mails: %1$d. Mislukt: %2$d.</string>
+    <string name="password_resets_confirm_text">De app stuurt een e-mail naar %1$d accounts.\n\nIedereen krijgt een link om een nieuw wachtwoord te kiezen.</string>
+    <string name="password_resets_summary">Verstuurde e-mails: %1$d\nMislukt: %2$d</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Het account bestaat niet.</string>
     <string name="reset_failure_no_email">Het account heeft geen e-mailadres.</string>
@@ -730,7 +730,6 @@
     <string name="activity_action_registry_create">EMA-speler aangemaakt</string>
     <string name="activity_action_registry_update">EMA-speler gewijzigd</string>
     <string name="activity_action_registry_photo">Foto van EMA-speler gewijzigd</string>
-    <string name="activity_action_registry_delete">EMA-speler verwijderd</string>
     <string name="activity_action_table_save">Tafel opgeslagen</string>
     <string name="activity_action_table_reset">Tafel gewist</string>
     <string name="activity_action_table_conflict">Opslaan geweigerd: de tafel was gewijzigd</string>
@@ -802,16 +801,17 @@
     <string name="round_control_table_status">Status</string>
     <string name="delete_selected_count">Verwijderen (%1$d)</string>
     <string name="users_delete_confirm_title">Accounts verwijderen?</string>
-    <string name="users_delete_confirm_text">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto. De EMA-spelers en de toernooiresultaten blijven. Dit kan niet ongedaan gemaakt worden.</string>
-    <string name="users_delete_summary">Verwijderde accounts: %1$d. Niet verwijderd: %2$d.</string>
+    <string name="users_delete_confirm_text">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</string>
+    <string name="users_delete_summary">Verwijderde accounts: %1$d\nNiet verwijderd: %2$d</string>
     <string name="delete_failure_self">Je kunt je eigen account niet verwijderen.</string>
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
-    <string name="players_delete_confirm_title">EMA-spelers verwijderen?</string>
-    <string name="players_delete_confirm_text">%1$d EMA-spelers worden definitief verwijderd, met hun foto. Een speler die in een toernooi speelt of een account heeft, blijft. Dit kan niet ongedaan gemaakt worden.</string>
-    <string name="players_delete_summary">Verwijderde spelers: %1$d. Niet verwijderd: %2$d.</string>
-    <string name="player_delete_failure_not_found">De speler bestaat niet.</string>
-    <string name="player_delete_failure_in_tournament">De speler zit in een toernooi.</string>
-    <string name="player_delete_failure_has_account">Een account gebruikt dit EMA-nummer.</string>
-    <string name="player_delete_failure_unknown">De speler is niet verwijderd. Probeer het opnieuw.</string>
+    <string name="player_accounts_delete_confirm_title">Accounts verwijderen?</string>
+    <string name="player_accounts_delete_confirm_text">De accounts van %1$d EMA-spelers worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven bewaard.\n\nDit kan niet ongedaan worden gemaakt.</string>
+    <string name="player_accounts_delete_summary">Verwijderde accounts: %1$d\nNiet verwijderd: %2$d</string>
+    <string name="delete_accounts_count">Accounts verwijderen (%1$d)</string>
+    <string name="player_account_delete_failure_no_account">De speler heeft geen account.</string>
+    <string name="player_account_delete_failure_self">Het is je eigen account.</string>
+    <string name="player_account_delete_failure_last_admin">Het is de laatste actieve admin.</string>
+    <string name="player_account_delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
 </resources>
