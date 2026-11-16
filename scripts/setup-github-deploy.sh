@@ -16,12 +16,14 @@ gcloud config set project "$PROJECT_ID" >/dev/null
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 
 echo "Enabling the APIs..."
+# One call takes at most 20 services, so they go in two calls.
 gcloud services enable \
   iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
   cloudresourcemanager.googleapis.com serviceusage.googleapis.com \
   cloudfunctions.googleapis.com cloudbuild.googleapis.com run.googleapis.com \
   artifactregistry.googleapis.com eventarc.googleapis.com pubsub.googleapis.com \
-  cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com \
+  cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com
+gcloud services enable \
   firebase.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
   firestore.googleapis.com firebasestorage.googleapis.com \
   testing.googleapis.com toolresults.googleapis.com storage.googleapis.com \
