@@ -221,16 +221,16 @@ internal class FakePlayerRepository(private val players: List<Player> = emptyLis
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
 
     /** The result of a bulk delete by EMA number. A player with no entry gets DELETED. */
-    val deleteResults = mutableMapOf<String, com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>()
+    val deleteResults = mutableMapOf<String, com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>()
     val deleteRequests = mutableListOf<List<String>>()
 
-    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> {
+    override suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>> {
         deleteRequests += emaIds
         return AppResult.Success(
             emaIds.map {
-                deleteResults[it] ?: com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(
+                deleteResults[it] ?: com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(
                     it,
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.DELETED,
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.DELETED,
                 )
             },
         )

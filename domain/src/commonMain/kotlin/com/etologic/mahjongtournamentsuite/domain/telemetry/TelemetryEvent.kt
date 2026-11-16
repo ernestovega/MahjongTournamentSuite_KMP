@@ -178,7 +178,6 @@ object TelemetryAction {
     const val REGISTRY_PLAYER_CREATED = "registry_player_created"
     const val REGISTRY_PLAYER_UPDATED = "registry_player_updated"
     const val REGISTRY_PHOTO_UPDATED = "registry_photo_updated"
-    const val REGISTRY_PLAYERS_DELETED = "registry_players_deleted"
     const val TABLE_RESET = "table_reset"
 
     /** Every value of this object. A test checks it against the rules of GA4. */
@@ -205,7 +204,6 @@ object TelemetryAction {
         REGISTRY_PLAYER_CREATED,
         REGISTRY_PLAYER_UPDATED,
         REGISTRY_PHOTO_UPDATED,
-        REGISTRY_PLAYERS_DELETED,
         TABLE_RESET,
     )
 }

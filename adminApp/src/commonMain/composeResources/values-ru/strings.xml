@@ -601,8 +601,8 @@
     <string name="send_reminder">Напомнить</string>
     <string name="send_password_reset_count">Отправить сброс пароля (%1$d)</string>
     <string name="password_resets_confirm_title">Отправить письма для сброса пароля?</string>
-    <string name="password_resets_confirm_text">Приложение отправит письмо на %1$d аккаунтов. Каждый получит ссылку для выбора нового пароля.</string>
-    <string name="password_resets_summary">Отправлено писем: %1$d. Ошибок: %2$d.</string>
+    <string name="password_resets_confirm_text">Приложение отправит письмо на %1$d аккаунтов.\n\nКаждый получит ссылку для выбора нового пароля.</string>
+    <string name="password_resets_summary">Отправлено писем: %1$d\nОшибок: %2$d</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Аккаунт не существует.</string>
     <string name="reset_failure_no_email">У аккаунта нет адреса эл. почты.</string>
@@ -732,7 +732,6 @@
     <string name="activity_action_registry_create">Игрок EMA создан</string>
     <string name="activity_action_registry_update">Игрок EMA изменён</string>
     <string name="activity_action_registry_photo">Фото игрока EMA изменено</string>
-    <string name="activity_action_registry_delete">Игрок EMA удалён</string>
     <string name="activity_action_table_save">Стол сохранён</string>
     <string name="activity_action_table_reset">Стол очищен</string>
     <string name="activity_action_table_conflict">Сохранение отклонено: стол был изменён</string>
@@ -804,16 +803,17 @@
     <string name="round_control_table_status">Статус</string>
     <string name="delete_selected_count">Удалить (%1$d)</string>
     <string name="users_delete_confirm_title">Удалить аккаунты?</string>
-    <string name="users_delete_confirm_text">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото. Игроки EMA и результаты турниров останутся. Это нельзя отменить.</string>
-    <string name="users_delete_summary">Удалено аккаунтов: %1$d. Не удалено: %2$d.</string>
+    <string name="users_delete_confirm_text">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</string>
+    <string name="users_delete_summary">Удалено аккаунтов: %1$d\nНе удалено: %2$d</string>
     <string name="delete_failure_self">Нельзя удалить собственный аккаунт.</string>
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>
-    <string name="players_delete_confirm_title">Удалить игроков EMA?</string>
-    <string name="players_delete_confirm_text">Игроки EMA будут удалены навсегда вместе с фото (%1$d). Игрок, который участвует в турнире или имеет аккаунт, останется. Это нельзя отменить.</string>
-    <string name="players_delete_summary">Удалено игроков: %1$d. Не удалено: %2$d.</string>
-    <string name="player_delete_failure_not_found">Игрок не существует.</string>
-    <string name="player_delete_failure_in_tournament">Игрок участвует в турнире.</string>
-    <string name="player_delete_failure_has_account">Этот номер EMA использует аккаунт.</string>
-    <string name="player_delete_failure_unknown">Игрок не удалён. Попробуйте снова.</string>
+    <string name="player_accounts_delete_confirm_title">Удалить аккаунты?</string>
+    <string name="player_accounts_delete_confirm_text">Аккаунты %1$d игроков EMA будут удалены навсегда: вход, email, псевдоним и фото.\n\nИгроки EMA и результаты турниров сохранятся.\n\nЭто нельзя отменить.</string>
+    <string name="player_accounts_delete_summary">Удалено аккаунтов: %1$d\nНе удалено: %2$d</string>
+    <string name="delete_accounts_count">Удалить аккаунты (%1$d)</string>
+    <string name="player_account_delete_failure_no_account">У игрока нет аккаунта.</string>
+    <string name="player_account_delete_failure_self">Это ваш собственный аккаунт.</string>
+    <string name="player_account_delete_failure_last_admin">Это последний активный админ.</string>
+    <string name="player_account_delete_failure_unknown">Аккаунт не удалён. Попробуйте ещё раз.</string>
 </resources>

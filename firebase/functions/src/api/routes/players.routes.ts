@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { recordActivity } from "../../services/activityLog";
+import { deleteAccountsOfPlayers } from "../../services/accountDeletes";
 import { actorFromToken } from "../../services/changeLog";
 
 import { badRequest, forbidden } from "../httpError";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { listPlayerTournamentIds } from "../../services/playerAccountsService";
-import { createPlayer, deletePlayers, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
+import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
 
 export function playersRouter(): Router {
   const router = Router();
@@ -46,16 +47,17 @@ export function playersRouter(): Router {
     }
   });
 
-  // Deletes many EMA players at once. A player that a tournament or an account uses stays, with its reason.
-  router.post("/delete", requireAuth, requireAdmin, async (req, res, next) => {
+  // Deletes the accounts of many EMA players at once, from the Player base. The EMA players stay.
+  router.post("/accounts/delete", requireAuth, requireAdmin, async (req, res, next) => {
     try {
+      const actor = res.locals.auth as { uid: string };
       const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
       const emaIds = raw.map((value) => validateEmaId(value));
-      const results = await deletePlayers(emaIds);
+      const results = await deleteAccountsOfPlayers(actor.uid, emaIds);
       const deleted = results.filter((result) => result.outcome === "DELETED").map((result) => result.emaId);
       if (deleted.length > 0) {
         await recordActivity({
-          action: "registry.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length} EMA players`,
+          action: "user.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length} users`,
           details: { emaIds: deleted },
         });
       }

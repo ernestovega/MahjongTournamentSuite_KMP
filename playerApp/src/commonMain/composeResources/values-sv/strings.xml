@@ -175,6 +175,7 @@
     <string name="menu_sign_in">Logga in</string>
     <string name="menu_contact">Kontakt</string>
     <string name="menu_privacy">Integritet</string>
+    <string name="menu_green_book">Green Book</string>
     <string name="tournaments_title">Turneringar</string>
     <string name="tournaments_no_match">Ingen turnering matchar filtren.</string>
     <string name="tournament_you_play">Du spelar i den här turneringen</string>

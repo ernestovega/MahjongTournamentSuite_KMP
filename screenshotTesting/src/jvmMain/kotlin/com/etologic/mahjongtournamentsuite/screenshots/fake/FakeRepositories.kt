@@ -157,7 +157,7 @@ open class ScreenshotPlayerRepository(private val players: List<Player> = Screen
     override suspend fun createPlayer(player: Player): AppResult<Player> = noWrite()
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = noWrite()
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = noWrite()
-    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> = noWrite()
+    override suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>> = noWrite()
 }
 
 /** A signed-in account: [profile], or nobody when it is null. */

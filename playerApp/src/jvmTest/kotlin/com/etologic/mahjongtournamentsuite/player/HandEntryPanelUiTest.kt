@@ -26,7 +26,9 @@ import kotlinx.datetime.LocalDateTime
 import org.koin.compose.KoinApplication
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.test.AfterTest
@@ -95,13 +97,14 @@ class HandEntryPanelUiTest {
         now: String? = null,
         started: Boolean = true,
         seats: Boolean = true,
+        controls: List<RoundControl> = emptyList(),
     ): PlayerTournamentView {
         val start = LocalDateTime.parse("2026-10-10T10:00").toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
         val tournament = Tournament(
             id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")),
             roundClocks = if (started) listOf(RoundClock(roundId = 1, startedAtMs = start)) else emptyList(),
-            matchDurationMinutes = 120, matchEndMode = mode, matchExtraMinutes = 15,
+            matchDurationMinutes = 120, matchEndMode = mode, matchExtraMinutes = 15, roundControls = controls,
         )
         val seatIds = if (seats) listOf("1", "2", "3", "4") else listOf("", "", "", "")
         val table = TableState(
@@ -134,8 +137,9 @@ class HandEntryPanelUiTest {
         doneHands: Int = 0,
         started: Boolean = true,
         seats: Boolean = true,
+        controls: List<RoundControl> = emptyList(),
     ) {
-        val view = view(mode, doneHands, time, started, seats)
+        val view = view(mode, doneHands, time, started, seats, controls)
         setContent {
             MtsTheme(useDarkTheme = false) {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(repository) } }) }) {
@@ -397,5 +401,63 @@ class HandEntryPanelUiTest {
         onAllNodesWithText("12").onFirst().assertIsDisplayed()
         onNodeWithText("Clear").performClick()
         assertEquals(0, onAllNodesWithText("12").fetchSemanticsNodes().size)
+    }
+
+    // Round control, the plan B of the Timer: an admin decides by hand what the players can do.
+
+    @Test
+    fun aRoundClosedByAnOrganizerTellsThePlayersWhyTheyCannotAddHands() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:30", controls = listOf(RoundControl(1, hands = ControlMode.CLOSED)))
+
+        onNodeWithText("An organizer closed the hand entry of this table for now. Ask a referee if you need to add a hand.").assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+        onNodeWithText("Add draw").assertDoesNotExist()
+    }
+
+    @Test
+    fun aClosedTableWinsOverAnOpenRound() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:30", controls = listOf(RoundControl(1, hands = ControlMode.OPEN, tables = mapOf(1 to ControlMode.CLOSED))))
+
+        onNodeWithText("An organizer closed the hand entry of this table for now. Ask a referee if you need to add a hand.").assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+    }
+
+    @Test
+    fun anOpenRoundLetsThePlayersAddHandsBeforeTheGong() = runComposeUiTest {
+        show(MatchEndMode.STOP, "09:00", started = false, controls = listOf(RoundControl(1, hands = ControlMode.OPEN)))
+
+        onNodeWithText("Waiting for the starting gong", substring = true).assertDoesNotExist()
+        onNodeWithText("Add win").assertIsDisplayed()
+    }
+
+    @Test
+    fun anOpenRoundLetsThePlayersAddHandsAfterTheTime() = runComposeUiTest {
+        show(MatchEndMode.STOP, "13:00", doneHands = 3, controls = listOf(RoundControl(1, hands = ControlMode.OPEN)))
+
+        onNodeWithText("The time of this match is over", substring = true).assertDoesNotExist()
+        onNodeWithText("Add win").assertIsDisplayed()
+    }
+
+    @Test
+    fun anOpenTableLetsThePlayersAddHandsInAClosedRound() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:30", controls = listOf(RoundControl(1, hands = ControlMode.CLOSED, tables = mapOf(1 to ControlMode.OPEN))))
+
+        onNodeWithText("An organizer closed the hand entry of this table for now. Ask a referee if you need to add a hand.").assertDoesNotExist()
+        onNodeWithText("Add win").assertIsDisplayed()
+    }
+
+    @Test
+    fun openSeatsLetThePlayersSetTheSeatsLongBeforeTheStart() = runComposeUiTest {
+        show(MatchEndMode.STOP, "09:00", started = false, seats = false, controls = listOf(RoundControl(1, seats = ControlMode.OPEN)))
+
+        onNodeWithText("Set the seats").assertIsDisplayed()
+    }
+
+    @Test
+    fun closedSeatsHideTheSeatButtonsBeforeTheGong() = runComposeUiTest {
+        show(MatchEndMode.STOP, "09:55", started = false, seats = false, controls = listOf(RoundControl(1, seats = ControlMode.CLOSED)))
+
+        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("Set the seats").assertDoesNotExist()
     }
 }

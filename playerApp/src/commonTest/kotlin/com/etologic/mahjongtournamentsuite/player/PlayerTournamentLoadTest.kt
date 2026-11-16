@@ -170,7 +170,7 @@ private class GatedPlayerRepository(private val server: GatedServer) : PlayerRep
     override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = error("unused")
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
-    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> = error("unused")
+    override suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>> = error("unused")
 }
 
 private class GatedAuthRepository(private val server: GatedServer) : AuthRepository {

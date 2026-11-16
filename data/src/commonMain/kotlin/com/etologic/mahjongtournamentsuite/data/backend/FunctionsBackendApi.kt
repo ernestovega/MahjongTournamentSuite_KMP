@@ -26,8 +26,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDeletesRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDeletesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountDeletesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountDeletesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
@@ -449,11 +449,11 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun deletePlayers(
+    suspend fun deletePlayerAccounts(
         idToken: String,
-        request: PlayerDeletesRequestDto,
-    ): PlayerDeletesResponseDto = post(
-        path = "/ema-player-registry/delete",
+        request: PlayerAccountDeletesRequestDto,
+    ): PlayerAccountDeletesResponseDto = post(
+        path = "/ema-player-registry/accounts/delete",
         requestBody = request,
         idToken = idToken,
     )
