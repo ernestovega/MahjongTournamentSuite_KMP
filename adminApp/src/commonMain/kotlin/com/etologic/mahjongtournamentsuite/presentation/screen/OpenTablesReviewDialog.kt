@@ -15,6 +15,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,8 +43,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableCol
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.cancel
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_close_all
+import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_close_selected
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_round
@@ -55,7 +55,8 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The review of the open tables of the rounds that are over, from the round control. One row per table: its round,
  * its number, the hands entered and a button that goes to its round. The checkboxes and "Close selected" close some
- * tables and keep the dialog open, so the admin sees the ones left and can go to them. At the end, Cancel and Close all.
+ * tables and keep the dialog open, so the admin sees the ones left and can go to them. The header checkbox checks
+ * them all. The header row stays in place while the rows scroll. At the end, Close and Close selected.
  */
 @Composable
 internal fun OpenTablesReviewDialog(
@@ -66,7 +67,6 @@ internal fun OpenTablesReviewDialog(
     loadRoundHands: suspend (roundId: Int) -> AppResult<List<Pair<TableState, List<TableHand>>>>,
     onGoTo: (TableKey) -> Unit,
     onCloseSelected: (List<TableKey>) -> Unit,
-    onCloseAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var picked by remember { mutableStateOf(emptySet<TableKey>()) }
@@ -140,27 +140,30 @@ internal fun OpenTablesReviewDialog(
                             }
                         }
                     }
-                    HorizontalDivider()
-                    // Closes the checked tables and keeps the dialog open, with a spinner while they close.
-                    FocusedOutlinedButton(
-                        onClick = { onCloseSelected(selected.sortedWith(compareBy(TableKey::roundId, TableKey::tableId))) },
-                        enabled = !busy && selected.isNotEmpty(),
-                        modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
-                        buttonModifier = Modifier.testTag("open_tables_close_selected"),
-                    ) {
-                        if (busy) {
-                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(16.dp).testTag("open_tables_closing"))
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(stringResource(Res.string.round_control_finished_close_selected))
-                    }
                 }
             },
             confirmButton = {
-                FocusedButton(onClick = onCloseAll, enabled = !busy) { Text(stringResource(Res.string.round_control_finished_close_all)) }
+                // Closes the checked tables and keeps the dialog open, with a spinner while they close.
+                FocusedButton(
+                    onClick = { onCloseSelected(selected.sortedWith(compareBy(TableKey::roundId, TableKey::tableId))) },
+                    enabled = !busy && selected.isNotEmpty(),
+                    buttonModifier = Modifier.testTag("open_tables_close_selected"),
+                ) {
+                    if (busy) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            color = LocalContentColor.current,
+                            modifier = Modifier.size(16.dp).testTag("open_tables_closing"),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(stringResource(Res.string.round_control_finished_close_selected))
+                }
             },
             dismissButton = {
-                FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                FocusedTextButton(onClick = onDismiss, buttonModifier = Modifier.testTag("open_tables_dismiss")) {
+                    Text(stringResource(Res.string.close))
+                }
             },
         )
     }

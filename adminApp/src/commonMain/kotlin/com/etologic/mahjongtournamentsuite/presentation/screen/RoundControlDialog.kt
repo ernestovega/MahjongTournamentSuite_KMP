@@ -309,10 +309,6 @@ internal fun RoundControlDialogContent(
                 scrollToTable = table
             },
             onCloseSelected = { selected -> closeTables(selected) },
-            onCloseAll = {
-                reviewing = false
-                closeTables(finishedOpenTables)
-            },
             onDismiss = { reviewing = false },
         )
     }

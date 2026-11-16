@@ -803,7 +803,6 @@
     <string name="round_control_finished_col_hands">Hands</string>
     <string name="round_control_finished_go">Go</string>
     <string name="round_control_finished_close_selected">Close selected</string>
-    <string name="round_control_finished_close_all">Close all</string>
     <string name="round_control_finished_badge">Open tables: %1$d</string>
     <string name="timer_manual_warning">Manual round control is on: the clock does not decide what the players can do.\nChange it in Round control.</string>
     <string name="activity_action_round_control">Round control changed</string>

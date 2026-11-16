@@ -803,7 +803,6 @@
     <string name="round_control_finished_col_hands">Manos</string>
     <string name="round_control_finished_go">Ir</string>
     <string name="round_control_finished_close_selected">Cerrar seleccionadas</string>
-    <string name="round_control_finished_close_all">Cerrar todas</string>
     <string name="round_control_finished_badge">Mesas abiertas: %1$d</string>
     <string name="timer_manual_warning">Control manual de ronda activo: el reloj no decide lo que pueden hacer los jugadores.\nCámbialo en Control de ronda.</string>
     <string name="activity_action_round_control">Control de ronda cambiado</string>

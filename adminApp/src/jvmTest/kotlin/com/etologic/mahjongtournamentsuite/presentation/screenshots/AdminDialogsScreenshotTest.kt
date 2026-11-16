@@ -143,7 +143,6 @@ class AdminDialogsScreenshotTest {
             loadRoundHands = { roundId -> openRoundHands(roundId) },
             onGoTo = {},
             onCloseSelected = {},
-            onCloseAll = {},
             onDismiss = {},
         )
     }

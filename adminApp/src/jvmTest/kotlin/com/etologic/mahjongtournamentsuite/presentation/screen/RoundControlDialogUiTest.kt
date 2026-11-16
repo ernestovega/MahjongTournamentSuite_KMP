@@ -343,7 +343,7 @@ class RoundControlDialogUiTest {
     }
 
     @Test
-    fun theOpenTablesOfAFinishedRoundShowABadgeAndCloseAllFromTheReview() = runComposeUiTest {
+    fun theOpenTablesOfAFinishedRoundShowABadgeAndCloseFromTheReview() = runComposeUiTest {
         // Round 1 is over: its time ran out. Table 1 stayed open, table 2 is completed.
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
         show(server)
@@ -356,7 +356,8 @@ class RoundControlDialogUiTest {
         onNodeWithText("Open tables in ended rounds").assertExists()
         onNodeWithTag("open_table_1_1").assertExists()
         onNodeWithTag("open_table_1_2").assertDoesNotExist()
-        onNodeWithText("Close all").performClick()
+        onNodeWithTag("open_tables_select_all").performClick()
+        onNodeWithTag("open_tables_close_selected").performClick()
         settle()
 
         assertEquals(listOf(listOf(TableKey(1, 1))), server.completedTableRequests.toList())
@@ -365,13 +366,14 @@ class RoundControlDialogUiTest {
     }
 
     @Test
-    fun cancellingTheReviewClosesNothing() = runComposeUiTest {
+    fun closingTheReviewWithoutCloseSelectedClosesNothing() = runComposeUiTest {
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
         show(server)
 
         onNodeWithText("Review").performClick()
         settle()
-        onNodeWithText("Cancel").performClick()
+        onNodeWithTag("open_table_1_1_check").performClick()
+        onNodeWithTag("open_tables_dismiss").performClick()
         settle()
 
         assertTrue(server.completedTableRequests.isEmpty())
@@ -473,6 +475,19 @@ class RoundControlDialogUiTest {
 
         onNodeWithTag("open_table_1_3").onChildren().filterToOne(hasText("5")).assertExists()
         onNodeWithTag("open_table_1_1").onChildren().filterToOne(hasText("0")).assertExists()
+    }
+
+    @Test
+    fun theHeaderOfTheReviewStaysInPlaceWhileTheRowsScroll() = runComposeUiTest {
+        val server = serverWithThreeOpenTables().apply { (5..20).forEach { seed(syncTable(tableId = it)) } }
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+        onNodeWithTag("open_table_1_20").performScrollTo().assertIsDisplayed()
+
+        onNodeWithTag("open_tables_select_all").assertIsDisplayed()
+        onNodeWithText("Hands").assertIsDisplayed()
     }
 
     @Test
