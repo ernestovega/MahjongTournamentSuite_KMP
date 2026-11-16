@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,12 +95,13 @@ fun AppBackground(showLogo: Boolean = true, content: @Composable () -> Unit) {
 
 /**
  * The logo with a progress below it, in the middle of the screen. It looks like the loading page of the web
- * (index.html), so a reload goes from one to the other without a jump.
+ * (index.html), so a reload goes from one to the other without a jump. It paints the background of the theme:
+ * on the web the canvas of the app is white until something draws on it.
  */
 @Composable
 fun AppLoading(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MtsSpacing.xxl, Alignment.CenterVertically),
     ) {
