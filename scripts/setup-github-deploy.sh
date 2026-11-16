@@ -23,7 +23,7 @@ gcloud services enable \
   cloudfunctions.googleapis.com cloudbuild.googleapis.com run.googleapis.com \
   artifactregistry.googleapis.com eventarc.googleapis.com pubsub.googleapis.com \
   cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com \
-  cloudbilling.googleapis.com firebaseextensions.googleapis.com
+  cloudbilling.googleapis.com firebaseextensions.googleapis.com compute.googleapis.com
 gcloud services enable \
   firebase.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
   firestore.googleapis.com firebasestorage.googleapis.com \
@@ -53,6 +53,13 @@ for role in \
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${SA_EMAIL}" --role="$role" --condition=None >/dev/null
 done
+
+# Cloud Build builds the functions as the default compute service account. New projects in an organization often
+# give it no role, and then every function build fails with "missing permission on the build service account".
+echo "Granting the build role to the default compute service account..."
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role=roles/cloudbuild.builds.builder --condition=None >/dev/null
 
 echo "Creating the GitHub identity pool and provider..."
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 \
