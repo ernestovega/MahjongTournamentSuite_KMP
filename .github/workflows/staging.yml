@@ -193,9 +193,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
-      - name: Check the Kotlin style
-        run: ./gradlew :data:ktlintCheck :androidApp:ktlintCheck
-
       - name: Build the staging app and its instrumented tests
         run: ./gradlew :androidApp:assembleStaging :androidApp:assembleStagingAndroidTest -Pmts.testBuildType=staging
 

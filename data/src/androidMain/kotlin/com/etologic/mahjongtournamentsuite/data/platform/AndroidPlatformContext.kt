@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.platform
 
 import android.content.Context
 import com.etologic.mahjongtournamentsuite.data.network.AndroidAppCheck
+import com.etologic.mahjongtournamentsuite.data.network.BackendUrlOverride
 
 object AndroidPlatformContext {
     private var appContext: Context? = null
@@ -16,9 +17,9 @@ object AndroidPlatformContext {
 
     fun init(context: Context) {
         appContext = context.applicationContext
+        BackendUrlOverride.applyManifest(context.applicationContext)
         AndroidAppCheck.install(context.applicationContext)
     }
 
-    fun requireContext(): Context =
-        appContext ?: error("AndroidPlatformContext not initialized. Call AndroidPlatformContext.init(context) in androidApp.")
+    fun requireContext(): Context = appContext ?: error("AndroidPlatformContext not initialized. Call AndroidPlatformContext.init(context) in androidApp.")
 }

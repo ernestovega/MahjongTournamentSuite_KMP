@@ -67,7 +67,22 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
+        // The app of the staging Firebase project, for rehearsals: it installs next to the real app and never calls
+        // the production backend. The project id is `mts.staging.project` in gradle.properties. See docs/staging.md.
+        create("staging") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            matchingFallbacks += listOf("debug")
+            val stagingProject = providers.gradleProperty("mts.staging.project").orNull.orEmpty()
+            manifestPlaceholders["mtsBackendUrl"] =
+                if (stagingProject.isBlank()) "" else "https://europe-southwest1-$stagingProject.cloudfunctions.net/api"
+        }
     }
+
+    // `-Pmts.testBuildType=staging` runs the instrumented tests (the automatic players of a rehearsal) on the
+    // staging app.
+    testBuildType = providers.gradleProperty("mts.testBuildType").orNull ?: "debug"
 
     testOptions {
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
@@ -95,6 +110,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    "stagingImplementation"(libs.androidx.compose.ui.test.manifest)
     // The one Android app of the suite holds both applications. See SuiteRoot.
     implementation(projects.adminApp)
     implementation(projects.playerApp)

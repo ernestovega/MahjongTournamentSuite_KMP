@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The staging app: its own backend and no App Check of the production project. See docs/staging.md. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <meta-data android:name="mts.backendUrl" android:value="${mtsBackendUrl}" />
+        <meta-data
+            android:name="mts.appCheck.appId"
+            android:value=""
+            tools:replace="android:value" />
+        <meta-data
+            android:name="mts.appCheck.apiKey"
+            android:value=""
+            tools:replace="android:value" />
+    </application>
+
+</manifest>
