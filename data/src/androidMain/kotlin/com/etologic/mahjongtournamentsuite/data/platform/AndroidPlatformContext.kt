@@ -21,6 +21,5 @@ object AndroidPlatformContext {
         AndroidAppCheck.install(context.applicationContext)
     }
 
-    fun requireContext(): Context =
-        appContext ?: error("AndroidPlatformContext not initialized. Call AndroidPlatformContext.init(context) in androidApp.")
+    fun requireContext(): Context = appContext ?: error("AndroidPlatformContext not initialized. Call AndroidPlatformContext.init(context) in androidApp.")
 }
