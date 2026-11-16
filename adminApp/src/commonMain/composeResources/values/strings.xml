@@ -792,12 +792,17 @@
     <string name="round_control_table_round">Like the round</string>
     <string name="round_control_no_tables">This round has no tables yet.</string>
     <string name="round_control_completed_notice">The tournament is completed. You can still reopen tables, but its clocks cannot change.</string>
-    <string name="round_control_finished_notice">Finished rounds with open tables: %1$s\nOpen tables: %2$d</string>
-    <string name="round_control_finished_button">Close tables of finished rounds</string>
-    <string name="round_control_finished_title">Close the open tables?</string>
-    <string name="round_control_finished_message">Tables to mark as completed: %1$d\n\n%2$s\n\nTheir players will no longer be able to add hands.\nYou can open any of them again in its round.</string>
-    <string name="round_control_finished_line">• Round %1$d, tables: %2$s</string>
-    <string name="round_control_finished_confirm">Close tables</string>
+    <plurals name="round_control_finished_notice">
+        <item quantity="one">There is %1$d open table in ended rounds</item>
+        <item quantity="other">There are %1$d open tables in ended rounds</item>
+    </plurals>
+    <string name="round_control_finished_review">Review</string>
+    <string name="round_control_finished_title">Open tables in ended rounds</string>
+    <string name="round_control_finished_col_round">Round</string>
+    <string name="round_control_finished_col_table">Table</string>
+    <string name="round_control_finished_col_hands">Hands</string>
+    <string name="round_control_finished_go">Go</string>
+    <string name="round_control_finished_close_all">Close all</string>
     <string name="round_control_finished_badge">Open tables: %1$d</string>
     <string name="timer_manual_warning">Manual round control is on: the clock does not decide what the players can do.\nChange it in Round control.</string>
     <string name="activity_action_round_control">Round control changed</string>

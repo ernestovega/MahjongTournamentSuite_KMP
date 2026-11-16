@@ -32,6 +32,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcomeDia
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.OpenTablesReviewDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountDeletesConfirmDialog
@@ -126,8 +127,33 @@ class AdminDialogsScreenshotTest {
         val tables = remember {
             ScreenshotData.tables(ONGOING).map { if (it.roundId == 2 && it.tableId in setOf(1, 3)) it.copy(isCompleted = false) else it }
         }
-        RoundControlDialogContent(controller = controller, loadTables = { AppResult.Success(tables) }, onDismiss = {})
+        RoundControlDialogContent(
+            controller = controller,
+            loadTables = { AppResult.Success(tables) },
+            loadRoundHands = { roundId -> openRoundHands(roundId) },
+            onDismiss = {},
+        )
     }
+
+    @Test
+    fun roundControlOpenTablesReview() = dialog("round-control-open-tables-review") {
+        OpenTablesReviewDialog(
+            tables = listOf(TableKey(2, 1), TableKey(2, 3), TableKey(4, 2)),
+            loadRoundHands = { roundId -> openRoundHands(roundId) },
+            onGoTo = {},
+            onCloseAll = {},
+            onDismiss = {},
+        )
+    }
+
+    /** The tables of a round with part of their hands, like tables that stayed open: 11, 0, 7 and 14 hands. */
+    private fun openRoundHands(roundId: Int) = AppResult.Success(
+        (1..4).map { tableId ->
+            val (table, hands) = ScreenshotData.table(ONGOING, roundId, tableId)
+            val done = listOf(11, 0, 7, 14)[tableId - 1]
+            table to hands.mapIndexed { index, hand -> hand.copy(isDone = index < done) }
+        },
+    )
 
     @Test
     fun resetTable() = dialog("reset-table") { ResetTableDialog(roundId = 3, tableId = 2, busy = false, onConfirm = {}, onDismiss = {}) }

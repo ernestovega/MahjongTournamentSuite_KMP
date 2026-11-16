@@ -792,12 +792,17 @@
     <string name="round_control_table_round">Zoals de ronde</string>
     <string name="round_control_no_tables">Deze ronde heeft nog geen tafels.</string>
     <string name="round_control_completed_notice">Het toernooi is voltooid. Je kunt nog tafels heropenen, maar de klokken kunnen niet veranderen.</string>
-    <string name="round_control_finished_notice">Afgelopen rondes met open tafels: %1$s\nOpen tafels: %2$d</string>
-    <string name="round_control_finished_button">Tafels van afgelopen rondes sluiten</string>
-    <string name="round_control_finished_title">Open tafels sluiten?</string>
-    <string name="round_control_finished_message">Tafels die als voltooid worden gemarkeerd: %1$d\n\n%2$s\n\nHun spelers kunnen geen handen meer toevoegen.\nJe kunt elke tafel weer openen in zijn ronde.</string>
-    <string name="round_control_finished_line">• Ronde %1$d, tafels: %2$s</string>
-    <string name="round_control_finished_confirm">Tafels sluiten</string>
+    <plurals name="round_control_finished_notice">
+        <item quantity="one">Er is %1$d open tafel in afgelopen rondes</item>
+        <item quantity="other">Er zijn %1$d open tafels in afgelopen rondes</item>
+    </plurals>
+    <string name="round_control_finished_review">Bekijken</string>
+    <string name="round_control_finished_title">Open tafels in afgelopen rondes</string>
+    <string name="round_control_finished_col_round">Ronde</string>
+    <string name="round_control_finished_col_table">Tafel</string>
+    <string name="round_control_finished_col_hands">Handen</string>
+    <string name="round_control_finished_go">Ga</string>
+    <string name="round_control_finished_close_all">Alles sluiten</string>
     <string name="round_control_finished_badge">Open tafels: %1$d</string>
     <string name="timer_manual_warning">Handmatige rondebesturing staat aan: de klok beslist niet wat de spelers kunnen doen.\nWijzig dit in Rondebesturing.</string>
     <string name="activity_action_round_control">Rondebeheer gewijzigd</string>

@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -53,7 +55,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.TABLE_HAS_ALL_HANDS
+import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -80,12 +84,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock_h
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_closed
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_completed_notice
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_badge
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_button
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_confirm
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_line
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_message
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_notice
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_title
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_review
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_hands_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_manual_warning
@@ -127,6 +127,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm
 import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_message
 import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_title
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -149,6 +150,7 @@ fun RoundControlDialog(
     RoundControlDialogContent(
         controller = controller,
         loadTables = { mode -> repository.listTournamentTables(tournamentId, null, mode) },
+        loadRoundHands = { roundId -> repository.getRoundTablesWithHands(tournamentId, roundId, RefreshMode.FORCE) },
         onDismiss = onDismiss,
     )
 }
@@ -166,6 +168,8 @@ internal fun RoundControlDialogContent(
     controller: RoundTimerController,
     /** Every table of the tournament: the round strip shows the status of each round. */
     loadTables: suspend (mode: RefreshMode) -> AppResult<List<TournamentTable>>,
+    /** The tables of a round with their hands: the review of the open tables counts the hands entered. */
+    loadRoundHands: suspend (roundId: Int) -> AppResult<List<Pair<TableState, List<TableHand>>>>,
     onDismiss: () -> Unit,
     deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
@@ -175,8 +179,10 @@ internal fun RoundControlDialogContent(
     var error by remember { mutableStateOf<AppError?>(null) }
     var prompt by remember { mutableStateOf<RoundControlPrompt?>(null) }
     var busy by remember { mutableStateOf(false) }
-    // The open tables of the finished rounds that the admin is asked to close, frozen when the confirmation opens.
-    var tablesToClose by remember { mutableStateOf<List<TableKey>?>(null) }
+    // The open tables of the finished rounds under review, frozen when the review opens.
+    var tablesToReview by remember { mutableStateOf<List<TableKey>?>(null) }
+    // The table to scroll to after "Go to the round" in the review.
+    var scrollToTable by remember { mutableStateOf<TableKey?>(null) }
     // Bumped after a table changes its completed mark, so the tables load again at once.
     var tablesRevision by remember { mutableStateOf(0) }
 
@@ -288,20 +294,20 @@ internal fun RoundControlDialogContent(
         )
         null -> Unit
     }
-    tablesToClose?.let { tables ->
-        val lines = tables.groupBy { it.roundId }.map { (roundId, keys) ->
-            stringResource(Res.string.round_control_finished_line, roundId, keys.joinToString(", ") { it.tableId.toString() })
-        }
-        ConfirmDialog(
-            name = "RoundControlCloseFinished",
-            title = stringResource(Res.string.round_control_finished_title),
-            message = stringResource(Res.string.round_control_finished_message, tables.size, lines.joinToString("\n")),
-            confirm = stringResource(Res.string.round_control_finished_confirm),
-            onConfirm = {
-                tablesToClose = null
+    tablesToReview?.let { tables ->
+        OpenTablesReviewDialog(
+            tables = tables,
+            loadRoundHands = loadRoundHands,
+            onGoTo = { table ->
+                tablesToReview = null
+                controller.selectRound(table.roundId)
+                scrollToTable = table
+            },
+            onCloseAll = {
+                tablesToReview = null
                 closeTables(tables)
             },
-            onDismiss = { tablesToClose = null },
+            onDismiss = { tablesToReview = null },
         )
     }
     if (state.confirmReset) {
@@ -333,6 +339,14 @@ internal fun RoundControlDialogContent(
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Above the rounds: it is about the whole tournament, not the selected round.
+                    if (finishedOpenTables.isNotEmpty()) {
+                        FinishedRoundsNotice(
+                            openTables = finishedOpenTables,
+                            enabled = !busy,
+                            onReview = { tablesToReview = finishedOpenTables },
+                        )
+                    }
                     // The rounds stay on top while the rest scrolls.
                     RoundStrip(
                         numRounds = state.numRounds,
@@ -346,13 +360,6 @@ internal fun RoundControlDialogContent(
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
                             if (state.control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
-                            if (finishedOpenTables.isNotEmpty()) {
-                                FinishedRoundsNotice(
-                                    openTables = finishedOpenTables,
-                                    enabled = !busy,
-                                    onClose = { tablesToClose = finishedOpenTables },
-                                )
-                            }
                             BoxWithConstraints(Modifier.fillMaxWidth()) {
                                 val clock: @Composable (Modifier) -> Unit = { modifier ->
                                     ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
@@ -377,6 +384,8 @@ internal fun RoundControlDialogContent(
                                 control = state.control,
                                 enabled = !busy,
                                 onChange = ::change,
+                                scrollTo = scrollToTable?.takeIf { it.roundId == state.roundId }?.tableId,
+                                onScrolled = { scrollToTable = null },
                             )
                         }
                     }
@@ -547,6 +556,9 @@ private fun TablesCard(
     control: RoundControl,
     enabled: Boolean,
     onChange: (RoundControlChange) -> Unit,
+    /** A table to bring into view once, after "Go to the round" in the review of the open tables. */
+    scrollTo: Int? = null,
+    onScrolled: () -> Unit = {},
 ) {
     Card(title = stringResource(Res.string.round_control_tables), info = stringResource(Res.string.round_control_tables_help), modifier = Modifier.fillMaxWidth()) {
         when {
@@ -554,7 +566,20 @@ private fun TablesCard(
             tables.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
             else -> tables.forEachIndexed { index, table ->
                 if (index > 0) HorizontalDivider()
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                val requester = remember { BringIntoViewRequester() }
+                if (scrollTo == table.tableId) {
+                    LaunchedEffect(scrollTo) {
+                        // Let the round's tables lay out first.
+                        delay(100)
+                        requester.bringIntoView()
+                        onScrolled()
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.bringIntoViewRequester(requester).testTag("table_row_${table.tableId}"),
+                ) {
                     Text("${stringResource(Res.string.table)} ${table.tableId}", fontWeight = FontWeight.SemiBold, modifier = Modifier.widthIn(min = 72.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -662,20 +687,27 @@ private fun Card(title: String, info: String?, modifier: Modifier, content: @Com
     }
 }
 
-/** The rounds that are over but keep open tables, with the button that closes them all after a confirmation. */
+/** The open tables of the rounds that are over, with the button that opens their review. About the whole tournament. */
 @Composable
-private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, onClose: () -> Unit) {
-    val rounds = openTables.map { it.roundId }.distinct().map { stringResource(Res.string.round_n, it) }.joinToString(", ")
+private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, onReview: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().testTag("finished_rounds_open_tables"),
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(Res.string.round_control_finished_notice, rounds, openTables.size), style = MaterialTheme.typography.bodyMedium)
-            FocusedButton(enabled = enabled, onClick = onClose, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.round_control_finished_button))
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                pluralStringResource(Res.plurals.round_control_finished_notice, openTables.size, openTables.size),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            FocusedButton(enabled = enabled, onClick = onReview) {
+                Text(stringResource(Res.string.round_control_finished_review))
             }
         }
     }

@@ -792,12 +792,17 @@
     <string name="round_control_table_round">Som omgången</string>
     <string name="round_control_no_tables">Den här omgången har inga bord än.</string>
     <string name="round_control_completed_notice">Turneringen är klar. Du kan fortfarande öppna bord igen, men dess klockor kan inte ändras.</string>
-    <string name="round_control_finished_notice">Avslutade omgångar med öppna bord: %1$s\nÖppna bord: %2$d</string>
-    <string name="round_control_finished_button">Stäng borden i avslutade omgångar</string>
-    <string name="round_control_finished_title">Stänga de öppna borden?</string>
-    <string name="round_control_finished_message">Bord som markeras som klara: %1$d\n\n%2$s\n\nDeras spelare kan inte längre lägga till händer.\nDu kan öppna vilket som helst av dem igen i dess omgång.</string>
-    <string name="round_control_finished_line">• Omgång %1$d, bord: %2$s</string>
-    <string name="round_control_finished_confirm">Stäng borden</string>
+    <plurals name="round_control_finished_notice">
+        <item quantity="one">Det finns %1$d öppet bord i avslutade omgångar</item>
+        <item quantity="other">Det finns %1$d öppna bord i avslutade omgångar</item>
+    </plurals>
+    <string name="round_control_finished_review">Granska</string>
+    <string name="round_control_finished_title">Öppna bord i avslutade omgångar</string>
+    <string name="round_control_finished_col_round">Omgång</string>
+    <string name="round_control_finished_col_table">Bord</string>
+    <string name="round_control_finished_col_hands">Händer</string>
+    <string name="round_control_finished_go">Gå</string>
+    <string name="round_control_finished_close_all">Stäng alla</string>
     <string name="round_control_finished_badge">Öppna bord: %1$d</string>
     <string name="timer_manual_warning">Manuell omgångskontroll är på: klockan bestämmer inte vad spelarna kan göra.\nÄndra det i Omgångskontroll.</string>
     <string name="activity_action_round_control">Omgångskontroll ändrad</string>

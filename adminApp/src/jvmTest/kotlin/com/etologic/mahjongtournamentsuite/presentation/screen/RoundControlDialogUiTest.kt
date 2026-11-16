@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,6 +51,7 @@ class RoundControlDialogUiTest {
                 RoundControlDialogContent(
                     controller = controller,
                     loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
+                    loadRoundHands = { roundId -> server.getRoundTablesWithHands("t1", roundId, RefreshMode.FORCE) },
                     onDismiss = {},
                     deviceNowMs = { now },
                 )
@@ -326,19 +328,20 @@ class RoundControlDialogUiTest {
     }
 
     @Test
-    fun theOpenTablesOfAFinishedRoundShowABadgeAndCloseAfterAConfirmation() = runComposeUiTest {
+    fun theOpenTablesOfAFinishedRoundShowABadgeAndCloseAllFromTheReview() = runComposeUiTest {
         // Round 1 is over: its time ran out. Table 1 stayed open, table 2 is completed.
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
         show(server)
 
         onNodeWithTag("round_chip_1_open_tables", useUnmergedTree = true).assertExists()
         onNodeWithContentDescription("Open tables: 1").assertExists()
-        onNodeWithText("Finished rounds with open tables: Round 1", substring = true).assertExists()
-        onNodeWithText("Close tables of finished rounds").performClick()
+        onNodeWithText("There is 1 open table in ended rounds").assertExists()
+        onNodeWithText("Review").performClick()
         settle()
-        onNodeWithText("Close the open tables?").assertExists()
-        onNodeWithText("• Round 1, tables: 1", substring = true).assertExists()
-        onNodeWithText("Close tables").performClick()
+        onNodeWithText("Open tables in ended rounds").assertExists()
+        onNodeWithTag("open_table_1_1").assertExists()
+        onNodeWithTag("open_table_1_2").assertDoesNotExist()
+        onNodeWithText("Close all").performClick()
         settle()
 
         assertEquals(listOf(listOf(TableKey(1, 1))), server.completedTableRequests.toList())
@@ -347,17 +350,34 @@ class RoundControlDialogUiTest {
     }
 
     @Test
-    fun cancellingTheConfirmationClosesNothing() = runComposeUiTest {
+    fun cancellingTheReviewClosesNothing() = runComposeUiTest {
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
         show(server)
 
-        onNodeWithText("Close tables of finished rounds").performClick()
+        onNodeWithText("Review").performClick()
         settle()
         onNodeWithText("Cancel").performClick()
         settle()
 
         assertTrue(server.completedTableRequests.isEmpty())
         onNodeWithTag("finished_rounds_open_tables").assertExists()
+    }
+
+    @Test
+    fun goToRoundClosesTheReviewAndSelectsTheRoundOfTheTable() = runComposeUiTest {
+        // Round 2 is in play, so round 1 is over. The dialog opens on round 2.
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min), RoundClock(roundId = 2, startedAtMs = now - 10 * min))
+        show(server, round = 2)
+
+        onNodeWithText("Review").performClick()
+        settle()
+        onNodeWithTag("open_table_1_1_go").performClick()
+        settle()
+
+        onNodeWithText("Open tables in ended rounds").assertDoesNotExist()
+        onNodeWithTag("round_chip_1").assertIsSelected()
+        onNodeWithTag("table_row_1").assertIsDisplayed()
+        assertTrue(server.completedTableRequests.isEmpty())
     }
 
     @Test

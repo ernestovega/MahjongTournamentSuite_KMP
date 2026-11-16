@@ -792,12 +792,17 @@
     <string name="round_control_table_round">Como la ronda</string>
     <string name="round_control_no_tables">Esta ronda aún no tiene mesas.</string>
     <string name="round_control_completed_notice">El torneo está completado. Puedes reabrir mesas, pero sus relojes no pueden cambiar.</string>
-    <string name="round_control_finished_notice">Rondas terminadas con mesas abiertas: %1$s\nMesas abiertas: %2$d</string>
-    <string name="round_control_finished_button">Cerrar mesas de rondas terminadas</string>
-    <string name="round_control_finished_title">¿Cerrar las mesas abiertas?</string>
-    <string name="round_control_finished_message">Mesas que se marcarán como completadas: %1$d\n\n%2$s\n\nSus jugadores ya no podrán añadir manos.\nPuedes abrir cualquiera otra vez desde su ronda.</string>
-    <string name="round_control_finished_line">• Ronda %1$d, mesas: %2$s</string>
-    <string name="round_control_finished_confirm">Cerrar mesas</string>
+    <plurals name="round_control_finished_notice">
+        <item quantity="one">Hay %1$d mesa abierta en rondas finalizadas</item>
+        <item quantity="other">Hay %1$d mesas abiertas en rondas finalizadas</item>
+    </plurals>
+    <string name="round_control_finished_review">Revisar</string>
+    <string name="round_control_finished_title">Mesas abiertas en rondas finalizadas</string>
+    <string name="round_control_finished_col_round">Ronda</string>
+    <string name="round_control_finished_col_table">Mesa</string>
+    <string name="round_control_finished_col_hands">Manos</string>
+    <string name="round_control_finished_go">Ir</string>
+    <string name="round_control_finished_close_all">Cerrar todas</string>
     <string name="round_control_finished_badge">Mesas abiertas: %1$d</string>
     <string name="timer_manual_warning">Control manual de ronda activo: el reloj no decide lo que pueden hacer los jugadores.\nCámbialo en Control de ronda.</string>
     <string name="activity_action_round_control">Control de ronda cambiado</string>
