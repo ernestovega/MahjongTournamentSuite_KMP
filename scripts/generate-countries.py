@@ -29,6 +29,10 @@ STRINGS = {
     "es": ROOT / "ui/src/commonMain/composeResources/values-es/strings.xml",
     "fr": ROOT / "ui/src/commonMain/composeResources/values-fr/strings.xml",
     "it": ROOT / "ui/src/commonMain/composeResources/values-it/strings.xml",
+    "de": ROOT / "ui/src/commonMain/composeResources/values-de/strings.xml",
+    "sv": ROOT / "ui/src/commonMain/composeResources/values-sv/strings.xml",
+    "nl": ROOT / "ui/src/commonMain/composeResources/values-nl/strings.xml",
+    "ru": ROOT / "ui/src/commonMain/composeResources/values-ru/strings.xml",
 }
 CSV_URL = "https://raw.githubusercontent.com/datasets/country-codes/main/data/country-codes.csv"
 

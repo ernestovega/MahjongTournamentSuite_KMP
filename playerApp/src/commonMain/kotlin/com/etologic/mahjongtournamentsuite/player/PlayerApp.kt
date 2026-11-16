@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
+import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -205,6 +206,8 @@ private fun PlayerNavigation(
         BrowserHistory(navController)
         // Over every screen: the table of the player when a round of the player starts soon or is in play.
         MyTableReminder(navController, sessionStorage)
+        // One time, when the app shows a language that was translated with AI.
+        AiTranslationNotice(onContact = { navController.navigate(SupportRoute()) })
     }
 }
 

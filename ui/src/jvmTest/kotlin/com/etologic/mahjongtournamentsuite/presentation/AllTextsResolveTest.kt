@@ -30,7 +30,7 @@ class AllTextsResolveTest {
     }
 
     /** The languages with their own texts. Each one has the same keys as English. */
-    private val translated = listOf("es", "fr", "it")
+    private val translated = listOf("es", "fr", "it", "de", "sv", "nl", "ru")
 
     @Test
     fun everyTextLoadsInEveryLanguage() = runTest {

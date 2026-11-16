@@ -492,6 +492,9 @@
     <string name="country_zw">Zimbabwe</string>
     <string name="country_eu">European Union</string>
     <string name="language_label">Language</string>
+    <string name="ai_translation_title">Translated with AI</string>
+    <string name="ai_translation_message">The texts in languages other than English were translated with AI and nobody has checked them yet. If you find any mistake, please tell us through the contact form.</string>
+    <string name="ai_translation_contact">Contact</string>
     <string name="error_tournament_not_found">The tournament was not found. It may have been deleted.</string>
     <string name="action_back">Back</string>
     <string name="dropdown_search">Search</string>
