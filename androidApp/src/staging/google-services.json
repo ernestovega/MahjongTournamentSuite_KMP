@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "701558487890",
+    "project_id": "mts---staging",
+    "storage_bucket": "mts---staging.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701558487890:android:9eff5d9521ed09bbf4588b",
+        "android_client_info": {
+          "package_name": "com.etologic.mahjongtournamentsuite.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeMVm7Dkdy3gn1xZgG7rdTO-tVCl_7lAo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
