@@ -675,10 +675,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = {
-            AppTopBarActions(
-                onNewPlayer = if (canEdit) ::openNewPlayerDialog else null,
-            )
+        // Only admins add players. An editor has no button here, so there is no empty three-dots menu on a phone.
+        actions = if (canEdit) {
+            { AppTopBarActions(onNewPlayer = ::openNewPlayerDialog) }
+        } else {
+            null
         },
     ) {
         ScreenColumn(maxWidth = 1200.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

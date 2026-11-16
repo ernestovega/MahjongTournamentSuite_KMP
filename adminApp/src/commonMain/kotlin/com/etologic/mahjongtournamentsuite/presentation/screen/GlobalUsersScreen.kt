@@ -377,12 +377,17 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
             }
         },
-        actions = {
-            AppTopBarActions(
-                // Only admins create accounts. A new account is an editor or an admin.
-                onNewUser = if (access?.isAdmin == true) ({ showCreateDialog = true }) else null,
-                newUserFocusRequester = addFocusRequester,
-            )
+        // Only admins create accounts. A new account is an editor or an admin. An editor has no button here,
+        // so the screen has no three-dots menu on a phone instead of an empty one.
+        actions = if (access?.isAdmin == true) {
+            {
+                AppTopBarActions(
+                    onNewUser = { showCreateDialog = true },
+                    newUserFocusRequester = addFocusRequester,
+                )
+            }
+        } else {
+            null
         },
     ) {
         ScreenColumn(

@@ -87,6 +87,10 @@ fun AppScaffold(
      * when the back button is present, and they stay visible when it is not.
      */
     rootLeadingActions: @Composable (() -> Unit)? = null,
+    /**
+     * Right of the title. On a narrow screen they go into the three-dots menu. Pass null, never an empty lambda,
+     * when the screen or the role of the user has no buttons here: an empty lambda shows a menu that opens nothing.
+     */
     actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,

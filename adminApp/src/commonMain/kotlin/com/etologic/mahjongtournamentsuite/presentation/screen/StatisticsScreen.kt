@@ -220,8 +220,6 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         showBackgroundLogo = isLoading && tournamentData == null && overview == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = {
-        },
     ) {
         ScreenColumn(
             // The statistics sections use the full width and flow into columns.

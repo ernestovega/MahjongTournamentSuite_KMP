@@ -63,12 +63,15 @@ class AccountActions(
      * The Profile button left of the title. The Exit button is inside the profile dialog.
      * Without an account it is the Sign in button: everything can be read without one.
      */
+    /** Reads whether there is an account and whether it can open the admin app. */
+    suspend fun loadSession() {
+        signedIn = session.hasSession()
+        canManage = signedIn == true && session.canManage()
+    }
+
     @Composable
     fun Buttons() {
-        LaunchedEffect(Unit) {
-            signedIn = session.hasSession()
-            canManage = signedIn == true && session.canManage()
-        }
+        LaunchedEffect(Unit) { loadSession() }
         when (signedIn) {
             null -> Unit
             true -> {
@@ -127,5 +130,9 @@ class AccountActions(
 fun rememberAccountActions(navController: NavHostController): AccountActions {
     val session = koinInject<PlayerSessionPresenter>()
     val scope = rememberCoroutineScope()
-    return remember(session, navController, scope) { AccountActions(session, navController, scope) }
+    val actions = remember(session, navController, scope) { AccountActions(session, navController, scope) }
+    // On a phone with a back button the account buttons wait inside the closed three-dots menu. The session is read
+    // now, so the menu does not open empty for a moment while it loads.
+    LaunchedEffect(actions) { actions.loadSession() }
+    return actions
 }
