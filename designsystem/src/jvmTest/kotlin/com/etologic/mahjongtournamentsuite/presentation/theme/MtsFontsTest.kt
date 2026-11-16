@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-/** The decorative font has no Cyrillic letters, and the web draws nothing for a missing letter. */
+/** The decorative font has no Cyrillic letters and no å, and the web draws nothing for a missing letter. */
 @OptIn(ExperimentalTestApi::class)
 class MtsFontsTest {
     private val original = Locale.getDefault()
@@ -28,10 +28,13 @@ class MtsFontsTest {
     }
 
     @Test
-    fun russianTitlesUseTheTextFont() = assertEquals(FontFamily.Default, familyIn("ru"))
+    fun russianAndSwedishTitlesUseTheTextFont() {
+        // Cyrillic letters, and the å of Swedish (Omgång).
+        for (tag in listOf("ru", "sv")) assertEquals(FontFamily.Default, familyIn(tag), tag)
+    }
 
     @Test
     fun latinLanguagesKeepTheDecorativeFont() {
-        for (tag in listOf("en", "es", "de", "sv", "nl")) assertNotEquals(FontFamily.Default, familyIn(tag), tag)
+        for (tag in listOf("en", "es", "fr", "it", "de", "nl")) assertNotEquals(FontFamily.Default, familyIn(tag), tag)
     }
 }
