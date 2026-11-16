@@ -57,9 +57,9 @@ class RulesTopBarUiTest {
     fun onAWideScreenTheCreditsButtonOfCombinationsOpensItsDialog() = runDesktopComposeUiTest(width = 1200, height = 800) {
         show { CombinationsScreen(it) }
         button("Credits").performClick()
-        onNodeWithText("martinpersson.org").assertExists()
+        onNodeWithText("www.martinpersson.org").assertExists()
         onNodeWithText("Close").performClick()
-        onNodeWithText("martinpersson.org").assertDoesNotExist()
+        onNodeWithText("www.martinpersson.org").assertDoesNotExist()
     }
 
     @Test
@@ -69,7 +69,7 @@ class RulesTopBarUiTest {
         openMenu()
         button("Credits").performClick()
         // The menu closes, and the dialog stays open, because its state is out of the button.
-        onNodeWithText("martinpersson.org").assertExists()
+        onNodeWithText("www.martinpersson.org").assertExists()
     }
 
     @Test

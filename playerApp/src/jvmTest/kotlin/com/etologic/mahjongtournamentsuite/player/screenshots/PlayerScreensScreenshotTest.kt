@@ -66,7 +66,7 @@ class PlayerScreensScreenshotTest {
     fun combinationsCredits() = playerScreenshots(
         "dialogs/combinations-credits",
         variants = dialogVariants,
-        ready = { waitForText("martinpersson.org") },
+        ready = { waitForText("www.martinpersson.org") },
     ) {
         CreditsDialog(onDismiss = {})
     }

@@ -337,10 +337,18 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
                     // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
                     TileGroupsRow(CreditsExampleTiles, Modifier.padding(bottom = 16.dp), maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
                     Text(stringResource(Res.string.combinations_tiles_credit), Modifier.padding(bottom = 8.dp), textAlign = TextAlign.Center)
-                    TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) { Text("martinpersson.org") }
+                    TextButton(
+                        onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
+                    ) { Text("www.martinpersson.org") }
                 }
             },
-            confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) } },
+            // Centered, as the rest of the dialog.
+            confirmButton = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
+                }
+            },
         )
     }
 }
