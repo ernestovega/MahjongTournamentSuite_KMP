@@ -23,8 +23,8 @@ class LocalizationParityTest {
             .associate { it.groupValues[1] to Regex("""%\d\$[sd]""").findAll(it.groupValues[2]).map { m -> m.value }.sorted().toList() }
 
     /**
-     * The text files of the English base. strings.xml must be in every language. Another file, such as the reference
-     * texts of the player app, may be missing in a language that has no translation yet: the English texts then show.
+     * The text files of the English base. strings.xml must be in every language. Another file, such as the names of the
+     * combinations of the player app, may be missing in a language that has no translation yet: the English texts then show.
      */
     private fun textFiles(base: File) = File(base, "values").listFiles { f -> f.extension == "xml" }.orEmpty().sortedBy { it.name }
 

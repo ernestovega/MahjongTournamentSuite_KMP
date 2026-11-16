@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The combinations and the penalties of the table screen. The combinations come from Mahjong Scoring 2. -->
+<!-- The names of the 81 combinations of the Mahjong Competition Rules, from Mahjong Scoring 2. A language without this file shows the English names. -->
 <resources>
-    <string name="combinations_title">Combinaisons</string>
-    <string name="combinations_search_hint">Nom, points ou description</string>
-    <string name="combinations_empty">Aucune combinaison ne correspond à la recherche.</string>
-    <string name="combinations_show_tiles">Afficher toutes les tuiles</string>
-    <string name="combinations_hide_tiles">Masquer toutes les tuiles</string>
-    <string name="combinations_points">%1$d points</string>
     <string name="comb_pure_double_chow">Double chow pur</string>
     <string name="comb_mixed_double_chow">Double chow</string>
     <string name="comb_short_straight">Petite suite pure</string>
@@ -100,36 +94,4 @@
     <string name="comb_nine_gates">Neufs portes</string>
     <string name="comb_four_kongs">Quatre kongs</string>
     <string name="comb_seven_shifted_pairs">Sept paires pures consécutives</string>
-    <string name="penalties_title">Pénalités</string>
-    <string name="penalties_section_warning">Avertissement et pénalité progressive</string>
-    <string name="penalties_section_dead_hand">Main morte</string>
-    <string name="penalties_section_points">Pénalités en points et sanctions graves</string>
-    <string name="penalties_progressive">Première infraction : avertissement. Deuxième : retrait de 5 points. Infractions suivantes : 10, 20, 30 points, etc. Le compte repart à zéro au début de chaque session, sauf pour le jeu obstructif, y compris les retards délibérés.</string>
-    <string name="penalties_source">Règles de compétition de Mahjong de l'EMA, version du 20 juin 2009.</string>
-    <string name="penalty_w1">Annonce erronée de kong, pong, chow ou hua : le joueur annonce mais n'exécute pas l'action, emploie un terme incorrect ou annonce pong trop tard.</string>
-    <string name="penalty_w2">Montrer des tuiles avant d'annoncer kong, pong, chow ou hua : l'annonce est invalide et les tuiles montrées doivent être défaussées.</string>
-    <string name="penalty_w3">Annoncer et prendre une tuile avant d'exposer les tuiles correspondantes.</string>
-    <string name="penalty_w4">Annoncer une fausse combinaison, avant de défausser : elle peut être corrigée, mais les tuiles exposées par erreur doivent être défaussées.</string>
-    <string name="penalty_w5">Remplacer une fausse fleur, avant de prendre la tuile de remplacement dans la main : cela peut être corrigé, et les tuiles exposées par erreur doivent être défaussées.</string>
-    <string name="penalty_w6">Piocher une tuile au mauvais endroit du mur : cela peut être corrigé avant de mettre la tuile dans la main.</string>
-    <string name="penalty_w7">Révéler les tuiles d'un adversaire : passible d'une pénalité supplémentaire.</string>
-    <string name="penalty_w8">Défaire prématurément le mur ou la zone de défausse : passible d'une pénalité supplémentaire.</string>
-    <string name="penalty_w9">Transmettre des informations : passible d'une pénalité supplémentaire.</string>
-    <string name="penalty_d1">Faux hu sans montrer les tuiles.</string>
-    <string name="penalty_d2">Annonce erronée de hu : annoncer autre chose que hu ou mahjong, ou montrer les tuiles avant d'annoncer hu.</string>
-    <string name="penalty_d3">Ne pas garder intacte la main gagnante : utiliser les tuiles de la main pour compter. Compter avec les fleurs fait perdre les fleurs, mais la main reste valide.</string>
-    <string name="penalty_d4">Annoncer une fausse combinaison, après avoir défaussé : cela ne peut pas être annulé.</string>
-    <string name="penalty_d5">Remplacer une fausse fleur après avoir pris la tuile de remplacement dans la main : cela ne peut pas être annulé. La fausse fleur reste sur la table et compte comme une défausse pour annoncer hu ou Dernière tuile.</string>
-    <string name="penalty_d6">Piocher au mauvais endroit et mettre la tuile dans la main : main morte seulement si un adversaire le signale immédiatement.</string>
-    <string name="penalty_d7">Ne pas prendre une tuile réclamée avant que les deux joueurs suivants aient défaussé.</string>
-    <string name="penalty_d8">Faux hu du joueur A alors que le joueur B a montré ses tuiles : A reçoit la pénalité correspondante. B a une main morte et doit défausser les tuiles montrées.</string>
-    <string name="penalty_d9">Trop ou trop peu de tuiles.</string>
-    <string name="penalty_p1">Faux hu de moins de 8 points : main morte et 10 points à chaque adversaire.</string>
-    <string name="penalty_p2">Faux hu avec une structure de main invalide : pas quatre combinaisons et une paire (ou une autre structure admise), une fausse combinaison ou un mauvais nombre de tuiles. Main morte et 20 points à chaque adversaire.</string>
-    <string name="penalty_p3">Oublier de prendre la tuile gagnante : 10 points retirés. La main reste valide et se compte normalement.</string>
-    <string name="penalty_p4">Retard de 10 minutes ou moins : 10 points retirés.</string>
-    <string name="penalty_p5">Retard de 11 à 15 minutes : 20 points retirés.</string>
-    <string name="penalty_p6">Retard de plus de 15 minutes : le joueur perd la session en cours et marque 0 point de table. Un remplaçant joue la session.</string>
-    <string name="penalty_p7">Jeu obstructif : retarder le jeu, ou révéler gravement des tuiles ou des informations. L'arbitre peut imposer de 10 à 60 points et/ou une main morte.</string>
-    <string name="penalty_p8">Perturbation grave : tricher ou entraver la compétition, y compris des retards répétés. Disqualification immédiate.</string>
 </resources>

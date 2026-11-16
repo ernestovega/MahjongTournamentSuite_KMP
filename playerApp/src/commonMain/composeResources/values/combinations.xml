@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The combinations and the penalties of the table screen. The combinations come from Mahjong Scoring 2. -->
+<!-- The names of the 81 combinations of the Mahjong Competition Rules, from Mahjong Scoring 2. A language without this file shows the English names. -->
 <resources>
-    <string name="combinations_title">Combinations</string>
-    <string name="combinations_search_hint">Name, points or description</string>
-    <string name="combinations_empty">No combination matches the search.</string>
-    <string name="combinations_show_tiles">Show all tiles</string>
-    <string name="combinations_hide_tiles">Hide all tiles</string>
-    <string name="combinations_points">%1$d points</string>
     <string name="comb_pure_double_chow">Pure double chow</string>
     <string name="comb_mixed_double_chow">Mixed double chow</string>
     <string name="comb_short_straight">Short straight</string>
@@ -100,36 +94,4 @@
     <string name="comb_nine_gates">Nine gates</string>
     <string name="comb_four_kongs">Four Kongs</string>
     <string name="comb_seven_shifted_pairs">Seven shifted pairs</string>
-    <string name="penalties_title">Penalties</string>
-    <string name="penalties_section_warning">Warning and progressive penalty</string>
-    <string name="penalties_section_dead_hand">Dead hand</string>
-    <string name="penalties_section_points">Point penalties and severe penalties</string>
-    <string name="penalties_progressive">First offence: warning. Second: 5-point deduction. Subsequent offences: 10, 20, 30 points, and so on. The count resets at the start of each session, except for obstructive play, including deliberate delays.</string>
-    <string name="penalties_source">Mahjong Competition Rules of the EMA, version of 20 June 2009.</string>
-    <string name="penalty_w1">Erroneous kong, pong, chow or hua call: the player calls but fails to perform the action, uses an incorrect term, or calls pong too late.</string>
-    <string name="penalty_w2">Revealing tiles before a kong, pong, chow or hua call: the call is invalid, and the revealed tiles must be discarded.</string>
-    <string name="penalty_w3">Calling and claiming a tile before exposing the matching tiles.</string>
-    <string name="penalty_w4">Claiming a false set, before discarding: it may be corrected, but the incorrectly exposed tiles must be discarded.</string>
-    <string name="penalty_w5">Replacing a false flower, before taking the replacement tile into the hand: it may be corrected, and the incorrectly exposed tiles must be discarded.</string>
-    <string name="penalty_w6">Drawing a tile from the wrong place in the wall: it may be corrected before putting the tile into the hand.</string>
-    <string name="penalty_w7">Revealing an opponent's tiles: subject to further penalty.</string>
-    <string name="penalty_w8">Prematurely destroying the wall or the discard area: subject to further penalty.</string>
-    <string name="penalty_w9">Passing information: subject to further penalty.</string>
-    <string name="penalty_d1">False hu without exposing tiles.</string>
-    <string name="penalty_d2">Erroneous hu call: calling something other than hu or mahjong, or exposing tiles before calling hu.</string>
-    <string name="penalty_d3">Failing to keep the winning hand intact: using hand tiles to count. Using flowers to count forfeits the flowers, but the hand remains valid.</string>
-    <string name="penalty_d4">Claiming a false set, after discarding: it cannot be undone.</string>
-    <string name="penalty_d5">Replacing a false flower after taking the replacement tile into the hand: it cannot be undone. The false flower remains on the table and counts as a discard for claiming hu or Last tile.</string>
-    <string name="penalty_d6">Drawing from the wrong place and putting the tile into the hand: dead hand only if an opponent points it out immediately.</string>
-    <string name="penalty_d7">Failing to take a claimed tile before the next two players have discarded.</string>
-    <string name="penalty_d8">False hu by player A when player B exposed tiles: A receives the applicable penalty. B has a dead hand and must discard the exposed tiles.</string>
-    <string name="penalty_d9">Too few or too many tiles.</string>
-    <string name="penalty_p1">False hu, fewer than 8 points: dead hand and 10 points to each opponent.</string>
-    <string name="penalty_p2">False hu with an invalid hand structure: not four sets and a pair (or another accepted structure), a false set, or a wrong tile count. Dead hand and 20 points to each opponent.</string>
-    <string name="penalty_p3">Forgetting to take the winning tile: 10 points deducted. The hand remains valid and is scored as usual.</string>
-    <string name="penalty_p4">Late by 10 minutes or less: 10 points deducted.</string>
-    <string name="penalty_p5">Late by 11 to 15 minutes: 20 points deducted.</string>
-    <string name="penalty_p6">Late by more than 15 minutes: the player forfeits the current session and scores 0 table points. A substitute plays the session.</string>
-    <string name="penalty_p7">Obstructive play: delaying the game, or seriously revealing tiles or information. The referee may impose 10 to 60 points and/or a dead hand.</string>
-    <string name="penalty_p8">Serious disruption: cheating or obstructing the competition, including repeated delaying. Immediate disqualification.</string>
 </resources>
