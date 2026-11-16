@@ -7,7 +7,7 @@
     <string name="combinations_unfold_all">Unfold all</string>
     <string name="combinations_fold_all">Fold all</string>
     <string name="combinations_unfold">Unfold</string>
-    <string name="combinations_tiles_credit">Tiles of the list by Martin Persson:</string>
+    <string name="combinations_tiles_credit">Tiles by Martin Persson:</string>
     <string name="combinations_close">Close</string>
     <string name="combinations_fold">Fold</string>
     <plurals name="combinations_points">

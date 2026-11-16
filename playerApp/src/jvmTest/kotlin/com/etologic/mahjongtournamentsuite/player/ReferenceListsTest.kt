@@ -33,9 +33,7 @@ class ReferenceListsTest {
     @Test
     fun everyTileOfEveryCombinationHasAPicture() {
         Combinations.flatMap { it.groups.flatten() }.toSet().forEach { tile ->
-            TileSet.entries.forEach { set ->
-                assertTrue(set.prefix + tile in Res.allDrawableResources, "No ${set.name} picture for $tile")
-            }
+            assertTrue(tile in Res.allDrawableResources, "No picture for $tile")
         }
     }
 

@@ -59,21 +59,15 @@ internal object TileNotation {
     )
 }
 
-/** The width of a tile over its height, as in the pictures of the tiles. */
 /**
- * The two sets of tile pictures. [Simple] is the clear set of Martin Persson (martinpersson.org, free with a link to his
- * page), for small tiles. [Luxury] is the detailed set, for the large tiles of the dialog on a big screen.
+ * The width of a tile over its height, as in the pictures of the tiles. The pictures are the set of Martin Persson
+ * (martinpersson.org, free with a link to his page), which reads clearly even small.
  */
-internal enum class TileSet(val prefix: String, val aspect: Float) {
-    Simple("mp_", 84f / 128f),
-    Luxury("", 109f / 168f),
-}
+private const val TileAspect = 84f / 128f
 
 /** The largest a tile grows in the list, so that a short hand on a wide screen does not get huge. */
 private val MaxTileWidth = 52.dp
 
-/** The largest a tile grows in the dialog of a combination on a big screen. */
-internal val LargeTileWidth = 120.dp
 private val TileGap = 1.dp
 private val GroupGap = 6.dp
 
@@ -87,18 +81,17 @@ internal fun TileGroupsRow(
     modifier: Modifier = Modifier,
     maxTileWidth: Dp = MaxTileWidth,
     alignment: Alignment = Alignment.TopStart,
-    set: TileSet = TileSet.Simple,
 ) {
     BoxWithConstraints(modifier, contentAlignment = alignment) {
         val count = groups.sumOf { it.size }.coerceAtLeast(1)
         val gaps = TileGap * (count - groups.size).coerceAtLeast(0) + GroupGap * (groups.size - 1).coerceAtLeast(0)
         val width: Dp = min(maxTileWidth, (maxWidth - gaps) / count)
-        val height = width / set.aspect
+        val height = width / TileAspect
         Row(horizontalArrangement = Arrangement.spacedBy(GroupGap)) {
             groups.forEach { group ->
                 Row(horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                     group.forEach { name ->
-                        val tile = Res.allDrawableResources.getValue(set.prefix + name)
+                        val tile = Res.allDrawableResources.getValue(name)
                         // The high filter keeps the pictures smooth when they draw much smaller than they are.
                         Image(
                             imageResource(tile),

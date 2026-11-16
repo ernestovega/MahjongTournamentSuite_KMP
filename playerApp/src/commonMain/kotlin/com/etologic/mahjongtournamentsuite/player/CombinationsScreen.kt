@@ -190,9 +190,20 @@ internal const val COMBINATIONS_SEARCH_TAG = "combinations-search"
 internal const val COMBINATION_ROW_TAG = "combination-row"
 internal const val POINTS_HEADER_TAG = "combination-points-header"
 internal const val POINTS_CHIP_TAG = "combination-points-chip"
+internal const val COMBINATION_MINI_TILES_TAG = "combination_mini_tiles"
+
 internal const val COMBINATION_DIALOG_TAG = "combination-dialog"
 
 /** The widest the list grows on a big screen, so the tiles of a long hand can be larger. */
+/** Width of a tile in the small tiles of a folded row on a wide screen. */
+private val MiniTileWidth = 24.dp
+
+/** The dialog of a combination: large enough for big tiles, not as wide as the screen. */
+private val DialogMaxWidth = 720.dp
+
+/** The largest a tile grows in the dialog of a combination. */
+private val DialogTileWidth = 64.dp
+
 private val ListMaxWidth = 960.dp
 
 /**
@@ -450,34 +461,46 @@ private fun CombinationRow(
         modifier = modifier.testTag(COMBINATION_ROW_TAG),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.clickable(onClick = onOpen).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    name,
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "#$position",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                IconButton(onClick = onFold) {
-                    Icon(
-                        Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(if (expanded) Res.string.combinations_fold else Res.string.combinations_unfold),
-                        modifier = Modifier.rotate(turn),
+        BoxWithConstraints {
+            // On a wide screen a folded row has room to spare: it shows the tiles in small next to the name.
+            val miniTiles = !expanded && maxWidth >= 600.dp && combination.groups.isNotEmpty()
+            Column(Modifier.clickable(onClick = onOpen).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        name,
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                     )
+                    if (miniTiles) {
+                        TileGroupsRow(
+                            combination.groups,
+                            Modifier.weight(1.5f).testTag(COMBINATION_MINI_TILES_TAG),
+                            maxTileWidth = MiniTileWidth,
+                            alignment = Alignment.CenterEnd,
+                        )
+                    }
+                    Text(
+                        "#$position",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    IconButton(onClick = onFold) {
+                        Icon(
+                            Icons.Default.KeyboardArrowDown,
+                            contentDescription = stringResource(if (expanded) Res.string.combinations_fold else Res.string.combinations_unfold),
+                            modifier = Modifier.rotate(turn),
+                        )
+                    }
                 }
-            }
-            AnimatedVisibility(visible = expanded) {
-                Column(
-                    Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (combination.groups.isNotEmpty()) TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
+                AnimatedVisibility(visible = expanded) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (combination.groups.isNotEmpty()) TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -485,8 +508,7 @@ private fun CombinationRow(
 }
 
 /**
- * A combination in large: its name, value and tiles centered, and the explanation of the rules.
- * The first paragraph of the explanation, the definition, is bold. The others, such as what it does not combine with, are not.
+ * A combination in large: its name, value, tiles and the explanation of the rules, all centered, one paragraph per idea.
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
  */
 @Composable
@@ -495,8 +517,7 @@ private fun CombinationDialog(position: Int, combination: Combination, onDismiss
     TrackedDialog("Combination") {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(
-                // Wide on a big screen, so that the tiles of a long hand show large.
-                modifier = Modifier.padding(16.dp).widthIn(max = 1200.dp).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
+                modifier = Modifier.padding(16.dp).widthIn(max = DialogMaxWidth).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
@@ -527,23 +548,19 @@ private fun CombinationDialog(position: Int, combination: Combination, onDismiss
                             textAlign = TextAlign.Center,
                         )
                         if (combination.groups.isNotEmpty()) {
-                            // A big screen shows the detailed tiles large. A phone keeps the clear ones, which read better small.
-                            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                                val large = maxWidth >= 600.dp
-                                TileGroupsRow(
-                                    combination.groups,
-                                    Modifier.fillMaxWidth(),
-                                    maxTileWidth = if (large) LargeTileWidth else 64.dp,
-                                    alignment = Alignment.TopCenter,
-                                    set = if (large) TileSet.Luxury else TileSet.Simple,
-                                )
-                            }
+                            TileGroupsRow(
+                                combination.groups,
+                                Modifier.fillMaxWidth(),
+                                maxTileWidth = DialogTileWidth,
+                                alignment = Alignment.TopCenter,
+                            )
                         }
-                        paragraphs.forEachIndexed { index, paragraph ->
+                        paragraphs.forEach { paragraph ->
                             Text(
                                 paragraph,
+                                Modifier.fillMaxWidth(),
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
