@@ -7,12 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allDrawableResources
-import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.imageResource
 
 /**
  * A short way to write the tiles of a hand, as Mahjong Scoring 2 drew them.
@@ -59,27 +60,38 @@ internal object TileNotation {
 
 /** The width of a tile over its height, as in the pictures of the tiles. */
 private const val TileAspect = 109f / 168f
-private val MaxTileWidth = 40.dp
+
+/** The largest a tile grows in the list, so that a short hand on a wide screen does not get huge. */
+private val MaxTileWidth = 52.dp
+
+/** The largest a tile grows in the dialog of a combination. */
+internal val LargeTileWidth = 80.dp
 private val TileGap = 1.dp
 private val GroupGap = 6.dp
 
 /**
- * The groups of tiles of a hand in one row. The tiles shrink to fit the width, up to [MaxTileWidth].
+ * The groups of tiles of a hand in one row. The tiles grow with the width, up to [maxTileWidth].
  * The pictures load only when the row shows, so a closed combination costs nothing.
  */
 @Composable
-internal fun TileGroupsRow(groups: List<List<String>>, modifier: Modifier = Modifier) {
+internal fun TileGroupsRow(groups: List<List<String>>, modifier: Modifier = Modifier, maxTileWidth: Dp = MaxTileWidth) {
     BoxWithConstraints(modifier) {
         val count = groups.sumOf { it.size }.coerceAtLeast(1)
         val gaps = TileGap * (count - groups.size).coerceAtLeast(0) + GroupGap * (groups.size - 1).coerceAtLeast(0)
-        val width: Dp = min(MaxTileWidth, (maxWidth - gaps) / count)
+        val width: Dp = min(maxTileWidth, (maxWidth - gaps) / count)
         val height = width / TileAspect
         Row(horizontalArrangement = Arrangement.spacedBy(GroupGap)) {
             groups.forEach { group ->
                 Row(horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                     group.forEach { name ->
                         val tile = Res.allDrawableResources.getValue(name)
-                        Image(painterResource(tile), contentDescription = null, modifier = Modifier.size(width, height))
+                        // The high filter keeps the pictures smooth when they draw much smaller than they are.
+                        Image(
+                            imageResource(tile),
+                            contentDescription = null,
+                            modifier = Modifier.size(width, height),
+                            filterQuality = FilterQuality.High,
+                        )
                     }
                 }
             }

@@ -1,27 +1,37 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -36,6 +46,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -44,33 +56,47 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_empty
-import mahjongtournamentsuite.playerapp.generated.resources.combinations_hide_tiles
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold_all
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_search_hint
-import mahjongtournamentsuite.playerapp.generated.resources.combinations_show_tiles
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_unfold
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_unfold_all
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * One of the 81 combinations (fan) of the Mahjong Competition Rules. [tiles] is an example hand in [TileNotation].
- * A combination without tiles, such as a way of winning, has a description instead.
+ * A combination without tiles, such as a way of winning, shows only its texts.
  */
 internal data class Combination(val id: String, val points: Int, val tiles: String?) {
     val name: StringResource get() = Res.allStringResources.getValue("comb_$id")
-    val description: StringResource? get() = if (tiles == null) Res.allStringResources.getValue("comb_desc_$id") else null
+
+    /** One or two lines, under the name in the list. */
+    val description: StringResource get() = Res.allStringResources.getValue("comb_desc_$id")
+
+    /** The explanation of the rules, with what the combination does not combine with, in its dialog. */
+    val detail: StringResource get() = Res.allStringResources.getValue("comb_detail_$id")
     val groups: List<List<String>> by lazy { tiles?.let(TileNotation::parse).orEmpty() }
 }
+
+/** The values of the combinations, from 1 to 88 points. */
+internal val CombinationValues: List<Int> by lazy { Combinations.map { it.points }.distinct() }
 
 /** The combinations from the cheapest to the most valuable, in the order of the rules. From Mahjong Scoring 2. */
 internal val Combinations: List<Combination> = listOf(
@@ -160,17 +186,30 @@ internal val Combinations: List<Combination> = listOf(
 internal const val COMBINATIONS_SEARCH_TAG = "combinations-search"
 internal const val COMBINATION_ROW_TAG = "combination-row"
 internal const val POINTS_HEADER_TAG = "combination-points-header"
+internal const val POINTS_CHIP_TAG = "combination-points-chip"
+internal const val COMBINATION_DIALOG_TAG = "combination-dialog"
 
-/** The list of the combinations, with a search and their tiles, which fold open with a tap. */
+/** The widest the list grows on a big screen, so the tiles of a long hand can be larger. */
+private val ListMaxWidth = 960.dp
+
+/**
+ * The list of the combinations, grouped by value, with a search and a chip for each value.
+ * The arrow of a combination folds its description and tiles open. A tap on it opens its dialog.
+ */
 @Composable
 fun CombinationsScreen(navController: NavHostController) {
     var query by rememberSaveable { mutableStateOf("") }
     var showAll by rememberSaveable { mutableStateOf(false) }
-    // The combinations that a tap turned the other way from [showAll].
+    // The combinations that a tap on their arrow turned the other way from [showAll].
     var toggled by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    // No value chosen shows every value.
+    var values by rememberSaveable { mutableStateOf(emptyList<Int>()) }
+    var opened by rememberSaveable { mutableStateOf<String?>(null) }
     val names = Combinations.associate { it.id to stringResource(it.name) }
-    val descriptions = Combinations.mapNotNull { c -> c.description?.let { c.id to stringResource(it) } }.toMap()
-    val shown = Combinations.withIndex().filter { (_, c) -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
+    val descriptions = Combinations.associate { it.id to stringResource(it.description) }
+    val found = Combinations.withIndex().filter { (_, c) -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
+    val shown = found.filter { values.isEmpty() || it.value.points in values }
+    val rowModifier = Modifier.widthIn(max = ListMaxWidth).fillMaxWidth()
 
     AppScaffold(
         title = stringResource(Res.string.combinations_title),
@@ -186,30 +225,24 @@ fun CombinationsScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             item(key = "search") {
-                // The button beside the search opens or closes all the combinations. A tap on one opens or closes only it.
-                Row(
-                    Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    CombinationSearch(query, onChange = { query = it }, Modifier.weight(1f))
-                    IconButton(
-                        onClick = {
-                            showAll = !showAll
-                            toggled = emptyList()
-                        },
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .size(48.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                    ) {
-                        Icon(
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            imageVector = if (showAll) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
-                            contentDescription = stringResource(if (showAll) Res.string.combinations_hide_tiles else Res.string.combinations_show_tiles),
-                        )
-                    }
-                }
+                CombinationTools(
+                    query = query,
+                    onQuery = { query = it },
+                    showAll = showAll,
+                    onShowAll = {
+                        showAll = !showAll
+                        toggled = emptyList()
+                    },
+                    modifier = rowModifier.padding(top = 12.dp),
+                )
+            }
+            item(key = "values") {
+                PointsChips(
+                    counts = CombinationValues.associateWith { value -> found.count { it.value.points == value } },
+                    selected = values,
+                    onToggle = { value -> values = if (value in values) values - value else values + value },
+                    modifier = rowModifier,
+                )
             }
             if (shown.isEmpty()) {
                 item(key = "empty") {
@@ -223,24 +256,26 @@ fun CombinationsScreen(navController: NavHostController) {
             }
             // One group for each value, under a header that stays at the top while its combinations scroll.
             shown.groupBy { it.value.points }.forEach { (points, group) ->
-                stickyHeader(key = "points-$points") {
-                    PointsHeader(points, Modifier.widthIn(max = 720.dp).fillMaxWidth())
-                }
+                stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
                 items(group, key = { it.value.id }) { (index, combination) ->
                     CombinationRow(
                         position = index + 1,
                         combination = combination,
                         name = names.getValue(combination.id),
-                        description = descriptions[combination.id],
+                        description = descriptions.getValue(combination.id),
                         expanded = showAll != (combination.id in toggled),
-                        onClick = {
+                        onFold = {
                             toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
                         },
-                        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
+                        onOpen = { opened = combination.id },
+                        modifier = rowModifier,
                     )
                 }
             }
         }
+    }
+    Combinations.withIndex().firstOrNull { it.value.id == opened }?.let { (index, combination) ->
+        CombinationDialog(index + 1, combination, onDismiss = { opened = null })
     }
 }
 
@@ -251,6 +286,45 @@ internal fun Combination.matches(query: String, name: String, description: Strin
     return name.contains(text, ignoreCase = true) ||
         description?.contains(text, ignoreCase = true) == true ||
         points.toString() == text
+}
+
+/** The search and the button that folds all the combinations open or closed. The button has its label when there is room. */
+@Composable
+private fun CombinationTools(query: String, onQuery: (String) -> Unit, showAll: Boolean, onShowAll: () -> Unit, modifier: Modifier = Modifier) {
+    val label = stringResource(if (showAll) Res.string.combinations_fold_all else Res.string.combinations_unfold_all)
+    val icon = if (showAll) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore
+    BoxWithConstraints(modifier) {
+        val wide = maxWidth >= 600.dp
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CombinationSearch(query, onChange = onQuery, Modifier.weight(1f))
+            if (wide) {
+                TextButton(
+                    onClick = onShowAll,
+                    modifier = Modifier.padding(top = 8.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Icon(icon, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(label)
+                }
+            } else {
+                IconButton(
+                    onClick = onShowAll,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .size(48.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                ) {
+                    Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -280,22 +354,82 @@ private fun CombinationSearch(query: String, onChange: (String) -> Unit, modifie
     )
 }
 
+/** A chip for each value, with how many combinations of the search it has, like the country chips of the players. */
+@Composable
+private fun PointsChips(counts: Map<Int, Int>, selected: List<Int>, onToggle: (Int) -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        counts.forEach { (points, count) ->
+            val isSelected = points in selected
+            TextButton(
+                onClick = { onToggle(points) },
+                modifier = Modifier.testTag(POINTS_CHIP_TAG),
+                shape = CircleShape,
+                colors = if (isSelected) {
+                    ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    )
+                } else {
+                    ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            ) {
+                Text("${pluralStringResource(Res.plurals.combinations_points, points, points)} ($count)")
+            }
+        }
+    }
+}
+
+/** The value of the combinations below it, like the round headers of the tables. Its band is opaque, so the rows scroll under it. */
+@Composable
+private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        modifier
+            .testTag(POINTS_HEADER_TAG)
+            .layout { measurable, constraints ->
+                // The content padding of the list narrows the header, so it grows back over it.
+                val extra = 24.dp.roundToPx()
+                val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
+                layout(constraints.maxWidth, placeable.height) { placeable.place(-12.dp.roundToPx(), 0) }
+            }
+            .background(colors.background)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(
+            pluralStringResource(Res.plurals.combinations_points, points, points),
+            Modifier.semantics { heading() },
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = colors.onSurface,
+        )
+    }
+}
+
 @Composable
 private fun CombinationRow(
     position: Int,
     combination: Combination,
     name: String,
-    description: String?,
+    description: String,
     expanded: Boolean,
-    onClick: () -> Unit,
+    onFold: () -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val turn by animateFloatAsState(if (expanded) 180f else 0f)
     Card(
         modifier = modifier.testTag(COMBINATION_ROW_TAG),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.clickable(onClick = onOpen).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     name,
                     Modifier.weight(1f),
@@ -307,38 +441,67 @@ private fun CombinationRow(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                IconButton(onClick = onFold) {
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = stringResource(if (expanded) Res.string.combinations_fold else Res.string.combinations_unfold),
+                        modifier = Modifier.rotate(turn),
+                    )
+                }
             }
             AnimatedVisibility(visible = expanded) {
-                Box(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                    if (description != null) {
-                        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
-                        TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
-                    }
+                Column(
+                    Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (combination.groups.isNotEmpty()) TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
                 }
             }
         }
     }
 }
 
-/** The value of the combinations below it, on an opaque band so that the rows scroll under it. */
+/** A combination in large: its tiles as big as the dialog allows, its description and the explanation of the rules. */
 @Composable
-private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .testTag(POINTS_HEADER_TAG)
-            .background(MaterialTheme.colorScheme.background)
-            .padding(vertical = 4.dp),
-    ) {
-        Text(
-            pluralStringResource(Res.plurals.combinations_points, points, points),
-            Modifier
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-                .semantics { heading() },
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary,
+private fun CombinationDialog(position: Int, combination: Combination, onDismiss: () -> Unit) {
+    TrackedDialog("Combination") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            // Wider than a usual dialog, so that the tiles of a long hand show large.
+            modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 840.dp).testTag(COMBINATION_DIALOG_TAG),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(combination.name), Modifier.weight(1f, fill = false))
+                    Text(
+                        "#$position",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        pluralStringResource(Res.plurals.combinations_points, combination.points, combination.points),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    if (combination.groups.isNotEmpty()) {
+                        TileGroupsRow(combination.groups, Modifier.fillMaxWidth(), maxTileWidth = LargeTileWidth)
+                    }
+                    val description = stringResource(combination.description)
+                    val detail = stringResource(combination.detail)
+                    Text(description, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                    // Some sources explain a simple combination with the same words as its description.
+                    if (detail != description) Text(detail, style = MaterialTheme.typography.bodyLarge)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
+            },
         )
     }
 }

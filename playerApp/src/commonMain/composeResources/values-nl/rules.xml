@@ -4,8 +4,11 @@
     <string name="combinations_title">Combinaties</string>
     <string name="combinations_search_hint">Naam, punten of beschrijving</string>
     <string name="combinations_empty">Geen combinatie past bij de zoekopdracht.</string>
-    <string name="combinations_show_tiles">Alle stenen tonen</string>
-    <string name="combinations_hide_tiles">Alle stenen verbergen</string>
+    <string name="combinations_unfold_all">Alles uitklappen</string>
+    <string name="combinations_fold_all">Alles inklappen</string>
+    <string name="combinations_unfold">Uitklappen</string>
+    <string name="combinations_close">Sluiten</string>
+    <string name="combinations_fold">Inklappen</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d punt</item>
         <item quantity="other">%1$d punten</item>

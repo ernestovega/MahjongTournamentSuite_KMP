@@ -4,8 +4,11 @@
     <string name="combinations_title">Комбинации</string>
     <string name="combinations_search_hint">Название, очки или описание</string>
     <string name="combinations_empty">Ни одна комбинация не подходит под поиск.</string>
-    <string name="combinations_show_tiles">Показать все кости</string>
-    <string name="combinations_hide_tiles">Скрыть все кости</string>
+    <string name="combinations_unfold_all">Развернуть все</string>
+    <string name="combinations_fold_all">Свернуть все</string>
+    <string name="combinations_unfold">Развернуть</string>
+    <string name="combinations_close">Закрыть</string>
+    <string name="combinations_fold">Свернуть</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d очко</item>
         <item quantity="few">%1$d очка</item>

@@ -4,8 +4,11 @@
     <string name="combinations_title">Combinaciones</string>
     <string name="combinations_search_hint">Nombre, puntos o descripción</string>
     <string name="combinations_empty">Ninguna combinación coincide con la búsqueda.</string>
-    <string name="combinations_show_tiles">Mostrar todas las fichas</string>
-    <string name="combinations_hide_tiles">Ocultar todas las fichas</string>
+    <string name="combinations_unfold_all">Desplegar todas</string>
+    <string name="combinations_fold_all">Plegar todas</string>
+    <string name="combinations_unfold">Desplegar</string>
+    <string name="combinations_close">Cerrar</string>
+    <string name="combinations_fold">Plegar</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d punto</item>
         <item quantity="other">%1$d puntos</item>

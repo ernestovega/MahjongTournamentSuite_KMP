@@ -17,12 +17,13 @@ class ReferenceListsTest {
     }
 
     @Test
-    fun everyCombinationHasANameAndTilesOrADescription() {
+    fun everyCombinationHasItsTextsAndItsTiles() {
         Combinations.forEach { combination ->
+            // Each lookup fails when the text is missing.
             combination.name
-            if (combination.tiles == null) {
-                assertTrue(combination.description != null, "${combination.id} has no description")
-            } else {
+            combination.description
+            combination.detail
+            if (combination.tiles != null) {
                 assertTrue(combination.groups.isNotEmpty(), "${combination.id} has no tiles")
                 assertTrue(combination.groups.sumOf { it.size } <= 18, "${combination.id} has too many tiles")
             }

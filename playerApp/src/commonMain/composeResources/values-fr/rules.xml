@@ -4,8 +4,11 @@
     <string name="combinations_title">Combinaisons</string>
     <string name="combinations_search_hint">Nom, points ou description</string>
     <string name="combinations_empty">Aucune combinaison ne correspond à la recherche.</string>
-    <string name="combinations_show_tiles">Afficher toutes les tuiles</string>
-    <string name="combinations_hide_tiles">Masquer toutes les tuiles</string>
+    <string name="combinations_unfold_all">Tout déplier</string>
+    <string name="combinations_fold_all">Tout replier</string>
+    <string name="combinations_unfold">Déplier</string>
+    <string name="combinations_close">Fermer</string>
+    <string name="combinations_fold">Replier</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d point</item>
         <item quantity="other">%1$d points</item>
