@@ -9,6 +9,7 @@
     <string name="combinations_unfold">Déplier</string>
     <string name="combinations_tiles_credit">Tuiles par Martin Persson :</string>
     <string name="combinations_close">Fermer</string>
+    <string name="combinations_credits">Crédits</string>
     <string name="combinations_fold">Replier</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d point</item>

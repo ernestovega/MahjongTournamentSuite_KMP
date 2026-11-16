@@ -9,6 +9,7 @@
     <string name="combinations_unfold">Fäll ut</string>
     <string name="combinations_tiles_credit">Brickor av Martin Persson:</string>
     <string name="combinations_close">Stäng</string>
+    <string name="combinations_credits">Tack</string>
     <string name="combinations_fold">Fäll ihop</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d poäng</item>

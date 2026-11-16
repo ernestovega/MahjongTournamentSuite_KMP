@@ -9,6 +9,7 @@
     <string name="combinations_unfold">Aufklappen</string>
     <string name="combinations_tiles_credit">Steine von Martin Persson:</string>
     <string name="combinations_close">Schließen</string>
+    <string name="combinations_credits">Danksagungen</string>
     <string name="combinations_fold">Zuklappen</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d Punkt</item>

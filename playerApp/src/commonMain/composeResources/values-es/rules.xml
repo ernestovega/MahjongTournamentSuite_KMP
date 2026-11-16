@@ -9,6 +9,7 @@
     <string name="combinations_unfold">Desplegar</string>
     <string name="combinations_tiles_credit">Fichas de Martin Persson:</string>
     <string name="combinations_close">Cerrar</string>
+    <string name="combinations_credits">Créditos</string>
     <string name="combinations_fold">Plegar</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d punto</item>

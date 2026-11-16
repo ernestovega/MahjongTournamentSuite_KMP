@@ -9,6 +9,7 @@
     <string name="combinations_unfold">Uitklappen</string>
     <string name="combinations_tiles_credit">Stenen van Martin Persson:</string>
     <string name="combinations_close">Sluiten</string>
+    <string name="combinations_credits">Credits</string>
     <string name="combinations_fold">Inklappen</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d punt</item>
