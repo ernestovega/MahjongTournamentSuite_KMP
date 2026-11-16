@@ -29,6 +29,12 @@ class PlayerRoundStartTest : PlayerE2eTest() {
         check(reply.status == 200) { "The Timer failed: ${reply.status} ${reply.body}" }
     }
 
+    /** Plays an admin on Round control, the plan B of the Timer, for round 1 of test-match-extra-time. */
+    private fun control(body: String) {
+        val reply = E2eApi.call("POST", "/tournaments/test-match-extra-time/rounds/1/control", E2eApi.signIn(E2eAccounts.ADMIN), body)
+        check(reply.status == 200) { "Round control failed: ${reply.status} ${reply.body}" }
+    }
+
     private fun openExtraTimeTable() {
         start(E2eAccounts.EXTRA_TIME, ready = "My tournaments")
         c.openTournament(extraTimeTournament)
@@ -75,5 +81,35 @@ class PlayerRoundStartTest : PlayerE2eTest() {
         c.clickButton("Save the seats")
 
         listOf("Add draw", "Add win", "Add penalty", "Change the seats").forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun anOrganizerClosesTheHandEntryAndATableControlOpensItAgain() {
+        timer("""{"action":"reset","force":true}""")
+        timer("""{"action":"start"}""")
+        openExtraTimeTable()
+        c.waitForText("Add draw")
+
+        control("""{"hands":"closed"}""")
+        // The app reads the tournament, with its controls, every few seconds while the round is in play.
+        c.waitForText("An organizer closed the hand entry of this table for now.", substring = true, timeoutMs = 60_000)
+        c.assertNoText("Add draw")
+
+        control("""{"table":{"tableId":1,"hands":"open"}}""")
+        c.waitForText("Add draw", timeoutMs = 60_000)
+        c.assertNoText("An organizer closed the hand entry of this table for now.", substring = true)
+    }
+
+    @Test
+    fun anOpenRoundShowsTheHandButtonsBeforeTheGong() {
+        timer("""{"action":"reset","force":true}""")
+        openExtraTimeTable()
+        c.waitForText("Waiting for the starting gong. The hand buttons appear when the round starts.")
+        c.assertNoText("Add draw")
+
+        control("""{"hands":"open"}""")
+
+        c.waitForText("Add draw", timeoutMs = 60_000)
+        c.assertNoText("Waiting for the starting gong. The hand buttons appear when the round starts.")
     }
 }

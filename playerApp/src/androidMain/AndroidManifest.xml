@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Shares the PDF of the Green Book with the PDF app of the phone. See GreenBook.android.kt. -->
+        <provider
+            android:name="com.etologic.mahjongtournamentsuite.player.GreenBookFileProvider"
+            android:authorities="${applicationId}.greenbook"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/green_book_paths" />
+        </provider>
+    </application>
+
+</manifest>
