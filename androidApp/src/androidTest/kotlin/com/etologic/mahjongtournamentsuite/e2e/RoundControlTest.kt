@@ -27,8 +27,11 @@ class RoundControlTest : AdminE2eTest() {
     private fun clocks(tournamentId: String): JSONArray =
         E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks", null).json().getJSONArray("roundClocks")
 
+    // One sign-in for the whole test: the polls below would pass the limit of sign-ins per minute.
+    private val adminToken by lazy { E2eApi.signIn(E2eAccounts.ADMIN) }
+
     private fun isCompleted(round: Int, table: Int): Boolean =
-        E2eApi.call("GET", "/tournaments/$LIVE_ID/tables/$round/$table", E2eApi.signIn(E2eAccounts.ADMIN)).json()
+        E2eApi.call("GET", "/tournaments/$LIVE_ID/tables/$round/$table", adminToken).json()
             .getJSONObject("table").getBoolean("isCompleted")
 
     private fun click(tag: String) {
