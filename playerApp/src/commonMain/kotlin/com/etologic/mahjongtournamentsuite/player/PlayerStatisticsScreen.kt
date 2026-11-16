@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollableTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
@@ -213,23 +215,40 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             ResetScrollOnChange(LocalScreenScroll.current?.state, scope to chosenSlotText)
             message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (scopes.size > 1) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    MtsScrollableTabRow(
-                        modifier = Modifier.weight(1f),
-                        selectedTabIndex = scopes.indexOf(scope),
-                    ) {
-                        scopes.forEach { item ->
-                            CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
+                // On a phone the tabs and the player picker do not fit in one row: the picker goes below the tabs.
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val narrow = maxWidth < ScopeRowMinWidth
+                    val tabs: @Composable (Modifier) -> Unit = { modifier ->
+                        MtsScrollableTabRow(
+                            modifier = modifier,
+                            selectedTabIndex = scopes.indexOf(scope),
+                        ) {
+                            scopes.forEach { item ->
+                                CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
+                            }
                         }
                     }
                     val pickerData = shown
-                    if (scope == StatisticsScope.PLAYER && pickerData != null) {
-                        PlayerDropdownField(
-                            names = pickerData.names,
-                            selectedId = chosenSlotId ?: mySlotId ?: pickerData.slots.firstOrNull()?.id,
-                            onChoose = { chosenSlotText = it.toString() },
-                            modifier = Modifier.padding(start = 12.dp).width(240.dp),
-                        )
+                    val picker: @Composable (Modifier) -> Unit = { modifier ->
+                        if (scope == StatisticsScope.PLAYER && pickerData != null) {
+                            PlayerDropdownField(
+                                names = pickerData.names,
+                                selectedId = chosenSlotId ?: mySlotId ?: pickerData.slots.firstOrNull()?.id,
+                                onChoose = { chosenSlotText = it.toString() },
+                                modifier = modifier,
+                            )
+                        }
+                    }
+                    if (narrow) {
+                        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                            tabs(Modifier.fillMaxWidth())
+                            picker(Modifier.fillMaxWidth())
+                        }
+                    } else {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            tabs(Modifier.weight(1f))
+                            picker(Modifier.padding(start = 12.dp).width(240.dp))
+                        }
                     }
                 }
             }
@@ -688,3 +707,6 @@ private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
         }
     }
 }
+
+/** Below this width the scope tabs and the player picker of the Statistics screen go on two rows. */
+private val ScopeRowMinWidth = 600.dp
