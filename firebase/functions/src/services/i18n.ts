@@ -1,5 +1,5 @@
 /** The languages of the emails. English is the base and the fallback. */
-export const LANGUAGES = ["en", "es", "fr", "it"] as const;
+export const LANGUAGES = ["en", "es", "fr", "it", "de", "sv", "nl", "ru"] as const;
 export type Language = typeof LANGUAGES[number];
 export const DEFAULT_LANGUAGE: Language = "en";
 
@@ -73,7 +73,49 @@ const italian: EmailTexts = {
   registrationOpen: (link) => `Apri il torneo: ${link}`,
 };
 
-const TEXTS: Record<Language, EmailTexts> = { en: english, es: spanish, fr: french, it: italian };
+const german: EmailTexts = {
+  appDescription: "Das ist die Spieler-App des Turniers. "
+    + "Nach der Anmeldung siehst du, wo du in jeder Runde spielst, die Rangliste nach jeder Runde "
+    + "und deine eigenen Ergebnisse. Du siehst auch kommende und vergangene Turniere, deine Statistik und mehr.",
+  registrationSubject: (name) => `Du bist für ${name} angemeldet`,
+  registrationIntro: (name) => `Du wurdest zum Turnier «${name}» hinzugefügt.`,
+  registrationAction: "Turnier öffnen",
+  registrationOpen: (link) => `Turnier öffnen: ${link}`,
+};
+
+const swedish: EmailTexts = {
+  appDescription: "Det här är turneringens spelarapp. "
+    + "När du har loggat in ser du var du spelar i varje omgång, rankingen efter varje omgång "
+    + "och dina egna resultat. Du ser också kommande och tidigare turneringar, din statistik och mer.",
+  registrationSubject: (name) => `Du är anmäld till ${name}`,
+  registrationIntro: (name) => `Du har lagts till i turneringen "${name}".`,
+  registrationAction: "Öppna turneringen",
+  registrationOpen: (link) => `Öppna turneringen: ${link}`,
+};
+
+const dutch: EmailTexts = {
+  appDescription: "Dit is de spelersapp van het toernooi. "
+    + "Na het aanmelden zie je waar je in elke ronde speelt, het klassement na elke ronde "
+    + "en je eigen resultaten. Je ziet ook komende en afgelopen toernooien, je statistieken en meer.",
+  registrationSubject: (name) => `Je bent ingeschreven voor ${name}`,
+  registrationIntro: (name) => `Je bent toegevoegd aan het toernooi "${name}".`,
+  registrationAction: "Toernooi openen",
+  registrationOpen: (link) => `Toernooi openen: ${link}`,
+};
+
+const russian: EmailTexts = {
+  appDescription: "Это приложение игрока турнира. "
+    + "После входа вы видите, где играете в каждом раунде, рейтинг после каждого раунда "
+    + "и свои результаты. Также вы видите предстоящие и прошедшие турниры, свою статистику и многое другое.",
+  registrationSubject: (name) => `Вы зарегистрированы на турнир ${name}`,
+  registrationIntro: (name) => `Вас добавили в турнир «${name}».`,
+  registrationAction: "Открыть турнир",
+  registrationOpen: (link) => `Открыть турнир: ${link}`,
+};
+
+const TEXTS: Record<Language, EmailTexts> = {
+  en: english, es: spanish, fr: french, it: italian, de: german, sv: swedish, nl: dutch, ru: russian,
+};
 
 export function emailTexts(language: Language): EmailTexts {
   return TEXTS[language];

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The texts of the combinations and penalties screens of the table. -->
+<resources>
+    <string name="combinations_title">Combinazioni</string>
+    <string name="combinations_search_hint">Nome, punti o descrizione</string>
+    <string name="combinations_empty">Nessuna combinazione corrisponde alla ricerca.</string>
+    <string name="combinations_show_tiles">Mostra tutte le pedine</string>
+    <string name="combinations_hide_tiles">Nascondi tutte le pedine</string>
+    <string name="combinations_points">%1$d punti</string>
+    <string name="penalties_title">Penalità</string>
+    <string name="penalties_section_warning">Ammonizione e penalità progressiva</string>
+    <string name="penalties_section_dead_hand">Mano morta</string>
+    <string name="penalties_section_points">Penalità in punti e sanzioni gravi</string>
+    <string name="penalties_progressive">Prima infrazione: ammonizione. Seconda: 5 punti di penalità. Infrazioni successive: 10, 20, 30 punti e così via. Il conteggio riparte all'inizio di ogni sessione, tranne per il gioco ostruzionistico, compresi i ritardi deliberati.</string>
+    <string name="penalties_source">Regole di competizione del Mahjong dell'EMA, versione del 20 giugno 2009.</string>
+    <string name="penalty_w1">Chiamata errata di kong, pong, chow o hua: il giocatore chiama ma non esegue l'azione, usa un termine sbagliato o chiama pong troppo tardi.</string>
+    <string name="penalty_w2">Mostrare pedine prima di chiamare kong, pong, chow o hua: la chiamata non è valida e le pedine mostrate devono essere scartate.</string>
+    <string name="penalty_w3">Chiamare e prendere una pedina prima di esporre le pedine corrispondenti.</string>
+    <string name="penalty_w4">Dichiarare una combinazione falsa, prima di scartare: si può correggere, ma le pedine esposte per errore devono essere scartate.</string>
+    <string name="penalty_w5">Sostituire un fiore falso, prima di prendere in mano la pedina di sostituzione: si può correggere, e le pedine esposte per errore devono essere scartate.</string>
+    <string name="penalty_w6">Pescare una pedina dal punto sbagliato del muro: si può correggere prima di metterla in mano.</string>
+    <string name="penalty_w7">Mostrare le pedine di un avversario: soggetto a ulteriori penalità.</string>
+    <string name="penalty_w8">Distruggere prima del tempo il muro o la zona degli scarti: soggetto a ulteriori penalità.</string>
+    <string name="penalty_w9">Passare informazioni: soggetto a ulteriori penalità.</string>
+    <string name="penalty_d1">Hu falso senza mostrare le pedine.</string>
+    <string name="penalty_d2">Chiamata errata di hu: dire qualcosa di diverso da hu o mahjong, o mostrare le pedine prima di chiamare hu.</string>
+    <string name="penalty_d3">Non mantenere intatta la mano vincente: usare le pedine della mano per contare. Contare con i fiori fa perdere i fiori, ma la mano resta valida.</string>
+    <string name="penalty_d4">Dichiarare una combinazione falsa, dopo aver scartato: non si può annullare.</string>
+    <string name="penalty_d5">Sostituire un fiore falso dopo aver preso in mano la pedina di sostituzione: non si può annullare. Il fiore falso resta sul tavolo e conta come uno scarto per chiamare hu o Ultima pedina.</string>
+    <string name="penalty_d6">Pescare dal punto sbagliato e mettere la pedina in mano: mano morta solo se un avversario lo segnala subito.</string>
+    <string name="penalty_d7">Non prendere una pedina chiamata prima che i due giocatori successivi abbiano scartato.</string>
+    <string name="penalty_d8">Hu falso del giocatore A quando il giocatore B ha mostrato le pedine: A riceve la penalità prevista. B ha la mano morta e deve scartare le pedine mostrate.</string>
+    <string name="penalty_d9">Troppe o troppo poche pedine.</string>
+    <string name="penalty_p1">Hu falso con meno di 8 punti: mano morta e 10 punti a ogni avversario.</string>
+    <string name="penalty_p2">Hu falso con una struttura di mano non valida: non quattro combinazioni e una coppia (o un'altra struttura ammessa), una combinazione falsa o un numero sbagliato di pedine. Mano morta e 20 punti a ogni avversario.</string>
+    <string name="penalty_p3">Dimenticare di prendere la pedina vincente: 10 punti di penalità. La mano resta valida e si conta come al solito.</string>
+    <string name="penalty_p4">Ritardo di 10 minuti o meno: 10 punti di penalità.</string>
+    <string name="penalty_p5">Ritardo da 11 a 15 minuti: 20 punti di penalità.</string>
+    <string name="penalty_p6">Ritardo di oltre 15 minuti: il giocatore perde la sessione in corso e ottiene 0 punti tavolo. Un sostituto gioca la sessione.</string>
+    <string name="penalty_p7">Gioco ostruzionistico: ritardare il gioco, o rivelare gravemente pedine o informazioni. L'arbitro può imporre da 10 a 60 punti e/o la mano morta.</string>
+    <string name="penalty_p8">Grave turbativa: barare od ostacolare la competizione, compresi ritardi ripetuti. Squalifica immediata.</string>
+</resources>

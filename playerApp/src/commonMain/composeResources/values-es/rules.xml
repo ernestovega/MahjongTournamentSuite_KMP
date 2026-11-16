@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The texts of the combinations and penalties screens of the table. -->
+<resources>
+    <string name="combinations_title">Combinaciones</string>
+    <string name="combinations_search_hint">Nombre, puntos o descripción</string>
+    <string name="combinations_empty">Ninguna combinación coincide con la búsqueda.</string>
+    <string name="combinations_show_tiles">Mostrar todas las fichas</string>
+    <string name="combinations_hide_tiles">Ocultar todas las fichas</string>
+    <string name="combinations_points">%1$d puntos</string>
+    <string name="penalties_title">Penalizaciones</string>
+    <string name="penalties_section_warning">Advertencia y sanción progresiva</string>
+    <string name="penalties_section_dead_hand">Mano muerta</string>
+    <string name="penalties_section_points">Penalizaciones en puntos y sanciones graves</string>
+    <string name="penalties_progressive">Primera infracción: advertencia. Segunda: descuento de 5 puntos. Infracciones siguientes: descuentos de 10, 20, 30 puntos, etc. El recuento se reinicia al comenzar cada sesión, salvo en caso de juego obstructivo, incluidas las demoras deliberadas.</string>
+    <string name="penalties_source">Reglas de Competición de Mahjong de la EMA, versión de 20 de junio de 2009.</string>
+    <string name="penalty_w1">Canto erróneo de kong, pong, chow o hua: el jugador canta pero no realiza la acción, emplea un término incorrecto o canta pong demasiado tarde.</string>
+    <string name="penalty_w2">Mostrar fichas antes de cantar kong, pong, chow o hua: el canto queda invalidado y deben descartarse las fichas mostradas.</string>
+    <string name="penalty_w3">Cantar y reclamar una ficha antes de mostrar las fichas correspondientes.</string>
+    <string name="penalty_w4">Declarar una combinación falsa antes de descartar: puede corregirse, pero las fichas mostradas por error han de descartarse.</string>
+    <string name="penalty_w5">Reemplazar una flor falsa antes de incorporar la ficha de reemplazo: puede corregirse, y las fichas mostradas por error deben descartarse.</string>
+    <string name="penalty_w6">Robar una ficha de un lugar incorrecto del muro: puede corregirse antes de incorporarla a la mano.</string>
+    <string name="penalty_w7">Mostrar las fichas de un rival: sujeto a sanciones adicionales.</string>
+    <string name="penalty_w8">Desmontar prematuramente el muro o la zona de descartes: sujeto a sanciones adicionales.</string>
+    <string name="penalty_w9">Transmitir información: sujeto a sanciones adicionales.</string>
+    <string name="penalty_d1">Hu falso sin mostrar las fichas.</string>
+    <string name="penalty_d2">Canto erróneo de hu: anunciar la victoria con otra palabra distinta de hu o mahjong, o mostrar las fichas antes de cantar hu.</string>
+    <string name="penalty_d3">No mantener intacta la mano ganadora: utilizar fichas de la mano para contar. Si se cuentan los puntos con flores, se pierden esas flores, pero la mano sigue siendo válida.</string>
+    <string name="penalty_d4">Declarar una combinación falsa después de descartar: no puede rectificarse.</string>
+    <string name="penalty_d5">Reemplazar una flor falsa tras incorporar la ficha de reemplazo: no puede corregirse. La flor falsa permanece en la mesa y cuenta como descarte para declarar hu o Última ficha.</string>
+    <string name="penalty_d6">Robar de un lugar incorrecto e incorporar la ficha a la mano: mano muerta solo si un rival señala el error inmediatamente.</string>
+    <string name="penalty_d7">No recoger una ficha reclamada antes de que los dos jugadores siguientes hayan descartado.</string>
+    <string name="penalty_d8">Hu falso del jugador A y el jugador B muestra sus fichas: A recibe su sanción correspondiente. B tiene mano muerta y debe descartar las fichas mostradas.</string>
+    <string name="penalty_d9">Tener demasiadas o demasiado pocas fichas.</string>
+    <string name="penalty_p1">Hu falso con menos de 8 puntos: mano muerta y 10 puntos a cada rival.</string>
+    <string name="penalty_p2">Hu falso con estructura inválida: no tener cuatro combinaciones y una pareja (u otra estructura admitida), contener una combinación falsa o un número incorrecto de fichas. Mano muerta y 20 puntos a cada rival.</string>
+    <string name="penalty_p3">Olvidar recoger la ficha ganadora: se descuentan 10 puntos. La mano es válida y se puntúa normalmente.</string>
+    <string name="penalty_p4">Retraso de 10 minutos o menos: descuento de 10 puntos.</string>
+    <string name="penalty_p5">Retraso de 11 a 15 minutos: descuento de 20 puntos.</string>
+    <string name="penalty_p6">Retraso de más de 15 minutos: pierde la sesión en curso y recibe 0 puntos de mesa. Un suplente disputa la sesión.</string>
+    <string name="penalty_p7">Juego obstructivo: demoras deliberadas o revelación grave de fichas o información. El árbitro puede imponer entre 10 y 60 puntos y/o mano muerta.</string>
+    <string name="penalty_p8">Alteración grave de la competición: trampas u obstrucción, incluidas demoras reiteradas. Descalificación inmediata.</string>
+</resources>

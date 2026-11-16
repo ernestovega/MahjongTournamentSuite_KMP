@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The texts of the combinations and penalties screens of the table. -->
+<resources>
+    <string name="combinations_title">Combinaties</string>
+    <string name="combinations_search_hint">Naam, punten of beschrijving</string>
+    <string name="combinations_empty">Geen combinatie past bij de zoekopdracht.</string>
+    <string name="combinations_show_tiles">Alle stenen tonen</string>
+    <string name="combinations_hide_tiles">Alle stenen verbergen</string>
+    <string name="combinations_points">%1$d punten</string>
+    <string name="penalties_title">Straffen</string>
+    <string name="penalties_section_warning">Waarschuwing en oplopende straf</string>
+    <string name="penalties_section_dead_hand">Dode hand</string>
+    <string name="penalties_section_points">Puntenstraffen en zware straffen</string>
+    <string name="penalties_progressive">Eerste overtreding: waarschuwing. Tweede: 5 punten aftrek. Volgende overtredingen: 10, 20, 30 punten, enzovoort. De telling begint opnieuw aan het begin van elke sessie, behalve bij obstructief spel, inclusief opzettelijke vertraging.</string>
+    <string name="penalties_source">Mahjong Competition Rules van de EMA, versie van 20 juni 2009.</string>
+    <string name="penalty_w1">Foute kong-, pong-, chow- of hua-melding: de speler meldt maar voert de actie niet uit, gebruikt een verkeerde term of meldt pong te laat.</string>
+    <string name="penalty_w2">Stenen tonen vóór een kong-, pong-, chow- of hua-melding: de melding is ongeldig en de getoonde stenen moeten worden afgelegd.</string>
+    <string name="penalty_w3">Een steen melden en claimen voordat de bijpassende stenen zijn getoond.</string>
+    <string name="penalty_w4">Een foute combinatie claimen, vóór het afleggen: dit mag worden hersteld, maar de ten onrechte getoonde stenen moeten worden afgelegd.</string>
+    <string name="penalty_w5">Een foute bloem vervangen, voordat de vervangende steen in de hand is genomen: dit mag worden hersteld, en de ten onrechte getoonde stenen moeten worden afgelegd.</string>
+    <string name="penalty_w6">Een steen van de verkeerde plek in de muur pakken: dit mag worden hersteld voordat de steen in de hand gaat.</string>
+    <string name="penalty_w7">De stenen van een tegenstander tonen: verdere straf mogelijk.</string>
+    <string name="penalty_w8">De muur of de aflegstapel voortijdig afbreken: verdere straf mogelijk.</string>
+    <string name="penalty_w9">Informatie doorgeven: verdere straf mogelijk.</string>
+    <string name="penalty_d1">Valse hu zonder stenen te tonen.</string>
+    <string name="penalty_d2">Foute hu-melding: iets anders zeggen dan hu of mahjong, of stenen tonen voordat hu is gemeld.</string>
+    <string name="penalty_d3">De winnende hand niet intact houden: stenen uit de hand gebruiken om te tellen. Wie met bloemen telt, verliest die bloemen, maar de hand blijft geldig.</string>
+    <string name="penalty_d4">Een foute combinatie claimen, na het afleggen: dit kan niet ongedaan worden gemaakt.</string>
+    <string name="penalty_d5">Een foute bloem vervangen nadat de vervangende steen in de hand is genomen: dit kan niet ongedaan worden gemaakt. De foute bloem blijft op tafel en telt als afgelegde steen voor het claimen van hu of Laatste steen.</string>
+    <string name="penalty_d6">Van de verkeerde plek pakken en de steen in de hand nemen: dode hand alleen als een tegenstander het meteen opmerkt.</string>
+    <string name="penalty_d7">Een geclaimde steen niet nemen voordat de volgende twee spelers hebben afgelegd.</string>
+    <string name="penalty_d8">Valse hu van speler A terwijl speler B stenen heeft getoond: A krijgt de bijbehorende straf. B heeft een dode hand en moet de getoonde stenen afleggen.</string>
+    <string name="penalty_d9">Te weinig of te veel stenen.</string>
+    <string name="penalty_p1">Valse hu met minder dan 8 punten: dode hand en 10 punten aan elke tegenstander.</string>
+    <string name="penalty_p2">Valse hu met een ongeldige handstructuur: geen vier combinaties en een paar (of een andere toegestane structuur), een foute combinatie of een verkeerd aantal stenen. Dode hand en 20 punten aan elke tegenstander.</string>
+    <string name="penalty_p3">Vergeten de winnende steen te nemen: 10 punten aftrek. De hand blijft geldig en wordt gewoon geteld.</string>
+    <string name="penalty_p4">10 minuten of minder te laat: 10 punten aftrek.</string>
+    <string name="penalty_p5">11 tot 15 minuten te laat: 20 punten aftrek.</string>
+    <string name="penalty_p6">Meer dan 15 minuten te laat: de speler verliest de lopende sessie en krijgt 0 tafelpunten. Een vervanger speelt de sessie.</string>
+    <string name="penalty_p7">Obstructief spel: het spel vertragen, of ernstig stenen of informatie onthullen. De scheidsrechter kan 10 tot 60 punten en/of een dode hand opleggen.</string>
+    <string name="penalty_p8">Ernstige verstoring: valsspelen of de competitie belemmeren, inclusief herhaalde vertraging. Onmiddellijke diskwalificatie.</string>
+</resources>

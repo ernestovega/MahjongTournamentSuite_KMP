@@ -22,10 +22,17 @@ describe("parseAcceptLanguage", () => {
     assert.equal(parseAcceptLanguage("ES-mx"), "es");
   });
 
+  it("picks German, Swedish, Dutch and Russian", () => {
+    assert.equal(parseAcceptLanguage("de-CH, en;q=0.5"), "de");
+    assert.equal(parseAcceptLanguage("sv-SE"), "sv");
+    assert.equal(parseAcceptLanguage("nl-BE, fr;q=0.8"), "nl");
+    assert.equal(parseAcceptLanguage("ru"), "ru");
+  });
+
   it("picks French and Italian", () => {
     assert.equal(parseAcceptLanguage("fr-CH"), "fr");
     assert.equal(parseAcceptLanguage("it-IT, en;q=0.5"), "it");
-    assert.equal(parseAcceptLanguage("de, fr;q=0.4"), "fr");
+    assert.equal(parseAcceptLanguage("pt, fr;q=0.4"), "fr");
   });
 
   it("follows the quality values", () => {
@@ -40,7 +47,7 @@ describe("parseAcceptLanguage", () => {
 
   it("skips languages that the emails do not have", () => {
     assert.equal(parseAcceptLanguage("ja-JP, es;q=0.5"), "es");
-    assert.equal(parseAcceptLanguage("ja, de"), "en");
+    assert.equal(parseAcceptLanguage("ja, pt"), "en");
   });
 
   it("ignores a language with quality zero and a broken quality", () => {
@@ -66,6 +73,13 @@ describe("email texts", () => {
     const registration = { tournamentName: "Madrid Open", link: "https://app/?tournament=x" };
     assert.match(buildRegistrationEmail("fr", registration).html, /<strong>Madrid Open<\/strong>/);
     assert.match(buildRegistrationEmail("it", registration).html, /<strong>Madrid Open<\/strong>/);
+  });
+
+  it("puts the name of the tournament in bold in every language", () => {
+    const registration = { tournamentName: "Madrid Open", link: "https://app/?tournament=x" };
+    for (const language of LANGUAGES) {
+      assert.match(buildRegistrationEmail(language, registration).html, /<strong>Madrid Open<\/strong>/, language);
+    }
   });
 
   it("builds the registration emails in both languages", () => {

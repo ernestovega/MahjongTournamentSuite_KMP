@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The texts of the combinations and penalties screens of the table. -->
+<resources>
+    <string name="combinations_title">Kombinationen</string>
+    <string name="combinations_search_hint">Name, Punkte oder Beschreibung</string>
+    <string name="combinations_empty">Keine Kombination passt zur Suche.</string>
+    <string name="combinations_show_tiles">Alle Steine zeigen</string>
+    <string name="combinations_hide_tiles">Alle Steine ausblenden</string>
+    <string name="combinations_points">%1$d Punkte</string>
+    <string name="penalties_title">Strafen</string>
+    <string name="penalties_section_warning">Verwarnung und steigende Strafe</string>
+    <string name="penalties_section_dead_hand">Tote Hand</string>
+    <string name="penalties_section_points">Punktstrafen und schwere Strafen</string>
+    <string name="penalties_progressive">Erster Verstoß: Verwarnung. Zweiter: 5 Punkte Abzug. Weitere Verstöße: 10, 20, 30 Punkte und so weiter. Die Zählung beginnt mit jeder Session neu, außer bei Behinderung des Spiels, einschließlich absichtlicher Verzögerungen.</string>
+    <string name="penalties_source">Mahjong Competition Rules der EMA, Fassung vom 20. Juni 2009.</string>
+    <string name="penalty_w1">Falscher Kong-, Pong-, Chow- oder Hua-Ruf: Der Spieler ruft, führt die Aktion aber nicht aus, benutzt einen falschen Begriff oder ruft Pong zu spät.</string>
+    <string name="penalty_w2">Steine vor einem Kong-, Pong-, Chow- oder Hua-Ruf zeigen: Der Ruf ist ungültig, und die gezeigten Steine müssen abgeworfen werden.</string>
+    <string name="penalty_w3">Einen Stein rufen und nehmen, bevor die passenden Steine gezeigt sind.</string>
+    <string name="penalty_w4">Eine falsche Kombination melden, vor dem Abwurf: Sie darf korrigiert werden, aber die falsch gezeigten Steine müssen abgeworfen werden.</string>
+    <string name="penalty_w5">Eine falsche Blume ersetzen, bevor der Ersatzstein in die Hand genommen ist: Das darf korrigiert werden, und die falsch gezeigten Steine müssen abgeworfen werden.</string>
+    <string name="penalty_w6">Einen Stein von der falschen Stelle der Mauer ziehen: Das darf korrigiert werden, bevor der Stein in die Hand kommt.</string>
+    <string name="penalty_w7">Die Steine eines Gegners zeigen: weitere Strafe möglich.</string>
+    <string name="penalty_w8">Die Mauer oder den Abwurfbereich vorzeitig zerstören: weitere Strafe möglich.</string>
+    <string name="penalty_w9">Informationen weitergeben: weitere Strafe möglich.</string>
+    <string name="penalty_d1">Falsches Hu, ohne Steine zu zeigen.</string>
+    <string name="penalty_d2">Falscher Hu-Ruf: etwas anderes als Hu oder Mahjong rufen, oder Steine zeigen, bevor Hu gerufen ist.</string>
+    <string name="penalty_d3">Die Siegerhand nicht unverändert lassen: Steine der Hand zum Zählen benutzen. Wer mit den Blumen zählt, verliert die Blumen, aber die Hand bleibt gültig.</string>
+    <string name="penalty_d4">Eine falsche Kombination melden, nach dem Abwurf: Das lässt sich nicht rückgängig machen.</string>
+    <string name="penalty_d5">Eine falsche Blume ersetzen, nachdem der Ersatzstein in die Hand genommen ist: Das lässt sich nicht rückgängig machen. Die falsche Blume bleibt auf dem Tisch und zählt als Abwurf für Hu oder Letzter Stein.</string>
+    <string name="penalty_d6">Von der falschen Stelle ziehen und den Stein in die Hand nehmen: tote Hand nur, wenn ein Gegner es sofort bemerkt.</string>
+    <string name="penalty_d7">Einen gerufenen Stein nicht nehmen, bevor die nächsten zwei Spieler abgeworfen haben.</string>
+    <string name="penalty_d8">Falsches Hu von Spieler A, während Spieler B Steine gezeigt hat: A erhält die vorgesehene Strafe. B hat eine tote Hand und muss die gezeigten Steine abwerfen.</string>
+    <string name="penalty_d9">Zu wenige oder zu viele Steine.</string>
+    <string name="penalty_p1">Falsches Hu mit weniger als 8 Punkten: tote Hand und 10 Punkte an jeden Gegner.</string>
+    <string name="penalty_p2">Falsches Hu mit ungültigem Handaufbau: nicht vier Kombinationen und ein Paar (oder ein anderer erlaubter Aufbau), eine falsche Kombination oder eine falsche Zahl von Steinen. Tote Hand und 20 Punkte an jeden Gegner.</string>
+    <string name="penalty_p3">Vergessen, den Siegstein zu nehmen: 10 Punkte Abzug. Die Hand bleibt gültig und wird normal gewertet.</string>
+    <string name="penalty_p4">Bis zu 10 Minuten zu spät: 10 Punkte Abzug.</string>
+    <string name="penalty_p5">11 bis 15 Minuten zu spät: 20 Punkte Abzug.</string>
+    <string name="penalty_p6">Mehr als 15 Minuten zu spät: Der Spieler verliert die laufende Session und erhält 0 Tischpunkte. Ein Ersatzspieler spielt die Session.</string>
+    <string name="penalty_p7">Behinderung des Spiels: das Spiel verzögern, oder schwerwiegend Steine oder Informationen preisgeben. Der Schiedsrichter kann 10 bis 60 Punkte und/oder eine tote Hand verhängen.</string>
+    <string name="penalty_p8">Schwere Störung: Betrug oder Behinderung des Turniers, einschließlich wiederholter Verzögerungen. Sofortige Disqualifikation.</string>
+</resources>
