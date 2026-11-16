@@ -10,17 +10,17 @@ import mahjongtournamentsuite.playerapp.generated.resources.menu_green_book
 import org.jetbrains.compose.resources.stringResource
 
 /*
- * The Green Book: the official MCR rules. There are editions in English, Spanish and Russian.
- * They are big (1 to 5 MB), so the site serves them and the app does not carry them. The site has them in
+ * The Green Book: the official MCR rules. There are editions in English and Spanish. A Russian edition exists
+ * (Russian Mahjong Federation, all rights reserved); it waits for their permission. The editions are big
+ * (2.5 and 5 MB), so the site serves them and the app does not carry them. The site has them in
  * playerApp/src/wasmJsMain/resources/green-book, so they are at /green-book/ next to the web app.
  * The app carries only the short English edition of the EMA (mahjong-europe.org/portal/images/docs/mcr_EN.pdf, 366 KB),
  * so the button works without internet the first time too.
  */
 
-/** The edition of the Green Book for [language]: Spanish and Russian have their own, the other languages use English. */
+/** The edition of the Green Book for [language]: Spanish has its own, the other languages use English. */
 internal fun greenBookEdition(language: AppLanguage): String = when (language) {
     AppLanguage.Spanish -> "ES"
-    AppLanguage.Russian -> "RU"
     else -> "EN"
 }
 
