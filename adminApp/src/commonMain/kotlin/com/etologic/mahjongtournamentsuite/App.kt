@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureF
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
+import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
 import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
@@ -245,6 +246,8 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                 }
                 // On the web the back and forward of the browser move through the screens like the back of the app.
                 BrowserHistory(navController)
+                // One time, when the app shows a language that was translated with AI.
+                AiTranslationNotice(onContact = { navController.navigate(SupportRoute()) })
             }
         }
     }

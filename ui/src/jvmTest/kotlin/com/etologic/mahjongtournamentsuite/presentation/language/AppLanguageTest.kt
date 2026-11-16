@@ -6,6 +6,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -23,10 +24,21 @@ import kotlin.test.assertNotEquals
 @Composable
 private fun Sample() = Text(stringResource(Res.string.sign_out_message))
 
-private class FakeLanguageStore(var saved: String? = null) : LanguageStore {
+private class FakeLanguageStore(
+    var saved: String? = null,
+    val system: List<String> = emptyList(),
+    var noticeSeen: Boolean = true,
+) : LanguageStore {
     val applied = mutableListOf<String>()
+    override fun systemTags(): List<String> = system
+    override fun aiNoticeSeen(): Boolean = noticeSeen
+    override fun saveAiNoticeSeen() {
+        noticeSeen = true
+    }
     override fun load(): String? = saved
-    override fun save(tag: String) { saved = tag }
+    override fun save(tag: String) {
+        saved = tag
+    }
     override fun apply(tag: String) {
         applied += tag
         Locale.setDefault(Locale.forLanguageTag(tag))
@@ -35,8 +47,7 @@ private class FakeLanguageStore(var saved: String? = null) : LanguageStore {
 
 /** The texts load in the background, so the test waits until the text shows. */
 @OptIn(ExperimentalTestApi::class)
-private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) =
-    waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) = waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
 /** Opens the menu of the selector with a tap on the field, which shows the [current] language, and taps the option [name]. */
 @OptIn(ExperimentalTestApi::class)
@@ -66,6 +77,68 @@ class AppLanguageTest {
         assertEquals(AppLanguage.English, AppLanguage.fromTag(null))
         assertEquals(AppLanguage.English, AppLanguage.fromTag(""))
         assertEquals(AppLanguage.English, AppLanguage.fromTag("xx"))
+    }
+
+    @Test
+    fun theLanguagesOfTheDeviceGiveTheFirstOneThatTheAppHas() {
+        assertEquals(AppLanguage.Spanish, AppLanguage.fromSystemTags(listOf("es-ES")))
+        assertEquals(AppLanguage.Spanish, AppLanguage.fromSystemTags(listOf("es_MX")))
+        assertEquals(AppLanguage.French, AppLanguage.fromSystemTags(listOf("xx-YY", "fr-CA", "it")))
+        assertEquals(AppLanguage.Italian, AppLanguage.fromSystemTags(listOf("IT")))
+        assertEquals(AppLanguage.English, AppLanguage.fromSystemTags(listOf("ja-JP")))
+        assertEquals(AppLanguage.English, AppLanguage.fromSystemTags(emptyList()))
+    }
+
+    @Test
+    fun withoutASavedLanguageTheAppUsesTheLanguageOfTheDeviceAndDoesNotSaveIt() = runComposeUiTest {
+        val store = FakeLanguageStore(saved = null, system = listOf("es-ES"))
+        setContent { ProvideAppLanguage(store) { Sample() } }
+        awaitText("¿Quieres cerrar la sesión?")
+        assertEquals(listOf("es"), store.applied)
+        assertEquals(null, store.saved)
+    }
+
+    @Test
+    fun theSavedLanguageWinsOverTheLanguageOfTheDevice() = runComposeUiTest {
+        val store = FakeLanguageStore(saved = "en", system = listOf("es-ES"))
+        setContent { ProvideAppLanguage(store) { Sample() } }
+        awaitText("Do you want to sign out?")
+    }
+
+    @Test
+    fun aLanguageTranslatedWithAiShowsTheNoticeOneTime() = runComposeUiTest {
+        val store = FakeLanguageStore(saved = "es", noticeSeen = false)
+        setContent { ProvideAppLanguage(store) { AiTranslationNotice(onContact = {}) } }
+        awaitText("Traducción con IA")
+        onNodeWithText("Aceptar").performClick()
+        waitForIdle()
+        assertEquals(true, store.noticeSeen)
+        onAllNodesWithText("Traducción con IA").assertCountEquals(0)
+    }
+
+    @Test
+    fun theContactOfTheNoticeOpensTheSupport() = runComposeUiTest {
+        val store = FakeLanguageStore(saved = "fr", noticeSeen = false)
+        var contacted = false
+        setContent { ProvideAppLanguage(store) { AiTranslationNotice(onContact = { contacted = true }) } }
+        awaitText("Contact")
+        onNodeWithText("Contact").performClick()
+        waitForIdle()
+        assertEquals(true, contacted)
+        assertEquals(true, store.noticeSeen)
+    }
+
+    @Test
+    fun englishDoesNotShowTheNotice() = runComposeUiTest {
+        val store = FakeLanguageStore(saved = "en", noticeSeen = false)
+        setContent {
+            ProvideAppLanguage(store) {
+                AiTranslationNotice(onContact = {})
+                Sample()
+            }
+        }
+        awaitText("Do you want to sign out?")
+        onAllNodesWithText("Translated with AI").assertCountEquals(0)
     }
 
     @Test

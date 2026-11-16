@@ -15,7 +15,8 @@ import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.rival_player
 
 /**
- * The languages of the apps. [English] is the default.
+ * The languages of the apps. Without a choice of the user, the app uses the language of the device or the browser
+ * when it is one of these, and [English] when it is not.
  * [endonym] is the name of the language in the language itself, so a user finds it in any language.
  * [flagCode] is the country whose flag marks the language.
  */
@@ -29,13 +30,33 @@ enum class AppLanguage(val tag: String, val endonym: String, val flagCode: Strin
     companion object {
         /** The language with this tag, or [English] when the tag is empty or unknown. */
         fun fromTag(tag: String?): AppLanguage = entries.firstOrNull { it.tag == tag } ?: English
+
+        /**
+         * The first language of [tags] (the languages of the device, in order of preference) that the app has, or [English].
+         * A tag matches a language by the whole tag ("de-CH") or by its first part ("es-MX" gives Spanish).
+         */
+        fun fromSystemTags(tags: List<String>): AppLanguage {
+            for (raw in tags) {
+                val tag = raw.trim().replace('_', '-').lowercase()
+                if (tag.isEmpty()) continue
+                entries.firstOrNull { it.tag.lowercase() == tag }?.let { return it }
+                val primary = tag.substringBefore('-')
+                entries.firstOrNull { it.tag.lowercase().substringBefore('-') == primary }?.let { return it }
+            }
+            return English
+        }
     }
 }
 
-/** The language that the user chose and the function that changes it. */
+/**
+ * The language that the user chose and the function that changes it.
+ * [showAiNotice] is true while the app shows a translation by AI and the user has not seen the notice about it yet.
+ */
 @Immutable
 class LanguageController(
     val language: AppLanguage,
+    val showAiNotice: Boolean = false,
+    val onAiNoticeSeen: () -> Unit = {},
     val onChange: (AppLanguage) -> Unit,
 )
 
@@ -50,14 +71,25 @@ fun ProvideAppLanguage(
     store: LanguageStore = PlatformLanguageStore,
     content: @Composable () -> Unit,
 ) {
-    var chosen by remember(store) { mutableStateOf(AppLanguage.fromTag(store.load())) }
+    // Without a saved choice the app follows the device. The choice is not saved, so the app follows a later change of the device.
+    var chosen by remember(store) {
+        mutableStateOf(store.load()?.let { AppLanguage.fromTag(it) } ?: AppLanguage.fromSystemTags(store.systemTags()))
+    }
+    var aiNoticeSeen by remember(store) { mutableStateOf(store.aiNoticeSeen()) }
     remember(store, chosen) { store.apply(chosen.tag) }
     val playerName = rememberTemplate(Res.string.rival_player)
     remember(playerName) {
         PlaceholderNames.playerTemplate = { number -> playerName(number) }
     }
-    val controller = remember(store, chosen) {
-        LanguageController(chosen) { next ->
+    val controller = remember(store, chosen, aiNoticeSeen) {
+        LanguageController(
+            language = chosen,
+            showAiNotice = chosen != AppLanguage.English && !aiNoticeSeen,
+            onAiNoticeSeen = {
+                store.saveAiNoticeSeen()
+                aiNoticeSeen = true
+            },
+        ) { next ->
             store.save(next.tag)
             chosen = next
         }
@@ -74,17 +106,32 @@ interface LanguageStore {
 
     /** Makes the platform use [tag]. */
     fun apply(tag: String)
+
+    /** The languages of the device or the browser, in order of preference, as tags like "es-ES". */
+    fun systemTags(): List<String> = emptyList()
+
+    /** True when the user has seen the notice about the translations by AI. */
+    fun aiNoticeSeen(): Boolean = true
+    fun saveAiNoticeSeen() {}
 }
 
 internal object PlatformLanguageStore : LanguageStore {
     override fun load(): String? = LanguagePreferenceStorage.load()?.takeIf { it.isNotBlank() }
     override fun save(tag: String) = LanguagePreferenceStorage.save(tag)
     override fun apply(tag: String) = applyPlatformLanguage(tag)
+    override fun systemTags(): List<String> = systemLanguageTags()
+    override fun aiNoticeSeen(): Boolean = LanguagePreferenceStorage.loadAiNoticeSeen()
+    override fun saveAiNoticeSeen() = LanguagePreferenceStorage.saveAiNoticeSeen()
 }
 
 internal expect object LanguagePreferenceStorage {
     fun load(): String?
     fun save(value: String)
+    fun loadAiNoticeSeen(): Boolean
+    fun saveAiNoticeSeen()
 }
 
 internal expect fun applyPlatformLanguage(tag: String)
+
+/** The languages of the device or the browser, in order of preference. It does not change when the app applies its language. */
+internal expect fun systemLanguageTags(): List<String>

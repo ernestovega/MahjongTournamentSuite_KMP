@@ -492,6 +492,9 @@
     <string name="country_zw">Zimbabwe</string>
     <string name="country_eu">Unione europea</string>
     <string name="language_label">Lingua</string>
+    <string name="ai_translation_title">Tradotto con l’IA</string>
+    <string name="ai_translation_message">I testi nelle lingue diverse dall’inglese sono stati tradotti con l’IA e nessuno li ha ancora verificati. Se trovi un errore, segnalacelo tramite il modulo di contatto.</string>
+    <string name="ai_translation_contact">Contatto</string>
     <string name="error_tournament_not_found">Il torneo non è stato trovato. Potrebbe essere stato eliminato.</string>
     <string name="action_back">Indietro</string>
     <string name="dropdown_search">Cerca</string>

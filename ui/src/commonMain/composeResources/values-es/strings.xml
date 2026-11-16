@@ -492,6 +492,9 @@
     <string name="country_zw">Zimbabue</string>
     <string name="country_eu">Unión Europea</string>
     <string name="language_label">Idioma</string>
+    <string name="ai_translation_title">Traducción con IA</string>
+    <string name="ai_translation_message">Los textos en idiomas distintos del inglés se han traducido con IA y todavía no los ha revisado nadie. Si encuentras cualquier error, avísanos por favor desde el formulario de contacto.</string>
+    <string name="ai_translation_contact">Contacto</string>
     <string name="error_tournament_not_found">No se ha encontrado el torneo. Puede que lo hayan eliminado.</string>
     <string name="action_back">Volver</string>
     <string name="dropdown_search">Buscar</string>
