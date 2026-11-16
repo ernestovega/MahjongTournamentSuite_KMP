@@ -318,8 +318,8 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
             text = {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
-                    TileGroupsRow(CreditsExampleTiles, maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
-                    Text(stringResource(Res.string.combinations_tiles_credit), textAlign = TextAlign.Center)
+                    TileGroupsRow(CreditsExampleTiles, Modifier.padding(bottom = 16.dp), maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
+                    Text(stringResource(Res.string.combinations_tiles_credit), Modifier.padding(bottom = 8.dp), textAlign = TextAlign.Center)
                     TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) { Text("martinpersson.org") }
                 }
             },
