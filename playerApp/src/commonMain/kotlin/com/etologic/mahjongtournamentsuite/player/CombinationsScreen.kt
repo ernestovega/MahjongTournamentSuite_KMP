@@ -314,10 +314,12 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
     TrackedDialog("CombinationsCredits") {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.combinations_credits)) },
+            title = { Text(stringResource(Res.string.combinations_credits), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(Res.string.combinations_tiles_credit))
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
+                    TileGroupsRow(CreditsExampleTiles, maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
+                    Text(stringResource(Res.string.combinations_tiles_credit), textAlign = TextAlign.Center)
                     TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) { Text("martinpersson.org") }
                 }
             },
@@ -325,6 +327,8 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
         )
     }
 }
+
+private val CreditsExampleTiles = TileNotation.parse("1m 5p 9s E C 1f 1g")
 
 private const val MARTIN_PERSSON_URL = "http://www.martinpersson.org"
 
