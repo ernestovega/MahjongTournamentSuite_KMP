@@ -4,6 +4,7 @@ import { auth, db, firebaseProjectId } from "../firebase";
 import { bumpGlobalDataVersion } from "../services/dataVersionsService";
 import { sendPasswordResetEmail } from "../services/firebaseAuthRest";
 import { createUserProfile, setGlobalUserRole } from "../services/usersService";
+import { normalizePlayerNamePart } from "../services/playerName";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { runScript } from "./scriptRun";
 import { STAGING_PLAYERS } from "./stagingPlayers";
@@ -11,7 +12,7 @@ import { STAGING_PLAYERS } from "./stagingPlayers";
 /**
  * Prepares the staging project for a rehearsal (docs/staging.md):
  * - the admin account of STAGING_ADMIN_EMAIL. A new account gets no password, only the password reset email.
- * - the fictitious EMA players of stagingPlayers.ts that are not created by hand.
+ * - the EMA players of stagingPlayers.ts that are not created by hand.
  *
  * It previews by default. Add --apply to write. It refuses to run on any project but `--project=<id>`, and never on
  * the production project.
@@ -60,8 +61,8 @@ runScript("seedStaging", async () => {
     added += 1;
     if (applyChanges) {
       await ref.create({
-        firstName: player.firstName,
-        lastName: player.lastName,
+        firstName: normalizePlayerNamePart(player.firstName),
+        lastName: normalizePlayerNamePart(player.lastName),
         country: player.country,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),

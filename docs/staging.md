@@ -33,8 +33,8 @@ production data.
   `.env.<project>`, written by the workflow: invitation links to the staging web and photos in the staging bucket.
   The staging web apps send no Analytics and no App Check token to production.
 - The same workflow, action `seed`: countries, the admin account of `STAGING_ADMIN_EMAIL` (a new one gets the
-  password reset email) and the fictitious EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
-  (numbers 9999xxxx). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
+  password reset email) and the EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
+  (the people registered for the next tournament, plus fictitious 9999xxxx numbers). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
 
 ## The Android app
 
