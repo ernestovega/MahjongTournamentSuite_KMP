@@ -196,13 +196,6 @@
             }
           ]
         }
-      ],
-      "redirects": [
-        {
-          "source": "/api-docs",
-          "destination": "/api-docs/",
-          "type": 301
-        }
       ]
     }
   ],
