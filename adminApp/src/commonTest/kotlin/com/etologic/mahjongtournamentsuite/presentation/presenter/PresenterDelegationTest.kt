@@ -258,6 +258,7 @@ private class RecordingAuthRepository(
     override suspend fun updateAlias(alias: String) = unusedResult<UserProfile>()
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray) = unusedResult<UserProfile>()
     override suspend fun removePhoto() = unusedResult<UserProfile>()
+    override suspend fun deleteAccount() = unusedResult<Unit>()
 }
 
 private fun <T> unusedResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

@@ -518,6 +518,11 @@
     <string name="consent_decline">Refuser</string>
     <string name="consent_declined_note">Vous ne pouvez pas utiliser l\'application sans l\'analyse anonyme. Vous pouvez fermer l\'application ou accepter pour continuer.</string>
     <string name="consent_withdraw">Retirer le consentement à l\'analyse</string>
+    <string name="profile_delete_account">Supprimer mon compte</string>
+    <string name="profile_delete_account_title">Supprimer votre compte ?</string>
+    <string name="profile_delete_account_message">Votre compte est supprimé définitivement : la connexion, l\'e-mail, le pseudo et la photo. Votre joueur EMA et vos résultats de tournois restent. Action irréversible.</string>
+    <string name="profile_delete_account_confirm">Supprimer</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
     <string name="consent_withdraw_info">L\'application arrête l\'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l\'application tant que vous n\'acceptez pas.</string>
     <string name="stat_best_hand_points">Main la plus haute</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>

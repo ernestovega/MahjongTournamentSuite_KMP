@@ -5,8 +5,11 @@ import { rateLimit } from "../middleware/rateLimit";
 import { requireAuth } from "../middleware/requireAuth";
 import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword } from "../../services/firebaseAuthRest";
 import { auth } from "../../firebase";
-import { getGlobalUserRoles } from "../../models/globalRole";
-import { clearUserPhoto, getOwnProfile, setUserPhoto, updateOwnAlias } from "../../services/usersService";
+import { getGlobalUserRole, getGlobalUserRoles } from "../../models/globalRole";
+import { recordActivity } from "../../services/activityLog";
+import { actorFromToken } from "../../services/changeLog";
+import { setAccountEmaId } from "../../services/playerAccountsService";
+import { clearUserPhoto, countEnabledAdmins, deleteManagedUser, getOwnProfile, setUserPhoto, updateOwnAlias } from "../../services/usersService";
 
 /** Turns the error code of the sign-in service into an answer that the apps can show to the user. */
 export function signInError(error: unknown): unknown {
@@ -114,6 +117,23 @@ export function authRouter(): Router {
       await clearUserPhoto(decoded.uid);
       const [profile, user] = await Promise.all([getOwnProfile(decoded.uid), auth.getUser(decoded.uid)]);
       res.status(200).json({ ...profile, roles: getGlobalUserRoles(user) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The user deletes the own account: the sign-in, the profile and the own photo. The EMA player and the results stay.
+  router.delete("/me", requireAuth, async (_req, res, next) => {
+    try {
+      const decoded = res.locals.auth as { uid: string };
+      const user = await auth.getUser(decoded.uid);
+      if (!user.disabled && getGlobalUserRole(user) === "ADMIN" && await countEnabledAdmins() <= 1) {
+        throw badRequest("The last enabled admin cannot delete the own account");
+      }
+      await setAccountEmaId({ uid: decoded.uid, emaId: null });
+      await deleteManagedUser(decoded.uid);
+      await recordActivity({ action: "user.delete", actor: actorFromToken(res.locals.auth), target: `user ${decoded.uid}`, details: { own: true } });
+      res.status(200).json({ ok: true });
     } catch (e) {
       next(e);
     }

@@ -56,6 +56,7 @@ import mahjongtournamentsuite.ui.generated.resources.password_hide
 import mahjongtournamentsuite.ui.generated.resources.password_show
 import mahjongtournamentsuite.ui.generated.resources.sign_in_button
 import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
+import mahjongtournamentsuite.ui.generated.resources.privacy_policy
 import mahjongtournamentsuite.ui.generated.resources.sign_in_need_help
 import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
@@ -257,6 +258,14 @@ fun SignInForm(
                             } else {
                                 Text(stringResource(Res.string.sign_in_button))
                             }
+                        }
+                        FocusedTextButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            enabled = !isLoading,
+                            onClick = rememberOpenPrivacyPolicy(),
+                            contentPadding = LinkButtonPadding,
+                        ) {
+                            Text(stringResource(Res.string.privacy_policy))
                         }
                     }
                 }

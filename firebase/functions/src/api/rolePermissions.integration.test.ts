@@ -35,6 +35,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["PUT", "/auth/me", "SIGNED_IN"],
   ["PUT", "/auth/me/photo", "SIGNED_IN"],
   ["DELETE", "/auth/me/photo", "SIGNED_IN"],
+  ["DELETE", "/auth/me", "SIGNED_IN"],
   ["GET", "/admin/whoami", "SIGNED_IN"],
   ["GET", "/countries/", "SIGNED_IN"],
   ["GET", "/ema-player-registry/", "SIGNED_IN"],
@@ -193,7 +194,12 @@ describe("who may call which route", () => {
 
       if (access === "SIGNED_IN") {
         it("lets any signed-in account through, also a player", async () => {
-          for (const account of [player, outsider, member, admin]) {
+          // Deleting the own account would delete the shared accounts of these tests, so that route gets fresh ones.
+          const ownDeletion = method === "DELETE" && path === "/auth/me";
+          const accounts = ownDeletion
+            ? [await createAccount({ role: "PLAYER" }), await createAccount({ role: "EDITOR" }), await createAccount({ role: "ADMIN" })]
+            : [player, outsider, member, admin];
+          for (const account of accounts) {
             const { status } = await server.request(method, concrete(path, t1), { token: account.token });
             assert.ok(!denied(status), `${status} for ${account.email}`);
           }
@@ -444,6 +450,18 @@ describe("account rules", () => {
     await assert.rejects(auth.getUser(victim.uid));
     assert.equal((await db.doc(`users/${victim.uid}`).get()).exists, false);
     assert.equal((await db.doc(`tournaments/${tournamentId}/members/${victim.uid}`).get()).exists, false);
+  });
+
+  it("a player deletes the own account: the sign-in goes, the EMA id is free again", async () => {
+    const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const player = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });
+    const emaId = String((await db.doc(`users/${player.uid}`).get()).get("emaId"));
+
+    assert.equal((await server.request("DELETE", "/auth/me", { token: player.token })).status, 200);
+
+    await assert.rejects(auth.getUser(player.uid));
+    assert.equal((await db.doc(`users/${player.uid}`).get()).exists, false);
+    assert.equal((await db.doc(`emaIdIndex/${emaId}`).get()).exists, false);
   });
 
   it("an admin deletes a player account: the EMA id is free again", async () => {

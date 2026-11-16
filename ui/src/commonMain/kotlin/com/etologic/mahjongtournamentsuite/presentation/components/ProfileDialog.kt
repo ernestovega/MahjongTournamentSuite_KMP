@@ -4,6 +4,10 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_confirm
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_message
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_title
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
 import mahjongtournamentsuite.ui.generated.resources.design_system
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
@@ -24,6 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +46,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_close
+import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.field_email
@@ -72,6 +79,10 @@ fun ProfileDialog(
     onSignOut: (() -> Unit)? = null,
     /** Opens the catalog of the design system. Only administrators get it. */
     onOpenDesignSystem: (() -> Unit)? = null,
+    /** Deletes the own account, after a confirmation. Without it the dialog has no delete button. */
+    onDeleteAccount: (suspend () -> AppResult<Unit>)? = null,
+    /** Runs after the account was deleted. The session has ended. */
+    onAccountDeleted: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
@@ -108,6 +119,37 @@ fun ProfileDialog(
         }
 
         is AppResult.Failure -> result.error.toUiText()
+    }
+
+    var confirmingDelete by remember { mutableStateOf(false) }
+    var deleteError by remember { mutableStateOf<UiText?>(null) }
+    if (confirmingDelete && onDeleteAccount != null) {
+        DeleteOwnAccountDialog(
+            deleting = saving,
+            error = deleteError,
+            onDismiss = {
+                confirmingDelete = false
+                deleteError = null
+            },
+            onConfirm = {
+                saving = true
+                deleteError = null
+                scope.launch {
+                    when (val result = onDeleteAccount()) {
+                        is AppResult.Success -> {
+                            saving = false
+                            onDismiss()
+                            onAccountDeleted()
+                        }
+                        is AppResult.Failure -> {
+                            deleteError = result.error.toUiText()
+                            saving = false
+                        }
+                    }
+                }
+            },
+        )
+        return
     }
 
     TrackedDialog("Profile") {
@@ -189,6 +231,13 @@ fun ProfileDialog(
                         )
                         FocusedTextButton(enabled = !saving, onClick = withdraw) { Text(stringResource(Res.string.consent_withdraw)) }
                     }
+                    if (onDeleteAccount != null) {
+                        FocusedTextButton(
+                            enabled = !saving,
+                            onClick = { confirmingDelete = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        ) { Text(stringResource(Res.string.profile_delete_account)) }
+                    }
                 }
             },
             // Logout is at the left of the button row. Close and Save are at the right. On a small phone Logout goes above.
@@ -212,6 +261,52 @@ fun ProfileDialog(
                 } else {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), content = buttons)
                 }
+            },
+        )
+    }
+}
+
+/** Asks before the own account is deleted. Cancel has the focus, so Enter never deletes by mistake. */
+@Composable
+private fun DeleteOwnAccountDialog(
+    deleting: Boolean,
+    error: UiText?,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val deleteFocus = remember { FocusRequester() }
+    val cancelFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { cancelFocus.requestFocus() }
+    TrackedDialog("DeleteOwnAccount") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!deleting) onDismiss() },
+            title = { Text(stringResource(Res.string.profile_delete_account_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.profile_delete_account_message))
+                    error?.let { Text(it.asString(), color = MaterialTheme.colorScheme.error) }
+                }
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onConfirm,
+                    enabled = !deleting,
+                    focusRequester = deleteFocus,
+                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) { Text(stringResource(Res.string.profile_delete_account_confirm)) }
+            },
+            dismissButton = {
+                FocusedTextButton(
+                    onClick = onDismiss,
+                    enabled = !deleting,
+                    focusRequester = cancelFocus,
+                    buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
+                ) { Text(stringResource(Res.string.action_cancel)) }
             },
         )
     }

@@ -187,6 +187,7 @@ internal class FakeSignedInAuthRepository : AuthRepository {
     override suspend fun updateAlias(alias: String) = AppResult.Success(UserProfile("me", "me@example.test", alias))
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray) = AppResult.Success(UserProfile("me", "me@example.test", hasOwnPhoto = true))
     override suspend fun removePhoto() = AppResult.Success(UserProfile("me", "me@example.test"))
+    override suspend fun deleteAccount() = AppResult.Success(Unit)
 }
 
 internal class FakePlayerRepository(private val players: List<Player> = emptyList()) : PlayerRepository {

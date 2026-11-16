@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -31,6 +32,52 @@ class ProfileDialogUiTest {
         onNodeWithText("ada@example.test").assertExists()
         onNodeWithText("10001").assertExists()
         onNodeWithText("EMA number").assertExists()
+    }
+
+    @Test
+    fun deleteMyAccountAsksFirstThenDeletesAndCloses() = runComposeUiTest {
+        var deletes = 0
+        var closed = false
+        var deleted = false
+        setContent {
+            TestTheme {
+                ProfileDialog(
+                    profile = player,
+                    onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { error("unused") },
+                    onSaved = {},
+                    onDismiss = { closed = true },
+                    onDeleteAccount = {
+                        deletes++
+                        AppResult.Success(Unit)
+                    },
+                    onAccountDeleted = { deleted = true },
+                )
+            }
+        }
+
+        onNodeWithText("Delete my account").performScrollTo().performClick()
+        onNodeWithText("Delete your account?").assertExists()
+        onNodeWithText("Cancel").performClick()
+        onNodeWithText("Profile").assertExists()
+        assertEquals(0, deletes)
+
+        onNodeWithText("Delete my account").performScrollTo().performClick()
+        onNodeWithText("Delete").performClick()
+        waitUntil(timeoutMillis = 5_000) { deleted }
+
+        assertEquals(1, deletes)
+        assertEquals(true, closed)
+    }
+
+    @Test
+    fun withoutTheDeleteCallbackTheDialogHasNoDeleteButton() = runComposeUiTest {
+        setContent {
+            TestTheme {
+                ProfileDialog(profile = player, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { error("unused") }, onSaved = {}, onDismiss = {})
+            }
+        }
+
+        onNodeWithText("Delete my account").assertDoesNotExist()
     }
 
     @Test

@@ -94,6 +94,7 @@ class RepositorySupportTest {
         override suspend fun updateAlias(alias: String) = error("Not used")
         override suspend fun updatePhoto(contentType: String, bytes: ByteArray) = error("Not used")
         override suspend fun removePhoto() = error("Not used")
+        override suspend fun deleteAccount() = error("Not used")
     }
 
     private class FakeConnectException(message: String) : Exception(message)

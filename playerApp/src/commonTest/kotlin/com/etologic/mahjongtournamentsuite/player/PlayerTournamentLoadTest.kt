@@ -185,6 +185,7 @@ private class GatedAuthRepository(private val server: GatedServer) : AuthReposit
     override suspend fun updateAlias(alias: String): AppResult<UserProfile> = error("unused")
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = error("unused")
     override suspend fun removePhoto(): AppResult<UserProfile> = error("unused")
+    override suspend fun deleteAccount(): AppResult<Unit> = error("unused")
 }
 
 private fun <T> unusedFakeResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

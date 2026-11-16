@@ -30,7 +30,7 @@ An editor cannot:
 
 - create, delete, rename, or configure tournaments;
 - create or modify an `ADMIN` account;
-- disable an account;
+- disable or delete an account;
 - edit the shared EMA player registry.
 
 ## Admin
@@ -42,10 +42,20 @@ An admin can:
 - perform every editor operation;
 - create, delete, rename, and configure tournaments;
 - create and modify admins;
-- disable and enable accounts;
+- disable, enable and delete accounts;
 - edit the shared EMA player registry.
 
-The last enabled admin cannot be demoted or disabled. An admin cannot disable their own account.
+The last enabled admin cannot be demoted, disabled or deleted. An admin cannot disable or delete their own account in App users.
+
+## Deleting an account
+
+The privacy policy (`https://mts.mahjongmadrid.com/privacy/`, file `playerApp/src/wasmJsMain/resources/privacy/index.html`)
+promises that a person can delete the own account. Deleting removes the sign-in, the profile (email, alias), the own
+photo, the editor assignments and the link to the EMA id. The EMA player and the tournament results stay, and the slots
+show "No account" again. It cannot be undone.
+
+- Any account deletes itself with "Delete my account" in the profile dialog: `DELETE /auth/me`.
+- An admin deletes another account with "Delete account" in the account dialog of App users: `DELETE /admin/users/{uid}`.
 
 ## Firebase Authentication
 
@@ -84,6 +94,7 @@ Only admins can disable or enable accounts:
 
 ```text
 PUT /admin/users/{uid}/disabled
+DELETE /admin/users/{uid}
 ```
 
 An editor receives only assignments for tournaments that the editor can manage. The backend preserves hidden assignments.

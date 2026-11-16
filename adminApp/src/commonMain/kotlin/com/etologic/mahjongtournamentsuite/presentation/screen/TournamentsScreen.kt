@@ -640,6 +640,17 @@ fun ProfileInfo(
                     showProfile = false
                     confirmingSignOut = true
                 },
+                onDeleteAccount = presenter::deleteAccount,
+                onAccountDeleted = {
+                    showProfile = false
+                    // As after a sign out. On the web the player app of the site takes over, without a session.
+                    coroutineScope.launch {
+                        if (leaveAdminForPlayerApp(signIn = false)) return@launch
+                        withContext(Dispatchers.Main) {
+                            navController.navigate(SignInRoute) { popUpTo(TournamentsRoute) { inclusive = true } }
+                        }
+                    }
+                },
                 onOpenDesignSystem = if (isAdmin) {
                     {
                         showProfile = false

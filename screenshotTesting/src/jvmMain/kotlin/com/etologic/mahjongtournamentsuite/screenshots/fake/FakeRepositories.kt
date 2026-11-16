@@ -171,6 +171,7 @@ open class ScreenshotAuthRepository(private val profile: UserProfile? = Screensh
     override suspend fun updateAlias(alias: String): AppResult<UserProfile> = noWrite()
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = noWrite()
     override suspend fun removePhoto(): AppResult<UserProfile> = noWrite()
+    override suspend fun deleteAccount(): AppResult<Unit> = noWrite()
 }
 
 /** The administration of an account with [role]. */

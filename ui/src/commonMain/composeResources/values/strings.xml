@@ -518,6 +518,11 @@
     <string name="consent_decline">Decline</string>
     <string name="consent_declined_note">You cannot use the app without the anonymous analytics. You can close the app, or you can accept to continue.</string>
     <string name="consent_withdraw">Withdraw analytics consent</string>
+    <string name="profile_delete_account">Delete my account</string>
+    <string name="profile_delete_account_title">Delete your account?</string>
+    <string name="profile_delete_account_message">Your account is deleted for good: the sign-in, the email, the alias and the photo. Your EMA player and your tournament results remain. This cannot be undone.</string>
+    <string name="profile_delete_account_confirm">Delete</string>
+    <string name="privacy_policy">Privacy policy</string>
     <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
     <string name="stat_best_hand_points">Highest hand</string>
     <string name="stat_average_hands_per_table">Avg. hands per table</string>

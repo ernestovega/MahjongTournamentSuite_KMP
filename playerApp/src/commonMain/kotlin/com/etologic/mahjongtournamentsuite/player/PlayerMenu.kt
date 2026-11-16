@@ -111,6 +111,12 @@ class AccountActions(
                     profile = null
                     confirmingSignOut = true
                 },
+                onDeleteAccount = session::deleteAccount,
+                onAccountDeleted = {
+                    profile = null
+                    // As after a sign out: the same screens stay open, now without an account.
+                    scope.launch { withContext(Dispatchers.Main) { navController.reopen(navController.openRoutes()) } }
+                },
             )
         }
         error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }

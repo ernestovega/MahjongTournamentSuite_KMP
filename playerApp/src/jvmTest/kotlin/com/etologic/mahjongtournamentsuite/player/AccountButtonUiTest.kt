@@ -44,6 +44,7 @@ private class SessionAuthRepository(
     override suspend fun updateAlias(alias: String): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
     override suspend fun removePhoto(): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
+    override suspend fun deleteAccount(): AppResult<Unit> = AppResult.Failure(AppError.Network)
 }
 
 /** Everything can be read without an account, so the top bar offers the sign-in. With an account it offers the profile. */

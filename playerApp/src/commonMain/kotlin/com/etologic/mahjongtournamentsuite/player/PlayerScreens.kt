@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ContactSupport
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Edit
@@ -114,6 +115,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenPrivacyPolicy
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
@@ -183,6 +185,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
 import mahjongtournamentsuite.playerapp.generated.resources.menu_contact
+import mahjongtournamentsuite.playerapp.generated.resources.menu_privacy
 import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
@@ -427,6 +430,7 @@ fun TournamentsScreen(navController: NavHostController) {
     val hideOnScroll = rememberHideOnScrollState()
     val account = rememberAccountActions(navController)
     account.Dialogs()
+    val openPrivacyPolicy = rememberOpenPrivacyPolicy()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),
@@ -436,6 +440,11 @@ fun TournamentsScreen(navController: NavHostController) {
                 text = stringResource(Res.string.menu_contact),
                 icon = Icons.Default.ContactSupport,
                 onClick = { navController.navigate(SupportRoute()) },
+            )
+            AppTopBarButton(
+                text = stringResource(Res.string.menu_privacy),
+                icon = Icons.Default.Policy,
+                onClick = openPrivacyPolicy,
             )
         },
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),

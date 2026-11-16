@@ -187,6 +187,20 @@ class DefaultAuthRepository(
     override suspend fun removePhoto(): AppResult<UserProfile> =
         profilePhotoRequest("Removing the photo") { idToken -> backendApi.removeOwnPhoto(idToken) }
 
+    override suspend fun deleteAccount(): AppResult<Unit> = runCatching {
+        ensureLoadedFromStore()
+        check(session != null) { "No active session" }
+        withFreshToken { idToken -> backendApi.deleteOwnAccount(idToken) }
+        credentialStore.clear()
+        signOut()
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Deleting the own account failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     private suspend fun profilePhotoRequest(
         action: String,
         call: suspend (String) -> UserProfileDto,

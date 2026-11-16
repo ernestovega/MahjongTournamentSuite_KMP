@@ -132,6 +132,8 @@ class FunctionsBackendApi(
 
     suspend fun removeOwnPhoto(idToken: String): UserProfileDto = delete(path = "/auth/me/photo", idToken = idToken)
 
+    suspend fun deleteOwnAccount(idToken: String): OkResponseDto = delete(path = "/auth/me", idToken = idToken)
+
     suspend fun updateUserPhoto(idToken: String, uid: String, request: UpdatePlayerPhotoRequestDto): ManagedUserDto = put(path = "/admin/users/$uid/photo", requestBody = request, idToken = idToken)
 
     suspend fun removeUserPhoto(idToken: String, uid: String): ManagedUserDto = delete(path = "/admin/users/$uid/photo", idToken = idToken)

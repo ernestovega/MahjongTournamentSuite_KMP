@@ -38,6 +38,9 @@ class TournamentsPresenter(
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
 
+    /** Deletes the own account. On success the session ends. */
+    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount()
+
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.toRefreshMode())
 
     suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.toRefreshMode())

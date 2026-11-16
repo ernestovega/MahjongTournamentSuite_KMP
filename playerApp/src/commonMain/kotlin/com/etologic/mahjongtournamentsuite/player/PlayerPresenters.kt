@@ -67,6 +67,15 @@ class PlayerSessionPresenter(
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
 
+    /** Deletes the own account. On success the player is signed out. */
+    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount().also { result ->
+        if (result is AppResult.Success) {
+            logger.i { "Player deleted the own account." }
+            telemetry.event(TelemetryEvent.LOGOUT)
+            telemetry.userProperty(TelemetryProperty.ROLE, null)
+        }
+    }
+
     suspend fun resetPassword(email: String): AppResult<Unit> = authRepository.requestPasswordReset(email.trim()).track(telemetry, TelemetryEvent.PASSWORD_RESET_REQUESTED)
 
     suspend fun signOut() {
