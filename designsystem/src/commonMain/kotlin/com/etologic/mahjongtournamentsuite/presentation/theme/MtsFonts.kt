@@ -10,10 +10,14 @@ import mahjongtournamentsuite.designsystem.generated.resources.go3v2
 import org.jetbrains.compose.resources.Font
 
 /**
- * Languages whose letters the decorative font does not have. The web draws no fallback for a missing letter, so their
- * titles and buttons would be empty: these languages use the text font everywhere.
+ * Languages with letters that the decorative font does not have: Cyrillic, Greek and CJK, and å and ø of the Nordic
+ * languages. The web and the desktop draw nothing for a missing letter, so titles and buttons would lose letters: these
+ * languages use the text font everywhere.
  */
-internal val LanguagesWithoutDecorativeFont = setOf("ru", "uk", "be", "bg", "sr", "mk", "el", "zh", "ja", "ko")
+internal val LanguagesWithoutDecorativeFont = setOf(
+    "ru", "uk", "be", "bg", "sr", "mk", "el", "zh", "ja", "ko",
+    "sv", "da", "nb", "nn", "no",
+)
 
 /** The decorative font of titles and labels, or the text font when the language of the app has letters it lacks. */
 @Composable
