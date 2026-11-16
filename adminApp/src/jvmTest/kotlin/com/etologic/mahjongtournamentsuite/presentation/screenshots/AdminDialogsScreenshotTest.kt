@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
@@ -15,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
@@ -38,6 +40,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBul
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialogContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendSummaryDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
@@ -108,6 +112,21 @@ class AdminDialogsScreenshotTest {
     @Test
     fun roundControl() = adminScreenshots("dialogs/round-control", variants = dialogVariants, ready = { waitForText("2:00:00") }) {
         RoundControlDialog(ONGOING, initialRound = 3, onDismiss = {})
+    }
+
+    @Test
+    fun roundControlOpenTablesOfFinishedRounds() = adminScreenshots(
+        "dialogs/round-control-open-tables",
+        variants = dialogVariants,
+        ready = { waitForText("2:00:00") },
+    ) {
+        // Round 2 is over (round 3 is in play) but two of its tables stayed open: badge on its chip and the close button.
+        val repository = koinInject<TournamentRepository>()
+        val controller = remember { RoundTimerController(repository, ONGOING, initialRound = 3) }
+        val tables = remember {
+            ScreenshotData.tables(ONGOING).map { if (it.roundId == 2 && it.tableId in setOf(1, 3)) it.copy(isCompleted = false) else it }
+        }
+        RoundControlDialogContent(controller = controller, loadTables = { AppResult.Success(tables) }, onDismiss = {})
     }
 
     @Test

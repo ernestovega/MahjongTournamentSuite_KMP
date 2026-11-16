@@ -324,4 +324,47 @@ class RoundControlDialogUiTest {
         assertTrue(server.tables.getValue(TableKey(1, 2)).first.isCompleted)
         onNodeWithTag("table_2_completed").assertIsSelected()
     }
+
+    @Test
+    fun theOpenTablesOfAFinishedRoundShowABadgeAndCloseAfterAConfirmation() = runComposeUiTest {
+        // Round 1 is over: its time ran out. Table 1 stayed open, table 2 is completed.
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
+        show(server)
+
+        onNodeWithTag("round_chip_1_open_tables", useUnmergedTree = true).assertExists()
+        onNodeWithContentDescription("Open tables: 1").assertExists()
+        onNodeWithText("Finished rounds with open tables: Round 1", substring = true).assertExists()
+        onNodeWithText("Close tables of finished rounds").performClick()
+        settle()
+        onNodeWithText("Close the open tables?").assertExists()
+        onNodeWithText("• Round 1, tables: 1", substring = true).assertExists()
+        onNodeWithText("Close tables").performClick()
+        settle()
+
+        assertEquals(listOf(listOf(TableKey(1, 1))), server.completedTableRequests.toList())
+        onNodeWithTag("finished_rounds_open_tables").assertDoesNotExist()
+        onNodeWithTag("round_chip_1_open_tables", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun cancellingTheConfirmationClosesNothing() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
+        show(server)
+
+        onNodeWithText("Close tables of finished rounds").performClick()
+        settle()
+        onNodeWithText("Cancel").performClick()
+        settle()
+
+        assertTrue(server.completedTableRequests.isEmpty())
+        onNodeWithTag("finished_rounds_open_tables").assertExists()
+    }
+
+    @Test
+    fun aRoundInPlayKeepsItsOpenTablesWithoutWarning() = runComposeUiTest {
+        show(server(RoundClock(roundId = 1, startedAtMs = now - 30 * min)))
+
+        onNodeWithTag("round_chip_1_open_tables", useUnmergedTree = true).assertDoesNotExist()
+        onNodeWithTag("finished_rounds_open_tables").assertDoesNotExist()
+    }
 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -50,6 +53,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.TABLE_HAS_ALL_HANDS
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -75,6 +79,13 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_closed
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_completed_notice
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_badge
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_button
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_confirm
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_line
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_message
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_notice
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_title
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_hands_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_manual_warning
@@ -164,6 +175,8 @@ internal fun RoundControlDialogContent(
     var error by remember { mutableStateOf<AppError?>(null) }
     var prompt by remember { mutableStateOf<RoundControlPrompt?>(null) }
     var busy by remember { mutableStateOf(false) }
+    // The open tables of the finished rounds that the admin is asked to close, frozen when the confirmation opens.
+    var tablesToClose by remember { mutableStateOf<List<TableKey>?>(null) }
     // Bumped after a table changes its completed mark, so the tables load again at once.
     var tablesRevision by remember { mutableStateOf(0) }
 
@@ -200,10 +213,34 @@ internal fun RoundControlDialogContent(
         }
     }
 
+    fun closeTables(tables: List<TableKey>) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            val result = controller.completeTables(tables)
+            busy = false
+            if (result is AppResult.Failure) error = result.error
+            tablesRevision += 1
+        }
+    }
+
     val remaining = state.remainingSeconds(now)
     val finished = state.isStarted && remaining <= 0L
     // The round whose clock runs now, if any.
     val runningRound = state.clocks.runningRound(state.durationMinutes, state.serverNow(now))
+    // The tables that stayed open in the rounds that are over: a badge on their rounds and a button closes them.
+    val finishedOpenTables = allTables?.let { tables ->
+        val finished = finishedRounds(
+            numRounds = state.numRounds,
+            tables = tables,
+            clocks = state.clocks,
+            durationMinutes = state.durationMinutes,
+            extraMs = state.extraMs,
+            serverNowMs = state.serverNow(now),
+            tournamentCompleted = state.tournamentCompleted,
+        )
+        openTablesOf(finished, tables)
+    }.orEmpty()
 
     error?.let {
         // A table with every hand done always stays completed. The text says how to open it.
@@ -251,6 +288,22 @@ internal fun RoundControlDialogContent(
         )
         null -> Unit
     }
+    tablesToClose?.let { tables ->
+        val lines = tables.groupBy { it.roundId }.map { (roundId, keys) ->
+            stringResource(Res.string.round_control_finished_line, roundId, keys.joinToString(", ") { it.tableId.toString() })
+        }
+        ConfirmDialog(
+            name = "RoundControlCloseFinished",
+            title = stringResource(Res.string.round_control_finished_title),
+            message = stringResource(Res.string.round_control_finished_message, tables.size, lines.joinToString("\n")),
+            confirm = stringResource(Res.string.round_control_finished_confirm),
+            onConfirm = {
+                tablesToClose = null
+                closeTables(tables)
+            },
+            onDismiss = { tablesToClose = null },
+        )
+    }
     if (state.confirmReset) {
         ConfirmDialog(
             name = "RoundControlConfirmReset",
@@ -286,12 +339,20 @@ internal fun RoundControlDialogContent(
                         selected = state.roundId,
                         runningRound = runningRound,
                         allTables = allTables,
+                        openTablesByRound = finishedOpenTables.groupingBy { it.roundId }.eachCount(),
                         onSelect = controller::selectRound,
                     )
                     ScrollableColumnWithScrollbar(state = scrollState, modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp)) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
                             if (state.control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
+                            if (finishedOpenTables.isNotEmpty()) {
+                                FinishedRoundsNotice(
+                                    openTables = finishedOpenTables,
+                                    enabled = !busy,
+                                    onClose = { tablesToClose = finishedOpenTables },
+                                )
+                            }
                             BoxWithConstraints(Modifier.fillMaxWidth()) {
                                 val clock: @Composable (Modifier) -> Unit = { modifier ->
                                     ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
@@ -335,6 +396,8 @@ private fun RoundStrip(
     selected: Int,
     runningRound: Int?,
     allTables: List<TournamentTable>?,
+    /** Open tables of each finished round. A round with any gets a badge with the count. */
+    openTablesByRound: Map<Int, Int>,
     onSelect: (Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -351,7 +414,17 @@ private fun RoundStrip(
             FilterChip(
                 selected = round == selected,
                 onClick = { onSelect(round) },
-                label = { Text(stringResource(Res.string.round_n, round)) },
+                label = {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(Res.string.round_n, round))
+                        openTablesByRound[round]?.takeIf { it > 0 }?.let { count ->
+                            val description = stringResource(Res.string.round_control_finished_badge, count)
+                            Badge(
+                                modifier = Modifier.testTag("round_chip_${round}_open_tables").semantics { contentDescription = description },
+                            ) { Text(count.toString()) }
+                        }
+                    }
+                },
                 leadingIcon = if (round == runningRound) {
                     {
                         Icon(
@@ -585,6 +658,25 @@ private fun Card(title: String, info: String?, modifier: Modifier, content: @Com
                 info?.let { InfoTooltipIcon(it) }
             }
             content()
+        }
+    }
+}
+
+/** The rounds that are over but keep open tables, with the button that closes them all after a confirmation. */
+@Composable
+private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, onClose: () -> Unit) {
+    val rounds = openTables.map { it.roundId }.distinct().map { stringResource(Res.string.round_n, it) }.joinToString(", ")
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().testTag("finished_rounds_open_tables"),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(Res.string.round_control_finished_notice, rounds, openTables.size), style = MaterialTheme.typography.bodyMedium)
+            FocusedButton(enabled = enabled, onClick = onClose, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(Res.string.round_control_finished_button))
+            }
         }
     }
 }

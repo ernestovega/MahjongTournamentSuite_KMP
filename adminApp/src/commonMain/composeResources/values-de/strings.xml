@@ -792,6 +792,13 @@
     <string name="round_control_table_round">Wie die Runde</string>
     <string name="round_control_no_tables">Diese Runde hat noch keine Tische.</string>
     <string name="round_control_completed_notice">Das Turnier ist abgeschlossen. Du kannst noch Tische wieder öffnen, aber seine Uhren können sich nicht ändern.</string>
+    <string name="round_control_finished_notice">Beendete Runden mit offenen Tischen: %1$s\nOffene Tische: %2$d</string>
+    <string name="round_control_finished_button">Tische beendeter Runden schließen</string>
+    <string name="round_control_finished_title">Offene Tische schließen?</string>
+    <string name="round_control_finished_message">Tische, die als abgeschlossen markiert werden: %1$d\n\n%2$s\n\nIhre Spieler können keine Hände mehr eintragen.\nDu kannst jeden davon in seiner Runde wieder öffnen.</string>
+    <string name="round_control_finished_line">• Runde %1$d, Tische: %2$s</string>
+    <string name="round_control_finished_confirm">Tische schließen</string>
+    <string name="round_control_finished_badge">Offene Tische: %1$d</string>
     <string name="timer_manual_warning">Die manuelle Rundensteuerung ist aktiv: Die Uhr entscheidet nicht, was die Spieler tun können.\nÄndere das in der Rundensteuerung.</string>
     <string name="activity_action_round_control">Rundensteuerung geändert</string>
     <string name="round_control_round_in_play">Das ist die laufende Runde.</string>

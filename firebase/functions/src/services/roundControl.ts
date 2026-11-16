@@ -124,3 +124,30 @@ export function parseRoundControlChange(body: unknown): RoundControlChange {
   }
   return change;
 }
+
+/** A table of a round, by its ids. */
+export type RoundTableRef = { roundId: number; tableId: number };
+
+/** The most tables one request closes: more than any tournament has. */
+const MAX_TABLES_TO_COMPLETE = 2000;
+
+/**
+ * Reads the tables of a "close the open tables of the finished rounds" request: `{ tables: [{ roundId, tableId }] }`.
+ * Repeated tables count once, sorted by round and table.
+ */
+export function parseTablesToComplete(body: unknown): RoundTableRef[] {
+  const data = body != null && typeof body === "object" ? body as Data : {};
+  if (!Array.isArray(data.tables) || data.tables.length === 0) throw badRequest("tables must be a non-empty list of { roundId, tableId }");
+  if (data.tables.length > MAX_TABLES_TO_COMPLETE) throw badRequest(`At most ${MAX_TABLES_TO_COMPLETE} tables at once`);
+  const unique = new Map<string, RoundTableRef>();
+  for (const item of data.tables) {
+    const row = item != null && typeof item === "object" ? item as Data : {};
+    const roundId = Number(row.roundId);
+    const tableId = Number(row.tableId);
+    if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
+      throw badRequest("tables must be a non-empty list of { roundId, tableId }");
+    }
+    unique.set(`${roundId}_${tableId}`, { roundId, tableId });
+  }
+  return [...unique.values()].sort((a, b) => a.roundId - b.roundId || a.tableId - b.tableId);
+}

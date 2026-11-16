@@ -792,6 +792,13 @@
     <string name="round_control_table_round">Come il turno</string>
     <string name="round_control_no_tables">Questo turno non ha ancora tavoli.</string>
     <string name="round_control_completed_notice">Il torneo è completato. Puoi ancora riaprire tavoli, ma i suoi orologi non possono cambiare.</string>
+    <string name="round_control_finished_notice">Turni finiti con tavoli aperti: %1$s\nTavoli aperti: %2$d</string>
+    <string name="round_control_finished_button">Chiudi i tavoli dei turni finiti</string>
+    <string name="round_control_finished_title">Chiudere i tavoli aperti?</string>
+    <string name="round_control_finished_message">Tavoli che saranno segnati come completati: %1$d\n\n%2$s\n\nI loro giocatori non potranno più aggiungere mani.\nPuoi riaprire ognuno di essi nel suo turno.</string>
+    <string name="round_control_finished_line">• Turno %1$d, tavoli: %2$s</string>
+    <string name="round_control_finished_confirm">Chiudi i tavoli</string>
+    <string name="round_control_finished_badge">Tavoli aperti: %1$d</string>
     <string name="timer_manual_warning">Controllo manuale del turno attivo: l'orologio non decide cosa possono fare i giocatori.\nCambialo in Controllo del turno.</string>
     <string name="activity_action_round_control">Controllo del turno modificato</string>
     <string name="round_control_round_in_play">È il turno in gioco.</string>

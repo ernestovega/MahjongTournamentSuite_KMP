@@ -44,6 +44,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
@@ -587,6 +589,16 @@ class FunctionsBackendApi(
         request: RoundControlRequestDto,
     ): RoundClocksResponseDto = post(
         path = "/tournaments/$tournamentId/rounds/$roundId/control",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun completeTables(
+        idToken: String,
+        tournamentId: String,
+        request: CompleteTablesRequestDto,
+    ): CompleteTablesResponseDto = post(
+        path = "/tournaments/$tournamentId/complete-open-tables",
         requestBody = request,
         idToken = idToken,
     )

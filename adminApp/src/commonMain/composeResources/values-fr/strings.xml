@@ -792,6 +792,13 @@
     <string name="round_control_table_round">Comme le tour</string>
     <string name="round_control_no_tables">Ce tour n'a pas encore de tables.</string>
     <string name="round_control_completed_notice">Le tournoi est terminé. Vous pouvez encore rouvrir des tables, mais ses horloges ne peuvent pas changer.</string>
+    <string name="round_control_finished_notice">Tours terminés avec des tables ouvertes : %1$s\nTables ouvertes : %2$d</string>
+    <string name="round_control_finished_button">Fermer les tables des tours terminés</string>
+    <string name="round_control_finished_title">Fermer les tables ouvertes ?</string>
+    <string name="round_control_finished_message">Tables qui seront marquées comme terminées : %1$d\n\n%2$s\n\nLeurs joueurs ne pourront plus ajouter de mains.\nVous pouvez rouvrir chacune d\'elles dans son tour.</string>
+    <string name="round_control_finished_line">• Tour %1$d, tables : %2$s</string>
+    <string name="round_control_finished_confirm">Fermer les tables</string>
+    <string name="round_control_finished_badge">Tables ouvertes : %1$d</string>
     <string name="timer_manual_warning">Contrôle manuel du tour actif : l'horloge ne décide pas de ce que les joueurs peuvent faire.\nChangez-le dans Contrôle du tour.</string>
     <string name="activity_action_round_control">Contrôle du tour modifié</string>
     <string name="round_control_round_in_play">C'est le tour en jeu.</string>

@@ -51,9 +51,9 @@ import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../../services/tourn
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 import { normalizeVenue, venueRequiredProblems } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
-import { getRoundClocks, updateRoundClock, updateRoundControl } from "../../services/roundClockService";
+import { completeTables, getRoundClocks, updateRoundClock, updateRoundControl } from "../../services/roundClockService";
 import { parseRoundClockAction } from "../../services/roundClock";
-import { parseRoundControlChange } from "../../services/roundControl";
+import { parseRoundControlChange, parseTablesToComplete } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
@@ -934,6 +934,25 @@ export function tournamentsRouter(): Router {
           tournamentId: pathParam(req, "tournamentId"),
           roundId,
           change: parseRoundControlChange(req.body),
+          actor: actorFromToken(res.locals.auth),
+        });
+        res.status(200).json(answer);
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // The round control closes in one go the tables that stayed open in the finished rounds.
+  router.post(
+    "/:tournamentId/complete-open-tables",
+    requireAuth,
+    requireAdmin,
+    async (req, res, next) => {
+      try {
+        const answer = await completeTables({
+          tournamentId: pathParam(req, "tournamentId"),
+          tables: parseTablesToComplete(req.body),
           actor: actorFromToken(res.locals.auth),
         });
         res.status(200).json(answer);

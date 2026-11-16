@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.of
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -215,6 +216,17 @@ class RoundTimerController(
             }
             is AppResult.Failure -> result
         }
+    }
+
+    /**
+     * Marks as completed the open tables of the finished rounds, the button of the round control. Admins only.
+     * The tournament is read again, since closing its last open tables completes it. Answers how many closed.
+     */
+    suspend fun completeTables(tables: List<TableKey>): AppResult<Int> {
+        val tournamentId = tournamentId ?: return AppResult.Failure(AppError.Unexpected("A Timer without a tournament has no tables"))
+        val result = repository.completeTables(tournamentId, tables)
+        if (result is AppResult.Success) refresh()
+        return result
     }
 
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }

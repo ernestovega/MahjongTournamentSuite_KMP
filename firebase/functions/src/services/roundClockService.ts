@@ -16,7 +16,7 @@ import {
   type RoundClockAction,
   type RoundClockView,
 } from "./roundClock";
-import { roundControlViews, type RoundControlChange, type RoundControlView } from "./roundControl";
+import { roundControlViews, type RoundControlChange, type RoundControlView, type RoundTableRef } from "./roundControl";
 import { HANDS_PER_TABLE, saveTableStateInTransaction, type TableState } from "./tableManagerService";
 import { tableVersionKey } from "./dataVersionsService";
 
@@ -162,6 +162,44 @@ export async function updateRoundControl(params: {
   });
   const answer = await getRoundClocks(params.tournamentId, params.nowMs);
   return { ...answer, reopened, completed };
+}
+
+/**
+ * Marks as completed many tables of several rounds at once: the button "Close the open tables of the finished rounds"
+ * of the round control. The admin chose the tables in the app, after a confirmation. A table that is completed
+ * already is skipped. One activity entry tells which tables closed.
+ */
+export async function completeTables(params: {
+  tournamentId: string;
+  tables: RoundTableRef[];
+  actor: ChangeActor | null;
+}): Promise<{ completed: number }> {
+  const tournament = await db.doc(`tournaments/${params.tournamentId}`).get();
+  if (!tournament.exists) throw notFound("Tournament not found");
+  const numRounds = Number(tournament.get("numRounds") ?? 0);
+  const outside = params.tables.find((table) => table.roundId > numRounds);
+  if (outside != null) throw notFound(`Round ${outside.roundId} not found`);
+  const closed: RoundTableRef[] = [];
+  for (const table of params.tables) {
+    if (await setTableCompleted(params.tournamentId, table.roundId, table.tableId, true, params.actor)) closed.push(table);
+  }
+  if (closed.length > 0) {
+    const rounds = [...new Set(closed.map((table) => table.roundId))];
+    await recordActivity({
+      action: "round.control",
+      actor: params.actor,
+      tournamentId: params.tournamentId,
+      target: rounds.map((roundId) => `round ${roundId}`).join(", "),
+      details: {
+        completeOpenTables: rounds.map((roundId) => ({
+          roundId,
+          tables: closed.filter((table) => table.roundId === roundId).map((table) => table.tableId),
+        })),
+        completed: closed.length,
+      },
+    });
+  }
+  return { completed: closed.length };
 }
 
 /** Opens a completed table again, so its players can add the hands they miss. False when it was open already. */

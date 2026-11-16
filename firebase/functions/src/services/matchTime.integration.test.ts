@@ -8,7 +8,7 @@ import { readChanges, readTable, requireEmulator, seedTournament } from "../test
 import { startedClock } from "../testing/schedule";
 import { closeRoundTables } from "./matchTimeCloseService";
 import { assignSeats, parseHandInput, recordHand } from "./playerHandService";
-import { updateRoundControl } from "./roundClockService";
+import { completeTables, updateRoundControl } from "./roundClockService";
 
 type Mode = "STOP" | "FINISH_HAND";
 
@@ -223,6 +223,35 @@ describe("match time", () => {
       assert.equal((await readTable(running.tournamentId, 1, 1)).isCompleted, true);
       await assert.rejects(recordHand({ tournamentId: running.tournamentId, roundId: 1, tableId: 1, uid: running.uid, input: win(), expectedVersion: 1 }));
       assert.equal((await control(running.tournamentId, { completeTables: [1] })).completed, 0);
+    });
+
+    it("the round control closes at once the open tables of the finished rounds, and skips completed ones", async () => {
+      const tournamentId = await seedTournament({
+        tables: [
+          { roundId: 1, tableId: 1 },
+          { roundId: 1, tableId: 2, isCompleted: true },
+          { roundId: 2, tableId: 1 },
+          { roundId: 3, tableId: 1 },
+        ],
+      });
+      await db.doc(`tournaments/${tournamentId}`).update({ numRounds: 3 });
+      const actor = { uid: "admin", name: "Admin" };
+
+      const answer = await completeTables({
+        tournamentId,
+        tables: [{ roundId: 1, tableId: 1 }, { roundId: 1, tableId: 2 }, { roundId: 2, tableId: 1 }],
+        actor,
+      });
+
+      assert.equal(answer.completed, 2);
+      assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, true);
+      assert.equal((await readTable(tournamentId, 2, 1)).isCompleted, true);
+      assert.equal((await readTable(tournamentId, 3, 1)).isCompleted, false);
+      assert.equal((await completeTables({ tournamentId, tables: [{ roundId: 1, tableId: 1 }], actor })).completed, 0);
+      await assert.rejects(
+        completeTables({ tournamentId, tables: [{ roundId: 4, tableId: 1 }], actor }),
+        (error: unknown) => error instanceof HttpError && error.status === 404,
+      );
     });
 
     it("open seats ignore the planned start, closed seats refuse them", async () => {

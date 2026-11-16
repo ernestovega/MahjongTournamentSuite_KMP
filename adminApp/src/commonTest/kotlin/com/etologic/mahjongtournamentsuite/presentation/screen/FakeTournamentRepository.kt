@@ -232,6 +232,21 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 
+    val completedTableRequests = mutableListOf<List<TableKey>>()
+
+    override suspend fun completeTables(tournamentId: String, tables: List<TableKey>): AppResult<Int> {
+        clockError?.let { return AppResult.Failure(it) }
+        completedTableRequests += tables
+        var completed = 0
+        tables.forEach { key ->
+            this.tables[key]?.takeIf { (table, _) -> !table.isCompleted }?.let { (table, hands) ->
+                this.tables[key] = table.copy(isCompleted = true) to hands
+                completed += 1
+            }
+        }
+        return AppResult.Success(completed)
+    }
+
     var roundControls: List<RoundControl> = emptyList()
 
     /** Tables with every hand done: the server refuses to open them, as the real one does. */

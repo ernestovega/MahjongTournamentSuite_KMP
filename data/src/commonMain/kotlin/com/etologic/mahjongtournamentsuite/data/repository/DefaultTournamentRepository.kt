@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
@@ -16,6 +17,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHands
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableRefDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
@@ -924,6 +926,22 @@ class DefaultTournamentRepository(
             val allHandsDone = (throwable as? BackendHttpException)
                 ?.takeIf { it.status == HttpStatusCode.Conflict && it.responseBody.contains(TABLE_HAS_ALL_HANDS) }
             AppResult.Failure(if (allHandsDone != null) AppError.Conflict(TABLE_HAS_ALL_HANDS) else throwable.toAppError())
+        },
+    )
+
+    override suspend fun completeTables(tournamentId: String, tables: List<TableKey>): AppResult<Int> = runCatching {
+        withFreshIdToken { token ->
+            backendApi.completeTables(
+                token,
+                tournamentId,
+                CompleteTablesRequestDto(tables.map { TableRefDto(roundId = it.roundId, tableId = it.tableId) }),
+            ).completed
+        }.also { cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables", GLOBAL_TOURNAMENTS_CACHE_KEY) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Closing the open tables failed." }
+            AppResult.Failure(throwable.toAppError())
         },
     )
 

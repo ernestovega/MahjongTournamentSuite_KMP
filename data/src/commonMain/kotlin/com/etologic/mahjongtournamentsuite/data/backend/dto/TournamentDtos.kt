@@ -527,6 +527,22 @@ data class RoundControlRequestDto(
 )
 
 @Serializable
+data class TableRefDto(
+    val roundId: Int,
+    val tableId: Int,
+)
+
+@Serializable
+data class CompleteTablesRequestDto(
+    val tables: List<TableRefDto>,
+)
+
+@Serializable
+data class CompleteTablesResponseDto(
+    val completed: Int = 0,
+)
+
+@Serializable
 data class RoundClockActionRequestDto(
     val action: String,
     val agoSeconds: Long? = null,

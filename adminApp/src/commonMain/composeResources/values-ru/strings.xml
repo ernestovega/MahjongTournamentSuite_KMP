@@ -794,6 +794,13 @@
     <string name="round_control_table_round">Как в раунде</string>
     <string name="round_control_no_tables">В этом раунде пока нет столов.</string>
     <string name="round_control_completed_notice">Турнир завершён. Столы можно открыть снова, но его часы изменить нельзя.</string>
+    <string name="round_control_finished_notice">Завершённые раунды с открытыми столами: %1$s\nОткрытых столов: %2$d</string>
+    <string name="round_control_finished_button">Закрыть столы завершённых раундов</string>
+    <string name="round_control_finished_title">Закрыть открытые столы?</string>
+    <string name="round_control_finished_message">Столы, которые будут отмечены как завершённые: %1$d\n\n%2$s\n\nИх игроки больше не смогут добавлять раздачи.\nЛюбой из них можно снова открыть в его раунде.</string>
+    <string name="round_control_finished_line">• Раунд %1$d, столы: %2$s</string>
+    <string name="round_control_finished_confirm">Закрыть столы</string>
+    <string name="round_control_finished_badge">Открытых столов: %1$d</string>
     <string name="timer_manual_warning">Включено ручное управление раундом: часы не решают, что могут делать игроки.\nИзмените это в Управлении раундом.</string>
     <string name="activity_action_round_control">Управление раундом изменено</string>
     <string name="round_control_round_in_play">Это текущий раунд.</string>

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { manualHands, manualSeats, parseRoundControlChange, roundControlViews } from "./roundControl";
+import { manualHands, manualSeats, parseRoundControlChange, parseTablesToComplete, roundControlViews } from "./roundControl";
 
 const tournament = {
   numRounds: 3,
@@ -37,4 +37,15 @@ test("the request body names what changes", () => {
   assert.deepEqual(parseRoundControlChange({ completeTables: [3, 3] }), { completeTables: [3] });
   assert.throws(() => parseRoundControlChange({ completeTables: 3 }));
   assert.throws(() => parseRoundControlChange({ reopenTables: [3], completeTables: [3] }));
+});
+
+test("the tables to close name their round, count once and come sorted", () => {
+  assert.deepEqual(
+    parseTablesToComplete({ tables: [{ roundId: 2, tableId: 3 }, { roundId: 1, tableId: 5 }, { roundId: "2", tableId: 3 }, { roundId: 1, tableId: 2 }] }),
+    [{ roundId: 1, tableId: 2 }, { roundId: 1, tableId: 5 }, { roundId: 2, tableId: 3 }],
+  );
+  assert.throws(() => parseTablesToComplete({}), /tables must be/);
+  assert.throws(() => parseTablesToComplete({ tables: [] }), /tables must be/);
+  assert.throws(() => parseTablesToComplete({ tables: [{ roundId: 0, tableId: 1 }] }), /tables must be/);
+  assert.throws(() => parseTablesToComplete({ tables: [{ roundId: 1 }] }), /tables must be/);
 });
