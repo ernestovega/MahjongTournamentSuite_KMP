@@ -336,6 +336,20 @@ export async function setManagedUserDisabled(uid: string, disabled: boolean): Pr
   );
 }
 
+/**
+ * Deletes an account for good: the sign-in, the profile (email, alias), the own photo and the editor assignments.
+ * Clear the EMA id first with setAccountEmaId. The EMA player and the tournament results stay.
+ */
+export async function deleteManagedUser(uid: string): Promise<void> {
+  await auth.getUser(uid);
+  await syncUserTournamentAssignments(uid, []);
+  const profile = await db.doc(`users/${uid}`).get();
+  if (typeof profile.get("photoUrl") === "string") await storage.deleteFiles({ prefix: `userPhotos/${uid}.` });
+  await db.doc(`users/${uid}`).delete();
+  await auth.deleteUser(uid);
+  await bumpGlobalDataVersion("users");
+}
+
 export async function countEnabledAdmins(): Promise<number> {
   let count = 0;
   let pageToken: string | undefined;

@@ -158,6 +158,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_assignments
 import mahjongtournamentsuite.adminapp.generated.resources.tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
+import mahjongtournamentsuite.adminapp.generated.resources.delete
+import mahjongtournamentsuite.adminapp.generated.resources.user_deleted
+import mahjongtournamentsuite.adminapp.generated.resources.delete_account
+import mahjongtournamentsuite.adminapp.generated.resources.delete_account_action
+import mahjongtournamentsuite.adminapp.generated.resources.delete_user_message
 import mahjongtournamentsuite.adminapp.generated.resources.user_enabled
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
@@ -182,6 +187,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var editingUser by remember { mutableStateOf<ManagedUser?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
+    var pendingDeletedUser by remember { mutableStateOf<ManagedUser?>(null) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -313,12 +319,31 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         }
     }
 
+    fun deleteUser(user: ManagedUser) {
+        scope.launch {
+            saving = true
+            error = null
+            notice = null
+            when (val result = presenter.deleteUser(user.uid)) {
+                is AppResult.Success -> {
+                    users = users.filterNot { it.uid == user.uid }
+                    selectedUids = selectedUids - user.uid
+                    notice = UiText.of(Res.string.user_deleted, user.email)
+                    pendingDeletedUser = null
+                    editingUser = null
+                }
+                is AppResult.Failure -> error = result.error.toUiText()
+            }
+            saving = false
+        }
+    }
+
     LaunchedEffect(presenter) { refresh() }
     LaunchedEffect(loading, access) {
         if (!loading && access != null && restoreUid == null) addFocusRequester.requestFocus()
     }
-    LaunchedEffect(editingUser, showCreateDialog, pendingDisabledUser, restoreUid, users) {
-        if (editingUser == null && !showCreateDialog && pendingDisabledUser == null) {
+    LaunchedEffect(editingUser, showCreateDialog, pendingDisabledUser, pendingDeletedUser, restoreUid, users) {
+        if (editingUser == null && !showCreateDialog && pendingDisabledUser == null && pendingDeletedUser == null) {
             val uid = restoreUid
             if (uid == null) {
                 addFocusRequester.requestFocus()
@@ -459,6 +484,10 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                     pendingDisabledUser = user
                 }
             },
+            onDelete = { user ->
+                editingUser = null
+                pendingDeletedUser = user
+            },
         )
     }
 
@@ -493,6 +522,15 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             saving = saving,
             onDismiss = { pendingDisabledUser = null },
             onConfirm = { setDisabled(user, true) },
+        )
+    }
+
+    pendingDeletedUser?.let { user ->
+        DeleteUserDialog(
+            user = user,
+            saving = saving,
+            onDismiss = { pendingDeletedUser = null },
+            onConfirm = { deleteUser(user) },
         )
     }
 }
@@ -708,6 +746,8 @@ private fun ManageUserDialog(
     onSave: (String, String, GlobalUserRole, List<TournamentAssignment>, String?) -> Unit,
     onResetPassword: (String) -> Unit,
     onChangeDisabled: (ManagedUser) -> Unit,
+    /** Deletes the account for good, after a confirmation. Shown with [canDisable], which only admins have. */
+    onDelete: (ManagedUser) -> Unit,
 ) {
     var email by remember(original) { mutableStateOf(original?.email.orEmpty()) }
     var alias by remember(original) { mutableStateOf(original?.alias.orEmpty()) }
@@ -927,6 +967,15 @@ private fun ManageUserDialog(
                                 enabled = !saving,
                                 colors = destructive,
                             ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                        }
+                    }
+                    if (original != null && !isSelf && canDisable) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FocusedTextButton(
+                                onClick = { onDelete(original) },
+                                enabled = !saving,
+                                colors = destructive,
+                            ) { Text(stringResource(Res.string.delete_account_action)) }
                         }
                     }
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -1152,6 +1201,46 @@ private fun TournamentSelectionRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@Composable
+private fun DeleteUserDialog(
+    user: ManagedUser,
+    saving: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val deleteFocus = remember { FocusRequester() }
+    val cancelFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { cancelFocus.requestFocus() }
+    TrackedDialog("DeleteAccount") {
+        AlertDialog(
+            onDismissRequest = { if (!saving) onDismiss() },
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.delete_account)) },
+            text = { Text(stringResource(Res.string.delete_user_message, user.email)) },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onConfirm,
+                    enabled = !saving,
+                    focusRequester = deleteFocus,
+                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) { Text(stringResource(Res.string.delete)) }
+            },
+            dismissButton = {
+                FocusedTextButton(
+                    onClick = onDismiss,
+                    enabled = !saving,
+                    focusRequester = cancelFocus,
+                    buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
+                ) { Text(stringResource(Res.string.cancel)) }
+            },
+        )
     }
 }
 

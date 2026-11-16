@@ -117,6 +117,7 @@
     <string name="select_results">Seleziona i risultati</string>
     <string name="clear_all">Cancella tutto</string>
     <string name="disable_account">Disattivare l'account?</string>
+    <string name="delete_account">Eliminare l\'account?</string>
     <string name="disable">Disattiva</string>
     <string name="save_player_changes">Salva le modifiche al giocatore</string>
     <string name="new_player">Nuovo giocatore</string>
@@ -292,6 +293,7 @@
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Account creato. Firebase ha inviato un'email di reimpostazione della password a %1$s.</string>
     <string name="user_disabled">%1$s è disattivato.</string>
+    <string name="user_deleted">%1$s è eliminato.</string>
     <string name="user_enabled">%1$s è attivato.</string>
     <string name="accounts_count_summary">%1$d account su %2$d</string>
     <string name="password_reset_sent_to">Email di reimpostazione della password inviata a %1$s.</string>
@@ -307,10 +309,12 @@
     <string name="plus_more">+%1$d altri</string>
     <string name="enable_account">Attiva l'account</string>
     <string name="disable_account_action">Disattiva l'account</string>
+    <string name="delete_account_action">Elimina l\'account</string>
     <string name="selected_count">%1$d selezionati</string>
     <string name="no_tournaments_selected">Nessun torneo è selezionato.</string>
     <string name="no_tournaments_match">Nessun torneo corrisponde alla ricerca.</string>
     <string name="disable_user_message">%1$s non potrà accedere. Il suo profilo e la sua cronologia restano.</string>
+    <string name="delete_user_message">%1$s sarà eliminato per sempre: l\'accesso, l\'email, l\'alias e la foto. Il giocatore EMA e i risultati dei tornei restano. Non si può annullare.</string>
     <string name="role_editor">Editor</string>
     <string name="role_admin">Amministratore</string>
     <string name="role_player">Giocatore</string>
@@ -719,6 +723,7 @@
     <string name="activity_action_user_password_reset">Reset della password inviato</string>
     <string name="activity_action_user_update">Utente modificato</string>
     <string name="activity_action_user_disable">Utente disattivato</string>
+    <string name="activity_action_user_delete">Utente eliminato</string>
     <string name="activity_action_user_enable">Utente attivato</string>
     <string name="activity_action_user_photo">Foto dell\'utente modificata</string>
     <string name="activity_action_user_photo_remove">Foto dell\'utente rimossa</string>

@@ -172,6 +172,7 @@ object TelemetryAction {
     const val ACCOUNT_UPDATED = "account_updated"
     const val ACCOUNT_DISABLED = "account_disabled"
     const val ACCOUNT_ENABLED = "account_enabled"
+    const val ACCOUNT_DELETED = "account_deleted"
     const val ACCOUNT_PHOTO_UPDATED = "account_photo_updated"
     const val ACCOUNT_PHOTO_REMOVED = "account_photo_removed"
     const val REGISTRY_PLAYER_CREATED = "registry_player_created"
@@ -197,6 +198,7 @@ object TelemetryAction {
         ACCOUNT_UPDATED,
         ACCOUNT_DISABLED,
         ACCOUNT_ENABLED,
+        ACCOUNT_DELETED,
         ACCOUNT_PHOTO_UPDATED,
         ACCOUNT_PHOTO_REMOVED,
         REGISTRY_PLAYER_CREATED,

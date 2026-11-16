@@ -216,6 +216,8 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    suspend fun deleteUser(idToken: String, uid: String): OkResponseDto = delete(path = "/admin/users/$uid", idToken = idToken)
+
     suspend fun sendPasswordResets(
         idToken: String,
         request: PasswordResetsRequestDto,

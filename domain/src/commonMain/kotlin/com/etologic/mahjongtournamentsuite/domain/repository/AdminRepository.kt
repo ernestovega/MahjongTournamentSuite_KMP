@@ -33,6 +33,12 @@ interface AdminRepository {
 
     suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser>
 
+    /**
+     * Deletes an account for good: the sign-in, the email, the alias, the own photo and the editor assignments.
+     * The EMA player and the results stay. Only admins can do this.
+     */
+    suspend fun deleteUser(uid: String): AppResult<Unit>
+
     /** Sets the own photo of another account. Only admins can do this. */
     suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser>
 

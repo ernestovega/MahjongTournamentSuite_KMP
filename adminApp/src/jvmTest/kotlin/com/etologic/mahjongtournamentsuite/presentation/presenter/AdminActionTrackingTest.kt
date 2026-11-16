@@ -103,6 +103,7 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.ACCOUNT_UPDATED) { it.usersPresenter.updateUser(USER) },
         Case(TelemetryAction.ACCOUNT_DISABLED) { it.usersPresenter.setUserDisabled(USER.uid, true) },
         Case(TelemetryAction.ACCOUNT_ENABLED) { it.usersPresenter.setUserDisabled(USER.uid, false) },
+        Case(TelemetryAction.ACCOUNT_DELETED) { it.usersPresenter.deleteUser(USER.uid) },
         Case(TelemetryAction.ACCOUNT_PHOTO_UPDATED) { it.usersPresenter.updateUserPhoto(USER.uid, "image/png", ByteArray(1)) },
         Case(TelemetryAction.ACCOUNT_PHOTO_REMOVED) { it.usersPresenter.removeUserPhoto(USER.uid) },
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },

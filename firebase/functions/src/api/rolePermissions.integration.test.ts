@@ -56,6 +56,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["PUT", "/ema-player-registry/:emaId", "ADMIN"],
   ["PUT", "/ema-player-registry/:emaId/photo", "ADMIN"],
   ["PUT", "/admin/users/:uid/disabled", "ADMIN"],
+  ["DELETE", "/admin/users/:uid", "ADMIN"],
   ["POST", "/admin/users/password-resets", "ADMIN"],
   ["PUT", "/admin/users/:uid/photo", "ADMIN"],
   ["DELETE", "/admin/users/:uid/photo", "ADMIN"],
@@ -418,6 +419,42 @@ describe("account rules", () => {
     const disabled = await createAccount({ role: "EDITOR", disabled: true });
 
     assert.equal((await server.request("GET", "/admin/whoami", { token: disabled.token })).status, 401);
+  });
+
+  it("an editor cannot delete an account", async () => {
+    const victim = await createAccount({ role: "EDITOR" });
+
+    assert.equal((await server.request("DELETE", `/admin/users/${victim.uid}`, { token: editor.token })).status, 403);
+    assert.ok(await auth.getUser(victim.uid));
+  });
+
+  it("an admin cannot delete their own account", async () => {
+    const extraAdmin = await createAccount({ role: "ADMIN" });
+
+    assert.equal((await server.request("DELETE", `/admin/users/${extraAdmin.uid}`, { token: extraAdmin.token })).status, 400);
+  });
+
+  it("an admin deletes an editor: the sign-in, the profile and the assignments go", async () => {
+    const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const victim = await createAccount({ role: "EDITOR", memberOf: [tournamentId] });
+
+    const { status } = await server.request("DELETE", `/admin/users/${victim.uid}`, { token: admin.token });
+
+    assert.equal(status, 200);
+    await assert.rejects(auth.getUser(victim.uid));
+    assert.equal((await db.doc(`users/${victim.uid}`).get()).exists, false);
+    assert.equal((await db.doc(`tournaments/${tournamentId}/members/${victim.uid}`).get()).exists, false);
+  });
+
+  it("an admin deletes a player account: the EMA id is free again", async () => {
+    const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const victim = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });
+    const emaId = String((await db.doc(`users/${victim.uid}`).get()).get("emaId"));
+
+    assert.equal((await server.request("DELETE", `/admin/users/${victim.uid}`, { token: admin.token })).status, 200);
+
+    await assert.rejects(auth.getUser(victim.uid));
+    assert.equal((await db.doc(`emaIdIndex/${emaId}`).get()).exists, false, "the EMA id still points to the deleted account");
   });
 
   it("the last enabled admin cannot be demoted or disabled", async () => {

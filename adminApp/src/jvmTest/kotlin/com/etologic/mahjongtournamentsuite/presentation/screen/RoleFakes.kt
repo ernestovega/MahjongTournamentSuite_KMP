@@ -59,6 +59,11 @@ internal class FakeAdminRepository(
         return write { user }
     }
 
+    override suspend fun deleteUser(uid: String): AppResult<Unit> {
+        calls += "delete $uid"
+        return write { }
+    }
+
     override suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> {
         calls += "disable $uid $disabled"
         return write { users.first { it.uid == uid }.copy(disabled = disabled) }

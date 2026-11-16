@@ -117,6 +117,7 @@
     <string name="select_results">Select results</string>
     <string name="clear_all">Clear all</string>
     <string name="disable_account">Disable account?</string>
+    <string name="delete_account">Delete account?</string>
     <string name="disable">Disable</string>
     <string name="save_player_changes">Save player changes</string>
     <string name="new_player">New player</string>
@@ -292,6 +293,7 @@
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Account created. Firebase sent a password-reset email to %1$s.</string>
     <string name="user_disabled">%1$s is disabled.</string>
+    <string name="user_deleted">%1$s is deleted.</string>
     <string name="user_enabled">%1$s is enabled.</string>
     <string name="accounts_count_summary">%1$d of %2$d accounts</string>
     <string name="password_reset_sent_to">Password-reset email sent to %1$s.</string>
@@ -307,10 +309,12 @@
     <string name="plus_more">+%1$d more</string>
     <string name="enable_account">Enable account</string>
     <string name="disable_account_action">Disable account</string>
+    <string name="delete_account_action">Delete account</string>
     <string name="selected_count">%1$d selected</string>
     <string name="no_tournaments_selected">No tournaments are selected.</string>
     <string name="no_tournaments_match">No tournaments match the search.</string>
     <string name="disable_user_message">%1$s will not be able to sign in. Its profile and history will remain.</string>
+    <string name="delete_user_message">%1$s will be deleted for good: the sign-in, the email, the alias and the photo. The EMA player and the tournament results remain. This cannot be undone.</string>
     <string name="role_editor">Editor</string>
     <string name="role_admin">Admin</string>
     <string name="role_player">Player</string>
@@ -719,6 +723,7 @@
     <string name="activity_action_user_password_reset">Password reset sent</string>
     <string name="activity_action_user_update">User changed</string>
     <string name="activity_action_user_disable">User disabled</string>
+    <string name="activity_action_user_delete">User deleted</string>
     <string name="activity_action_user_enable">User enabled</string>
     <string name="activity_action_user_photo">User photo changed</string>
     <string name="activity_action_user_photo_remove">User photo removed</string>

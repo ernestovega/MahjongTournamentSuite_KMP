@@ -163,6 +163,11 @@ class DefaultAdminRepository(
             .also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
 
+    override suspend fun deleteUser(uid: String): AppResult<Unit> = managedUserRequest("Deleting user") { idToken ->
+        backendApi.deleteUser(idToken, uid)
+        cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
+    }
+
     override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> = managedUserRequest("Sending password resets") { idToken ->
         backendApi.sendPasswordResets(idToken, PasswordResetsRequestDto(uids)).results.map { dto ->
             PasswordResetResult(

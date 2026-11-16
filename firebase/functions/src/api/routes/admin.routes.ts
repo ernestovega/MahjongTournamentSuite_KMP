@@ -15,6 +15,7 @@ import {
   clearUserPhoto,
   countEnabledAdmins,
   createUserProfile,
+  deleteManagedUser,
   getManagedUser,
   getUserProfile,
   listAssignedTournamentIds,
@@ -314,6 +315,25 @@ export function adminRouter(): Router {
         action: disabled ? "user.disable" : "user.enable", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
       });
       res.status(200).json(await getManagedUser(current.uid));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Deletes an account for good, for example when the person asks for it (privacy policy). Only admins do this.
+  // The EMA player and the tournament results stay; the slots show "No account" again.
+  router.delete("/users/:uid", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const actor = res.locals.auth as Actor;
+      const current = await getManagedUser(pathParam(req, "uid"));
+      if (actor.uid === current.uid) throw badRequest("You cannot delete your own account");
+      await assertAdminRemainsEnabled(current.role, current.disabled, current.role, true);
+      await setAccountEmaId({ uid: current.uid, emaId: null });
+      await deleteManagedUser(current.uid);
+      await recordActivity({
+        action: "user.delete", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`, details: {},
+      });
+      res.status(200).json({ ok: true });
     } catch (error) {
       next(error);
     }

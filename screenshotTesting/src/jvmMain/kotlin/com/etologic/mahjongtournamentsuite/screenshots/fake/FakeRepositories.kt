@@ -191,6 +191,7 @@ open class ScreenshotAdminRepository(
 
     override suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = noWrite()
     override suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> = noWrite()
+    override suspend fun deleteUser(uid: String): AppResult<Unit> = noWrite()
     override suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> = noWrite()
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = noWrite()
     override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> = noWrite()

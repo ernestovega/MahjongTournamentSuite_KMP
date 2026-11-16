@@ -56,6 +56,9 @@ class UsersPresenter(
     suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> = adminRepository.setUserDisabled(uid, disabled)
         .trackAction(telemetry, if (disabled) TelemetryAction.ACCOUNT_DISABLED else TelemetryAction.ACCOUNT_ENABLED)
 
+    /** Deletes an account for good. Only admins call it. */
+    suspend fun deleteUser(uid: String): AppResult<Unit> = adminRepository.deleteUser(uid).trackAction(telemetry, TelemetryAction.ACCOUNT_DELETED)
+
     /** Sends the password reset email to many accounts. Only admins call it. */
     suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> {
         // The server takes up to 200 accounts in one request, so a longer list goes in several requests.

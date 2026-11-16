@@ -110,6 +110,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tourn
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_rename
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_delete
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_disable
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_enable
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_password_reset
@@ -806,6 +807,7 @@ private val ACTION_LABELS: Map<String, StringResource> = mapOf(
     "user.passwordReset" to Res.string.activity_action_user_password_reset,
     "user.update" to Res.string.activity_action_user_update,
     "user.disable" to Res.string.activity_action_user_disable,
+    "user.delete" to Res.string.activity_action_user_delete,
     "user.enable" to Res.string.activity_action_user_enable,
     "user.photo" to Res.string.activity_action_user_photo,
     "user.photo.remove" to Res.string.activity_action_user_photo_remove,
