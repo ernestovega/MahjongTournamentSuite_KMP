@@ -218,6 +218,7 @@ fun CombinationsScreen(navController: NavHostController) {
         title = stringResource(Res.string.combinations_title),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
+        actions = { ContactTopBarButton(navController) },
     ) {
         LazyColumnWithScrollbar(
             state = rememberLazyListState(),

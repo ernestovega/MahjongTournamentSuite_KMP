@@ -61,6 +61,7 @@ fun PenaltiesScreen(navController: NavHostController) {
         title = stringResource(Res.string.penalties_title),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
+        actions = { ContactTopBarButton(navController) },
     ) {
         ScreenColumn(
             maxWidth = 720.dp,

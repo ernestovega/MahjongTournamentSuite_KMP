@@ -437,31 +437,10 @@ fun TournamentsScreen(navController: NavHostController) {
     val hideOnScroll = rememberHideOnScrollState()
     val account = rememberAccountActions(navController)
     account.Dialogs()
-    val openPrivacyPolicy = rememberOpenPrivacyPolicy()
-    val openVersions = rememberOpenVersions()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),
-        // The landing page has the contact button. The privacy policy also links the form at /support.
-        actions = {
-            GreenBookButton()
-            AppTopBarButton(
-                text = stringResource(Res.string.menu_contact),
-                icon = Icons.Default.ContactSupport,
-                onClick = { navController.navigate(SupportRoute()) },
-            )
-            AppTopBarButton(
-                text = stringResource(Res.string.menu_privacy),
-                icon = Icons.Default.Policy,
-                onClick = openPrivacyPolicy,
-            )
-            // The latest and the published version of each product: https://mts.mahjongmadrid.com/version
-            AppTopBarButton(
-                text = stringResource(Res.string.menu_version),
-                icon = Icons.Default.NewReleases,
-                onClick = openVersions,
-            )
-        },
+        actions = { InfoTopBarButtons(navController) },
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
     ) {
@@ -966,6 +945,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         isLoading = (view == null && message == null) || ((shownTab == MainTab.STATISTICS || teamOpen) && statisticsLoading),
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },
+        // The same buttons as the list of tournaments. On a phone they go into the menu.
+        actions = { InfoTopBarButtons(navController) },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
@@ -2140,4 +2121,37 @@ internal fun formatClock(ms: Long): String {
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
     return "$hours:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+}
+
+/**
+ * The Green Book, Contact, Privacy and Version buttons of the top bar.
+ * The list of tournaments and the screen of a tournament show them.
+ */
+@Composable
+fun InfoTopBarButtons(navController: NavHostController) {
+    val openPrivacyPolicy = rememberOpenPrivacyPolicy()
+    val openVersions = rememberOpenVersions()
+    GreenBookButton()
+    ContactTopBarButton(navController)
+    AppTopBarButton(
+        text = stringResource(Res.string.menu_privacy),
+        icon = Icons.Default.Policy,
+        onClick = openPrivacyPolicy,
+    )
+    // The latest and the published version of each product: https://mts.mahjongmadrid.com/version
+    AppTopBarButton(
+        text = stringResource(Res.string.menu_version),
+        icon = Icons.Default.NewReleases,
+        onClick = openVersions,
+    )
+}
+
+/** Opens the contact form. The landing page has the contact button. The privacy policy also links the form at /support. */
+@Composable
+fun ContactTopBarButton(navController: NavHostController) {
+    AppTopBarButton(
+        text = stringResource(Res.string.menu_contact),
+        icon = Icons.Default.ContactSupport,
+        onClick = { navController.navigate(SupportRoute()) },
+    )
 }
