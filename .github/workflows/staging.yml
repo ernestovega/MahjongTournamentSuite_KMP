@@ -114,6 +114,14 @@ jobs:
           --non-interactive
           --force
 
+      # The deploy makes the API public only when it creates it. Staging needs it public too (the web apps and the bots
+      # call it without a Google identity), so make sure on every deploy.
+      - name: Let everyone call the API
+        run: >
+          gcloud run services add-iam-policy-binding api
+          --region=europe-southwest1 --project="$STAGING"
+          --member=allUsers --role=roles/run.invoker
+
       - name: Set the CORS rules of the photo bucket
         run: gcloud storage buckets update "gs://$STAGING.firebasestorage.app" --cors-file=storage.cors.staging.json
 
