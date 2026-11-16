@@ -1,12 +1,10 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,9 +36,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -52,8 +49,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
-import mahjongtournamentsuite.playerapp.generated.resources.bg_table_landscape
-import mahjongtournamentsuite.playerapp.generated.resources.bg_table_portrait
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_empty
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_hide_tiles
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
@@ -63,7 +58,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
@@ -164,6 +158,7 @@ internal val Combinations: List<Combination> = listOf(
 
 internal const val COMBINATIONS_SEARCH_TAG = "combinations-search"
 internal const val COMBINATION_ROW_TAG = "combination-row"
+internal const val POINTS_HEADER_TAG = "combination-points-header"
 
 /** The list of the combinations, with a search and their tiles, which fold open with a tap. */
 @Composable
@@ -181,51 +176,56 @@ fun CombinationsScreen(navController: NavHostController) {
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
-        TableBackground {
-            LazyColumnWithScrollbar(
-                state = rememberLazyListState(),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                item(key = "search") {
-                    // The button beside the search opens or closes all the combinations. A tap on one opens or closes only it.
-                    Row(
-                        Modifier.widthIn(max = 720.dp).fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        LazyColumnWithScrollbar(
+            state = rememberLazyListState(),
+            modifier = Modifier.fillMaxSize(),
+            // No top padding, so that a value header sticks right at the top.
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            item(key = "search") {
+                // The button beside the search opens or closes all the combinations. A tap on one opens or closes only it.
+                Row(
+                    Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CombinationSearch(query, onChange = { query = it }, Modifier.weight(1f))
+                    IconButton(
+                        onClick = {
+                            showAll = !showAll
+                            toggled = emptyList()
+                        },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .size(48.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
                     ) {
-                        CombinationSearch(query, onChange = { query = it }, Modifier.weight(1f))
-                        IconButton(
-                            onClick = {
-                                showAll = !showAll
-                                toggled = emptyList()
-                            },
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .size(48.dp)
-                                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                        ) {
-                            Icon(
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                imageVector = if (showAll) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
-                                contentDescription = stringResource(if (showAll) Res.string.combinations_hide_tiles else Res.string.combinations_show_tiles),
-                            )
-                        }
-                    }
-                }
-                if (shown.isEmpty()) {
-                    item(key = "empty") {
-                        Text(
-                            stringResource(Res.string.combinations_empty),
-                            Modifier.padding(24.dp),
-                            color = MaterialTheme.colorScheme.inverseOnSurface,
-                            textAlign = TextAlign.Center,
+                        Icon(
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            imageVector = if (showAll) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
+                            contentDescription = stringResource(if (showAll) Res.string.combinations_hide_tiles else Res.string.combinations_show_tiles),
                         )
                     }
                 }
-                items(shown, key = { it.value.id }) { (index, combination) ->
+            }
+            if (shown.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        stringResource(Res.string.combinations_empty),
+                        Modifier.padding(24.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+            // One group for each value, under a header that stays at the top while its combinations scroll.
+            shown.groupBy { it.value.points }.forEach { (points, group) ->
+                stickyHeader(key = "points-$points") {
+                    PointsHeader(points, Modifier.widthIn(max = 720.dp).fillMaxWidth())
+                }
+                items(group, key = { it.value.id }) { (index, combination) ->
                     CombinationRow(
                         position = index + 1,
                         combination = combination,
@@ -273,7 +273,7 @@ private fun CombinationSearch(query: String, onChange: (String) -> Unit, modifie
         },
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
         ),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
     )
@@ -291,11 +291,10 @@ private fun CombinationRow(
 ) {
     Card(
         modifier = modifier.testTag(COMBINATION_ROW_TAG),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PointsBadge(combination.points)
                 Text(
                     name,
                     Modifier.weight(1f),
@@ -321,31 +320,24 @@ private fun CombinationRow(
     }
 }
 
+/** The value of the combinations below it, on an opaque band so that the rows scroll under it. */
 @Composable
-private fun PointsBadge(points: Int) {
-    val label = stringResource(Res.string.combinations_points, points)
+private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
     Box(
-        Modifier
-            .size(36.dp)
-            .background(MaterialTheme.colorScheme.primary, CircleShape),
-        contentAlignment = Alignment.Center,
+        modifier
+            .testTag(POINTS_HEADER_TAG)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(vertical = 4.dp),
     ) {
         Text(
-            points.toString(),
+            stringResource(Res.string.combinations_points, points),
+            Modifier
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .semantics { heading() },
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.semantics { contentDescription = label },
         )
-    }
-}
-
-/** The wooden table behind the combinations. One small picture, upright on a phone and wide on a big screen. */
-@Composable
-internal fun TableBackground(content: @Composable () -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val picture = if (maxWidth > maxHeight) Res.drawable.bg_table_landscape else Res.drawable.bg_table_portrait
-        Image(painterResource(picture), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        content()
     }
 }
