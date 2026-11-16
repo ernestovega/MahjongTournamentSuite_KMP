@@ -19,6 +19,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
@@ -180,6 +183,27 @@ class TournamentScreenUiTest {
             loadScreen()
 
             onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
+        }
+    }
+
+    @Test
+    fun anAdminOpensRoundControlFromTheTopBar() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.ADMIN)) {
+            loadScreen()
+
+            onNode(hasText("Round control") or hasContentDescription("Round control")).performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("What the players can do").fetchSemanticsNodes().isNotEmpty() }
+            onNodeWithTag("round_chip_1").assertIsSelected()
+            onNodeWithTag("hands_auto").assertIsSelected()
+        }
+    }
+
+    @Test
+    fun anEditorHasNoRoundControl() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.EDITOR)) {
+            loadScreen()
+
+            onNode(hasText("Round control") or hasContentDescription("Round control")).assertDoesNotExist()
         }
     }
 

@@ -4,12 +4,15 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -193,5 +196,119 @@ class RoundControlDialogUiTest {
         onNodeWithTag("round_chip_2").assertIsSelected()
         onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
         onNodeWithTag("seats_auto").assertIsSelected()
+    }
+
+    @Test
+    fun seatsOpenAndClosedChangeTheSeatsOfTheRound() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithTag("seats_open").performClick()
+        settle()
+        onNodeWithTag("seats_open").assertIsSelected()
+        onNodeWithText("This round is in manual mode", substring = true).assertExists()
+
+        onNodeWithTag("seats_closed").performClick()
+        settle()
+        onNodeWithTag("seats_closed").assertIsSelected()
+
+        assertEquals(
+            listOf(1 to RoundControlChange(seats = ControlMode.OPEN), 1 to RoundControlChange(seats = ControlMode.CLOSED)),
+            server.controlChanges.toList(),
+        )
+        assertEquals(ControlMode.CLOSED, server.roundControls.single().seats)
+    }
+
+    @Test
+    fun theRoundStartedEarlierStartsTheClockInThePast() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithText("The round started earlier").performClick()
+        settle()
+        onNodeWithText("When did the round start?").assertExists()
+        onNode(hasSetTextAction()).performTextReplacement("10")
+        onNodeWithText("Set").performClick()
+        settle()
+
+        assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Start(agoSeconds = 600)), server.clockActions.toList())
+        onNodeWithText("1:50:00").assertExists()
+    }
+
+    @Test
+    fun pauseAndResumeTheClockOfTheRound() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithText("Pause timer").performClick()
+        settle()
+        onNodeWithText("Resume").performClick()
+        settle()
+
+        assertEquals(
+            listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Pause(), 1 to RoundClockAction.Resume()),
+            server.clockActions.toList(),
+        )
+        onNodeWithText("Pause timer").assertExists()
+    }
+
+    @Test
+    fun setTimeChangesTheRemainingTime() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithText("Set time").performClick()
+        settle()
+        onNode(hasSetTextAction()).performTextReplacement("45")
+        onNodeWithText("Set").performClick()
+        settle()
+
+        assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.SetRemaining(2_700L)), server.clockActions.toList())
+        onNodeWithText("0:45:00").assertExists()
+    }
+
+    @Test
+    fun resetAsksFirstAndThenClearsTheClock() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        show(server)
+
+        onNodeWithText("Reset timer").performClick()
+        settle()
+        onNodeWithText("Reset the round clock?").assertExists()
+        assertTrue(server.clockActions.isEmpty())
+        onNodeWithText("Reset").performClick()
+        settle()
+
+        assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Reset(force = true)), server.clockActions.toList())
+        onNodeWithText("Not started").assertExists()
+        onNodeWithText("2:00:00").assertExists()
+    }
+
+    @Test
+    fun aChangeThatTheServerRejectsShowsAnErrorAndKeepsTheMode() = runComposeUiTest {
+        val server = server()
+        show(server)
+        server.clockError = AppError.Network
+
+        onNodeWithTag("hands_closed").performClick()
+        settle()
+
+        onNodeWithText("Network request failed.").assertExists()
+        onNodeWithTag("hands_auto").assertIsSelected()
+        assertTrue(server.controlChanges.isEmpty())
+    }
+
+    @Test
+    fun aTableThatTheServerFailsToCompleteStaysInPlay() = runComposeUiTest {
+        val server = server()
+        show(server)
+        server.clockError = AppError.Network
+
+        onNodeWithTag("table_1_completed").performScrollTo().performClick()
+        settle()
+
+        onNodeWithText("Network request failed.").assertExists()
+        assertFalse(server.tables.getValue(TableKey(1, 1)).first.isCompleted)
+        onNodeWithTag("table_1_in_play").assertIsSelected()
     }
 }

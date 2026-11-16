@@ -64,40 +64,40 @@
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/HandEntryPanelUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="41" column="31" source="standard:parameter-list-wrapping" />
-        <error line="41" column="31" source="standard:function-signature" />
-        <error line="41" column="45" source="standard:parameter-list-wrapping" />
-        <error line="41" column="45" source="standard:function-signature" />
-        <error line="41" column="59" source="standard:parameter-list-wrapping" />
-        <error line="41" column="59" source="standard:function-signature" />
-        <error line="41" column="90" source="standard:parameter-list-wrapping" />
-        <error line="41" column="90" source="standard:function-signature" />
-        <error line="45" column="31" source="standard:parameter-list-wrapping" />
-        <error line="45" column="31" source="standard:function-signature" />
-        <error line="45" column="45" source="standard:parameter-list-wrapping" />
-        <error line="45" column="45" source="standard:function-signature" />
-        <error line="45" column="59" source="standard:parameter-list-wrapping" />
-        <error line="45" column="59" source="standard:function-signature" />
-        <error line="61" column="31" source="standard:parameter-list-wrapping" />
-        <error line="61" column="31" source="standard:function-signature" />
-        <error line="61" column="45" source="standard:parameter-list-wrapping" />
-        <error line="61" column="45" source="standard:function-signature" />
-        <error line="61" column="59" source="standard:parameter-list-wrapping" />
-        <error line="61" column="59" source="standard:function-signature" />
-        <error line="61" column="83" source="standard:parameter-list-wrapping" />
-        <error line="61" column="83" source="standard:function-signature" />
-        <error line="67" column="31" source="standard:parameter-list-wrapping" />
-        <error line="67" column="31" source="standard:function-signature" />
-        <error line="67" column="45" source="standard:parameter-list-wrapping" />
-        <error line="67" column="45" source="standard:function-signature" />
-        <error line="67" column="59" source="standard:parameter-list-wrapping" />
-        <error line="67" column="59" source="standard:function-signature" />
-        <error line="67" column="77" source="standard:parameter-list-wrapping" />
-        <error line="67" column="77" source="standard:function-signature" />
-        <error line="85" column="81" source="standard:function-signature" />
-        <error line="143" column="45" source="standard:argument-list-wrapping" />
-        <error line="143" column="58" source="standard:argument-list-wrapping" />
-        <error line="144" column="38" source="standard:argument-list-wrapping" />
+        <error line="43" column="31" source="standard:parameter-list-wrapping" />
+        <error line="43" column="31" source="standard:function-signature" />
+        <error line="43" column="45" source="standard:parameter-list-wrapping" />
+        <error line="43" column="45" source="standard:function-signature" />
+        <error line="43" column="59" source="standard:parameter-list-wrapping" />
+        <error line="43" column="59" source="standard:function-signature" />
+        <error line="43" column="90" source="standard:parameter-list-wrapping" />
+        <error line="43" column="90" source="standard:function-signature" />
+        <error line="47" column="31" source="standard:parameter-list-wrapping" />
+        <error line="47" column="31" source="standard:function-signature" />
+        <error line="47" column="45" source="standard:parameter-list-wrapping" />
+        <error line="47" column="45" source="standard:function-signature" />
+        <error line="47" column="59" source="standard:parameter-list-wrapping" />
+        <error line="47" column="59" source="standard:function-signature" />
+        <error line="63" column="31" source="standard:parameter-list-wrapping" />
+        <error line="63" column="31" source="standard:function-signature" />
+        <error line="63" column="45" source="standard:parameter-list-wrapping" />
+        <error line="63" column="45" source="standard:function-signature" />
+        <error line="63" column="59" source="standard:parameter-list-wrapping" />
+        <error line="63" column="59" source="standard:function-signature" />
+        <error line="63" column="83" source="standard:parameter-list-wrapping" />
+        <error line="63" column="83" source="standard:function-signature" />
+        <error line="69" column="31" source="standard:parameter-list-wrapping" />
+        <error line="69" column="31" source="standard:function-signature" />
+        <error line="69" column="45" source="standard:parameter-list-wrapping" />
+        <error line="69" column="45" source="standard:function-signature" />
+        <error line="69" column="59" source="standard:parameter-list-wrapping" />
+        <error line="69" column="59" source="standard:function-signature" />
+        <error line="69" column="77" source="standard:parameter-list-wrapping" />
+        <error line="69" column="77" source="standard:function-signature" />
+        <error line="87" column="81" source="standard:function-signature" />
+        <error line="147" column="45" source="standard:argument-list-wrapping" />
+        <error line="147" column="58" source="standard:argument-list-wrapping" />
+        <error line="148" column="38" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/PluralTextsTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
