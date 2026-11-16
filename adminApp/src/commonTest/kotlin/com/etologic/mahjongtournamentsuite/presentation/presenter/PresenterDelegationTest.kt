@@ -235,7 +235,7 @@ private class RecordingPlayerRepository : PlayerRepository {
     override suspend fun createPlayer(player: Player) = unusedResult<Player>()
     override suspend fun updatePlayer(previousEmaId: String, player: Player) = unusedResult<Unit>()
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray) = unusedResult<Player>()
-    override suspend fun deletePlayers(emaIds: List<String>) = unusedResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>>()
+    override suspend fun deletePlayerAccounts(emaIds: List<String>) = unusedResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>>()
 }
 
 private class RecordingAuthRepository(

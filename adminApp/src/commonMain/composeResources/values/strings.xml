@@ -730,7 +730,6 @@
     <string name="activity_action_registry_create">EMA player created</string>
     <string name="activity_action_registry_update">EMA player changed</string>
     <string name="activity_action_registry_photo">EMA player photo changed</string>
-    <string name="activity_action_registry_delete">EMA player deleted</string>
     <string name="activity_action_table_save">Table saved</string>
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
@@ -807,11 +806,12 @@
     <string name="delete_failure_self">You cannot delete your own account.</string>
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
-    <string name="players_delete_confirm_title">Delete EMA players?</string>
-    <string name="players_delete_confirm_text">%1$d EMA players will be deleted for good, with their photo.\n\nA player who plays in a tournament or who has an account stays.\n\nThis cannot be undone.</string>
-    <string name="players_delete_summary">Players deleted: %1$d\nNot deleted: %2$d</string>
-    <string name="player_delete_failure_not_found">The player does not exist.</string>
-    <string name="player_delete_failure_in_tournament">The player is in a tournament.</string>
-    <string name="player_delete_failure_has_account">An account uses this EMA number.</string>
-    <string name="player_delete_failure_unknown">The player was not deleted. Try again.</string>
+    <string name="player_accounts_delete_confirm_title">Delete the accounts?</string>
+    <string name="player_accounts_delete_confirm_text">The accounts of %1$d EMA players will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</string>
+    <string name="player_accounts_delete_summary">Accounts deleted: %1$d\nNot deleted: %2$d</string>
+    <string name="delete_accounts_count">Delete accounts (%1$d)</string>
+    <string name="player_account_delete_failure_no_account">The player has no account.</string>
+    <string name="player_account_delete_failure_self">It is your own account.</string>
+    <string name="player_account_delete_failure_last_admin">It is the last enabled admin.</string>
+    <string name="player_account_delete_failure_unknown">The account was not deleted. Try again.</string>
 </resources>

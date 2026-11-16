@@ -27,9 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteFailure
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
@@ -39,16 +39,16 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.clear
-import mahjongtournamentsuite.adminapp.generated.resources.delete_selected_count
+import mahjongtournamentsuite.adminapp.generated.resources.delete_accounts_count
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
-import mahjongtournamentsuite.adminapp.generated.resources.player_delete_failure_has_account
-import mahjongtournamentsuite.adminapp.generated.resources.player_delete_failure_in_tournament
-import mahjongtournamentsuite.adminapp.generated.resources.player_delete_failure_not_found
-import mahjongtournamentsuite.adminapp.generated.resources.player_delete_failure_unknown
-import mahjongtournamentsuite.adminapp.generated.resources.players_delete_confirm_text
-import mahjongtournamentsuite.adminapp.generated.resources.players_delete_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.players_delete_summary
+import mahjongtournamentsuite.adminapp.generated.resources.player_account_delete_failure_last_admin
+import mahjongtournamentsuite.adminapp.generated.resources.player_account_delete_failure_no_account
+import mahjongtournamentsuite.adminapp.generated.resources.player_account_delete_failure_self
+import mahjongtournamentsuite.adminapp.generated.resources.player_account_delete_failure_unknown
+import mahjongtournamentsuite.adminapp.generated.resources.player_accounts_delete_confirm_text
+import mahjongtournamentsuite.adminapp.generated.resources.player_accounts_delete_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.player_accounts_delete_summary
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_line
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
@@ -57,7 +57,7 @@ import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
-/** The bar above the player base list. Admins select players here and delete them. */
+/** The bar above the player base list. Admins select players here and delete their accounts. The EMA players stay. */
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 internal fun PlayerSelectionBar(
@@ -85,14 +85,14 @@ internal fun PlayerSelectionBar(
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
         ) {
             Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.delete_selected_count, selectedCount), Modifier.padding(start = 8.dp))
+            Text(stringResource(Res.string.delete_accounts_count, selectedCount), Modifier.padding(start = 8.dp))
         }
     }
 }
 
-/** Asks before the app deletes many EMA players. Cancel has the focus. */
+/** Asks before the app deletes the accounts of many EMA players. Cancel has the focus. */
 @Composable
-internal fun PlayerDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+internal fun PlayerAccountDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val deleteFocus = remember { FocusRequester() }
     val cancelFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { cancelFocus.requestFocus() }
@@ -101,8 +101,8 @@ internal fun PlayerDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: ()
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
             icon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text(stringResource(Res.string.players_delete_confirm_title)) },
-            text = { Text(stringResource(Res.string.players_delete_confirm_text, count)) },
+            title = { Text(stringResource(Res.string.player_accounts_delete_confirm_title)) },
+            text = { Text(stringResource(Res.string.player_accounts_delete_confirm_text, count)) },
             confirmButton = {
                 FocusedButton(
                     onClick = onConfirm,
@@ -113,7 +113,7 @@ internal fun PlayerDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: ()
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError,
                     ),
-                ) { Text(stringResource(Res.string.delete_selected_count, count)) }
+                ) { Text(stringResource(Res.string.delete_accounts_count, count)) }
             },
             dismissButton = {
                 FocusedTextButton(
@@ -127,18 +127,18 @@ internal fun PlayerDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: ()
     }
 }
 
-private fun PlayerDeleteFailure?.textRes(): StringResource = when (this) {
-    PlayerDeleteFailure.NOT_FOUND -> Res.string.player_delete_failure_not_found
-    PlayerDeleteFailure.IN_TOURNAMENT -> Res.string.player_delete_failure_in_tournament
-    PlayerDeleteFailure.HAS_ACCOUNT -> Res.string.player_delete_failure_has_account
-    PlayerDeleteFailure.UNKNOWN, null -> Res.string.player_delete_failure_unknown
+private fun PlayerAccountDeleteFailure?.textRes(): StringResource = when (this) {
+    PlayerAccountDeleteFailure.NO_ACCOUNT -> Res.string.player_account_delete_failure_no_account
+    PlayerAccountDeleteFailure.SELF -> Res.string.player_account_delete_failure_self
+    PlayerAccountDeleteFailure.LAST_ADMIN -> Res.string.player_account_delete_failure_last_admin
+    PlayerAccountDeleteFailure.UNKNOWN, null -> Res.string.player_account_delete_failure_unknown
 }
 
-/** The result of a bulk delete: how many players are gone, and one line for each player that stays. */
+/** The result of a bulk delete: how many accounts are gone, and one line for each player whose account stays. */
 @Composable
-internal fun PlayerDeletesResultDialog(results: List<PlayerDeleteResult>, players: List<Player>, onDismiss: () -> Unit) {
-    val deleted = results.count { it.outcome == PlayerDeleteOutcome.DELETED }
-    val failed = results.filter { it.outcome == PlayerDeleteOutcome.FAILED }
+internal fun PlayerAccountDeletesResultDialog(results: List<PlayerAccountDeleteResult>, players: List<Player>, onDismiss: () -> Unit) {
+    val deleted = results.count { it.outcome == PlayerAccountDeleteOutcome.DELETED }
+    val failed = results.filter { it.outcome == PlayerAccountDeleteOutcome.FAILED }
     val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     TrackedDialog("DeletePlayersDone") {
         AlertDialog(
@@ -148,7 +148,7 @@ internal fun PlayerDeletesResultDialog(results: List<PlayerDeleteResult>, player
             title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.players_delete_summary, deleted, failed.size))
+                    Text(stringResource(Res.string.player_accounts_delete_summary, deleted, failed.size))
                     LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
                         items(failed, key = { it.emaId }) { result ->
                             val name = players.firstOrNull { it.emaId == result.emaId }?.let { "${it.displayName} (${it.emaId})" } ?: result.emaId

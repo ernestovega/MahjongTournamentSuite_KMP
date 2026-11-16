@@ -32,6 +32,7 @@ import {
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
 import { pathParam } from "../pathParam";
+import { deleteAccountChecked } from "../../services/accountDeletes";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
 import { FEED_ORIGINS, FEED_SOURCES, listActivityFeed, type FeedOrigin, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
@@ -358,26 +359,9 @@ export function adminRouter(): Router {
       const results: UserDeleteResult[] = [];
       for (const uid of uids) {
         const fail = (reason: UserDeleteFailure): UserDeleteResult => ({ uid, outcome: "FAILED", reason });
-        if (uid === actor.uid) {
-          results.push(fail("SELF"));
-          continue;
-        }
         try {
-          const current = await getManagedUser(uid).catch((error: { status?: number; code?: string }) => {
-            if (error.status === 404 || error.code === "auth/user-not-found") return null;
-            throw error;
-          });
-          if (current == null) {
-            results.push(fail("NOT_FOUND"));
-            continue;
-          }
-          if (current.role === "ADMIN" && !current.disabled && await countEnabledAdmins() <= 1) {
-            results.push(fail("LAST_ADMIN"));
-            continue;
-          }
-          await setAccountEmaId({ uid: current.uid, emaId: null });
-          await deleteManagedUser(current.uid);
-          results.push({ uid, outcome: "DELETED" });
+          const failure = await deleteAccountChecked(actor.uid, uid);
+          results.push(failure == null ? { uid, outcome: "DELETED" } : fail(failure));
         } catch (error) {
           console.error("Account delete failed", { uid, error });
           results.push(fail("UNKNOWN"));

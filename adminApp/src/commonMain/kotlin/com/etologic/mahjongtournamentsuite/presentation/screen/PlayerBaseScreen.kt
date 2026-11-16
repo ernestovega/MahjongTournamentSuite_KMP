@@ -63,8 +63,8 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -163,11 +163,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val admin by store.adminStatus.collectAsState()
     val canEdit = admin?.canEditPlayers == true
     val canEditEmaNumber = admin?.isAdmin == true
-    // Admins select players in the list and delete them in one go.
+    // Admins select players in the list and delete their accounts in one go. The EMA players are never deleted.
     val canDelete = admin?.isAdmin == true
     var checkedEmaIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var confirmDeleteOpen by remember { mutableStateOf(false) }
-    var deleteResults by remember { mutableStateOf<List<PlayerDeleteResult>?>(null) }
+    var deleteResults by remember { mutableStateOf<List<PlayerAccountDeleteResult>?>(null) }
     var deleteResultPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var selectedEmaId by remember { mutableStateOf<String?>(null) }
     var emaId by remember { mutableStateOf("") }
@@ -226,7 +226,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             matchesSearch && matchesCountry
         }
     }
-    // Only the players that the list shows are deleted. A checked player that a filter hides stays out.
+    // Only the players that the list shows count. A checked player that a filter hides stays out.
     val chosenEmaIds = filteredPlayers.map { it.emaId }.filter { it in checkedEmaIds }
     val filteredCountryCount = remember(filteredPlayers) {
         filteredPlayers
@@ -643,7 +643,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
 
     if (confirmDeleteOpen) {
         val emaIds = chosenEmaIds
-        PlayerDeletesConfirmDialog(
+        PlayerAccountDeletesConfirmDialog(
             count = emaIds.size,
             busy = saving,
             onDismiss = { confirmDeleteOpen = false },
@@ -651,14 +651,12 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 scope.launch {
                     saving = true
                     error = null
-                    when (val result = presenter.deletePlayers(emaIds)) {
+                    when (val result = presenter.deletePlayerAccounts(emaIds)) {
                         is AppResult.Success -> {
-                            val deleted = result.value.filter { it.outcome == PlayerDeleteOutcome.DELETED }.map { it.emaId }.toSet()
-                            // The dialog names the players that stay, so it needs the list from before the delete.
+                            val deleted = result.value.filter { it.outcome == PlayerAccountDeleteOutcome.DELETED }.map { it.emaId }.toSet()
+                            // Only the accounts go. The EMA players stay in the list.
                             deleteResultPlayers = players
                             deleteResults = result.value
-                            if (selectedEmaId in deleted) select(null)
-                            store.upsertBasePlayers(players.filterNot { it.emaId in deleted })
                             checkedEmaIds = checkedEmaIds - deleted
                         }
                         is AppResult.Failure -> error = result.error.toUiText()
@@ -669,7 +667,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             },
         )
     }
-    deleteResults?.let { PlayerDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
+    deleteResults?.let { PlayerAccountDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
 
     AppScaffold(
         title = stringResource(Res.string.players),

@@ -730,7 +730,6 @@
     <string name="activity_action_registry_create">Joueur EMA créé</string>
     <string name="activity_action_registry_update">Joueur EMA modifié</string>
     <string name="activity_action_registry_photo">Photo du joueur EMA modifiée</string>
-    <string name="activity_action_registry_delete">Joueur EMA supprimé</string>
     <string name="activity_action_table_save">Table enregistrée</string>
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
@@ -807,11 +806,12 @@
     <string name="delete_failure_self">Vous ne pouvez pas supprimer votre propre compte.</string>
     <string name="delete_failure_last_admin">C’est le dernier admin actif.</string>
     <string name="delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
-    <string name="players_delete_confirm_title">Supprimer les joueurs EMA ?</string>
-    <string name="players_delete_confirm_text">%1$d joueurs EMA seront supprimés définitivement, avec leur photo.\n\nUn joueur inscrit à un tournoi ou qui a un compte reste.\n\nAction irréversible.</string>
-    <string name="players_delete_summary">Joueurs supprimés : %1$d\nNon supprimés : %2$d</string>
-    <string name="player_delete_failure_not_found">Le joueur n’existe pas.</string>
-    <string name="player_delete_failure_in_tournament">Le joueur est dans un tournoi.</string>
-    <string name="player_delete_failure_has_account">Un compte utilise ce numéro EMA.</string>
-    <string name="player_delete_failure_unknown">Le joueur n’a pas été supprimé. Réessayez.</string>
+    <string name="player_accounts_delete_confirm_title">Supprimer les comptes ?</string>
+    <string name="player_accounts_delete_confirm_text">Les comptes de %1$d joueurs EMA seront supprimés définitivement : la connexion, l’e-mail, le pseudo et la photo.\n\nLes joueurs EMA et les résultats des tournois restent.\n\nAction irréversible.</string>
+    <string name="player_accounts_delete_summary">Comptes supprimés : %1$d\nNon supprimés : %2$d</string>
+    <string name="delete_accounts_count">Supprimer les comptes (%1$d)</string>
+    <string name="player_account_delete_failure_no_account">Le joueur n’a pas de compte.</string>
+    <string name="player_account_delete_failure_self">C’est votre propre compte.</string>
+    <string name="player_account_delete_failure_last_admin">C’est le dernier admin actif.</string>
+    <string name="player_account_delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
 </resources>

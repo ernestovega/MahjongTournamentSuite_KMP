@@ -730,7 +730,6 @@
     <string name="activity_action_registry_create">Giocatore EMA creato</string>
     <string name="activity_action_registry_update">Giocatore EMA modificato</string>
     <string name="activity_action_registry_photo">Foto del giocatore EMA modificata</string>
-    <string name="activity_action_registry_delete">Giocatore EMA eliminato</string>
     <string name="activity_action_table_save">Tavolo salvato</string>
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
@@ -807,11 +806,12 @@
     <string name="delete_failure_self">Non puoi eliminare il tuo account.</string>
     <string name="delete_failure_last_admin">È l\'ultimo admin attivo.</string>
     <string name="delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>
-    <string name="players_delete_confirm_title">Eliminare i giocatori EMA?</string>
-    <string name="players_delete_confirm_text">%1$d giocatori EMA saranno eliminati per sempre, con la loro foto.\n\nUn giocatore che gioca in un torneo o che ha un account resta.\n\nNon si può annullare.</string>
-    <string name="players_delete_summary">Giocatori eliminati: %1$d\nNon eliminati: %2$d</string>
-    <string name="player_delete_failure_not_found">Il giocatore non esiste.</string>
-    <string name="player_delete_failure_in_tournament">Il giocatore è in un torneo.</string>
-    <string name="player_delete_failure_has_account">Un account usa questo numero EMA.</string>
-    <string name="player_delete_failure_unknown">Il giocatore non è stato eliminato. Riprova.</string>
+    <string name="player_accounts_delete_confirm_title">Eliminare gli account?</string>
+    <string name="player_accounts_delete_confirm_text">Gli account di %1$d giocatori EMA saranno eliminati per sempre: l\'accesso, l\'email, l\'alias e la foto.\n\nI giocatori EMA e i risultati dei tornei restano.\n\nNon si può annullare.</string>
+    <string name="player_accounts_delete_summary">Account eliminati: %1$d\nNon eliminati: %2$d</string>
+    <string name="delete_accounts_count">Elimina account (%1$d)</string>
+    <string name="player_account_delete_failure_no_account">Il giocatore non ha un account.</string>
+    <string name="player_account_delete_failure_self">È il tuo account.</string>
+    <string name="player_account_delete_failure_last_admin">È l\'ultimo admin attivo.</string>
+    <string name="player_account_delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>
 </resources>

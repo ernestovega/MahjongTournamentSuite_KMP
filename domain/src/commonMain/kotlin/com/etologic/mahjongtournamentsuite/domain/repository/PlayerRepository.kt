@@ -2,7 +2,7 @@ package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 
 /** Access to the shared player base. EMA number is the player primary key. */
 interface PlayerRepository {
@@ -18,6 +18,6 @@ interface PlayerRepository {
         bytes: ByteArray,
     ): AppResult<Player>
 
-    /** Deletes many players. Every player has its own result. The server takes up to 200 in one request. */
-    suspend fun deletePlayers(emaIds: List<String>): AppResult<List<PlayerDeleteResult>>
+    /** Deletes the account of each EMA player, never the EMA player. Every player has its own result. Up to 50 per request. */
+    suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<PlayerAccountDeleteResult>>
 }

@@ -32,9 +32,9 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDi
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountDeletesConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerDeletesConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
@@ -212,19 +212,19 @@ class AdminDialogsScreenshotTest {
     }
 
     @Test
-    fun playerDeletesConfirm() = dialog("player-deletes-confirm") { PlayerDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
+    fun playerAccountDeletesConfirm() = dialog("player-account-deletes-confirm") { PlayerAccountDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
 
     @Test
-    fun playerDeletesResult() = dialog("player-deletes-result") {
-        PlayerDeletesResultDialog(
+    fun playerAccountDeletesResult() = dialog("player-account-deletes-result") {
+        PlayerAccountDeletesResultDialog(
             results = ScreenshotData.players.take(2).mapIndexed { index, player ->
                 if (index == 0) {
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.DELETED)
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.DELETED)
                 } else {
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(
                         player.emaId,
-                        com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.FAILED,
-                        com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteFailure.IN_TOURNAMENT,
+                        com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.FAILED,
+                        com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteFailure.NO_ACCOUNT,
                     )
                 }
             },
