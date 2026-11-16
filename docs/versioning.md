@@ -25,6 +25,10 @@ The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to 
 
 ## See the published versions
 
+The quickest way: open **https://mts.mahjongmadrid.com/version**. The backend answers it with a table of the three products: the latest version (on `main` when the backend was deployed) next to the published one, with ✓ when they match. The web comes from `/version.json`, the backend is the one that answers, and the Android app is read from Google Play (cached for 5 minutes). Google Play needs the service account of the functions in Play Console (Users and permissions, "View app information"); until then the page says which account to invite. The code is `firebase/functions/src/services/versionsPage.ts`.
+
+The same table from a terminal or GitHub Actions:
+
 ```bash
 python3 scripts/versions.py status
 ```

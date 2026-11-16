@@ -1,6 +1,7 @@
 import express from "express";
 
 import { backendVersion } from "../backendVersion";
+import { versionsPage } from "../services/versionsPage";
 import { gzipJson } from "./middleware/gzipJson";
 import { appCheck } from "./middleware/appCheck";
 import { errorHandler } from "./middleware/errorHandler";
@@ -82,7 +83,16 @@ export function buildApp(): express.Express {
     res.status(200).json({ ok: true, version: backendVersion() });
   });
 
-  // Every route except /health needs a valid App Check token when the mode is "enforce".
+  // The versions of the three products, as a page for people. See docs/versioning.md.
+  app.get("/version", async (_req, res, next) => {
+    try {
+      res.status(200).type("html").send(await versionsPage());
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Every route except /health and /version needs a valid App Check token when the mode is "enforce".
   app.use(appCheck());
 
   // A brake on writes. The key is the address plus the token, so players who share one venue network do not
