@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
+import com.etologic.mahjongtournamentsuite.player.CreditsDialog
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
@@ -53,6 +54,15 @@ class PlayerScreensScreenshotTest {
         ready = { waitForText(if (Locale.getDefault().language == "es") "Ir a mi mesa" else "Go to my table") },
     ) {
         MyTableReminderDialog("Madrid Open 2026", roundId = 3, tableId = 7, moment = RoundMoment.StartedAgo(12 * 60_000L), onOpen = {}, onDismiss = {})
+    }
+
+    @Test
+    fun combinationsCredits() = playerScreenshots(
+        "dialogs/combinations-credits",
+        variants = dialogVariants,
+        ready = { waitForText("martinpersson.org") },
+    ) {
+        CreditsDialog(onDismiss = {})
     }
 
     @Test

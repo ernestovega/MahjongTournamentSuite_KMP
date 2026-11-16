@@ -10,6 +10,7 @@
     <string name="combinations_tiles_credit">Tiles by Martin Persson:</string>
     <string name="combinations_examples">Examples</string>
     <string name="combinations_close">Close</string>
+    <string name="combinations_credits">Credits</string>
     <string name="combinations_fold">Fold</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d point</item>

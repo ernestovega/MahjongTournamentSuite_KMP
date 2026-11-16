@@ -10,6 +10,7 @@
     <string name="combinations_tiles_credit">Кости – Мартин Перссон:</string>
     <string name="combinations_examples">Примеры</string>
     <string name="combinations_close">Закрыть</string>
+    <string name="combinations_credits">Благодарности</string>
     <string name="combinations_fold">Свернуть</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d очко</item>

@@ -26,10 +26,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,18 +58,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_credits
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_empty
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_examples
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold
@@ -242,106 +245,107 @@ fun CombinationsScreen(navController: NavHostController) {
     val found = Combinations.filter { c -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
     val shown = found.filter { values.isEmpty() || it.points in values }
     val rowModifier = Modifier.widthIn(max = ListMaxWidth).fillMaxWidth()
+    // The state is out of the button: on a phone the button is in the menu, which closes when it is pressed.
+    var showCredits by rememberSaveable { mutableStateOf(false) }
 
     AppScaffold(
         title = stringResource(Res.string.combinations_title),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = { ContactTopBarButton(navController) },
+        actions = {
+            AppTopBarButton(
+                text = stringResource(Res.string.combinations_credits),
+                icon = Icons.Default.Info,
+                onClick = { showCredits = true },
+            )
+            ContactTopBarButton(navController)
+        },
     ) {
-        // The credit of the tiles stays in the bottom right corner, over the list.
-        Box(Modifier.fillMaxSize()) {
-            LazyColumnWithScrollbar(
-                state = rememberLazyListState(),
-                modifier = Modifier.fillMaxSize(),
-                // No top padding, so that a value header sticks right at the top.
-                // The bottom padding leaves room for the credit, so it never covers the last combination.
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 56.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                item(key = "search") {
-                    CombinationTools(
-                        query = query,
-                        onQuery = { query = it },
-                        showAll = showAll,
-                        onShowAll = {
-                            showAll = !showAll
-                            toggled = emptyList()
-                        },
-                        modifier = rowModifier.padding(top = 12.dp),
+        LazyColumnWithScrollbar(
+            state = rememberLazyListState(),
+            modifier = Modifier.fillMaxSize(),
+            // No top padding, so that a value header sticks right at the top.
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            item(key = "search") {
+                CombinationTools(
+                    query = query,
+                    onQuery = { query = it },
+                    showAll = showAll,
+                    onShowAll = {
+                        showAll = !showAll
+                        toggled = emptyList()
+                    },
+                    modifier = rowModifier.padding(top = 12.dp),
+                )
+            }
+            item(key = "values") {
+                PointsChips(
+                    counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
+                    selected = values,
+                    onToggle = { value -> values = if (value in values) values - value else values + value },
+                    modifier = rowModifier,
+                )
+            }
+            if (shown.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        stringResource(Res.string.combinations_empty),
+                        Modifier.padding(24.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
                     )
                 }
-                item(key = "values") {
-                    PointsChips(
-                        counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
-                        selected = values,
-                        onToggle = { value -> values = if (value in values) values - value else values + value },
+            }
+            // One group for each value, under a header that stays at the top while its combinations scroll.
+            shown.groupBy { it.points }.forEach { (points, group) ->
+                stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
+                items(group, key = { it.id }) { combination ->
+                    CombinationRow(
+                        combination = combination,
+                        name = names.getValue(combination.id),
+                        description = descriptions.getValue(combination.id),
+                        expanded = showAll != (combination.id in toggled),
+                        onFold = {
+                            toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
+                        },
+                        onOpen = { opened = combination.id },
                         modifier = rowModifier,
                     )
                 }
-                if (shown.isEmpty()) {
-                    item(key = "empty") {
-                        Text(
-                            stringResource(Res.string.combinations_empty),
-                            Modifier.padding(24.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-                // One group for each value, under a header that stays at the top while its combinations scroll.
-                shown.groupBy { it.points }.forEach { (points, group) ->
-                    stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
-                    items(group, key = { it.id }) { combination ->
-                        CombinationRow(
-                            combination = combination,
-                            name = names.getValue(combination.id),
-                            description = descriptions.getValue(combination.id),
-                            expanded = showAll != (combination.id in toggled),
-                            onFold = {
-                                toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
-                            },
-                            onOpen = { opened = combination.id },
-                            modifier = rowModifier,
-                        )
-                    }
-                }
             }
-            TilesCredit(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 12.dp))
         }
     }
     Combinations.firstOrNull { it.id == opened }?.let { combination ->
         CombinationDialog(combination, onDismiss = { opened = null })
     }
+    if (showCredits) CreditsDialog(onDismiss = { showCredits = false })
 }
 
-/** The link that the licence of the tiles asks for. It is always visible, small but readable, and opens the page of the author. */
+/** The credits of the screen. The licence of the tiles asks for the link to the page of their author. */
 @Composable
-private fun TilesCredit(modifier: Modifier = Modifier) {
+internal fun CreditsDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    Surface(
-        onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
-        modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 2.dp,
-    ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(Res.string.combinations_tiles_credit),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                " martinpersson.org",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                textDecoration = TextDecoration.Underline,
-            )
-        }
+    TrackedDialog("CombinationsCredits") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.combinations_credits), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+            text = {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
+                    TileGroupsRow(CreditsExampleTiles, Modifier.padding(bottom = 16.dp), maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
+                    Text(stringResource(Res.string.combinations_tiles_credit), Modifier.padding(bottom = 8.dp), textAlign = TextAlign.Center)
+                    TextButton(onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) }) { Text("martinpersson.org") }
+                }
+            },
+            confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) } },
+        )
     }
 }
+
+private val CreditsExampleTiles = TileNotation.parse("1m 5p 9s E C 1f 1g")
 
 private const val MARTIN_PERSSON_URL = "http://www.martinpersson.org"
 

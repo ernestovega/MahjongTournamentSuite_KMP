@@ -10,6 +10,7 @@
     <string name="combinations_tiles_credit">Pedine di Martin Persson:</string>
     <string name="combinations_examples">Esempi</string>
     <string name="combinations_close">Chiudi</string>
+    <string name="combinations_credits">Crediti</string>
     <string name="combinations_fold">Comprimi</string>
     <plurals name="combinations_points">
         <item quantity="one">%1$d punto</item>
