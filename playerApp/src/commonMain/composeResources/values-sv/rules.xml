@@ -7,7 +7,7 @@
     <string name="combinations_unfold_all">Fäll ut alla</string>
     <string name="combinations_fold_all">Fäll ihop alla</string>
     <string name="combinations_unfold">Fäll ut</string>
-    <string name="combinations_tiles_credit">Brickorna i listan av Martin Persson:</string>
+    <string name="combinations_tiles_credit">Brickor av Martin Persson:</string>
     <string name="combinations_close">Stäng</string>
     <string name="combinations_fold">Fäll ihop</string>
     <plurals name="combinations_points">

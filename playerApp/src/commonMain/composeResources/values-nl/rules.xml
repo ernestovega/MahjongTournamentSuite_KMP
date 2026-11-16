@@ -7,7 +7,7 @@
     <string name="combinations_unfold_all">Alles uitklappen</string>
     <string name="combinations_fold_all">Alles inklappen</string>
     <string name="combinations_unfold">Uitklappen</string>
-    <string name="combinations_tiles_credit">Stenen in de lijst van Martin Persson:</string>
+    <string name="combinations_tiles_credit">Stenen van Martin Persson:</string>
     <string name="combinations_close">Sluiten</string>
     <string name="combinations_fold">Inklappen</string>
     <plurals name="combinations_points">

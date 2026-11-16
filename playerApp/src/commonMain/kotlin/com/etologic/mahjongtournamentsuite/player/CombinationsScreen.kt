@@ -190,10 +190,21 @@ internal const val COMBINATIONS_SEARCH_TAG = "combinations-search"
 internal const val COMBINATION_ROW_TAG = "combination-row"
 internal const val POINTS_HEADER_TAG = "combination-points-header"
 internal const val POINTS_CHIP_TAG = "combination-points-chip"
+internal const val COMBINATION_MINI_TILES_TAG = "combination_mini_tiles"
+
 internal const val COMBINATION_DIALOG_TAG = "combination-dialog"
 
 /** The widest the list grows on a big screen, so the tiles of a long hand can be larger. */
-private val ListMaxWidth = 960.dp
+/** Width of a tile in the small tiles of a folded row on a wide screen. */
+private val MiniTileWidth = 24.dp
+
+/** The dialog of a combination: large enough for big tiles, not as wide as the screen. */
+private val DialogMaxWidth = 720.dp
+
+/** The largest a tile grows in the dialog of a combination. */
+private val DialogTileWidth = 64.dp
+
+private val ListMaxWidth = 720.dp
 
 /**
  * The list of the combinations, grouped by value, with a search and a chip for each value.
@@ -210,8 +221,8 @@ fun CombinationsScreen(navController: NavHostController) {
     var opened by rememberSaveable { mutableStateOf<String?>(null) }
     val names = Combinations.associate { it.id to stringResource(it.name) }
     val descriptions = Combinations.associate { it.id to stringResource(it.description) }
-    val found = Combinations.withIndex().filter { (_, c) -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
-    val shown = found.filter { values.isEmpty() || it.value.points in values }
+    val found = Combinations.filter { c -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
+    val shown = found.filter { values.isEmpty() || it.points in values }
     val rowModifier = Modifier.widthIn(max = ListMaxWidth).fillMaxWidth()
 
     AppScaffold(
@@ -242,7 +253,7 @@ fun CombinationsScreen(navController: NavHostController) {
             }
             item(key = "values") {
                 PointsChips(
-                    counts = CombinationValues.associateWith { value -> found.count { it.value.points == value } },
+                    counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
                     selected = values,
                     onToggle = { value -> values = if (value in values) values - value else values + value },
                     modifier = rowModifier,
@@ -259,11 +270,10 @@ fun CombinationsScreen(navController: NavHostController) {
                 }
             }
             // One group for each value, under a header that stays at the top while its combinations scroll.
-            shown.groupBy { it.value.points }.forEach { (points, group) ->
+            shown.groupBy { it.points }.forEach { (points, group) ->
                 stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
-                items(group, key = { it.value.id }) { (index, combination) ->
+                items(group, key = { it.id }) { combination ->
                     CombinationRow(
-                        position = index + 1,
                         combination = combination,
                         name = names.getValue(combination.id),
                         description = descriptions.getValue(combination.id),
@@ -279,8 +289,8 @@ fun CombinationsScreen(navController: NavHostController) {
             item(key = "credit") { TilesCredit(rowModifier) }
         }
     }
-    Combinations.withIndex().firstOrNull { it.value.id == opened }?.let { (index, combination) ->
-        CombinationDialog(index + 1, combination, onDismiss = { opened = null })
+    Combinations.firstOrNull { it.id == opened }?.let { combination ->
+        CombinationDialog(combination, onDismiss = { opened = null })
     }
 }
 
@@ -437,7 +447,6 @@ private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CombinationRow(
-    position: Int,
     combination: Combination,
     name: String,
     description: String,
@@ -451,34 +460,41 @@ private fun CombinationRow(
         modifier = modifier.testTag(COMBINATION_ROW_TAG),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.clickable(onClick = onOpen).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    name,
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "#$position",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                IconButton(onClick = onFold) {
-                    Icon(
-                        Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(if (expanded) Res.string.combinations_fold else Res.string.combinations_unfold),
-                        modifier = Modifier.rotate(turn),
+        BoxWithConstraints {
+            // On a wide screen a folded row has room to spare: it shows the tiles in small next to the name.
+            val miniTiles = !expanded && maxWidth >= 600.dp && combination.groups.isNotEmpty()
+            Column(Modifier.clickable(onClick = onOpen).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        name,
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                     )
+                    if (miniTiles) {
+                        TileGroupsRow(
+                            combination.groups,
+                            Modifier.testTag(COMBINATION_MINI_TILES_TAG),
+                            maxTileWidth = MiniTileWidth,
+                            alignment = Alignment.CenterEnd,
+                        )
+                    }
+                    IconButton(onClick = onFold) {
+                        Icon(
+                            Icons.Default.KeyboardArrowDown,
+                            contentDescription = stringResource(if (expanded) Res.string.combinations_fold else Res.string.combinations_unfold),
+                            modifier = Modifier.rotate(turn),
+                        )
+                    }
                 }
-            }
-            AnimatedVisibility(visible = expanded) {
-                Column(
-                    Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (combination.groups.isNotEmpty()) TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
+                AnimatedVisibility(visible = expanded) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (combination.groups.isNotEmpty()) TileGroupsRow(combination.groups, Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -486,35 +502,26 @@ private fun CombinationRow(
 }
 
 /**
- * A combination in large: its name, value and tiles centered, and the explanation of the rules.
- * The first paragraph of the explanation, the definition, is bold. The others, such as what it does not combine with, are not.
+ * A combination in large: its name, value, tiles and the explanation of the rules, all centered, one paragraph per idea.
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
  */
 @Composable
-private fun CombinationDialog(position: Int, combination: Combination, onDismiss: () -> Unit) {
+private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
     val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(
-                // Wide on a big screen, so that the tiles of a long hand show large.
-                modifier = Modifier.padding(16.dp).widthIn(max = 1200.dp).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
+                modifier = Modifier.padding(16.dp).widthIn(max = DialogMaxWidth).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(
+                    Text(
+                        stringResource(combination.name),
                         Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    ) {
-                        Text(
-                            stringResource(combination.name),
-                            Modifier.weight(1f, fill = false),
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                        Text("#$position", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                    )
                     Column(
                         Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -528,23 +535,19 @@ private fun CombinationDialog(position: Int, combination: Combination, onDismiss
                             textAlign = TextAlign.Center,
                         )
                         if (combination.groups.isNotEmpty()) {
-                            // A big screen shows the detailed tiles large. A phone keeps the clear ones, which read better small.
-                            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                                val large = maxWidth >= 600.dp
-                                TileGroupsRow(
-                                    combination.groups,
-                                    Modifier.fillMaxWidth(),
-                                    maxTileWidth = if (large) LargeTileWidth else 64.dp,
-                                    alignment = Alignment.TopCenter,
-                                    set = if (large) TileSet.Luxury else TileSet.Simple,
-                                )
-                            }
+                            TileGroupsRow(
+                                combination.groups,
+                                Modifier.fillMaxWidth(),
+                                maxTileWidth = DialogTileWidth,
+                                alignment = Alignment.TopCenter,
+                            )
                         }
-                        paragraphs.forEachIndexed { index, paragraph ->
+                        paragraphs.forEach { paragraph ->
                             Text(
                                 paragraph,
+                                Modifier.fillMaxWidth(),
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
