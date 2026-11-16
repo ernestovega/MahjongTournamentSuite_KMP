@@ -17,4 +17,8 @@ if find "$out" -name '*.wasm' | grep -Ev '/[0-9a-f]{16,}\.wasm$'; then
   echo "A .wasm file above has no content hash in its name. Fix the build or the cache rule in firebase.json." >&2
   exit 1
 fi
-echo "Web hosting files in $out"
+# The published web version, for python3 scripts/versions.py status. See docs/versioning.md.
+web_version=$(sed -n 's/^web-versionName *= *"\([^"]*\)".*/\1/p' gradle/libs.versions.toml)
+[ -n "$web_version" ] || { echo "web-versionName is missing in gradle/libs.versions.toml" >&2; exit 1; }
+printf '{"web":"%s"}\n' "$web_version" > "$out/version.json"
+echo "Web hosting files in $out (web $web_version)"

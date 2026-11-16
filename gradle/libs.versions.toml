@@ -2,12 +2,14 @@
 kover = "0.9.11"
 ktlintGradle = "13.1.0"
 agp = "9.4.1"
-# Versions of the two products. Each one goes up on its own, see docs/versioning.md.
-# Bump the patch with: python3 scripts/versions.py bump <web|admin>
+# Versions of the three products. Each one goes up on its own, see docs/versioning.md.
+# Bump the patch with: python3 scripts/versions.py bump <web|admin|backend>
+# See the published ones with: python3 scripts/versions.py status
 # MAJOR and MINOR only change by hand, when the owner decides.
 web-versionName = "1.0.200"
-admin-versionName = "1.0.140"
-admin-versionCode = "140"
+admin-versionName = "1.0.139"
+admin-versionCode = "139"
+backend-versionName = "1.0.0"
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "36"

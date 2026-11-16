@@ -132,7 +132,7 @@ Treat those as tooling noise unless a specific failure appears.
 
 ## Versions
 
-The web and the admin app (Android and desktop) have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. Details: `docs/versioning.md`.
+The web, the admin app (Android and desktop) and the backend (`firebase/`) have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin|backend>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. `python3 scripts/versions.py status` shows the published version of each product next to the one on main. Details: `docs/versioning.md`.
 
 ## Editing Guidance
 
