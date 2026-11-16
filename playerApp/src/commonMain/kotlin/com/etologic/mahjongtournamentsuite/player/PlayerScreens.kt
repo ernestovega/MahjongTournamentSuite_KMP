@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ContactSupport
 import androidx.compose.material.icons.filled.Policy
@@ -170,7 +172,9 @@ import mahjongtournamentsuite.playerapp.generated.resources.action_open
 import mahjongtournamentsuite.playerapp.generated.resources.age_hours
 import mahjongtournamentsuite.playerapp.generated.resources.age_minutes
 import mahjongtournamentsuite.playerapp.generated.resources.age_seconds
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
 import mahjongtournamentsuite.playerapp.generated.resources.contact_send_email
+import mahjongtournamentsuite.playerapp.generated.resources.penalties_title
 import mahjongtournamentsuite.playerapp.generated.resources.data_stale
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
@@ -1755,6 +1759,19 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
+        // The rules at hand during the game. On a phone they go into the menu.
+        actions = {
+            AppTopBarButton(
+                text = stringResource(Res.string.combinations_title),
+                icon = Icons.AutoMirrored.Filled.MenuBook,
+                onClick = { navController.navigate(CombinationsRoute) },
+            )
+            AppTopBarButton(
+                text = stringResource(Res.string.penalties_title),
+                icon = Icons.Default.Gavel,
+                onClick = { navController.navigate(PenaltiesRoute) },
+            )
+        },
     ) {
         ScreenColumn(
             maxWidth = 720.dp,

@@ -91,6 +91,14 @@ data class TournamentPlayerRoute(val tournamentId: String, val slotId: Int, val 
 @Serializable
 data class TableRoute(val tournamentId: String, val roundId: Int, val tableId: Int)
 
+/** The list of the combinations of the rules, opened from a table. */
+@Serializable
+data object CombinationsRoute
+
+/** The usual penalties of the rules, opened from a table. */
+@Serializable
+data object PenaltiesRoute
+
 /**
  * The statistics screen. [scope] is the name of a [StatisticsScope]. The other values give the context of the scope.
  * A missing [slotId] means the signed-in player.
@@ -231,6 +239,8 @@ private fun PlayerNavHost(
             TableScreen(navController, route.tournamentId, route.roundId, route.tableId)
         }
         screen<StatisticsRoute> { entry -> StatisticsScreen(navController, entry.toRoute<StatisticsRoute>()) }
+        screen<CombinationsRoute> { CombinationsScreen(navController) }
+        screen<PenaltiesRoute> { PenaltiesScreen(navController) }
     }
 }
 

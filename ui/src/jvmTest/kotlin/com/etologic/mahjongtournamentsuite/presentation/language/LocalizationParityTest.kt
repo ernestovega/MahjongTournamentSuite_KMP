@@ -22,16 +22,29 @@ class LocalizationParityTest {
         Regex("""<string name="([^"]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL).findAll(file.readText())
             .associate { it.groupValues[1] to Regex("""%\d\$[sd]""").findAll(it.groupValues[2]).map { m -> m.value }.sorted().toList() }
 
+    /**
+     * The text files of the English base. strings.xml must be in every language. Another file, such as the reference
+     * texts of the player app, may be missing in a language that has no translation yet: the English texts then show.
+     */
+    private fun textFiles(base: File) = File(base, "values").listFiles { f -> f.extension == "xml" }.orEmpty().sortedBy { it.name }
+
+    private fun languages(base: File) = base.listFiles { f -> f.isDirectory && f.name.startsWith("values-") }.orEmpty()
+
     @Test
     fun everyLanguageHasTheKeysOfTheEnglishBase() {
         modules.forEach { module ->
             val base = resources(module)
-            val english = keysOf(File(base, "values/strings.xml"))
-            assertTrue(english.isNotEmpty(), "$module has no English texts")
-            base.listFiles { f -> f.isDirectory && f.name.startsWith("values-") }.orEmpty().forEach { folder ->
-                val keys = keysOf(File(folder, "strings.xml"))
-                assertEquals(emptySet(), english - keys, "$module/${folder.name} misses texts")
-                assertEquals(emptySet(), keys - english, "$module/${folder.name} has extra texts")
+            assertTrue(keysOf(File(base, "values/strings.xml")).isNotEmpty(), "$module has no English texts")
+            textFiles(base).forEach { englishFile ->
+                val english = keysOf(englishFile)
+                languages(base).forEach { folder ->
+                    val file = File(folder, englishFile.name)
+                    if (file.exists() || englishFile.name == "strings.xml") {
+                        val keys = keysOf(file)
+                        assertEquals(emptySet(), english - keys, "$module/${folder.name}/${file.name} misses texts")
+                        assertEquals(emptySet(), keys - english, "$module/${folder.name}/${file.name} has extra texts")
+                    }
+                }
             }
         }
     }
@@ -40,10 +53,12 @@ class LocalizationParityTest {
     fun everyLanguageUsesTheSamePlaceholdersAsTheEnglishBase() {
         modules.forEach { module ->
             val base = resources(module)
-            val english = placeholdersOf(File(base, "values/strings.xml"))
-            base.listFiles { f -> f.isDirectory && f.name.startsWith("values-") }.orEmpty().forEach { folder ->
-                placeholdersOf(File(folder, "strings.xml")).forEach { (key, found) ->
-                    english[key]?.let { assertEquals(it, found, "$module/${folder.name}: placeholders of $key") }
+            textFiles(base).forEach { englishFile ->
+                val english = placeholdersOf(englishFile)
+                languages(base).map { File(it, englishFile.name) }.filter { it.exists() }.forEach { file ->
+                    placeholdersOf(file).forEach { (key, found) ->
+                        english[key]?.let { assertEquals(it, found, "$module/${file.parentFile.name}: placeholders of $key") }
+                    }
                 }
             }
         }
@@ -53,7 +68,7 @@ class LocalizationParityTest {
     fun noTextHasADoublePercentSign() {
         modules.forEach { module ->
             val base = resources(module)
-            base.walkTopDown().filter { it.name == "strings.xml" }.forEach {
+            base.walkTopDown().filter { it.extension == "xml" && it.parentFile.name.startsWith("values") }.forEach {
                 assertTrue("%%" !in it.readText(), "${it.path} has a double percent sign")
             }
         }
