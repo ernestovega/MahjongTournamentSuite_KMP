@@ -69,6 +69,10 @@ class AppLanguageTest {
         assertEquals(AppLanguage.Spanish, AppLanguage.fromTag("es"))
         assertEquals(AppLanguage.French, AppLanguage.fromTag("fr"))
         assertEquals(AppLanguage.Italian, AppLanguage.fromTag("it"))
+        assertEquals(AppLanguage.German, AppLanguage.fromTag("de"))
+        assertEquals(AppLanguage.Swedish, AppLanguage.fromTag("sv"))
+        assertEquals(AppLanguage.Dutch, AppLanguage.fromTag("nl"))
+        assertEquals(AppLanguage.Russian, AppLanguage.fromTag("ru"))
         assertEquals(AppLanguage.English, AppLanguage.fromTag("en"))
     }
 
@@ -85,6 +89,10 @@ class AppLanguageTest {
         assertEquals(AppLanguage.Spanish, AppLanguage.fromSystemTags(listOf("es_MX")))
         assertEquals(AppLanguage.French, AppLanguage.fromSystemTags(listOf("xx-YY", "fr-CA", "it")))
         assertEquals(AppLanguage.Italian, AppLanguage.fromSystemTags(listOf("IT")))
+        assertEquals(AppLanguage.German, AppLanguage.fromSystemTags(listOf("de-CH")))
+        assertEquals(AppLanguage.Swedish, AppLanguage.fromSystemTags(listOf("sv-SE")))
+        assertEquals(AppLanguage.Dutch, AppLanguage.fromSystemTags(listOf("nl-BE")))
+        assertEquals(AppLanguage.Russian, AppLanguage.fromSystemTags(listOf("ru-RU")))
         assertEquals(AppLanguage.English, AppLanguage.fromSystemTags(listOf("ja-JP")))
         assertEquals(AppLanguage.English, AppLanguage.fromSystemTags(emptyList()))
     }
@@ -202,6 +210,10 @@ class AppLanguageTest {
         awaitText("Español")
         awaitText("Français")
         awaitText("Italiano")
+        awaitText("Deutsch")
+        awaitText("Svenska")
+        awaitText("Nederlands")
+        awaitText("Русский")
     }
 
     @Test

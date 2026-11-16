@@ -25,6 +25,10 @@ enum class AppLanguage(val tag: String, val endonym: String, val flagCode: Strin
     Spanish("es", "Español", "ES"),
     French("fr", "Français", "FR"),
     Italian("it", "Italiano", "IT"),
+    German("de", "Deutsch", "DE"),
+    Swedish("sv", "Svenska", "SE"),
+    Dutch("nl", "Nederlands", "NL"),
+    Russian("ru", "Русский", "RU"),
     ;
 
     companion object {

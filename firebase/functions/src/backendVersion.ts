@@ -1,16 +1,29 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-let cached: string | undefined;
+/** What the build wrote into lib/backendVersion.json: the backend version and the other versions on main. */
+export interface BuiltVersions {
+  version: string;
+  web?: string;
+  android?: string;
+  androidCode?: string;
+}
 
-/** The backend version, written into lib/backendVersion.json by the build. "unknown" when the file is missing. */
-export function backendVersion(): string {
+let cached: BuiltVersions | undefined;
+
+export function builtVersions(): BuiltVersions {
   if (cached === undefined) {
     try {
-      cached = String(JSON.parse(readFileSync(join(__dirname, "backendVersion.json"), "utf8")).version ?? "unknown");
+      const read = JSON.parse(readFileSync(join(__dirname, "backendVersion.json"), "utf8"));
+      cached = { ...read, version: String(read.version ?? "unknown") };
     } catch {
-      cached = "unknown";
+      cached = { version: "unknown" };
     }
   }
-  return cached;
+  return cached as BuiltVersions;
+}
+
+/** The backend version. "unknown" when the build did not write it. */
+export function backendVersion(): string {
+  return builtVersions().version;
 }

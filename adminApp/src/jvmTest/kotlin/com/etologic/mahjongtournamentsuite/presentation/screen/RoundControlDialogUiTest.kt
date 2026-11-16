@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,8 +32,8 @@ class RoundControlDialogUiTest {
     private val now = 1_000_000_000L
     private val min = 60_000L
 
-    private fun server(vararg clocks: RoundClock) = FakeTournamentRepository().apply {
-        tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 3, matchDurationMinutes = 120))
+    private fun server(vararg clocks: RoundClock, numRounds: Int = 3) = FakeTournamentRepository().apply {
+        tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = numRounds, matchDurationMinutes = 120))
         roundClocks = clocks.toList()
         serverNowMs = now
         seed(syncTable(tableId = 1))
@@ -72,6 +73,14 @@ class RoundControlDialogUiTest {
         onNodeWithTag("hands_auto").assertIsSelected()
         onNodeWithTag("seats_auto").assertIsSelected()
         onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun openingOnALateRoundScrollsTheRoundStripToIt() = runComposeUiTest {
+        show(server(numRounds = 30), round = 28)
+
+        onNodeWithTag("round_chip_28").assertIsDisplayed().assertIsSelected()
+        onNodeWithTag("round_chip_1").assertDoesNotExist()
     }
 
     @Test

@@ -24,19 +24,21 @@ def read(path: Path) -> tuple[set[str], dict[str, list[str]]]:
 
 for module in MODULES:
     base = Path(module) / "src/commonMain/composeResources"
-    english_keys, english_placeholders = read(base / "values/strings.xml")
-    for folder in sorted(base.glob("values-*")):
-        file = folder / "strings.xml"
-        if not file.exists():
-            continue
-        keys, placeholders = read(file)
-        for key in sorted(english_keys - keys):
-            ERRORS.append(f"{file}: missing {key}")
-        for key in sorted(keys - english_keys):
-            ERRORS.append(f"{file}: extra {key}")
-        for key, found in placeholders.items():
-            if key in english_placeholders and english_placeholders[key] != found:
-                ERRORS.append(f"{file}: placeholders of {key} differ from English")
+    # strings.xml is in every language. Another file may be missing in a language without a translation yet.
+    for english_file in sorted((base / "values").glob("*.xml")):
+        english_keys, english_placeholders = read(english_file)
+        for folder in sorted(base.glob("values-*")):
+            file = folder / english_file.name
+            if not file.exists():
+                continue
+            keys, placeholders = read(file)
+            for key in sorted(english_keys - keys):
+                ERRORS.append(f"{file}: missing {key}")
+            for key in sorted(keys - english_keys):
+                ERRORS.append(f"{file}: extra {key}")
+            for key, found in placeholders.items():
+                if key in english_placeholders and english_placeholders[key] != found:
+                    ERRORS.append(f"{file}: placeholders of {key} differ from English")
 
 print("\n".join(ERRORS) if ERRORS else "All language folders match the English texts.")
 sys.exit(1 if ERRORS else 0)

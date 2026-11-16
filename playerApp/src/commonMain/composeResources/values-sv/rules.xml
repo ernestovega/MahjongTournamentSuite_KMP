@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The texts of the combinations and penalties screens of the table. -->
+<resources>
+    <string name="combinations_title">Kombinationer</string>
+    <string name="combinations_search_hint">Namn, poäng eller beskrivning</string>
+    <string name="combinations_empty">Ingen kombination matchar sökningen.</string>
+    <string name="combinations_show_tiles">Visa alla brickor</string>
+    <string name="combinations_hide_tiles">Dölj alla brickor</string>
+    <string name="combinations_points">%1$d poäng</string>
+    <string name="penalties_title">Straff</string>
+    <string name="penalties_section_warning">Varning och stegrande straff</string>
+    <string name="penalties_section_dead_hand">Död hand</string>
+    <string name="penalties_section_points">Poängstraff och allvarliga straff</string>
+    <string name="penalties_progressive">Första förseelsen: varning. Andra: 5 poängs avdrag. Följande förseelser: 10, 20, 30 poäng och så vidare. Räkningen börjar om vid varje session, utom vid obstruktivt spel, inklusive avsiktliga förseningar.</string>
+    <string name="penalties_source">EMA:s Mahjong Competition Rules, version av den 20 juni 2009.</string>
+    <string name="penalty_w1">Felaktigt kong-, pong-, chow- eller hua-rop: spelaren ropar men utför inte handlingen, använder fel ord eller ropar pong för sent.</string>
+    <string name="penalty_w2">Visa brickor före ett kong-, pong-, chow- eller hua-rop: ropet är ogiltigt och de visade brickorna måste kastas.</string>
+    <string name="penalty_w3">Ropa och ta en bricka innan de matchande brickorna har visats.</string>
+    <string name="penalty_w4">Göra anspråk på en falsk kombination, före kastet: det får rättas, men de felaktigt visade brickorna måste kastas.</string>
+    <string name="penalty_w5">Ersätta en falsk blomma, innan ersättningsbrickan har tagits in i handen: det får rättas, och de felaktigt visade brickorna måste kastas.</string>
+    <string name="penalty_w6">Dra en bricka från fel ställe i muren: det får rättas innan brickan tas in i handen.</string>
+    <string name="penalty_w7">Visa en motståndares brickor: kan ge ytterligare straff.</string>
+    <string name="penalty_w8">Riva muren eller kastområdet i förtid: kan ge ytterligare straff.</string>
+    <string name="penalty_w9">Föra vidare information: kan ge ytterligare straff.</string>
+    <string name="penalty_d1">Falskt hu utan att visa brickorna.</string>
+    <string name="penalty_d2">Felaktigt hu-rop: ropa något annat än hu eller mahjong, eller visa brickorna innan hu har ropats.</string>
+    <string name="penalty_d3">Inte hålla den vinnande handen orörd: använda handens brickor för att räkna. Den som räknar med blommorna förlorar blommorna, men handen är fortfarande giltig.</string>
+    <string name="penalty_d4">Göra anspråk på en falsk kombination, efter kastet: det kan inte göras ogjort.</string>
+    <string name="penalty_d5">Ersätta en falsk blomma efter att ersättningsbrickan har tagits in i handen: det kan inte göras ogjort. Den falska blomman ligger kvar på bordet och räknas som ett kast för hu eller Sista brickan.</string>
+    <string name="penalty_d6">Dra från fel ställe och ta in brickan i handen: död hand bara om en motståndare påpekar det direkt.</string>
+    <string name="penalty_d7">Inte ta en ropad bricka innan de två följande spelarna har kastat.</string>
+    <string name="penalty_d8">Falskt hu av spelare A när spelare B har visat brickor: A får det straff som gäller. B har död hand och måste kasta de visade brickorna.</string>
+    <string name="penalty_d9">För få eller för många brickor.</string>
+    <string name="penalty_p1">Falskt hu med färre än 8 poäng: död hand och 10 poäng till varje motståndare.</string>
+    <string name="penalty_p2">Falskt hu med ogiltig handstruktur: inte fyra kombinationer och ett par (eller en annan godkänd struktur), en falsk kombination eller fel antal brickor. Död hand och 20 poäng till varje motståndare.</string>
+    <string name="penalty_p3">Glömma att ta den vinnande brickan: 10 poängs avdrag. Handen är giltig och räknas som vanligt.</string>
+    <string name="penalty_p4">Försenad 10 minuter eller mindre: 10 poängs avdrag.</string>
+    <string name="penalty_p5">Försenad 11 till 15 minuter: 20 poängs avdrag.</string>
+    <string name="penalty_p6">Försenad mer än 15 minuter: spelaren förlorar den pågående sessionen och får 0 bordspoäng. En ersättare spelar sessionen.</string>
+    <string name="penalty_p7">Obstruktivt spel: fördröja spelet, eller allvarligt avslöja brickor eller information. Domaren kan döma ut 10 till 60 poäng och/eller död hand.</string>
+    <string name="penalty_p8">Allvarlig störning: fusk eller att hindra tävlingen, inklusive upprepade förseningar. Omedelbar diskvalificering.</string>
+</resources>
