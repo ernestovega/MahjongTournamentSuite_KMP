@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.ContactSupport
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.CheckCircle
@@ -46,6 +47,7 @@ import androidx.compose.material.icons.filled.HourglassTop
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
+import mahjongtournamentsuite.playerapp.generated.resources.menu_green_book
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
@@ -436,6 +438,7 @@ fun TournamentsScreen(navController: NavHostController) {
         title = stringResource(Res.string.tournaments_title),
         // The landing page has the contact button. The privacy policy also links the form at /support.
         actions = {
+            GreenBookButton()
             AppTopBarButton(
                 text = stringResource(Res.string.menu_contact),
                 icon = Icons.Default.ContactSupport,
@@ -2112,3 +2115,19 @@ internal fun formatClock(ms: Long): String {
     val secs = seconds % 60
     return "$hours:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
 }
+
+/**
+ * Opens the Green Book of the EMA, the official MCR rules, in the browser.
+ * The PDF is in English, for every language of the app. For the actions of an AppScaffold.
+ */
+@Composable
+fun GreenBookButton() {
+    val uriHandler = LocalUriHandler.current
+    AppTopBarButton(
+        text = stringResource(Res.string.menu_green_book),
+        icon = Icons.Default.Book,
+        onClick = { runCatching { uriHandler.openUri(GREEN_BOOK_URL) } },
+    )
+}
+
+private const val GREEN_BOOK_URL = "http://mahjong-europe.org/portal/images/docs/mcr_EN.pdf"
