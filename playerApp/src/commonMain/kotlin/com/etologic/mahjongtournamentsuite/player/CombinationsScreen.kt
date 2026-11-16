@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,18 +32,22 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -325,33 +330,55 @@ fun CombinationsScreen(navController: NavHostController) {
 }
 
 /** The credits of the screen. The licence of the tiles asks for the link to the page of their author. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreditsDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     TrackedDialog("CombinationsCredits") {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.combinations_credits), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            text = {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
-                    TileGroupsRow(CreditsExampleTiles, Modifier.padding(bottom = 16.dp), maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
-                    Text(stringResource(Res.string.combinations_tiles_credit), Modifier.padding(bottom = 8.dp), textAlign = TextAlign.Center)
-                    TextButton(
-                        onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
-                    ) { Text("www.martinpersson.org") }
+        // A basic dialog and not an AlertDialog, whose fixed paddings around the text and the buttons are larger.
+        // It keeps the platform width of an AlertDialog; every line, the Close button and the bottom edge are 16 dp apart.
+        BasicAlertDialog(onDismissRequest = onDismiss) {
+            Surface(shape = AlertDialogDefaults.shape, color = AlertDialogDefaults.containerColor, tonalElevation = AlertDialogDefaults.TonalElevation) {
+                // No 48 dp touch target around the two compact buttons, so that their gaps look like the others.
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text(
+                            stringResource(Res.string.combinations_credits),
+                            Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                        // One tile of each kind as an example: characters, dots, bamboos, a wind, a dragon, a flower and a season.
+                        TileGroupsRow(CreditsExampleTiles, maxTileWidth = 32.dp, alignment = Alignment.TopCenter)
+                        Text(
+                            stringResource(Res.string.combinations_tiles_credit),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        TextButton(
+                            onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
+                            modifier = CompactButton,
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
+                            contentPadding = CompactButtonPadding,
+                        ) { Text("www.martinpersson.org") }
+                        TextButton(onClick = onDismiss, modifier = CompactButton, contentPadding = CompactButtonPadding) {
+                            Text(stringResource(Res.string.combinations_close))
+                        }
+                    }
                 }
-            },
-            // Centered, as the rest of the dialog.
-            confirmButton = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
-                }
-            },
-        )
+            }
+        }
     }
 }
+
+/** A text button only as tall as its text, so that its gap to the lines around it looks like the others. */
+private val CompactButton = Modifier.defaultMinSize(minHeight = 1.dp)
+private val CompactButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
 
 private val CreditsExampleTiles = TileNotation.parse("1m 5p 9s E C 1f 1g")
 
