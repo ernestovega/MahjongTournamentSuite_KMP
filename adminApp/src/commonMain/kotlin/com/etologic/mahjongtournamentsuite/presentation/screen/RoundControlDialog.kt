@@ -329,7 +329,14 @@ private fun RoundStrip(
     onSelect: (Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    LaunchedEffect(selected) { listState.animateScrollToItem((selected - 2).coerceAtLeast(0)) }
+    // Keyed on numRounds too: it is 1 until the tournament loads, so the first scroll had no chip to reach.
+    var scrolledOnce by remember { mutableStateOf(false) }
+    LaunchedEffect(selected, numRounds) {
+        if (selected > numRounds) return@LaunchedEffect
+        val target = (selected - 2).coerceAtLeast(0)
+        if (scrolledOnce) listState.animateScrollToItem(target) else listState.scrollToItem(target)
+        scrolledOnce = true
+    }
     LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         items((1..numRounds.coerceAtLeast(1)).toList()) { round ->
             FilterChip(
@@ -465,9 +472,13 @@ private fun TablesCard(
             tables.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
             else -> tables.forEachIndexed { index, table ->
                 if (index > 0) HorizontalDivider()
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${stringResource(Res.string.table)} ${table.tableId}", fontWeight = FontWeight.SemiBold)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("${stringResource(Res.string.table)} ${table.tableId}", fontWeight = FontWeight.SemiBold, modifier = Modifier.widthIn(min = 72.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f),
+                    ) {
                         // The same mark as the Completed switch of the table editor. A completed table takes no hand.
                         SubCard(stringResource(Res.string.round_control_table_status)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
