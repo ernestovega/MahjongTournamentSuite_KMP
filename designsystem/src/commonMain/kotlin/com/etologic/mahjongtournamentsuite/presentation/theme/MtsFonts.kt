@@ -40,10 +40,17 @@ internal fun titleFontFor(language: String): TitleFont = when (language) {
 
 /** The font of titles and labels in the language of the app: Gang of Three, its Cyrillic look-alike or the text font. */
 @Composable
-fun GangOfThreeFontFamily(): FontFamily {
+fun GangOfThreeFontFamily(): FontFamily = TitleFontFamily(Locale.current.language)
+
+/**
+ * The title font for text in the language [language] (a tag like "ru"), whatever the language of the app. The language
+ * menu uses it, so "Русский" shows in a font with Cyrillic letters while the app is in English.
+ */
+@Composable
+fun TitleFontFamily(language: String): FontFamily {
     val decorative = Font(Res.font.go3v2)
     val cyrillic = Font(Res.font.mts_cyrillic_caps)
-    val titleFont = titleFontFor(Locale.current.language)
+    val titleFont = titleFontFor(language.substringBefore('-').lowercase())
     return remember(decorative, cyrillic, titleFont) {
         when (titleFont) {
             TitleFont.Decorative -> FontFamily(decorative)

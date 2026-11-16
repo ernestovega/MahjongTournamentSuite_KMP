@@ -39,18 +39,20 @@ class PlaceHistoryTournamentsUiTest {
         result("a", 1, 1), result("a", 2, 3), result("a", 3, 2),
         result("b", 1, 4), result("b", 2, 2),
         result("c", 1, 1), result("c", 2, 1), result("c", 3, 3), result("c", 4, 2),
+        result("d", 1, 4), result("d", 2, 1),
     )
 
     private val tournaments = listOf(
         Tournament(id = "a", name = "Madrid Open", shortName = "MAD 25", isTeams = false, numPlayers = 4, numRounds = 3, eventStartDate = "2025-03-01"),
         Tournament(id = "b", name = "Copa", shortName = "COPA", isTeams = false, numPlayers = 4, numRounds = 2, eventStartDate = "2025-06-01"),
         Tournament(id = "c", name = "Open de Italia", shortName = "", isTeams = false, numPlayers = 4, numRounds = 4, eventStartDate = "2026-01-10"),
+        Tournament(id = "d", name = "Madrid Open 2026", shortName = "MMO 26", isTeams = false, numPlayers = 4, numRounds = 2, eventStartDate = "2026-11-12"),
     )
 
     @Test
     fun theTablesOfEachTournamentFormOneRun() {
         assertEquals(
-            listOf(TournamentRun("a", 0, 2), TournamentRun("b", 3, 4), TournamentRun("c", 5, 8)),
+            listOf(TournamentRun("a", 0, 2), TournamentRun("b", 3, 4), TournamentRun("c", 5, 8), TournamentRun("d", 9, 10)),
             tournamentRuns(results),
         )
         assertEquals(listOf(TournamentRun("a", 0, 1)), tournamentRuns(results.take(2)))
@@ -72,6 +74,6 @@ class PlaceHistoryTournamentsUiTest {
             ImageIO.write(onAllNodes(isRoot())[0].captureToImage().toAwtImage(), "png", File(dir, "place-history-tournaments.png"))
         }
         // The bands and names are drawn on the canvas. With MTS_SCREENSHOT_DIR set, the test saves the picture to check by eye.
-        onAllNodesWithText("Place in the last 9 tables", substring = true, ignoreCase = true).fetchSemanticsNodes().let { assertTrue(it.isNotEmpty()) }
+        onAllNodesWithText("Place in the last 11 tables", substring = true, ignoreCase = true).fetchSemanticsNodes().let { assertTrue(it.isNotEmpty()) }
     }
 }
