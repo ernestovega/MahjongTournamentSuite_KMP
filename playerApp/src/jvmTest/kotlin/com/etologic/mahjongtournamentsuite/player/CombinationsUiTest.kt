@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -41,7 +40,9 @@ class CombinationsUiTest {
         setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
         onNodeWithTag(COMBINATIONS_SEARCH_TAG).performTextInput("88")
         onAllNodesWithTag(COMBINATION_ROW_TAG).assertCountEquals(7)
-        onAllNodesWithContentDescription("88 points", useUnmergedTree = true).assertCountEquals(7)
+        // One header for the value, above its seven combinations.
+        onAllNodesWithTag(POINTS_HEADER_TAG).assertCountEquals(1)
+        onNodeWithText("88 points").assertExists()
     }
 
     @Test

@@ -89,6 +89,8 @@ class SelectOption<out K>(
     val trailingIcon: (@Composable () -> Unit)? = null,
     /** The color of [label] in the menu. Unspecified keeps the color of the menu. */
     val color: Color = Color.Unspecified,
+    /** The font of [label] in the menu, when it needs letters that the font of the menu lacks. Null keeps the menu font. */
+    val fontFamily: FontFamily? = null,
 )
 
 /** The menus show a search field as first item when they have more options than this. */
@@ -409,7 +411,7 @@ private fun <K> ColumnScope.SelectMenuItems(
     }
     shown.forEach { option ->
         DropdownMenuItem(
-            text = { Text(option.label, color = option.color, fontFamily = fontFamily) },
+            text = { Text(option.label, color = option.color, fontFamily = option.fontFamily ?: fontFamily) },
             leadingIcon = option.leadingIcon,
             trailingIcon = option.trailingIcon,
             enabled = option.enabled,

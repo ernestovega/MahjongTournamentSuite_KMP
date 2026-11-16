@@ -151,13 +151,12 @@ export function renderVersionsPage(rows: VersionRow[]): string {
 body{font:16px/1.4 system-ui,sans-serif;color:var(--fg);background:var(--bg);margin:0;padding:24px 16px}
 h1{font-size:20px;margin:0 0 16px}table{border-collapse:collapse;width:100%;max-width:720px}
 th,td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid var(--line)}
-thead th{color:var(--muted);font-weight:500;font-size:14px}.ok{color:var(--ok)}p{color:var(--muted);font-size:14px;max-width:720px}
+thead th{color:var(--muted);font-weight:500;font-size:14px}.ok{color:var(--ok)}
 </style></head><body>
 <h1>Mahjong Tournament Suite versions</h1>
 <table><thead><tr><th>Product</th><th>Latest (main)</th><th>Published</th></tr></thead><tbody>
 ${body}
 </tbody></table>
-<p>Latest = the versions on main when this backend was deployed. Every push to main deploys the web and the backend; the Android app goes to Google Play only when it is published by hand.</p>
 </body></html>`;
 }
 

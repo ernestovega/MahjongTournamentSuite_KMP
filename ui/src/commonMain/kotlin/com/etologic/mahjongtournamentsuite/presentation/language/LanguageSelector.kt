@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.theme.TitleFontFamily
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.language_label
 import org.jetbrains.compose.resources.stringResource
@@ -21,8 +22,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LanguageSelector(modifier: Modifier = Modifier) {
     val controller = LocalLanguageController.current
-    val options = remember {
-        AppLanguage.entries.map { language -> SelectOption(language, language.endonym, leadingIcon = { LanguageFlag(language) }) }
+    // Each name in a font that has its letters: Gang of Three has no Cyrillic, so "Русский" would be empty.
+    val fonts = AppLanguage.entries.associateWith { TitleFontFamily(it.tag) }
+    val options = remember(fonts) {
+        AppLanguage.entries.map { language ->
+            SelectOption(language, language.endonym, leadingIcon = { LanguageFlag(language) }, fontFamily = fonts.getValue(language))
+        }
     }
     SelectField(
         label = stringResource(Res.string.language_label),

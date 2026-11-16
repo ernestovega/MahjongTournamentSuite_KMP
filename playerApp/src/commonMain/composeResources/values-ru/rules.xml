@@ -6,7 +6,12 @@
     <string name="combinations_empty">Ни одна комбинация не подходит под поиск.</string>
     <string name="combinations_show_tiles">Показать все кости</string>
     <string name="combinations_hide_tiles">Скрыть все кости</string>
-    <string name="combinations_points">%1$d очков</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d очко</item>
+        <item quantity="few">%1$d очка</item>
+        <item quantity="many">%1$d очков</item>
+        <item quantity="other">%1$d очка</item>
+    </plurals>
     <string name="penalties_title">Штрафы</string>
     <string name="penalties_section_warning">Предупреждение и прогрессивный штраф</string>
     <string name="penalties_section_dead_hand">Мёртвая рука</string>

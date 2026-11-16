@@ -6,7 +6,10 @@
     <string name="combinations_empty">Keine Kombination passt zur Suche.</string>
     <string name="combinations_show_tiles">Alle Steine zeigen</string>
     <string name="combinations_hide_tiles">Alle Steine ausblenden</string>
-    <string name="combinations_points">%1$d Punkte</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d Punkt</item>
+        <item quantity="other">%1$d Punkte</item>
+    </plurals>
     <string name="penalties_title">Strafen</string>
     <string name="penalties_section_warning">Verwarnung und steigende Strafe</string>
     <string name="penalties_section_dead_hand">Tote Hand</string>

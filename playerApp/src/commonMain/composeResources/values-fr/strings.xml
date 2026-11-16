@@ -175,6 +175,7 @@
     <string name="menu_sign_in">Se connecter</string>
     <string name="menu_contact">Contact</string>
     <string name="menu_privacy">Confidentialité</string>
+    <string name="menu_version">Version</string>
     <string name="menu_green_book">Green Book</string>
     <string name="green_book_downloading">Téléchargement du Green Book…</string>
     <string name="green_book_offline">Le Green Book dans votre langue n'a pas pu être téléchargé.\nLa version anglaise s'ouvre à la place.</string>
