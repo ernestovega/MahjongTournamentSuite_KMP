@@ -33,6 +33,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDial
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerDeletesConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
@@ -41,6 +43,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdateNotice
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdatesDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.UserDeletesConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.UserDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
@@ -184,6 +188,47 @@ class AdminDialogsScreenshotTest {
                 PasswordResetResult("editor-2", PasswordResetOutcome.FAILED, PasswordResetFailure.DISABLED),
             ),
             users = ScreenshotData.users,
+            onDismiss = {},
+        )
+    }
+
+    @Test
+    fun userDeletesConfirm() = dialog("user-deletes-confirm") { UserDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
+
+    @Test
+    fun userDeletesResult() = dialog("user-deletes-result") {
+        UserDeletesResultDialog(
+            results = listOf(
+                com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult("player-1", com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome.DELETED),
+                com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult(
+                    "editor-2",
+                    com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome.FAILED,
+                    com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure.LAST_ADMIN,
+                ),
+            ),
+            users = ScreenshotData.users,
+            onDismiss = {},
+        )
+    }
+
+    @Test
+    fun playerDeletesConfirm() = dialog("player-deletes-confirm") { PlayerDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
+
+    @Test
+    fun playerDeletesResult() = dialog("player-deletes-result") {
+        PlayerDeletesResultDialog(
+            results = ScreenshotData.players.take(2).mapIndexed { index, player ->
+                if (index == 0) {
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.DELETED)
+                } else {
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(
+                        player.emaId,
+                        com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.FAILED,
+                        com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteFailure.IN_TOURNAMENT,
+                    )
+                }
+            },
+            players = ScreenshotData.players,
             onDismiss = {},
         )
     }

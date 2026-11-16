@@ -10,6 +10,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
@@ -59,6 +62,23 @@ class UsersPresenter(
     /** Deletes an account for good. Only admins call it. */
     suspend fun deleteUser(uid: String): AppResult<Unit> = adminRepository.deleteUser(uid).trackAction(telemetry, TelemetryAction.ACCOUNT_DELETED)
 
+    /** Deletes many accounts for good. Only admins call it. Every account has its own result. */
+    suspend fun deleteUsers(uids: List<String>): AppResult<List<UserDeleteResult>> {
+        // The server takes up to 50 accounts in one request, so a longer list goes in several requests.
+        val results = mutableListOf<UserDeleteResult>()
+        for (chunk in uids.chunked(MAX_USER_DELETES_PER_REQUEST)) {
+            when (val result = adminRepository.deleteUsers(chunk)) {
+                is AppResult.Success -> results += result.value
+                // A request that fails after others went through must not hide them. Its accounts show as failed.
+                is AppResult.Failure -> {
+                    if (results.isEmpty()) return result.trackAction(telemetry, TelemetryAction.ACCOUNT_DELETED)
+                    results += chunk.map { UserDeleteResult(it, UserDeleteOutcome.FAILED, UserDeleteFailure.UNKNOWN) }
+                }
+            }
+        }
+        return AppResult.Success(results).trackAction(telemetry, TelemetryAction.ACCOUNT_DELETED)
+    }
+
     /** Sends the password reset email to many accounts. Only admins call it. */
     suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> {
         // The server takes up to 200 accounts in one request, so a longer list goes in several requests.
@@ -84,6 +104,9 @@ class UsersPresenter(
 }
 
 private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED
+
+/** The server deletes up to 50 accounts in one request. */
+internal const val MAX_USER_DELETES_PER_REQUEST = 50
 
 /** The server takes up to 200 accounts in one password reset request. */
 internal const val MAX_PASSWORD_RESETS_PER_REQUEST = 200

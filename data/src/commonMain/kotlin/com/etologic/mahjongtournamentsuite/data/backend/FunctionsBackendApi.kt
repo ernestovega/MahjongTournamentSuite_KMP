@@ -1,11 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
@@ -31,6 +26,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDeletesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDeletesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
@@ -45,9 +42,14 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
@@ -67,6 +69,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserDeletesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserDeletesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
@@ -219,6 +223,15 @@ class FunctionsBackendApi(
     )
 
     suspend fun deleteUser(idToken: String, uid: String): OkResponseDto = delete(path = "/admin/users/$uid", idToken = idToken)
+
+    suspend fun deleteUsers(
+        idToken: String,
+        request: UserDeletesRequestDto,
+    ): UserDeletesResponseDto = post(
+        path = "/admin/users/delete",
+        requestBody = request,
+        idToken = idToken,
+    )
 
     suspend fun sendPasswordResets(
         idToken: String,
@@ -432,6 +445,15 @@ class FunctionsBackendApi(
         request: UpdatePlayerRequestDto,
     ): OkResponseDto = put(
         path = "/ema-player-registry/$emaId",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun deletePlayers(
+        idToken: String,
+        request: PlayerDeletesRequestDto,
+    ): PlayerDeletesResponseDto = post(
+        path = "/ema-player-registry/delete",
         requestBody = request,
         idToken = idToken,
     )

@@ -60,6 +60,9 @@ class AdminActionTrackingTest {
         override suspend fun createPlayer(player: Player) = result(player)
         override suspend fun updatePlayer(previousEmaId: String, player: Player) = result(Unit)
         override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray) = result(PLAYER)
+        override suspend fun deletePlayers(emaIds: List<String>) = result(
+            emaIds.map { com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(it, com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.DELETED) },
+        )
     }
 
     private class Case(val action: String, val run: suspend (World) -> Unit)
@@ -109,6 +112,7 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },
         Case(TelemetryAction.REGISTRY_PLAYER_UPDATED) { it.playerBasePresenter.updatePlayer("1234", PLAYER) },
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },
+        Case(TelemetryAction.REGISTRY_PLAYERS_DELETED) { it.playerBasePresenter.deletePlayers(listOf("1234")) },
         Case(TelemetryAction.TABLE_RESET) { it.tablePresenter.resetTable("t1", 1, 1) },
     )
 

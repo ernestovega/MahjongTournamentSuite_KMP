@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">EMA player created</string>
     <string name="activity_action_registry_update">EMA player changed</string>
     <string name="activity_action_registry_photo">EMA player photo changed</string>
+    <string name="activity_action_registry_delete">EMA player deleted</string>
     <string name="activity_action_table_save">Table saved</string>
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
@@ -799,4 +800,18 @@
     <string name="round_control_players">What the players can do</string>
     <string name="round_control_table_hands">Hand entry</string>
     <string name="round_control_table_status">Status</string>
+    <string name="delete_selected_count">Delete (%1$d)</string>
+    <string name="users_delete_confirm_title">Delete accounts?</string>
+    <string name="users_delete_confirm_text">%1$d accounts will be deleted for good: the sign-in, the email, the alias and the photo. The EMA players and the tournament results remain. This cannot be undone.</string>
+    <string name="users_delete_summary">Accounts deleted: %1$d. Not deleted: %2$d.</string>
+    <string name="delete_failure_self">You cannot delete your own account.</string>
+    <string name="delete_failure_last_admin">It is the last enabled admin.</string>
+    <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
+    <string name="players_delete_confirm_title">Delete EMA players?</string>
+    <string name="players_delete_confirm_text">%1$d EMA players will be deleted for good, with their photo. A player who plays in a tournament or who has an account stays. This cannot be undone.</string>
+    <string name="players_delete_summary">Players deleted: %1$d. Not deleted: %2$d.</string>
+    <string name="player_delete_failure_not_found">The player does not exist.</string>
+    <string name="player_delete_failure_in_tournament">The player is in a tournament.</string>
+    <string name="player_delete_failure_has_account">An account uses this EMA number.</string>
+    <string name="player_delete_failure_unknown">The player was not deleted. Try again.</string>
 </resources>

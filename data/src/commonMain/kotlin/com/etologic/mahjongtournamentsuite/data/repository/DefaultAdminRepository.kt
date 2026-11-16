@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsReques
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserDeletesRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
@@ -25,6 +26,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -166,6 +170,21 @@ class DefaultAdminRepository(
     override suspend fun deleteUser(uid: String): AppResult<Unit> = managedUserRequest("Deleting user") { idToken ->
         backendApi.deleteUser(idToken, uid)
         cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
+    }
+
+    override suspend fun deleteUsers(uids: List<String>): AppResult<List<UserDeleteResult>> = managedUserRequest("Deleting users") { idToken ->
+        try {
+            backendApi.deleteUsers(idToken, UserDeletesRequestDto(uids)).results.map { dto ->
+                UserDeleteResult(
+                    uid = dto.uid,
+                    outcome = UserDeleteOutcome.entries.firstOrNull { it.name == dto.outcome } ?: UserDeleteOutcome.FAILED,
+                    reason = dto.reason?.let { name -> UserDeleteFailure.entries.firstOrNull { it.name == name } ?: UserDeleteFailure.UNKNOWN },
+                )
+            }
+        } finally {
+            // Some accounts can be gone even when the request fails half way.
+            cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
+        }
     }
 
     override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> = managedUserRequest("Sending password resets") { idToken ->

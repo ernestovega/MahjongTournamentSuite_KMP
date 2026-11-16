@@ -288,6 +288,23 @@ data class EmaReportRequestDto(
 )
 
 @Serializable
+data class PlayerDeletesRequestDto(
+    val emaIds: List<String>,
+)
+
+@Serializable
+data class PlayerDeleteResultDto(
+    val emaId: String,
+    val outcome: String,
+    val reason: String? = null,
+)
+
+@Serializable
+data class PlayerDeletesResponseDto(
+    val results: List<PlayerDeleteResultDto> = emptyList(),
+)
+
+@Serializable
 data class UpdatePlayerPhotoRequestDto(
     val contentType: String,
     val dataBase64: String,

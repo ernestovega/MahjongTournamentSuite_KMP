@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +63,8 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -160,6 +163,12 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val admin by store.adminStatus.collectAsState()
     val canEdit = admin?.canEditPlayers == true
     val canEditEmaNumber = admin?.isAdmin == true
+    // Admins select players in the list and delete them in one go.
+    val canDelete = admin?.isAdmin == true
+    var checkedEmaIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var confirmDeleteOpen by remember { mutableStateOf(false) }
+    var deleteResults by remember { mutableStateOf<List<PlayerDeleteResult>?>(null) }
+    var deleteResultPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var selectedEmaId by remember { mutableStateOf<String?>(null) }
     var emaId by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
@@ -217,6 +226,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
             matchesSearch && matchesCountry
         }
     }
+    // Only the players that the list shows are deleted. A checked player that a filter hides stays out.
+    val chosenEmaIds = filteredPlayers.map { it.emaId }.filter { it in checkedEmaIds }
     val filteredCountryCount = remember(filteredPlayers) {
         filteredPlayers
             .map { it.country.trim().uppercase() }
@@ -630,6 +641,36 @@ fun PlayerBaseScreen(navController: NavHostController) {
         }
     }
 
+    if (confirmDeleteOpen) {
+        val emaIds = chosenEmaIds
+        PlayerDeletesConfirmDialog(
+            count = emaIds.size,
+            busy = saving,
+            onDismiss = { confirmDeleteOpen = false },
+            onConfirm = {
+                scope.launch {
+                    saving = true
+                    error = null
+                    when (val result = presenter.deletePlayers(emaIds)) {
+                        is AppResult.Success -> {
+                            val deleted = result.value.filter { it.outcome == PlayerDeleteOutcome.DELETED }.map { it.emaId }.toSet()
+                            // The dialog names the players that stay, so it needs the list from before the delete.
+                            deleteResultPlayers = players
+                            deleteResults = result.value
+                            if (selectedEmaId in deleted) select(null)
+                            store.upsertBasePlayers(players.filterNot { it.emaId in deleted })
+                            checkedEmaIds = checkedEmaIds - deleted
+                        }
+                        is AppResult.Failure -> error = result.error.toUiText()
+                    }
+                    confirmDeleteOpen = false
+                    saving = false
+                }
+            },
+        )
+    }
+    deleteResults?.let { PlayerDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
+
     AppScaffold(
         title = stringResource(Res.string.players),
         isLoading = loading || saving,
@@ -748,8 +789,19 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
                     ) {
                         Column(Modifier.fillMaxWidth().weight(1f)) {
+                            if (canDelete) {
+                                PlayerSelectionBar(
+                                    shownCount = filteredPlayers.size,
+                                    selectedCount = chosenEmaIds.size,
+                                    busy = saving || loading,
+                                    onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
+                                    onClear = { checkedEmaIds = emptySet() },
+                                    onDelete = { confirmDeleteOpen = true },
+                                )
+                            }
                             if (!compact) {
                                 DataTableHeaderRow {
+                                    if (canDelete) Spacer(Modifier.width(PlayerCheckboxColumnWidth))
                                     PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
                                     PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
                                     PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
@@ -771,6 +823,17 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         onClick = { select(player) },
                                         highlighted = selectedEmaId == player.emaId,
                                     ) {
+                                        if (canDelete) {
+                                            val checkDescription = "${player.displayName} ${player.emaId}"
+                                            Checkbox(
+                                                checked = player.emaId in checkedEmaIds,
+                                                onCheckedChange = {
+                                                    checkedEmaIds = if (player.emaId in checkedEmaIds) checkedEmaIds - player.emaId else checkedEmaIds + player.emaId
+                                                },
+                                                enabled = !saving && !loading,
+                                                modifier = Modifier.width(PlayerCheckboxColumnWidth).semantics { contentDescription = checkDescription },
+                                            )
+                                        }
                                         Box(
                                             modifier = Modifier
                                                 .width(PlayerPhotoColumnWidth)
@@ -928,6 +991,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     }
 }
 
+private val PlayerCheckboxColumnWidth = 48.dp
 internal val PlayerPhotoSize = 40.dp
 internal val PlayerPhotoColumnWidth = 48.dp
 private val PlayerCountryColumnWidth = 64.dp

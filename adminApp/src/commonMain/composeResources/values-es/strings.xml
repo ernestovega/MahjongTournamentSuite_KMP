@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">Jugador EMA creado</string>
     <string name="activity_action_registry_update">Jugador EMA cambiado</string>
     <string name="activity_action_registry_photo">Foto de jugador EMA cambiada</string>
+    <string name="activity_action_registry_delete">Jugador EMA eliminado</string>
     <string name="activity_action_table_save">Mesa guardada</string>
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
@@ -799,4 +800,18 @@
     <string name="round_control_players">Qué pueden hacer los jugadores</string>
     <string name="round_control_table_hands">Entrada de manos</string>
     <string name="round_control_table_status">Estado</string>
+    <string name="delete_selected_count">Eliminar (%1$d)</string>
+    <string name="users_delete_confirm_title">¿Eliminar cuentas?</string>
+    <string name="users_delete_confirm_text">Se eliminarán para siempre %1$d cuentas: el acceso, el correo, el alias y la foto. Los jugadores EMA y los resultados de los torneos se conservan. No se puede deshacer.</string>
+    <string name="users_delete_summary">Cuentas eliminadas: %1$d. No eliminadas: %2$d.</string>
+    <string name="delete_failure_self">No puedes eliminar tu propia cuenta.</string>
+    <string name="delete_failure_last_admin">Es el último admin activo.</string>
+    <string name="delete_failure_unknown">No se eliminó la cuenta. Inténtalo de nuevo.</string>
+    <string name="players_delete_confirm_title">¿Eliminar jugadores EMA?</string>
+    <string name="players_delete_confirm_text">Se eliminarán para siempre %1$d jugadores EMA, con su foto. Un jugador que juega en un torneo o que tiene cuenta se conserva. No se puede deshacer.</string>
+    <string name="players_delete_summary">Jugadores eliminados: %1$d. No eliminados: %2$d.</string>
+    <string name="player_delete_failure_not_found">El jugador no existe.</string>
+    <string name="player_delete_failure_in_tournament">El jugador está en un torneo.</string>
+    <string name="player_delete_failure_has_account">Una cuenta usa este número EMA.</string>
+    <string name="player_delete_failure_unknown">No se eliminó el jugador. Inténtalo de nuevo.</string>
 </resources>

@@ -43,6 +43,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -156,6 +157,7 @@ open class ScreenshotPlayerRepository(private val players: List<Player> = Screen
     override suspend fun createPlayer(player: Player): AppResult<Player> = noWrite()
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = noWrite()
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = noWrite()
+    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> = noWrite()
 }
 
 /** A signed-in account: [profile], or nobody when it is null. */
@@ -193,6 +195,7 @@ open class ScreenshotAdminRepository(
     override suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = noWrite()
     override suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> = noWrite()
     override suspend fun deleteUser(uid: String): AppResult<Unit> = noWrite()
+    override suspend fun deleteUsers(uids: List<String>): AppResult<List<UserDeleteResult>> = noWrite()
     override suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> = noWrite()
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = noWrite()
     override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> = noWrite()

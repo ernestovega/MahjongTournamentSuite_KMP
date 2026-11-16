@@ -70,6 +70,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -117,6 +119,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.confirm_email
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
+import mahjongtournamentsuite.adminapp.generated.resources.delete
+import mahjongtournamentsuite.adminapp.generated.resources.delete_account
+import mahjongtournamentsuite.adminapp.generated.resources.delete_account_action
+import mahjongtournamentsuite.adminapp.generated.resources.delete_user_message
 import mahjongtournamentsuite.adminapp.generated.resources.disable
 import mahjongtournamentsuite.adminapp.generated.resources.disable_account
 import mahjongtournamentsuite.adminapp.generated.resources.disable_account_action
@@ -157,12 +163,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.the_email_addresses_d
 import mahjongtournamentsuite.adminapp.generated.resources.tournament
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_assignments
 import mahjongtournamentsuite.adminapp.generated.resources.tournaments_selected
-import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
-import mahjongtournamentsuite.adminapp.generated.resources.delete
 import mahjongtournamentsuite.adminapp.generated.resources.user_deleted
-import mahjongtournamentsuite.adminapp.generated.resources.delete_account
-import mahjongtournamentsuite.adminapp.generated.resources.delete_account_action
-import mahjongtournamentsuite.adminapp.generated.resources.delete_user_message
+import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.user_enabled
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
@@ -196,6 +198,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var selectedUids by remember { mutableStateOf<Set<String>>(emptySet()) }
     var confirmResetOpen by remember { mutableStateOf(false) }
     var resetResults by remember { mutableStateOf<List<PasswordResetResult>?>(null) }
+    var confirmDeleteOpen by remember { mutableStateOf(false) }
+    var deleteResults by remember { mutableStateOf<List<UserDeleteResult>?>(null) }
+    var deleteResultUsers by remember { mutableStateOf<List<ManagedUser>>(emptyList()) }
     var editUidHandled by rememberSaveable { mutableStateOf(false) }
     val addFocusRequester = remember { FocusRequester() }
     val rowFocusRequesters = remember(users.map(ManagedUser::uid)) {
@@ -235,6 +240,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
 
     // Only the accounts that the list shows are sent. A selected account that a filter hides stays out.
     val chosenUids = filteredUsers.map { it.uid }.filter { it in selectedUids }
+    // An admin cannot delete the own account, so a bulk delete leaves it out.
+    val deletableUids = chosenUids.filter { it != access?.uid }
 
     fun refresh(force: Boolean = false) {
         scope.launch {
@@ -415,6 +422,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                         onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
                         onClear = { selectedUids = emptySet() },
                         onSend = { confirmResetOpen = true },
+                        deleteCount = deletableUids.size,
+                        onDelete = { confirmDeleteOpen = true },
                         showSend = !compact,
                     )
                 }
@@ -515,6 +524,36 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         )
     }
     resetResults?.let { PasswordResetsResultDialog(it, users, onDismiss = { resetResults = null }) }
+
+    if (confirmDeleteOpen) {
+        val uids = deletableUids
+        UserDeletesConfirmDialog(
+            count = uids.size,
+            busy = saving,
+            onDismiss = { confirmDeleteOpen = false },
+            onConfirm = {
+                scope.launch {
+                    saving = true
+                    error = null
+                    notice = null
+                    when (val result = presenter.deleteUsers(uids)) {
+                        is AppResult.Success -> {
+                            val deleted = result.value.filter { it.outcome == UserDeleteOutcome.DELETED }.map { it.uid }.toSet()
+                            // The dialog names the accounts that stay, so it needs the list from before the delete.
+                            deleteResults = result.value
+                            deleteResultUsers = users
+                            users = users.filterNot { it.uid in deleted }
+                            selectedUids = selectedUids - deleted
+                        }
+                        is AppResult.Failure -> error = result.error.toUiText()
+                    }
+                    confirmDeleteOpen = false
+                    saving = false
+                }
+            },
+        )
+    }
+    deleteResults?.let { UserDeletesResultDialog(it, deleteResultUsers, onDismiss = { deleteResults = null }) }
 
     pendingDisabledUser?.let { user ->
         DisableUserDialog(

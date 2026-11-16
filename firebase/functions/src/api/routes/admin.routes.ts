@@ -38,6 +38,11 @@ import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
 
 type Actor = { uid: string; admin?: boolean };
 
+/** The server deletes up to 50 accounts in one request. Each one takes several calls, so a longer list would be slow. */
+const MAX_USER_DELETES = 50;
+type UserDeleteFailure = "NOT_FOUND" | "SELF" | "LAST_ADMIN" | "UNKNOWN";
+type UserDeleteResult = { uid: string; outcome: "DELETED" | "FAILED"; reason?: UserDeleteFailure };
+
 function requireEmail(value: unknown, fieldName: string): string {
   const email = String(value ?? "").trim();
   if (!email || !email.includes("@")) throw badRequest(`${fieldName} must be a valid email`);
@@ -334,6 +339,57 @@ export function adminRouter(): Router {
         action: "user.delete", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`, details: {},
       });
       res.status(200).json({ ok: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Deletes many accounts at once, like the single delete above. Every account has its own result: the own account,
+  // the last enabled admin or an unknown account fails alone, and the others are still deleted. The accounts go one
+  // after another, so the check of the last admin sees the admins that this request already deleted.
+  router.post("/users/delete", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const actor = res.locals.auth as Actor;
+      const raw = Array.isArray(req.body?.uids) ? req.body.uids as unknown[] : [];
+      const uids = [...new Set(raw.map((value) => String(value ?? "").trim()))];
+      if (uids.some((uid) => uid === "")) throw badRequest("uids must be non-empty texts");
+      if (uids.length === 0) throw badRequest("Choose at least one account");
+      if (uids.length > MAX_USER_DELETES) throw badRequest(`At most ${MAX_USER_DELETES} accounts per request`);
+      const results: UserDeleteResult[] = [];
+      for (const uid of uids) {
+        const fail = (reason: UserDeleteFailure): UserDeleteResult => ({ uid, outcome: "FAILED", reason });
+        if (uid === actor.uid) {
+          results.push(fail("SELF"));
+          continue;
+        }
+        try {
+          const current = await getManagedUser(uid).catch((error: { status?: number; code?: string }) => {
+            if (error.status === 404 || error.code === "auth/user-not-found") return null;
+            throw error;
+          });
+          if (current == null) {
+            results.push(fail("NOT_FOUND"));
+            continue;
+          }
+          if (current.role === "ADMIN" && !current.disabled && await countEnabledAdmins() <= 1) {
+            results.push(fail("LAST_ADMIN"));
+            continue;
+          }
+          await setAccountEmaId({ uid: current.uid, emaId: null });
+          await deleteManagedUser(current.uid);
+          results.push({ uid, outcome: "DELETED" });
+        } catch (error) {
+          console.error("Account delete failed", { uid, error });
+          results.push(fail("UNKNOWN"));
+        }
+      }
+      const deleted = results.filter((result) => result.outcome === "DELETED").map((result) => result.uid);
+      if (deleted.length > 0) {
+        await recordActivity({
+          action: "user.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length} users`, details: { uids: deleted },
+        });
+      }
+      res.status(200).json({ results });
     } catch (error) {
       next(error);
     }

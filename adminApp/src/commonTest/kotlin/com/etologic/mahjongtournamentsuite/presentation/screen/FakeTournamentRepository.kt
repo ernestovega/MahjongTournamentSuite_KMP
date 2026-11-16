@@ -342,6 +342,7 @@ internal class NoPlayersRepository : PlayerRepository {
     override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = error("unused")
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
+    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> = error("unused")
 }
 
 private fun <T> unusedFakeResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

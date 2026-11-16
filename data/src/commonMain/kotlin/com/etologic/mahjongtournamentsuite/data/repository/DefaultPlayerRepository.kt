@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDeletesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
@@ -13,6 +14,9 @@ import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -57,6 +61,21 @@ class DefaultPlayerRepository(
                 dataBase64 = Base64.Default.encode(bytes),
             ),
         ).toPlayer().also { cache.markStale(PLAYERS_CACHE_KEY) }
+    }
+
+    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<PlayerDeleteResult>> = request("Deleting shared players") { token ->
+        try {
+            backendApi.deletePlayers(token, PlayerDeletesRequestDto(emaIds)).results.map { dto ->
+                PlayerDeleteResult(
+                    emaId = dto.emaId,
+                    outcome = PlayerDeleteOutcome.entries.firstOrNull { it.name == dto.outcome } ?: PlayerDeleteOutcome.FAILED,
+                    reason = dto.reason?.let { name -> PlayerDeleteFailure.entries.firstOrNull { it.name == name } ?: PlayerDeleteFailure.UNKNOWN },
+                )
+            }
+        } finally {
+            // Some players can be gone even when the request fails half way.
+            cache.markStale(PLAYERS_CACHE_KEY)
+        }
     }
 
     private suspend fun <T> request(action: String, block: suspend (String) -> T): AppResult<T> = runCatching {

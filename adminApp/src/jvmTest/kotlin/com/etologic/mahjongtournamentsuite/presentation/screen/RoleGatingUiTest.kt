@@ -3,30 +3,32 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isFocused
-import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
@@ -238,6 +240,48 @@ class RoleGatingUiTest {
     }
 
     @Test
+    fun adminDeletesSelectedEmaPlayersAndThoseInUseStay() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val babbage = Player(emaId = "10002", firstName = "Charles", lastName = "Babbage", country = "GBR")
+        val turing = Player(emaId = "10003", firstName = "Alan", lastName = "Turing", country = "GBR")
+        val registry = FakePlayerRepository(listOf(player, babbage, turing)).apply {
+            deleteResults["10003"] = com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(
+                "10003",
+                com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.FAILED,
+                com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteFailure.IN_TOURNAMENT,
+            )
+        }
+        show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("10002")
+        onNodeWithContentDescription("10002", substring = true).performClick()
+        onNodeWithContentDescription("10003", substring = true).performClick()
+        onNodeWithText("Delete (2)").performClick()
+        onNodeWithText("Delete EMA players?").assertExists()
+        assertEquals(emptyList(), registry.deleteRequests)
+        onAllNodesWithText("Delete (2)").onLast().performClick()
+        awaitText("Players deleted: 1. Not deleted: 1.")
+
+        assertEquals(listOf(listOf("10002", "10003")), registry.deleteRequests)
+        onNodeWithText("The player is in a tournament.", substring = true).assertExists()
+        onNodeWithText("OK").performClick()
+        waitForIdle()
+        onAllNodesWithText("10002", substring = true).assertCountEquals(0)
+        onAllNodesWithText("10003", substring = true).onFirst().assertExists()
+        onNodeWithText("1 selected").assertExists()
+    }
+
+    @Test
+    fun editorCannotSelectOrDeleteEmaPlayers() = runComposeUiTest {
+        val world = World(GlobalUserRole.EDITOR, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.EDITOR) }
+        show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("10001")
+        onAllNodesWithText("Delete (0)").assertCountEquals(0)
+        onAllNodesWithContentDescription("10001", substring = true).assertCountEquals(0)
+    }
+
+    @Test
     fun editorCanReadButNotAddEmaPlayers() = runComposeUiTest {
         val world = World(GlobalUserRole.EDITOR, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.EDITOR) }
         show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }
@@ -270,7 +314,8 @@ class RoleGatingUiTest {
         onAllNodesWithText("10001", substring = true).onFirst().performClick()
         waitForIdle()
         onNodeWithText("Hide from the public").performScrollTo()
-        onAllNodes(isToggleable()).onFirst().assertIsOff().performClick()
+        // The list checkboxes come first; the switch is in the details, after them.
+        onAllNodes(isToggleable()).onLast().assertIsOff().performClick()
         waitForIdle()
         onNodeWithText("Save").performScrollTo().performClick()
         awaitText("Save player changes")

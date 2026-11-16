@@ -14,8 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.clear
+import mahjongtournamentsuite.adminapp.generated.resources.delete_selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_confirm_text
@@ -51,7 +54,7 @@ import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
-/** The bar above the list of accounts. Admins select accounts here and send them the password reset email. */
+/** The bar above the list of accounts. Admins select accounts here, send them the password reset email or delete them. */
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 internal fun PasswordResetBar(
@@ -61,6 +64,9 @@ internal fun PasswordResetBar(
     onSelectAllShown: () -> Unit,
     onClear: () -> Unit,
     onSend: () -> Unit,
+    /** The selected accounts that a delete would remove: the own account is never one of them. */
+    deleteCount: Int,
+    onDelete: () -> Unit,
     /** False on a phone, where the send button floats at the bottom of the screen. */
     showSend: Boolean = true,
 ) {
@@ -76,8 +82,17 @@ internal fun PasswordResetBar(
         }
         TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { Text(stringResource(Res.string.clear)) }
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showSend) Spacer(Modifier.weight(1f))
+        // On a phone the delete stays here, and the send button floats at the bottom of the screen.
+        TextButton(
+            enabled = deleteCount > 0 && !busy,
+            onClick = onDelete,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
+            Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
+            Text(stringResource(Res.string.delete_selected_count, deleteCount), Modifier.padding(start = 8.dp))
+        }
         if (showSend) {
-            Spacer(Modifier.weight(1f))
             Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
                 Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))

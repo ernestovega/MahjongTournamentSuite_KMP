@@ -69,6 +69,23 @@ data class PasswordResetsResponseDto(
 )
 
 @Serializable
+data class UserDeletesRequestDto(
+    val uids: List<String>,
+)
+
+@Serializable
+data class UserDeleteResultDto(
+    val uid: String,
+    val outcome: String,
+    val reason: String? = null,
+)
+
+@Serializable
+data class UserDeletesResponseDto(
+    val results: List<UserDeleteResultDto> = emptyList(),
+)
+
+@Serializable
 data class SetUserDisabledRequestDto(
     val disabled: Boolean,
 )

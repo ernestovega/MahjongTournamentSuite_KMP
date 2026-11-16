@@ -242,3 +242,50 @@ export async function updatePlayerPhoto(params: {
 export async function playerExists(emaId: string): Promise<boolean> {
   return (await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()).exists;
 }
+
+export type PlayerDeleteFailure = "NOT_FOUND" | "IN_TOURNAMENT" | "HAS_ACCOUNT" | "UNKNOWN";
+export type PlayerDeleteResult = { emaId: string; outcome: "DELETED" | "FAILED"; reason?: PlayerDeleteFailure };
+
+/** The server deletes up to 200 EMA players in one request. */
+export const MAX_PLAYER_DELETES = 200;
+
+/**
+ * Deletes EMA players for good, with their photo. A player that a tournament slot uses, or that an account has as its
+ * EMA number, stays: the tournament results and the account need it. Every player has its own result.
+ */
+export async function deletePlayers(emaIds: string[]): Promise<PlayerDeleteResult[]> {
+  const unique = [...new Set(emaIds)];
+  if (unique.length === 0) throw badRequest("Choose at least one player");
+  if (unique.length > MAX_PLAYER_DELETES) throw badRequest(`At most ${MAX_PLAYER_DELETES} players per request`);
+  const results: PlayerDeleteResult[] = [];
+  let deletedAny = false;
+  for (const emaId of unique) {
+    const fail = (reason: PlayerDeleteFailure): PlayerDeleteResult => ({ emaId, outcome: "FAILED", reason });
+    try {
+      const ref = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId);
+      const snapshot = await ref.get();
+      if (!snapshot.exists) {
+        results.push(fail("NOT_FOUND"));
+        continue;
+      }
+      const slots = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).limit(1).select().get();
+      if (!slots.empty) {
+        results.push(fail("IN_TOURNAMENT"));
+        continue;
+      }
+      if ((await db.doc(`emaIdIndex/${emaId}`).get()).exists) {
+        results.push(fail("HAS_ACCOUNT"));
+        continue;
+      }
+      if (typeof snapshot.get("photoUrl") === "string") await storage.deleteFiles({ prefix: `playerPhotos/${emaId}.` });
+      await ref.delete();
+      deletedAny = true;
+      results.push({ emaId, outcome: "DELETED" });
+    } catch (error) {
+      console.error("EMA player delete failed", { emaId, error });
+      results.push(fail("UNKNOWN"));
+    }
+  }
+  if (deletedAny) await bumpGlobalDataVersion("emaPlayers");
+  return results;
+}

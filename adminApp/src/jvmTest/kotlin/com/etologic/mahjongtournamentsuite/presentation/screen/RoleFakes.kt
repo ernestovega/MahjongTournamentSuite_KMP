@@ -24,6 +24,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -62,6 +64,20 @@ internal class FakeAdminRepository(
     override suspend fun deleteUser(uid: String): AppResult<Unit> {
         calls += "delete $uid"
         return write { }
+    }
+
+    /** The result of a bulk delete by uid. An account with no entry gets DELETED. */
+    val deleteResults = mutableMapOf<String, UserDeleteResult>()
+    val deleteRequests = mutableListOf<List<String>>()
+
+    /** The bulk delete request (counted from 1) that fails with a network error, and every request after it. */
+    var failDeletesFromRequest: Int = Int.MAX_VALUE
+
+    override suspend fun deleteUsers(uids: List<String>): AppResult<List<UserDeleteResult>> {
+        deleteRequests += uids
+        calls += "delete ${uids.joinToString(",")}"
+        if (deleteRequests.size >= failDeletesFromRequest) return AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Network)
+        return write { uids.map { deleteResults[it] ?: UserDeleteResult(it, UserDeleteOutcome.DELETED) } }
     }
 
     override suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> {
@@ -203,4 +219,20 @@ internal class FakePlayerRepository(private val players: List<Player> = emptyLis
         return AppResult.Success(Unit)
     }
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
+
+    /** The result of a bulk delete by EMA number. A player with no entry gets DELETED. */
+    val deleteResults = mutableMapOf<String, com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>()
+    val deleteRequests = mutableListOf<List<String>>()
+
+    override suspend fun deletePlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult>> {
+        deleteRequests += emaIds
+        return AppResult.Success(
+            emaIds.map {
+                deleteResults[it] ?: com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteResult(
+                    it,
+                    com.etologic.mahjongtournamentsuite.domain.model.PlayerDeleteOutcome.DELETED,
+                )
+            },
+        )
+    }
 }

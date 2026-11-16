@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">Joueur EMA créé</string>
     <string name="activity_action_registry_update">Joueur EMA modifié</string>
     <string name="activity_action_registry_photo">Photo du joueur EMA modifiée</string>
+    <string name="activity_action_registry_delete">Joueur EMA supprimé</string>
     <string name="activity_action_table_save">Table enregistrée</string>
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
@@ -799,4 +800,18 @@
     <string name="round_control_players">Ce que les joueurs peuvent faire</string>
     <string name="round_control_table_hands">Saisie des mains</string>
     <string name="round_control_table_status">État</string>
+    <string name="delete_selected_count">Supprimer (%1$d)</string>
+    <string name="users_delete_confirm_title">Supprimer les comptes ?</string>
+    <string name="users_delete_confirm_text">%1$d comptes seront supprimés définitivement : la connexion, l’e-mail, le pseudo et la photo. Les joueurs EMA et les résultats des tournois restent. Action irréversible.</string>
+    <string name="users_delete_summary">Comptes supprimés : %1$d. Non supprimés : %2$d.</string>
+    <string name="delete_failure_self">Vous ne pouvez pas supprimer votre propre compte.</string>
+    <string name="delete_failure_last_admin">C’est le dernier admin actif.</string>
+    <string name="delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
+    <string name="players_delete_confirm_title">Supprimer les joueurs EMA ?</string>
+    <string name="players_delete_confirm_text">%1$d joueurs EMA seront supprimés définitivement, avec leur photo. Un joueur inscrit à un tournoi ou qui a un compte reste. Action irréversible.</string>
+    <string name="players_delete_summary">Joueurs supprimés : %1$d. Non supprimés : %2$d.</string>
+    <string name="player_delete_failure_not_found">Le joueur n’existe pas.</string>
+    <string name="player_delete_failure_in_tournament">Le joueur est dans un tournoi.</string>
+    <string name="player_delete_failure_has_account">Un compte utilise ce numéro EMA.</string>
+    <string name="player_delete_failure_unknown">Le joueur n’a pas été supprimé. Réessayez.</string>
 </resources>

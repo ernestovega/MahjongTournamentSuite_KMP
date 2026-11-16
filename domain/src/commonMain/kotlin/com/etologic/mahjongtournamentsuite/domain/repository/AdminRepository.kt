@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 
 interface AdminRepository {
@@ -38,6 +39,9 @@ interface AdminRepository {
      * The EMA player and the results stay. Only admins can do this.
      */
     suspend fun deleteUser(uid: String): AppResult<Unit>
+
+    /** Deletes many accounts. Every account has its own result. The server takes up to 50 in one request. */
+    suspend fun deleteUsers(uids: List<String>): AppResult<List<UserDeleteResult>>
 
     /** Sets the own photo of another account. Only admins can do this. */
     suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser>

@@ -6,7 +6,7 @@ import { badRequest, forbidden } from "../httpError";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { listPlayerTournamentIds } from "../../services/playerAccountsService";
-import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
+import { createPlayer, deletePlayers, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
 
 export function playersRouter(): Router {
   const router = Router();
@@ -41,6 +41,25 @@ export function playersRouter(): Router {
         details: { firstName, lastName, country },
       });
       res.status(200).json(created);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Deletes many EMA players at once. A player that a tournament or an account uses stays, with its reason.
+  router.post("/delete", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
+      const emaIds = raw.map((value) => validateEmaId(value));
+      const results = await deletePlayers(emaIds);
+      const deleted = results.filter((result) => result.outcome === "DELETED").map((result) => result.emaId);
+      if (deleted.length > 0) {
+        await recordActivity({
+          action: "registry.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length} EMA players`,
+          details: { emaIds: deleted },
+        });
+      }
+      res.status(200).json({ results });
     } catch (error) {
       next(error);
     }
