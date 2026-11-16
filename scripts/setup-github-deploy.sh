@@ -22,7 +22,8 @@ gcloud services enable \
   cloudresourcemanager.googleapis.com serviceusage.googleapis.com \
   cloudfunctions.googleapis.com cloudbuild.googleapis.com run.googleapis.com \
   artifactregistry.googleapis.com eventarc.googleapis.com pubsub.googleapis.com \
-  cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com
+  cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com \
+  cloudbilling.googleapis.com firebaseextensions.googleapis.com
 gcloud services enable \
   firebase.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
   firestore.googleapis.com firebasestorage.googleapis.com \

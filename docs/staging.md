@@ -21,6 +21,7 @@ production data.
 2. Add a web app and copy its `apiKey`. Add an Android app with the package
    `com.etologic.mahjongtournamentsuite.staging` and put its `google-services.json` in `androidApp/src/staging/`.
 3. In Google Cloud Shell, from a clone of the repository: `PROJECT_ID=<project> bash scripts/setup-github-deploy.sh`.
+   It also enables the Cloud Billing API, which the deploy of the functions needs and cannot enable itself.
 4. In the Secret Manager of staging: `MTS_SMTP_URI` and `PLACES_API_KEY` (copies of production) and
    `MTS_ID_TOOLKIT_API_KEY` (the `apiKey` of step 2).
 5. In GitHub, the variables `STAGING_FIREBASE_PROJECT`, `STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER` and
