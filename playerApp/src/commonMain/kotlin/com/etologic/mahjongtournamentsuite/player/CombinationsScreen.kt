@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -68,6 +69,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_empty
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_examples
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_fold_all
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
@@ -97,7 +99,17 @@ internal data class Combination(val id: String, val points: Int, val tiles: Stri
     /** The explanation of the rules, with what the combination does not combine with, in its dialog. */
     val detail: StringResource get() = Res.allStringResources.getValue("comb_detail_$id")
     val groups: List<List<String>> by lazy { tiles?.let(TileNotation::parse).orEmpty() }
+
+    /** The examples of the Green Book: the tiles of each, and its text when it has one. */
+    val examples: List<CombinationExample> by lazy {
+        CombinationExamples[id].orEmpty().mapIndexed { index, notation ->
+            CombinationExample(TileNotation.parse(notation), Res.allStringResources["comb_example_${id}_${index + 1}"])
+        }
+    }
 }
+
+/** An example hand of a combination, as in the Green Book: its tiles and what it combines with. */
+internal data class CombinationExample(val groups: List<List<String>>, val text: StringResource?)
 
 /** The values of the combinations, from 1 to 88 points. */
 internal val CombinationValues: List<Int> by lazy { Combinations.map { it.points }.distinct() }
@@ -191,6 +203,8 @@ internal const val COMBINATIONS_SEARCH_TAG = "combinations-search"
 internal const val COMBINATION_ROW_TAG = "combination-row"
 internal const val POINTS_HEADER_TAG = "combination-points-header"
 internal const val POINTS_CHIP_TAG = "combination-points-chip"
+internal const val COMBINATION_EXAMPLE_TAG = "combination_example"
+
 internal const val COMBINATION_MINI_TILES_TAG = "combination_mini_tiles"
 
 internal const val COMBINATION_DIALOG_TAG = "combination-dialog"
@@ -201,6 +215,9 @@ private val MiniTileWidth = 24.dp
 
 /** The dialog of a combination: large enough for big tiles, not as wide as the screen. */
 private val DialogMaxWidth = 720.dp
+
+/** The largest a tile grows in an example of the dialog, smaller than the tiles of the combination itself. */
+private val ExampleTileWidth = 40.dp
 
 /** The largest a tile grows in the dialog of a combination. */
 private val DialogTileWidth = 64.dp
@@ -517,6 +534,28 @@ private fun CombinationRow(
     }
 }
 
+/** An example of the Green Book: its tiles, and under them what it combines with, one paragraph per idea. */
+@Composable
+private fun CombinationExampleView(example: CombinationExample) {
+    Column(
+        Modifier.fillMaxWidth().testTag(COMBINATION_EXAMPLE_TAG),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        TileGroupsRow(example.groups, Modifier.fillMaxWidth(), maxTileWidth = ExampleTileWidth, alignment = Alignment.TopCenter)
+        example.text?.let { text ->
+            stringResource(text).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }.forEach { paragraph ->
+                Text(
+                    paragraph,
+                    Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
 /**
  * A combination in large: its name, value, tiles and the explanation of the rules, all centered, one paragraph per idea.
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
@@ -565,6 +604,17 @@ private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                             )
+                        }
+                        if (combination.examples.isNotEmpty()) {
+                            HorizontalDivider()
+                            Text(
+                                stringResource(Res.string.combinations_examples),
+                                Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                            )
+                            combination.examples.forEach { example -> CombinationExampleView(example) }
                         }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

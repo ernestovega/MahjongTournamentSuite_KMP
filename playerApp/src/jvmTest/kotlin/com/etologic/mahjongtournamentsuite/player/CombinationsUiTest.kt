@@ -70,6 +70,9 @@ class CombinationsUiTest {
         onNodeWithText("Big four winds").performClick()
         onNodeWithTag(COMBINATION_DIALOG_TAG).assertExists()
         onNodeWithText("Does not combine with Big Three Winds", substring = true).assertExists()
+        // The three examples of the Green Book, with what they combine with.
+        onAllNodesWithTag(COMBINATION_EXAMPLE_TAG).assertCountEquals(3)
+        onNodeWithText("Combined with Half Flush.").assertExists()
         onNodeWithText("Close").performClick()
         onNodeWithTag(COMBINATION_DIALOG_TAG).assertDoesNotExist()
     }

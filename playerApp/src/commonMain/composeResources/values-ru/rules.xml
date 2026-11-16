@@ -8,6 +8,7 @@
     <string name="combinations_fold_all">Свернуть все</string>
     <string name="combinations_unfold">Развернуть</string>
     <string name="combinations_tiles_credit">Кости – Мартин Перссон:</string>
+    <string name="combinations_examples">Примеры</string>
     <string name="combinations_close">Закрыть</string>
     <string name="combinations_fold">Свернуть</string>
     <plurals name="combinations_points">

@@ -31,6 +31,18 @@ class ReferenceListsTest {
     }
 
     @Test
+    fun theExamplesOfTheGreenBookBelongToCombinationsAndHaveFullHands() {
+        val ids = Combinations.map { it.id }.toSet()
+        assertTrue(CombinationExamples.keys.all { it in ids }, "Examples of an unknown combination")
+        Combinations.flatMap { it.examples }.forEach { example ->
+            val tiles = example.groups.flatten()
+            // 13 when the example shows a hand still waiting for its last tile.
+            assertTrue(tiles.size in 13..18, "An example with ${tiles.size} tiles: $tiles")
+            tiles.forEach { assertTrue(it in Res.allDrawableResources, "No picture for $it") }
+        }
+    }
+
+    @Test
     fun everyTileOfEveryCombinationHasAPicture() {
         Combinations.flatMap { it.groups.flatten() }.toSet().forEach { tile ->
             assertTrue(tile in Res.allDrawableResources, "No picture for $tile")
