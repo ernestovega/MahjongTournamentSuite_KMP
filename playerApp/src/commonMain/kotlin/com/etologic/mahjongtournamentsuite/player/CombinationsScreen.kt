@@ -566,7 +566,7 @@ private fun CombinationExampleView(example: CombinationExample) {
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
  */
 @Composable
-private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
+internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
     val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {

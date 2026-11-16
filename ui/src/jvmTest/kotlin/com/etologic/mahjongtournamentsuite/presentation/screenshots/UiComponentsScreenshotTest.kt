@@ -68,6 +68,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChoos
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
+import com.etologic.mahjongtournamentsuite.presentation.language.AppLanguage
+import com.etologic.mahjongtournamentsuite.presentation.language.LanguageController
+import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -279,6 +283,13 @@ class UiComponentsScreenshotTest {
 
     @Test
     fun appChooserDialog() = component("dialog-app-chooser", variants = componentDialogVariants) { SuiteAppChooserDialog(onChoose = {}) }
+
+    @Test
+    fun aiTranslationDialog() = component("dialog-ai-translation", variants = componentDialogVariants) {
+        CompositionLocalProvider(LocalLanguageController provides LanguageController(AppLanguage.Spanish, showAiNotice = true) {}) {
+            AiTranslationNotice(onContact = {})
+        }
+    }
 
     @Test
     fun profileDialog() = component("dialog-profile", variants = componentDialogVariants) {
