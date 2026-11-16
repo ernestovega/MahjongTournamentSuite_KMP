@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -37,6 +38,10 @@ class RoundControlTest : AdminE2eTest() {
     private fun click(tag: String) {
         c.onNodeWithTag(tag).performScrollTo().performClick()
         c.waitForIdle()
+    }
+
+    private fun waitSelected(tag: String) = c.waitUntil(SERVER_WAIT_MS) {
+        runCatching { c.onNodeWithTag(tag).assertIsSelected().assertIsEnabled() }.isSuccess
     }
 
     @Test
@@ -84,10 +89,15 @@ class RoundControlTest : AdminE2eTest() {
         openRoundControl()
         c.waitForText("Table 1")
         val before = isCompleted(4, 1)
-        click(if (before) "table_1_in_play" else "table_1_completed")
+        val (first, second) = if (before) "table_1_in_play" to "table_1_completed" else "table_1_completed" to "table_1_in_play"
+        // The chips act on the mark that the dialog shows, so each press waits until the dialog has the new mark.
+        waitSelected(second)
+        click(first)
         c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 1) != before }
-        click(if (before) "table_1_completed" else "table_1_in_play")
+        waitSelected(first)
+        click(second)
         c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 1) == before }
+        waitSelected(second)
     }
 
     @Test
