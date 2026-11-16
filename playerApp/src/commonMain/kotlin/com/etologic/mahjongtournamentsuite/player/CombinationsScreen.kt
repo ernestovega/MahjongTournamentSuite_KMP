@@ -204,7 +204,7 @@ private val DialogMaxWidth = 720.dp
 /** The largest a tile grows in the dialog of a combination. */
 private val DialogTileWidth = 64.dp
 
-private val ListMaxWidth = 960.dp
+private val ListMaxWidth = 720.dp
 
 /**
  * The list of the combinations, grouped by value, with a search and a chip for each value.
@@ -221,8 +221,8 @@ fun CombinationsScreen(navController: NavHostController) {
     var opened by rememberSaveable { mutableStateOf<String?>(null) }
     val names = Combinations.associate { it.id to stringResource(it.name) }
     val descriptions = Combinations.associate { it.id to stringResource(it.description) }
-    val found = Combinations.withIndex().filter { (_, c) -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
-    val shown = found.filter { values.isEmpty() || it.value.points in values }
+    val found = Combinations.filter { c -> c.matches(query, names.getValue(c.id), descriptions[c.id]) }
+    val shown = found.filter { values.isEmpty() || it.points in values }
     val rowModifier = Modifier.widthIn(max = ListMaxWidth).fillMaxWidth()
 
     AppScaffold(
@@ -252,7 +252,7 @@ fun CombinationsScreen(navController: NavHostController) {
             }
             item(key = "values") {
                 PointsChips(
-                    counts = CombinationValues.associateWith { value -> found.count { it.value.points == value } },
+                    counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
                     selected = values,
                     onToggle = { value -> values = if (value in values) values - value else values + value },
                     modifier = rowModifier,
@@ -269,11 +269,10 @@ fun CombinationsScreen(navController: NavHostController) {
                 }
             }
             // One group for each value, under a header that stays at the top while its combinations scroll.
-            shown.groupBy { it.value.points }.forEach { (points, group) ->
+            shown.groupBy { it.points }.forEach { (points, group) ->
                 stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
-                items(group, key = { it.value.id }) { (index, combination) ->
+                items(group, key = { it.id }) { combination ->
                     CombinationRow(
-                        position = index + 1,
                         combination = combination,
                         name = names.getValue(combination.id),
                         description = descriptions.getValue(combination.id),
@@ -289,8 +288,8 @@ fun CombinationsScreen(navController: NavHostController) {
             item(key = "credit") { TilesCredit(rowModifier) }
         }
     }
-    Combinations.withIndex().firstOrNull { it.value.id == opened }?.let { (index, combination) ->
-        CombinationDialog(index + 1, combination, onDismiss = { opened = null })
+    Combinations.firstOrNull { it.id == opened }?.let { combination ->
+        CombinationDialog(combination, onDismiss = { opened = null })
     }
 }
 
@@ -447,7 +446,6 @@ private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CombinationRow(
-    position: Int,
     combination: Combination,
     name: String,
     description: String,
@@ -475,16 +473,11 @@ private fun CombinationRow(
                     if (miniTiles) {
                         TileGroupsRow(
                             combination.groups,
-                            Modifier.weight(1.5f).testTag(COMBINATION_MINI_TILES_TAG),
+                            Modifier.testTag(COMBINATION_MINI_TILES_TAG),
                             maxTileWidth = MiniTileWidth,
                             alignment = Alignment.CenterEnd,
                         )
                     }
-                    Text(
-                        "#$position",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                     IconButton(onClick = onFold) {
                         Icon(
                             Icons.Default.KeyboardArrowDown,
@@ -512,7 +505,7 @@ private fun CombinationRow(
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
  */
 @Composable
-private fun CombinationDialog(position: Int, combination: Combination, onDismiss: () -> Unit) {
+private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
     val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -522,19 +515,12 @@ private fun CombinationDialog(position: Int, combination: Combination, onDismiss
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(
+                    Text(
+                        stringResource(combination.name),
                         Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    ) {
-                        Text(
-                            stringResource(combination.name),
-                            Modifier.weight(1f, fill = false),
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                        Text("#$position", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                    )
                     Column(
                         Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
