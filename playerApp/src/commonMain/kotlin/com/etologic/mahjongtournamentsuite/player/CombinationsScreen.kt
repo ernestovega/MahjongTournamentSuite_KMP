@@ -58,6 +58,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
@@ -330,7 +331,7 @@ private fun PointsHeader(points: Int, modifier: Modifier = Modifier) {
             .padding(vertical = 4.dp),
     ) {
         Text(
-            stringResource(Res.string.combinations_points, points),
+            pluralStringResource(Res.plurals.combinations_points, points, points),
             Modifier
                 .background(MaterialTheme.colorScheme.primary, CircleShape)
                 .padding(horizontal = 12.dp, vertical = 4.dp)

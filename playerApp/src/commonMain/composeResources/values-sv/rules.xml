@@ -6,7 +6,10 @@
     <string name="combinations_empty">Ingen kombination matchar sökningen.</string>
     <string name="combinations_show_tiles">Visa alla brickor</string>
     <string name="combinations_hide_tiles">Dölj alla brickor</string>
-    <string name="combinations_points">%1$d poäng</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d poäng</item>
+        <item quantity="other">%1$d poäng</item>
+    </plurals>
     <string name="penalties_title">Straff</string>
     <string name="penalties_section_warning">Varning och stegrande straff</string>
     <string name="penalties_section_dead_hand">Död hand</string>

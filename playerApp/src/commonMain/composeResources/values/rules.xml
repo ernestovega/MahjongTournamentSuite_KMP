@@ -6,7 +6,10 @@
     <string name="combinations_empty">No combination matches the search.</string>
     <string name="combinations_show_tiles">Show all tiles</string>
     <string name="combinations_hide_tiles">Hide all tiles</string>
-    <string name="combinations_points">%1$d points</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
     <string name="penalties_title">Penalties</string>
     <string name="penalties_section_warning">Warning and progressive penalty</string>
     <string name="penalties_section_dead_hand">Dead hand</string>

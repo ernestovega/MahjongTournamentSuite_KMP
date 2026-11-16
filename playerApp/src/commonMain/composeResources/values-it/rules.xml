@@ -6,7 +6,10 @@
     <string name="combinations_empty">Nessuna combinazione corrisponde alla ricerca.</string>
     <string name="combinations_show_tiles">Mostra tutte le pedine</string>
     <string name="combinations_hide_tiles">Nascondi tutte le pedine</string>
-    <string name="combinations_points">%1$d punti</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d punto</item>
+        <item quantity="other">%1$d punti</item>
+    </plurals>
     <string name="penalties_title">Penalità</string>
     <string name="penalties_section_warning">Ammonizione e penalità progressiva</string>
     <string name="penalties_section_dead_hand">Mano morta</string>

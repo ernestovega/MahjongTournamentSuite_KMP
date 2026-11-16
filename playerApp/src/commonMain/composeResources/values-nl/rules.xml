@@ -6,7 +6,10 @@
     <string name="combinations_empty">Geen combinatie past bij de zoekopdracht.</string>
     <string name="combinations_show_tiles">Alle stenen tonen</string>
     <string name="combinations_hide_tiles">Alle stenen verbergen</string>
-    <string name="combinations_points">%1$d punten</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d punt</item>
+        <item quantity="other">%1$d punten</item>
+    </plurals>
     <string name="penalties_title">Straffen</string>
     <string name="penalties_section_warning">Waarschuwing en oplopende straf</string>
     <string name="penalties_section_dead_hand">Dode hand</string>

@@ -6,7 +6,10 @@
     <string name="combinations_empty">Ninguna combinación coincide con la búsqueda.</string>
     <string name="combinations_show_tiles">Mostrar todas las fichas</string>
     <string name="combinations_hide_tiles">Ocultar todas las fichas</string>
-    <string name="combinations_points">%1$d puntos</string>
+    <plurals name="combinations_points">
+        <item quantity="one">%1$d punto</item>
+        <item quantity="other">%1$d puntos</item>
+    </plurals>
     <string name="penalties_title">Penalizaciones</string>
     <string name="penalties_section_warning">Advertencia y sanción progresiva</string>
     <string name="penalties_section_dead_hand">Mano muerta</string>
