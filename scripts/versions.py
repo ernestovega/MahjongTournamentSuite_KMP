@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Versions of the two products: the web, and the Android app (with the desktop admin app).
+"""Versions of the three products: the web, the Android app (with the desktop admin app) and the backend.
 
 The versions live in gradle/libs.versions.toml. See docs/versioning.md.
 
     python3 scripts/versions.py show
-    python3 scripts/versions.py bump <web|admin>
+    python3 scripts/versions.py status
+    python3 scripts/versions.py bump <web|admin|backend>
     python3 scripts/versions.py check [--base origin/main]
+
+`status` puts the version of each product on main next to the published one: the web and the backend as the site
+answers them, and the Android app on each Google Play track. Google Play needs credentials: in GitHub Actions run
+Actions > Versions > Run workflow; on a computer, sign in with `gcloud auth application-default login` and install
+google-auth and google-api-python-client. Without them, `status` still shows the web and the backend.
 
 `check` lists the files that the branch changed since it left the base branch, finds the products
 that those files go into, and fails when one of those products has not a higher version than on
@@ -15,20 +21,27 @@ the base branch. The "Build and test" job runs it on every pull request to main.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CATALOG = "gradle/libs.versions.toml"
 
-WEB, ADMIN = "web", "admin"
-PRODUCTS = (WEB, ADMIN)
-LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app"}
-# The web has no version code because no store needs one.
-HAS_CODE = {WEB: False, ADMIN: True}
+WEB, ADMIN, BACKEND = "web", "admin", "backend"
+PRODUCTS = (WEB, ADMIN, BACKEND)
+LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app", BACKEND: "Backend"}
+# Only the Android app has a version code, because Google Play needs one.
+HAS_CODE = {WEB: False, ADMIN: True, BACKEND: False}
+# The products that the Gradle build makes. The backend is built with npm.
+GRADLE_PRODUCTS = {WEB, ADMIN}
+
+# The site that serves the web at / and /admin/, the file /version.json, and the backend at /api/.
+SITE = os.environ.get("MTS_SITE_URL", "https://mts.mahjongmadrid.com")
 
 # The products that each Gradle module goes into.
 MODULES = {
@@ -56,7 +69,7 @@ SOURCE_SETS = {
 # Root files of the Gradle build. A change can touch every product.
 BUILD_FILES = {"build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat"}
 
-VERSION_LINE = re.compile(r'^(?P<product>web|admin)-version(?P<kind>Name|Code)\s*=\s*"(?P<value>[^"]*)"\s*$', re.M)
+VERSION_LINE = re.compile(r'^(?P<product>web|admin|backend)-version(?P<kind>Name|Code)\s*=\s*"(?P<value>[^"]*)"\s*$', re.M)
 
 
 def git(*args: str) -> str:
@@ -71,7 +84,9 @@ def read_versions(text: str) -> dict[str, dict[str, str]]:
 
 
 def without_versions(text: str) -> str:
-    return VERSION_LINE.sub("", text)
+    # The line break goes too, so that adding a product's version lines is a change of version lines only.
+    # Comment lines go too: they change no build.
+    return re.sub(r"^\s*#.*\n?", "", re.sub(VERSION_LINE.pattern + r"\n?", "", text, flags=re.M), flags=re.M)
 
 
 def parse_name(name: str) -> tuple[int, int, int]:
@@ -104,13 +119,16 @@ def products_of(path: str) -> set[str]:
                 products = products & SOURCE_SETS[source_set]
         return set(products)
     if path in BUILD_FILES or (top == "gradle" and path != CATALOG):
-        return set(PRODUCTS)
+        return set(GRADLE_PRODUCTS)
     if top == "firebase":
-        # Everything under firebase/ is deployed with the web: functions, rules and indexes.
+        # Everything under firebase/ is the backend: functions, Firestore and Storage rules, and indexes.
         if "/test/" in path or re.search(r"\.test\.[cm]?[jt]s$", path):
             return set()
-        return {WEB}
-    if path in ("firebase.json", ".firebaserc") or top in ("public", "kotlin-js-store"):
+        return {BACKEND}
+    if path in ("firebase.json", ".firebaserc"):
+        # They configure the hosting of the web and the deploy of the backend.
+        return {WEB, BACKEND}
+    if top in ("public", "kotlin-js-store"):
         return {WEB}
     return set()
 
@@ -135,7 +153,7 @@ def check(base: str) -> int:
             # Only the version lines changed: nothing else to bump.
             if without_versions(head_text) == without_versions(base_text):
                 continue
-            touched = set(PRODUCTS)
+            touched = set(GRADLE_PRODUCTS)
         else:
             touched = products_of(path)
         for product in touched:
@@ -212,10 +230,110 @@ def show() -> int:
     return 0
 
 
+def fetch_json(url: str) -> dict:
+    request = urllib.request.Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "mts-versions"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return json.load(response)
+
+
+def published_web() -> str:
+    """The web version that the site serves, from /version.json (written by scripts/assemble-web-hosting.sh)."""
+    try:
+        return fetch_json(f"{SITE}/version.json").get("web") or "unknown"
+    except Exception as error:  # noqa: BLE001 - any failure is shown, not raised
+        return f"unknown ({error})"
+
+
+def published_backend() -> str:
+    """The backend version that the API answers on /api/health."""
+    try:
+        return fetch_json(f"{SITE}/api/health").get("version") or "unknown (deployed before it had a version)"
+    except Exception as error:  # noqa: BLE001
+        return f"unknown ({error})"
+
+
+TRACK_LABELS = {"internal": "internal testing", "alpha": "closed testing", "beta": "open testing", "production": "production"}
+
+
+def published_android(latest_code: str) -> list[str]:
+    """The releases of the Android app on each Google Play track, or why they could not be read."""
+    try:
+        import play
+        tracks = play.tracks(play.publisher(), play.PACKAGES[ADMIN])
+    except ImportError:
+        return ["needs google-auth and google-api-python-client (or run Actions > Versions)"]
+    except Exception as error:  # noqa: BLE001
+        return [f"could not read Google Play ({type(error).__name__}: {error})"]
+    order = list(TRACK_LABELS)
+    lines = []
+    for track in sorted(tracks, key=lambda name: (order.index(name) if name in order else len(order), name)):
+        for release in tracks[track]:
+            codes = release.get("versionCodes", [])
+            state = release.get("status", "")
+            text = f"{TRACK_LABELS.get(track, track)}: {release.get('name') or ', '.join(codes)}"
+            if state != "completed":
+                text += f" [{state}]"
+            if state == "completed" and latest_code in codes:
+                text += "  ✓ up to date"
+            lines.append(text)
+    return lines or ["nothing on Google Play"]
+
+
+def main_versions() -> tuple[dict[str, dict[str, str]], str]:
+    """The versions on origin/main, or in this checkout when origin/main cannot be read."""
+    try:
+        git("fetch", "--quiet", "origin", "main")
+    except subprocess.CalledProcessError:
+        pass
+    try:
+        return read_versions(git("show", f"origin/main:{CATALOG}")), "main"
+    except subprocess.CalledProcessError:
+        return read_versions((ROOT / CATALOG).read_text()), "this checkout"
+
+
+def status() -> int:
+    latest, where = main_versions()
+
+    def name(product: str) -> str:
+        values = latest.get(product, {})
+        return values.get("name", "?") + (f" ({values['code']})" if "code" in values else "")
+
+    def mark(published: str, product: str) -> str:
+        if published.startswith("unknown") or published.startswith("could not"):
+            return ""
+        return "  ✓ up to date" if published == latest.get(product, {}).get("name") else "  ← not published yet"
+
+    web, backend = published_web(), published_backend()
+    android = published_android(latest.get(ADMIN, {}).get("code", ""))
+    rows = [
+        ("Web", name(WEB), [web + mark(web, WEB)]),
+        ("Backend", name(BACKEND), [backend + mark(backend, BACKEND)]),
+        ("Android app", name(ADMIN), android),
+    ]
+    print(f"Latest = {where}. Published web and backend = {SITE}.\n")
+    width = max(len(row[0]) for row in rows)
+    latest_width = max(len(row[1]) for row in rows)
+    print(f"{'Product'.ljust(width)}  {'Latest'.ljust(latest_width)}  Published")
+    for label, newest, published in rows:
+        for index, line in enumerate(published):
+            first = index == 0
+            print(f"{(label if first else '').ljust(width)}  {(newest if first else '').ljust(latest_width)}  {line}")
+
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a") as out:
+            out.write(f"### Versions\n\nLatest = {where}. Published web and backend = {SITE}.\n\n")
+            out.write("| Product | Latest | Published |\n|---|---|---|\n")
+            for label, newest, published in rows:
+                out.write(f"| {label} | {newest} | {'<br>'.join(published)} |\n")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("show")
+    commands.add_parser("status")
     bump_parser = commands.add_parser("bump")
     bump_parser.add_argument("product", choices=PRODUCTS)
     check_parser = commands.add_parser("check")
@@ -225,6 +343,8 @@ def main() -> int:
         return bump(args.product)
     if args.command == "check":
         return check(args.base)
+    if args.command == "status":
+        return status()
     return show()
 
 

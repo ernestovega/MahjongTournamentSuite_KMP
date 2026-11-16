@@ -1,5 +1,6 @@
 import express from "express";
 
+import { backendVersion } from "../backendVersion";
 import { gzipJson } from "./middleware/gzipJson";
 import { appCheck } from "./middleware/appCheck";
 import { errorHandler } from "./middleware/errorHandler";
@@ -77,7 +78,8 @@ export function buildApp(): express.Express {
   });
 
   app.get("/health", (_req, res) => {
-    res.status(200).json({ ok: true });
+    // The version lets anyone see which backend is deployed: python3 scripts/versions.py status.
+    res.status(200).json({ ok: true, version: backendVersion() });
   });
 
   // Every route except /health needs a valid App Check token when the mode is "enforce".

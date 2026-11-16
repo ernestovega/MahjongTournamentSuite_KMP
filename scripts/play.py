@@ -2,6 +2,7 @@
 """Publishes the Android app on Google Play. See docs/android-release.md.
 
     python3 scripts/play.py pending
+    python3 scripts/play.py tracks
     python3 scripts/play.py upload admin <path/to/app-release.aab>
 
 `pending` asks Google Play which version codes the app already has, and says whether its version code in
@@ -56,6 +57,16 @@ def uploaded_codes(service, package: str) -> set[int]:
     codes = {int(item["versionCode"]) for item in bundles.get("bundles", [])}
     codes |= {int(item["versionCode"]) for item in apks.get("apks", [])}
     return codes
+
+
+def tracks(service, package: str) -> dict[str, list[dict]]:
+    """The releases on each track of the app, as Google Play lists them. Tracks without releases are left out."""
+    edit = service.edits().insert(packageName=package, body={}).execute()
+    try:
+        listed = service.edits().tracks().list(packageName=package, editId=edit["id"]).execute()
+    finally:
+        service.edits().delete(packageName=package, editId=edit["id"]).execute()
+    return {item["track"]: item["releases"] for item in listed.get("tracks", []) if item.get("releases")}
 
 
 def pending() -> int:
@@ -123,6 +134,12 @@ def upload(app: str, bundle: Path) -> int:
 def main(args: list[str]) -> int:
     if args == ["pending"]:
         return pending()
+    if args == ["tracks"]:
+        for app, package in PACKAGES.items():
+            for track, releases in tracks(publisher(), package).items():
+                for release in releases:
+                    print(f"{LABELS[app]} on {track}: {release.get('name')} {release.get('versionCodes')} {release.get('status')}")
+        return 0
     if len(args) == 3 and args[0] == "upload" and args[1] in PACKAGES:
         return upload(args[1], Path(args[2]))
     print(__doc__, file=sys.stderr)

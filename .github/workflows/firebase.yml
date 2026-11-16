@@ -215,6 +215,12 @@ jobs:
           --non-interactive
           --force
 
+      # The table of versions in the summary of the run. Google Play is shown by the job below and by
+      # Actions > Versions.
+      - name: Show the versions
+        if: always()
+        run: python3 scripts/versions.py status
+
   # Setup of Google Play and the upload keystores: docs/android-release.md.
   # Paused on push (Ernesto, 2026-11-11): small changes must not reach Google Play. It runs only when the workflow is
   # started by hand on main, from the Actions tab. To publish on every push again, put back `github.event_name != 'pull_request'`.
@@ -285,3 +291,7 @@ jobs:
       - name: Remove the keystores
         if: always()
         run: rm -f "$RUNNER_TEMP"/mts-upload.jks
+
+      - name: Show the versions
+        if: always()
+        run: python3 scripts/versions.py status

@@ -20,6 +20,7 @@ CATALOG_TEXT = """[versions]
 web-versionName = "1.0.4"
 admin-versionName = "1.0.3"
 admin-versionCode = "3"
+backend-versionName = "1.0.2"
 kotlin = "2.0.0"
 """
 
@@ -62,13 +63,18 @@ class ProductsOfTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(versions.products_of(path), set())
 
-    def test_the_backend_and_the_hosting_go_with_the_web(self):
-        self.assertEqual(versions.products_of("firebase/functions/src/services/a.ts"), {"web"})
-        self.assertEqual(versions.products_of("firebase/firestore.rules"), {"web"})
-        self.assertEqual(versions.products_of("firebase.json"), {"web"})
-        self.assertEqual(versions.products_of(".firebaserc"), {"web"})
+    def test_firebase_goes_into_the_backend(self):
+        self.assertEqual(versions.products_of("firebase/functions/src/services/a.ts"), {"backend"})
+        self.assertEqual(versions.products_of("firebase/firestore.rules"), {"backend"})
+        self.assertEqual(versions.products_of("firebase/functions/package.json"), {"backend"})
+
+    def test_the_firebase_config_goes_into_the_web_and_the_backend(self):
+        self.assertEqual(versions.products_of("firebase.json"), {"web", "backend"})
+        self.assertEqual(versions.products_of(".firebaserc"), {"web", "backend"})
+        self.assertEqual(versions.products_of("public/robots.txt"), {"web"})
 
     def test_root_build_files_and_gradle_files_touch_every_product(self):
+        # The backend is not built with Gradle.
         self.assertEqual(versions.products_of("build.gradle.kts"), {"web", "admin"})
         self.assertEqual(versions.products_of("gradle/wrapper/gradle-wrapper.properties"), {"web", "admin"})
 
@@ -84,6 +90,7 @@ class CatalogTest(unittest.TestCase):
             {
                 "web": {"name": "1.0.4"},
                 "admin": {"name": "1.0.3", "code": "3"},
+                "backend": {"name": "1.0.2"},
             },
         )
 
@@ -140,8 +147,10 @@ class GitRepoTest(unittest.TestCase):
     def test_bump_raises_only_the_patch_and_the_code(self):
         self.quiet(versions.bump, "admin")
         self.quiet(versions.bump, "web")
+        self.quiet(versions.bump, "backend")
         self.assertEqual(self.catalog()["admin"], {"name": "1.0.4", "code": "4"})
         self.assertEqual(self.catalog()["web"], {"name": "1.0.5"})
+        self.assertEqual(self.catalog()["backend"], {"name": "1.0.3"})
 
     def test_a_branch_that_only_changes_tests_and_docs_needs_no_bump(self):
         self.write("data/src/commonTest/kotlin/ATest.kt", "test")
@@ -188,6 +197,35 @@ class GitRepoTest(unittest.TestCase):
         self.assertEqual(result, 1)
         for product in ("web", "admin"):
             self.assertIn(f"bump {product}", out)
+        self.assertNotIn("bump backend", out)
+
+    def test_a_comment_in_the_catalog_needs_no_bump(self):
+        self.write(versions.CATALOG, "# A comment\n" + CATALOG_TEXT)
+        self.commit()
+        self.assertEqual(self.quiet(versions.check, "main")[0], 0)
+
+    def test_a_backend_change_needs_only_a_backend_bump(self):
+        self.write("firebase/functions/src/a.ts", "code")
+        self.commit()
+        result, out = self.quiet(versions.check, "main")
+        self.assertEqual(result, 1)
+        self.assertIn("bump backend", out)
+        self.assertNotIn("bump web", out)
+        self.quiet(versions.bump, "backend")
+        self.commit()
+        self.assertEqual(self.quiet(versions.check, "main")[0], 0)
+
+    def test_a_base_without_the_backend_accepts_it_as_new(self):
+        catalog = CATALOG_TEXT.replace('backend-versionName = "1.0.2"\n', "")
+        self.git("checkout", "-q", "main")
+        self.write(versions.CATALOG, catalog)
+        self.commit()
+        self.git("checkout", "-q", "-b", "add-backend")
+        self.write(versions.CATALOG, CATALOG_TEXT)
+        self.commit()
+        result, out = self.quiet(versions.check, "main")
+        self.assertEqual(result, 0)
+        self.assertIn("Backend: 1.0.2 (new", out)
 
     def test_a_catalog_change_of_only_the_version_lines_needs_nothing_else(self):
         self.quiet(versions.bump, "admin")
