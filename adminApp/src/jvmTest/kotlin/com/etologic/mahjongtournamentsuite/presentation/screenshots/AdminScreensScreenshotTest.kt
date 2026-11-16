@@ -1,7 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -90,6 +95,28 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun users() = adminScreenshots("users", ready = { waitForText("ada@example.test", substring = true) }) { nav -> GlobalUsersScreen(nav) }
+
+    /** An admin chose some EMA players: the bar offers to delete their accounts. */
+    @Test
+    fun playerBaseSelected() = adminScreenshots(
+        "player-base-selected",
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            onAllNodesWithText("Select all shown", substring = true).onFirst().performClick()
+            waitForIdle()
+        },
+    ) { nav -> PlayerBaseScreen(nav) }
+
+    /** An admin chose two accounts: the bar offers to delete them. */
+    @Test
+    fun usersSelected() = adminScreenshots(
+        "users-selected",
+        ready = {
+            waitForText("ada@example.test", substring = true)
+            onAllNodes(hasContentDescription("ada@example.test") and hasClickAction()).onFirst().performClick()
+            waitForIdle()
+        },
+    ) { nav -> GlobalUsersScreen(nav) }
 
     @Test
     fun statistics() = adminScreenshots("statistics", ready = { waitForText("Top players") }) { nav ->

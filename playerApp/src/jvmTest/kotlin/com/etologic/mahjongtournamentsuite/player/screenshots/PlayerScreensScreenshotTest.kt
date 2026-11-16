@@ -6,13 +6,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
+import com.etologic.mahjongtournamentsuite.player.CombinationDialog
+import com.etologic.mahjongtournamentsuite.player.Combinations
 import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
 import com.etologic.mahjongtournamentsuite.player.CreditsDialog
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
@@ -64,6 +70,21 @@ class PlayerScreensScreenshotTest {
     ) {
         CreditsDialog(onDismiss = {})
     }
+
+    /** The dialog of a combination: its tiles, its detail and the examples of the Green Book. */
+    private fun combinationDialog(id: String) = playerScreenshots(
+        "dialogs/combination-${id.replace('_', '-')}",
+        variants = dialogVariants,
+        ready = { waitUntil(timeoutMillis = 10_000) { onAllNodesWithTag(COMBINATION_DIALOG_TAG).fetchSemanticsNodes().isNotEmpty() } },
+    ) {
+        CombinationDialog(Combinations.first { it.id == id }, onDismiss = {})
+    }
+
+    @Test
+    fun combinationWithExamples() = combinationDialog("big_four_winds")
+
+    @Test
+    fun combinationWithoutExamples() = combinationDialog("pure_double_chow")
 
     @Test
     fun myTableButton() = playerScreenshots("components/my-table-button", variants = componentVariants, ready = { waitForText("Go to my table") }) {
@@ -138,6 +159,27 @@ class PlayerScreensScreenshotTest {
 
     @Test
     fun combinations() = playerScreenshots("combinations", ready = { waitForText("Pure double chow") }) { nav -> CombinationsScreen(nav) }
+
+    @Test
+    fun combinationsFolded() = playerScreenshots(
+        "combinations-folded",
+        ready = {
+            waitForText("Pure double chow")
+            onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
+            waitForIdle()
+        },
+    ) { nav -> CombinationsScreen(nav) }
+
+    @Test
+    fun combinationsOneValue() = playerScreenshots(
+        "combinations-one-value",
+        ready = {
+            waitForText("Pure double chow")
+            onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
+            onNode(hasText("24 points (9)")).performScrollTo().performClick()
+            waitForIdle()
+        },
+    ) { nav -> CombinationsScreen(nav) }
 
     @Test
     fun penalties() = playerScreenshots("penalties", ready = { waitForText("Dead hand") }) { nav -> PenaltiesScreen(nav) }

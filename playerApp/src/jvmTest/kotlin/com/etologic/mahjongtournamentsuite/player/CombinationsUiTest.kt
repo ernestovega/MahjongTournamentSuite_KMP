@@ -8,6 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -18,6 +20,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -75,6 +78,17 @@ class CombinationsUiTest {
         onNodeWithText("Combined with Half Flush.").assertExists()
         onNodeWithText("Close").performClick()
         onNodeWithTag(COMBINATION_DIALOG_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun theDialogScrollsOnASmallScreen() = runDesktopComposeUiTest(width = 320, height = 480) {
+        setContent { MtsTheme(useDarkTheme = false) { CombinationsScreen(rememberNavController()) } }
+        onNodeWithTag(COMBINATIONS_SEARCH_TAG).performTextInput("big four")
+        onNodeWithText("Big four winds").performClick()
+        // The last example does not fit: it shows after a scroll, and the Close button stays on screen.
+        onNodeWithText("Combined with Half Flush.").assertIsNotDisplayed()
+        onNodeWithText("Combined with Half Flush.").performScrollTo().assertIsDisplayed()
+        onNodeWithText("Close").assertIsDisplayed()
     }
 
     @Test

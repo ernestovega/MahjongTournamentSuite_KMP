@@ -562,10 +562,11 @@ private fun CombinationExampleView(example: CombinationExample) {
 
 /**
  * A combination in large: its name, value, tiles and the explanation of the rules, all centered, one paragraph per idea.
+ * The first paragraph, the definition, is bold.
  * It is a plain dialog and not an AlertDialog, because an AlertDialog never grows wider than 560 dp and the tiles need more.
  */
 @Composable
-private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
+internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
     val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -588,7 +589,7 @@ private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
                         Text(
                             pluralStringResource(Res.plurals.combinations_points, combination.points, combination.points),
                             Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
                             textAlign = TextAlign.Center,
@@ -601,11 +602,13 @@ private fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
                                 alignment = Alignment.TopCenter,
                             )
                         }
-                        paragraphs.forEach { paragraph ->
+                        paragraphs.forEachIndexed { index, paragraph ->
+                            // The first paragraph is the definition, in bold. The others, such as what it does not combine with, are not.
                             Text(
                                 paragraph,
                                 Modifier.fillMaxWidth(),
                                 style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
                                 textAlign = TextAlign.Center,
                             )
                         }
