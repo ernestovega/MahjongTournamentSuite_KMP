@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- The editions downloaded from the site. -->
+    <files-path name="greenbook-kept" path="greenbook/" />
+    <!-- The copy of the English edition inside the app. -->
     <cache-path name="greenbook" path="greenbook/" />
 </paths>

@@ -176,6 +176,8 @@
     <string name="menu_contact">Kontakt</string>
     <string name="menu_privacy">Integritet</string>
     <string name="menu_green_book">Green Book</string>
+    <string name="green_book_downloading">Laddar ner Green Book…</string>
+    <string name="green_book_offline">Green Book på ditt språk kunde inte laddas ner.\nDen engelska versionen öppnas i stället.</string>
     <string name="tournaments_title">Turneringar</string>
     <string name="tournaments_no_match">Ingen turnering matchar filtren.</string>
     <string name="tournament_you_play">Du spelar i den här turneringen</string>

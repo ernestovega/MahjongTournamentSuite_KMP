@@ -182,6 +182,8 @@
     <string name="menu_contact">Связаться</string>
     <string name="menu_privacy">Конфиденциальность</string>
     <string name="menu_green_book">Green Book</string>
+    <string name="green_book_downloading">Загрузка Green Book…</string>
+    <string name="green_book_offline">Не удалось загрузить Green Book на вашем языке.\nОткрывается английская версия.</string>
     <string name="tournaments_title">Турниры</string>
     <string name="tournaments_no_match">Нет турниров по этим фильтрам.</string>
     <string name="tournament_you_play">Вы играете в этом турнире</string>
