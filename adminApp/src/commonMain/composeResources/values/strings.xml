@@ -787,6 +787,7 @@
     <string name="round_control_tables">Tables</string>
     <string name="round_control_tables_help">Status (In play / Completed)\nThe same mark as the Completed switch of the table editor. A completed table takes no hands.\n\nHand entry\n• Like the round: uses the mode of the round.\n• Open or Closed: wins over the round.</string>
     <string name="round_control_table_completed">Completed</string>
+    <string name="round_control_table_all_hands_done">This table has every hand done, so it stays completed.\n\nTo open it again, change one of its hands in the table editor.</string>
     <string name="round_control_table_in_play">In play</string>
     <string name="round_control_table_round">Like the round</string>
     <string name="round_control_no_tables">This round has no tables yet.</string>

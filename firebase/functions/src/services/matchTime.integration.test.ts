@@ -204,6 +204,18 @@ describe("match time", () => {
       await recordHand({ tournamentId: closed.tournamentId, roundId: 1, tableId: 1, uid: closed.uid, input: win(), expectedVersion: 2 });
     });
 
+    it("a table with every hand done stays completed, and the admin is told why", async () => {
+      const full = await seedTimedTable(30, "STOP", 16);
+      // The last saved hand completes the table by itself, like the editor and the phones do.
+      await control(full.tournamentId, { completeTables: [1] });
+      assert.equal((await readTable(full.tournamentId, 1, 1)).isCompleted, true);
+      await assert.rejects(
+        control(full.tournamentId, { reopenTables: [1] }),
+        (error: unknown) => (error as { details?: { code?: string } }).details?.code === "TABLE_HAS_ALL_HANDS",
+      );
+      assert.equal((await readTable(full.tournamentId, 1, 1)).isCompleted, true);
+    });
+
     it("an admin marks a table as completed, like the Completed switch of the editor", async () => {
       const running = await seedTimedTable(30, "STOP");
       const answer = await control(running.tournamentId, { completeTables: [1] });

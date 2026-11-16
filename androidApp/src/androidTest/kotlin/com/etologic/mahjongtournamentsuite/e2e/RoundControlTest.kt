@@ -84,20 +84,30 @@ class RoundControlTest : AdminE2eTest() {
         c.onNodeWithTag("table_2_auto").assertIsSelected()
     }
 
+    /** Table 5 of round 4 has 11 of its 16 hands done, so it is in play and can be completed and opened again. */
     @Test
     fun completedAndInPlayChangeTheTableLikeTheSwitchOfTheEditor() {
         openRoundControl()
-        c.waitForText("Table 1")
-        val before = isCompleted(4, 1)
-        val (first, second) = if (before) "table_1_in_play" to "table_1_completed" else "table_1_completed" to "table_1_in_play"
+        check(!isCompleted(4, 5)) { "Table 5 of round 4 should start in play" }
         // The chips act on the mark that the dialog shows, so each press waits until the dialog has the new mark.
-        waitSelected(second)
-        click(first)
-        c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 1) != before }
-        waitSelected(first)
-        click(second)
-        c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 1) == before }
-        waitSelected(second)
+        waitSelected("table_5_in_play")
+        click("table_5_completed")
+        c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 5) }
+        waitSelected("table_5_completed")
+        click("table_5_in_play")
+        c.waitUntil(SERVER_WAIT_MS) { !isCompleted(4, 5) }
+        waitSelected("table_5_in_play")
+    }
+
+    /** Table 1 of round 4 has every hand done. It stays completed, and the dialog says why. */
+    @Test
+    fun aTableWithEveryHandDoneStaysCompletedAndTheDialogSaysWhy() {
+        openRoundControl()
+        check(isCompleted(4, 1)) { "Table 1 of round 4 should start completed" }
+        waitSelected("table_1_completed")
+        click("table_1_in_play")
+        c.waitForText("This table has every hand done, so it stays completed.", substring = true)
+        check(isCompleted(4, 1)) { "Table 1 of round 4 opened" }
     }
 
     @Test

@@ -185,7 +185,7 @@ async function setTableCompleted(
     const table = await transaction.get(tableRef);
     if (!table.exists) throw notFound(`Table ${tableId} not found`);
     if ((table.get("isCompleted") === true) === completed) return false;
-    await saveTableStateInTransaction(transaction, {
+    const saved = await saveTableStateInTransaction(transaction, {
       tournamentId,
       roundId,
       tableId,
@@ -194,6 +194,10 @@ async function setTableCompleted(
       handPatches: [],
       actor: actor ?? { uid: "system", name: "Round control", source: "system" },
     });
+    // A table with every hand done is always completed. Say so instead of keeping it completed in silence.
+    if (!completed && saved.table.isCompleted) {
+      throw conflict(`Table ${tableId} has every hand done, so it stays completed`, { code: "TABLE_HAS_ALL_HANDS", tableId });
+    }
     return true;
   });
 }

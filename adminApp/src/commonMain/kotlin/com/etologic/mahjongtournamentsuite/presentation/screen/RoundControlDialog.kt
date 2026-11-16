@@ -49,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.TABLE_HAS_ALL_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -87,6 +88,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_round_i
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_running
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_seats
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_seats_help
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_all_hands_done
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_completed
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_in_play
@@ -203,7 +205,14 @@ internal fun RoundControlDialogContent(
     // The round whose clock runs now, if any.
     val runningRound = state.clocks.runningRound(state.durationMinutes, state.serverNow(now))
 
-    error?.let { AppErrorDialog(it.toUiText(), onDismiss = { error = null }) }
+    error?.let {
+        // A table with every hand done always stays completed. The text says how to open it.
+        if (it == AppError.Conflict(TABLE_HAS_ALL_HANDS)) {
+            AppErrorDialog(stringResource(Res.string.round_control_table_all_hands_done), onDismiss = { error = null })
+        } else {
+            AppErrorDialog(it.toUiText(), onDismiss = { error = null })
+        }
+    }
     when (prompt) {
         RoundControlPrompt.SetTime -> MinutesDialog(
             name = "RoundControlSetTime",

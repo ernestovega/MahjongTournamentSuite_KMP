@@ -233,10 +233,14 @@ internal class FakeTournamentRepository : TournamentRepository {
     }
 
     var roundControls: List<RoundControl> = emptyList()
+
+    /** Tables with every hand done: the server refuses to open them, as the real one does. */
+    var tablesWithAllHands: Set<Int> = emptySet()
     val controlChanges = mutableListOf<Pair<Int, RoundControlChange>>()
 
     override suspend fun updateRoundControl(tournamentId: String, roundId: Int, change: RoundControlChange): AppResult<RoundClocks> {
         clockError?.let { return AppResult.Failure(it) }
+        if (change.reopenTables.any { it in tablesWithAllHands }) return AppResult.Failure(AppError.Conflict(TABLE_HAS_ALL_HANDS))
         controlChanges += roundId to change
         val current = roundControls.of(roundId)
         val tables = change.table?.let { (tableId, mode) ->

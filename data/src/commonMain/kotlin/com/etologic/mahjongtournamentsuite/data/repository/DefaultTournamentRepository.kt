@@ -50,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import com.etologic.mahjongtournamentsuite.domain.model.TABLE_HAS_ALL_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -920,7 +921,9 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Changing the round control failed." }
-            AppResult.Failure(throwable.toAppError())
+            val allHandsDone = (throwable as? BackendHttpException)
+                ?.takeIf { it.status == HttpStatusCode.Conflict && it.responseBody.contains(TABLE_HAS_ALL_HANDS) }
+            AppResult.Failure(if (allHandsDone != null) AppError.Conflict(TABLE_HAS_ALL_HANDS) else throwable.toAppError())
         },
     )
 

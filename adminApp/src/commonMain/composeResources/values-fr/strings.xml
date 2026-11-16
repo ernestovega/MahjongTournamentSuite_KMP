@@ -787,6 +787,7 @@
     <string name="round_control_tables">Tables</string>
     <string name="round_control_tables_help">Statut (En jeu / Terminée)\nLa même marque que l'interrupteur Completed de l'éditeur de tables. Une table terminée n'accepte plus de mains.\n\nSaisie des mains\n• Comme le tour : utilise le mode du tour.\n• Ouvert ou Fermé : l'emporte sur le tour.</string>
     <string name="round_control_table_completed">Terminée</string>
+    <string name="round_control_table_all_hands_done">Cette table a toutes ses mains faites, elle reste donc terminée.\n\nPour la rouvrir, modifiez une de ses mains dans l'éditeur de tables.</string>
     <string name="round_control_table_in_play">En jeu</string>
     <string name="round_control_table_round">Comme le tour</string>
     <string name="round_control_no_tables">Ce tour n'a pas encore de tables.</string>

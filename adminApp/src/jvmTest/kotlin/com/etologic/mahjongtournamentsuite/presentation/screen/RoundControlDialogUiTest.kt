@@ -311,4 +311,17 @@ class RoundControlDialogUiTest {
         assertFalse(server.tables.getValue(TableKey(1, 1)).first.isCompleted)
         onNodeWithTag("table_1_in_play").assertIsSelected()
     }
+
+    @Test
+    fun inPlayExplainsWhyATableWithEveryHandDoneStaysCompleted() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min)).apply { tablesWithAllHands = setOf(2) }
+        show(server)
+
+        onNodeWithTag("table_2_in_play").performScrollTo().performClick()
+        settle()
+
+        onNodeWithText("This table has every hand done, so it stays completed.", substring = true).assertExists()
+        assertTrue(server.tables.getValue(TableKey(1, 2)).first.isCompleted)
+        onNodeWithTag("table_2_completed").assertIsSelected()
+    }
 }

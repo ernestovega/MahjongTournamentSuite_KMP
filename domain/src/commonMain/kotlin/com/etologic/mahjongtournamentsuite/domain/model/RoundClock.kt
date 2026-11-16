@@ -81,6 +81,9 @@ sealed interface RoundClockAction {
 /** The message of the [AppError.Conflict] of a reset of a round with saved hands. The Timer asks for a confirmation. */
 const val ROUND_HAS_HANDS = "ROUND_HAS_HANDS"
 
+/** The answer of the server when Round control asks to open a table that has every hand done. */
+const val TABLE_HAS_ALL_HANDS = "TABLE_HAS_ALL_HANDS"
+
 /** A manual control of the plan B of the Timer. Automatic follows the clock of the round, as always. */
 enum class ControlMode { AUTO, OPEN, CLOSED }
 

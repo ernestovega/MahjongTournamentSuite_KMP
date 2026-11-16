@@ -787,6 +787,7 @@
     <string name="round_control_tables">Mesas</string>
     <string name="round_control_tables_help">Estado (En juego / Completada)\nEs la misma marca que el interruptor Completed del editor de mesas. Una mesa completada no admite manos.\n\nEntrada de manos\n• Como la ronda: usa el modo de la ronda.\n• Abierto o Cerrado: mandan sobre la ronda.</string>
     <string name="round_control_table_completed">Completada</string>
+    <string name="round_control_table_all_hands_done">Esta mesa tiene todas las manos hechas, así que sigue completada.\n\nPara abrirla otra vez, cambia una de sus manos en el editor de mesas.</string>
     <string name="round_control_table_in_play">En juego</string>
     <string name="round_control_table_round">Como la ronda</string>
     <string name="round_control_no_tables">Esta ronda aún no tiene mesas.</string>

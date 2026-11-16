@@ -787,6 +787,7 @@
     <string name="round_control_tables">Tavoli</string>
     <string name="round_control_tables_help">Stato (In gioco / Completato)\nLo stesso segno dell'interruttore Completed dell'editor dei tavoli. Un tavolo completato non accetta mani.\n\nInserimento mani\n• Come il turno: usa la modalità del turno.\n• Aperto o Chiuso: vale più del turno.</string>
     <string name="round_control_table_completed">Completato</string>
+    <string name="round_control_table_all_hands_done">Questo tavolo ha tutte le mani fatte, quindi resta completato.\n\nPer riaprirlo, modifica una delle sue mani nell'editor dei tavoli.</string>
     <string name="round_control_table_in_play">In gioco</string>
     <string name="round_control_table_round">Come il turno</string>
     <string name="round_control_no_tables">Questo turno non ha ancora tavoli.</string>
