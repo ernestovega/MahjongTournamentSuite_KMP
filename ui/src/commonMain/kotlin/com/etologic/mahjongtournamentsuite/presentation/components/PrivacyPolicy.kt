@@ -12,3 +12,13 @@ fun rememberOpenPrivacyPolicy(): () -> Unit {
     val uriHandler = LocalUriHandler.current
     return { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) } }
 }
+
+/** The page with the latest and the published version of the web, the backend and the Android app. */
+const val VERSIONS_URL = "https://mts.mahjongmadrid.com/version"
+
+/** Opens the versions page in the browser. */
+@Composable
+fun rememberOpenVersions(): () -> Unit {
+    val uriHandler = LocalUriHandler.current
+    return { runCatching { uriHandler.openUri(VERSIONS_URL) } }
+}

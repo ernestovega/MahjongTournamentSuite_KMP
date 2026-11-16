@@ -181,6 +181,7 @@
     <string name="menu_sign_in">Войти</string>
     <string name="menu_contact">Связаться</string>
     <string name="menu_privacy">Конфиденциальность</string>
+    <string name="menu_version">Версия</string>
     <string name="menu_green_book">Green Book</string>
     <string name="tournaments_title">Турниры</string>
     <string name="tournaments_no_match">Нет турниров по этим фильтрам.</string>
