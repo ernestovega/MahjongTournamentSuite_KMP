@@ -177,7 +177,6 @@
     <string name="short_name">Nombre corto</string>
     <string name="from_to">Desde-hasta</string>
     <string name="features">Funciones</string>
-    <string name="open">Abrir</string>
     <string name="select_ema_player">Elegir un jugador EMA</string>
     <string name="name_ema_id_or_country">Nombre, ID EMA o país</string>
     <string name="no_player_found">No se ha encontrado ningún jugador.</string>
@@ -199,17 +198,9 @@
     <string name="no_players_match_the_search">Ningún jugador coincide con la búsqueda.</string>
     <string name="clear_slot">Vaciar el puesto</string>
     <string name="tables">Mesas</string>
-    <string name="filter">Filtrar</string>
-    <string name="all_rounds">Todas las rondas</string>
     <string name="loading">Cargando…</string>
-    <string name="no_tables_yet">Aún no hay mesas</string>
-    <string name="the_tables_show_here_when_the">Las mesas aparecen aquí cuando se sortea la ronda.</string>
     <string name="round">Ronda</string>
     <string name="table">Mesa</string>
-    <string name="manual_results">Resultados manuales</string>
-    <string name="edit_coming_soon">Editar (próximamente)</string>
-    <string name="delete_coming_soon">Eliminar (próximamente)</string>
-    <string name="preview_tournament_2">preview-tournament</string>
     <string name="no_players_in_this_group">No hay jugadores en este grupo.</string>
     <string name="reason">Motivo</string>
     <string name="first_round_of_the_substitute">Primera ronda del suplente</string>

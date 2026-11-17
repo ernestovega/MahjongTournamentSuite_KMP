@@ -177,7 +177,6 @@
     <string name="short_name">Korte naam</string>
     <string name="from_to">Van-tot</string>
     <string name="features">Kenmerken</string>
-    <string name="open">Openen</string>
     <string name="select_ema_player">EMA-speler kiezen</string>
     <string name="name_ema_id_or_country">Naam, EMA-ID of land</string>
     <string name="no_player_found">Geen speler gevonden.</string>
@@ -199,17 +198,9 @@
     <string name="no_players_match_the_search">Geen spelers komen overeen met de zoekopdracht.</string>
     <string name="clear_slot">Plaats wissen</string>
     <string name="tables">Tafels</string>
-    <string name="filter">Filter</string>
-    <string name="all_rounds">Alle ronden</string>
     <string name="loading">Laden…</string>
-    <string name="no_tables_yet">Nog geen tafels</string>
-    <string name="the_tables_show_here_when_the">De tafels verschijnen hier als de ronde ingedeeld is.</string>
     <string name="round">Ronde</string>
     <string name="table">Tafel</string>
-    <string name="manual_results">Handmatige resultaten</string>
-    <string name="edit_coming_soon">Bewerken (binnenkort)</string>
-    <string name="delete_coming_soon">Verwijderen (binnenkort)</string>
-    <string name="preview_tournament_2">toernooivoorbeeld</string>
     <string name="no_players_in_this_group">Geen spelers in deze groep.</string>
     <string name="reason">Reden</string>
     <string name="first_round_of_the_substitute">Eerste ronde van de vervanger</string>
