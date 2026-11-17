@@ -11,6 +11,8 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -280,8 +282,19 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.scrollListTo("Assign")
         val buttons = c.onAllNodes(hasText("Assign") and hasClickAction())
         c.waitUntil(20_000) { buttons.fetchSemanticsNodes().isNotEmpty() }
-        // The free slots are the last ones, so the first Assign button left is the slot of the plan.
-        buttons[0].apply { runCatching { performScrollTo() } }.performClick()
+        // A lazy list composes a row a little before it shows it: the list scrolls until the button is on screen, or
+        // the tap lands outside the screen. The free slots are the last ones, so the first Assign button left is the
+        // slot of the plan.
+        val button = hasText("Assign") and hasClickAction()
+        repeat(3) {
+            if (c.isOnScreen(title)) return@repeat
+            c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
+                runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(button) }
+            }
+            c.waitForIdle()
+            buttons[0].performClick()
+            runCatching { c.waitForText(title, timeoutMs = 10_000) }
+        }
         c.waitForText(title)
     }
 
