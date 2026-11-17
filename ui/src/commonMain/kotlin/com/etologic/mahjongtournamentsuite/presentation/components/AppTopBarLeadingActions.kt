@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.focus.FocusRequester
@@ -23,6 +24,7 @@ import mahjongtournamentsuite.ui.generated.resources.top_bar_activity
 import mahjongtournamentsuite.ui.generated.resources.top_bar_app_errors
 import mahjongtournamentsuite.ui.generated.resources.top_bar_app_users
 import mahjongtournamentsuite.ui.generated.resources.top_bar_ranking
+import mahjongtournamentsuite.ui.generated.resources.top_bar_screenshots
 import mahjongtournamentsuite.ui.generated.resources.top_bar_timer
 import org.jetbrains.compose.resources.stringResource
 
@@ -32,6 +34,8 @@ fun AppTopBarLeadingActions(
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
     onErrors: (() -> Unit)? = null,
+    /** The screenshot gallery (docs/screenshot-gallery.md). Only for administrators. */
+    onScreenshots: (() -> Unit)? = null,
     /** Who wrote what and when. Only for administrators. */
     onActivity: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
@@ -50,6 +54,7 @@ fun AppTopBarLeadingActions(
         }
         onActivity?.let { AppTopBarButton(stringResource(Res.string.top_bar_activity), Icons.Default.History, it) }
         onErrors?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, it, errorsFocusRequester) }
+        onScreenshots?.let { AppTopBarButton(stringResource(Res.string.top_bar_screenshots), Icons.Default.PhotoLibrary, it) }
         onTimer?.let { AppTopBarButton(stringResource(Res.string.top_bar_timer), Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton(stringResource(Res.string.top_bar_ranking), Icons.Default.Leaderboard, it, rankingFocusRequester) }
     }

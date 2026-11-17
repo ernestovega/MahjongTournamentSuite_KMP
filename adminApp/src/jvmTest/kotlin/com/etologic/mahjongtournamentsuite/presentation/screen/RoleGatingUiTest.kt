@@ -142,6 +142,7 @@ class RoleGatingUiTest {
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onNodeWithText("App errors").assertExists()
+        onNodeWithText("Screenshots").assertExists()
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
     }
 
@@ -154,6 +155,7 @@ class RoleGatingUiTest {
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onAllNodesWithText("App errors").assertCountEquals(0)
+        onAllNodesWithText("Screenshots").assertCountEquals(0)
         onAllNodesWithText("Editor", substring = true).assertCountEquals(1)
     }
 

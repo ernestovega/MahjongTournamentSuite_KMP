@@ -58,6 +58,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -164,6 +165,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
+/** The gallery of the screenshot tests and the game day videos (docs/screenshot-gallery.md). */
+private const val SCREENSHOT_GALLERY_URL = "https://mts-staging-screenshots.web.app"
+
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun TournamentsScreen(
@@ -172,6 +176,7 @@ fun TournamentsScreen(
     val presenter = koinInject<TournamentsPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
 
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
@@ -371,6 +376,11 @@ fun TournamentsScreen(
                 },
                 onErrors = if (adminStatus?.isAdmin == true) {
                     { navController.navigate(ErrorsRoute) }
+                } else {
+                    null
+                },
+                onScreenshots = if (adminStatus?.isAdmin == true) {
+                    { runCatching { uriHandler.openUri(SCREENSHOT_GALLERY_URL) } }
                 } else {
                     null
                 },

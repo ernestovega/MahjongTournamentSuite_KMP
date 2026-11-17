@@ -27,6 +27,7 @@
     <string name="app_logo_description">Логотип Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Пользователи</string>
     <string name="top_bar_app_errors">Ошибки приложения</string>
+    <string name="top_bar_screenshots">Скриншоты</string>
     <string name="top_bar_timer">Таймер</string>
     <string name="top_bar_ranking">Рейтинг</string>
     <string name="date_field_clear">Очистить: %1$s</string>

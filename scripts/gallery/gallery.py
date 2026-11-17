@@ -6,7 +6,7 @@
     python3 scripts/gallery/gallery.py publish --out DIR --site SITE --project PROJECT (needs an access token)
 
 build: the history of the reference images comes from git (the last N commits of main that changed one). Every
-image is stored once, by its Git LFS id: img/<id>.png (the original) and thumb/<id>.webp (small, for the lists).
+image is stored once, by its Git LFS id: img/<id>.png (the original) and thumb2/<id>.webp (a WebP up to 900 px high, for the lists).
 Only the ids that the site does not have yet are downloaded from Git LFS, so a run costs little LFS bandwidth.
 
 videos: the screen recordings of the last game days (the organizer tablet of Actions > Game day), compressed to a
@@ -50,7 +50,9 @@ DEFAULT_VERSIONS = 30
 KEEP_GAME_DAYS = 3
 GAME_DAY_WORKFLOW = "scenario.yml"
 VIDEO_ARTIFACTS = re.compile(r"^organizer-")
-THUMB_HEIGHT = 440
+THUMB_HEIGHT = 900
+# Changing THUMB_HEIGHT or the quality needs a new folder, so every thumbnail is made again.
+THUMB_DIR = "thumb2"
 LFS_POINTER = re.compile(rb"^version https://git-lfs.github.com/spec/v1\noid sha256:([0-9a-f]{64})\nsize (\d+)\n")
 
 
@@ -234,6 +236,7 @@ def last_verify(repo, head):
                 "url": run["html_url"],
                 "branch": run.get("head_branch"),
                 "commitsBehind": behind,
+                **versions_at(run["head_sha"]),
             }
     return None
 
@@ -296,13 +299,16 @@ def local_lfs_object(oid):
 
 
 def make_thumb(png, target):
+    """Writes the thumbnail and returns the size of the original, [width, height]."""
     from PIL import Image
 
     with Image.open(png) as image:
+        size = [image.width, image.height]
         image = image.convert("RGB")
         if image.height > THUMB_HEIGHT:
             image = image.resize((max(1, round(image.width * THUMB_HEIGHT / image.height)), THUMB_HEIGHT), Image.LANCZOS)
-        image.save(target, "WEBP", quality=72, method=6)
+        image.save(target, "WEBP", quality=80, method=6)
+    return size
 
 
 def command_build(args):
@@ -310,9 +316,11 @@ def command_build(args):
     if out.exists():
         shutil.rmtree(out)
     (out / "img").mkdir(parents=True)
-    (out / "thumb").mkdir()
+    (out / THUMB_DIR).mkdir()
     previous = load_previous(args.previous)
     have = set(previous.get("files", {}).get("img", []))
+    if previous.get("files", {}).get("thumbDir", "thumb") != THUMB_DIR:
+        have = set()
     repo = os.environ.get("GITHUB_REPOSITORY", "ernestovega/mahjongtournamentsuite_kmp")
     head = git("rev-parse", args.head)
 
@@ -321,6 +329,7 @@ def command_build(args):
 
     # The contents the site lacks: from the local LFS store when they are there, otherwise from GitHub.
     need = sorted(oids - have)
+    dims = {oid: size for oid, size in previous.get("dims", {}).items() if oid in oids}
     found = {oid: local_lfs_object(oid) for oid in need}
     remote = [oid for oid, path in found.items() if path is None]
     with tempfile.TemporaryDirectory() as tmp:
@@ -331,7 +340,7 @@ def command_build(args):
             if found.get(oid) is None:
                 sys.exit(f"Image {oid} could not be downloaded.")
             shutil.copyfile(found[oid], out / "img" / f"{oid}.png")
-            make_thumb(found[oid], out / "thumb" / f"{oid}.webp")
+            dims[oid] = make_thumb(found[oid], out / THUMB_DIR / f"{oid}.webp")
 
     manifest = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -341,9 +350,10 @@ def command_build(args):
         "modules": staleness(head),
         "versions": versions,
         "images": images,
+        "dims": dims,
         "videos": previous.get("videos", []),
         "checkedRuns": previous.get("checkedRuns", []),
-        "files": {"img": sorted(oids), "videos": previous.get("files", {}).get("videos", [])},
+        "files": {"img": sorted(oids), "thumbDir": THUMB_DIR, "videos": previous.get("files", {}).get("videos", [])},
     }
     (out / "manifest.json").write_text(json.dumps(manifest, separators=(",", ":")))
     shutil.copyfile(HERE / "index.html", out / "index.html")
@@ -456,7 +466,7 @@ def wanted_paths(manifest):
     paths = {"index.html", "manifest.json"}
     for oid in manifest["files"]["img"]:
         paths.add(f"img/{oid}.png")
-        paths.add(f"thumb/{oid}.webp")
+        paths.add(f"{manifest['files'].get('thumbDir', 'thumb')}/{oid}.webp")
     paths.update(manifest["files"].get("videos", []))
     return paths
 
@@ -529,7 +539,7 @@ def command_publish(args):
         "headers": [
             {"glob": "**", "headers": {"X-Robots-Tag": "noindex, nofollow"}},
             {"glob": "/img/**", "headers": {h["key"]: h["value"] for h in immutable}},
-            {"glob": "/thumb/**", "headers": {h["key"]: h["value"] for h in immutable}},
+            {"glob": "/thumb*/**", "headers": {h["key"]: h["value"] for h in immutable}},
             {"glob": "/videos/**", "headers": {h["key"]: h["value"] for h in immutable}},
             {"glob": "/manifest.json", "headers": {"Cache-Control": "no-cache"}},
             {"glob": "/index.html", "headers": {"Cache-Control": "no-cache"}},

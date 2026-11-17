@@ -6,388 +6,724 @@
 <meta name="robots" content="noindex, nofollow">
 <title>MTS screenshot gallery</title>
 <style>
-:root { --bg:#f5f7f5; --card:#fff; --text:#1a1f1b; --muted:#5b655e; --line:#dce2de; --accent:#1f7a4d; --chip:#e8eee9;
-  --ok:#1f7a4d; --warn:#9a6400; --bad:#b3261e; --okbg:#e3f3ea; --warnbg:#fbf0d9; --badbg:#fbe4e2; }
-@media (prefers-color-scheme: dark) { :root { --bg:#111412; --card:#1b1f1c; --text:#e6ebe7; --muted:#9aa49d; --line:#2c332e;
-  --accent:#5cc48f; --chip:#252b27; --ok:#6fd19c; --warn:#f0b54a; --bad:#ff8a80; --okbg:#173023; --warnbg:#33290f; --badbg:#3a1a18; } }
+:root {
+  --bg:#f3f5f3; --card:#fff; --text:#1a1f1b; --muted:#5b655e; --line:#d9e0db; --accent:#1f7a4d; --chip:#e7ede9;
+  --ok:#1f7a4d; --warn:#8a5a00; --bad:#b3261e; --okbg:#e1f2e8; --warnbg:#fbefd5; --badbg:#fbe3e1;
+  --old:#d32f2f; --oldbg:#fde4e4; --new:#0b7a43; --newbg:#ddf5e8; --h:400px; --top:0px;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#101311; --card:#1a1e1b; --text:#e6ebe7; --muted:#9aa49d; --line:#2b322d; --accent:#5cc48f; --chip:#242a26;
+  --ok:#6fd19c; --warn:#f0b54a; --bad:#ff8a80; --okbg:#163022; --warnbg:#33290f; --badbg:#3a1a18;
+  --old:#ff6b6b; --oldbg:#3a1616; --new:#5fd69a; --newbg:#123323; } }
 * { box-sizing:border-box; }
+html { scroll-padding-top:var(--top); }
 body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
 a { color:var(--accent); }
-header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 16px 8px; }
-h1 { font-size:18px; margin:0; }
-.meta { color:var(--muted); font-size:13px; }
-.status { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px; }
-.pill { font-size:12px; border-radius:999px; padding:3px 10px; border:1px solid transparent; white-space:nowrap; }
-.pill.ok { background:var(--okbg); color:var(--ok); } .pill.warn { background:var(--warnbg); color:var(--warn); } .pill.bad { background:var(--badbg); color:var(--bad); }
-.pill a { color:inherit; }
-nav.tabs { display:flex; gap:4px; margin-top:8px; }
-nav.tabs a { text-decoration:none; color:var(--muted); padding:6px 12px; border-radius:8px; font-weight:600; font-size:14px; }
+button { font:inherit; color:inherit; }
+.muted { color:var(--muted); }
+
+/* header */
+header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; }
+.head { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
+h1 { font-size:17px; margin:0; white-space:nowrap; }
+nav.tabs { display:flex; gap:2px; }
+nav.tabs a { text-decoration:none; color:var(--muted); padding:5px 11px; border-radius:8px; font-weight:600; font-size:14px; white-space:nowrap; }
 nav.tabs a.on { background:var(--chip); color:var(--text); }
-.bar { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; }
-.bar input, .bar select, select { padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); font:inherit; font-size:14px; min-width:0; }
-.bar input { flex:1 1 160px; }
-.chip { border:1px solid var(--line); background:var(--chip); color:var(--text); border-radius:999px; padding:4px 11px; font:inherit; font-size:13px; cursor:pointer; }
-.chip[aria-pressed=true] { background:var(--accent); border-color:var(--accent); color:#fff; }
-.sep { width:1px; height:22px; background:var(--line); margin:0 2px; }
-main { padding:6px 16px 48px; }
-@media (max-width:700px) { header { position:static; } figure img { height:160px; } }
-h2 { font-size:16px; margin:22px 0 6px; }
+.grow { flex:1; }
+#statusBtn { border:0; border-radius:999px; padding:4px 11px; font-size:13px; cursor:pointer; }
+#statusPanel { display:none; padding:8px 0 2px; }
+#statusPanel.open { display:block; }
+.meta { font-size:13px; color:var(--muted); margin-bottom:6px; }
+.status { display:flex; flex-wrap:wrap; gap:6px; }
+.pill { font-size:12.5px; border-radius:999px; padding:3px 10px; }
+.ok { background:var(--okbg); color:var(--ok); } .warn { background:var(--warnbg); color:var(--warn); } .bad { background:var(--badbg); color:var(--bad); }
+.pill a { color:inherit; }
+
+/* toolbar */
+.toolbar { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; margin-top:8px; }
+.toolbar input[type=search] { flex:1 1 180px; min-width:120px; }
+input, select { padding:6px 9px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); font:inherit; font-size:14px; min-width:0; max-width:100%; }
+.group { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--card); }
+.group button { border:0; background:transparent; padding:5px 10px; font-size:13px; cursor:pointer; white-space:nowrap; }
+.group button + button { border-left:1px solid var(--line); }
+.group button[aria-pressed=true] { background:var(--accent); color:#fff; }
+.label { font-size:12px; color:var(--muted); margin:0 2px 0 6px; }
+#filtersBtn { display:none; }
+.btn { border:1px solid var(--line); background:var(--card); border-radius:9px; padding:5px 12px; font-size:13.5px; cursor:pointer; white-space:nowrap; }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.count { font-size:13px; color:var(--muted); }
+
+/* screens */
+main { padding:8px 16px 64px; }
+h2.module { font-size:15px; margin:22px 0 6px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
 .screen { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px 12px; margin:10px 0; }
-.screen h3 { font-size:14px; margin:0 0 8px; font-weight:600; }
-.row { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; align-items:flex-start; }
-figure { margin:0; flex:0 0 auto; cursor:zoom-in; position:relative; }
-figure img { display:block; height:200px; width:auto; min-width:60px; border:1px solid var(--line); border-radius:6px; background:var(--chip); }
-figcaption { font-size:12px; color:var(--muted); margin-top:3px; }
-.badge { position:absolute; top:6px; left:6px; font-size:11px; font-weight:700; background:var(--warn); color:#fff; border-radius:6px; padding:1px 6px; }
-.removed { height:200px; width:110px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:6px; color:var(--muted); font-size:12px; text-align:center; padding:6px; }
+.screen-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.screen-head h3 { font-size:15px; margin:0; font-weight:650; }
+.row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; }
+
+figure.shot { margin:0; min-width:0; flex:0 1 calc(var(--h) * var(--ar)); cursor:zoom-in; position:relative; }
+figure.shot img { display:block; width:100%; height:auto; aspect-ratio:var(--ar); border:1px solid var(--line); border-radius:6px; background:var(--chip); }
+figure.shot:hover img { outline:2px solid var(--accent); outline-offset:1px; }
+figcaption { font-size:12.5px; color:var(--muted); margin-top:4px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.tag { font-size:11px; font-weight:700; border-radius:5px; padding:1px 6px; letter-spacing:.03em; }
+.tag.changed { background:var(--warnbg); color:var(--warn); }
+.tag.new { background:var(--newbg); color:var(--new); }
+.tag.old { background:var(--old); color:#fff; } .tag.newv { background:var(--new); color:#fff; }
+.pager { display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap; }
 .empty { color:var(--muted); padding:24px 0; }
+
+/* changes */
 details.version { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:10px 0; }
-details.version summary { cursor:pointer; padding:10px 12px; list-style:none; }
+details.version summary { cursor:pointer; padding:10px 12px; list-style:none; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 details.version summary::-webkit-details-marker { display:none; }
-.vtitle { font-weight:600; } .vmeta { color:var(--muted); font-size:13px; }
-.changes { padding:0 12px 12px; display:flex; flex-wrap:wrap; gap:14px; }
-.pair { display:flex; flex-direction:column; gap:4px; cursor:zoom-in; }
-.pair .imgs { display:flex; gap:4px; align-items:center; }
-.pair img { height:130px; border:1px solid var(--line); border-radius:6px; background:var(--chip); }
-.pair .lbl { font-size:12px; color:var(--muted); max-width:300px; overflow-wrap:anywhere; }
-.pair .removed { height:130px; width:70px; }
-.videos { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
-.vcard { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+details.version summary::before { content:"▸"; color:var(--muted); }
+details.version[open] summary::before { content:"▾"; }
+.vtitle { font-weight:650; }
+.vsub { font-size:13px; color:var(--muted); flex-basis:100%; padding-left:18px; }
+.pairs { padding:0 12px 12px; display:flex; flex-direction:column; gap:14px; }
+.pair { border-top:1px solid var(--line); padding-top:10px; }
+.pair-name { font-size:13.5px; font-weight:600; margin-bottom:6px; cursor:pointer; }
+.pair-imgs { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+.pair-imgs figure.shot { flex-basis:calc(var(--h) * var(--ar)); }
+.phead { font-size:16px; font-weight:800; letter-spacing:.04em; color:#fff; padding:5px 10px; border-radius:8px 8px 0 0; text-align:center; line-height:1.2; }
+.phead small { display:block; font-size:12px; font-weight:500; letter-spacing:0; }
+.phead.o { background:var(--old); } .phead.n { background:var(--new); }
+.phead + img { border-radius:0 0 6px 6px !important; }
+.frame-old img { border:2px solid var(--old) !important; }
+.frame-new img { border:2px solid var(--new) !important; }
+.missing { height:calc(var(--h) * .5); min-width:120px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:6px; color:var(--muted); font-size:13px; padding:8px; text-align:center; }
+
+/* videos */
+.videos { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr)); gap:12px; }
+.vcard { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px 12px; }
 .vcard video { width:100%; border-radius:8px; background:#000; margin-top:8px; display:block; }
-.speeds { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+
 /* viewer */
-#viewer { position:fixed; inset:0; z-index:10; background:rgba(8,10,9,.94); color:#eee; display:none; flex-direction:column; }
+#viewer { position:fixed; inset:0; z-index:10; background:#0c0e0d; color:#eee; display:none; flex-direction:column; }
 #viewer.open { display:flex; }
-#viewer .top { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid #333; }
-#viewer .top .name { font-weight:600; flex:1 1 220px; overflow-wrap:anywhere; }
-#viewer .chip { background:#262b28; border-color:#3a413c; color:#eee; }
-#viewer .chip[aria-pressed=true] { background:var(--accent); border-color:var(--accent); }
-#viewer select { background:#1c201d; color:#eee; border-color:#3a413c; }
-#viewer .stage { flex:1; min-height:0; display:flex; gap:10px; align-items:center; justify-content:center; padding:10px; overflow:auto; }
-#viewer .stage .side { display:flex; flex-direction:column; align-items:center; min-width:0; max-height:100%; }
-#viewer .stage img { max-width:100%; max-height:calc(100vh - 170px); object-fit:contain; background:#777; }
-#viewer .stage .cap { font-size:12px; color:#bbb; margin-top:4px; text-align:center; }
-.slider { position:relative; display:inline-block; max-width:100%; user-select:none; touch-action:none; }
-.slider img { display:block; }
-.slider .over { position:absolute; inset:0; overflow:hidden; }
-.slider .over img { max-width:none !important; }
-.slider .handle { position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 0 1px #000; cursor:ew-resize; }
-.slider .handle::after { content:"⇔"; position:absolute; top:50%; left:-13px; width:28px; height:28px; margin-top:-14px; border-radius:50%; background:#fff; color:#000; text-align:center; line-height:28px; font-size:14px; }
-.diff { position:relative; display:inline-block; }
-.diff img + img { position:absolute; inset:0; mix-blend-mode:difference; }
-#viewer .history { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:8px 12px 12px; border-top:1px solid #333; font-size:13px; }
-#viewer .nav { background:rgba(255,255,255,.12); color:#fff; border:0; font-size:24px; width:40px; height:40px; border-radius:8px; cursor:pointer; }
+#viewer .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid #2a2f2c; }
+#viewer .title { font-weight:650; flex:1 1 200px; min-width:0; }
+#viewer .title small { display:block; font-weight:400; color:#aab3ad; font-size:12.5px; }
+#viewer .group { background:#1b1f1d; border-color:#3a413c; }
+#viewer .group button + button { border-color:#3a413c; }
+#viewer select { background:#1b1f1d; color:#eee; border-color:#3a413c; }
+#viewer .btn { background:#1b1f1d; border-color:#3a413c; color:#eee; }
+.navbtn { background:#232825; color:#fff; border:0; min-width:38px; height:38px; border-radius:9px; cursor:pointer; font-size:20px; }
+.legend { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:6px 12px; border-bottom:1px solid #2a2f2c; font-size:13px; }
+.legend .key { display:inline-flex; align-items:center; gap:6px; border-radius:8px; padding:3px 9px; }
+.legend .key.o { background:#3a1616; color:#ffb3b3; border:1px solid var(--old); }
+.legend .key.n { background:#123323; color:#9ff0c4; border:1px solid var(--new); }
+.legend .key b { font-size:11px; letter-spacing:.05em; }
+#vStage { flex:1; min-height:0; overflow:auto; padding:12px; display:flex; gap:12px; align-items:flex-start; justify-content:center; flex-wrap:wrap; }
+#vStage.fit { align-items:center; }
+.pane { display:flex; flex-direction:column; min-width:0; max-width:100%; }
+.pane .ph { font-size:20px; font-weight:800; letter-spacing:.04em; padding:6px 14px; border-radius:8px; align-self:stretch; text-align:center; margin-bottom:8px; }
+.pane .ph small { display:block; font-size:13px; font-weight:500; letter-spacing:0; opacity:.95; }
+.pane.o .ph { background:var(--old); color:#fff; } .pane.n .ph { background:var(--new); color:#fff; }
+.pane img { display:block; background:#666; }
+.pane.o img { outline:4px solid var(--old); } .pane.n img { outline:4px solid var(--new); }
+.fit .pane img, .fit .slider > img, .fit .flip img, .fit .diff img { width:auto; height:auto; max-width:100%; max-height:var(--stageH); }
+.side2.fit .pane img { max-height:calc(var(--stageH) - 70px); }
+.side2 .pane { flex:1 1 0; align-items:center; }
+.side2.fit .pane img { max-width:100%; }
+.slider { position:relative; display:inline-block; max-width:100%; user-select:none; touch-action:none; cursor:ew-resize; line-height:0; }
+.slider::after { content:""; position:absolute; inset:0; border:4px solid var(--new); pointer-events:none; z-index:1; }
+.slider .over { position:absolute; top:0; left:0; bottom:0; overflow:hidden; z-index:2; }
+.slider .over::after { content:""; position:absolute; inset:0; border:4px solid var(--old); border-right:0; pointer-events:none; }
+.slider .handle, .slider .corner { z-index:3; }
+.slider .over img { max-width:none !important; max-height:none !important; }
+.slider .handle { position:absolute; top:0; bottom:0; width:4px; margin-left:-2px; background:#fff; box-shadow:0 0 0 1px #000; }
+.slider .knob { position:absolute; top:50%; left:-20px; width:44px; height:44px; margin-top:-22px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,.5); line-height:1; }
+.corner { position:absolute; top:10px; font-size:16px; font-weight:800; letter-spacing:.05em; padding:5px 12px; border-radius:6px; line-height:1.2; pointer-events:none; }
+.corner.o { left:10px; background:var(--old); color:#fff; } .corner.n { right:10px; background:var(--new); color:#fff; }
+.flip { position:relative; display:inline-block; line-height:0; cursor:pointer; }
+.flip .corner { left:8px; right:auto; font-size:14px; }
+.flip img { outline:4px solid var(--new); } .flip.showOld img { outline-color:var(--old); }
+.diff { position:relative; display:inline-block; line-height:0; }
+.diff img + img { position:absolute; inset:0; width:100%; height:100%; mix-blend-mode:difference; }
+.hint { flex-basis:100%; text-align:center; color:#aab3ad; font-size:12.5px; }
+.actual img { max-width:none !important; max-height:none !important; }
+#vHistory { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:8px 12px; border-top:1px solid #2a2f2c; font-size:13px; }
+#vHistory .group button { padding:4px 9px; }
+
+.edge { position:absolute; top:50%; transform:translateY(-50%); z-index:4; width:52px; height:96px; border:0; border-radius:12px; background:rgba(40,46,42,.82); color:#fff; font-size:40px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.edge:hover { background:rgba(60,70,64,.95); }
+.edge.l { left:8px; } .edge.r { right:8px; }
+#viewer { overflow:hidden; }
+#vWrap { position:relative; flex:1; min-height:0; display:flex; }
+#vWrap #vStage { flex:1; padding-left:68px; padding-right:68px; }
+#fab { position:fixed; right:18px; bottom:18px; z-index:20; display:none; align-items:center; gap:8px; border:0; border-radius:16px; padding:14px 18px; background:var(--accent); color:#fff; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(0,0,0,.35); cursor:pointer; }
+#fab.show { display:inline-flex; }
+#toast { position:fixed; left:50%; bottom:84px; transform:translateX(-50%); z-index:21; background:#222; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; display:none; max-width:90vw; white-space:pre-line; box-shadow:0 4px 14px rgba(0,0,0,.4); }
+#toast.show { display:block; }
+.copy { border:1px solid var(--line); background:var(--card); border-radius:8px; padding:2px 9px; font-size:12.5px; cursor:pointer; margin-left:auto; }
+#viewer #vHistory { padding-right:220px; }
+/* small screens */
+@media (max-width:760px) {
+  header { padding:8px 12px; }
+  main { padding:6px 12px 64px; }
+  #filtersBtn { display:inline-block; }
+  .toolbar .more { display:none; }
+  .toolbar.open .more { display:contents; }
+  .screen { padding:8px; }
+  .row { gap:8px; }
+  .paged .row { flex-wrap:wrap; }
+  #viewer .bar { padding:6px 8px; gap:6px; }
+  #vWrap #vStage { padding:8px; }
+  .edge { width:36px; height:64px; font-size:28px; background:rgba(40,46,42,.6); }
+  .edge.l { left:2px; } .edge.r { right:2px; }
+  #vStage.side2 { flex-direction:column; flex-wrap:nowrap; align-items:center; }
+  #vStage.side2 .pane { flex:none; width:100%; }
+  #vStage.side2.fit .pane img { max-height:none; max-width:100%; }
+  #viewer .title { font-size:14px; flex-basis:calc(100% - 140px); order:1; }
+  #viewer #vClose { order:2; margin-left:auto; }
+  #viewer #vPrev, #viewer #vNext { display:none; }
+  #viewer .bar .group { order:3; overflow-x:auto; max-width:100%; }
+  #viewer #vZoom { order:4; }
+  .legend { font-size:12.5px; padding:6px 8px; }
+  .pane .ph { font-size:17px; }
+  #fab { right:12px; bottom:12px; padding:12px 14px; }
+  #viewer #vHistory { padding-right:12px; padding-bottom:70px; }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>MTS screenshot gallery</h1>
-  <div class="meta" id="meta">Loading…</div>
-  <div class="status" id="status"></div>
-  <nav class="tabs" id="tabs">
-    <a href="#screens" data-tab="screens">Screens</a>
-    <a href="#changes" data-tab="changes">Changes</a>
-    <a href="#videos" data-tab="videos">Game day videos</a>
-  </nav>
-  <div id="filters">
-    <div class="bar" id="modules"></div>
-    <div class="bar">
-      <input id="q" type="search" placeholder="Search">
-      <select id="version" title="Version"></select>
-      <span id="devices"></span><span class="sep"></span><span id="themes"></span>
-      <button class="chip" id="onlyChanged" aria-pressed="false" title="Only the images that changed in this version">changed</button>
-    </div>
+<header id="header">
+  <div class="head">
+    <h1>MTS screenshots</h1>
+    <nav class="tabs" id="tabs">
+      <a href="#screens" data-tab="screens">Screens</a>
+      <a href="#changes" data-tab="changes">Changes</a>
+      <a href="#videos" data-tab="videos">Game day videos</a>
+    </nav>
+    <span class="grow"></span>
+    <button id="statusBtn" class="ok" aria-expanded="false">Status</button>
   </div>
+  <div id="statusPanel"><div class="meta" id="meta"></div><div class="status" id="status"></div></div>
+  <div class="toolbar" id="toolbar"></div>
 </header>
-<main id="main"></main>
+<main id="main"><p class="empty">Loading…</p></main>
 
-<div id="viewer" role="dialog" aria-modal="true">
-  <div class="top">
-    <button class="nav" id="vPrev" aria-label="Previous">‹</button>
-    <button class="nav" id="vNext" aria-label="Next">›</button>
-    <span class="name" id="vName"></span>
-    <span id="vModes"></span>
-    <label style="font-size:13px">vs <select id="vCompare"></select></label>
-    <button class="nav" id="vClose" aria-label="Close">✕</button>
+<button id="fab" title="Copy a text that identifies this screenshot (C)">📋 Copy reference</button>
+<div id="toast" role="status"></div>
+<div id="viewer" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <div class="bar">
+    <button class="navbtn" id="vPrev" title="Previous (←)" aria-label="Previous">‹</button>
+    <button class="navbtn" id="vNext" title="Next (→)" aria-label="Next">›</button>
+    <div class="title" id="vTitle"></div>
+    <div class="group" id="vModes"></div>
+    <button class="btn" id="vZoom" title="Fit to the window or real pixels (Z)">Fit</button>
+    <button class="navbtn" id="vClose" title="Close (Esc)" aria-label="Close">✕</button>
   </div>
-  <div class="stage" id="vStage"></div>
-  <div class="history" id="vHistory"></div>
+  <div class="legend" id="vLegend"></div>
+  <div id="vWrap">
+    <button class="edge l" id="vEdgePrev" title="Previous image (←)" aria-label="Previous image">‹</button>
+    <div id="vStage"></div>
+    <button class="edge r" id="vEdgeNext" title="Next image (→)" aria-label="Next image">›</button>
+  </div>
+  <div id="vHistory"></div>
 </div>
 
 <script>
 "use strict";
-const $ = (s, el = document) => el.querySelector(s);
-const el = (tag, attrs = {}, ...kids) => {
+const $ = (s, root = document) => root.querySelector(s);
+function h(tag, attrs = {}, ...kids) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
-    if (k.startsWith("on")) e[k] = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+    if (k.startsWith("on")) e[k] = v;
+    else if (k === "text") e.textContent = v;
+    else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+    else e.setAttribute(k, v === true ? "" : v);
   }
-  for (const k of kids) if (k != null) e.append(k);
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k);
   return e;
-};
+}
 const store = {
-  get(k, d) { try { const v = localStorage.getItem("g." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem("g." + k, JSON.stringify(v)); } catch (e) {} },
+  get(k, d) { try { const v = localStorage.getItem("gallery." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("gallery." + k, JSON.stringify(v)); } catch (e) {} },
 };
-const DEVICES = ["phone", "narrow", "tablet", "desktop"];
-const THEMES = ["light", "dark"];
-let M = null, KEYS = [], LABELS = {};
+
+const DEVICES = [["phone", "Phone"], ["narrow", "Narrow ES"], ["tablet", "Tablet"], ["desktop", "Desktop"]];
+const THEMES = [["light", "Light"], ["dark", "Dark"]];
+const SIZES = [["s", "S", 220], ["m", "M", 380], ["l", "L", 600], ["fit", "Fit", 0]];
+const VARIANT_ORDER = ["phone-light", "phone-dark", "narrow-light-es", "tablet-light", "tablet-dark", "desktop-light", "desktop-dark"];
+
+let M = null, KEYS = [], LABELS = {}, THUMBS = "thumb";
 const state = {
   tab: "screens", module: store.get("module", "all"), devices: new Set(store.get("devices", [])),
   themes: new Set(store.get("themes", [])), q: "", version: 0, onlyChanged: false,
+  size: store.get("size", "m"), paged: store.get("paged", false), page: 0, filtersOpen: false,
 };
 
-const short = (sha) => (sha || "").slice(0, 7);
-const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-const ago = (iso) => {
+// ---------------------------------------------------------------- labels
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function when(iso) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${time}`;
+}
+function ago(iso) {
   const s = (Date.now() - new Date(iso)) / 1000;
   if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
   return `${Math.round(s / 86400)} days ago`;
-};
+}
+/** "17 Nov 15:20 · web 1.0.264": the date says when, the version says what was published around then. */
+function vName(i, withApp = false) {
+  const v = M.versions[i];
+  return `${when(v.date)}${v.web ? " · web " + v.web : ""}${withApp && v.app ? " · app " + v.app : ""}`;
+}
 const commitUrl = (sha) => `https://github.com/${M.repo}/commit/${sha}`;
-const thumb = (oid) => `thumb/${oid}.webp`;
+const thumb = (oid) => `${THUMBS}/${oid}.webp`;
 const full = (oid) => `img/${oid}.png`;
-const vLabel = (i) => { const v = M.versions[i]; return `${short(v.sha)} · ${fmtDate(v.date)}${v.web ? " · web " + v.web : ""}`; };
-
-// An image's entries are [version index, id or null], newest first. At version k it is the first entry with index >= k.
-function entryAt(key, k) { return (M.images[key] || []).find((e) => e[0] >= k) || null; }
-function oidAt(key, k) { const e = entryAt(key, k); return e ? e[1] : null; }
-function changedIn(key, k) { return k < M.versions.length - 1 && (M.images[key] || []).some((e) => e[0] === k); }
-function previousOid(key, k) { const e = entryAt(key, k); if (!e) return null; const p = (M.images[key] || []).find((x) => x[0] > e[0]); return p ? p[1] : null; }
+const ar = (oid) => { const d = M.dims && M.dims[oid]; return d ? d[0] / d[1] : 0.5; };
 const moduleOf = (key) => key.split("/")[0];
 const screenOf = (key) => key.slice(key.indexOf("/") + 1, key.lastIndexOf("/"));
 const variantOf = (key) => key.slice(key.lastIndexOf("/") + 1);
+function variantName(variant) {
+  if (variant === "narrow-light-es") return "Narrow phone · Spanish";
+  const [device, theme] = variant.split("-");
+  const d = { phone: "Phone", tablet: "Tablet", desktop: "Desktop" }[device] || device;
+  return theme ? `${d} · ${theme}` : d;
+}
+function variantRank(key) { const i = VARIANT_ORDER.indexOf(variantOf(key)); return i < 0 ? 99 : i; }
 
+// An image's entries are [version index, id or null], newest first. At version k it is the first entry with index >= k.
+const entriesOf = (key) => M.images[key] || [];
+function entryAt(key, k) { return entriesOf(key).find((e) => e[0] >= k) || null; }
+function oidAt(key, k) { const e = entryAt(key, k); return e ? e[1] : null; }
+function changedIn(key, k) { return k < M.versions.length - 1 && entriesOf(key).some((e) => e[0] === k); }
+function olderEntry(key, k) { const e = entryAt(key, k); return e ? entriesOf(key).find((x) => x[0] > e[0]) || null : null; }
+
+// ---------------------------------------------------------------- load
 async function load() {
   const res = await fetch("manifest.json", { cache: "no-cache" });
   M = await res.json();
-  KEYS = Object.keys(M.images).sort();
+  THUMBS = (M.files && M.files.thumbDir) || "thumb";
+  KEYS = Object.keys(M.images).sort((a, b) => {
+    const sa = a.slice(0, a.lastIndexOf("/")), sb = b.slice(0, b.lastIndexOf("/"));
+    return sa < sb ? -1 : sa > sb ? 1 : variantRank(a) - variantRank(b);
+  });
   for (const m of M.modules) LABELS[m.id] = m.label;
-  renderHeader();
-  const sel = $("#version");
-  M.versions.forEach((v, i) => sel.append(el("option", { value: i, text: (i === 0 ? "Current: " : "") + vLabel(i) })));
-  sel.onchange = () => { state.version = +sel.value; render(); };
-  $("#q").oninput = (e) => { state.q = e.target.value; render(); };
-  $("#onlyChanged").onclick = () => { state.onlyChanged = !state.onlyChanged; $("#onlyChanged").setAttribute("aria-pressed", state.onlyChanged); render(); };
+  renderStatus();
   window.addEventListener("hashchange", route);
+  window.addEventListener("resize", measure);
   route();
 }
 
-function renderHeader() {
+function measure() {
+  const top = $("#header").offsetHeight;
+  document.documentElement.style.setProperty("--top", top + "px");
+  const size = SIZES.find((s) => s[0] === state.size) || SIZES[1];
+  let px = size[2];
+  if (!px) px = Math.max(200, window.innerHeight - top - 110);
+  if (state.paged) px = Math.max(200, window.innerHeight - top - 150);
+  document.documentElement.style.setProperty("--h", px + "px");
+}
+
+function renderStatus() {
   const cur = M.versions[0];
   const count = KEYS.filter((k) => oidAt(k, 0)).length;
-  $("#meta").replaceChildren(
-    `${count} images · images of `, el("a", { href: commitUrl(cur.sha), text: short(cur.sha) }),
-    ` (${fmtDate(cur.date)}${cur.web ? ", web " + cur.web : ""}${cur.app ? ", app " + cur.app : ""}) · `,
-    `${M.versions.length} versions kept · page built ${ago(M.generated)}`,
-  );
+  $("#meta").textContent = `${count} images. Last change ${vName(0, true)}. ${M.versions.length} versions kept. Page updated ${ago(M.generated)}.`;
   const st = $("#status"); st.replaceChildren();
+  let warnings = 0, bad = false;
   const v = M.verify;
   if (v) {
     const ok = v.conclusion === "success";
-    const behind = v.commitsBehind ? `, ${v.commitsBehind} commits behind main` : ", on the latest commit";
-    st.append(el("span", { class: "pill " + (ok ? (v.commitsBehind > 0 ? "warn" : "ok") : "bad"), title: "Last run of Actions > Screenshot tests" },
-      el("a", { href: v.url, text: `Screenshot tests ${ok ? "passed" : "failed"} ${ago(v.date)}${behind}` })));
-  } else st.append(el("span", { class: "pill warn", text: "Screenshot tests have never run in Actions" }));
+    const late = v.commitsBehind > 0;
+    if (!ok) bad = true; else if (late) warnings++;
+    const text = `Screenshot tests ${ok ? "passed" : "FAILED"} ${ago(v.date)}${v.web ? " (web " + v.web + ")" : ""}${late ? `. Main has ${v.commitsBehind} newer commits` : ""}`;
+    st.append(h("span", { class: "pill " + (ok ? (late ? "warn" : "ok") : "bad") }, h("a", { href: v.url, target: "_blank", text })));
+  } else { warnings++; st.append(h("span", { class: "pill warn", text: "Screenshot tests have never run in Actions" })); }
   for (const m of M.modules) {
     const stale = m.codeCommitsAfter > 0;
-    const title = stale ? `Code of ${m.label} changed after its images: ${m.codeCommitsAfter} commits, last ${short(m.lastCode.sha)} ${m.lastCode.subject}. The images may be out of date: run the tests to know.` : `No code of ${m.label} changed after its images (${short(m.imagesSha)}).`;
-    st.append(el("span", { class: "pill " + (stale ? "warn" : "ok"), title },
-      el("a", { href: commitUrl(stale ? m.lastCode.sha : m.imagesSha), text: stale ? `${m.label}: code changed after the images (${m.codeCommitsAfter})` : `${m.label}: images up to date` })));
+    if (stale) warnings++;
+    const text = stale
+      ? `${m.label}: its code changed after its images (${m.codeCommitsAfter} commits, last ${when(m.lastCode.date)})`
+      : `${m.label}: images up to date (${when(m.imagesDate)})`;
+    st.append(h("span", { class: "pill " + (stale ? "warn" : "ok"), title: stale ? `Last: ${m.lastCode.subject}. Only a hint: run Screenshot tests to know.` : "" },
+      h("a", { href: commitUrl(stale ? m.lastCode.sha : m.imagesSha), target: "_blank", text })));
   }
+  const btn = $("#statusBtn");
+  btn.className = bad ? "bad" : warnings ? "warn" : "ok";
+  btn.textContent = bad ? "Tests failed ▾" : warnings ? `${warnings} to check ▾` : "Up to date ▾";
+  btn.onclick = () => { const p = $("#statusPanel"); p.classList.toggle("open"); btn.setAttribute("aria-expanded", p.classList.contains("open")); measure(); };
 }
 
-function chip(label, pressed, onclick, title) { return el("button", { class: "chip", "aria-pressed": String(pressed), onclick, title, text: label }); }
-function renderFilters() {
-  const mods = $("#modules"); mods.replaceChildren();
+// ---------------------------------------------------------------- toolbar
+function group(options, isOn, onPick, label) {
+  return [label ? h("span", { class: "label", text: label }) : null,
+    h("div", { class: "group", role: "group" }, options.map(([id, text, title]) =>
+      h("button", { "aria-pressed": String(isOn(id)), title, onclick: () => onPick(id), text })))];
+}
+function renderToolbar() {
+  const bar = $("#toolbar"); bar.replaceChildren();
+  if (state.tab === "videos") { bar.style.display = "none"; measure(); return; }
+  bar.style.display = "";
+  bar.classList.toggle("open", state.filtersOpen);
+  const sizeGroup = group(SIZES.map(([id, t]) => [id, t]), (id) => id === state.size, (id) => { state.size = id; store.set("size", id); render(); }, "Size");
+  if (state.tab === "changes") { bar.append(...sizeGroup); measure(); return; }
   const k = state.version;
-  const n = (m) => KEYS.filter((key) => (m === "all" || moduleOf(key) === m) && oidAt(key, k)).length;
-  mods.append(chip(`All (${n("all")})`, state.module === "all", () => setModule("all")));
-  for (const m of M.modules) mods.append(chip(`${m.label} (${n(m.id)})`, state.module === m.id, () => setModule(m.id)));
-  for (const [id, values, set, name] of [["#devices", DEVICES, state.devices, "devices"], ["#themes", THEMES, state.themes, "themes"]]) {
-    const box = $(id); box.replaceChildren();
-    for (const v of values) box.append(chip(v, set.has(v), () => { set.has(v) ? set.delete(v) : set.add(v); store.set(name, [...set]); render(); }));
-  }
-  $("#version").value = state.version;
+  const n = (mod) => KEYS.filter((key) => (mod === "all" || moduleOf(key) === mod) && oidAt(key, k)).length;
+  const search = h("input", { type: "search", placeholder: "Search", value: state.q, "aria-label": "Search screens" });
+  search.oninput = () => { state.q = search.value; state.page = 0; renderMain(); };
+  const mod = h("select", { "aria-label": "Module" }, h("option", { value: "all", text: `All modules (${n("all")})` }),
+    M.modules.map((m) => h("option", { value: m.id, text: `${m.label} (${n(m.id)})` })));
+  mod.value = state.module;
+  mod.onchange = () => { state.module = mod.value; store.set("module", mod.value); state.page = 0; render(); };
+  const ver = h("select", { "aria-label": "Version", title: "See the images as they were then" },
+    M.versions.map((v, i) => h("option", { value: i, text: (i === 0 ? "Latest: " : "") + vName(i) + (v.changed ? ` (${v.changed} changed)` : "") })));
+  ver.value = state.version;
+  ver.onchange = () => { state.version = +ver.value; state.page = 0; render(); };
+  const toggle = (set, name) => (id) => { set.has(id) ? set.delete(id) : set.add(id); store.set(name, [...set]); state.page = 0; render(); };
+  const active = state.devices.size + state.themes.size + (state.onlyChanged ? 1 : 0) + (state.module !== "all" ? 1 : 0);
+  bar.append(
+    search,
+    h("button", { class: "btn", id: "filtersBtn", onclick: () => { state.filtersOpen = !state.filtersOpen; renderToolbar(); }, text: `Filters${active ? " (" + active + ")" : ""} ${state.filtersOpen ? "▴" : "▾"}` }),
+    h("span", { class: "more" },
+      mod, ver,
+      ...group(DEVICES, (id) => state.devices.has(id), toggle(state.devices, "devices")),
+      ...group(THEMES, (id) => state.themes.has(id), toggle(state.themes, "themes")),
+      ...group([["changed", "Changed only", "Only the images that changed in the chosen version"]], () => state.onlyChanged, () => { state.onlyChanged = !state.onlyChanged; state.page = 0; render(); }),
+      ...sizeGroup,
+      ...group([["grid", "All"], ["paged", "One screen"]], (id) => (id === "paged") === state.paged, (id) => { state.paged = id === "paged"; store.set("paged", state.paged); render(); }, "Show"),
+    ),
+  );
+  measure();
 }
-function setModule(m) { state.module = m; store.set("module", m); render(); }
 
+// ---------------------------------------------------------------- routing
 function route() {
-  const h = location.hash.slice(1) || "screens";
-  state.tab = ["screens", "changes", "videos"].includes(h) ? h : "screens";
+  if (location.hash.startsWith("#img=")) {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const key = p.get("img");
+    const find = (sha) => sha ? M.versions.findIndex((v) => v.sha.startsWith(sha)) : -1;
+    const version = Math.max(0, find(p.get("v")));
+    const before = find(p.get("before"));
+    if (M.images[key]) {
+      if (!$("#viewer").classList.contains("open")) { state.tab = "screens"; for (const a of document.querySelectorAll("#tabs a")) a.classList.toggle("on", a.dataset.tab === "screens"); render(); }
+      openViewer(KEYS, key, { version, mode: before >= 0 ? store.get("compareMode", "side") : undefined, old: before >= 0 ? before : null });
+      return;
+    }
+  }
+  const t = location.hash.slice(1) || "screens";
+  state.tab = ["screens", "changes", "videos"].includes(t) ? t : "screens";
   for (const a of document.querySelectorAll("#tabs a")) a.classList.toggle("on", a.dataset.tab === state.tab);
-  $("#filters").style.display = state.tab === "screens" ? "" : "none";
   render();
 }
-function render() {
-  if (!M) return;
-  if (state.tab === "screens") { renderFilters(); renderScreens(); }
+function render() { if (!M) return; renderToolbar(); renderMain(); }
+function renderMain() {
+  if (state.tab === "screens") renderScreens();
   else if (state.tab === "changes") renderChanges();
   else renderVideos();
 }
 
-let visible = [];
+// ---------------------------------------------------------------- screens
 function matches(key) {
   if (state.module !== "all" && moduleOf(key) !== state.module) return false;
   const parts = variantOf(key).split("-");
   if (state.devices.size && !parts.some((p) => state.devices.has(p))) return false;
   if (state.themes.size && !parts.some((p) => state.themes.has(p))) return false;
   const q = state.q.trim().toLowerCase();
-  if (q && !key.toLowerCase().includes(q)) return false;
+  if (q && !key.toLowerCase().replace(/-/g, " ").includes(q.replace(/-/g, " "))) return false;
   if (state.onlyChanged && !changedIn(key, state.version)) return false;
   return !!oidAt(key, state.version);
 }
+function shot(key, oid, opts = {}) {
+  const fig = h("figure", { class: "shot " + (opts.cls || ""), style: { "--ar": ar(oid) }, onclick: opts.onclick, title: opts.title },
+    opts.header || null,
+    h("img", { loading: "lazy", decoding: "async", src: thumb(oid), alt: opts.alt || key, width: (M.dims[oid] || [])[0], height: (M.dims[oid] || [])[1] }),
+    opts.caption ? h("figcaption", {}, opts.caption) : null);
+  return fig;
+}
+let visible = [];
 function renderScreens() {
-  const main = $("#main"); main.replaceChildren(); visible = [];
+  const main = $("#main"); main.replaceChildren(); main.classList.toggle("paged", state.paged);
   const k = state.version;
-  let lastModule = null, box = null, row = null, lastScreen = null;
-  for (const key of KEYS) {
-    if (!matches(key)) continue;
-    const mod = moduleOf(key), screen = screenOf(key);
-    if (mod !== lastModule) { main.append(el("h2", { text: `${LABELS[mod] || mod} · ${mod}` })); lastModule = mod; lastScreen = null; }
-    if (screen !== lastScreen) {
-      row = el("div", { class: "row" });
-      box = el("section", { class: "screen" }, el("h3", { text: screen }), row);
-      main.append(box); lastScreen = screen;
-    }
-    const i = visible.length; visible.push(key);
-    const oid = oidAt(key, k);
-    row.append(el("figure", { onclick: () => openViewer(i) },
-      el("img", { loading: "lazy", decoding: "async", src: thumb(oid), alt: `${screen} ${variantOf(key)}` }),
-      changedIn(key, k) ? el("span", { class: "badge", text: previousOid(key, k) ? "changed" : "new" }) : null,
-      el("figcaption", { text: variantOf(key) })));
+  const keys = KEYS.filter(matches);
+  visible = keys;
+  // Groups of one screen.
+  const screens = [];
+  for (const key of keys) {
+    const id = key.slice(0, key.lastIndexOf("/"));
+    if (!screens.length || screens[screens.length - 1].id !== id) screens.push({ id, keys: [] });
+    screens[screens.length - 1].keys.push(key);
   }
-  if (!visible.length) main.append(el("p", { class: "empty", text: "No images match." }));
+  pageFab = null; setFab(null);
+  if (!screens.length) { main.append(h("p", { class: "empty", text: "No images match the filters." })); return; }
+  const card = (s) => {
+    const changed = s.keys.filter((key) => changedIn(key, k)).length;
+    const row = h("div", { class: "row" }, s.keys.map((key) => {
+      const oid = oidAt(key, k);
+      const tag = changedIn(key, k) ? h("span", { class: "tag " + (olderEntry(key, k) && olderEntry(key, k)[1] ? "changed" : "new"), text: olderEntry(key, k) && olderEntry(key, k)[1] ? "CHANGED" : "NEW" }) : null;
+      return shot(key, oid, { onclick: () => openViewer(visible, key, { version: k }), caption: [variantName(variantOf(key)), tag] });
+    }));
+    return h("section", { class: "screen" },
+      h("div", { class: "screen-head" }, h("h3", { text: screenOf(s.keys[0]) }), h("span", { class: "muted", style: { fontSize: "13px" }, text: `${LABELS[moduleOf(s.keys[0])] || ""}${changed ? ` · ${changed} changed in this version` : ""}` }),
+        h("button", { class: "copy", title: "Copy a text that identifies this screen", onclick: () => copyText(screenReference(s.keys, k)), text: "📋 Copy" })),
+      row);
+  };
+  if (state.paged) {
+    state.page = Math.min(Math.max(0, state.page), screens.length - 1);
+    const go = (d) => { state.page = Math.min(screens.length - 1, Math.max(0, state.page + d)); renderScreens(); window.scrollTo(0, 0); };
+    const pager = () => h("div", { class: "pager" },
+      h("button", { class: "btn", onclick: () => go(-1), disabled: state.page === 0, text: "‹ Previous" }),
+      h("span", { class: "count", text: `Screen ${state.page + 1} of ${screens.length} · keys J and K` }),
+      h("button", { class: "btn primary", onclick: () => go(1), disabled: state.page === screens.length - 1, text: "Next ›" }));
+    const current = screens[state.page];
+    main.append(pager(), card(current));
+    pageFab = () => copyText(screenReference(current.keys, k));
+    setFab(pageFab);
+    return;
+  }
+  let lastModule = null;
+  main.append(h("p", { class: "count", text: `${keys.length} images in ${screens.length} screens${k ? " · as they were on " + vName(k) : ""}` }));
+  for (const s of screens) {
+    const mod = moduleOf(s.keys[0]);
+    if (mod !== lastModule) { main.append(h("h2", { class: "module", text: LABELS[mod] || mod })); lastModule = mod; }
+    main.append(card(s));
+  }
 }
 
+// ---------------------------------------------------------------- changes
 function renderChanges() {
-  const main = $("#main"); main.replaceChildren();
-  main.append(el("p", { class: "vmeta", text: `The last ${M.versions.length} commits of main that changed reference images. The oldest one is the starting point.` }));
+  pageFab = null; setFab(null);
+  const main = $("#main"); main.replaceChildren(); main.classList.remove("paged");
+  main.append(h("p", { class: "count", text: `The last ${M.versions.length} changes of the images on main, newest first. Red is the image before, green the image after.` }));
   M.versions.forEach((v, i) => {
     const last = i === M.versions.length - 1;
-    const d = el("details", { class: "version" },
-      el("summary", {},
-        el("div", { class: "vtitle", text: v.subject }),
-        el("div", { class: "vmeta" }, el("a", { href: commitUrl(v.sha), text: short(v.sha), onclick: (e) => e.stopPropagation() }),
-          ` · ${fmtDate(v.date)}${v.web ? " · web " + v.web : ""}${v.app ? " · app " + v.app : ""} · `,
-          last ? "starting point" : `${v.changed} images changed`)));
-    const body = el("div", { class: "changes" });
+    const keys = last ? [] : KEYS.filter((key) => entriesOf(key).some((e) => e[0] === i));
+    const review = keys.length ? h("button", { class: "btn primary", onclick: (e) => { e.preventDefault(); openViewer(keys, keys[0], { version: i, mode: store.get("compareMode", "side") }); }, text: `Review ${keys.length} ▸` }) : null;
+    const d = h("details", { class: "version", open: i === 0 && keys.length <= 30 },
+      h("summary", {},
+        h("span", { class: "vtitle", text: vName(i, true) }),
+        h("span", { class: "muted", text: last ? "starting point" : `${v.changed} images` }),
+        review,
+        h("span", { class: "vsub" }, v.subject, " · ", h("a", { href: commitUrl(v.sha), target: "_blank", onclick: (e) => e.stopPropagation(), text: "GitHub ↗" }))));
+    const body = h("div", { class: "pairs" });
     d.append(body);
-    d.ontoggle = () => {
+    const fill = () => {
       if (!d.open || body.childElementCount || last) return;
-      const keys = KEYS.filter((key) => (M.images[key] || []).some((e) => e[0] === i));
       for (const key of keys) {
         const after = oidAt(key, i), before = oidAt(key, i + 1);
-        body.append(el("div", { class: "pair", onclick: () => openViewer(0, { list: keys, key, version: i, compare: i + 1, mode: after && before ? "slider" : "single" }) },
-          el("div", { class: "imgs" },
-            before ? el("img", { loading: "lazy", src: thumb(before), alt: "before" }) : el("div", { class: "removed", text: "new" }),
-            "→",
-            after ? el("img", { loading: "lazy", src: thumb(after), alt: "after" }) : el("div", { class: "removed", text: "removed" })),
-          el("div", { class: "lbl", text: key })));
+        const open = () => openViewer(keys, key, { version: i, mode: store.get("compareMode", "side") });
+        body.append(h("div", { class: "pair" },
+          h("div", { class: "pair-name", onclick: open, text: `${screenOf(key)} · ${variantName(variantOf(key))}` }),
+          h("div", { class: "pair-imgs" },
+            before ? shot(key, before, { cls: "frame-old", onclick: open, header: h("div", { class: "phead o" }, "BEFORE", h("small", { text: vName(i + 1) })) }) : h("div", { class: "missing", text: "Did not exist before" }),
+            after ? shot(key, after, { cls: "frame-new", onclick: open, header: h("div", { class: "phead n" }, "AFTER", h("small", { text: vName(i) })) }) : h("div", { class: "missing", text: "Removed" }))));
       }
     };
+    d.ontoggle = fill;
     main.append(d);
+    fill();
   });
 }
 
+// ---------------------------------------------------------------- videos
 function renderVideos() {
-  const main = $("#main"); main.replaceChildren();
-  main.append(el("p", { class: "vmeta", text: "The organizer tablet of the last game days (Actions > Game day), compressed: only the frames that change are kept, the times are real. Older runs are removed." }));
-  if (!M.videos || !M.videos.length) { main.append(el("p", { class: "empty", text: "No game day videos yet." })); return; }
-  const grid = el("div", { class: "videos" });
-  for (const run of M.videos) {
-    for (const item of run.items.length ? run.items : [null]) {
-      const card = el("div", { class: "vcard" },
-        el("div", { class: "vtitle", text: item ? `${run.title} · ${item.name}` : run.title }),
-        el("div", { class: "vmeta" }, el("a", { href: run.url, text: `Run #${run.number}` }), ` · ${fmtDate(run.date)} · ${run.conclusion || ""}`,
-          item ? ` · ${item.duration ? Math.round(item.duration / 60) + " min" : ""} · ${(item.size / 1e6).toFixed(1)} MB` : " · no video"));
-      if (item) {
-        const video = el("video", { controls: "", preload: "none", src: item.src, poster: item.poster || null, playsinline: "" });
-        const speeds = el("div", { class: "speeds" });
-        for (const s of [1, 2, 4, 8, 16]) speeds.append(chip(`${s}×`, s === 1, () => { video.playbackRate = s; for (const b of speeds.children) b.setAttribute("aria-pressed", b.textContent === `${s}×`); }));
-        card.append(video, speeds);
-      }
-      grid.append(card);
-    }
+  pageFab = null; setFab(null);
+  const main = $("#main"); main.replaceChildren(); main.classList.remove("paged");
+  main.append(h("p", { class: "count", text: "The organizer tablet in the last game days (Actions > Game day). Only the frames that change are kept; the times are real. Older runs are removed." }));
+  if (!M.videos || !M.videos.length) { main.append(h("p", { class: "empty", text: "No game day videos yet." })); return; }
+  const grid = h("div", { class: "videos" });
+  for (const run of M.videos) for (const item of run.items) {
+    const video = h("video", { controls: true, preload: "none", src: item.src, poster: item.poster, playsinline: true });
+    const speeds = group([1, 2, 4, 8, 16].map((s) => [String(s), s + "×"]), (id) => +id === (video.playbackRate || 1), (id) => { video.playbackRate = +id; speedBox.replaceChildren(...speeds()); }, "Speed");
+    const speedBox = h("div", { class: "toolbar" }, ...speeds);
+    function speeds_() { return group([1, 2, 4, 8, 16].map((s) => [String(s), s + "×"]), (id) => +id === video.playbackRate, (id) => { video.playbackRate = +id; speedBox.replaceChildren(...speeds_()); }, "Speed"); }
+    speedBox.replaceChildren(...speeds_());
+    grid.append(h("div", { class: "vcard" },
+      h("div", { class: "vtitle", text: `${when(run.date)} · ${item.name.replace("organizer-", "organizer ")}` }),
+      h("div", { class: "muted", style: { fontSize: "13px" } }, run.title, " · ", h("a", { href: run.url, target: "_blank", text: `run #${run.number}` }),
+        ` · ${run.conclusion || ""} · ${item.duration ? Math.round(item.duration / 60) + " min · " : ""}${(item.size / 1e6).toFixed(1)} MB`),
+      video, speedBox));
   }
   main.append(grid);
 }
 
+// ---------------------------------------------------------------- copy a reference
+const fileOf = (key) => { const m = moduleOf(key); return `${m}/screenshots/${key.slice(m.length + 1)}.png`; };
+const shaOf = (i) => M.versions[i].sha.slice(0, 10);
+function linkTo(key, version, old) {
+  let hash = `img=${encodeURIComponent(key)}&v=${shaOf(version)}`;
+  if (old != null) hash += `&before=${shaOf(old)}`;
+  return `${location.origin}${location.pathname}#${hash}`;
+}
+function imageReference(key, version, old) {
+  const lines = [
+    `Screenshot: ${LABELS[moduleOf(key)] || moduleOf(key)} › ${screenOf(key)} › ${variantName(variantOf(key))}`,
+    `File: ${fileOf(key)}`,
+    `Version: ${vName(version, true)}`,
+  ];
+  if (old != null) lines.push(`Compared with (before): ${vName(old, true)}`);
+  lines.push(`Link: ${linkTo(key, version, old)}`);
+  return lines.join("\n");
+}
+function screenReference(keys, version) {
+  const key = keys[0];
+  return [
+    `Screen: ${LABELS[moduleOf(key)] || moduleOf(key)} › ${screenOf(key)} (${keys.map((k) => variantName(variantOf(k))).join(", ")})`,
+    `Files: ${fileOf(key).replace(/[^/]+\.png$/, "*.png")}`,
+    `Version: ${vName(version, true)}`,
+    `Link: ${linkTo(key, version, null)}`,
+  ].join("\n");
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const area = h("textarea", { style: { position: "fixed", opacity: "0" } }); area.value = text;
+    document.body.append(area); area.select(); try { document.execCommand("copy"); } catch (e2) {} area.remove();
+  }
+  const t = $("#toast"); t.textContent = "Copied. Paste it in the chat:\n" + text.split("\n")[0];
+  t.classList.add("show"); clearTimeout(copyText.timer); copyText.timer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+let fabAction = null, pageFab = null;
+function setFab(action) { fabAction = action; $("#fab").classList.toggle("show", !!action); }
+$("#fab").onclick = () => fabAction && fabAction();
+
 // ---------------------------------------------------------------- viewer
-const V = { list: [], index: 0, key: null, version: 0, compare: null, mode: store.get("mode", "single") };
-function openViewer(i, opts = {}) {
-  V.list = opts.list || visible; V.index = opts.key ? V.list.indexOf(opts.key) : i;
-  V.version = opts.version ?? state.version;
-  V.forced = opts.compare;
-  if (opts.mode) V.mode = opts.mode;
-  showViewer();
-  $("#viewer").classList.add("open");
+// NEW is the image at V.version. OLD is always an older version of the same image (V.old, a version index).
+const MODES = [["single", "Image", "1"], ["side", "Side by side", "2"], ["slider", "Slider", "3"], ["flip", "Flip", "4"], ["diff", "Difference", "5"]];
+const V = { list: [], index: 0, version: 0, old: null, mode: "single", fit: true, showOld: false, timer: null };
+function openViewer(list, key, opts = {}) {
+  V.list = list; V.index = Math.max(0, list.indexOf(key)); V.version = opts.version ?? 0;
+  V.mode = opts.mode || V.mode; V.keepOld = opts.old != null; if (opts.old != null) V.old = opts.old;
+  $("#viewer").classList.add("open"); document.body.style.overflow = "hidden";
+  show();
 }
-function showViewer() {
-  V.key = V.list[(V.index + V.list.length) % V.list.length];
-  const key = V.key;
-  const entries = (M.images[key] || []);
-  // The other version: the one asked for, or the previous change of this image.
-  let compare = V.forced;
-  if (compare == null) { const cur = entryAt(key, V.version); const p = cur && entries.find((e) => e[0] > cur[0]); compare = p ? p[0] : null; }
-  V.compare = compare; V.forced = undefined;
-  $("#vName").textContent = key;
-  const modes = $("#vModes"); modes.replaceChildren();
-  for (const [m, label] of [["single", "Image"], ["side", "Side by side"], ["slider", "Slider"], ["diff", "Difference"]]) {
-    modes.append(chip(label, V.mode === m, () => { V.mode = m; store.set("mode", m); V.forced = V.compare; showViewer(); }));
-  }
-  const sel = $("#vCompare"); sel.replaceChildren(el("option", { value: "", text: "—" }));
-  for (const e of entries) if (e[1]) sel.append(el("option", { value: e[0], text: vLabel(e[0]) }));
-  sel.value = V.compare == null ? "" : String(entryAt(key, V.compare)?.[0] ?? "");
-  sel.onchange = () => { V.forced = sel.value === "" ? null : +sel.value; if (V.mode === "single" && V.forced != null) V.mode = "slider"; showViewer(); };
+function closeViewer() { setFab(pageFab); history.replaceState(null, "", "#" + state.tab); $("#viewer").classList.remove("open"); document.body.style.overflow = ""; $("#vStage").replaceChildren(); clearInterval(V.timer); }
+function step(d) { V.index = (V.index + d + V.list.length) % V.list.length; V.keepOld = false; show(); }
+function setMode(m) { V.mode = m; if (m !== "single") store.set("compareMode", m); V.keepOld = true; show(); }
 
-  const a = oidAt(key, V.version), b = V.compare == null ? null : oidAt(key, V.compare);
-  const stage = $("#vStage"); stage.replaceChildren();
-  const side = (oid, cap) => el("div", { class: "side" }, oid ? el("img", { src: full(oid), alt: cap }) : el("div", { class: "removed", text: "not in this version" }), el("div", { class: "cap", text: cap }));
-  const capA = `${vLabel(V.version)}`, capB = V.compare == null ? "" : vLabel(V.compare);
-  if (V.mode === "single" || !b || !a) stage.append(side(a, capA));
-  else if (V.mode === "side") stage.append(side(b, "before: " + capB), side(a, "after: " + capA));
-  else if (V.mode === "diff") {
-    stage.append(el("div", { class: "side" }, el("div", { class: "diff" }, el("img", { src: full(b) }), el("img", { src: full(a) })),
-      el("div", { class: "cap", text: `Difference: black where both are equal. ${capB} vs ${capA}` })));
-  } else stage.append(slider(b, a, capB, capA));
+function show() {
+  clearInterval(V.timer);
+  const key = V.list[V.index];
+  const cur = entryAt(key, V.version);
+  const newOid = cur ? cur[1] : null;
+  if (!V.keepOld) { const o = olderEntry(key, V.version); V.old = o && o[1] ? o[0] : null; }
+  V.keepOld = false;
+  const oldOid = V.old == null ? null : oidAt(key, V.old);
+  const comparing = V.mode !== "single" && oldOid && newOid;
+  setFab(() => copyText(imageReference(key, V.version, comparing ? V.old : null)));
+  history.replaceState(null, "", linkTo(key, V.version, comparing ? V.old : null));
 
-  const hist = $("#vHistory"); hist.replaceChildren(el("span", { text: "Changes of this image:" }));
-  for (const e of entries) {
-    const label = `${short(M.versions[e[0]].sha)} ${new Date(M.versions[e[0]].date).toLocaleDateString()}${e[1] ? "" : " (removed)"}`;
-    hist.append(chip(label, e[0] === (entryAt(key, V.version) || [])[0], () => { V.version = e[0]; showViewer(); }, M.versions[e[0]].subject));
+  $("#vTitle").replaceChildren(`${screenOf(key)} · ${variantName(variantOf(key))}`,
+    h("small", { text: `${LABELS[moduleOf(key)] || moduleOf(key)} · ${V.index + 1} of ${V.list.length}` }));
+  $("#vModes").replaceChildren(...MODES.map(([id, text, k]) => h("button", { "aria-pressed": String(V.mode === id), title: `${text} (${k})`, disabled: id !== "single" && !oldOid, onclick: () => setMode(id), text })));
+  $("#vZoom").textContent = V.fit ? "Fit" : "100%";
+
+  // The legend says which is which, in the same colors as the frames.
+  const olderChoices = entriesOf(key).filter((e) => e[1] && cur && e[0] > cur[0]);
+  const legend = $("#vLegend"); legend.replaceChildren();
+  if (olderChoices.length) {
+    const sel = h("select", { "aria-label": "Version before" }, olderChoices.map((e) => h("option", { value: e[0], text: vName(e[0]) })));
+    sel.value = V.old == null ? "" : String(V.old);
+    sel.onchange = () => { V.old = +sel.value; if (V.mode === "single") V.mode = store.get("compareMode", "side"); V.keepOld = true; show(); };
+    legend.append(h("span", { class: "key o" }, h("b", { text: "BEFORE" }), sel), h("span", { text: "→" }));
   }
-  if (entries.length && entries[entries.length - 1][0] === M.versions.length - 1) hist.append(el("span", { style: "color:#999", text: "(and older, not kept)" }));
+  legend.append(h("span", { class: "key n" }, h("b", { text: "AFTER" }), vName(V.version)));
+  if (olderChoices.length && V.mode === "single") legend.append(h("span", { style: { color: "#aab3ad" }, text: "Choose Side by side, Slider, Flip or Difference to compare." }));
+  if (!olderChoices.length) legend.append(h("span", { style: { color: "#aab3ad" }, text: "No older version of this image in the history kept." }));
+
+  const stage = $("#vStage");
+  stage.replaceChildren();
+  stage.className = (V.fit ? "fit" : "actual") + (comparing && V.mode === "side" ? " side2" : "");
+  const stageH = stage.clientHeight - 60;
+  stage.style.setProperty("--stageH", Math.max(200, stageH) + "px");
+  const img = (oid, alt) => h("img", { src: full(oid), alt, width: (M.dims[oid] || [])[0], height: (M.dims[oid] || [])[1] });
+
+  if (!comparing) {
+    stage.append(newOid ? h("div", { class: "pane" }, img(newOid, "image")) : h("div", { class: "missing", text: "Not in this version" }));
+  } else if (V.mode === "side") {
+    stage.append(
+      h("div", { class: "pane o" }, h("div", { class: "ph" }, "BEFORE", h("small", { text: vName(V.old) })), img(oldOid, "before")),
+      h("div", { class: "pane n" }, h("div", { class: "ph" }, "AFTER", h("small", { text: vName(V.version) })), img(newOid, "after")));
+  } else if (V.mode === "slider") {
+    stage.append(slider(oldOid, newOid), h("div", { class: "hint", text: `Move the line with the mouse or a finger. Left, in red: BEFORE (${vName(V.old)}). Right, in green: AFTER (${vName(V.version)}).` }));
+  } else if (V.mode === "flip") {
+    const box = h("div", { class: "flip" + (V.showOld ? " showOld" : ""), title: "Click or press Space to switch" });
+    const paint = () => {
+      box.className = "flip" + (V.showOld ? " showOld" : "");
+      box.replaceChildren(img(V.showOld ? oldOid : newOid, V.showOld ? "before" : "after"),
+        h("span", { class: "corner " + (V.showOld ? "o" : "n"), text: V.showOld ? `BEFORE · ${vName(V.old)}` : `AFTER · ${vName(V.version)}` }));
+    };
+    box.onclick = () => { V.showOld = !V.showOld; paint(); };
+    paint();
+    const auto = h("button", { class: "btn", text: "Auto flip" });
+    auto.onclick = () => { if (V.timer) { clearInterval(V.timer); V.timer = null; auto.textContent = "Auto flip"; } else { V.timer = setInterval(() => { V.showOld = !V.showOld; paint(); }, 900); auto.textContent = "Stop"; } };
+    stage.append(box, h("div", { class: "hint" }, "Click the image or press Space to switch between BEFORE and AFTER. ", auto));
+  } else {
+    stage.append(h("div", { class: "diff" }, img(oldOid, "old"), img(newOid, "new")),
+      h("div", { class: "hint", text: `Black: the same in both. Bright: what changed between BEFORE (${vName(V.old)}) and AFTER (${vName(V.version)}).` }));
+  }
+
+  const hist = $("#vHistory"); hist.replaceChildren(h("span", { text: "Versions of this image:" }));
+  hist.append(h("div", { class: "group" }, entriesOf(key).map((e) =>
+    h("button", { "aria-pressed": String(cur && e[0] === cur[0]), title: M.versions[e[0]].subject, onclick: () => { V.version = e[0]; show(); },
+      text: vName(e[0]) + (e[1] ? "" : " (removed)") }))));
+  if (entriesOf(key).length && entriesOf(key)[entriesOf(key).length - 1][0] === M.versions.length - 1) hist.append(h("span", { style: { color: "#8a948e" }, text: "Older ones are not kept." }));
 }
-function slider(before, after, capB, capA) {
-  const base = el("img", { src: full(after), alt: "after" });
-  const overImg = el("img", { src: full(before), alt: "before" });
-  const over = el("div", { class: "over" }, overImg);
-  const handle = el("div", { class: "handle" });
-  const wrap = el("div", { class: "slider" }, base, over, handle);
+
+function slider(oldOid, newOid) {
+  const base = h("img", { src: full(newOid), alt: "new", width: (M.dims[newOid] || [])[0], height: (M.dims[newOid] || [])[1] });
+  const overImg = h("img", { src: full(oldOid), alt: "old" });
+  const over = h("div", { class: "over" }, overImg);
+  const handle = h("div", { class: "handle" }, h("div", { class: "knob", text: "‹ ›" }));
+  const wrap = h("div", { class: "slider" }, base, over, handle,
+    h("span", { class: "corner o", text: "◀ BEFORE" }), h("span", { class: "corner n", text: "AFTER ▶" }));
   const set = (f) => { f = Math.min(1, Math.max(0, f)); over.style.width = f * 100 + "%"; handle.style.left = f * 100 + "%"; };
   const sync = () => { overImg.style.width = base.clientWidth + "px"; overImg.style.height = base.clientHeight + "px"; };
   base.onload = sync; new ResizeObserver(sync).observe(base);
   const move = (e) => { const r = wrap.getBoundingClientRect(); set((e.clientX - r.left) / r.width); };
-  wrap.onpointerdown = (e) => { wrap.setPointerCapture(e.pointerId); move(e); wrap.onpointermove = move; };
-  wrap.onpointerup = () => { wrap.onpointermove = null; };
+  let dragging = false;
+  wrap.onpointerdown = (e) => { dragging = true; wrap.setPointerCapture(e.pointerId); move(e); };
+  wrap.onpointermove = (e) => { if (dragging || e.pointerType === "mouse") move(e); };
+  wrap.onpointerup = () => { dragging = false; };
   set(0.5);
-  return el("div", { class: "side" }, wrap, el("div", { class: "cap", text: `◀ before: ${capB} · after: ${capA} ▶` }));
+  return wrap;
 }
-function closeViewer() { $("#viewer").classList.remove("open"); $("#vStage").replaceChildren(); }
-$("#vClose").onclick = closeViewer;
-$("#vPrev").onclick = () => { V.index--; showViewer(); };
-$("#vNext").onclick = () => { V.index++; showViewer(); };
-document.addEventListener("keydown", (e) => {
-  if (!$("#viewer").classList.contains("open")) return;
-  if (e.key === "Escape") closeViewer();
-  else if (e.key === "ArrowLeft") { V.index--; showViewer(); }
-  else if (e.key === "ArrowRight") { V.index++; showViewer(); }
-});
 
-load().catch((e) => { $("#meta").textContent = "Could not load the gallery: " + e; });
+$("#vClose").onclick = closeViewer;
+$("#vPrev").onclick = () => step(-1);
+$("#vEdgePrev").onclick = () => step(-1);
+$("#vEdgeNext").onclick = () => step(1);
+// Swipe left or right on a phone or tablet. Not on the slider, which uses the same gesture.
+(() => {
+  let x0 = null, y0 = null;
+  const stage = $("#vWrap");
+  stage.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1 || e.target.closest(".slider") || !V.fit) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener("touchend", (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
+  }, { passive: true });
+})();
+$("#vNext").onclick = () => step(1);
+$("#vZoom").onclick = () => { V.fit = !V.fit; V.keepOld = true; show(); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, select, textarea")) return;
+  const open = $("#viewer").classList.contains("open");
+  if (open) {
+    if (e.key === "Escape") closeViewer();
+    else if (e.key === "ArrowLeft") step(-1);
+    else if (e.key === "ArrowRight") step(1);
+    else if (e.key === " " && V.mode === "flip") { e.preventDefault(); V.showOld = !V.showOld; V.keepOld = true; show(); }
+    else if (e.key === "c" || e.key === "C") { fabAction && fabAction(); }
+    else if (e.key === "z" || e.key === "Z") { V.fit = !V.fit; V.keepOld = true; show(); }
+    else { const m = MODES.find((x) => x[2] === e.key); if (m) setMode(m[0]); }
+  } else if (state.tab === "screens" && state.paged && (e.key === "j" || e.key === "k")) {
+    state.page += e.key === "j" ? 1 : -1; renderScreens(); window.scrollTo(0, 0);
+  }
+});
+window.addEventListener("resize", () => { if ($("#viewer").classList.contains("open")) { V.keepOld = true; show(); } });
+
+load().catch((e) => { $("#main").replaceChildren(h("p", { class: "empty", text: "Could not load the gallery: " + e })); });
 </script>
 </body>
 </html>

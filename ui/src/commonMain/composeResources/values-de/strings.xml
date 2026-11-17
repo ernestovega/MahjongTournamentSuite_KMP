@@ -27,6 +27,7 @@
     <string name="app_logo_description">Logo von Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Benutzer</string>
     <string name="top_bar_app_errors">App-Fehler</string>
+    <string name="top_bar_screenshots">Screenshots</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Rangliste</string>
     <string name="date_field_clear">%1$s löschen</string>

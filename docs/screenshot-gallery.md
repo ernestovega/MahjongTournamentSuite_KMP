@@ -6,13 +6,22 @@ It is a second Hosting site of the staging project, so it never touches the stag
 
 ## What it shows
 
-- **Screens**: every image, grouped by module and screen, with filters by device and theme and a search. The version
-  menu shows the images as they were in an older version, and `changed` keeps only what changed in it.
-- **Changes**: the last 30 commits of main that changed images, newest first, each with its images before and after.
-- **Viewer** (click an image): the image in full size, every version where it changed, and a comparison with any of
-  them: side by side, a slider, or the difference (black where both are equal).
+The admin app opens it with the **Screenshots** button of the tournament list (administrators only).
+
+- **Screens**: every image, grouped by module and screen, with filters by device and theme, a search and four sizes
+  (S, M, L, Fit). **One screen** shows a single screen at a time, as big as the window (J and K, or the buttons, move
+  to the next one). The version menu shows the images as they were on an older date, and **Changed only** keeps what
+  changed then. Versions are named by date and web version.
+- **Changes**: the last 30 changes of the images on main, newest first, each image with BEFORE (red) and AFTER
+  (green). **Review** opens the viewer on them.
+- **Viewer** (click an image): the image in full size, the arrows at the sides (or ← and →, or a swipe on a phone)
+  go to the next image, and the versions of the image are at the bottom. Compare BEFORE (red) and AFTER (green) side
+  by side, with a slider, flipping between them (Space) or as a difference (black where both are equal). Z switches
+  between fit and real pixels.
+- **Copy reference** (the floating button, or C): copies a text with the screen, the variant, the file in the
+  repository, the version and a link that opens the same image. Paste it in the chat to ask about that screen.
 - **Game day videos**: the screen of the organizer tablet in the last 3 runs of Actions > Game day.
-- At the top, whether the images are up to date:
+- **Status** (top right): whether the images are up to date:
   - the last run of Actions > Screenshot tests, and how many commits of main came after it;
   - for each module, whether its main code (`src/*Main`, plus `ui`, `designsystem` and `screenshotTesting` where
     they apply) changed after its images. That is only a hint: running the tests is the real check.
@@ -20,9 +29,9 @@ It is a second Hosting site of the staging project, so it never touches the stag
 ## How it stays small
 
 - Each image is stored once, named by its Git LFS id, in `img/` (the original PNG, opened only in the viewer) and
-  `thumb/` (a WebP 440 px high, about 8 KB, loaded lazily in the lists). An image that did not change in a version
+  `thumb2/` (a WebP up to 900 px high, loaded lazily in the lists). An image that did not change in a version
   costs nothing more.
-- Only the last 30 versions are kept (`DEFAULT_VERSIONS` in `scripts/gallery/gallery.py`). About 40 MB in total.
+- Only the last 30 versions are kept (`DEFAULT_VERSIONS` in `scripts/gallery/gallery.py`). About 60 MB in total.
 - The videos keep only the frames that change (variable frame rate, 960 px wide), so a still screen costs almost
   nothing and the times stay real. Only the last 3 game days are kept (`KEEP_GAME_DAYS`).
 - Publishing uses the Hosting REST API: files the site already has are never uploaded again, and the runner downloads
