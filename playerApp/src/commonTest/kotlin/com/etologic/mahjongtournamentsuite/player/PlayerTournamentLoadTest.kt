@@ -113,8 +113,7 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         handPatches: Map<Int, Map<String, Any?>>,
     ) = unusedFakeResult<Pair<TableState, List<TableHand>>>()
 
-    override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> =
-        server.manifests[tournamentId]?.let { AppResult.Success(it) } ?: AppResult.Failure(AppError.Network)
+    override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> = server.manifests[tournamentId]?.let { AppResult.Success(it) } ?: AppResult.Failure(AppError.Network)
 
     override suspend fun createTournament(request: CreateTournamentRequest) = unusedFakeResult<Tournament>()
 
@@ -306,8 +305,7 @@ class PlayerTournamentLoadTest {
         assertEquals(AppError.Network, assertIs<AppResult.Failure>(presenter.load("t1")).error)
     }
 
-    private fun manifest(tables: Long, players: Long = 1, teams: Long = 1, rounds: Long = 1) =
-        TournamentManifest(tablesRevision = tables, tableVersions = emptyMap(), playersRevision = players, teamsRevision = teams, roundsRevision = rounds)
+    private fun manifest(tables: Long, players: Long = 1, teams: Long = 1, rounds: Long = 1) = TournamentManifest(tablesRevision = tables, tableVersions = emptyMap(), playersRevision = players, teamsRevision = teams, roundsRevision = rounds)
 
     @Test
     fun thePlacesKeyChangesWhenHandsPlayersOrTeamsChange() = runTest {
