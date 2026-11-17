@@ -109,7 +109,7 @@ internal fun standingColor(rank: Int): Color = MtsTheme.colors.position(rank, Ma
 
 /**
  * One line for each place of the player: the ranking, the team, the best hand and the chicken hands. Each line has the
- * icon of the stat in the color of the place, the place, and a small info icon whose tooltip says the details.
+ * place, the icon of the stat in the color of the place, and a small info icon whose tooltip says the details.
  */
 @Composable
 internal fun StandingBadges(standing: TournamentStanding, modifier: Modifier = Modifier) {
@@ -170,13 +170,14 @@ private fun StandingLine(icon: Painter, rank: Int, title: StringResource, detail
     // The title is the first line of the tooltip. The details are bullets, one on each line.
     val tooltip = (listOf(name) + details).joinToString("\n")
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(icon, contentDescription = name, Modifier.size(20.dp), tint = standingColor(rank))
+        // The number is at the left, so the icons stay aligned whatever the number of digits.
         Text(
             "$rank",
             style = MaterialTheme.typography.titleSmall.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        Icon(icon, contentDescription = name, Modifier.size(20.dp), tint = standingColor(rank))
         AppTooltipBox(tooltip, alignEnd = true) {
             // The tap shows the tooltip. It does not reach the card, so it does not open the tournament.
             Box(
