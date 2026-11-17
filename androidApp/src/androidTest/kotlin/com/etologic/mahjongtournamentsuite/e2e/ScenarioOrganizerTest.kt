@@ -251,7 +251,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         if (c.isOnScreen("Replace all players?")) c.clickButton("Replace")
         c.waitForText("Import finished", timeoutMs = 120_000)
         c.waitForText("Players saved: $imported")
-        c.clickLastButton("Close")
+        // The list reloads behind the dialog when the import ends: a tap during that reload can be lost, so the
+        // organizer looks again and closes the dialog until it is gone.
+        repeat(3) {
+            if (c.isOnScreen("Import finished")) c.clickLastButton("Close")
+            runCatching { c.waitForNoText("Import finished", timeoutMs = 10_000) }
+        }
+        c.waitForNoText("Import finished")
         log("$imported players imported")
     }
 
