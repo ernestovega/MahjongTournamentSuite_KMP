@@ -51,7 +51,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
@@ -114,7 +113,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -129,7 +127,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
-import com.etologic.mahjongtournamentsuite.presentation.components.RankTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
@@ -211,8 +208,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
-import mahjongtournamentsuite.playerapp.generated.resources.standing_best_hand
-import mahjongtournamentsuite.playerapp.generated.resources.standing_team
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
@@ -581,34 +576,6 @@ internal enum class TournamentStatus(val label: StringResource) {
     FINISHED(Res.string.status_finished),
 }
 
-/**
- * The place of the player in a tournament. The other ranks are null when the list does not show them.
- * [chickenRank] and [bestHandRank] are from 1 to 3.
- */
-internal data class TournamentStanding(
-    val position: Int,
-    val teamRank: Int? = null,
-    val chickenRank: Int? = null,
-    val bestHandRank: Int? = null,
-)
-
-/**
- * What the list shows for [place]. The team place shows in a tournament with teams. The prizes of the hands show only
- * when the tournament is over, the tournament counts them and the player is in the first three.
- */
-internal fun tournamentStandingOf(
-    place: Standing,
-    isTeams: Boolean,
-    finished: Boolean,
-    countsChickenHands: Boolean,
-    countsBestHands: Boolean,
-) = TournamentStanding(
-    position = place.rank,
-    teamRank = place.teamRank.takeIf { isTeams },
-    chickenRank = place.chickenRank.takeIf { finished && countsChickenHands && it in 1..3 },
-    bestHandRank = place.bestHandRank.takeIf { finished && countsBestHands && it in 1..3 },
-)
-
 /** The status comes from the dates. It is null when the tournament has no dates. */
 internal fun statusOf(tournament: Tournament): TournamentStatus? {
     if (tournament.isCompleted) return TournamentStatus.FINISHED
@@ -647,16 +614,6 @@ private fun StatusChip(status: TournamentStatus) {
     }
 }
 
-/** The place of the player: a trophy and the number. The trophy is gold, silver or bronze for the first three. */
-@Composable
-private fun StandingTag(standing: TournamentStanding) {
-    val color = MaterialTheme.colorScheme.onSurface
-    MtsOutlinedTag(color) {
-        RankTrophy(standing.position, size = 18.dp)
-        Text("${standing.position}", style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
-    }
-}
-
 /** The logo of the tournament. A neutral box with a trophy shows while the tournament has no logo. */
 @Composable
 private fun TournamentLogo(tournament: Tournament) {
@@ -687,7 +644,7 @@ private fun TournamentLogo(tournament: Tournament) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, mine: Boolean = false, onClick: () -> Unit) {
+internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, mine: Boolean = false, onClick: () -> Unit) {
     var expanded by remember(tournament.id) { mutableStateOf(false) }
     val status = statusOf(tournament)
     // A tournament in progress and an upcoming tournament have an accent color. A finished tournament has none.
@@ -713,49 +670,21 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // The place and the prizes are at the top right, centered on the lines of the name.
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            tournament.name,
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (standing != null) {
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                StandingTag(standing)
-                                if (standing.teamRank != null || standing.chickenRank != null || standing.bestHandRank != null) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-                                        if (standing.teamRank != null) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.standing_team), Modifier.size(22.dp))
-                                                RankTrophy(standing.teamRank, size = 18.dp)
-                                                Text("${standing.teamRank}", style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                        if (standing.chickenRank != null) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                ChickenIcon(size = 22.dp)
-                                                PositionTrophy(standing.chickenRank, size = 18.dp)
-                                            }
-                                        }
-                                        if (standing.bestHandRank != null) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                // The hand is the icon of the best hands. The trophy is already the icon of the place.
-                                                Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.standing_best_hand), Modifier.size(20.dp))
-                                                PositionTrophy(standing.bestHandRank, size = 18.dp)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Text(
+                        tournament.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     // The dates are the subtitle of the item. They stay at the right of the status badge, or alone when there is no badge.
                     if (status != null || dates != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // The dates move under the status when they do not fit beside it, so they never break inside a word.
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            itemVerticalAlignment = Alignment.CenterVertically,
+                        ) {
                             if (status != null) StatusChip(status)
                             // The own tournaments are marked, so they stand out in the list of all tournaments.
                             if (mine) {
@@ -772,6 +701,8 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                         }
                     }
                 }
+                // The places of the player are at the top right, one line for each.
+                if (standing != null) StandingBadges(standing)
             }
             if (hasCity || venueText.isNotBlank()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

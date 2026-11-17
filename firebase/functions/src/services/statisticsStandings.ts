@@ -13,10 +13,18 @@ export type PersonStanding = {
   /** Place of the team of the player, and the number of teams. Null when the team is not known. */
   teamRank: number | null;
   teamOf: number | null;
+  /** The points of the team of the player. Null when the team is not known. */
+  teamPoints: number | null;
   /** Place of the player by chicken hands. Null when the player won no chicken hand. */
   chickenRank: number | null;
+  /** The chicken hands of the player, and the number of players with a chicken hand. */
+  chickenHands: number;
+  chickenOf: number;
   /** Place of the best hand of the player among the best hands of all players. Null when the player won no hand. */
   bestHandRank: number | null;
+  /** The value of the best hand of the player (0 without a hand), and the number of best hands it is compared with. */
+  bestHand: number;
+  bestHandOf: number;
 };
 
 type SlotRow = { slot: number; points: number; score: number; chicken: number; best: number };
@@ -52,6 +60,8 @@ export function standingOf(tournamentId: string, slotId: number, data: Data): Pe
   const myTeam = teams[String(slotId)];
   const myTeamRow = teamRows.find((row) => row.team === myTeam);
 
+  const bestHands = Object.values(best).flatMap((tables) => Object.values((tables ?? {}) as Record<string, number>)).map(Number);
+
   return {
     tournamentId,
     rank: rows.filter((row) => beats(row, mine)).length + 1,
@@ -60,13 +70,15 @@ export function standingOf(tournamentId: string, slotId: number, data: Data): Pe
     score: mine.score,
     teamRank: myTeamRow == null ? null : teamRows.filter((row) => beats(row, myTeamRow)).length + 1,
     teamOf: myTeamRow == null ? null : teamRows.length,
+    teamPoints: myTeamRow == null ? null : myTeamRow.points,
     chickenRank: mine.chicken === 0
       ? null
       : rows.filter((row) => row.chicken > mine.chicken || (row.chicken === mine.chicken && beats(row, mine))).length + 1,
-    bestHandRank: mine.best === 0
-      ? null
-      : Object.values(best).flatMap((tables) => Object.values((tables ?? {}) as Record<string, number>))
-        .filter((hand) => Number(hand) > mine.best).length + 1,
+    chickenHands: mine.chicken,
+    chickenOf: rows.filter((row) => row.chicken > 0).length,
+    bestHandRank: mine.best === 0 ? null : bestHands.filter((hand) => hand > mine.best).length + 1,
+    bestHand: mine.best,
+    bestHandOf: bestHands.filter((hand) => hand > 0).length,
   };
 }
 

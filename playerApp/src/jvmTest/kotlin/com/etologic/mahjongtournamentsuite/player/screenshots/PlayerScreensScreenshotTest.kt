@@ -1,7 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player.screenshots
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
@@ -13,9 +17,11 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
 import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
@@ -30,13 +36,18 @@ import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.player.TableScreen
+import com.etologic.mahjongtournamentsuite.player.TournamentCard
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen
+import com.etologic.mahjongtournamentsuite.player.TournamentStanding
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.COMPLETED
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.INDIVIDUAL
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import java.util.Locale
 import kotlin.test.Test
@@ -90,6 +101,56 @@ class PlayerScreensScreenshotTest {
     fun myTableButton() = playerScreenshots("components/my-table-button", variants = componentVariants, ready = { waitForText("Go to my table") }) {
         Box(Modifier.fillMaxSize()) { MyTableButton(onClick = {}, modifier = Modifier.align(Alignment.BottomEnd)) }
     }
+
+    /**
+     * The places of the player on the cards of the list of tournaments: gold, silver and bronze for the first three,
+     * the color of the text for the others, a tournament without teams and one without the places of the hands.
+     */
+    @Composable
+    private fun StandingCards() {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            TournamentCard(
+                ScreenshotData.tournament(ONGOING),
+                TournamentStanding(
+                    position = 1, of = 16, points = 12.0, score = 210, teamRank = 2, teamOf = 4, teamPoints = 18.5,
+                    chickenRank = 3, chickenHands = 2, chickenOf = 7, bestHandRank = 1, bestHand = 88, bestHandOf = 64,
+                ),
+                mine = true,
+            ) {}
+            TournamentCard(
+                ScreenshotData.tournament(COMPLETED),
+                TournamentStanding(
+                    position = 7, of = 16, points = 4.5, score = -35, teamRank = 4, teamOf = 4, teamPoints = -6.0,
+                    chickenRank = 5, chickenHands = 1, chickenOf = 9, bestHandRank = 12, bestHand = 32, bestHandOf = 64,
+                ),
+                mine = true,
+            ) {}
+            TournamentCard(
+                ScreenshotData.tournament(INDIVIDUAL),
+                TournamentStanding(position = 3, of = 16, points = 9.0, score = 120, bestHandRank = 2, bestHand = 64, bestHandOf = 64),
+                mine = true,
+            ) {}
+        }
+    }
+
+    @Test
+    fun tournamentStandings() = playerScreenshots(
+        "components/tournament-standings",
+        variants = componentVariants,
+        ready = { waitForText("Paris Classic 2026") },
+    ) { StandingCards() }
+
+    @Test
+    fun tournamentStandingsTooltip() = playerScreenshots(
+        "components/tournament-standings-tooltip",
+        variants = componentVariants,
+        ready = {
+            waitForText("Paris Classic 2026")
+            // The mouse over the info icon of the ranking shows its tooltip.
+            onAllNodes(hasContentDescription("Show the details")).onFirst().performMouseInput { moveTo(center) }
+            waitForText("Ranking", substring = true)
+        },
+    ) { StandingCards() }
 
     @Test
     fun signIn() = playerScreenshots("sign-in", modules = { playerModules(account = null) }) { nav -> SignInScreen(nav, null) }

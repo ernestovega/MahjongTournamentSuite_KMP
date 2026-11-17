@@ -133,4 +133,18 @@ class DefaultStatisticsRepository(
 
 private fun Throwable.toAppError(): AppError = toRepositoryAppError()
 
-internal fun StandingDto.toStanding() = Standing(rank, of, points, score, teamRank, chickenRank, bestHandRank)
+internal fun StandingDto.toStanding() = Standing(
+    rank = rank,
+    of = of,
+    points = points,
+    score = score,
+    teamRank = teamRank,
+    chickenRank = chickenRank,
+    bestHandRank = bestHandRank,
+    teamOf = teamOf,
+    teamPoints = teamPoints,
+    chickenHands = chickenHands,
+    chickenOf = chickenOf,
+    bestHand = bestHand,
+    bestHandOf = bestHandOf,
+)

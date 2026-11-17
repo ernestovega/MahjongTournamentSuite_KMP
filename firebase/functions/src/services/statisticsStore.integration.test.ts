@@ -63,8 +63,8 @@ describe("statistics store", () => {
     const person = await loadPersonStatistics(ema(tag, 4), null);
     assert.equal(person.tournaments.length, 1);
     assert.equal(person.tournaments[0].results[0].position, 4);
-    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 4), [id, "other"])), [{ tournamentId: id, rank: 4, of: 4, score: -50, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null }]);
-    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 1), [id])), [{ tournamentId: id, rank: 1, of: 4, score: 50, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 4), [id, "other"])), [{ tournamentId: id, rank: 4, of: 4, score: -50, teamRank: null, teamOf: null, teamPoints: null, chickenRank: null, chickenHands: 0, chickenOf: 0, bestHandRank: null, bestHand: 0, bestHandOf: 0 }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 1), [id])), [{ tournamentId: id, rank: 1, of: 4, score: 50, teamRank: null, teamOf: null, teamPoints: null, chickenRank: null, chickenHands: 0, chickenOf: 0, bestHandRank: null, bestHand: 0, bestHandOf: 0 }]);
     assert.equal((await loadPersonStatistics(ema(tag, 4), new Set(["other"]))).tournaments.length, 0);
   });
 
