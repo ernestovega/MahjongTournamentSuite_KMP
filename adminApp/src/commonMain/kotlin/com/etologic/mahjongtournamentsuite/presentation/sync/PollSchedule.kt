@@ -29,6 +29,14 @@ class PollSchedule(
         require(slowAfter <= stopAfter) { "Polling must slow down before it stops." }
     }
 
+    companion object {
+        /**
+         * The pace of the tournament screen. It never stops: a screen left open as a monitor of the venue stays
+         * current, at the 15 seconds of the player app once the user is idle.
+         */
+        val TOURNAMENT_SCREEN = PollSchedule(slowInterval = 15.seconds, stopAfter = Duration.INFINITE)
+    }
+
     fun nextStep(idle: Duration, hasUnsavedEdits: Boolean): PollStep = when {
         idle >= stopAfter -> PollStep.Stop
         idle >= slowAfter -> PollStep.Wait(slowInterval)

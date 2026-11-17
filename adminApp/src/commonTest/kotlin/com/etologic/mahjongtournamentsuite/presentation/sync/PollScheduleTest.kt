@@ -60,4 +60,12 @@ class PollScheduleTest {
         assertFailsWith<IllegalArgumentException> { PollSchedule(slowAfter = 6.minutes, stopAfter = 5.minutes) }
         assertFailsWith<IllegalArgumentException> { PollSchedule(editingInterval = Duration.ZERO) }
     }
+
+    @Test
+    fun theTournamentScreenNeverStopsAndSlowsTo15Seconds() {
+        val screen = PollSchedule.TOURNAMENT_SCREEN
+        assertEquals(PollStep.Wait(10.seconds), screen.nextStep(Duration.ZERO, false))
+        assertEquals(PollStep.Wait(15.seconds), screen.nextStep(2.minutes, false))
+        assertEquals(PollStep.Wait(15.seconds), screen.nextStep(1000.minutes, true))
+    }
 }

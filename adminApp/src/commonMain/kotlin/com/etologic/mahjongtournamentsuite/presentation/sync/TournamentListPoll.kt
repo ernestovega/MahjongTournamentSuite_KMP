@@ -7,10 +7,11 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
- * How often the list of tournaments checks the server for changes while it is on screen.
- * It never stops, so a screen left open for a long time stays current. A tournament being played makes it check more often.
+ * How often the list of tournaments and the ranking screen check the server for changes while they are on screen.
+ * They never stop, so a screen left open for a long time stays current. A tournament being played makes them check more often.
  */
 object TournamentListPoll {
     val IDLE: Duration = 5.minutes
@@ -18,6 +19,12 @@ object TournamentListPoll {
 
     /** [today] is the date on this device. */
     fun nextDelay(tournaments: List<Tournament>, today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date): Duration = if (tournaments.any { it.isOngoingOn(today) }) ONGOING else IDLE
+
+    /** The ranking of an ongoing tournament checks every 15 seconds, the same pace as the screens of the player app. */
+    val RANKING_ONGOING: Duration = 15.seconds
+
+    /** Before the first answer the ranking checks at the ongoing pace, so it shows soon. */
+    fun rankingDelay(tournament: Tournament?, today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date): Duration = if (tournament == null || tournament.isOngoingOn(today)) RANKING_ONGOING else IDLE
 
     /** A tournament is ongoing from its start date to its end date, unless it is completed. Without a valid start date it is not. */
     private fun Tournament.isOngoingOn(today: LocalDate): Boolean {

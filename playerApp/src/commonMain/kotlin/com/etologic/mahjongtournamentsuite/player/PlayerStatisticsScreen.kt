@@ -36,6 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
@@ -160,6 +163,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         else -> tournamentFinished
     }
 
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     // The tournament shows as soon as it is ready. "My statistics" loads at the same time.
     LaunchedEffect(route.tournamentId) {
         coroutineScope {
@@ -182,6 +186,17 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 }
             }
             personFinished = true
+        }
+        // The statistics of the tournament are checked again while the screen is open. The first check reuses the
+        // revisions of the load above, so it asks the server nothing new.
+        val id = route.tournamentId ?: return@LaunchedEffect
+        pollForChanges(
+            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
+            forceFirst = false,
+            load = { mode -> presenter.tournament(id, mode, track = false) },
+            nextDelay = { tournament?.tournament?.let { PollSchedule.nextDelay(it, null, it.currentVenueDateTime()) } ?: PollSchedule.UNKNOWN },
+        ) { result ->
+            if (result is AppResult.Success) tournament = result.value
         }
     }
 
@@ -308,21 +323,16 @@ fun TournamentStatisticsTab(
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
-    var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
-    var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
-    LaunchedEffect(tournamentId) {
-        when (val result = presenter.tournament(tournamentId)) {
-            is AppResult.Success -> data = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
-        }
-    }
+    val polled = rememberTournamentStatistics(presenter, tournamentId)
+    val data = polled.data
+    val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
-        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
         val loaded = data ?: return@Column
         TournamentStatisticsPanel(
             statistics = loaded.statistics,
@@ -345,21 +355,17 @@ fun PersonStatisticsTab(
     top: (@Composable () -> Unit)? = null,
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
-    var data by remember(emaId) { mutableStateOf<PersonStatisticsData?>(null) }
-    var message by remember(emaId) { mutableStateOf<UiText?>(null) }
-    LaunchedEffect(emaId) {
-        when (val result = presenter.person(emaId)) {
-            is AppResult.Success -> data = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
-        }
-    }
+    // The statistics of a person change slowly, so they are checked at the slow pace of the lists.
+    val polled = rememberPolledLoad(emaId, load = { mode, first -> presenter.person(emaId, mode, track = first) }, nextDelay = { PollSchedule.LIST_IDLE })
+    val data = polled.data
+    val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("person-statistics-$emaId"))
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
-        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
         top?.invoke()
         val loaded = data ?: return@Column
         PlayerStatisticsPanel(
@@ -388,21 +394,16 @@ fun PlayerSlotStatisticsTab(
     top: (@Composable () -> Unit)? = null,
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
-    var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
-    var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
-    LaunchedEffect(tournamentId) {
-        when (val result = presenter.tournament(tournamentId)) {
-            is AppResult.Success -> data = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
-        }
-    }
+    val polled = rememberTournamentStatistics(presenter, tournamentId)
+    val data = polled.data
+    val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("player-statistics-$slotId"))
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
-        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
         top?.invoke()
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
@@ -450,17 +451,30 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     var tabName by rememberPersistentText("my-statistics-tab", MyStatisticsKind.ME.name)
     val tab = tabs.firstOrNull { it.name == tabName } ?: tabs.first()
     var otherEma by rememberPersistentText("others-player", null)
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         signedIn = session.hasSession()
         if (!signedIn) {
             finished = true
             return@LaunchedEffect
         }
-        when (val result = presenter.me()) {
-            is AppResult.Success -> person = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
+        // The statistics of a person change slowly, so they are checked again at the slow pace of the lists.
+        var first = true
+        pollForChanges(
+            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
+            forceFirst = false,
+            load = { mode -> presenter.me(mode, track = first).also { first = false } },
+            nextDelay = { PollSchedule.LIST_IDLE },
+        ) { result ->
+            when (result) {
+                is AppResult.Success -> {
+                    person = result.value
+                    message = null
+                }
+                is AppResult.Failure -> if (person == null) message = result.error.toUiText()
+            }
+            finished = true
         }
-        finished = true
     }
     ReportLoading(!finished || othersLoading, onLoadingChange)
     // A rival opens in the "Others" tab.
@@ -556,17 +570,28 @@ private fun OthersStatistics(
             is AppResult.Failure -> message = result.error.toUiText()
         }
     }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(emaId) {
         val id = emaId ?: return@LaunchedEffect
         onLoadingChange(true)
-        when (val result = presenter.person(id)) {
-            is AppResult.Success -> {
-                data = result.value
-                message = null
+        // Checked again at the slow pace of the lists while the player is on screen.
+        var first = true
+        pollForChanges(
+            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
+            forceFirst = false,
+            load = { mode -> presenter.person(id, mode, track = first) },
+            nextDelay = { PollSchedule.LIST_IDLE },
+        ) { result ->
+            when (result) {
+                is AppResult.Success -> {
+                    data = result.value
+                    message = null
+                }
+                is AppResult.Failure -> if (first) message = result.error.toUiText()
             }
-            is AppResult.Failure -> message = result.error.toUiText()
+            if (first) onLoadingChange(false)
+            first = false
         }
-        onLoadingChange(false)
     }
     DisposableEffect(Unit) { onDispose { onLoadingChange(false) } }
     val chosen = players.firstOrNull { it.emaId == emaId }
@@ -710,3 +735,14 @@ private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
 
 /** Below this width the scope tabs and the player picker of the Statistics screen go on two rows. */
 private val ScopeRowMinWidth = 600.dp
+
+/**
+ * The statistics of a tournament, checked again while the screen is open: every 15 seconds while the tournament runs,
+ * and at the slower pace of [PollSchedule] before and after. Nothing downloads again when no hand changed.
+ */
+@Composable
+private fun rememberTournamentStatistics(presenter: PlayerStatisticsPresenter, tournamentId: String): PolledLoad<TournamentStatisticsData> = rememberPolledLoad(
+    tournamentId,
+    load = { mode, first -> presenter.tournament(tournamentId, mode, track = first) },
+    nextDelay = { data -> PollSchedule.nextDelay(data?.tournament, null, data?.tournament?.currentVenueDateTime() ?: currentLocalDateTime()) },
+)
