@@ -9,30 +9,23 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.window.DialogProperties
-import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
-import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,14 +40,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
@@ -63,15 +61,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
-import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
-import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
+import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
@@ -101,12 +101,13 @@ import mahjongtournamentsuite.playerapp.generated.resources.chicken_hand
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_another_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_draw
-import mahjongtournamentsuite.playerapp.generated.resources.entry_back
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_win
+import mahjongtournamentsuite.playerapp.generated.resources.entry_back
 import mahjongtournamentsuite.playerapp.generated.resources.entry_check_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_check_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_chicken_limit
+import mahjongtournamentsuite.playerapp.generated.resources.entry_closed_by_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.entry_confirm_save
 import mahjongtournamentsuite.playerapp.generated.resources.entry_draw_explanation
 import mahjongtournamentsuite.playerapp.generated.resources.entry_edit
@@ -114,6 +115,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time
 import mahjongtournamentsuite.playerapp.generated.resources.entry_from
 import mahjongtournamentsuite.playerapp.generated.resources.entry_hand_score
 import mahjongtournamentsuite.playerapp.generated.resources.entry_loser
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_each
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_get
 import mahjongtournamentsuite.playerapp.generated.resources.entry_penalized_player
@@ -123,14 +126,13 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_points
 import mahjongtournamentsuite.playerapp.generated.resources.entry_remove_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
-import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_not_assigned
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
-import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_not_assigned
 import mahjongtournamentsuite.playerapp.generated.resources.entry_self_draw
 import mahjongtournamentsuite.playerapp.generated.resources.entry_share
 import mahjongtournamentsuite.playerapp.generated.resources.entry_shared_multiple
-import mahjongtournamentsuite.playerapp.generated.resources.entry_closed_by_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.entry_time_over
 import mahjongtournamentsuite.playerapp.generated.resources.entry_totals_only
 import mahjongtournamentsuite.playerapp.generated.resources.entry_updating_table
@@ -386,7 +388,7 @@ fun HandEntryPanel(
     }
 
     val entryTitle: @Composable () -> Unit = {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
             Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
             HandNumberLabel(handInPlay)
         }
@@ -409,9 +411,11 @@ fun HandEntryPanel(
                     }
                 },
                 confirmButton = {
-                    Button(enabled = !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                    MtsDialogButtons {
+                        Button(enabled = !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                        cancelButton()
+                    }
                 },
-                dismissButton = cancelButton,
             )
         }
     }
@@ -490,16 +494,18 @@ fun HandEntryPanel(
                     }
                 },
                 confirmButton = {
-                    if (winStep == WinStep.SCORE) {
-                        Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
-                    } else {
-                        cancelButton()
+                    MtsDialogButtons {
+                        if (winStep == WinStep.SCORE) {
+                            Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                        } else {
+                            cancelButton()
+                        }
+                        when (winStep) {
+                            WinStep.WINNER -> Unit
+                            WinStep.LOSER -> backButton(WinStep.WINNER)()
+                            WinStep.SCORE -> backButton(WinStep.LOSER)()
+                        }
                     }
-                },
-                dismissButton = when (winStep) {
-                    WinStep.WINNER -> null
-                    WinStep.LOSER -> backButton(WinStep.WINNER)
-                    WinStep.SCORE -> backButton(WinStep.LOSER)
                 },
             )
         }
@@ -517,7 +523,7 @@ fun HandEntryPanel(
                 modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 560.dp),
                 properties = DialogProperties(usePlatformDefaultWidth = false),
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
                         Text(stringResource(Res.string.entry_check_hand))
                         HandNumberLabel(review.handId)
                     }
@@ -568,7 +574,7 @@ fun HandEntryPanel(
         TrackedDialog("EntryAddPenalty") {
             AlertDialog(
                 onDismissRequest = { finishEntry() },
-                title = { Text(stringResource(Res.string.entry_add_penalty)) },
+                title = { MtsDialogTitle(stringResource(Res.string.entry_add_penalty)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         penaltyDrafts.forEachIndexed { index, draft ->
@@ -599,12 +605,14 @@ fun HandEntryPanel(
                     }
                 },
                 confirmButton = {
-                    Button(
-                        enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
-                        onClick = { penaltyReview = true },
-                    ) { Text(stringResource(Res.string.entry_review)) }
+                    MtsDialogButtons {
+                        Button(
+                            enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
+                            onClick = { penaltyReview = true },
+                        ) { Text(stringResource(Res.string.entry_review)) }
+                        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                    }
                 },
-                dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
             )
         }
     }
@@ -617,7 +625,7 @@ fun HandEntryPanel(
                         message = null
                     }
                 },
-                title = { Text(stringResource(Res.string.entry_check_penalty)) },
+                title = { MtsDialogTitle(stringResource(Res.string.entry_check_penalty)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         penaltyEntries.forEach { PenaltyLine(it, view, seats) }
@@ -626,34 +634,34 @@ fun HandEntryPanel(
                     }
                 },
                 confirmButton = {
-                    Button(
-                        enabled = !saving,
-                        onClick = {
-                            scope.launch {
-                                busy = true
-                                message = null
-                                when (val result = presenter.addPenalties(tournamentId, roundId, tableId, penaltyEntries, table.table.version)) {
-                                    is AppResult.Success -> {
-                                        awaitingKey = progressKey
-                                        onSaved()
-                                    }
-                                    is AppResult.Failure ->
-                                        if (result.error is AppError.Conflict) {
-                                            tableChanged(result.error.toUiText())
-                                        } else {
-                                            message = result.error.toUiText()
+                    MtsDialogButtons {
+                        Button(
+                            enabled = !saving,
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    message = null
+                                    when (val result = presenter.addPenalties(tournamentId, roundId, tableId, penaltyEntries, table.table.version)) {
+                                        is AppResult.Success -> {
+                                            awaitingKey = progressKey
+                                            onSaved()
                                         }
+                                        is AppResult.Failure ->
+                                            if (result.error is AppError.Conflict) {
+                                                tableChanged(result.error.toUiText())
+                                            } else {
+                                                message = result.error.toUiText()
+                                            }
+                                    }
+                                    busy = false
                                 }
-                                busy = false
-                            }
-                        },
-                    ) { Text(stringResource(Res.string.entry_confirm_save)) }
-                },
-                dismissButton = {
-                    TextButton(enabled = !saving, onClick = {
-                        penaltyReview = false
-                        message = null
-                    }) { Text(stringResource(Res.string.entry_edit)) }
+                            },
+                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                        TextButton(enabled = !saving, onClick = {
+                            penaltyReview = false
+                            message = null
+                        }) { Text(stringResource(Res.string.entry_edit)) }
+                    }
                 },
             )
         }
@@ -1076,7 +1084,7 @@ private fun TableChangedDialog(
     val lastHand = table.hands.filter { it.isDone }.maxByOrNull { it.handId }
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onClose,
-        title = { Text(stringResource(Res.string.changed_title)) },
+        title = { MtsDialogTitle(stringResource(Res.string.changed_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(serverMessage)
@@ -1117,6 +1125,10 @@ private fun TableChangedDialog(
                 Text(stringResource(Res.string.changed_call_staff))
             }
         },
-        confirmButton = { Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) } },
+        confirmButton = {
+            MtsDialogButtons {
+                Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
+            }
+        },
     )
 }

@@ -72,6 +72,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -608,7 +610,7 @@ private fun TeamEditorDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.edit_team_n, team.id)) },
+            title = { MtsDialogTitle(stringResource(Res.string.edit_team_n, team.id)) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
@@ -666,13 +668,14 @@ private fun TeamEditorDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = { onSave(name.trim(), selectedEmaIds.toList()) },
-                    enabled = !saving && name.trim().isNotEmpty() && (!assignmentsLocked || !membershipChanged),
-                ) { Text(stringResource(Res.string.save_team)) }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = { onSave(name.trim(), selectedEmaIds.toList()) },
+                        enabled = !saving && name.trim().isNotEmpty() && (!assignmentsLocked || !membershipChanged),
+                    ) { Text(stringResource(Res.string.save_team)) }
+
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                }
             },
         )
     }
@@ -715,7 +718,7 @@ private fun PlayerPickerDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.select_player_n, slot.id)) },
+            title = { MtsDialogTitle(stringResource(Res.string.select_player_n, slot.id)) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
@@ -768,13 +771,14 @@ private fun PlayerPickerDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = onClear,
-                    enabled = !saving && selectedEmaId != null,
-                ) { Text(stringResource(Res.string.clear_slot)) }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onClear,
+                        enabled = !saving && selectedEmaId != null,
+                    ) { Text(stringResource(Res.string.clear_slot)) }
+
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                }
             },
         )
     }

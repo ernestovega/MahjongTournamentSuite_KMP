@@ -74,7 +74,7 @@ private fun AppMessageDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(title) },
+            title = { MtsDialogTitle(title) },
             text = {
                 Box(
                     modifier = Modifier
@@ -111,15 +111,17 @@ private fun AppMessageDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = onDismiss,
-                    focusRequester = dismissFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = dismissFocusRequester,
-                        next = dismissFocusRequester,
-                    ),
-                ) {
-                    Text(stringResource(Res.string.action_ok))
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onDismiss,
+                        focusRequester = dismissFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = dismissFocusRequester,
+                            next = dismissFocusRequester,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.action_ok))
+                    }
                 }
             },
         )

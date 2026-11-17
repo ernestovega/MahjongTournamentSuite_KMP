@@ -25,6 +25,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -38,6 +42,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.remove_email
 import mahjongtournamentsuite.adminapp.generated.resources.these_players_have_no_email
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
@@ -68,10 +73,10 @@ internal fun SlotEmailDialog(
             modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.email_dialog_title, playerName)) },
+            title = { MtsDialogTitle(stringResource(Res.string.email_dialog_title, playerName)) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (currentEmail == null && hasEmail) Text(stringResource(Res.string.email_dialog_hidden_hint))
+                    if (currentEmail == null && hasEmail) MtsDialogText(stringResource(Res.string.email_dialog_hidden_hint))
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -84,11 +89,18 @@ internal fun SlotEmailDialog(
                     )
                 }
             },
-            confirmButton = { Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { Text(confirmLabel) } },
-            dismissButton = {
-                Column {
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { Text(confirmLabel) }
+                    if (hasEmail) {
+                        OutlinedButton(
+                            enabled = !busy,
+                            onClick = onRemove,
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!busy),
+                        ) { Text(stringResource(Res.string.remove_email)) }
+                    }
                     TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                    if (hasEmail) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_email)) }
                 }
             },
         )
@@ -119,7 +131,7 @@ internal fun MissingEmailsDialog(
             modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.emails_are_missing)) },
+            title = { MtsDialogTitle(stringResource(Res.string.emails_are_missing)) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(Res.string.these_players_have_no_email))
@@ -146,11 +158,14 @@ internal fun MissingEmailsDialog(
                 }
             },
             confirmButton = {
-                Button(enabled = filled.isNotEmpty() && allValid && !busy, onClick = { onConfirm(filled) }) {
-                    Text("$confirmLabel (${filled.size})")
+                MtsDialogButtons {
+                    Button(enabled = filled.isNotEmpty() && allValid && !busy, onClick = { onConfirm(filled) }) {
+                        Text("$confirmLabel (${filled.size})")
+                    }
+
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
             },
-            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
         )
     }
 }

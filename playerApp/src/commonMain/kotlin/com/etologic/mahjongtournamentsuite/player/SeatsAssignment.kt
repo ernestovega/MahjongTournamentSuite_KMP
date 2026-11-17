@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -93,17 +95,21 @@ internal fun SeatsAssignment(
             // The question of the seat to pick is the title. Once the four seats are set, the title names the table's seats.
             title = {
                 if (complete) {
-                    Text(stringResource(Res.string.seats_title))
+                    MtsDialogTitle(stringResource(Res.string.seats_title))
                 } else {
                     val wind = SeatWind.entries[picks.size]
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md, Alignment.CenterHorizontally),
+                    ) {
                         WindIcon(wind, size = 32.dp)
                         Text(stringResource(Res.string.seats_who_sits, wind.label()))
                     }
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     // Each player keeps its own button. A button that moves up to the place of the picked one would
                     // take its last press and ignore a quick second pick.
                     if (!complete) {
@@ -124,25 +130,26 @@ internal fun SeatsAssignment(
                 }
             },
             confirmButton = {
-                Button(
-                    enabled = complete && !busy,
-                    onClick = {
-                        busy = true
-                        scope.launch {
-                            val result = presenter.assignSeats(tournamentId, table.roundId, table.tableId, picks.toList(), table.table.version)
-                            busy = false
-                            message = (result as? AppResult.Failure)?.error?.toUiText()
-                            // A table that changed loads again, so the player sees the seats of the other player.
-                            if (result is AppResult.Success || (result as? AppResult.Failure)?.error is AppError.Conflict) onSaved()
-                            close()
-                        }
-                    },
-                ) { Text(stringResource(Res.string.seats_save)) }
-            },
-            dismissButton = {
-                Row {
-                    if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { Text(stringResource(Res.string.seats_restart)) }
-                    TextButton(enabled = !busy, onClick = { close() }) { Text(stringResource(Res.string.action_cancel)) }
+                MtsDialogButtons {
+                    Button(
+                        enabled = complete && !busy,
+                        onClick = {
+                            busy = true
+                            scope.launch {
+                                val result = presenter.assignSeats(tournamentId, table.roundId, table.tableId, picks.toList(), table.table.version)
+                                busy = false
+                                message = (result as? AppResult.Failure)?.error?.toUiText()
+                                // A table that changed loads again, so the player sees the seats of the other player.
+                                if (result is AppResult.Success || (result as? AppResult.Failure)?.error is AppError.Conflict) onSaved()
+                                close()
+                            }
+                        },
+                    ) { Text(stringResource(Res.string.seats_save)) }
+
+                    Row {
+                        if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { Text(stringResource(Res.string.seats_restart)) }
+                        TextButton(enabled = !busy, onClick = { close() }) { Text(stringResource(Res.string.action_cancel)) }
+                    }
                 }
             },
         )

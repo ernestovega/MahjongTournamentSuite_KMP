@@ -480,8 +480,6 @@
     <string name="stats_admin_only">De statistieken van alle toernooien zijn voor beheerders. Zoek een toernooi om de statistieken ervan te zien.</string>
     <string name="id_cards_proportion_info">De breedte en de hoogte zijn gekoppeld, zodat de kaart haar verhouding behoudt.\n• De verhouding is de relatie tussen de breedte en de hoogte van de kaart. De breedte is altijd %1$s keer de hoogte.\n• Als je één kant wijzigt, verandert de andere kant vanzelf. De kaart wordt nooit uitgerekt.\n• Het oorspronkelijke formaat is %2$s x %3$s mm. Met dit formaat passen 10 kaarten op één staand A4-vel, in 2 kolommen en 5 rijen.</string>
     <string name="use_range">Gebruik %1$s tot %2$s.</string>
-    <string name="substitute_player_question">%1$s vervangen?</string>
-    <string name="substitution_of_player">Vervanging van %1$s</string>
     <string name="substitution_explanation">Een vervanger speelt vanaf de gekozen ronde voor deze speler. De vervanger wordt niet geregistreerd en krijgt geen resultaat in het klassement. De speler krijgt 0 tafelpunten voor de ronden die de vervanger speelt.</string>
     <string name="reason_late">De speler kwam te laat.</string>
     <string name="reason_ill">De speler is ziek.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">Je kunt geen spelers importeren omdat een tafel al gegevens heeft: plaatsen of resultaten. De import vervangt alle spelers, en dat zou bestaande resultaten wijzigen. Gebruik de opties in de rij van een speler om één speler te wijzigen.</string>
     <string name="sending_title">Versturen</string>
     <string name="sending_text">De app verstuurt de e-mails. Wacht tot ze klaar is.</string>
-    <string name="send_result_invited">Accounts aangemaakt en uitnodigingen verstuurd: %1$d</string>
-    <string name="send_result_reminded">Herinneringen verstuurd: %1$d</string>
-    <string name="send_result_failed">Niet verstuurd: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">%1$d account is aangemaakt en de uitnodiging is verstuurd.</item>
+        <item quantity="other">%1$d accounts zijn aangemaakt en de uitnodigingen zijn verstuurd.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">%1$d herinnering is verstuurd.</item>
+        <item quantity="other">%1$d herinneringen zijn verstuurd.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Spelers: %1$d · Gewijzigd: %2$d · Fouten: %3$d · Verwijderd: %4$d</string>
     <string name="import_legend_changed">Nieuw of gewijzigd</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Verwijderen (%1$d)</string>
     <string name="users_delete_confirm_title">Accounts verwijderen?</string>
     <string name="users_delete_confirm_text">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</string>
-    <string name="users_delete_summary">Verwijderde accounts: %1$d\nNiet verwijderd: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">%1$d account is verwijderd.</item>
+        <item quantity="other">%1$d accounts zijn verwijderd.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">%1$d account kon niet worden verwijderd:</item>
+        <item quantity="other">%1$d accounts konden niet worden verwijderd:</item>
+    </plurals>
     <string name="delete_failure_self">Je kunt je eigen account niet verwijderen.</string>
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>

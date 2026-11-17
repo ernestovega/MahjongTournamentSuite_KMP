@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +56,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlin
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -545,7 +547,7 @@ private fun ErrorGroupDialog(
             modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 900.dp).fillMaxWidth(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
-            title = { Text(group?.errorType.orEmpty(), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+            title = { Text(group?.errorType.orEmpty(), Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) },
             text = {
                 val scroll = rememberScrollState()
                 ScrollableColumnWithScrollbar(state = scroll, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
@@ -584,22 +586,23 @@ private fun ErrorGroupDialog(
                     }
                 }
             },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = {
-                        clipboard.setText(AnnotatedString(detail?.stackTrace.orEmpty()))
-                    },
-                    enabled = detail?.stackTrace?.isNotBlank() == true,
-                    focusRequester = copyFocus,
-                    buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
-                ) { Text(stringResource(Res.string.errors_copy_stack)) }
-            },
             confirmButton = {
-                FocusedButton(
-                    onClick = onDismiss,
-                    focusRequester = closeFocus,
-                    buttonModifier = Modifier.focusLoop(previous = copyFocus, next = copyFocus),
-                ) { Text(stringResource(Res.string.close)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onDismiss,
+                        focusRequester = closeFocus,
+                        buttonModifier = Modifier.focusLoop(previous = copyFocus, next = copyFocus),
+                    ) { Text(stringResource(Res.string.close)) }
+
+                    FocusedTextButton(
+                        onClick = {
+                            clipboard.setText(AnnotatedString(detail?.stackTrace.orEmpty()))
+                        },
+                        enabled = detail?.stackTrace?.isNotBlank() == true,
+                        focusRequester = copyFocus,
+                        buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
+                    ) { Text(stringResource(Res.string.errors_copy_stack)) }
+                }
             },
         )
     }

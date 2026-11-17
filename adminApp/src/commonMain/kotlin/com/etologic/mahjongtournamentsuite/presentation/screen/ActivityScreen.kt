@@ -60,6 +60,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlin
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -675,7 +676,7 @@ private fun ActivityEntryDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(actionLabel(entry.action), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+            title = { Text(actionLabel(entry.action), Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) },
             text = {
                 ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
                     SelectionContainer {
@@ -707,21 +708,22 @@ private fun ActivityEntryDialog(
                     }
                 }
             },
-            dismissButton = {
-                if (canFilterByPerson) {
-                    FocusedTextButton(
-                        onClick = onFilterByPerson,
-                        focusRequester = personFocus,
-                        buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
-                    ) { Text(stringResource(Res.string.activity_only_person)) }
-                }
-            },
             confirmButton = {
-                FocusedButton(
-                    onClick = onDismiss,
-                    focusRequester = closeFocus,
-                    buttonModifier = if (canFilterByPerson) Modifier.focusLoop(previous = personFocus, next = personFocus) else Modifier,
-                ) { Text(stringResource(Res.string.close)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onDismiss,
+                        focusRequester = closeFocus,
+                        buttonModifier = if (canFilterByPerson) Modifier.focusLoop(previous = personFocus, next = personFocus) else Modifier,
+                    ) { Text(stringResource(Res.string.close)) }
+
+                    if (canFilterByPerson) {
+                        FocusedTextButton(
+                            onClick = onFilterByPerson,
+                            focusRequester = personFocus,
+                            buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
+                        ) { Text(stringResource(Res.string.activity_only_person)) }
+                    }
+                }
             },
         )
     }

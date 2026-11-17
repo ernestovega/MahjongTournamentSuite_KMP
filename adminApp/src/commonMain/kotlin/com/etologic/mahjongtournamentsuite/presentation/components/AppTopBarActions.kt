@@ -1,22 +1,18 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_users
@@ -47,6 +44,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_invitations
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_new_user
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 @Composable
 fun AppTopBarActions(
@@ -83,10 +81,13 @@ fun AppTopBarActions(
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { lockedInfoOpen = false },
-                icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                title = { Text(stringResource(Res.string.import_locked_title)) },
-                text = { Text(stringResource(Res.string.import_locked_text)) },
-                confirmButton = { Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) } },
+                title = { MtsDialogTitle(stringResource(Res.string.import_locked_title)) },
+                text = { MtsDialogText(stringResource(Res.string.import_locked_text)) },
+                confirmButton = {
+                    MtsDialogButtons {
+                        Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) }
+                    }
+                },
             )
         }
     }

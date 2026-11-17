@@ -63,7 +63,7 @@ fun SuiteAppChooserDialog(onChoose: (app: SuiteApp) -> Unit) {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { onChoose(SuiteApp.PLAYER) },
-            title = { Text(stringResource(Res.string.app_chooser_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.app_chooser_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

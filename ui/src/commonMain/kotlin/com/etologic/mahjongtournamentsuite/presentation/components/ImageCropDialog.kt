@@ -76,7 +76,7 @@ fun ImageCropDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!isCropping) onDismiss() },
-            title = { Text(title) },
+            title = { MtsDialogTitle(title) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -122,31 +122,32 @@ fun ImageCropDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    enabled = !isCropping && imageSize != IntSize.Zero,
-                    onClick = {
-                        isCropping = true
-                        cropSelectedImage(
-                            image = image,
-                            crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
-                            onCropped = onCropped,
-                            onError = {
-                                isCropping = false
-                                onError(it)
-                            },
-                        )
-                    },
-                ) {
-                    if (isCropping) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(stringResource(Res.string.crop_use))
+                MtsDialogButtons {
+                    FocusedButton(
+                        enabled = !isCropping && imageSize != IntSize.Zero,
+                        onClick = {
+                            isCropping = true
+                            cropSelectedImage(
+                                image = image,
+                                crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
+                                onCropped = onCropped,
+                                onError = {
+                                    isCropping = false
+                                    onError(it)
+                                },
+                            )
+                        },
+                    ) {
+                        if (isCropping) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text(stringResource(Res.string.crop_use))
+                        }
                     }
-                }
-            },
-            dismissButton = {
-                FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
-                    Text(stringResource(Res.string.action_cancel))
+
+                    FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
+                        Text(stringResource(Res.string.action_cancel))
+                    }
                 }
             },
         )

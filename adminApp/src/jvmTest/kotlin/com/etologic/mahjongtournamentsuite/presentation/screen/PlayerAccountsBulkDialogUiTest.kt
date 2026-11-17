@@ -303,7 +303,8 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("All (2)").performClick()
 
         onNodeWithText("Reminder sent").assertIsDisplayed()
-        onNodeWithText("Another account or another player already uses this email.").assertIsDisplayed()
+        // The reason shows in the row of the list too.
+        onAllNodesWithText("Another account or another player already uses this email.").onLast().assertIsDisplayed()
     }
 
     // ---------------------------------------------------------------- feedback while and after the send
@@ -363,12 +364,14 @@ class PlayerAccountsBulkDialogUiTest {
             PlayerAccountActionResult(3, PlayerAccountOutcome.FAILED, PlayerAccountFailure.EMAIL_IN_USE),
         )
         host.busy = false
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Done").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Not all emails were sent").fetchSemanticsNodes().isNotEmpty() }
 
-        onNodeWithText("Accounts created and invitations sent: 1").assertIsDisplayed()
-        onNodeWithText("Reminders sent: 2").assertIsDisplayed()
-        onNodeWithText("Not sent: 1").assertIsDisplayed()
-        onNodeWithText("• 3 · P3: Another account or another player already uses this email.").assertIsDisplayed()
+        onNodeWithText("1 account was created and its invitation sent.").assertIsDisplayed()
+        onNodeWithText("2 reminders were sent.").assertIsDisplayed()
+        onNodeWithText("1 email could not be sent:").assertIsDisplayed()
+        onNodeWithText("3 · P3").assertIsDisplayed()
+        // The reason shows in the row of the list too.
+        onAllNodesWithText("Another account or another player already uses this email.").onLast().assertIsDisplayed()
     }
 
     @Test

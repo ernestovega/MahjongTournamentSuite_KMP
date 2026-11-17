@@ -412,23 +412,19 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun theDisableButtonIsInTheRowOfCancelAndSaveAndTheResetButtonIsAboveIt() = runComposeUiTest {
+    fun theButtonsGoFromSaveToCancel() = runComposeUiTest {
         show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
         waitForIdle()
 
-        val reset = onNodeWithText("Send password-reset email").getUnclippedBoundsInRoot()
-        val disable = onNodeWithText("Disable account").getUnclippedBoundsInRoot()
-        val cancel = onNodeWithText("Cancel").getUnclippedBoundsInRoot()
-        val save = onNodeWithText("Save").getUnclippedBoundsInRoot()
-        assertEquals(disable.top, cancel.top)
-        assertEquals(disable.top, save.top)
-        assertTrue(disable.left < cancel.left)
-        assertTrue(cancel.left < save.left)
-        assertTrue(reset.bottom <= disable.top)
-        assertEquals(disable.left, reset.left)
+        // Save comes first and Cancel last: one under the other, or in a row with Save on the right.
+        val order = listOf("Save", "Send password-reset email", "Disable account", "Delete account", "Cancel")
+            .map { onNodeWithText(it).getUnclippedBoundsInRoot() }
+        order.zipWithNext().forEach { (before, after) ->
+            assertTrue(after.top >= before.bottom || (after.top == before.top && after.right <= before.left))
+        }
     }
 
     @Test

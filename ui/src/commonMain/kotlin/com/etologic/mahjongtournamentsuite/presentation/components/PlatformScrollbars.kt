@@ -89,21 +89,25 @@ fun ScrollableColumnWithScrollbar(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Box(modifier = modifier) {
+    // A fixed height from the caller reaches the column through the min constraints. A height that is only a maximum
+    // lets the box wrap short content, so a dialog with one line of text does not grow to that maximum.
+    Box(modifier = modifier, propagateMinConstraints = true) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(end = PlatformScrollbarThickness)
                 .verticalScroll(state),
             content = content,
         )
-        PlatformVerticalScrollbar(
-            scrollState = state,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .width(PlatformScrollbarThickness),
-        )
+        // The scrollbar takes the size of the box and never sets it.
+        Box(Modifier.matchParentSize(), contentAlignment = Alignment.CenterEnd) {
+            PlatformVerticalScrollbar(
+                scrollState = state,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(PlatformScrollbarThickness),
+            )
+        }
     }
 }
 

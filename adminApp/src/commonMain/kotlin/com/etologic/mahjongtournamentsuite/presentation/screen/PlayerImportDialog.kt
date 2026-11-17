@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -65,6 +64,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
@@ -132,7 +135,6 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {
@@ -219,7 +221,7 @@ fun PlayerImportDialog(
         ImportStep.Reading, ImportStep.Applying -> TrackedDialog("ImportPlayersProgress") {
             AlertDialog(
                 onDismissRequest = {},
-                title = { Text(stringResource(Res.string.import_players_title)) },
+                title = { MtsDialogTitle(stringResource(Res.string.import_players_title)) },
                 text = {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator()
@@ -260,11 +262,14 @@ fun PlayerImportDialog(
                     AlertDialog(
                         onDismissRequest = { confirming = false },
                         modifier = Modifier.appFocusGroup(),
-                        icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        title = { Text(stringResource(Res.string.import_confirm_title)) },
-                        text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
-                        confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
-                        dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
+                        title = { MtsDialogTitle(stringResource(Res.string.import_confirm_title)) },
+                        text = { MtsDialogText(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
+                        confirmButton = {
+                            MtsDialogButtons {
+                                Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) }
+                                TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) }
+                            }
+                        },
                     )
                 }
             }
@@ -274,9 +279,13 @@ fun PlayerImportDialog(
             AlertDialog(
                 onDismissRequest = onDismiss,
                 modifier = Modifier.appFocusGroup(),
-                title = { Text(stringResource(Res.string.import_done_title)) },
+                title = { MtsDialogTitle(stringResource(Res.string.import_done_title)) },
                 text = { ImportResultContent(current.result) },
-                confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
+                confirmButton = {
+                    MtsDialogButtons {
+                        Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                    }
+                },
             )
         }
     }

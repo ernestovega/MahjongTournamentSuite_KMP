@@ -39,11 +39,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_close_selected
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_col_round
@@ -87,7 +89,7 @@ internal fun OpenTablesReviewDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.round_control_finished_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.round_control_finished_title)) },
             text = {
                 Column {
                     TableRow(
@@ -143,26 +145,27 @@ internal fun OpenTablesReviewDialog(
                 }
             },
             confirmButton = {
-                // Closes the checked tables and keeps the dialog open, with a spinner while they close.
-                FocusedButton(
-                    onClick = { onCloseSelected(selected.sortedWith(compareBy(TableKey::roundId, TableKey::tableId))) },
-                    enabled = !busy && selected.isNotEmpty(),
-                    buttonModifier = Modifier.testTag("open_tables_close_selected"),
-                ) {
-                    if (busy) {
-                        CircularProgressIndicator(
-                            strokeWidth = 2.dp,
-                            color = LocalContentColor.current,
-                            modifier = Modifier.size(16.dp).testTag("open_tables_closing"),
-                        )
-                        Spacer(Modifier.width(8.dp))
+                MtsDialogButtons {
+                    // Closes the checked tables and keeps the dialog open, with a spinner while they close.
+                    FocusedButton(
+                        onClick = { onCloseSelected(selected.sortedWith(compareBy(TableKey::roundId, TableKey::tableId))) },
+                        enabled = !busy && selected.isNotEmpty(),
+                        buttonModifier = Modifier.testTag("open_tables_close_selected"),
+                    ) {
+                        if (busy) {
+                            CircularProgressIndicator(
+                                strokeWidth = 2.dp,
+                                color = LocalContentColor.current,
+                                modifier = Modifier.size(16.dp).testTag("open_tables_closing"),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(stringResource(Res.string.round_control_finished_close_selected))
                     }
-                    Text(stringResource(Res.string.round_control_finished_close_selected))
-                }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss, buttonModifier = Modifier.testTag("open_tables_dismiss")) {
-                    Text(stringResource(Res.string.close))
+
+                    FocusedTextButton(onClick = onDismiss, buttonModifier = Modifier.testTag("open_tables_dismiss")) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             },
         )

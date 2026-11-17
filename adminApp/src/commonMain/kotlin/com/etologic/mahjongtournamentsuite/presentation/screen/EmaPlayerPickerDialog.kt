@@ -32,6 +32,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -72,7 +74,7 @@ internal fun EmaPlayerPickerDialog(
     TrackedDialog("SelectEmaPlayer") {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.select_ema_player)) },
+            title = { MtsDialogTitle(stringResource(Res.string.select_ema_player)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -139,8 +141,11 @@ internal fun EmaPlayerPickerDialog(
                     }
                 }
             },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+            confirmButton = {
+                MtsDialogButtons {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                }
+            },
         )
     }
 }

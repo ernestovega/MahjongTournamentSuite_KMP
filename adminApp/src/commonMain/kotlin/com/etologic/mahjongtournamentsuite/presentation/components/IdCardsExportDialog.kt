@@ -333,15 +333,16 @@ fun IdCardsExportDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    enabled = !widthInvalid && !heightInvalid,
-                    onClick = { onExport(effective) },
-                ) {
-                    Text(stringResource(Res.string.create_pdf))
+                MtsDialogButtons {
+                    FocusedButton(
+                        enabled = !widthInvalid && !heightInvalid,
+                        onClick = { onExport(effective) },
+                    ) {
+                        Text(stringResource(Res.string.create_pdf))
+                    }
+
+                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
             },
         )
     }

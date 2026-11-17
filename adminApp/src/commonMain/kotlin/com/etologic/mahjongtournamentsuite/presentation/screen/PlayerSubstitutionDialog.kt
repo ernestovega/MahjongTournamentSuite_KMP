@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,13 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,9 +19,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.a_disqualified_player_gets_0_table
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -36,12 +38,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.reason_late
 import mahjongtournamentsuite.adminapp.generated.resources.remove_substitution
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
-import mahjongtournamentsuite.adminapp.generated.resources.substitute_player_question
+import mahjongtournamentsuite.adminapp.generated.resources.substitution
 import mahjongtournamentsuite.adminapp.generated.resources.substitution_explanation
-import mahjongtournamentsuite.adminapp.generated.resources.substitution_of_player
 import mahjongtournamentsuite.adminapp.generated.resources.the_head_referee_excluded_the_player
 import mahjongtournamentsuite.adminapp.generated.resources.the_player_leaves_after_the_session
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * The editor sets here that a substitute plays for a player from a round on.
@@ -66,11 +70,12 @@ fun PlayerSubstitutionDialog(
     TrackedDialog("SubstitutePlayerQuestion") {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(if (current == null) stringResource(Res.string.substitute_player_question, playerName) else stringResource(Res.string.substitution_of_player, playerName)) },
+            // A short title fits one line on a phone. The player goes under it.
+            title = { MtsDialogTitle(stringResource(Res.string.substitution), subtitle = playerName) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(Res.string.substitution_explanation))
-                    Text(stringResource(Res.string.reason), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.reason), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
                     SubstitutionReason.entries.forEach { option ->
                         Row(
                             Modifier.fillMaxWidth(),
@@ -93,8 +98,8 @@ fun PlayerSubstitutionDialog(
                             )
                         }
                     }
-                    Text(stringResource(Res.string.first_round_of_the_substitute), style = MaterialTheme.typography.labelLarge)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.first_round_of_the_substitute), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+                    Row(Modifier.align(Alignment.CenterHorizontally).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         rounds.forEach { round ->
                             FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
                         }
@@ -117,14 +122,19 @@ fun PlayerSubstitutionDialog(
                 }
             },
             confirmButton = {
-                Button(
-                    enabled = !busy,
-                    onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
-                ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
-            },
-            dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (current != null) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_substitution)) }
+                MtsDialogButtons {
+                    Button(
+                        enabled = !busy,
+                        onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
+                    ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
+                    if (current != null) {
+                        OutlinedButton(
+                            enabled = !busy,
+                            onClick = onRemove,
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!busy),
+                        ) { Text(stringResource(Res.string.remove_substitution)) }
+                    }
                     TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
             },

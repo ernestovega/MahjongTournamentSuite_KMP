@@ -19,12 +19,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -106,19 +108,10 @@ internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: (
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
-            title = {
-                Text(stringResource(Res.string.password_resets_confirm_title), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            },
-            text = {
-                Text(
-                    stringResource(Res.string.password_resets_confirm_text, count),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-            },
-            // Everything goes centered, with Cancel under Send, in every window size.
+            title = { MtsDialogTitle(stringResource(Res.string.password_resets_confirm_title)) },
+            text = { MtsDialogText(stringResource(Res.string.password_resets_confirm_text, count)) },
             confirmButton = {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                MtsDialogButtons {
                     Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) }
                     TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
@@ -144,7 +137,7 @@ internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, user
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
+            title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (sent > 0) Text(pluralStringResource(Res.plurals.password_resets_sent, sent, sent))
@@ -164,7 +157,11 @@ internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, user
                     }
                 }
             },
-            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                }
+            },
         )
     }
 }

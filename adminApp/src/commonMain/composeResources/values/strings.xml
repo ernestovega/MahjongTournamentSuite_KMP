@@ -480,8 +480,6 @@
     <string name="stats_admin_only">The statistics of all tournaments are for administrators. Search a tournament to see its statistics.</string>
     <string name="id_cards_proportion_info">The width and the height are linked, so the card keeps its proportion.\n• The proportion is the relation between the width and the height of the card. The width is always %1$s times the height.\n• When you change one side, the other side changes by itself. The card is never stretched.\n• The original size is %2$s x %3$s mm. It is the size that lets 10 cards fit on one portrait A4 sheet, in 2 columns and 5 rows.</string>
     <string name="use_range">Use %1$s to %2$s.</string>
-    <string name="substitute_player_question">Substitute %1$s?</string>
-    <string name="substitution_of_player">Substitution of %1$s</string>
     <string name="substitution_explanation">A substitute plays for this player from the chosen round. The substitute is not recorded and gets no result in the ranking. The player gets 0 table points for the rounds that the substitute plays.</string>
     <string name="reason_late">The player came late.</string>
     <string name="reason_ill">The player is ill.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">You cannot import players because a table already has data: seats or results. The import replaces all players, and that would change results that exist. To change one player, use the options in the row of the player.</string>
     <string name="sending_title">Sending</string>
     <string name="sending_text">The app is sending the emails. Wait until it finishes.</string>
-    <string name="send_result_invited">Accounts created and invitations sent: %1$d</string>
-    <string name="send_result_reminded">Reminders sent: %1$d</string>
-    <string name="send_result_failed">Not sent: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">%1$d account was created and its invitation sent.</item>
+        <item quantity="other">%1$d accounts were created and their invitations sent.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">%1$d reminder was sent.</item>
+        <item quantity="other">%1$d reminders were sent.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Players: %1$d · Changed: %2$d · Errors: %3$d · Removed: %4$d</string>
     <string name="import_legend_changed">New or changed</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Delete (%1$d)</string>
     <string name="users_delete_confirm_title">Delete accounts?</string>
     <string name="users_delete_confirm_text">%1$d accounts will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</string>
-    <string name="users_delete_summary">Accounts deleted: %1$d\nNot deleted: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">%1$d account was deleted.</item>
+        <item quantity="other">%1$d accounts were deleted.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">%1$d account could not be deleted:</item>
+        <item quantity="other">%1$d accounts could not be deleted:</item>
+    </plurals>
     <string name="delete_failure_self">You cannot delete your own account.</string>
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>

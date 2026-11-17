@@ -480,8 +480,6 @@
     <string name="stats_admin_only">Statistiken för alla turneringar är för administratörer. Sök en turnering för att se dess statistik.</string>
     <string name="id_cards_proportion_info">Bredden och höjden är kopplade så att kortet behåller sina proportioner.\n• Proportionen är förhållandet mellan kortets bredd och höjd. Bredden är alltid %1$s gånger höjden.\n• När du ändrar en sida ändras den andra av sig själv. Kortet sträcks aldrig ut.\n• Originalstorleken är %2$s x %3$s mm. Med den storleken får 10 kort plats på ett stående A4-ark, i 2 kolumner och 5 rader.</string>
     <string name="use_range">Använd %1$s till %2$s.</string>
-    <string name="substitute_player_question">Byta ut %1$s?</string>
-    <string name="substitution_of_player">Byte av %1$s</string>
     <string name="substitution_explanation">En ersättare spelar för den här spelaren från den valda omgången. Ersättaren registreras inte och får inget resultat i rankingen. Spelaren får 0 bordspoäng för de omgångar som ersättaren spelar.</string>
     <string name="reason_late">Spelaren kom sent.</string>
     <string name="reason_ill">Spelaren är sjuk.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">Du kan inte importera spelare eftersom ett bord redan har data: platser eller resultat. Importen ersätter alla spelare, och det skulle ändra befintliga resultat. För att ändra en spelare, använd alternativen på spelarens rad.</string>
     <string name="sending_title">Skickar</string>
     <string name="sending_text">Appen skickar e-postmeddelandena. Vänta tills den är klar.</string>
-    <string name="send_result_invited">Skapade konton och skickade inbjudningar: %1$d</string>
-    <string name="send_result_reminded">Skickade påminnelser: %1$d</string>
-    <string name="send_result_failed">Inte skickade: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">%1$d konto skapades och inbjudan skickades.</item>
+        <item quantity="other">%1$d konton skapades och inbjudningarna skickades.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">%1$d påminnelse skickades.</item>
+        <item quantity="other">%1$d påminnelser skickades.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Spelare: %1$d · Ändrade: %2$d · Fel: %3$d · Borttagna: %4$d</string>
     <string name="import_legend_changed">Ny eller ändrad</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Radera (%1$d)</string>
     <string name="users_delete_confirm_title">Radera konton?</string>
     <string name="users_delete_confirm_text">%1$d konton raderas för gott: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelarna och turneringsresultaten finns kvar.\n\nDetta kan inte ångras.</string>
-    <string name="users_delete_summary">Raderade konton: %1$d\nInte raderade: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">%1$d konto raderades.</item>
+        <item quantity="other">%1$d konton raderades.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">%1$d konto kunde inte raderas:</item>
+        <item quantity="other">%1$d konton kunde inte raderas:</item>
+    </plurals>
     <string name="delete_failure_self">Du kan inte radera ditt eget konto.</string>
     <string name="delete_failure_last_admin">Det är den sista aktiva administratören.</string>
     <string name="delete_failure_unknown">Kontot raderades inte. Försök igen.</string>

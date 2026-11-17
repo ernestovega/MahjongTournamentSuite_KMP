@@ -1,29 +1,19 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
@@ -31,7 +21,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -48,15 +42,17 @@ import mahjongtournamentsuite.adminapp.generated.resources.failure_unexpected
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_invited
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_reminded
-import mahjongtournamentsuite.adminapp.generated.resources.send_failure_line
-import mahjongtournamentsuite.adminapp.generated.resources.send_result_failed
-import mahjongtournamentsuite.adminapp.generated.resources.send_result_invited
-import mahjongtournamentsuite.adminapp.generated.resources.send_result_reminded
+import mahjongtournamentsuite.adminapp.generated.resources.password_resets_failed
+import mahjongtournamentsuite.adminapp.generated.resources.password_resets_partial_title
+import mahjongtournamentsuite.adminapp.generated.resources.send_invited
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminded
 import mahjongtournamentsuite.adminapp.generated.resources.sending_text
 import mahjongtournamentsuite.adminapp.generated.resources.sending_title
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** A check for a player with an account and a cross for a player without one. The description names the state for screen readers. */
 @Composable
@@ -112,11 +108,12 @@ internal fun SendingDialog() {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = {},
-            title = { Text(stringResource(Res.string.sending_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.sending_title)) },
+            // The text first and the progress under it, both centered.
             text = {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    MtsDialogText(stringResource(Res.string.sending_text))
                     CircularProgressIndicator()
-                    Text(stringResource(Res.string.sending_text))
                 }
             },
             confirmButton = {},
@@ -137,53 +134,45 @@ internal fun SendSummaryDialog(
     val invited = results.count { it.outcome == PlayerAccountOutcome.INVITED }
     val reminded = results.count { it.outcome == PlayerAccountOutcome.REMINDED }
     val failed = results.filter { it.outcome == PlayerAccountOutcome.FAILED }
-    val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     TrackedDialog("AccountActionsDone") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
-            title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
+            title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
+            // One sentence for each count that is not zero, and the failed players in a card with their reason.
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.send_result_invited, invited))
-                    Text(stringResource(Res.string.send_result_reminded, reminded))
-                    Text(stringResource(Res.string.send_result_failed, failed.size), color = if (failed.isEmpty()) Color.Unspecified else color)
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                        items(failed, key = { it.playerId }) { result ->
-                            Text(
-                                stringResource(
-                                    Res.string.send_failure_line,
-                                    nameOf(result.playerId),
-                                    stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes()),
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (invited > 0) Text(pluralStringResource(Res.plurals.send_invited, invited, invited))
+                    if (reminded > 0) Text(pluralStringResource(Res.plurals.send_reminded, reminded, reminded))
+                    if (failed.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(pluralStringResource(Res.plurals.password_resets_failed, failed.size, failed.size), color = MaterialTheme.colorScheme.error)
+                            PlayerLinesCard(
+                                failed.map { result ->
+                                    PlayerLine(nameOf(result.playerId), listOf(stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())))
+                                },
+                                detailColor = MaterialTheme.colorScheme.error,
                             )
                         }
                     }
                 }
             },
-            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                }
+            },
         )
     }
 }
 
 @Composable
 fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
-    val color = if (outcome.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     TrackedDialog("AccountActionsError") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            icon = {
-                Icon(
-                    if (outcome.isError) Icons.Filled.Warning else Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    tint = color,
-                )
-            },
-            title = { Text(stringResource(if (outcome.isError) Res.string.something_went_wrong else Res.string.dialog_done_title), color = color) },
+            title = { MtsDialogTitle(stringResource(if (outcome.isError) Res.string.something_went_wrong else Res.string.dialog_done_title)) },
             text = {
                 Text(
                     outcome.message.asString(),
@@ -193,7 +182,7 @@ fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
                 )
             },
             confirmButton = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                MtsDialogButtons {
                     Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
                 }
             },

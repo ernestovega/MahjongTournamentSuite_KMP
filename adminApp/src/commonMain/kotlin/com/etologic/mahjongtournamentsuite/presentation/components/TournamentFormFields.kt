@@ -78,13 +78,13 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -222,7 +222,7 @@ fun TournamentColorPickerDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.choose_tournament_color)) },
+            title = { MtsDialogTitle(stringResource(Res.string.choose_tournament_color)) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -303,16 +303,17 @@ fun TournamentColorPickerDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    enabled = hexValue.text.toRgbColorOrNull() != null,
-                    onClick = { onColorSelected(hexValue.text.uppercase()) },
-                ) {
-                    Text(stringResource(Res.string.ok))
-                }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel))
+                MtsDialogButtons {
+                    FocusedButton(
+                        enabled = hexValue.text.toRgbColorOrNull() != null,
+                        onClick = { onColorSelected(hexValue.text.uppercase()) },
+                    ) {
+                        Text(stringResource(Res.string.ok))
+                    }
+
+                    FocusedTextButton(onClick = onDismiss) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             },
         )
@@ -498,14 +499,7 @@ fun TournamentLogoLibraryDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            // With no logos the dialog is only a message: title, text and button go centered.
-            title = {
-                Text(
-                    stringResource(Res.string.reuse_tournament_logo),
-                    modifier = if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
-                    textAlign = if (logos.isEmpty()) TextAlign.Center else null,
-                )
-            },
+            title = { MtsDialogTitle(stringResource(Res.string.reuse_tournament_logo)) },
             text = {
                 if (logos.isEmpty()) {
                     Text(
@@ -519,7 +513,7 @@ fun TournamentLogoLibraryDialog(
                             .fillMaxWidth()
                             .heightIn(max = 400.dp)
                             .verticalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         logos.forEachIndexed { index, tournament ->
@@ -545,22 +539,23 @@ fun TournamentLogoLibraryDialog(
                     }
                 }
             },
-            confirmButton = {},
-            dismissButton = {
-                Box(
-                    if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
-                    contentAlignment = Alignment.Center,
-                ) {
-                    FocusedTextButton(
-                        onClick = onDismiss,
-                        focusRequester = cancelFocusRequester,
-                        buttonModifier = if (itemFocusRequesters.isEmpty()) {
-                            Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
-                        } else {
-                            Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
-                        },
+            confirmButton = {
+                MtsDialogButtons {
+                    Box(
+                        if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Text(stringResource(Res.string.cancel))
+                        FocusedTextButton(
+                            onClick = onDismiss,
+                            focusRequester = cancelFocusRequester,
+                            buttonModifier = if (itemFocusRequesters.isEmpty()) {
+                                Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
+                            } else {
+                                Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
+                            },
+                        ) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 }
             },
@@ -689,7 +684,7 @@ fun TournamentTimePickerDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.select_time)) },
+            title = { MtsDialogTitle(stringResource(Res.string.select_time)) },
             text = {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -699,21 +694,22 @@ fun TournamentTimePickerDialog(
                 }
             },
             confirmButton = {
-                FocusedTextButton(
-                    onClick = {
-                        onTimeSelected(
-                            "${state.hour.toString().padStart(2, '0')}:" +
-                                state.minute.toString().padStart(2, '0'),
-                        )
-                    },
-                    focusRequester = confirmFocusRequester,
-                ) {
-                    Text(stringResource(Res.string.ok))
-                }
-            },
-            dismissButton = {
-                FocusedTextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel))
+                MtsDialogButtons {
+                    FocusedTextButton(
+                        onClick = {
+                            onTimeSelected(
+                                "${state.hour.toString().padStart(2, '0')}:" +
+                                    state.minute.toString().padStart(2, '0'),
+                            )
+                        },
+                        focusRequester = confirmFocusRequester,
+                    ) {
+                        Text(stringResource(Res.string.ok))
+                    }
+
+                    FocusedTextButton(onClick = onDismiss) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             },
         )

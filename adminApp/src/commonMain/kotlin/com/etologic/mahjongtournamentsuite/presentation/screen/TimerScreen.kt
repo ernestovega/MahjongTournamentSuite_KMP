@@ -15,30 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.rememberCoroutineScope
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import kotlin.time.Clock
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
-import mahjongtournamentsuite.adminapp.generated.resources.timer_late_start
-import mahjongtournamentsuite.adminapp.generated.resources.timer_manual_warning
-import mahjongtournamentsuite.adminapp.generated.resources.timer_load_failed
-import mahjongtournamentsuite.adminapp.generated.resources.timer_tournament_completed
-import mahjongtournamentsuite.adminapp.generated.resources.timer_offline
-import mahjongtournamentsuite.adminapp.generated.resources.timer_paused
-import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm
-import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_message
-import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.timer_stop
-import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm
-import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_message
-import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago
-import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_message
-import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_title
-import mahjongtournamentsuite.adminapp.generated.resources.timer_waiting_gong
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
@@ -52,9 +28,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,9 +60,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.GongIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
@@ -96,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.decrease_round
@@ -109,9 +93,28 @@ import mahjongtournamentsuite.adminapp.generated.resources.set_time
 import mahjongtournamentsuite.adminapp.generated.resources.time_is_up
 import mahjongtournamentsuite.adminapp.generated.resources.timer_gong_resume
 import mahjongtournamentsuite.adminapp.generated.resources.timer_gong_start
+import mahjongtournamentsuite.adminapp.generated.resources.timer_late_start
+import mahjongtournamentsuite.adminapp.generated.resources.timer_load_failed
+import mahjongtournamentsuite.adminapp.generated.resources.timer_manual_warning
+import mahjongtournamentsuite.adminapp.generated.resources.timer_offline
 import mahjongtournamentsuite.adminapp.generated.resources.timer_pause
+import mahjongtournamentsuite.adminapp.generated.resources.timer_paused
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_title
 import mahjongtournamentsuite.adminapp.generated.resources.timer_start
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_title
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_stop_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.timer_tournament_completed
+import mahjongtournamentsuite.adminapp.generated.resources.timer_waiting_gong
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import kotlin.time.Clock
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 
 @Composable
@@ -239,21 +242,22 @@ internal fun TimerContent(
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { dialog = null },
-                title = { Text(stringResource(Res.string.timer_stop_confirm_title)) },
-                text = { Text(stringResource(Res.string.timer_stop_confirm_message)) },
+                title = { MtsDialogTitle(stringResource(Res.string.timer_stop_confirm_title)) },
+                text = { MtsDialogText(stringResource(Res.string.timer_stop_confirm_message)) },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            dialog = null
-                            scope.launch { controller.stop() }
-                        },
-                    ) {
-                        Text(stringResource(Res.string.timer_stop_confirm))
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { dialog = null }) {
-                        Text(stringResource(Res.string.cancel))
+                    MtsDialogButtons {
+                        Button(
+                            onClick = {
+                                dialog = null
+                                scope.launch { controller.stop() }
+                            },
+                        ) {
+                            Text(stringResource(Res.string.timer_stop_confirm))
+                        }
+
+                        Button(onClick = { dialog = null }) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 },
             )
@@ -266,16 +270,17 @@ internal fun TimerContent(
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { controller.dismissResetConfirmation() },
-                title = { Text(stringResource(Res.string.timer_reset_confirm_title)) },
-                text = { Text(stringResource(Res.string.timer_reset_confirm_message)) },
+                title = { MtsDialogTitle(stringResource(Res.string.timer_reset_confirm_title)) },
+                text = { MtsDialogText(stringResource(Res.string.timer_reset_confirm_message)) },
                 confirmButton = {
-                    Button(onClick = { scope.launch { controller.reset(force = true) } }) {
-                        Text(stringResource(Res.string.timer_reset_confirm))
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { controller.dismissResetConfirmation() }) {
-                        Text(stringResource(Res.string.cancel))
+                    MtsDialogButtons {
+                        Button(onClick = { scope.launch { controller.reset(force = true) } }) {
+                            Text(stringResource(Res.string.timer_reset_confirm))
+                        }
+
+                        Button(onClick = { controller.dismissResetConfirmation() }) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 },
             )
@@ -609,30 +614,31 @@ internal fun MinutesDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
             confirmButton = {
-                Button(
-                    focusRequester = setFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = timeFieldFocusRequester,
-                        next = cancelFocusRequester,
-                    ),
-                    onClick = { apply() },
-                ) {
-                    Text(stringResource(Res.string.set))
+                MtsDialogButtons {
+                    Button(
+                        focusRequester = setFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = timeFieldFocusRequester,
+                            next = cancelFocusRequester,
+                        ),
+                        onClick = { apply() },
+                    ) {
+                        Text(stringResource(Res.string.set))
+                    }
+
+                    Button(
+                        onClick = onDismiss,
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = setFocusRequester,
+                            next = timeFieldFocusRequester,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             },
-            dismissButton = {
-                Button(
-                    onClick = onDismiss,
-                    focusRequester = cancelFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = setFocusRequester,
-                        next = timeFieldFocusRequester,
-                    ),
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-            title = { Text(title) },
+            title = { MtsDialogTitle(title) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(message)

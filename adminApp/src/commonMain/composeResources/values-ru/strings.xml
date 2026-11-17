@@ -480,8 +480,6 @@
     <string name="stats_admin_only">Статистика всех турниров доступна администраторам. Найдите турнир, чтобы увидеть его статистику.</string>
     <string name="id_cards_proportion_info">Ширина и высота связаны, поэтому бейдж сохраняет пропорции.\n• Пропорция — это соотношение ширины и высоты бейджа. Ширина всегда в %1$s раза больше высоты.\n• Когда вы меняете одну сторону, другая меняется сама. Бейдж никогда не растягивается.\n• Исходный размер — %2$s x %3$s мм. При этом размере на один лист A4 в книжной ориентации помещается 10 бейджей: 2 столбца и 5 строк.</string>
     <string name="use_range">Используйте от %1$s до %2$s.</string>
-    <string name="substitute_player_question">Заменить %1$s?</string>
-    <string name="substitution_of_player">Замена %1$s</string>
     <string name="substitution_explanation">С выбранного раунда за этого игрока играет замена. Замена не регистрируется и не получает результата в рейтинге. Игрок получает 0 очков стола за раунды, которые играет замена.</string>
     <string name="reason_late">Игрок опоздал.</string>
     <string name="reason_ill">Игрок заболел.</string>
@@ -617,9 +615,18 @@
     <string name="import_locked_text">Нельзя импортировать игроков, потому что у стола уже есть данные: рассадка или результаты. Импорт заменяет всех игроков, и это изменило бы существующие результаты. Чтобы изменить одного игрока, используйте действия в его строке.</string>
     <string name="sending_title">Отправка</string>
     <string name="sending_text">Приложение отправляет письма. Дождитесь окончания.</string>
-    <string name="send_result_invited">Создано аккаунтов и отправлено приглашений: %1$d</string>
-    <string name="send_result_reminded">Отправлено напоминаний: %1$d</string>
-    <string name="send_result_failed">Не отправлено: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">Создана %1$d учётная запись, приглашение отправлено.</item>
+        <item quantity="few">Создано %1$d учётные записи, приглашения отправлены.</item>
+        <item quantity="many">Создано %1$d учётных записей, приглашения отправлены.</item>
+        <item quantity="other">Создано %1$d учётные записи, приглашения отправлены.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">Отправлено %1$d напоминание.</item>
+        <item quantity="few">Отправлено %1$d напоминания.</item>
+        <item quantity="many">Отправлено %1$d напоминаний.</item>
+        <item quantity="other">Отправлено %1$d напоминания.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Игроков: %1$d · Изменено: %2$d · Ошибок: %3$d · Удалено: %4$d</string>
     <string name="import_legend_changed">Новые или изменённые</string>
@@ -828,7 +835,18 @@
     <string name="delete_selected_count">Удалить (%1$d)</string>
     <string name="users_delete_confirm_title">Удалить аккаунты?</string>
     <string name="users_delete_confirm_text">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</string>
-    <string name="users_delete_summary">Удалено аккаунтов: %1$d\nНе удалено: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">Удалена %1$d учётная запись.</item>
+        <item quantity="few">Удалено %1$d учётные записи.</item>
+        <item quantity="many">Удалено %1$d учётных записей.</item>
+        <item quantity="other">Удалено %1$d учётные записи.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">Не удалось удалить %1$d учётную запись:</item>
+        <item quantity="few">Не удалось удалить %1$d учётные записи:</item>
+        <item quantity="many">Не удалось удалить %1$d учётных записей:</item>
+        <item quantity="other">Не удалось удалить %1$d учётные записи:</item>
+    </plurals>
     <string name="delete_failure_self">Нельзя удалить собственный аккаунт.</string>
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>

@@ -22,10 +22,14 @@ fun PasswordResetConfirmDialog(email: String, onConfirm: () -> Unit, onDismiss: 
     TrackedDialog("PasswordResetConfirm") {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.password_reset_title)) },
-            text = { Text(stringResource(Res.string.password_reset_message, email)) },
-            confirmButton = { AppTextButton(onClick = onConfirm) { Text(stringResource(Res.string.password_reset_confirm)) } },
-            dismissButton = { AppTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) } },
+            title = { MtsDialogTitle(stringResource(Res.string.password_reset_title)) },
+            text = { MtsDialogText(stringResource(Res.string.password_reset_message, email)) },
+            confirmButton = {
+                MtsDialogButtons {
+                    DebouncedButton(onClick = onConfirm) { Text(stringResource(Res.string.password_reset_confirm)) }
+                    AppTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+                }
+            },
         )
     }
 }

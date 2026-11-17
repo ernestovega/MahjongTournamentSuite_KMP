@@ -25,7 +25,6 @@ import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +60,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighligh
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
@@ -147,7 +147,8 @@ internal fun TournamentContent(
                             onClick = { onResetTable(selectedEditor.tableId) },
                             enabled = enabled,
                             modifier = Modifier.testTag("resetTableButton"),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(enabled),
                         ) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = null, Modifier.size(18.dp))
                             Text(stringResource(Res.string.reset_table), Modifier.padding(start = 8.dp))

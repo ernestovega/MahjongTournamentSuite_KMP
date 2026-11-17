@@ -85,6 +85,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -523,44 +526,43 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         restoreSaveFocus = true
                     }
                 },
-                title = { Text(stringResource(Res.string.save_player_changes)) },
-                text = {
-                    Text(stringResource(Res.string.save_changes_to, selected?.displayName ?: stringResource(Res.string.this_player)))
-                },
+                title = { MtsDialogTitle(stringResource(Res.string.save_player_changes)) },
+                text = { MtsDialogText(stringResource(Res.string.save_changes_to, selected?.displayName ?: stringResource(Res.string.this_player))) },
                 confirmButton = {
-                    Button(
-                        enabled = !saving,
-                        onClick = {
-                            showSaveConfirmation = false
-                            save()
-                        },
-                        focusRequester = confirmFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = cancelFocusRequester,
-                            next = cancelFocusRequester,
-                        ),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary,
-                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                        ),
-                    ) {
-                        Text(stringResource(Res.string.save))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        enabled = !saving,
-                        onClick = {
-                            showSaveConfirmation = false
-                            restoreSaveFocus = true
-                        },
-                        focusRequester = cancelFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = confirmFocusRequester,
-                            next = confirmFocusRequester,
-                        ),
-                    ) {
-                        Text(stringResource(Res.string.cancel))
+                    MtsDialogButtons {
+                        Button(
+                            enabled = !saving,
+                            onClick = {
+                                showSaveConfirmation = false
+                                save()
+                            },
+                            focusRequester = confirmFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = cancelFocusRequester,
+                                next = cancelFocusRequester,
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                            ),
+                        ) {
+                            Text(stringResource(Res.string.save))
+                        }
+
+                        TextButton(
+                            enabled = !saving,
+                            onClick = {
+                                showSaveConfirmation = false
+                                restoreSaveFocus = true
+                            },
+                            focusRequester = cancelFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = confirmFocusRequester,
+                                next = confirmFocusRequester,
+                            ),
+                        ) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 },
             )
@@ -579,7 +581,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { if (!saving) showNewPlayerDialog = false },
-                title = { Text(stringResource(Res.string.new_player)) },
+                title = { MtsDialogTitle(stringResource(Res.string.new_player)) },
                 text = {
                     val newPlayerScrollState = rememberScrollState()
                     Box(modifier = Modifier.heightIn(max = 620.dp)) {
@@ -658,10 +660,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     }
                 },
                 confirmButton = {
-                    Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
-                },
-                dismissButton = {
-                    TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
+                    MtsDialogButtons {
+                        Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
+
+                        TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
+                    }
                 },
             )
         }

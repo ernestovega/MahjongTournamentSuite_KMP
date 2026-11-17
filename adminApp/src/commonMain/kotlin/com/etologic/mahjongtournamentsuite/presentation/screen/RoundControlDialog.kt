@@ -74,6 +74,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
@@ -340,7 +343,7 @@ internal fun RoundControlDialogContent(
             modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 1120.dp).fillMaxWidth(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.round_control_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.round_control_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Above the rounds: it is about the whole tournament, not the selected round.
@@ -404,7 +407,9 @@ internal fun RoundControlDialogContent(
                 }
             },
             confirmButton = {
-                FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                MtsDialogButtons {
+                    FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                }
             },
         )
     }
@@ -836,10 +841,14 @@ private fun ConfirmDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = { Text(message) },
-            confirmButton = { FocusedButton(onClick = onConfirm) { Text(confirm) } },
-            dismissButton = { FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+            title = { MtsDialogTitle(title) },
+            text = { MtsDialogText(message) },
+            confirmButton = {
+                MtsDialogButtons {
+                    FocusedButton(onClick = onConfirm) { Text(confirm) }
+                    FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                }
+            },
         )
     }
 }

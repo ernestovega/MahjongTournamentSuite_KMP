@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -84,6 +83,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -93,17 +93,20 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
-import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
+import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -145,22 +148,22 @@ import mahjongtournamentsuite.adminapp.generated.resources.photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_actions
 import mahjongtournamentsuite.adminapp.generated.resources.player_n
+import mahjongtournamentsuite.adminapp.generated.resources.round
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
-import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
-import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
-import mahjongtournamentsuite.adminapp.generated.resources.round
 import mahjongtournamentsuite.adminapp.generated.resources.table
 import mahjongtournamentsuite.adminapp.generated.resources.tables
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
 import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_players
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -619,7 +622,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AlertDialog(
                 onDismissRequest = { assignmentSlotId = null },
                 modifier = Modifier.appFocusGroup(),
-                title = { Text(stringResource(Res.string.assign_ema_player_to_player, assignmentSlot.id)) },
+                title = { MtsDialogTitle(stringResource(Res.string.assign_ema_player_to_player, assignmentSlot.id)) },
                 text = {
                     Column(
                         modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
@@ -846,67 +849,69 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     }
                 },
                 confirmButton = {
-                    val cancelInteractionSource = remember { MutableInteractionSource() }
-                    val cancelHovered by cancelInteractionSource.collectIsHoveredAsState()
-                    val cancelFocused by cancelInteractionSource.collectIsFocusedAsState()
-                    TextButton(
-                        onClick = { assignmentSlotId = null },
-                        interactionSource = cancelInteractionSource,
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (cancelHovered || cancelFocused) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
-                            .focusRequester(cancelFocusRequester)
-                            .focusProperties {
-                                previous = playerFocusRequesters.getOrNull(
-                                    selectedPlayerIndex(),
-                                ) ?: searchFocusRequester
-                                next = searchFocusRequester
-                            }
-                            .onPreviewKeyEvent { event ->
-                                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                when (event.key) {
-                                    Key.Tab -> {
-                                        if (event.isShiftPressed && playerFocusRequesters.isNotEmpty()) {
-                                            requestPlayerFocus(selectedPlayerIndex())
-                                        } else {
-                                            searchFocusRequester.requestFocus()
-                                        }
-                                        true
-                                    }
-                                    Key.DirectionLeft -> {
-                                        if (playerFocusRequesters.isEmpty()) {
-                                            searchFocusRequester.requestFocus()
-                                        } else {
-                                            requestPlayerFocus(selectedPlayerIndex())
-                                        }
-                                        true
-                                    }
-                                    Key.DirectionRight -> {
-                                        searchFocusRequester.requestFocus()
-                                        true
-                                    }
-                                    Key.DirectionUp -> {
-                                        if (playerFocusRequesters.isEmpty()) {
-                                            searchFocusRequester.requestFocus()
-                                        } else {
-                                            requestPlayerFocus(selectedPlayerIndex())
-                                        }
-                                        true
-                                    }
-                                    Key.DirectionDown -> {
-                                        searchFocusRequester.requestFocus()
-                                        true
-                                    }
-                                    else -> false
+                    MtsDialogButtons {
+                        val cancelInteractionSource = remember { MutableInteractionSource() }
+                        val cancelHovered by cancelInteractionSource.collectIsHoveredAsState()
+                        val cancelFocused by cancelInteractionSource.collectIsFocusedAsState()
+                        TextButton(
+                            onClick = { assignmentSlotId = null },
+                            interactionSource = cancelInteractionSource,
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.small)
+                                .background(
+                                    if (cancelHovered || cancelFocused) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                    } else {
+                                        androidx.compose.ui.graphics.Color.Transparent
+                                    },
+                                )
+                                .focusRequester(cancelFocusRequester)
+                                .focusProperties {
+                                    previous = playerFocusRequesters.getOrNull(
+                                        selectedPlayerIndex(),
+                                    ) ?: searchFocusRequester
+                                    next = searchFocusRequester
                                 }
-                            },
-                    ) { Text(stringResource(Res.string.cancel)) }
+                                .onPreviewKeyEvent { event ->
+                                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                    when (event.key) {
+                                        Key.Tab -> {
+                                            if (event.isShiftPressed && playerFocusRequesters.isNotEmpty()) {
+                                                requestPlayerFocus(selectedPlayerIndex())
+                                            } else {
+                                                searchFocusRequester.requestFocus()
+                                            }
+                                            true
+                                        }
+                                        Key.DirectionLeft -> {
+                                            if (playerFocusRequesters.isEmpty()) {
+                                                searchFocusRequester.requestFocus()
+                                            } else {
+                                                requestPlayerFocus(selectedPlayerIndex())
+                                            }
+                                            true
+                                        }
+                                        Key.DirectionRight -> {
+                                            searchFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        Key.DirectionUp -> {
+                                            if (playerFocusRequesters.isEmpty()) {
+                                                searchFocusRequester.requestFocus()
+                                            } else {
+                                                requestPlayerFocus(selectedPlayerIndex())
+                                            }
+                                            true
+                                        }
+                                        Key.DirectionDown -> {
+                                            searchFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                },
+                        ) { Text(stringResource(Res.string.cancel)) }
+                    }
                 },
             )
         }
@@ -950,9 +955,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { clearAssignmentSlotId = null },
-                title = { Text(stringResource(Res.string.clear_assignment)) },
+                title = { MtsDialogTitle(stringResource(Res.string.clear_assignment)) },
                 text = {
-                    Text(
+                    MtsDialogText(
                         stringResource(
                             Res.string.clear_assignment_message,
                             assignedName ?: stringResource(Res.string.this_assignment),
@@ -961,88 +966,89 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     )
                 },
                 confirmButton = {
-                    Box(
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (clearConfirmFocused || clearConfirmHovered) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
-                            .padding(3.dp),
-                    ) {
-                        Button(
-                            enabled = savingId == null,
-                            onClick = { assign(clearAssignmentSlot.id, null) },
-                            interactionSource = clearConfirmInteractionSource,
+                    MtsDialogButtons {
+                        Box(
                             modifier = Modifier
-                                .focusRequester(clearConfirmFocusRequester)
-                                .focusProperties {
-                                    previous = clearCancelFocusRequester
-                                    next = clearCancelFocusRequester
-                                }
-                                .onPreviewKeyEvent { event ->
-                                    if (event.type != KeyEventType.KeyDown) {
-                                        return@onPreviewKeyEvent false
+                                .clip(MaterialTheme.shapes.small)
+                                .background(
+                                    if (clearConfirmFocused || clearConfirmHovered) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                    } else {
+                                        androidx.compose.ui.graphics.Color.Transparent
+                                    },
+                                )
+                                .padding(3.dp),
+                        ) {
+                            Button(
+                                enabled = savingId == null,
+                                onClick = { assign(clearAssignmentSlot.id, null) },
+                                interactionSource = clearConfirmInteractionSource,
+                                modifier = Modifier
+                                    .focusRequester(clearConfirmFocusRequester)
+                                    .focusProperties {
+                                        previous = clearCancelFocusRequester
+                                        next = clearCancelFocusRequester
                                     }
-                                    when (event.key) {
-                                        Key.Tab,
-                                        Key.DirectionLeft,
-                                        Key.DirectionRight,
-                                        Key.DirectionUp,
-                                        Key.DirectionDown,
-                                        -> {
-                                            clearCancelFocusRequester.requestFocus()
-                                            true
+                                    .onPreviewKeyEvent { event ->
+                                        if (event.type != KeyEventType.KeyDown) {
+                                            return@onPreviewKeyEvent false
                                         }
-                                        else -> false
-                                    }
-                                },
-                        ) { Text(stringResource(Res.string.clear_assignment_2)) }
-                    }
-                },
-                dismissButton = {
-                    Box(
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (clearCancelFocused || clearCancelHovered) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
-                            .padding(3.dp),
-                    ) {
-                        TextButton(
-                            onClick = { clearAssignmentSlotId = null },
-                            interactionSource = clearCancelInteractionSource,
+                                        when (event.key) {
+                                            Key.Tab,
+                                            Key.DirectionLeft,
+                                            Key.DirectionRight,
+                                            Key.DirectionUp,
+                                            Key.DirectionDown,
+                                            -> {
+                                                clearCancelFocusRequester.requestFocus()
+                                                true
+                                            }
+                                            else -> false
+                                        }
+                                    },
+                            ) { Text(stringResource(Res.string.clear_assignment_2)) }
+                        }
+
+                        Box(
                             modifier = Modifier
-                                .focusRequester(clearCancelFocusRequester)
-                                .focusProperties {
-                                    previous = clearConfirmFocusRequester
-                                    next = clearConfirmFocusRequester
-                                }
-                                .onPreviewKeyEvent { event ->
-                                    if (event.type != KeyEventType.KeyDown) {
-                                        return@onPreviewKeyEvent false
+                                .clip(MaterialTheme.shapes.small)
+                                .background(
+                                    if (clearCancelFocused || clearCancelHovered) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                    } else {
+                                        androidx.compose.ui.graphics.Color.Transparent
+                                    },
+                                )
+                                .padding(3.dp),
+                        ) {
+                            TextButton(
+                                onClick = { clearAssignmentSlotId = null },
+                                interactionSource = clearCancelInteractionSource,
+                                modifier = Modifier
+                                    .focusRequester(clearCancelFocusRequester)
+                                    .focusProperties {
+                                        previous = clearConfirmFocusRequester
+                                        next = clearConfirmFocusRequester
                                     }
-                                    when (event.key) {
-                                        Key.Tab,
-                                        Key.DirectionLeft,
-                                        Key.DirectionRight,
-                                        Key.DirectionUp,
-                                        Key.DirectionDown,
-                                        -> {
-                                            clearConfirmFocusRequester.requestFocus()
-                                            true
+                                    .onPreviewKeyEvent { event ->
+                                        if (event.type != KeyEventType.KeyDown) {
+                                            return@onPreviewKeyEvent false
                                         }
-                                        else -> false
-                                    }
-                                },
-                        ) { Text(stringResource(Res.string.cancel)) }
+                                        when (event.key) {
+                                            Key.Tab,
+                                            Key.DirectionLeft,
+                                            Key.DirectionRight,
+                                            Key.DirectionUp,
+                                            Key.DirectionDown,
+                                            -> {
+                                                clearConfirmFocusRequester.requestFocus()
+                                                true
+                                            }
+                                            else -> false
+                                        }
+                                    },
+                            ) { Text(stringResource(Res.string.cancel)) }
+                        }
                     }
                 },
             )

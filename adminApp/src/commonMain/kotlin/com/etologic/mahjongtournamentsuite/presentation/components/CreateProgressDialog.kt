@@ -89,7 +89,7 @@ fun CreateProgressDialog(
             modifier = Modifier.widthIn(max = 560.dp),
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
             onDismissRequest = {},
-            title = { Text(stringResource(Res.string.create_progress_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.create_progress_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -123,7 +123,9 @@ fun CreateProgressDialog(
                 }
             },
             confirmButton = {
-                Button(onClick = onCancel) { Text(stringResource(Res.string.create_cancel_calculation)) }
+                MtsDialogButtons {
+                    Button(onClick = onCancel) { Text(stringResource(Res.string.create_cancel_calculation)) }
+                }
             },
         )
     }

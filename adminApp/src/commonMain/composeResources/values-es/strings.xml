@@ -480,8 +480,6 @@
     <string name="stats_admin_only">Las estadísticas de todos los torneos son solo para administradores. Busca un torneo para ver sus estadísticas.</string>
     <string name="id_cards_proportion_info">El ancho y el alto están vinculados, así que la tarjeta mantiene su proporción.\n• La proporción es la relación entre el ancho y el alto de la tarjeta. El ancho es siempre %1$s veces el alto.\n• Cuando cambias un lado, el otro cambia solo. La tarjeta nunca se estira.\n• El tamaño original es %2$s x %3$s mm. Es el tamaño que permite colocar 10 tarjetas en una hoja A4 vertical, en 2 columnas y 5 filas.</string>
     <string name="use_range">Usa de %1$s a %2$s.</string>
-    <string name="substitute_player_question">¿Sustituir a %1$s?</string>
-    <string name="substitution_of_player">Sustitución de %1$s</string>
     <string name="substitution_explanation">Un suplente juega por este jugador desde la ronda elegida. El suplente no se registra y no tiene resultado en la clasificación. El jugador recibe 0 puntos de mesa en las rondas que juega el suplente.</string>
     <string name="reason_late">El jugador llegó tarde.</string>
     <string name="reason_ill">El jugador está enfermo.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">No se pueden importar jugadores porque una mesa ya tiene datos: asientos o resultados. La importación sustituye a todos los jugadores y cambiaría resultados que ya existen. Para cambiar un jugador, usa las opciones de su fila.</string>
     <string name="sending_title">Enviando</string>
     <string name="sending_text">La app está enviando los emails. Espera a que termine.</string>
-    <string name="send_result_invited">Cuentas creadas e invitaciones enviadas: %1$d</string>
-    <string name="send_result_reminded">Recordatorios enviados: %1$d</string>
-    <string name="send_result_failed">No enviados: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">Se ha creado %1$d cuenta y se ha enviado su invitación.</item>
+        <item quantity="other">Se han creado %1$d cuentas y se han enviado sus invitaciones.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">Se ha enviado %1$d recordatorio.</item>
+        <item quantity="other">Se han enviado %1$d recordatorios.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Jugadores: %1$d · Cambian: %2$d · Errores: %3$d · Se quitan: %4$d</string>
     <string name="import_legend_changed">Nuevo o cambia</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Eliminar (%1$d)</string>
     <string name="users_delete_confirm_title">¿Eliminar cuentas?</string>
     <string name="users_delete_confirm_text">Se eliminarán para siempre %1$d cuentas: el acceso, el correo, el alias y la foto.\n\nLos jugadores EMA y los resultados de los torneos se conservan.\n\nNo se puede deshacer.</string>
-    <string name="users_delete_summary">Cuentas eliminadas: %1$d\nNo eliminadas: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">Se ha eliminado %1$d cuenta.</item>
+        <item quantity="other">Se han eliminado %1$d cuentas.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">No se ha podido eliminar %1$d cuenta:</item>
+        <item quantity="other">No se han podido eliminar %1$d cuentas:</item>
+    </plurals>
     <string name="delete_failure_self">No puedes eliminar tu propia cuenta.</string>
     <string name="delete_failure_last_admin">Es el último admin activo.</string>
     <string name="delete_failure_unknown">No se eliminó la cuenta. Inténtalo de nuevo.</string>

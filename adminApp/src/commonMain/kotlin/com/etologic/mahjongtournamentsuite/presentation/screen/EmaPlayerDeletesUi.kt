@@ -29,6 +29,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -112,7 +115,7 @@ internal fun EmaPlayerDeletesConfirmDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
-            title = { Text(stringResource(Res.string.ema_players_delete_confirm_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.ema_players_delete_confirm_title)) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (deletable > 0) {
@@ -135,24 +138,22 @@ internal fun EmaPlayerDeletesConfirmDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = onConfirm,
-                    enabled = !busy,
-                    focusRequester = deleteFocus,
-                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
-                ) { Text(stringResource(Res.string.delete_players_count, count)) }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    enabled = !busy,
-                    focusRequester = cancelFocus,
-                    buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                ) { Text(stringResource(Res.string.cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onConfirm,
+                        enabled = !busy,
+                        focusRequester = deleteFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                        colors = MtsButtons.destructiveColors(),
+                    ) { Text(stringResource(Res.string.delete_players_count, count)) }
+
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !busy,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
+                    ) { Text(stringResource(Res.string.cancel)) }
+                }
             },
         )
     }
@@ -173,7 +174,7 @@ internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, 
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.ema_players_delete_partial_title)) },
+            title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.ema_players_delete_partial_title)) },
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (deleted > 0) Text(pluralStringResource(Res.plurals.ema_players_delete_deleted, deleted, deleted))
@@ -195,7 +196,11 @@ internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, 
                     }
                 }
             },
-            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                }
+            },
         )
     }
 }

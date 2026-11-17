@@ -480,8 +480,6 @@
     <string name="stats_admin_only">Die Statistiken aller Turniere sind für Administratoren. Suche ein Turnier, um seine Statistiken zu sehen.</string>
     <string name="id_cards_proportion_info">Breite und Höhe sind verknüpft, damit der Ausweis sein Seitenverhältnis behält.\n• Das Seitenverhältnis ist die Beziehung zwischen Breite und Höhe des Ausweises. Die Breite ist immer %1$s-mal die Höhe.\n• Wenn du eine Seite änderst, ändert sich die andere von selbst. Der Ausweis wird nie verzerrt.\n• Die Originalgröße ist %2$s x %3$s mm. Mit dieser Größe passen 10 Ausweise auf ein A4-Blatt im Hochformat, in 2 Spalten und 5 Zeilen.</string>
     <string name="use_range">Verwende %1$s bis %2$s.</string>
-    <string name="substitute_player_question">%1$s ersetzen?</string>
-    <string name="substitution_of_player">Ersetzung von %1$s</string>
     <string name="substitution_explanation">Ein Ersatzspieler spielt ab der gewählten Runde für diesen Spieler. Der Ersatzspieler wird nicht erfasst und erhält kein Ergebnis in der Rangliste. Der Spieler erhält 0 Tischpunkte für die Runden, die der Ersatzspieler spielt.</string>
     <string name="reason_late">Der Spieler kam zu spät.</string>
     <string name="reason_ill">Der Spieler ist krank.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">Du kannst keine Spieler importieren, weil ein Tisch bereits Daten hat: Plätze oder Ergebnisse. Der Import ersetzt alle Spieler und würde vorhandene Ergebnisse ändern. Um einen Spieler zu ändern, nutze die Optionen in der Zeile des Spielers.</string>
     <string name="sending_title">Wird gesendet</string>
     <string name="sending_text">Die App sendet die E-Mails. Warte, bis sie fertig ist.</string>
-    <string name="send_result_invited">Erstellte Konten und gesendete Einladungen: %1$d</string>
-    <string name="send_result_reminded">Gesendete Erinnerungen: %1$d</string>
-    <string name="send_result_failed">Nicht gesendet: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">%1$d Konto wurde erstellt und die Einladung gesendet.</item>
+        <item quantity="other">%1$d Konten wurden erstellt und die Einladungen gesendet.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">%1$d Erinnerung wurde gesendet.</item>
+        <item quantity="other">%1$d Erinnerungen wurden gesendet.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Spieler: %1$d · Geändert: %2$d · Fehler: %3$d · Entfernt: %4$d</string>
     <string name="import_legend_changed">Neu oder geändert</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Löschen (%1$d)</string>
     <string name="users_delete_confirm_title">Konten löschen?</string>
     <string name="users_delete_confirm_text">%1$d Konten werden endgültig gelöscht: die Anmeldung, die E-Mail, der Alias und das Foto.\n\nDie EMA-Spieler und die Turnierergebnisse bleiben.\n\nDas kann nicht rückgängig gemacht werden.</string>
-    <string name="users_delete_summary">Gelöschte Konten: %1$d\nNicht gelöscht: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">%1$d Konto wurde gelöscht.</item>
+        <item quantity="other">%1$d Konten wurden gelöscht.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">%1$d Konto konnte nicht gelöscht werden:</item>
+        <item quantity="other">%1$d Konten konnten nicht gelöscht werden:</item>
+    </plurals>
     <string name="delete_failure_self">Du kannst dein eigenes Konto nicht löschen.</string>
     <string name="delete_failure_last_admin">Es ist der letzte aktive Admin.</string>
     <string name="delete_failure_unknown">Das Konto wurde nicht gelöscht. Versuche es erneut.</string>

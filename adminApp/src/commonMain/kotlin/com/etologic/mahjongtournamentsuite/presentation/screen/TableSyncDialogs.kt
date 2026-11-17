@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,12 +17,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -72,7 +73,7 @@ internal fun TableUpdatesDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
+            title = { MtsDialogTitle(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
             text = {
                 ScrollableColumnWithScrollbar(
                     state = scrollState,
@@ -80,11 +81,16 @@ internal fun TableUpdatesDialog(
                 ) {
                     notices.forEachIndexed { index, notice ->
                         if (index > 0) Spacer(Modifier.height(16.dp))
-                        Text(notice.headline().asString(), fontWeight = FontWeight.Bold)
+                        Text(notice.headline().asString(), Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         if (notice.lostChanges.isNotEmpty()) {
                             Spacer(Modifier.height(6.dp))
-                            Text(stringResource(Res.string.enter_these_values_again_if_they), style = MaterialTheme.typography.bodySmall)
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                stringResource(Res.string.enter_these_values_again_if_they),
+                                Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                            )
+                            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 notice.lostChanges.forEach { change ->
                                     Text(stringResource(Res.string.lost_change_line, change.label.asString(), change.value.asString()), style = MaterialTheme.typography.bodyMedium)
                                 }
@@ -94,7 +100,9 @@ internal fun TableUpdatesDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
+                MtsDialogButtons {
+                    FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
+                }
             },
         )
     }
@@ -113,16 +121,12 @@ internal fun ResetTableDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
+            // A short title fits one line on a phone. The round goes under it.
             title = {
-                // A short title fits one line on a phone. The round goes under it.
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(Res.string.reset_table_confirm_title, tableId), textAlign = TextAlign.Center)
-                    Text(
-                        stringResource(Res.string.round_n, roundId),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                MtsDialogTitle(
+                    stringResource(Res.string.reset_table_confirm_title, tableId),
+                    subtitle = stringResource(Res.string.round_n, roundId),
+                )
             },
             text = {
                 // What goes and what stays, as two short lists. The block is centered and its lines read from the left.
@@ -140,17 +144,13 @@ internal fun ResetTableDialog(
                     )
                 }
             },
-            // Clear table first and Cancel under it, centered, in every window size.
             confirmButton = {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                MtsDialogButtons {
                     Button(
                         enabled = !busy,
                         onClick = onConfirm,
                         modifier = Modifier.testTag("resetTableConfirm"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = Color.White,
-                        ),
+                        colors = MtsButtons.destructiveColors(),
                     ) { Text(stringResource(Res.string.reset_table)) }
                     TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }

@@ -17,10 +17,14 @@ fun SignOutConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     TrackedDialog("SignOut") {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.sign_out_title)) },
-            text = { Text(stringResource(Res.string.sign_out_message)) },
-            confirmButton = { AppTextButton(onClick = onConfirm) { Text(stringResource(Res.string.sign_out_confirm)) } },
-            dismissButton = { AppTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) } },
+            title = { MtsDialogTitle(stringResource(Res.string.sign_out_title)) },
+            text = { MtsDialogText(stringResource(Res.string.sign_out_message)) },
+            confirmButton = {
+                MtsDialogButtons {
+                    DebouncedButton(onClick = onConfirm) { Text(stringResource(Res.string.sign_out_confirm)) }
+                    AppTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+                }
+            },
         )
     }
 }

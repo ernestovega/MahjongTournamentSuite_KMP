@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -36,24 +38,25 @@ fun AiTranslationNotice(onContact: () -> Unit) {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = controller.onAiNoticeSeen,
-            title = { Text(stringResource(Res.string.ai_translation_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.ai_translation_title)) },
             text = { Text(stringResource(Res.string.ai_translation_message), style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
-                FocusedButton(
-                    onClick = controller.onAiNoticeSeen,
-                    focusRequester = okFocus,
-                    buttonModifier = Modifier.focusLoop(contactFocus, contactFocus),
-                ) { Text(stringResource(Res.string.action_ok)) }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = {
-                        controller.onAiNoticeSeen()
-                        onContact()
-                    },
-                    focusRequester = contactFocus,
-                    buttonModifier = Modifier.focusLoop(okFocus, okFocus),
-                ) { Text(stringResource(Res.string.ai_translation_contact)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = controller.onAiNoticeSeen,
+                        focusRequester = okFocus,
+                        buttonModifier = Modifier.focusLoop(contactFocus, contactFocus),
+                    ) { Text(stringResource(Res.string.action_ok)) }
+
+                    FocusedTextButton(
+                        onClick = {
+                            controller.onAiNoticeSeen()
+                            onContact()
+                        },
+                        focusRequester = contactFocus,
+                        buttonModifier = Modifier.focusLoop(okFocus, okFocus),
+                    ) { Text(stringResource(Res.string.ai_translation_contact)) }
+                }
             },
         )
     }

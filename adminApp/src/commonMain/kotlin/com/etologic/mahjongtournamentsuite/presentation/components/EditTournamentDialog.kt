@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -297,7 +296,7 @@ fun EditTournamentDialog(
                     onDismiss()
                 }
             },
-            title = { Text(stringResource(Res.string.edit_tournament)) },
+            title = { MtsDialogTitle(stringResource(Res.string.edit_tournament)) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     PrimaryScrollableTabRow(
@@ -743,13 +742,12 @@ fun EditTournamentDialog(
                 DialogButtonRow(
                     start = {
                         if (canDeleteTournaments) {
-                            FocusedTextButton(
+                            FocusedOutlinedButton(
                                 enabled = !isLoading,
                                 onClick = { deleteDialogTournament = tournament },
                                 focusRequester = editDeleteFocusRequester,
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error,
-                                ),
+                                colors = MtsButtons.destructiveOutlinedColors(),
+                                border = MtsButtons.destructiveBorder(!isLoading),
                             ) {
                                 Text(stringResource(Res.string.delete))
                             }
@@ -1000,59 +998,57 @@ fun EditTournamentDialog(
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { if (!isLoading) deleteDialogTournament = null },
-                title = { Text(stringResource(Res.string.delete_tournament)) },
-                text = { Text(stringResource(Res.string.delete_tournament_message, deleting.name, deleting.id)) },
+                title = { MtsDialogTitle(stringResource(Res.string.delete_tournament)) },
+                text = { MtsDialogText(stringResource(Res.string.delete_tournament_message, deleting.name, deleting.id)) },
                 confirmButton = {
-                    Button(
-                        enabled = !isLoading,
-                        focusRequester = deleteFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = cancelFocusRequester,
-                            next = cancelFocusRequester,
-                        ),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                        ),
-                        onClick = {
-                            coroutineScope.launch {
-                                errorMessage = null
-                                isLoading = true
+                    MtsDialogButtons {
+                        Button(
+                            enabled = !isLoading,
+                            focusRequester = deleteFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = cancelFocusRequester,
+                                next = cancelFocusRequester,
+                            ),
+                            colors = MtsButtons.destructiveColors(),
+                            onClick = {
+                                coroutineScope.launch {
+                                    errorMessage = null
+                                    isLoading = true
 
-                                when (val result = presenter.deleteTournament(deleting.id)) {
-                                    is AppResult.Success -> {
-                                        deleteDialogTournament = null
-                                        // Leave first. Without the tournament in the store this dialog closes, and
-                                        // that cancels this coroutine before a later onDeleted call could run.
-                                        // The delete suspends, so the navigation goes back to the main thread.
-                                        withContext(Dispatchers.Main) { onDeleted() }
-                                        store.removeTournament(deleting.id)
-                                        refreshTournaments()
+                                    when (val result = presenter.deleteTournament(deleting.id)) {
+                                        is AppResult.Success -> {
+                                            deleteDialogTournament = null
+                                            // Leave first. Without the tournament in the store this dialog closes, and
+                                            // that cancels this coroutine before a later onDeleted call could run.
+                                            // The delete suspends, so the navigation goes back to the main thread.
+                                            withContext(Dispatchers.Main) { onDeleted() }
+                                            store.removeTournament(deleting.id)
+                                            refreshTournaments()
+                                        }
+
+                                        is AppResult.Failure -> {
+                                            errorMessage = result.error.toUiText()
+                                        }
                                     }
 
-                                    is AppResult.Failure -> {
-                                        errorMessage = result.error.toUiText()
-                                    }
+                                    isLoading = false
                                 }
+                            },
+                        ) {
+                            Text(stringResource(Res.string.delete))
+                        }
 
-                                isLoading = false
-                            }
-                        },
-                    ) {
-                        Text(stringResource(Res.string.delete))
-                    }
-                },
-                dismissButton = {
-                    Button(
-                        enabled = !isLoading,
-                        onClick = { deleteDialogTournament = null },
-                        focusRequester = cancelFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = deleteFocusRequester,
-                            next = deleteFocusRequester,
-                        ),
-                    ) {
-                        Text(stringResource(Res.string.cancel))
+                        Button(
+                            enabled = !isLoading,
+                            onClick = { deleteDialogTournament = null },
+                            focusRequester = cancelFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = deleteFocusRequester,
+                                next = deleteFocusRequester,
+                            ),
+                        ) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 },
             )

@@ -60,6 +60,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIc
 import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
@@ -496,7 +498,7 @@ fun CreateTournamentDialog(
                     onDismiss()
                 }
             },
-            title = { Text(stringResource(Res.string.new_tournament)) },
+            title = { MtsDialogTitle(stringResource(Res.string.new_tournament)) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     PrimaryScrollableTabRow(
@@ -911,21 +913,19 @@ fun CreateTournamentDialog(
                 }
             },
             confirmButton = {
-                Button(onClick = ::startCreate, enabled = !isLoading) {
-                    Text(stringResource(Res.string.create))
-                }
-            },
-            dismissButton = if (isLoading) {
-                null
-            } else {
-                {
-                    AppTextButton(
-                        onClick = {
-                            cancelCreation()
-                            onDismiss()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.cancel))
+                MtsDialogButtons {
+                    Button(onClick = ::startCreate, enabled = !isLoading) {
+                        Text(stringResource(Res.string.create))
+                    }
+                    if (!isLoading) {
+                        AppTextButton(
+                            onClick = {
+                                cancelCreation()
+                                onDismiss()
+                            },
+                        ) {
+                            Text(stringResource(Res.string.cancel))
+                        }
                     }
                 }
             },

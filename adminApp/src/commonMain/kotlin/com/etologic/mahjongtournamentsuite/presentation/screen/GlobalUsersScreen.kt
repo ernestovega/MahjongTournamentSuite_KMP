@@ -87,6 +87,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlin
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -849,7 +853,7 @@ private fun ManageUserDialog(
         AlertDialog(
             onDismissRequest = { if (!saving) onDismiss() },
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
+            title = { MtsDialogTitle(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
             text = {
                 Column(
                     modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
@@ -1002,57 +1006,49 @@ private fun ManageUserDialog(
                 }
             },
             confirmButton = {
-                val destructive = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // Save on top. The account actions under it, outlined, the destructive ones in red. Cancel last.
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = {
+                            val selectedAssignments = if (role != GlobalUserRole.EDITOR) {
+                                emptyList()
+                            } else {
+                                tournaments.filter { assignments[it.id] == true }
+                                    .map { TournamentAssignment(it.id, it.name) }
+                            }
+                            onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                        },
+                        enabled = valid && !saving,
+                        focusRequester = saveFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                    ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
                     if (original != null && !isSelf) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            FocusedTextButton(
-                                onClick = { onResetPassword(original.email) },
-                                enabled = !saving,
-                                colors = destructive,
-                            ) { Text(stringResource(Res.string.send_password_reset_email)) }
-                        }
+                        FocusedOutlinedButton(
+                            onClick = { onResetPassword(original.email) },
+                            enabled = !saving,
+                        ) { Text(stringResource(Res.string.send_password_reset_email)) }
                     }
                     if (original != null && !isSelf && canDisable) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            FocusedTextButton(
-                                onClick = { onDelete(original) },
-                                enabled = !saving,
-                                colors = destructive,
-                            ) { Text(stringResource(Res.string.delete_account_action)) }
-                        }
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        if (original != null && !isSelf && canDisable) {
-                            FocusedTextButton(
-                                onClick = { onChangeDisabled(original) },
-                                enabled = !saving,
-                                colors = destructive,
-                            ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
-                        }
-                        Spacer(Modifier.weight(1f))
-                        FocusedTextButton(
-                            onClick = onDismiss,
+                        // Enabling an account again is not destructive: only Disable is red.
+                        FocusedOutlinedButton(
+                            onClick = { onChangeDisabled(original) },
                             enabled = !saving,
-                            focusRequester = cancelFocus,
-                            buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
-                        ) { Text(stringResource(Res.string.cancel)) }
-                        Spacer(Modifier.width(8.dp))
-                        FocusedButton(
-                            onClick = {
-                                val selectedAssignments = if (role != GlobalUserRole.EDITOR) {
-                                    emptyList()
-                                } else {
-                                    tournaments.filter { assignments[it.id] == true }
-                                        .map { TournamentAssignment(it.id, it.name) }
-                                }
-                                onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
-                            },
-                            enabled = valid && !saving,
-                            focusRequester = saveFocus,
-                            buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                        ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
+                            colors = if (original.disabled) ButtonDefaults.outlinedButtonColors() else MtsButtons.destructiveOutlinedColors(),
+                            border = if (original.disabled) ButtonDefaults.outlinedButtonBorder(!saving) else MtsButtons.destructiveBorder(!saving),
+                        ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
+                        FocusedOutlinedButton(
+                            onClick = { onDelete(original) },
+                            enabled = !saving,
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!saving),
+                        ) { Text(stringResource(Res.string.delete_account_action)) }
                     }
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
+                    ) { Text(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -1115,7 +1111,7 @@ private fun TournamentAssignmentsDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.assign_tournaments)) },
+            title = { MtsDialogTitle(stringResource(Res.string.assign_tournaments)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
@@ -1178,27 +1174,28 @@ private fun TournamentAssignmentsDialog(
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = onDismiss,
-                    enabled = enabled,
-                    focusRequester = closeFocus,
-                    buttonModifier = Modifier.focusProperties { next = searchFocus },
-                ) { Text(stringResource(Res.string.close)) }
-            },
-            dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    FocusedTextButton(
-                        onClick = {
-                            filteredTournaments.forEach { onAssignmentChange(it.id, true) }
-                        },
-                        enabled = enabled && filteredTournaments.isNotEmpty(),
-                    ) { Text(stringResource(Res.string.select_results)) }
-                    FocusedTextButton(
-                        onClick = {
-                            tournaments.forEach { onAssignmentChange(it.id, false) }
-                        },
-                        enabled = enabled && selectedCount > 0,
-                    ) { Text(stringResource(Res.string.clear_all)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onDismiss,
+                        enabled = enabled,
+                        focusRequester = closeFocus,
+                        buttonModifier = Modifier.focusProperties { next = searchFocus },
+                    ) { Text(stringResource(Res.string.close)) }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FocusedTextButton(
+                            onClick = {
+                                filteredTournaments.forEach { onAssignmentChange(it.id, true) }
+                            },
+                            enabled = enabled && filteredTournaments.isNotEmpty(),
+                        ) { Text(stringResource(Res.string.select_results)) }
+                        FocusedTextButton(
+                            onClick = {
+                                tournaments.forEach { onAssignmentChange(it.id, false) }
+                            },
+                            enabled = enabled && selectedCount > 0,
+                        ) { Text(stringResource(Res.string.clear_all)) }
+                    }
                 }
             },
         )
@@ -1262,27 +1259,25 @@ private fun DeleteUserDialog(
         AlertDialog(
             onDismissRequest = { if (!saving) onDismiss() },
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.delete_account)) },
-            text = { Text(stringResource(Res.string.delete_user_message, user.email)) },
+            title = { MtsDialogTitle(stringResource(Res.string.delete_account)) },
+            text = { MtsDialogText(stringResource(Res.string.delete_user_message, user.email)) },
             confirmButton = {
-                FocusedButton(
-                    onClick = onConfirm,
-                    enabled = !saving,
-                    focusRequester = deleteFocus,
-                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
-                ) { Text(stringResource(Res.string.delete)) }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    enabled = !saving,
-                    focusRequester = cancelFocus,
-                    buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                ) { Text(stringResource(Res.string.cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onConfirm,
+                        enabled = !saving,
+                        focusRequester = deleteFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                        colors = MtsButtons.destructiveColors(),
+                    ) { Text(stringResource(Res.string.delete)) }
+
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
+                    ) { Text(stringResource(Res.string.cancel)) }
+                }
             },
         )
     }
@@ -1302,23 +1297,24 @@ private fun DisableUserDialog(
         AlertDialog(
             onDismissRequest = { if (!saving) onDismiss() },
             modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.disable_account)) },
-            text = { Text(stringResource(Res.string.disable_user_message, user.email)) },
+            title = { MtsDialogTitle(stringResource(Res.string.disable_account)) },
+            text = { MtsDialogText(stringResource(Res.string.disable_user_message, user.email)) },
             confirmButton = {
-                FocusedButton(
-                    onClick = onConfirm,
-                    enabled = !saving,
-                    focusRequester = disableFocus,
-                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                ) { Text(stringResource(Res.string.disable)) }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    enabled = !saving,
-                    focusRequester = cancelFocus,
-                    buttonModifier = Modifier.focusLoop(disableFocus, disableFocus),
-                ) { Text(stringResource(Res.string.cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onConfirm,
+                        enabled = !saving,
+                        focusRequester = disableFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                    ) { Text(stringResource(Res.string.disable)) }
+
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(disableFocus, disableFocus),
+                    ) { Text(stringResource(Res.string.cancel)) }
+                }
             },
         )
     }

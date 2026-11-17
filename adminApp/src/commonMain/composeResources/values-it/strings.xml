@@ -480,8 +480,6 @@
     <string name="stats_admin_only">Le statistiche di tutti i tornei sono riservate agli amministratori. Cerca un torneo per vederne le statistiche.</string>
     <string name="id_cards_proportion_info">La larghezza e l'altezza sono collegate, quindi il cartellino mantiene la sua proporzione.\n• La proporzione è il rapporto tra la larghezza e l'altezza del cartellino. La larghezza è sempre %1$s volte l'altezza.\n• Quando cambi un lato, l'altro cambia da solo. Il cartellino non viene mai deformato.\n• La dimensione originale è %2$s x %3$s mm. È la dimensione che permette di mettere 10 cartellini su un foglio A4 verticale, in 2 colonne e 5 righe.</string>
     <string name="use_range">Usa da %1$s a %2$s.</string>
-    <string name="substitute_player_question">Sostituire %1$s?</string>
-    <string name="substitution_of_player">Sostituzione di %1$s</string>
     <string name="substitution_explanation">Un sostituto gioca per questo giocatore dal turno scelto. Il sostituto non viene registrato e non ha nessun risultato in classifica. Il giocatore ottiene 0 punti tavolo per i turni che gioca il sostituto.</string>
     <string name="reason_late">Il giocatore è arrivato in ritardo.</string>
     <string name="reason_ill">Il giocatore è malato.</string>
@@ -611,9 +609,14 @@
     <string name="import_locked_text">Non puoi importare giocatori perché un tavolo ha già dei dati: posti o risultati. L'importazione sostituisce tutti i giocatori e cambierebbe risultati già esistenti. Per cambiare un giocatore, usa le opzioni della sua riga.</string>
     <string name="sending_title">Invio in corso</string>
     <string name="sending_text">L'app sta inviando le email. Attendi che finisca.</string>
-    <string name="send_result_invited">Account creati e inviti inviati: %1$d</string>
-    <string name="send_result_reminded">Promemoria inviati: %1$d</string>
-    <string name="send_result_failed">Non inviati: %1$d</string>
+    <plurals name="send_invited">
+        <item quantity="one">È stato creato %1$d account e inviato il suo invito.</item>
+        <item quantity="other">Sono stati creati %1$d account e inviati i loro inviti.</item>
+    </plurals>
+    <plurals name="send_reminded">
+        <item quantity="one">È stato inviato %1$d promemoria.</item>
+        <item quantity="other">Sono stati inviati %1$d promemoria.</item>
+    </plurals>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Giocatori: %1$d · Cambiano: %2$d · Errori: %3$d · Rimossi: %4$d</string>
     <string name="import_legend_changed">Nuovo o cambia</string>
@@ -820,7 +823,14 @@
     <string name="delete_selected_count">Elimina (%1$d)</string>
     <string name="users_delete_confirm_title">Eliminare gli account?</string>
     <string name="users_delete_confirm_text">%1$d account saranno eliminati per sempre: l\'accesso, l\'email, l\'alias e la foto.\n\nI giocatori EMA e i risultati dei tornei restano.\n\nNon si può annullare.</string>
-    <string name="users_delete_summary">Account eliminati: %1$d\nNon eliminati: %2$d</string>
+    <plurals name="users_deleted">
+        <item quantity="one">È stato eliminato %1$d account.</item>
+        <item quantity="other">Sono stati eliminati %1$d account.</item>
+    </plurals>
+    <plurals name="users_delete_failed">
+        <item quantity="one">Non è stato possibile eliminare %1$d account:</item>
+        <item quantity="other">Non è stato possibile eliminare %1$d account:</item>
+    </plurals>
     <string name="delete_failure_self">Non puoi eliminare il tuo account.</string>
     <string name="delete_failure_last_admin">È l\'ultimo admin attivo.</string>
     <string name="delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>

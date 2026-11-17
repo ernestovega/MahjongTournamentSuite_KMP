@@ -1,35 +1,21 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
-import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
-import mahjongtournamentsuite.ui.generated.resources.profile_delete_account
-import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_confirm
-import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_message
-import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_title
-import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
-import mahjongtournamentsuite.ui.generated.resources.design_system
-import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,20 +23,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.action_close
 import mahjongtournamentsuite.ui.generated.resources.action_cancel
+import mahjongtournamentsuite.ui.generated.resources.action_close
 import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
+import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
+import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
+import mahjongtournamentsuite.ui.generated.resources.design_system
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_confirm
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_message
+import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_title
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
@@ -232,34 +231,28 @@ fun ProfileDialog(
                         FocusedTextButton(enabled = !saving, onClick = withdraw) { Text(stringResource(Res.string.consent_withdraw)) }
                     }
                     if (onDeleteAccount != null) {
-                        FocusedTextButton(
+                        FocusedOutlinedButton(
                             enabled = !saving,
                             onClick = { confirmingDelete = true },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!saving),
                         ) { Text(stringResource(Res.string.profile_delete_account)) }
                     }
                 }
             },
-            // Logout is at the left of the button row. Close and Save are at the right. On a small phone Logout goes above.
+            // Save first. Logout is a secondary destructive action: red and outlined. On a phone they stack, Save on top.
             confirmButton = {
-                val buttons: @Composable RowScope.() -> Unit = {
-                    FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                MtsDialogButtons {
                     FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-                }
-                if (onSignOut != null) {
-                    DialogButtonRow(
-                        start = {
-                            FocusedTextButton(
-                                enabled = !saving,
-                                onClick = onSignOut,
-                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                            ) { Text(stringResource(Res.string.action_logout)) }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        end = buttons,
-                    )
-                } else {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), content = buttons)
+                    if (onSignOut != null) {
+                        FocusedOutlinedButton(
+                            enabled = !saving,
+                            onClick = onSignOut,
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!saving),
+                        ) { Text(stringResource(Res.string.action_logout)) }
+                    }
+                    FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
                 }
             },
         )
@@ -281,32 +274,30 @@ private fun DeleteOwnAccountDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!deleting) onDismiss() },
-            title = { Text(stringResource(Res.string.profile_delete_account_title)) },
+            title = { MtsDialogTitle(stringResource(Res.string.profile_delete_account_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.profile_delete_account_message))
-                    error?.let { Text(it.asString(), color = MaterialTheme.colorScheme.error) }
+                    MtsDialogText(stringResource(Res.string.profile_delete_account_message))
+                    error?.let { Text(it.asString(), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center) }
                 }
             },
             confirmButton = {
-                FocusedButton(
-                    onClick = onConfirm,
-                    enabled = !deleting,
-                    focusRequester = deleteFocus,
-                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
-                ) { Text(stringResource(Res.string.profile_delete_account_confirm)) }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    enabled = !deleting,
-                    focusRequester = cancelFocus,
-                    buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                ) { Text(stringResource(Res.string.action_cancel)) }
+                MtsDialogButtons {
+                    FocusedButton(
+                        onClick = onConfirm,
+                        enabled = !deleting,
+                        focusRequester = deleteFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                        colors = MtsButtons.destructiveColors(),
+                    ) { Text(stringResource(Res.string.profile_delete_account_confirm)) }
+
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !deleting,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
+                    ) { Text(stringResource(Res.string.action_cancel)) }
+                }
             },
         )
     }
