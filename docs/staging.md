@@ -36,11 +36,22 @@ production data.
 - The same workflow, action `seed`: countries, the admin account of `STAGING_ADMIN_EMAIL` (a new one gets the
   password reset email) and the EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
   (the people registered for the next tournament, plus fictitious 9999xxxx numbers). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
-  Before that it loads the whole EMA ranking from the EMA website, as production has it, with the photos in the
-  staging bucket.
 
 ## The Android app
 
 `./gradlew :androidApp:assembleStaging` builds the staging app, signed with the debug key. It installs next to the real
 app. Without `mts.staging.project` the app calls an address that does not exist, never production.
 `-Pmts.testBuildType=staging` runs the instrumented tests on the staging app.
+
+## All the EMA players of production
+
+The seed creates only the players of the rehearsal. To have the whole registry of production, with the photos, an owner
+of both projects runs in Google Cloud Shell, from `firebase/functions`:
+
+```
+npm ci && npm run build
+node lib/scripts/copyEmaPlayersToStaging.js --to=<project>           # preview
+node lib/scripts/copyEmaPlayersToStaging.js --to=<project> --apply   # copy
+```
+
+It only reads production. Every write goes to the staging project.

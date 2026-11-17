@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "deploy: publish main on staging. seed: admin account, countries, the whole EMA ranking and the fictitious players of the rehearsal. android: build the staging APK."
+        description: "deploy: publish main on staging. seed: admin account, countries and the EMA players of the rehearsal. android: build the staging APK."
         type: choice
         options: [deploy, seed, android]
         default: deploy
@@ -140,7 +140,7 @@ jobs:
     name: Seed staging
     if: github.ref == 'refs/heads/main' && inputs.action == 'seed'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
@@ -183,9 +183,6 @@ jobs:
           echo "::add-mask::$MTS_ID_TOOLKIT_API_KEY"
           export MTS_ID_TOOLKIT_API_KEY
           npm run seed:countries
-          # The whole EMA ranking, as production has it: read from the EMA website, never from production. Photos go
-          # to the staging bucket. A second run only adds and updates what changed.
-          node lib/scripts/seedPlayers.js
           npm run seed:staging -- --apply --project="$STAGING"
 
   # The staging Android app (build type `staging`), as a downloadable APK. It may run on any branch: it touches no project.
