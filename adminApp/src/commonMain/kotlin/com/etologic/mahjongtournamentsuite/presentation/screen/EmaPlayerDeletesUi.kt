@@ -1,9 +1,11 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -11,13 +13,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteFailure
 import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome
@@ -43,15 +46,19 @@ import mahjongtournamentsuite.adminapp.generated.resources.delete_players_count
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_delete_failure_not_found
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_delete_failure_unknown
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_confirm_text
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_cannot_undo
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_summary
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_with_data
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_deactivated
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_deleted
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_failed
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_partial_title
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_will_deactivate
+import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_will_delete
 import mahjongtournamentsuite.adminapp.generated.resources.ok
-import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_line
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
@@ -93,8 +100,8 @@ internal fun PlayerSelectionBar(
 internal data class PlayerWithData(val name: String, val tournaments: List<String>)
 
 /**
- * Asks before the app deletes many EMA players. The players with data in tournaments are listed with their
- * tournaments: they are deactivated, not deleted. Cancel has the focus.
+ * Asks before the app deletes many EMA players. The text tells apart the players that are deleted for good and the ones
+ * with results in tournaments, which are deactivated instead and listed with their tournaments. Cancel has the focus.
  */
 @Composable
 internal fun EmaPlayerDeletesConfirmDialog(
@@ -106,32 +113,31 @@ internal fun EmaPlayerDeletesConfirmDialog(
 ) {
     val deleteFocus = remember { FocusRequester() }
     val cancelFocus = remember { FocusRequester() }
+    val deletable = (count - withData.size).coerceAtLeast(0)
     LaunchedEffect(Unit) { cancelFocus.requestFocus() }
     TrackedDialog("DeletePlayersConfirm") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
-            icon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             title = { Text(stringResource(Res.string.ema_players_delete_confirm_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.ema_players_delete_confirm_text, count))
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (deletable > 0) {
+                        Text(pluralStringResource(Res.plurals.ema_players_delete_will_delete, deletable, deletable))
+                    }
                     if (withData.isNotEmpty()) {
-                        Text(stringResource(Res.string.ema_players_delete_with_data), color = MaterialTheme.colorScheme.error)
-                        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                            items(withData, key = { it.name }) { player ->
-                                Column(Modifier.padding(vertical = 4.dp)) {
-                                    Text(player.name, style = MaterialTheme.typography.bodyMedium)
-                                    player.tournaments.forEach { tournament ->
-                                        Text(
-                                            "• $tournament",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                }
-                            }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(pluralStringResource(Res.plurals.ema_players_delete_will_deactivate, withData.size, withData.size))
+                            PlayerLinesCard(withData.map { player -> PlayerLine(player.name, player.tournaments.map { "• $it" }) })
                         }
+                    }
+                    if (deletable > 0) {
+                        Text(
+                            stringResource(Res.string.ema_players_delete_cannot_undo),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             },
@@ -159,6 +165,33 @@ internal fun EmaPlayerDeletesConfirmDialog(
     }
 }
 
+/** One player in a [PlayerLinesCard]: the name and the lines under it. */
+private class PlayerLine(val name: String, val details: List<String>)
+
+/** A soft card with a scrollable list of players, so the list reads apart from the text around it. */
+@Composable
+private fun PlayerLinesCard(lines: List<PlayerLine>, detailColor: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+// The dialog is already surfaceContainerHigh: the lowest container and a thin border set the card apart in both themes.
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        LazyColumn(
+            Modifier.fillMaxWidth().heightIn(max = 200.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(lines) { line ->
+                Column {
+                    Text(line.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    line.details.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = detailColor) }
+                }
+            }
+        }
+    }
+}
+
 private fun EmaPlayerDeleteFailure?.textRes(): StringResource = when (this) {
     EmaPlayerDeleteFailure.NOT_FOUND -> Res.string.ema_player_delete_failure_not_found
     EmaPlayerDeleteFailure.UNKNOWN, null -> Res.string.ema_player_delete_failure_unknown
@@ -170,23 +203,27 @@ internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, 
     val deleted = results.count { it.outcome == EmaPlayerDeleteOutcome.DELETED }
     val disabled = results.count { it.outcome == EmaPlayerDeleteOutcome.DISABLED }
     val failed = results.filter { it.outcome == EmaPlayerDeleteOutcome.FAILED }
-    val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     TrackedDialog("DeletePlayersDone") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
-            title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
+            title = { Text(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.ema_players_delete_partial_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.ema_players_delete_summary, deleted, disabled, failed.size))
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                        items(failed, key = { it.emaId }) { result ->
-                            val name = players.firstOrNull { it.emaId == result.emaId }?.let { "${it.displayName} (${it.emaId})" } ?: result.emaId
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (deleted > 0) Text(pluralStringResource(Res.plurals.ema_players_delete_deleted, deleted, deleted))
+                    if (disabled > 0) Text(pluralStringResource(Res.plurals.ema_players_delete_deactivated, disabled, disabled))
+                    if (failed.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                stringResource(Res.string.reset_failure_line, name, stringResource(result.reason.textRes())),
-                                style = MaterialTheme.typography.bodySmall,
+                                pluralStringResource(Res.plurals.ema_players_delete_failed, failed.size, failed.size),
                                 color = MaterialTheme.colorScheme.error,
+                            )
+                            PlayerLinesCard(
+                                failed.map { result ->
+                                    val name = players.firstOrNull { it.emaId == result.emaId }?.let { "${it.displayName} (${it.emaId})" } ?: result.emaId
+                                    PlayerLine(name, listOf(stringResource(result.reason.textRes())))
+                                },
+                                detailColor = MaterialTheme.colorScheme.error,
                             )
                         }
                     }

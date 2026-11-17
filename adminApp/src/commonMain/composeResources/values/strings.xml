@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
     <string name="ema_players_delete_confirm_title">Delete the EMA players?</string>
-    <string name="ema_players_delete_confirm_text">%1$d EMA players will be deleted for good.\n\nTheir accounts stay. An account only loses its EMA number.\n\nThis cannot be undone.</string>
-    <string name="ema_players_delete_with_data">These players have data in tournaments. They will not be deleted: they will be deactivated, and the list will show them crossed out.</string>
-    <string name="ema_players_delete_summary">Deleted: %1$d\nDeactivated: %2$d\nNot deleted: %3$d</string>
     <string name="delete_players_count">Delete players (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d EMA player will be deleted for good. If it is linked to an account, the account stays and only loses its EMA number.</item>
+        <item quantity="other">%1$d EMA players will be deleted for good. The accounts linked to them stay and only lose their EMA number.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d player has results in tournaments, so it will be deactivated instead of deleted. Its results stay, and the list will show it crossed out.</item>
+        <item quantity="other">%1$d players have results in tournaments, so they will be deactivated instead of deleted. Their results stay, and the list will show them crossed out.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d EMA player was deleted.</item>
+        <item quantity="other">%1$d EMA players were deleted.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d player was deactivated because it has results in tournaments.</item>
+        <item quantity="other">%1$d players were deactivated because they have results in tournaments.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">%1$d player could not be deleted:</item>
+        <item quantity="other">%1$d players could not be deleted:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">Deleting cannot be undone.</string>
+    <string name="ema_players_delete_partial_title">Not all were deleted</string>
     <string name="ema_player_delete_failure_not_found">The player no longer exists.</string>
     <string name="ema_player_delete_failure_unknown">The player was not deleted. Try again.</string>
     <string name="player_disabled">Deactivated</string>

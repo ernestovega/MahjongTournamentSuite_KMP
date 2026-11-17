@@ -816,10 +816,39 @@
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>
     <string name="ema_players_delete_confirm_title">Удалить игроков EMA?</string>
-    <string name="ema_players_delete_confirm_text">%1$d игроков EMA будут удалены навсегда.\n\nИх аккаунты сохранятся. Аккаунт только теряет номер EMA.\n\nЭто нельзя отменить.</string>
-    <string name="ema_players_delete_with_data">У этих игроков есть данные в турнирах. Они не будут удалены: их деактивируют, и в списке они будут зачёркнуты.</string>
-    <string name="ema_players_delete_summary">Удалено: %1$d\nДеактивировано: %2$d\nНе удалено: %3$d</string>
     <string name="delete_players_count">Удалить игроков (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d игрок EMA будет удалён навсегда. Если он связан с учётной записью, она сохранится и потеряет только номер EMA.</item>
+        <item quantity="few">%1$d игрока EMA будут удалены навсегда. Связанные с ними учётные записи сохранятся и потеряют только номер EMA.</item>
+        <item quantity="many">%1$d игроков EMA будут удалены навсегда. Связанные с ними учётные записи сохранятся и потеряют только номер EMA.</item>
+        <item quantity="other">%1$d игрока EMA будут удалены навсегда. Связанные с ними учётные записи сохранятся и потеряют только номер EMA.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">У %1$d игрока есть результаты в турнирах, поэтому он будет деактивирован, а не удалён. Его результаты сохранятся, а в списке он будет зачёркнут.</item>
+        <item quantity="few">У %1$d игроков есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
+        <item quantity="many">У %1$d игроков есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
+        <item quantity="other">У %1$d игрока есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">Удалён %1$d игрок EMA.</item>
+        <item quantity="few">Удалено %1$d игрока EMA.</item>
+        <item quantity="many">Удалено %1$d игроков EMA.</item>
+        <item quantity="other">Удалено %1$d игрока EMA.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">Деактивирован %1$d игрок, потому что у него есть результаты в турнирах.</item>
+        <item quantity="few">Деактивировано %1$d игрока, потому что у них есть результаты в турнирах.</item>
+        <item quantity="many">Деактивировано %1$d игроков, потому что у них есть результаты в турнирах.</item>
+        <item quantity="other">Деактивировано %1$d игрока, потому что у них есть результаты в турнирах.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">Не удалось удалить %1$d игрока:</item>
+        <item quantity="few">Не удалось удалить %1$d игроков:</item>
+        <item quantity="many">Не удалось удалить %1$d игроков:</item>
+        <item quantity="other">Не удалось удалить %1$d игрока:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">Удаление нельзя отменить.</string>
+    <string name="ema_players_delete_partial_title">Удалены не все</string>
     <string name="ema_player_delete_failure_not_found">Игрока больше нет.</string>
     <string name="ema_player_delete_failure_unknown">Игрок не удалён. Попробуйте ещё раз.</string>
     <string name="player_disabled">Деактивирован</string>

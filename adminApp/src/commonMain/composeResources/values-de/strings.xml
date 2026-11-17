@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">Es ist der letzte aktive Admin.</string>
     <string name="delete_failure_unknown">Das Konto wurde nicht gelöscht. Versuche es erneut.</string>
     <string name="ema_players_delete_confirm_title">EMA-Spieler löschen?</string>
-    <string name="ema_players_delete_confirm_text">%1$d EMA-Spieler werden endgültig gelöscht.\n\nIhre Konten bleiben erhalten. Ein Konto verliert nur seine EMA-Nummer.\n\nDies kann nicht rückgängig gemacht werden.</string>
-    <string name="ema_players_delete_with_data">Diese Spieler haben Daten in Turnieren. Sie werden nicht gelöscht, sondern deaktiviert, und die Liste zeigt sie durchgestrichen.</string>
-    <string name="ema_players_delete_summary">Gelöscht: %1$d\nDeaktiviert: %2$d\nNicht gelöscht: %3$d</string>
     <string name="delete_players_count">Spieler löschen (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d EMA-Spieler wird endgültig gelöscht. Ist er mit einem Konto verknüpft, bleibt das Konto erhalten und verliert nur seine EMA-Nummer.</item>
+        <item quantity="other">%1$d EMA-Spieler werden endgültig gelöscht. Die mit ihnen verknüpften Konten bleiben erhalten und verlieren nur ihre EMA-Nummer.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d Spieler hat Ergebnisse in Turnieren und wird daher deaktiviert statt gelöscht. Seine Ergebnisse bleiben erhalten, und die Liste zeigt ihn durchgestrichen.</item>
+        <item quantity="other">%1$d Spieler haben Ergebnisse in Turnieren und werden daher deaktiviert statt gelöscht. Ihre Ergebnisse bleiben erhalten, und die Liste zeigt sie durchgestrichen.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d EMA-Spieler wurde gelöscht.</item>
+        <item quantity="other">%1$d EMA-Spieler wurden gelöscht.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d Spieler wurde deaktiviert, weil er Ergebnisse in Turnieren hat.</item>
+        <item quantity="other">%1$d Spieler wurden deaktiviert, weil sie Ergebnisse in Turnieren haben.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">%1$d Spieler konnte nicht gelöscht werden:</item>
+        <item quantity="other">%1$d Spieler konnten nicht gelöscht werden:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">Das Löschen kann nicht rückgängig gemacht werden.</string>
+    <string name="ema_players_delete_partial_title">Nicht alle wurden gelöscht</string>
     <string name="ema_player_delete_failure_not_found">Den Spieler gibt es nicht mehr.</string>
     <string name="ema_player_delete_failure_unknown">Der Spieler wurde nicht gelöscht. Versuche es erneut.</string>
     <string name="player_disabled">Deaktiviert</string>

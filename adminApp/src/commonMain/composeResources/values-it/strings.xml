@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">È l\'ultimo admin attivo.</string>
     <string name="delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>
     <string name="ema_players_delete_confirm_title">Eliminare i giocatori EMA?</string>
-    <string name="ema_players_delete_confirm_text">%1$d giocatori EMA saranno eliminati per sempre.\n\nI loro account restano. Un account perde solo il numero EMA.\n\nNon si può annullare.</string>
-    <string name="ema_players_delete_with_data">Questi giocatori hanno dati nei tornei. Non saranno eliminati: saranno disattivati e l\'elenco li mostrerà barrati.</string>
-    <string name="ema_players_delete_summary">Eliminati: %1$d\nDisattivati: %2$d\nNon eliminati: %3$d</string>
     <string name="delete_players_count">Elimina giocatori (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d giocatore EMA verrà eliminato definitivamente. Se è collegato a un account, l’account resta e perde solo il suo numero EMA.</item>
+        <item quantity="other">%1$d giocatori EMA verranno eliminati definitivamente. Gli account collegati restano e perdono solo il loro numero EMA.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d giocatore ha risultati nei tornei, quindi verrà disattivato invece di essere eliminato. I suoi risultati restano e l’elenco lo mostrerà barrato.</item>
+        <item quantity="other">%1$d giocatori hanno risultati nei tornei, quindi verranno disattivati invece di essere eliminati. I loro risultati restano e l’elenco li mostrerà barrati.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d giocatore EMA è stato eliminato.</item>
+        <item quantity="other">%1$d giocatori EMA sono stati eliminati.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d giocatore è stato disattivato perché ha risultati nei tornei.</item>
+        <item quantity="other">%1$d giocatori sono stati disattivati perché hanno risultati nei tornei.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">Non è stato possibile eliminare %1$d giocatore:</item>
+        <item quantity="other">Non è stato possibile eliminare %1$d giocatori:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">L’eliminazione non si può annullare.</string>
+    <string name="ema_players_delete_partial_title">Non tutti sono stati eliminati</string>
     <string name="ema_player_delete_failure_not_found">Il giocatore non esiste più.</string>
     <string name="ema_player_delete_failure_unknown">Il giocatore non è stato eliminato. Riprova.</string>
     <string name="player_disabled">Disattivato</string>

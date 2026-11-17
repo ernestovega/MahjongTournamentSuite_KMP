@@ -261,12 +261,14 @@ class RoleGatingUiTest {
         onNodeWithText("Delete players (2)").performClick()
         awaitText("Delete the EMA players?")
         // The warning names the player with data and its tournaments: it is deactivated, not deleted.
-        onNodeWithText("These players have data in tournaments", substring = true).assertExists()
+        onNodeWithText("1 player has results in tournaments", substring = true).assertExists()
+        onNodeWithText("1 EMA player will be deleted for good", substring = true).assertExists()
         onNodeWithText("ALAN TURING (10003)").assertExists()
         onNodeWithText("• Open de Madrid").assertExists()
         assertEquals(emptyList(), registry.deleteRequests)
         onAllNodesWithText("Delete players (2)").onLast().performClick()
-        awaitText("Deleted: 1\nDeactivated: 1\nNot deleted: 0")
+        awaitText("1 EMA player was deleted.")
+        awaitText("1 player was deactivated because it has results in tournaments.")
 
         assertEquals(listOf(listOf("10002", "10003")), registry.deleteRequests)
         onNodeWithText("OK").performClick()

@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">Det är den sista aktiva administratören.</string>
     <string name="delete_failure_unknown">Kontot raderades inte. Försök igen.</string>
     <string name="ema_players_delete_confirm_title">Radera EMA-spelarna?</string>
-    <string name="ema_players_delete_confirm_text">%1$d EMA-spelare raderas för alltid.\n\nDeras konton finns kvar. Ett konto förlorar bara sitt EMA-nummer.\n\nDet går inte att ångra.</string>
-    <string name="ema_players_delete_with_data">De här spelarna har data i turneringar. De raderas inte: de inaktiveras, och listan visar dem överstrukna.</string>
-    <string name="ema_players_delete_summary">Raderade: %1$d\nInaktiverade: %2$d\nInte raderade: %3$d</string>
     <string name="delete_players_count">Radera spelare (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d EMA-spelare raderas för gott. Om spelaren är kopplad till ett konto finns kontot kvar och förlorar bara sitt EMA-nummer.</item>
+        <item quantity="other">%1$d EMA-spelare raderas för gott. Konton som är kopplade till dem finns kvar och förlorar bara sitt EMA-nummer.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d spelare har resultat i turneringar och inaktiveras därför i stället för att raderas. Resultaten finns kvar och listan visar spelaren överstruken.</item>
+        <item quantity="other">%1$d spelare har resultat i turneringar och inaktiveras därför i stället för att raderas. Resultaten finns kvar och listan visar dem överstrukna.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d EMA-spelare raderades.</item>
+        <item quantity="other">%1$d EMA-spelare raderades.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d spelare inaktiverades eftersom spelaren har resultat i turneringar.</item>
+        <item quantity="other">%1$d spelare inaktiverades eftersom de har resultat i turneringar.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">%1$d spelare kunde inte raderas:</item>
+        <item quantity="other">%1$d spelare kunde inte raderas:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">Det går inte att ångra en radering.</string>
+    <string name="ema_players_delete_partial_title">Alla raderades inte</string>
     <string name="ema_player_delete_failure_not_found">Spelaren finns inte längre.</string>
     <string name="ema_player_delete_failure_unknown">Spelaren raderades inte. Försök igen.</string>
     <string name="player_disabled">Inaktiverad</string>

@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">C’est le dernier admin actif.</string>
     <string name="delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
     <string name="ema_players_delete_confirm_title">Supprimer les joueurs EMA ?</string>
-    <string name="ema_players_delete_confirm_text">%1$d joueurs EMA seront supprimés définitivement.\n\nLeurs comptes restent. Un compte perd seulement son numéro EMA.\n\nAction irréversible.</string>
-    <string name="ema_players_delete_with_data">Ces joueurs ont des données dans des tournois. Ils ne seront pas supprimés : ils seront désactivés, et la liste les affichera barrés.</string>
-    <string name="ema_players_delete_summary">Supprimés : %1$d\nDésactivés : %2$d\nNon supprimés : %3$d</string>
     <string name="delete_players_count">Supprimer les joueurs (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d joueur EMA sera supprimé définitivement. S’il est lié à un compte, le compte est conservé et perd seulement son numéro EMA.</item>
+        <item quantity="other">%1$d joueurs EMA seront supprimés définitivement. Les comptes liés à ces joueurs sont conservés et perdent seulement leur numéro EMA.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d joueur a des résultats dans des tournois, il sera donc désactivé au lieu d’être supprimé. Ses résultats sont conservés et la liste l’affichera barré.</item>
+        <item quantity="other">%1$d joueurs ont des résultats dans des tournois, ils seront donc désactivés au lieu d’être supprimés. Leurs résultats sont conservés et la liste les affichera barrés.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d joueur EMA a été supprimé.</item>
+        <item quantity="other">%1$d joueurs EMA ont été supprimés.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d joueur a été désactivé, car il a des résultats dans des tournois.</item>
+        <item quantity="other">%1$d joueurs ont été désactivés, car ils ont des résultats dans des tournois.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">%1$d joueur n’a pas pu être supprimé :</item>
+        <item quantity="other">%1$d joueurs n’ont pas pu être supprimés :</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">La suppression est irréversible.</string>
+    <string name="ema_players_delete_partial_title">Tous n’ont pas été supprimés</string>
     <string name="ema_player_delete_failure_not_found">Le joueur n’existe plus.</string>
     <string name="ema_player_delete_failure_unknown">Le joueur n’a pas été supprimé. Réessayez.</string>
     <string name="player_disabled">Désactivé</string>

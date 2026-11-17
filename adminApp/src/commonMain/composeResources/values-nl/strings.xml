@@ -812,10 +812,29 @@
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
     <string name="ema_players_delete_confirm_title">EMA-spelers verwijderen?</string>
-    <string name="ema_players_delete_confirm_text">%1$d EMA-spelers worden definitief verwijderd.\n\nHun accounts blijven bestaan. Een account verliest alleen zijn EMA-nummer.\n\nDit kan niet ongedaan worden gemaakt.</string>
-    <string name="ema_players_delete_with_data">Deze spelers hebben gegevens in toernooien. Ze worden niet verwijderd: ze worden gedeactiveerd en de lijst toont ze doorgestreept.</string>
-    <string name="ema_players_delete_summary">Verwijderd: %1$d\nGedeactiveerd: %2$d\nNiet verwijderd: %3$d</string>
     <string name="delete_players_count">Spelers verwijderen (%1$d)</string>
+    <plurals name="ema_players_delete_will_delete">
+        <item quantity="one">%1$d EMA-speler wordt definitief verwijderd. Is die aan een account gekoppeld, dan blijft het account bestaan en verliest het alleen zijn EMA-nummer.</item>
+        <item quantity="other">%1$d EMA-spelers worden definitief verwijderd. De gekoppelde accounts blijven bestaan en verliezen alleen hun EMA-nummer.</item>
+    </plurals>
+    <plurals name="ema_players_delete_will_deactivate">
+        <item quantity="one">%1$d speler heeft resultaten in toernooien en wordt daarom gedeactiveerd in plaats van verwijderd. De resultaten blijven bewaard en de lijst toont de speler doorgestreept.</item>
+        <item quantity="other">%1$d spelers hebben resultaten in toernooien en worden daarom gedeactiveerd in plaats van verwijderd. Hun resultaten blijven bewaard en de lijst toont ze doorgestreept.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deleted">
+        <item quantity="one">%1$d EMA-speler is verwijderd.</item>
+        <item quantity="other">%1$d EMA-spelers zijn verwijderd.</item>
+    </plurals>
+    <plurals name="ema_players_delete_deactivated">
+        <item quantity="one">%1$d speler is gedeactiveerd omdat die resultaten in toernooien heeft.</item>
+        <item quantity="other">%1$d spelers zijn gedeactiveerd omdat ze resultaten in toernooien hebben.</item>
+    </plurals>
+    <plurals name="ema_players_delete_failed">
+        <item quantity="one">%1$d speler kon niet worden verwijderd:</item>
+        <item quantity="other">%1$d spelers konden niet worden verwijderd:</item>
+    </plurals>
+    <string name="ema_players_delete_cannot_undo">Verwijderen kan niet ongedaan worden gemaakt.</string>
+    <string name="ema_players_delete_partial_title">Niet alle spelers zijn verwijderd</string>
     <string name="ema_player_delete_failure_not_found">De speler bestaat niet meer.</string>
     <string name="ema_player_delete_failure_unknown">De speler is niet verwijderd. Probeer het opnieuw.</string>
     <string name="player_disabled">Gedeactiveerd</string>
