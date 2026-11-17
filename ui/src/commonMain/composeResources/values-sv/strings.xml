@@ -547,4 +547,8 @@
     <string name="country_zm">Zambia</string>
     <string name="country_zw">Zimbabwe</string>
     <string name="country_eu">Europeiska unionen</string>
+    <string name="password_reset_title">Återställ lösenordet</string>
+    <string name="password_reset_message">Vi skickar en länk för att skapa ett nytt lösenord till:\n%1$s\n\nStämmer den här e-postadressen?</string>
+    <string name="password_reset_confirm">Ja, skicka</string>
+    <string name="password_reset_invalid_email">Den här e-postadressen ser inte rätt ut.\nKontrollera den och försök igen.</string>
 </resources>

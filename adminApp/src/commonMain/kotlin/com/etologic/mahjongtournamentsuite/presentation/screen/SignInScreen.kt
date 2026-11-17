@@ -13,7 +13,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
+import com.etologic.mahjongtournamentsuite.presentation.components.passwordResetEmailError
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
@@ -92,6 +94,8 @@ fun SignInScreen(
         }
     }
 
+    var confirmingReset by remember { mutableStateOf(false) }
+
     fun requestPasswordReset() {
         errorMessage = null
         infoMessage = null
@@ -100,7 +104,16 @@ fun SignInScreen(
             emailRequester.requestFocus()
             return
         }
+        passwordResetEmailError(email)?.let {
+            errorMessage = it
+            emailRequester.requestFocus()
+            return
+        }
+        confirmingReset = true
+    }
 
+    fun sendPasswordReset() {
+        confirmingReset = false
         isLoading = true
         coroutineScope.launch {
             when (val result = authPresenter.requestPasswordReset(email.trim())) {
@@ -111,6 +124,17 @@ fun SignInScreen(
             }
             isLoading = false
         }
+    }
+
+    if (confirmingReset) {
+        PasswordResetConfirmDialog(
+            email = email.trim(),
+            onConfirm = ::sendPasswordReset,
+            onDismiss = {
+                confirmingReset = false
+                emailRequester.requestFocus()
+            },
+        )
     }
 
     SignInForm(

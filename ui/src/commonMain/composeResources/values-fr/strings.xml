@@ -551,4 +551,8 @@
     <string name="rounds_member_points">%1$s : %2$s points</string>
     <string name="rounds_member_result">%1$s : %4$d (#%2$d, %3$s pts)</string>
     <string name="rounds_team_score_detail">Tour %1$d · Score %3$d · %2$s points</string>
+    <string name="password_reset_title">Réinitialiser le mot de passe</string>
+    <string name="password_reset_message">Nous enverrons un lien pour créer un nouveau mot de passe à :\n%1$s\n\nCette adresse est-elle correcte ?</string>
+    <string name="password_reset_confirm">Oui, envoyer</string>
+    <string name="password_reset_invalid_email">Cette adresse e-mail ne semble pas valide.\nVérifiez-la et réessayez.</string>
 </resources>

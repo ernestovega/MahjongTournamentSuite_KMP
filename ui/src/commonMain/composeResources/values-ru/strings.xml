@@ -547,4 +547,8 @@
     <string name="country_zm">Замбия</string>
     <string name="country_zw">Зимбабве</string>
     <string name="country_eu">Европейский союз</string>
+    <string name="password_reset_title">Сброс пароля</string>
+    <string name="password_reset_message">Мы отправим ссылку для создания нового пароля на адрес:\n%1$s\n\nЭтот адрес указан верно?</string>
+    <string name="password_reset_confirm">Да, отправить</string>
+    <string name="password_reset_invalid_email">Этот адрес электронной почты выглядит неверно.\nПроверьте его и попробуйте снова.</string>
 </resources>

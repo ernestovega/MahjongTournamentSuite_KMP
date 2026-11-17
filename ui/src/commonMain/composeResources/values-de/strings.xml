@@ -547,4 +547,8 @@
     <string name="country_zm">Sambia</string>
     <string name="country_zw">Simbabwe</string>
     <string name="country_eu">Europäische Union</string>
+    <string name="password_reset_title">Passwort zurücksetzen</string>
+    <string name="password_reset_message">Wir senden einen Link zum Erstellen eines neuen Passworts an:\n%1$s\n\nIst diese E-Mail-Adresse richtig?</string>
+    <string name="password_reset_confirm">Ja, senden</string>
+    <string name="password_reset_invalid_email">Diese E-Mail-Adresse sieht nicht richtig aus.\nPrüfe sie und versuche es erneut.</string>
 </resources>

@@ -103,6 +103,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.passwordResetEmailError
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import coil3.compose.AsyncImage
@@ -339,6 +341,8 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         }
     }
 
+    var confirmingReset by remember { mutableStateOf(false) }
+
     fun requestPasswordReset() {
         errorMessage = null
         infoMessage = null
@@ -347,6 +351,16 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             emailRequester.requestFocus()
             return
         }
+        passwordResetEmailError(email)?.let {
+            errorMessage = it
+            emailRequester.requestFocus()
+            return
+        }
+        confirmingReset = true
+    }
+
+    fun sendPasswordReset() {
+        confirmingReset = false
         busy = true
         scope.launch {
             when (val result = presenter.resetPassword(email)) {
@@ -363,6 +377,17 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             choosingApp = false
             if (app == SuiteApp.ADMIN) openAdminApp(appSwitcher) else continueInPlayerApp()
         }
+    }
+
+    if (confirmingReset) {
+        PasswordResetConfirmDialog(
+            email = email.trim(),
+            onConfirm = ::sendPasswordReset,
+            onDismiss = {
+                confirmingReset = false
+                emailRequester.requestFocus()
+            },
+        )
     }
 
     SignInForm(
