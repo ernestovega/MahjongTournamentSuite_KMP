@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
@@ -9,6 +11,7 @@ import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { planOngoingRound } from "../services/ongoingRound";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
+import { deleteTournament, saveAssociationLogo } from "../services/tournamentsService";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
 import {
   randomTable,
@@ -50,7 +53,7 @@ type Data = Record<string, unknown>;
  * a member whose name has letters outside ASCII, and "open" stays unassigned. Every assigned slot holds a registered
  * EMA player.
  */
-type PlayerSpec = "ema" | "tail" | "special" | "open" | { emaId: string } | { fromCountry: string };
+type PlayerSpec = "ema" | "tail" | "special" | "open" | { emaId: string } | { fromCountry: string; orAny?: boolean };
 
 type HandStyle =
   | "normal" | "draws" | "allDraws" | "penalties" | "tiePairs" | "tieTop3" | "tieBottom3"
@@ -81,6 +84,8 @@ type TournamentSpec = {
   contactEmail: string;
   /** An address that does not load, to check how the screens look without the logo. */
   logoUrl?: string;
+  /** A PNG in firebase/functions/assets that the seed uploads as the logo of the tournament. */
+  logoAsset?: string;
   isTeams: boolean;
   teamNames?: string[];
   numRounds: number;
@@ -98,6 +103,13 @@ type TournamentSpec = {
   production?: boolean;
   /** EMA ids that the random fill of "ema" slots must not use. */
   avoidEmaIds?: string[];
+  /**
+   * Tournaments whose stored players this one must not use, read at the run. Two tournaments at the same time take
+   * place in different countries, with different players.
+   */
+  avoidPlayersOf?: string[];
+  /** A tournament that this one replaces. The run with --apply deletes it. */
+  replaces?: string;
   /**
    * The round that waits for the Play of the Timer. The seed moves the whole schedule so that this round starts at the
    * time of the run, as the script prepareOngoingRound does: the rounds before it are over and it has no clock.
@@ -656,7 +668,7 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
 
 /**
  * The tournaments that stay in production. They look like real events, with real EMA players, team names by country
- * and no "Test" in any text. The testers play in all of them. The ongoing one is a big tournament that starts on the
+ * and no "Test" in any text. The testers play in all of them but the Uppsala Open. The ongoing one is a big tournament that starts on the
  * day of the seed run and lasts 4 days. Its rounds start every 2 hours and 30 minutes, from 10:00 to 23:00, so the
  * testers can play a round in the morning, in the afternoon and at night. The rounds that started before the seed run
  * are complete and over. The last round that started by the planned times is empty and starts at the time of the seed
@@ -703,11 +715,27 @@ const MADRID_OPEN_TEAMS = [
   "Helsinki Mahjong", "Tampere Mahjong",
 ];
 
-const SPAIN_CUP_TEAMS = [
-  "Dragones de Lavapiés", "Los Cuatro Vientos", "Mahjong Retiro", "Club Chamberí", "Tigres del Jarama", "Bambú Salamanca",
-  "Fénix de Atocha", "Las Tejas Doradas", "Viento del Este", "Flor de Ciruelo", "Mahjong Barcelona Norte", "Mahjong Valencia Centro",
-  "Club Sevilla Mahjong", "Les Dragons de Paris", "Mahjong Roma", "Mahjong Berlin",
-];
+/**
+ * The second ongoing tournament, at the same time as the Madrid Open: an individual MCR open in Uppsala (Sweden), with
+ * players that the Madrid Open does not have and none of the testers, as two simultaneous tournaments would be. It
+ * starts two days before the seed run and has one round a day for 8 days, so it covers the week. The rounds that
+ * started before the run are complete and over. The last one that started by the planned times is empty and starts
+ * at the time of the run, without a clock, as in the Madrid Open.
+ */
+const UPPSALA_START = addDays(localSlot(new Date()).date, -2);
+const UPPSALA_TIME = "10:00";
+const UPPSALA_ROUNDS = 8;
+const UPPSALA_NOW_ROUND = localSlot(new Date()).startTime >= UPPSALA_TIME ? 3 : 2;
+const NORRLANDS_NATION: Venue = {
+  venueName: "Norrlands Nation",
+  venueAddress: "Västra Ågatan 14, Uppsala",
+  venueMapUrl: "https://www.google.com/maps/search/?api=1&query=Norrlands%20Nation%2C%20V%C3%A4stra%20%C3%85gatan%2014%2C%20Uppsala",
+};
+
+/** Players from the given countries, in that order. A country without free players left gives any free player. */
+function playersFrom(countries: Array<[string, number]>): PlayerSpec[] {
+  return countries.flatMap(([country, count]) => Array.from({ length: count }, () => ({ fromCountry: country, orAny: true })));
+}
 
 const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
   {
@@ -763,27 +791,33 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     avoidEmaIds: TESTER_EMA_IDS,
   },
   {
-    id: "spanish-team-cup-2027",
-    name: "Spanish Team Cup 2027",
-    shortName: "STC 2027",
-    primaryColor: "#1565C0",
-    startDate: "2027-05-15", endDate: "2027-05-16",
-    hostCountry: "ES", hostCity: "Madrid",
-    venue: ESKALERRIA, contactEmail: "organizacion@spanishteamcup.example",
-    isTeams: true, teamNames: SPAIN_CUP_TEAMS, numRounds: 7,
-    players: playersByCountry([["ESP", 52], ["FRA", 4], ["ITA", 4], ["GER", 4]]),
+    id: "uppsala-mcr-open-2026",
+    name: "Uppsala MCR Open 2026",
+    shortName: "UMO 2026",
+    primaryColor: "#0067A5",
+    startDate: UPPSALA_START, endDate: addDays(UPPSALA_START, UPPSALA_ROUNDS - 1),
+    hostCountry: "SE", hostCity: "Uppsala",
+    venue: NORRLANDS_NATION, contactEmail: "info@uppsalamcropen.example",
+    logoAsset: "uppsala-mahjong.png",
+    isTeams: false, numRounds: UPPSALA_ROUNDS,
+    // 64 players: Nordic first, then other countries.
+    players: playersFrom([["SWE", 32], ["DEN", 8], ["FIN", 8], ["NOR", 4], ["GER", 4], ["NED", 4], ["POL", 4]]),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(7, "2027-05-15", 4, PROD_TIMES),
+    schedule: spread(UPPSALA_ROUNDS, UPPSALA_START, 1, [UPPSALA_TIME]),
     agenda: [
-      { title: "Registration and welcome coffee", date: "2027-05-15", startTime: "08:00" },
-      { title: "Lunch break", date: "2027-05-15", startTime: "13:30" },
-      { title: "Lunch break", date: "2027-05-16", startTime: "13:30" },
-      { title: "Awards ceremony", date: "2027-05-16", startTime: "17:30" },
+      { title: "Registration and welcome coffee", date: UPPSALA_START, startTime: "09:15" },
+      { title: "Awards ceremony", date: addDays(UPPSALA_START, UPPSALA_ROUNDS - 1), startTime: "12:30" },
     ],
-    mode: () => ({ kind: "empty" }),
-    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
-    testers: true, production: true,
+    mode: (round, table) => {
+      if (round < UPPSALA_NOW_ROUND) return { kind: "full", style: table % 7 === 0 ? "draws" : "normal" };
+      return { kind: "empty" };
+    },
+    readyRound: UPPSALA_NOW_ROUND,
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Stockholm" },
+    production: true,
     avoidEmaIds: TESTER_EMA_IDS,
+    avoidPlayersOf: ["madrid-open-2026"],
+    replaces: "spanish-team-cup-2027",
   },
 ];
 
@@ -1090,7 +1124,7 @@ function isFixedEma(entry: PlayerSpec): entry is { emaId: string } {
   return typeof entry === "object" && "emaId" in entry;
 }
 
-function isCountryPick(entry: PlayerSpec): entry is { fromCountry: string } {
+function isCountryPick(entry: PlayerSpec): entry is { fromCountry: string; orAny?: boolean } {
   return typeof entry === "object" && "fromCountry" in entry;
 }
 
@@ -1104,7 +1138,7 @@ type BuiltTournament = {
   summary: { tables: Record<string, number>; players: number; ema: number; open: number; completed: boolean };
 };
 
-function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournament {
+function buildTournament(spec: TournamentSpec, registry: Registry, avoidStored: Set<string> = new Set()): BuiltTournament {
   const rng = seededRng(hashText(spec.id));
   const numPlayers = spec.players.length;
   if (numPlayers % 4 !== 0) throw new Error(`${spec.id}: players must be a multiple of 4`);
@@ -1112,7 +1146,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
   const stamp = () => ({ createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
   const writes: Write[] = [];
 
-  const avoid = new Set(spec.avoidEmaIds ?? []);
+  const avoid = new Set([...(spec.avoidEmaIds ?? []), ...avoidStored]);
   const pool = shuffled(registry.filter((member) => !avoid.has(member.id)), rng);
   const strengthKeys = new Map<number, string>();
   let ema = 0;
@@ -1131,7 +1165,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       } else if (isFixedEma(entry)) member = registry.find((candidate) => candidate.id === entry.emaId);
       else {
         const found = pool.findIndex((candidate) => candidate.country === entry.fromCountry);
-        member = found >= 0 ? pool.splice(found, 1)[0] : undefined;
+        member = found >= 0 ? pool.splice(found, 1)[0] : entry.orAny === true ? pool.shift() : undefined;
       }
       if (!member) throw new Error(`${spec.id}: no EMA player for slot ${playerId}`);
       ema += 1;
@@ -1306,6 +1340,19 @@ async function linkTesterAccounts(): Promise<void> {
   }
 }
 
+/** The EMA ids of the stored players of [tournamentIds]. */
+async function storedEmaIdsOf(tournamentIds: string[]): Promise<Set<string>> {
+  const ids = new Set<string>();
+  for (const id of tournamentIds) {
+    const players = await db.collection(`tournaments/${id}/players`).select("assignedEmaId").get();
+    players.docs.forEach((doc) => {
+      const emaId = doc.get("assignedEmaId");
+      if (typeof emaId === "string" && emaId !== "") ids.add(emaId);
+    });
+  }
+  return ids;
+}
+
 /** Every round needs a date inside the tournament and a start time, as the apps require. */
 function scheduleProblem(spec: TournamentSpec): string | null {
   if (spec.schedule.length !== spec.numRounds) {
@@ -1328,7 +1375,7 @@ async function main(): Promise<void> {
     if (only != null) return only.includes(spec.id);
     if (onlyProduction) return spec.production === true;
     if (onlyTesters) return spec.testers === true && spec.production !== true;
-    return spec.testers !== true;
+    return spec.testers !== true && spec.production !== true;
   });
   if (specs.some((spec) => !spec.production && !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
   const small = specs.find((spec) => !isValidPlayerCount(spec.players.length));
@@ -1340,18 +1387,30 @@ async function main(): Promise<void> {
     await linkTesterAccounts();
   }
   for (const spec of specs) {
-    const built = buildTournament(spec, registry);
+    const avoidStored = await storedEmaIdsOf(spec.avoidPlayersOf ?? []);
+    const built = buildTournament(spec, registry, avoidStored);
     console.log(`\n${spec.id} (${spec.name})`);
     console.log(`  players ${built.summary.players}: ${built.summary.ema} EMA, ${built.summary.open} open`);
     console.log(`  tables ${JSON.stringify(built.summary.tables)}`);
     console.log(`  completed: ${built.summary.completed}; documents: ${built.writes.length + 1}`);
+    if (avoidStored.size > 0) console.log(`  avoids the ${avoidStored.size} EMA players of ${(spec.avoidPlayersOf ?? []).join(", ")}`);
+    const startsAt = (built.tournament.roundSchedules as Array<{ date: string; startTime: string }>);
+    console.log(`  dates ${String(built.tournament.eventStartDate)} to ${String(built.tournament.eventEndDate)}; rounds ${startsAt.map((entry) => `${entry.date.slice(5)} ${entry.startTime}`).join(", ")}`);
+    const replaced = spec.replaces != null ? await db.collection("tournaments").doc(spec.replaces).get() : null;
+    if (replaced?.exists) console.log(`  replaces ${spec.replaces} (${String(replaced.get("name") ?? "")}), which ${applyChanges ? "is deleted" : "the run with --apply deletes"}`);
     if (!applyChanges) continue;
 
+    if (replaced?.exists) await deleteTournament(replaced.id);
     const ref = db.collection("tournaments").doc(spec.id);
     await db.recursiveDelete(ref);
     const writer = db.bulkWriter();
     built.writes.forEach((write) => { void writer.set(db.doc(write.path), write.data); });
     await writer.close();
+    if (spec.logoAsset != null) {
+      const bytes = readFileSync(`assets/${spec.logoAsset}`);
+      const logo = await saveAssociationLogo(spec.id, "image/png", bytes.toString("base64"));
+      Object.assign(built.tournament, { associationLogoUrl: logo.url, associationLogoPath: logo.path, associationLogoHash: logo.hash });
+    }
     // The tournament document comes last. A tournament without its document is invisible.
     await ref.set(built.tournament);
     // The close of a round in play is planned at its Play. These rounds had no Play, so the seed plans it.

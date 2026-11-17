@@ -8,6 +8,9 @@ import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 const tournamentId = process.argv.slice(2).find((arg) => !arg.startsWith("--")) ?? "madrid-open-2026";
+/** --until=YYYY-MM-DD keeps the tournament in progress up to that day, even when its rounds end earlier. */
+const until = process.argv.find((arg) => arg.startsWith("--until="))?.split("=")[1];
+if (until != null && !/^\d{4}-\d{2}-\d{2}$/.test(until)) throw new Error("--until needs a date as YYYY-MM-DD");
 
 /**
  * Leaves an ongoing tournament ready to try the tables: the first round after the last round with hands starts at
@@ -16,7 +19,7 @@ const tournamentId = process.argv.slice(2).find((arg) => !arg.startsWith("--")) 
  * closes their tables with hands, as at the end of a round. Run it again whenever you need a fresh round.
  *
  * It previews by default. Add --apply to write.
- * Usage: node lib/scripts/prepareOngoingRound.js [tournamentId] [--apply]   (default madrid-open-2026)
+ * Usage: node lib/scripts/prepareOngoingRound.js [tournamentId] [--until=YYYY-MM-DD] [--apply]   (default madrid-open-2026)
  */
 async function main(): Promise<{ tournamentId: string; round: number; closedTables: number }> {
   const ref = db.collection("tournaments").doc(tournamentId);
@@ -27,6 +30,7 @@ async function main(): Promise<{ tournamentId: string; round: number; closedTabl
   const roundsWithHands = new Set(withHands.docs.map((doc) => Number(doc.get("roundId"))));
   const nowMs = Date.now();
   const plan = planOngoingRound(tournament, roundsWithHands, nowMs);
+  if (until != null && until > plan.eventEndDate) plan.eventEndDate = until;
   const start = plan.roundSchedules[plan.roundId - 1];
   const openBefore = withHands.docs.filter((doc) => doc.get("isCompleted") !== true && Number(doc.get("roundId")) < plan.roundId);
 
