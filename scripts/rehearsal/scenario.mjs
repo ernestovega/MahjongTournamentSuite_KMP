@@ -60,8 +60,8 @@ async function freePlayers(api, token) {
   return (registry.json.players ?? []).filter((player) =>
     !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName
     && Number(player.emaId) > 0
-    // The guests of the registry and the account of the Google Play reviewers are not people of a tournament.
-    && !/EMA GUEST|GOOGLE PLAY/i.test(`${player.firstName} ${player.lastName}`));
+    // The test players of the registry, as the one of the Google Play reviewers, are not people of a tournament.
+    && !/GOOGLE PLAY/i.test(`${player.firstName} ${player.lastName}`));
 }
 
 function csv(rows) {
@@ -84,7 +84,11 @@ export async function makePlan(args) {
   const api = new Api(args.api ?? STAGING_API, new Metrics());
   const admin = new Session(api, rehearsalEmail(baseEmail, "botadmin"), password);
   if (!(await admin.signIn())) throw new Error("The bot admin could not sign in.");
-  const free = shuffle(await freePlayers(api, admin.token));
+  // The EMA guests (people without an EMA number of their own) play too: two of them, when the registry has them.
+  const all = await freePlayers(api, admin.token);
+  const isGuest = (player) => /EMA GUEST/i.test(`${player.firstName} ${player.lastName}`);
+  const guests = shuffle(all.filter(isGuest)).slice(0, 2);
+  const free = shuffle([...guests, ...shuffle(all.filter((player) => !isGuest(player))).slice(0, size.players - guests.length)]);
   if (free.length < size.players) throw new Error(`The registry has only ${free.length} free EMA players.`);
 
   const now = new Date();
