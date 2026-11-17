@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts."
+        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts. mail-check: the mailbox of the game day scenarios answers."
         type: choice
-        options: [calibrate, passwords, bots, check, calibration-cleanup]
+        options: [calibrate, passwords, bots, check, calibration-cleanup, mail-check]
         default: calibrate
       tournament:
         description: "bots and check: the name of the rehearsal tournament, as in the public list."
@@ -51,7 +51,7 @@ jobs:
   # The accounts and the password, with the Admin SDK of staging.
   accounts:
     name: Accounts
-    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check'
+    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -104,6 +104,23 @@ jobs:
             calibration-cleanup) mode=--calibration-cleanup ;;
           esac
           node lib/scripts/rehearsalAccounts.js "$mode" --apply --project="$STAGING"
+
+  # The mailbox of the game day scenarios (docs/scenarios.md), read by IMAP.
+  mail:
+    name: Mailbox of the scenarios
+    if: inputs.action == 'mail-check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Read the mailbox
+        env:
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+          REHEARSAL_IMAP_PASSWORD: ${{ secrets.REHEARSAL_IMAP_PASSWORD }}
+        run: node scripts/rehearsal/mail.mjs --check
 
   # The staging app and its automatic player (RehearsalPlayerTest), built once for every emulator.
   app:
