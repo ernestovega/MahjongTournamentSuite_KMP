@@ -225,3 +225,162 @@ jobs:
           name: invitations
           path: out/invitations.json
           retention-days: 14
+
+  # The organizer runs the rounds on the tablet: Play on the Timer, and the open tables closed at the end.
+  organizer-play:
+    name: Organizer runs the rounds
+    needs: [app, organizer-setup, invitations]
+    if: always() && needs.organizer-setup.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-apks
+          path: apks/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Prepare the organizer
+        run: |
+          password="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$password"
+          {
+            echo "REHEARSAL_PASSWORD=$password"
+            echo "REHEARSAL_API=https://europe-southwest1-$STAGING.cloudfunctions.net/api"
+            echo "REHEARSAL_APKS=apks"
+          } >> "$GITHUB_ENV"
+
+      - name: Run the rounds on the tablet
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell wm size 1280x800 && adb shell wm density 160
+            scripts/rehearsal/emulator-organizer.sh play out/scenario
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: organizer-play
+          path: out/organizer-play/
+          retention-days: 14
+
+  # The players of the tables, as bots with the accounts of their invitations. The lowest slot of a table writes.
+  bots:
+    name: Players play the tables
+    needs: [organizer-setup, invitations]
+    if: always() && needs.organizer-setup.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Play
+        env:
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+        run: |
+          echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          players=$(jq .players out/scenario/plan.json)
+          rounds=$(jq .rounds out/scenario/plan.json)
+          minutes=$(jq '.matchDurationMinutes + .matchExtraMinutes' out/scenario/plan.json)
+          # The organizer needs a few minutes for the Timer of each round, and the tablet starts after the bots.
+          until=$(date -u -d "+$(( rounds * (minutes + 4) + 15 )) minutes" +%Y-%m-%dT%H:%M:%SZ)
+          node scripts/rehearsal/bots.mjs --plan=out/scenario/plan.json --slots="1-$players" \
+            --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --until="$until" --hand-seconds=30-40 --penalty-rate=0.05 --spectators=10 \
+            --report=out/bots.json --title="Bots of the scenario"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bots
+          path: out/bots*.json
+          retention-days: 14
+
+  check:
+    name: Checks
+    needs: [bots, organizer-play]
+    if: always() && needs.bots.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bots
+          path: out/
+
+      - name: Check the tournament
+        run: |
+          node scripts/rehearsal/report.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --tournament="$(jq -r .name out/scenario/plan.json)" --report=out/check.json --title="Game day checks" out/bots.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: check
+          path: out/check.json
+          retention-days: 30

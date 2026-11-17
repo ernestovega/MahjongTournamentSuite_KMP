@@ -11,7 +11,7 @@
 // At each table the lowest slot writes the hands, as the scorer of a real table. Slot 1 is a person, slots 2-9 are
 // emulators, the others are bots. A process writes only for the tables whose lowest slot is one of its bots, so several
 // processes (GitHub, the Mac) and the emulators never write the same table.
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import fs, { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 import {
@@ -391,7 +391,8 @@ export async function runBots(options) {
   // The sign-in route takes 30 calls a minute from one address, so the bots sign in one every 2.5 seconds.
   const bots = [];
   for (const slot of options.slots) {
-    const session = new Session(api, rehearsalEmail(options.baseEmail, options.accountSuffix(slot)), options.password);
+    const email = options.emailOf ? options.emailOf(slot) : rehearsalEmail(options.baseEmail, options.accountSuffix(slot));
+    const session = new Session(api, email, options.password);
     if (await session.signIn()) bots.push(new PlayerBot(context, slot, session));
     else metrics.event("sign-in-failed", { slot });
     await sleep(2_500);
@@ -459,8 +460,12 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const password = process.env.REHEARSAL_PASSWORD ?? "";
   const baseEmail = process.env.STAGING_ADMIN_EMAIL ?? "";
+  // A game day scenario (docs/scenarios.md): the plan names the tournament and the email of each slot.
+  const plan = args.plan ? JSON.parse(fs.readFileSync(String(args.plan), "utf8")) : null;
+  if (plan) args.tournament ??= plan.name;
+  const emailOf = plan ? (slot) => plan.slots.find((item) => item.slot === slot)?.email : null;
   // Phones that only read need no account.
-  if (parseRange(args.slots).length > 0 && (!password || !baseEmail)) throw new Error("Set REHEARSAL_PASSWORD and STAGING_ADMIN_EMAIL.");
+  if (parseRange(args.slots).length > 0 && (!password || (!baseEmail && !plan))) throw new Error("Set REHEARSAL_PASSWORD and STAGING_ADMIN_EMAIL.");
   const metrics = new Metrics();
   const api = new Api(args.api ?? STAGING_API, metrics);
   const tournamentId = await findTournament(api, args.tournament);
@@ -470,6 +475,7 @@ async function main() {
     api, metrics, tournamentId, baseEmail, password,
     slots: parseRange(args.slots),
     accountSuffix: (slot) => `j${String(slot).padStart(2, "0")}`,
+    emailOf,
     spectators: Number(args.spectators ?? 0),
     venuePhones: Number(args["venue-phones"] ?? 0),
     until,

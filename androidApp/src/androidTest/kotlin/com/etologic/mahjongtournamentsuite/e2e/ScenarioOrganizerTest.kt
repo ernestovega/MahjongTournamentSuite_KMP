@@ -39,6 +39,9 @@ import java.io.File
  * the form (the app computes the draw), imports the players (first the file with mistakes, then the right one),
  * assigns the last slots by hand, and sends the invitations, typing the emails of the slots assigned by hand.
  *
+ * Phase "play": presses Play of each round on the Timer, waits until the tables of the round close or its time with
+ * the extra time is over, and closes the tables that stay open from the review of Round control.
+ *
  * Arguments: e2eBackendUrl (the staging API), scenarioEmail and scenarioPassword (the bot admin), scenarioDir (the
  * folder of plan.json and the files on the device, /data/local/tmp/scenario by default), scenarioPhase.
  * Logs: adb logcat -s SCENARIO
@@ -105,6 +108,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     fun organize() {
         when (phase) {
             "setup" -> setup()
+            "play" -> play()
             else -> error("Unknown phase $phase")
         }
     }
@@ -289,6 +293,101 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val invited = slots.count { !it.accountBefore }
         c.waitForText("Accounts created and invitations sent: $invited", substring = true, timeoutMs = 60_000)
         log("invitations sent: $invited new accounts, ${slots.size - invited} reminders")
+    }
+
+    // The rounds: Play on the Timer, then the tables that stay open after the time are closed by the organizer.
+
+    private fun play() {
+        app.launch()
+        c.signIn(email, password)
+        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
+        val name = plan.getString("name")
+        c.openTournament(name)
+        c.waitForText("Players & results", timeoutMs = 60_000)
+        val tournamentId = tournamentIdOf(name)
+        val rounds = plan.getInt("rounds")
+        val minutes = plan.getInt("matchDurationMinutes") + plan.getInt("matchExtraMinutes")
+        for (round in 1..rounds) {
+            startRoundOnTheTimer(tournamentId, round)
+            log("round $round: Play")
+            if (round > 1) closeOpenTablesOfEndedRounds()
+            val deadline = System.currentTimeMillis() + (minutes + 2) * 60_000L
+            while (System.currentTimeMillis() < deadline && openTables(tournamentId, round) > 0) idle(30_000)
+            log("round $round: ${openTables(tournamentId, round)} tables open at the end")
+        }
+        // The last round has no next round: its clock with the extra time is over, so its open tables show in the review.
+        closeOpenTablesOfEndedRounds()
+        log("play done")
+    }
+
+    private fun tournamentIdOf(name: String): String {
+        val list = E2eApi.call("GET", "/public/tournaments").json().getJSONArray("tournaments")
+        return (0 until list.length()).map { list.getJSONObject(it) }.first { it.getString("name") == name }.getString("id")
+    }
+
+    private fun openTables(tournamentId: String, round: Int): Int {
+        val reply = runCatching { E2eApi.call("GET", "/public/tournaments/$tournamentId/rounds/$round/tables-with-hands") }.getOrNull()
+        if (reply == null || reply.status != 200) return Int.MAX_VALUE
+        val tables = reply.json().getJSONArray("tables")
+        return (0 until tables.length()).count { !tables.getJSONObject(it).getJSONObject("table").optBoolean("isCompleted") }
+    }
+
+    /** Lets the app run in real time while the organizer waits. */
+    private fun idle(ms: Long) {
+        val until = System.currentTimeMillis() + ms
+        while (System.currentTimeMillis() < until) {
+            runCatching {
+                c.mainClock.advanceTimeBy(500)
+                c.waitForIdle()
+            }
+            Thread.sleep(500)
+        }
+    }
+
+    /** Play on the Timer of the tournament, as in TournamentJourneyTest. The Timer opens in its own window. */
+    private fun startRoundOnTheTimer(tournamentId: String, round: Int) {
+        c.clickButton("Timer")
+        c.waitForAnyText("Start timer", "Pause timer", timeoutMs = 60_000)
+        val deadline = System.currentTimeMillis() + 60_000
+        while (true) {
+            c.settle()
+            if (c.isOnScreen("Round $round") && c.isOnScreen("Start timer")) break
+            check(System.currentTimeMillis() < deadline) { "The Timer did not reach round $round" }
+            when {
+                c.isOnScreen("Pause timer") -> {
+                    c.clickButton("Pause timer")
+                    c.waitForText("Start timer")
+                }
+                c.isOnScreen("Increase round") -> c.clickButton("Increase round")
+            }
+        }
+        c.clickButton("Start timer")
+        c.waitForText("Pause timer")
+        val clocks = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks").json().getJSONArray("roundClocks")
+        check((0 until clocks.length()).any { clocks.getJSONObject(it).getInt("roundId") == round }) { "Round $round has no clock" }
+        shell("input keyevent KEYCODE_BACK")
+        c.waitForNoText("Pause timer")
+        c.waitForText("Players & results", timeoutMs = 60_000)
+    }
+
+    /** Round control warns of open tables in ended rounds. The review closes them all, as the organizer at the end. */
+    private fun closeOpenTablesOfEndedRounds() {
+        c.clickButton("Round control")
+        c.waitForText("Round control", timeoutMs = 60_000)
+        idle(5_000)
+        if (c.isOnScreen("Review")) {
+            c.clickButton("Review")
+            c.waitForText("Open tables in ended rounds")
+            // The checkbox of the header selects every row.
+            val boxes = c.onAllNodes(androidx.compose.ui.test.isToggleable())
+            boxes[0].performClick()
+            c.clickButton("Close selected")
+            c.waitForNoText("Open tables in ended rounds", timeoutMs = 120_000)
+            log("the organizer closed the open tables of the ended rounds")
+        }
+        shell("input keyevent KEYCODE_BACK")
+        c.waitForText("Players & results", timeoutMs = 60_000)
     }
 
     private companion object {
