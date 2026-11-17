@@ -130,6 +130,19 @@ export async function makePlan(args) {
     matchDurationMinutes: minutes,
     matchExtraMinutes: 3,
     // The schedule of the form. The rounds start when the organizer presses Play, one after the other.
+    // The corner cases of the organizer (docs/scenarios.md). Round 2, so the first round plays as usual. The editor
+    // deletes or corrects a hand in the admin app when the table has played [minHands] hands: the newest hand, or the
+    // one [back] hands before it.
+    // Round 1: table 3 starts late. Its scorer arrives [minutes] after the gong, and a player of it did not come: the
+    // organizer substitutes the player (reason late, from round 1) [afterMinutes] after the gong, in Players.
+    cornerCases: [
+      { kind: "late", round: 1, table: 3, minutes: 4 },
+      { kind: "substitution", round: 1, table: 3, reason: "LATE", afterMinutes: 1 },
+      { kind: "delete", round: 2, table: 2, which: "last", minHands: 4 },
+      { kind: "delete", round: 2, table: 3, which: "older", minHands: 6, back: 3 },
+      { kind: "edit", round: 2, table: 4, which: "last", minHands: 4 },
+      { kind: "edit", round: 2, table: 5, which: "older", minHands: 6, back: 3 },
+    ],
     roundSchedules: Array.from({ length: size.rounds }, (_, index) => ({ roundId: index + 1, date: start.date, startTime: start.time })),
     slots,
   };

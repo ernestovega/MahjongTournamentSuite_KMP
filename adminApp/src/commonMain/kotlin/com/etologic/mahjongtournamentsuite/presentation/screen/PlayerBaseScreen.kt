@@ -723,7 +723,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 1200.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // A phone keeps about the same visible space (16 dp) above the search field, between the field, the country chips
+        // and the card, and under the card. The field has 8 dp for its label above the border, and the chips some touch area.
+        val compactScreen = LocalCompactLayout.current
+        ScreenColumn(
+            maxWidth = 1200.dp,
+            contentPadding = if (compactScreen) PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 16.dp) else PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp),
+        ) {
             error?.let {
                 AppErrorDialog(
                     message = it,
@@ -837,7 +844,10 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
                                     onClear = { checkedEmaIds = emptySet() },
                                     onDelete = { openDeleteConfirmation() },
+                                    compact = compact,
                                 )
+                                // On a phone the bar takes two rows. The space under it matches the space above it.
+                                if (compact) Spacer(Modifier.height(16.dp))
                             }
                             if (!compact) {
                                 DataTableHeaderRow {

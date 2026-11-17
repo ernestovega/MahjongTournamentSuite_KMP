@@ -9,7 +9,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path";
 
 import { Api, Metrics, STAGING_API, parseArgs } from "./api.mjs";
-import { findTournament } from "./bots.mjs";
+import { findTournament, sameHand } from "./bots.mjs";
 
 const SEATS = ["East", "South", "West", "North"];
 const PLACE_POINTS = [4, 2, 1, 0];
@@ -51,22 +51,31 @@ export function tablePoints(scores) {
   return points;
 }
 
-function sameHand(saved, server) {
-  if (saved.isDraw) return text(server.playerWinnerId) === "";
-  return text(server.playerWinnerId) === text(saved.playerWinnerId)
-    && text(server.playerLooserId).replace(/^-$/, "") === text(saved.playerLooserId)
-    && text(server.handScore) === text(saved.handScore);
-}
+
+const beats = (a, b) => a.points > b.points || (a.points === b.points && a.score > b.score);
+const round6 = (value) => Math.round(value * 1e6) / 1e6;
 
 /** Reads the tournament and checks it. [botReports] are the reports of bots.mjs, from every process. */
 export async function checkTournament(api, tournamentId, botReports = []) {
   const reply = await api.call("GET", `/public/tournaments/${tournamentId}/tables-with-hands`, { label: "GET all tables" });
   if (reply.status !== 200) throw new Error(`Reading the tables failed: ${reply.status} ${reply.json?.message ?? ""}`);
   const tables = reply.json.tables;
+  // A substitute plays for a slot from a round on: the results of the slot in those rounds do not count for it
+  // (playerSubstitution.ts). A disqualified slot counts in no round.
+  const players = await api.call("GET", `/public/tournaments/${tournamentId}/players`, { label: "GET players" });
+  const substitutionOf = new Map((players.json?.players ?? []).filter((player) => player.substitution != null)
+    .map((player) => [String(player.id), player.substitution]));
+  const ignored = (slot, roundId) => {
+    const substitution = substitutionOf.get(String(slot));
+    return substitution != null && (substitution.reason === "DISQUALIFIED" || roundId >= Number(substitution.fromRound));
+  };
   const byKey = new Map(tables.map((item) => [`${item.table.roundId}_${item.table.tableId}`, item]));
   const scoreProblems = [];
   const openTables = [];
   const ranking = new Map();
+  // The chicken hands of each slot, and the best hand of each slot at each table (the winning hand with most points).
+  const chickenBySlot = new Map();
+  const bestBySlotTable = [];
   let doneHands = 0;
 
   for (const [key, { table, hands }] of byKey) {
@@ -74,8 +83,17 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     const seats = SEATS.map((name) => text(table[`player${name}Id`]));
     doneHands += hands.filter((hand) => hand.isDone).length;
     if (seats.some((seat) => seat === "") || table.useTotalsOnly) continue;
-    const changes = hands.filter((hand) => hand.isDone || table.isCompleted).map((hand) => handChange(hand, seats)).filter(Boolean);
+    const counted = hands.filter((hand) => hand.isDone || table.isCompleted);
+    const changes = counted.map((hand) => handChange(hand, seats)).filter(Boolean);
     if (changes.length === 0) continue;
+    const bestHere = new Map();
+    for (const hand of counted) {
+      const winner = text(hand.playerWinnerId);
+      if (winner === "" || !/^\d+$/.test(text(hand.handScore)) || ignored(winner, table.roundId)) continue;
+      bestHere.set(winner, Math.max(bestHere.get(winner) ?? 0, Number(text(hand.handScore))));
+      if (hand.isChickenHand) chickenBySlot.set(winner, (chickenBySlot.get(winner) ?? 0) + 1);
+    }
+    bestHere.forEach((best, slot) => bestBySlotTable.push({ slot, best }));
     const scores = changes.reduce((totals, change) => change.map((value, index) => totals[index] + value), [0, 0, 0, 0]);
     const points = tablePoints(scores);
     SEATS.forEach((name, index) => {
@@ -87,6 +105,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
       if (Number(storedPoints) !== points[index]) {
         scoreProblems.push(`${key} ${name}: table points ${storedPoints} on the server, ${points[index]} here`);
       }
+      if (ignored(seats[index], table.roundId)) return;
       const entry = ranking.get(seats[index]) ?? { playerId: seats[index], points: 0, score: 0 };
       entry.points += points[index];
       entry.score += scores[index];
@@ -99,9 +118,11 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const changed = [];
   const extra = [];
   const savedByTable = new Map();
+  // The hands that an editor deleted are not counted, and a hand written twice in the same slot counts as the last one.
   for (const report of botReports) {
     for (const saved of report.hands ?? []) {
-      const list = savedByTable.get(saved.table) ?? [];
+      if (saved.deleted) continue;
+      const list = (savedByTable.get(saved.table) ?? []).filter((item) => Number(item.handId) !== Number(saved.handId));
       list.push(saved);
       savedByTable.set(saved.table, list);
     }
@@ -132,7 +153,113 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     races: races.length,
     raceDuplicates: raceDuplicates.length,
     ranking: sorted,
+    substitutions: Object.fromEntries(substitutionOf),
+    chickenBySlot: Object.fromEntries(chickenBySlot),
+    bestBySlotTable,
   };
+}
+
+/**
+ * The places that the server gives each person (the standings of the list of tournaments: podium, team, chicken
+ * hands and best hand), compared with the same places counted here from the hands. Returns the differences.
+ */
+export async function checkStandings(api, tournamentId, check) {
+  const reply = await api.call("GET", `/public/tournaments/${tournamentId}/players`, { label: "GET players" });
+  if (reply.status !== 200) throw new Error(`Reading the players failed: ${reply.status}`);
+  const players = reply.json.players.filter((player) => player.assignedEmaId);
+  const rows = check.ranking.map((entry) => ({ ...entry, points: round6(entry.points) }));
+  const teamOf = new Map(players.map((player) => [String(player.id), player.team]));
+  const teamRows = [...new Set(rows.map((row) => teamOf.get(row.playerId)).filter((team) => team > 0))].map((team) => {
+    const members = rows.filter((row) => teamOf.get(row.playerId) === team);
+    return { team, points: round6(members.reduce((sum, row) => sum + row.points, 0)), score: members.reduce((sum, row) => sum + row.score, 0) };
+  });
+  const chicken = (slot) => check.chickenBySlot[slot] ?? 0;
+  const best = (slot) => check.bestBySlotTable.filter((entry) => entry.slot === slot).reduce((max, entry) => Math.max(max, entry.best), 0);
+  const problems = [];
+  let compared = 0;
+  for (const player of players) {
+    const slot = String(player.id);
+    const mine = rows.find((row) => row.playerId === slot);
+    if (mine == null) continue;
+    const answer = await api.call("GET", `/public/statistics/persons/${player.assignedEmaId}/standings?tournaments=${tournamentId}`, { label: "GET standings" });
+    // A person who asked to stay hidden has no public standings.
+    if (answer.status === 404) continue;
+    const standing = answer.json?.standings?.[0];
+    if (answer.status !== 200 || standing == null) {
+      problems.push(`slot ${slot}: no standing (${answer.status})`);
+      continue;
+    }
+    compared += 1;
+    const myTeam = teamRows.find((row) => row.team === teamOf.get(slot));
+    const expected = {
+      rank: rows.filter((row) => beats(row, mine)).length + 1,
+      points: mine.points,
+      score: mine.score,
+      teamRank: myTeam == null ? null : teamRows.filter((row) => beats(row, myTeam)).length + 1,
+      teamPoints: myTeam == null ? null : myTeam.points,
+      chickenHands: chicken(slot),
+      chickenRank: chicken(slot) === 0
+        ? null
+        : rows.filter((row) => chicken(row.playerId) > chicken(slot) || (chicken(row.playerId) === chicken(slot) && beats(row, mine))).length + 1,
+      bestHand: best(slot),
+      bestHandRank: best(slot) === 0 ? null : check.bestBySlotTable.filter((entry) => entry.best > best(slot)).length + 1,
+    };
+    for (const [field, value] of Object.entries(expected)) {
+      const stored = typeof value === "number" && standing[field] != null ? round6(Number(standing[field])) : standing[field] ?? null;
+      if (stored !== value) problems.push(`slot ${slot} ${field}: ${standing[field]} on the server, ${value} here`);
+    }
+  }
+  return {
+    compared,
+    problems,
+    teams: teamRows.length,
+    chickenHands: Object.values(check.chickenBySlot).reduce((sum, count) => sum + count, 0),
+    bestHand: check.bestBySlotTable.reduce((max, entry) => Math.max(max, entry.best), 0),
+  };
+}
+
+/**
+ * The corner cases of the plan of a game day (plan.cornerCases): each correction of an editor must be seen by the
+ * phones of its table, a deleted hand must be written again, and no other table may have a correction.
+ */
+export function cornerCaseVerdicts(plan, botReports, check = null) {
+  const events = botReports.flatMap((report) => report.events ?? []);
+  const lines = [];
+  const add = (ok, textLine) => lines.push(`${ok ? "✅" : "❌"} ${textLine}`);
+  const cases = plan?.cornerCases ?? [];
+  const planned = new Set(cases.filter((item) => item.kind === "delete" || item.kind === "edit").map((item) => `${item.round}_${item.table}`));
+  for (const item of cases) {
+    const key = `${item.round}_${item.table}`;
+    const at = (kind) => events.filter((event) => event.kind === kind && event.table === key);
+    const where = item.which === "last" ? "the last hand" : "an older hand";
+    const position = (event) => (item.which === "last" ? event.handId === event.newest : event.handId < event.newest);
+    if (item.kind === "delete") {
+      const scorer = at("hand-deleted-seen").filter((event) => !event.watcher);
+      const watchers = at("hand-deleted-seen").filter((event) => event.watcher);
+      const again = at("hand-reentered");
+      add(scorer.some(position) && watchers.length > 0 && again.length > 0,
+        `Table ${key}: the editor deleted ${where}, the phones saw it and the player wrote it again (${scorer.length} seen by the scorer, ${watchers.length} by the others, ${again.length} written again${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}` : ""}).`);
+    } else if (item.kind === "late") {
+      const late = events.filter((event) => event.kind === "late-table" && event.table === key);
+      const done = events.filter((event) => event.kind === "table-completed" && event.table === key);
+      add(late.length > 0 && done.length > 0, `Table ${key} started ${item.minutes} minutes late and still played to the end (${done[0]?.hands ?? 0} hands).`);
+    } else if (item.kind === "substitution") {
+      const found = Object.entries(check?.substitutions ?? {}).filter(([, value]) => value.reason === item.reason && Number(value.fromRound) === item.round);
+      const ranked = found.filter(([slot]) => check.ranking.some((entry) => entry.playerId === slot));
+      add(found.length > 0 && ranked.length === 0,
+        `A player of table ${key} was substituted (${item.reason.toLowerCase()}, from round ${item.round}) and has no result in the ranking (${found.map(([slot]) => `slot ${slot}`).join(", ") || "none"}).`);
+    } else if (item.kind === "edit") {
+      const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
+      const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
+      add(scorer.some(position) && watchers.length > 0,
+        `Table ${key}: the editor corrected ${where} and the phones show the correction (${scorer.length} seen by the scorer, ${watchers.length} by the others${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}, score ${scorer[0].from?.handScore} to ${scorer[0].to?.handScore}` : ""}).`);
+    }
+  }
+  if (cases.length > 0) {
+    const elsewhere = events.filter((event) => (event.kind === "hand-deleted-seen" || event.kind === "hand-corrected-seen") && !planned.has(event.table));
+    add(elsewhere.length === 0, `No hand changed at the other tables (${elsewhere.length}${elsewhere.length ? `: ${[...new Set(elsewhere.map((event) => event.table))].join(", ")}` : ""}).`);
+  }
+  return lines;
 }
 
 /** The targets of docs/rehearsal.md that the bots can measure, as lines with ✅ or ❌. */
@@ -161,6 +288,11 @@ export function verdicts(check, botReports, integrity) {
   add(p95 != null && p95 < 1_500, `Saving a hand takes p95 ${p95 ?? "-"} ms (target under 1500 ms).`);
   if (delays.length > 0) add(Math.max(...delays) < 20_000, `A hand reaches the other phones of the table in p95 ${Math.max(...delays)} ms (target under 20 s).`);
   add(check.openTables.length === 0, `Every table is closed (${check.openTables.length} open${check.openTables.length ? `: ${check.openTables.join(", ")}` : ""}).`);
+  if (check.standings != null) {
+    const s = check.standings;
+    add(s.problems.length === 0 && s.compared > 0,
+      `Places of every player (ranking, team, chicken hands and best hand) match an independent count (${s.problems.length} differences in ${s.compared} players; ${s.teams} teams, ${s.chickenHands} chicken hands, best hand ${s.bestHand}).`);
+  }
   if (integrity != null) add(integrity.counts?.errors === 0, `Integrity check: ${integrity.counts?.errors ?? "?"} errors, ${integrity.counts?.warnings ?? "?"} warnings.`);
   return lines;
 }
@@ -168,7 +300,7 @@ export function verdicts(check, botReports, integrity) {
 export function checkMarkdown(title, check, lines) {
   const out = [`### ${title}`, "", ...lines.map((line) => `- ${line}`), ""];
   out.push(`Tables: ${check.tables}. Hands on the server: ${check.doneHands}. Saved by the bots of these reports: ${check.handsSavedByBots}.`);
-  for (const [name, list] of [["Score differences", check.scoreProblems], ["Lost hands", check.lost], ["Changed hands", check.changed], ["Extra hands", check.extra]]) {
+  for (const [name, list] of [["Place differences", check.standings?.problems ?? []], ["Score differences", check.scoreProblems], ["Lost hands", check.lost], ["Changed hands", check.changed], ["Extra hands", check.extra]]) {
     if (list.length > 0) out.push("", `${name}:`, ...list.slice(0, 30).map((item) => `- ${item}`));
   }
   out.push("", "Top of the ranking (independent count):", "", "| # | Player | Points | Score |", "| --- | --- | --- | --- |");
@@ -191,7 +323,9 @@ async function main() {
   const api = new Api(args.api ?? STAGING_API, new Metrics());
   const tournamentId = await findTournament(api, args.tournament);
   const check = await checkTournament(api, tournamentId, botReports);
-  const lines = verdicts(check, botReports, null);
+  if (args.standings !== "off") check.standings = await checkStandings(api, tournamentId, check);
+  const plan = args.plan ? JSON.parse(readFileSync(String(args.plan), "utf8")) : null;
+  const lines = [...verdicts(check, botReports, null), ...cornerCaseVerdicts(plan, botReports, check)];
   writeCheck(args.report ?? "out/check.json", args.title ?? "Rehearsal check", check, lines);
   if (lines.some((line) => line.startsWith("❌"))) process.exitCode = 1;
 }

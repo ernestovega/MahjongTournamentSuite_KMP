@@ -27,6 +27,11 @@ them every phone and bot signs in again, as after the lunch break.
 Each run starts with a short preflight (about 10 minutes): the tablet creates a tournament of 16, imports and invites, and
 one phone writes two hands. When a screen has changed, the run stops there.
 
+## Staging first
+
+Each run deploys main to staging before anything else (the job "Deploy main to staging", the same deploy as Actions >
+Deploy staging). The app of the test and the backend it talks to are always the same commit.
+
 ## Who does what
 
 - **Organizer (tablet emulator, admin app, `ScenarioOrganizerTest`).** Signs in as the bot admin, creates the tournament
@@ -53,10 +58,20 @@ read it, so each one knows its part.
 
 - A table starts late; its scorer arrives minutes after the gong. A substitution of a player at that table, minutes
   after the first gong of round 1.
+
+  Done (plan.cornerCases, round 1, table 3). The scorer of the table arrives 4 minutes after the gong. A minute after
+  the gong the organizer substitutes the highest slot of the table in Players (the player came late, from round 1).
+  The checks want the table played to the end, and the substituted slot with no result in the ranking (the
+  independent count leaves out the rounds of the substitute, as the server does).
 - Two phones send the same hand at once (race).
 - A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
   and a hand of several hands before.
 - A hand edited by the editor (the last one and an older one), and the phone of the table shows the correction.
+
+  Done (plan.cornerCases, round 2, tables 2 to 5). The organizer waits until the table has played a few hands, opens
+  it in the table editor and turns Done off and clears the hand, or types another score. The bots of the table see the
+  change: the scorer writes a deleted hand again at once, and the others note it. The checks want each case seen by
+  the scorer and by another phone, at the right hand (the newest or an older one), and no change at any other table.
 - Penalties, a draw, extra time after the gong (finish the hand), a table that stays open and the admin closes it.
 - A table with manual totals.
 - A seat change after the seats are saved.
@@ -69,3 +84,7 @@ read it, so each one knows its part.
 
 `report.mjs` scores every table again with its own count (teams, chicken hands, best hands, penalties) and compares it
 with the server, together with the hands of the bots, the times and the errors (docs/rehearsal.md, The checks).
+
+It also asks the server the places of every player, as the list of tournaments shows them (podium, team, chicken
+hands and best hand), and compares each one with its own count. The bots mark about a third of the hands won on a
+discard with 8 to 12 points as chicken hands, so every scenario has some.

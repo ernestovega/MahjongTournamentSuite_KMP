@@ -69,11 +69,13 @@ internal fun PlayerSelectionBar(
     onSelectAllShown: () -> Unit,
     onClear: () -> Unit,
     onDelete: () -> Unit,
+    compact: Boolean = false,
 ) {
     FlowRow(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        // The buttons already have room around their text, so the rows of a phone go one after the other.
+        verticalArrangement = Arrangement.spacedBy(if (compact) 0.dp else 4.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {

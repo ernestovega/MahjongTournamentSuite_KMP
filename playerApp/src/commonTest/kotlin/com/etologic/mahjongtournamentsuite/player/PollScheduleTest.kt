@@ -164,4 +164,16 @@ class PollScheduleTest {
     fun someoneElseChecksEvery15SecondsWhileARoundIsInPlay() {
         assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), null, at("2026-10-10T10:30")))
     }
+
+    @Test
+    fun theOwnTableChecksEveryTwoSecondsWhileItsRoundIsPlayed() {
+        assertEquals(2.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T10:00"), playsHere = true, ownTable = true))
+        assertEquals(2.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T12:05"), playsHere = true, ownTable = true))
+    }
+
+    @Test
+    fun theOwnTableSlowsDownWhenItsRoundIsOver() {
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T15:30"), playsHere = true, ownTable = true))
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(), 1, at("2026-10-12T10:00"), playsHere = true, ownTable = true))
+    }
 }

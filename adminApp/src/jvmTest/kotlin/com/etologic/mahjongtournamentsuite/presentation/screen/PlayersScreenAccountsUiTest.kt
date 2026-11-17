@@ -5,7 +5,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -15,13 +14,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
@@ -44,7 +37,10 @@ import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** The account column and the menu of each player: invite when there is no account, edit the account (admins) when there is one. */
+/**
+ * The menu of each player. Invitations and reminders go out from the Invitations dialog only, so the menu offers the edit
+ * of the email when there is no account, and the edit of the account (admins) when there is one.
+ */
 @OptIn(ExperimentalTestApi::class)
 class PlayersScreenAccountsUiTest {
     private val withAccount = TournamentPlayer(id = 1, name = "P1", team = 0, assignedEmaId = "11", accountUid = "u1", hasAccount = true, hasEmail = true)
@@ -103,63 +99,24 @@ class PlayersScreenAccountsUiTest {
     }
 
     @Test
-    fun theAccountColumnShowsACheckOrACrossAndNoText() = runComposeUiTest {
+    fun theRowsShowNoAccountStateAndTheMenuSendsNoEmails() = runComposeUiTest {
         show(World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount)))
 
-        onAllNodesWithContentDescription("Has account").assertCountEquals(1)
-        onAllNodesWithContentDescription("No account").assertCountEquals(1)
-        onAllNodesWithText("Has account").assertCountEquals(0)
-        onAllNodesWithText("No account").assertCountEquals(0)
-    }
-
-    @Test
-    fun aPlayerWithNoAccountOffersTheInviteOptionAndNotTheEditOption() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount)))
-
-        openMenu(1)
-
-        onAllNodesWithText("Invite").assertCountEquals(1)
-        onAllNodesWithText("Edit account").assertCountEquals(0)
-    }
-
-    @Test
-    fun aPlayerWithAnAccountOffersSendReminderToAnAdmin() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withAccount)))
-
+        onAllNodesWithContentDescription("Has account").assertCountEquals(0)
+        onAllNodesWithContentDescription("No account").assertCountEquals(0)
         openMenu(0)
-
-        onAllNodesWithText("Remind").assertCountEquals(1)
-    }
-
-    @Test
-    fun aPlayerWithAnAccountOffersSendReminderToAnEditorToo() = runComposeUiTest {
-        show(World(GlobalUserRole.EDITOR, listOf(withAccount)))
-
-        openMenu(0)
-
-        onAllNodesWithText("Remind").assertCountEquals(1)
-    }
-
-    @Test
-    fun sendReminderSendsToThePlayerAndShowsTheResult() = runComposeUiTest {
-        val world = World(GlobalUserRole.EDITOR, listOf(withAccount))
-        world.accounts.results[1] = PlayerAccountActionResult(1, PlayerAccountOutcome.REMINDED)
-        show(world)
-
-        openMenu(0)
-        onNodeWithText("Remind").performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The reminder was sent.").fetchSemanticsNodes().isNotEmpty() }
-
-        assertEquals(listOf(listOf(1)), world.accounts.sent)
-    }
-
-    @Test
-    fun aPlayerWithNoAccountOffersNoReminder() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withoutAccount)))
-
-        openMenu(0)
-
         onAllNodesWithText("Remind").assertCountEquals(0)
+        onAllNodesWithText("Invite").assertCountEquals(0)
+    }
+
+    @Test
+    fun aPlayerWithNoAccountOffersEditEmailButNoInvite() = runComposeUiTest {
+        show(World(GlobalUserRole.EDITOR, listOf(withoutAccount)))
+
+        openMenu(0)
+
+        onAllNodesWithText("Edit email").assertCountEquals(1)
+        onAllNodesWithText("Invite").assertCountEquals(0)
     }
 
     @Test
@@ -183,60 +140,12 @@ class PlayersScreenAccountsUiTest {
     }
 
     @Test
-    fun anEditorCanInviteAPlayerWithNoAccount() = runComposeUiTest {
-        show(World(GlobalUserRole.EDITOR, listOf(withAccount, withoutAccount)))
-
-        openMenu(1)
-
-        onAllNodesWithText("Invite").assertCountEquals(1)
-    }
-
-    @Test
     fun anEmptySlotHasNoAccountOptionAtAll() = runComposeUiTest {
         show(World(GlobalUserRole.ADMIN, listOf(empty)), waitForMenus = false)
 
         onAllNodesWithContentDescription("Player actions").assertCountEquals(0)
         onAllNodesWithText("Invite").assertCountEquals(0)
         onAllNodesWithText("Edit account").assertCountEquals(0)
-    }
-
-    private val noEmail = TournamentPlayer(id = 4, name = "P4", team = 0, assignedEmaId = "44", hasEmail = false)
-
-    @Test
-    fun invitingAPlayerWithNoEmailAsksForTheEmailThenSavesItAndInvites() = runComposeUiTest {
-        val world = World(GlobalUserRole.EDITOR, listOf(noEmail))
-        show(world)
-
-        openMenu(0)
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Email").fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText("Invite").assertIsNotEnabled()
-        onNodeWithText("Email").performTextInput("p4@example.test")
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("The account was created and the email to choose a password was sent.").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        assertEquals(listOf(listOf(PlayerEmailItem(4, "p4@example.test"))), world.accounts.savedEmails)
-        assertEquals(listOf(listOf(4)), world.accounts.sent)
-    }
-
-    @Test
-    fun aRefusedEmailShowsTheReasonAndSendsNothing() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, listOf(noEmail))
-        world.accounts.emailResults[4] = PlayerEmailResult(4, PlayerEmailOutcome.FAILED, PlayerEmailFailure.EMAIL_IN_USE)
-        show(world)
-
-        openMenu(0)
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Email").fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText("Email").performTextInput("taken@example.test")
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("Another account or another player already uses this email.").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        assertEquals(emptyList(), world.accounts.sent)
     }
 
     @Test
@@ -279,53 +188,6 @@ class PlayersScreenAccountsUiTest {
         openMenu(0)
 
         onAllNodesWithText("Edit email").assertCountEquals(0)
-    }
-
-    @Test
-    fun invitingSendsTheOnePlayerAndShowsTheResult() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount))
-        show(world)
-
-        openMenu(1)
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("The account was created and the email to choose a password was sent.").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        assertEquals(listOf(listOf(2)), world.accounts.sent)
-    }
-
-    @Test
-    fun aLoadingDialogShowsWhileTheInvitationGoesOutAndTheResultReplacesIt() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, listOf(withoutAccount))
-        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
-        world.accounts.sendGate = gate
-        show(world)
-
-        openMenu(0)
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The app is sending the emails. Wait until it finishes.").fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText("Sending").assertExists()
-        assertEquals(emptyList(), world.accounts.sent)
-        gate.complete(Unit)
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("The account was created and the email to choose a password was sent.").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        onAllNodesWithText("Sending").assertCountEquals(0)
-    }
-
-    @Test
-    fun aFailedInviteShowsTheReason() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, listOf(withoutAccount))
-        world.accounts.results[2] = PlayerAccountActionResult(2, PlayerAccountOutcome.FAILED, PlayerAccountFailure.EMAIL_IN_USE)
-        show(world)
-
-        openMenu(0)
-        onNodeWithText("Invite").performClick()
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("Another account or another player already uses this email.").fetchSemanticsNodes().isNotEmpty()
-        }
     }
 }
 
