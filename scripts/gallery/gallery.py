@@ -342,6 +342,7 @@ def command_build(args):
         "versions": versions,
         "images": images,
         "videos": previous.get("videos", []),
+        "checkedRuns": previous.get("checkedRuns", []),
         "files": {"img": sorted(oids), "videos": previous.get("files", {}).get("videos", [])},
     }
     (out / "manifest.json").write_text(json.dumps(manifest, separators=(",", ":")))
@@ -389,14 +390,18 @@ def command_videos(args):
     manifest_path = out / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     repo = manifest["repo"]
-    known = {v["run"]: v for v in manifest.get("videos", [])}
+    known = {v["run"]: v for v in manifest.get("videos", []) if v.get("items")}
+    # Runs already looked at that had no video (they failed before the tablet recorded): not downloaded again.
+    checked = set(manifest.get("checkedRuns", []))
     try:
-        runs = github(f"/repos/{repo}/actions/workflows/{GAME_DAY_WORKFLOW}/runs?per_page=10&status=completed")["workflow_runs"]
+        runs = github(f"/repos/{repo}/actions/workflows/{GAME_DAY_WORKFLOW}/runs?per_page=20&status=completed")["workflow_runs"]
     except (urllib.error.URLError, KeyError, OSError) as error:
         log(f"No game day runs ({error}).")
         runs = []
-    for run in runs[:KEEP_GAME_DAYS]:
-        if run["id"] in known:
+    for run in runs:
+        if len(known) >= KEEP_GAME_DAYS and all(run["created_at"] < v["date"] for v in known.values()):
+            break
+        if run["id"] in known or run["id"] in checked:
             continue
         entry = {
             "run": run["id"], "number": run["run_number"], "title": run.get("display_title") or run["name"],
@@ -429,7 +434,11 @@ def command_videos(args):
                     "size": target.stat().st_size,
                 })
                 log(f"  -> {target.stat().st_size / 1e6:.1f} MB")
-        known[run["id"]] = entry
+        if entry["items"]:
+            known[run["id"]] = entry
+        else:
+            checked.add(run["id"])
+    manifest["checkedRuns"] = sorted(checked)[-50:]
     kept = sorted(known.values(), key=lambda v: v["date"], reverse=True)[:KEEP_GAME_DAYS]
     manifest["videos"] = kept
     manifest["files"]["videos"] = sorted(
