@@ -133,8 +133,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun createAccountInUsers(slot: Slot) {
         if (!c.isOnScreen("New user")) {
-            c.clickButton("Users")
-            c.waitForText("New user", timeoutMs = 60_000)
+            // The list moves while it loads, so a first tap can miss. The organizer taps again.
+            repeat(3) {
+                if (!c.isOnScreen("New user")) runCatching { c.settle(); c.clickButton("Users") }
+                runCatching { c.waitForText("New user", timeoutMs = 20_000) }
+            }
+            c.waitForText("New user", timeoutMs = 30_000)
         }
         c.clickButton("New user")
         c.waitForText("Add account")

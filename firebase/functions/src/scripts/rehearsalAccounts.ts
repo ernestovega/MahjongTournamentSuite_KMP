@@ -4,7 +4,7 @@ import { auth, db, firebaseProjectId } from "../firebase";
 import { bumpGlobalDataVersion } from "../services/dataVersionsService";
 import { createPlayerAccount, setAccountEmaId } from "../services/playerAccountsService";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
-import { createUserProfile, deleteManagedUser, setGlobalUserRole } from "../services/usersService";
+import { createUserProfile, deleteManagedUser, setGlobalUserRole, updateOwnAlias } from "../services/usersService";
 import { runScript } from "./scriptRun";
 
 /**
@@ -102,7 +102,8 @@ async function setupCalibration(baseEmail: string, password: string) {
     }
     if ((admin.customClaims ?? {}).admin !== true) await setGlobalUserRole(admin.uid, "ADMIN");
     await auth.updateUser(admin.uid, { password, emailVerified: true });
-    await bumpGlobalDataVersion("users");
+    // The apps show the alias instead of a name made from the email, so the videos of a game day show no address.
+    await updateOwnAlias(admin.uid, "Bot organizer");
   }
   console.log(`Calibration${applyChanges ? "" : " (preview)"}: ${players} new EMA players, ${accounts} new accounts, bot admin ${adminState}.`);
   return { players, accounts, admin: adminState };

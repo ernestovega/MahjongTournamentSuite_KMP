@@ -28,7 +28,7 @@ local_part="${base%@*}"
 local_part="${local_part%%+*}"
 # The logs of GitHub are public: the addresses of the accounts never show in them.
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
-  echo "::add-mask::$local_part"
+  for variant in "$local_part" "${local_part^}" "${local_part^^}"; do echo "::add-mask::$variant"; done
   if [ -n "${REHEARSAL_IMAP_USER:-}" ]; then echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"; fi
 fi
 email="$(printf '%s+mts-botadmin@%s' "$local_part" "${base#*@}")"

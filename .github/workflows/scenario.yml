@@ -60,6 +60,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - run: npm ci --no-audit --no-fund --prefix firebase/functions && npm run build --prefix firebase/functions
 
       - uses: google-github-actions/auth@v3
         with:
@@ -67,6 +71,18 @@ jobs:
           service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v2
+
+      # The bot admin is the organizer. The same step of the calibration makes it, with its password and its alias.
+      - name: Prepare the bot admin
+        working-directory: firebase/functions
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+        run: |
+          export GCLOUD_PROJECT="$STAGING" EMA_FIREBASE_PROJECT="$STAGING"
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          node lib/scripts/rehearsalAccounts.js --calibration-setup --apply --project="$STAGING"
 
       - name: Write the plan
         env:
