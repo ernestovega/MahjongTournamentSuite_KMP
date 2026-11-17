@@ -636,19 +636,35 @@ internal fun statusColor(status: TournamentStatus): Color = when (status) {
     TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
 }
 
+/** The space between the three lines of the header of a tournament card. */
+private val CardHeaderSpacing = 4.dp
+
+/** The line height of the status and the name of a tournament card. */
+private val CardHeadlineLine = 24.dp
+
 /**
- * The status of a tournament: a big text in the color of the status, with no border. The letters are about as tall as
- * the old bordered tag (24 dp), and the line keeps that height, so the row of the dates does not grow.
+ * The size of the logo of a tournament card: the height of its three lines (status, name and dates), so the logo is
+ * as tall as the text beside it.
  */
+private val CardLogoSize = CardHeadlineLine * 2 + 20.dp + CardHeaderSpacing * 2
+
+/**
+ * The text style of the status and the name of a tournament card: the same size for both, 20 sp on a 24 dp line.
+ * The line is trimmed, so the status is as tall as the old bordered tag.
+ */
+@Composable
+private fun cardHeadlineStyle() = MaterialTheme.typography.titleMedium.copy(
+    fontSize = 20.sp,
+    lineHeight = 24.sp,
+    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+)
+
+/** The status of a tournament: a text in the color of the status, with no border, as big as the name. */
 @Composable
 private fun StatusChip(status: TournamentStatus) {
     Text(
         stringResource(status.label),
-        style = MaterialTheme.typography.labelMedium.copy(
-            fontSize = 22.sp,
-            lineHeight = 24.sp,
-            lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
-        ),
+        style = cardHeadlineStyle(),
         color = statusColor(status),
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
@@ -659,13 +675,13 @@ private fun StatusChip(status: TournamentStatus) {
 @Composable
 private fun TournamentLogo(tournament: Tournament) {
     val shape = MaterialTheme.shapes.medium
-    val modifier = Modifier.size(56.dp).clip(shape)
+    val modifier = Modifier.size(CardLogoSize).clip(shape)
     if (tournament.associationLogoUrl.isNullOrBlank()) {
         Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
             Icon(
                 Icons.Default.EmojiEvents,
                 contentDescription = null,
-                Modifier.size(32.dp),
+                Modifier.size(44.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -695,7 +711,6 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
         else -> null
     }
     val uriHandler = LocalUriHandler.current
-    val venueText = venueSummary(tournament)
     val mapLink = venueMapLink(tournament)
     val email = tournament.venue.contactEmail
     val dates = datesOf(tournament)
@@ -710,22 +725,10 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        tournament.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    // The dates are the subtitle of the item. They stay at the right of the status badge, or alone when there is no badge.
-                    if (status != null || dates != null) {
-                        // The dates move under the status when they do not fit beside it, so they never break inside a word.
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            itemVerticalAlignment = Alignment.CenterVertically,
-                        ) {
+                // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
+                    if (status != null || mine) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (status != null) StatusChip(status)
                             // The own tournaments are marked, so they stand out in the list of all tournaments.
                             if (mine) {
@@ -736,53 +739,43 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
                                     tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
-                            if (dates != null) {
-                                Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                            }
                         }
+                    }
+                    Text(
+                        tournament.name,
+                        style = cardHeadlineStyle(),
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (dates != null) {
+                        Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 // The places of the player are at the top right, one line for each.
                 if (standing != null) StandingBadges(standing)
             }
-            if (hasCity || venueText.isNotBlank()) {
+            // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
+            if (hasCity || mapLink != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    run {
-                        // The pin and the Directions button are centered between the lines of the place.
-                        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                            // The address follows the city. It moves to a second line when the row is full.
-                            FlowRow(
-                                Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(0.dp),
-                                itemVerticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                if (hasCity) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        if (tournament.hostCity.isNotBlank()) {
-                                            Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                        if (tournament.hostCountry.isNotBlank()) {
-                                            CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
-                                        }
-                                    }
-                                }
-                                if (venueText.isNotBlank()) {
-                                    Text(
-                                        venueText,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
-                            }
-                            if (mapLink != null) {
-                                LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
-                                    uriHandler.openUri(mapLink)
-                                }
-                            }
+                    Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (tournament.hostCity.isNotBlank()) {
+                            Text(
+                                tournament.hostCity,
+                                Modifier.weight(1f, fill = false),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (tournament.hostCountry.isNotBlank()) {
+                            CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+                        }
+                    }
+                    if (mapLink != null) {
+                        LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
+                            uriHandler.openUri(mapLink)
                         }
                     }
                 }

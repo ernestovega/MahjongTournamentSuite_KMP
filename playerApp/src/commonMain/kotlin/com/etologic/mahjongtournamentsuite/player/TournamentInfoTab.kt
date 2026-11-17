@@ -253,9 +253,6 @@ fun venueDirectionsLink(tournament: Tournament): String? {
     return "https://www.google.com/maps/dir/?api=1&destination=${encodeQueryValue(place)}"
 }
 
-/** The venue name and address in one text, for a short view. */
-fun venueSummary(tournament: Tournament): String = listOf(tournament.venue.name, tournament.venue.address).filter { it.isNotBlank() }.joinToString(" - ")
-
 /**
  * The schedule of a tournament: the rounds and the agenda events in chronological order.
  * Each day has a tinted title bar over the full width, with the full weekday and month in the middle. Each row has the name on the left
