@@ -591,14 +591,6 @@
     <string name="send_password_reset_count">Send password reset (%1$d)</string>
     <string name="password_resets_confirm_title">Send password reset emails?</string>
     <string name="password_resets_confirm_text">The app sends an email to %1$d accounts.\n\nEach person gets a link to choose a new password.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">%1$d password reset email was sent.</item>
-        <item quantity="other">%1$d password reset emails were sent.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">%1$d email could not be sent:</item>
-        <item quantity="other">%1$d emails could not be sent:</item>
-    </plurals>
     <string name="password_resets_partial_title">Not all emails were sent</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">The account does not exist.</string>
@@ -610,6 +602,10 @@
     <string name="import_locked_text">You cannot import players because a table already has data: seats or results. The import replaces all players, and that would change results that exist. To change one player, use the options in the row of the player.</string>
     <string name="sending_title">Sending</string>
     <string name="sending_text">The app is sending the emails. Wait until it finishes.</string>
+    <string name="result_section_deleted">Deleted</string>
+    <string name="result_section_deactivated">Deactivated</string>
+    <string name="result_section_not_deleted">Not deleted</string>
+    <string name="result_section_sent">Sent</string>
     <string name="send_section_invited">Invited</string>
     <string name="send_section_reminded">Reminded</string>
     <string name="send_section_failed">Not sent</string>
@@ -819,14 +815,6 @@
     <string name="delete_selected_count">Delete (%1$d)</string>
     <string name="users_delete_confirm_title">Delete accounts?</string>
     <string name="users_delete_confirm_text">%1$d accounts will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">%1$d account was deleted.</item>
-        <item quantity="other">%1$d accounts were deleted.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">%1$d account could not be deleted:</item>
-        <item quantity="other">%1$d accounts could not be deleted:</item>
-    </plurals>
     <string name="delete_failure_self">You cannot delete your own account.</string>
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
@@ -839,18 +827,6 @@
     <plurals name="ema_players_delete_will_deactivate">
         <item quantity="one">%1$d player has results in tournaments, so it will be deactivated instead of deleted. Its results stay, and the list will show it crossed out.</item>
         <item quantity="other">%1$d players have results in tournaments, so they will be deactivated instead of deleted. Their results stay, and the list will show them crossed out.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">%1$d EMA player was deleted.</item>
-        <item quantity="other">%1$d EMA players were deleted.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">%1$d player was deactivated because it has results in tournaments.</item>
-        <item quantity="other">%1$d players were deactivated because they have results in tournaments.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">%1$d player could not be deleted:</item>
-        <item quantity="other">%1$d players could not be deleted:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">Deleting cannot be undone.</string>
     <string name="ema_players_delete_partial_title">Not all were deleted</string>

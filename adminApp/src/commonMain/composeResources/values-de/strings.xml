@@ -591,14 +591,6 @@
     <string name="send_password_reset_count">Passwort-Zurücksetzung senden (%1$d)</string>
     <string name="password_resets_confirm_title">E-Mails zum Zurücksetzen des Passworts senden?</string>
     <string name="password_resets_confirm_text">Die App sendet eine E-Mail an %1$d Konten.\n\nJede Person erhält einen Link, um ein neues Passwort festzulegen.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">%1$d E-Mail zum Zurücksetzen des Passworts wurde gesendet.</item>
-        <item quantity="other">%1$d E-Mails zum Zurücksetzen des Passworts wurden gesendet.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">%1$d E-Mail konnte nicht gesendet werden:</item>
-        <item quantity="other">%1$d E-Mails konnten nicht gesendet werden:</item>
-    </plurals>
     <string name="password_resets_partial_title">Nicht alle E-Mails wurden gesendet</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Das Konto existiert nicht.</string>
@@ -610,6 +602,10 @@
     <string name="import_locked_text">Du kannst keine Spieler importieren, weil ein Tisch bereits Daten hat: Plätze oder Ergebnisse. Der Import ersetzt alle Spieler und würde vorhandene Ergebnisse ändern. Um einen Spieler zu ändern, nutze die Optionen in der Zeile des Spielers.</string>
     <string name="sending_title">Wird gesendet</string>
     <string name="sending_text">Die App sendet die E-Mails. Warte, bis sie fertig ist.</string>
+    <string name="result_section_deleted">Gelöscht</string>
+    <string name="result_section_deactivated">Deaktiviert</string>
+    <string name="result_section_not_deleted">Nicht gelöscht</string>
+    <string name="result_section_sent">Gesendet</string>
     <string name="send_section_invited">Eingeladen</string>
     <string name="send_section_reminded">Erinnert</string>
     <string name="send_section_failed">Nicht gesendet</string>
@@ -819,14 +815,6 @@
     <string name="delete_selected_count">Löschen (%1$d)</string>
     <string name="users_delete_confirm_title">Konten löschen?</string>
     <string name="users_delete_confirm_text">%1$d Konten werden endgültig gelöscht: die Anmeldung, die E-Mail, der Alias und das Foto.\n\nDie EMA-Spieler und die Turnierergebnisse bleiben.\n\nDas kann nicht rückgängig gemacht werden.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">%1$d Konto wurde gelöscht.</item>
-        <item quantity="other">%1$d Konten wurden gelöscht.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">%1$d Konto konnte nicht gelöscht werden:</item>
-        <item quantity="other">%1$d Konten konnten nicht gelöscht werden:</item>
-    </plurals>
     <string name="delete_failure_self">Du kannst dein eigenes Konto nicht löschen.</string>
     <string name="delete_failure_last_admin">Es ist der letzte aktive Admin.</string>
     <string name="delete_failure_unknown">Das Konto wurde nicht gelöscht. Versuche es erneut.</string>
@@ -839,18 +827,6 @@
     <plurals name="ema_players_delete_will_deactivate">
         <item quantity="one">%1$d Spieler hat Ergebnisse in Turnieren und wird daher deaktiviert statt gelöscht. Seine Ergebnisse bleiben erhalten, und die Liste zeigt ihn durchgestrichen.</item>
         <item quantity="other">%1$d Spieler haben Ergebnisse in Turnieren und werden daher deaktiviert statt gelöscht. Ihre Ergebnisse bleiben erhalten, und die Liste zeigt sie durchgestrichen.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">%1$d EMA-Spieler wurde gelöscht.</item>
-        <item quantity="other">%1$d EMA-Spieler wurden gelöscht.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">%1$d Spieler wurde deaktiviert, weil er Ergebnisse in Turnieren hat.</item>
-        <item quantity="other">%1$d Spieler wurden deaktiviert, weil sie Ergebnisse in Turnieren haben.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">%1$d Spieler konnte nicht gelöscht werden:</item>
-        <item quantity="other">%1$d Spieler konnten nicht gelöscht werden:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">Das Löschen kann nicht rückgängig gemacht werden.</string>
     <string name="ema_players_delete_partial_title">Nicht alle wurden gelöscht</string>

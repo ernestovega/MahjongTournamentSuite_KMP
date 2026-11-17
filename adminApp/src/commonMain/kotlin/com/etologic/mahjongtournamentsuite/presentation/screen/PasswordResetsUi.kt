@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -37,19 +39,18 @@ import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.password_resets_failed
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_partial_title
-import mahjongtournamentsuite.adminapp.generated.resources.password_resets_sent
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_email_failed
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_no_email
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_not_found
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_unknown
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_sent
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
+import mahjongtournamentsuite.adminapp.generated.resources.send_section_failed
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
@@ -131,7 +132,8 @@ private fun PasswordResetFailure?.textRes(): StringResource = when (this) {
 /** The result of a mass reset: how many emails went out, and one line for each account that failed. */
 @Composable
 internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, users: List<ManagedUser>, onDismiss: () -> Unit) {
-    val sent = results.count { it.outcome == PasswordResetOutcome.SENT }
+    val sent = results.filter { it.outcome == PasswordResetOutcome.SENT }
+    val emailOf = { uid: String -> users.firstOrNull { it.uid == uid }?.email ?: uid }
     val failed = results.filter { it.outcome == PasswordResetOutcome.FAILED }
     TrackedDialog("PasswordResetsDone") {
         AlertDialog(
@@ -139,21 +141,24 @@ internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, user
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (sent > 0) Text(pluralStringResource(Res.plurals.password_resets_sent, sent, sent))
+                // One section for each outcome that happened: its title, its count and its accounts. One that failed shows why.
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (sent.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.Email,
+                            stringResource(Res.string.result_section_sent),
+                            sent.map { PlayerLine(emailOf(it.uid), emptyList()) },
+                            maxHeight = 120.dp,
+                        )
+                    }
                     if (failed.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(pluralStringResource(Res.plurals.password_resets_failed, failed.size, failed.size), color = MaterialTheme.colorScheme.error)
-                            PlayerLinesCard(
-                                failed.map { result ->
-                                    PlayerLine(
-                                        users.firstOrNull { it.uid == result.uid }?.email ?: result.uid,
-                                        listOf(stringResource(result.reason.textRes())),
-                                    )
-                                },
-                                detailColor = MaterialTheme.colorScheme.error,
-                            )
-                        }
+                        PlayerLinesSection(
+                            Icons.Filled.ErrorOutline,
+                            stringResource(Res.string.send_section_failed),
+                            failed.map { result -> PlayerLine(emailOf(result.uid), listOf(stringResource(result.reason.textRes()))) },
+                            color = MaterialTheme.colorScheme.error,
+                            detailColor = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             },

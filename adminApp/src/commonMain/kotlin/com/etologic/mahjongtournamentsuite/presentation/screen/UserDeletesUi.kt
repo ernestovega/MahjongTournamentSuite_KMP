@@ -3,6 +3,9 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,12 +38,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_partial_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_not_found
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_deleted
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_not_deleted
 import mahjongtournamentsuite.adminapp.generated.resources.users_delete_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.users_delete_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.users_delete_failed
-import mahjongtournamentsuite.adminapp.generated.resources.users_deleted
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
@@ -88,7 +90,8 @@ private fun UserDeleteFailure?.textRes(): StringResource = when (this) {
 /** The result of a bulk delete: how many accounts are gone, and one line for each account that stays. */
 @Composable
 internal fun UserDeletesResultDialog(results: List<UserDeleteResult>, users: List<ManagedUser>, onDismiss: () -> Unit) {
-    val deleted = results.count { it.outcome == UserDeleteOutcome.DELETED }
+    val deleted = results.filter { it.outcome == UserDeleteOutcome.DELETED }
+    val emailOf = { uid: String -> users.firstOrNull { it.uid == uid }?.email ?: uid }
     val failed = results.filter { it.outcome == UserDeleteOutcome.FAILED }
     TrackedDialog("DeleteAccountsDone") {
         AlertDialog(
@@ -96,18 +99,24 @@ internal fun UserDeletesResultDialog(results: List<UserDeleteResult>, users: Lis
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.ema_players_delete_partial_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (deleted > 0) Text(pluralStringResource(Res.plurals.users_deleted, deleted, deleted))
+                // One section for each outcome that happened: its title, its count and its accounts. One that stays shows why.
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (deleted.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.Delete,
+                            stringResource(Res.string.result_section_deleted),
+                            deleted.map { result -> PlayerLine(emailOf(result.uid), emptyList()) },
+                            maxHeight = 120.dp,
+                        )
+                    }
                     if (failed.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(pluralStringResource(Res.plurals.users_delete_failed, failed.size, failed.size), color = MaterialTheme.colorScheme.error)
-                            PlayerLinesCard(
-                                failed.map { result ->
-                                    PlayerLine(users.firstOrNull { it.uid == result.uid }?.email ?: result.uid, listOf(stringResource(result.reason.textRes())))
-                                },
-                                detailColor = MaterialTheme.colorScheme.error,
-                            )
-                        }
+                        PlayerLinesSection(
+                            Icons.Filled.ErrorOutline,
+                            stringResource(Res.string.result_section_not_deleted),
+                            failed.map { result -> PlayerLine(emailOf(result.uid), listOf(stringResource(result.reason.textRes()))) },
+                            color = MaterialTheme.colorScheme.error,
+                            detailColor = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             },

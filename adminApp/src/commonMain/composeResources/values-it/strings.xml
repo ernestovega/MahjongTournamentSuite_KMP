@@ -591,14 +591,6 @@
     <string name="send_password_reset_count">Invia reimpostazione password (%1$d)</string>
     <string name="password_resets_confirm_title">Inviare le email di reimpostazione password?</string>
     <string name="password_resets_confirm_text">L'app invia un'email a %1$d account.\n\nOgni persona riceve un link per scegliere una nuova password.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">È stata inviata %1$d email di reimpostazione password.</item>
-        <item quantity="other">Sono state inviate %1$d email di reimpostazione password.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">Non è stato possibile inviare %1$d email:</item>
-        <item quantity="other">Non è stato possibile inviare %1$d email:</item>
-    </plurals>
     <string name="password_resets_partial_title">Non tutte le email sono state inviate</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">L'account non esiste.</string>
@@ -610,6 +602,10 @@
     <string name="import_locked_text">Non puoi importare giocatori perché un tavolo ha già dei dati: posti o risultati. L'importazione sostituisce tutti i giocatori e cambierebbe risultati già esistenti. Per cambiare un giocatore, usa le opzioni della sua riga.</string>
     <string name="sending_title">Invio in corso</string>
     <string name="sending_text">L'app sta inviando le email. Attendi che finisca.</string>
+    <string name="result_section_deleted">Eliminati</string>
+    <string name="result_section_deactivated">Disattivati</string>
+    <string name="result_section_not_deleted">Non eliminati</string>
+    <string name="result_section_sent">Inviati</string>
     <string name="send_section_invited">Invitati</string>
     <string name="send_section_reminded">Sollecitati</string>
     <string name="send_section_failed">Non inviati</string>
@@ -819,14 +815,6 @@
     <string name="delete_selected_count">Elimina (%1$d)</string>
     <string name="users_delete_confirm_title">Eliminare gli account?</string>
     <string name="users_delete_confirm_text">%1$d account saranno eliminati per sempre: l\'accesso, l\'email, l\'alias e la foto.\n\nI giocatori EMA e i risultati dei tornei restano.\n\nNon si può annullare.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">È stato eliminato %1$d account.</item>
-        <item quantity="other">Sono stati eliminati %1$d account.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">Non è stato possibile eliminare %1$d account:</item>
-        <item quantity="other">Non è stato possibile eliminare %1$d account:</item>
-    </plurals>
     <string name="delete_failure_self">Non puoi eliminare il tuo account.</string>
     <string name="delete_failure_last_admin">È l\'ultimo admin attivo.</string>
     <string name="delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>
@@ -839,18 +827,6 @@
     <plurals name="ema_players_delete_will_deactivate">
         <item quantity="one">%1$d giocatore ha risultati nei tornei, quindi verrà disattivato invece di essere eliminato. I suoi risultati restano e l’elenco lo mostrerà barrato.</item>
         <item quantity="other">%1$d giocatori hanno risultati nei tornei, quindi verranno disattivati invece di essere eliminati. I loro risultati restano e l’elenco li mostrerà barrati.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">%1$d giocatore EMA è stato eliminato.</item>
-        <item quantity="other">%1$d giocatori EMA sono stati eliminati.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">%1$d giocatore è stato disattivato perché ha risultati nei tornei.</item>
-        <item quantity="other">%1$d giocatori sono stati disattivati perché hanno risultati nei tornei.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">Non è stato possibile eliminare %1$d giocatore:</item>
-        <item quantity="other">Non è stato possibile eliminare %1$d giocatori:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">L’eliminazione non si può annullare.</string>
     <string name="ema_players_delete_partial_title">Non tutti sono stati eliminati</string>

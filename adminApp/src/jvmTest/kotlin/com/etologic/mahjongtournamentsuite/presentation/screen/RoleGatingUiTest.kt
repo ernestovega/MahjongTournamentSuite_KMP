@@ -267,8 +267,8 @@ class RoleGatingUiTest {
         onNodeWithText("• Open de Madrid").assertExists()
         assertEquals(emptyList(), registry.deleteRequests)
         onAllNodesWithText("Delete players (2)").onLast().performClick()
-        awaitText("1 EMA player was deleted.")
-        awaitText("1 player was deactivated because it has results in tournaments.")
+        awaitText("Deleted")
+        awaitText("Deactivated")
 
         assertEquals(listOf(listOf("10002", "10003")), registry.deleteRequests)
         onNodeWithText("OK").performClick()

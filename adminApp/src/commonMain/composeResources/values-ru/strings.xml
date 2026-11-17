@@ -593,18 +593,6 @@
     <string name="send_password_reset_count">Отправить сброс пароля (%1$d)</string>
     <string name="password_resets_confirm_title">Отправить письма для сброса пароля?</string>
     <string name="password_resets_confirm_text">Приложение отправит письмо на %1$d аккаунтов.\n\nКаждый получит ссылку для выбора нового пароля.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">Отправлено %1$d письмо для сброса пароля.</item>
-        <item quantity="few">Отправлено %1$d письма для сброса пароля.</item>
-        <item quantity="many">Отправлено %1$d писем для сброса пароля.</item>
-        <item quantity="other">Отправлено %1$d письма для сброса пароля.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">Не удалось отправить %1$d письмо:</item>
-        <item quantity="few">Не удалось отправить %1$d письма:</item>
-        <item quantity="many">Не удалось отправить %1$d писем:</item>
-        <item quantity="other">Не удалось отправить %1$d письма:</item>
-    </plurals>
     <string name="password_resets_partial_title">Отправлены не все письма</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Аккаунт не существует.</string>
@@ -616,6 +604,10 @@
     <string name="import_locked_text">Нельзя импортировать игроков, потому что у стола уже есть данные: рассадка или результаты. Импорт заменяет всех игроков, и это изменило бы существующие результаты. Чтобы изменить одного игрока, используйте действия в его строке.</string>
     <string name="sending_title">Отправка</string>
     <string name="sending_text">Приложение отправляет письма. Дождитесь окончания.</string>
+    <string name="result_section_deleted">Удалены</string>
+    <string name="result_section_deactivated">Отключены</string>
+    <string name="result_section_not_deleted">Не удалены</string>
+    <string name="result_section_sent">Отправлены</string>
     <string name="send_section_invited">Приглашены</string>
     <string name="send_section_reminded">Напомнили</string>
     <string name="send_section_failed">Не отправлено</string>
@@ -827,18 +819,6 @@
     <string name="delete_selected_count">Удалить (%1$d)</string>
     <string name="users_delete_confirm_title">Удалить аккаунты?</string>
     <string name="users_delete_confirm_text">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">Удалена %1$d учётная запись.</item>
-        <item quantity="few">Удалено %1$d учётные записи.</item>
-        <item quantity="many">Удалено %1$d учётных записей.</item>
-        <item quantity="other">Удалено %1$d учётные записи.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">Не удалось удалить %1$d учётную запись:</item>
-        <item quantity="few">Не удалось удалить %1$d учётные записи:</item>
-        <item quantity="many">Не удалось удалить %1$d учётных записей:</item>
-        <item quantity="other">Не удалось удалить %1$d учётные записи:</item>
-    </plurals>
     <string name="delete_failure_self">Нельзя удалить собственный аккаунт.</string>
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>
@@ -855,24 +835,6 @@
         <item quantity="few">У %1$d игроков есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
         <item quantity="many">У %1$d игроков есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
         <item quantity="other">У %1$d игрока есть результаты в турнирах, поэтому они будут деактивированы, а не удалены. Их результаты сохранятся, а в списке они будут зачёркнуты.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">Удалён %1$d игрок EMA.</item>
-        <item quantity="few">Удалено %1$d игрока EMA.</item>
-        <item quantity="many">Удалено %1$d игроков EMA.</item>
-        <item quantity="other">Удалено %1$d игрока EMA.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">Деактивирован %1$d игрок, потому что у него есть результаты в турнирах.</item>
-        <item quantity="few">Деактивировано %1$d игрока, потому что у них есть результаты в турнирах.</item>
-        <item quantity="many">Деактивировано %1$d игроков, потому что у них есть результаты в турнирах.</item>
-        <item quantity="other">Деактивировано %1$d игрока, потому что у них есть результаты в турнирах.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">Не удалось удалить %1$d игрока:</item>
-        <item quantity="few">Не удалось удалить %1$d игроков:</item>
-        <item quantity="many">Не удалось удалить %1$d игроков:</item>
-        <item quantity="other">Не удалось удалить %1$d игрока:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">Удаление нельзя отменить.</string>
     <string name="ema_players_delete_partial_title">Удалены не все</string>

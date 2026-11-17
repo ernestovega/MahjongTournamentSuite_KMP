@@ -591,14 +591,6 @@
     <string name="send_password_reset_count">Nieuw wachtwoord sturen (%1$d)</string>
     <string name="password_resets_confirm_title">E-mails voor nieuw wachtwoord sturen?</string>
     <string name="password_resets_confirm_text">De app stuurt een e-mail naar %1$d accounts.\n\nIedereen krijgt een link om een nieuw wachtwoord te kiezen.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">%1$d e-mail voor een nieuw wachtwoord is verstuurd.</item>
-        <item quantity="other">%1$d e-mails voor een nieuw wachtwoord zijn verstuurd.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">%1$d e-mail kon niet worden verstuurd:</item>
-        <item quantity="other">%1$d e-mails konden niet worden verstuurd:</item>
-    </plurals>
     <string name="password_resets_partial_title">Niet alle e-mails zijn verstuurd</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Het account bestaat niet.</string>
@@ -610,6 +602,10 @@
     <string name="import_locked_text">Je kunt geen spelers importeren omdat een tafel al gegevens heeft: plaatsen of resultaten. De import vervangt alle spelers, en dat zou bestaande resultaten wijzigen. Gebruik de opties in de rij van een speler om één speler te wijzigen.</string>
     <string name="sending_title">Versturen</string>
     <string name="sending_text">De app verstuurt de e-mails. Wacht tot ze klaar is.</string>
+    <string name="result_section_deleted">Verwijderd</string>
+    <string name="result_section_deactivated">Gedeactiveerd</string>
+    <string name="result_section_not_deleted">Niet verwijderd</string>
+    <string name="result_section_sent">Verzonden</string>
     <string name="send_section_invited">Uitgenodigd</string>
     <string name="send_section_reminded">Herinnerd</string>
     <string name="send_section_failed">Niet verzonden</string>
@@ -819,14 +815,6 @@
     <string name="delete_selected_count">Verwijderen (%1$d)</string>
     <string name="users_delete_confirm_title">Accounts verwijderen?</string>
     <string name="users_delete_confirm_text">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">%1$d account is verwijderd.</item>
-        <item quantity="other">%1$d accounts zijn verwijderd.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">%1$d account kon niet worden verwijderd:</item>
-        <item quantity="other">%1$d accounts konden niet worden verwijderd:</item>
-    </plurals>
     <string name="delete_failure_self">Je kunt je eigen account niet verwijderen.</string>
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
@@ -839,18 +827,6 @@
     <plurals name="ema_players_delete_will_deactivate">
         <item quantity="one">%1$d speler heeft resultaten in toernooien en wordt daarom gedeactiveerd in plaats van verwijderd. De resultaten blijven bewaard en de lijst toont de speler doorgestreept.</item>
         <item quantity="other">%1$d spelers hebben resultaten in toernooien en worden daarom gedeactiveerd in plaats van verwijderd. Hun resultaten blijven bewaard en de lijst toont ze doorgestreept.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">%1$d EMA-speler is verwijderd.</item>
-        <item quantity="other">%1$d EMA-spelers zijn verwijderd.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">%1$d speler is gedeactiveerd omdat die resultaten in toernooien heeft.</item>
-        <item quantity="other">%1$d spelers zijn gedeactiveerd omdat ze resultaten in toernooien hebben.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">%1$d speler kon niet worden verwijderd:</item>
-        <item quantity="other">%1$d spelers konden niet worden verwijderd:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">Verwijderen kan niet ongedaan worden gemaakt.</string>
     <string name="ema_players_delete_partial_title">Niet alle spelers zijn verwijderd</string>

@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -44,13 +46,13 @@ import mahjongtournamentsuite.adminapp.generated.resources.ema_player_delete_fai
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_delete_failure_unknown
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_cannot_undo
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_deactivated
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_deleted
-import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_failed
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_partial_title
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_will_deactivate
 import mahjongtournamentsuite.adminapp.generated.resources.ema_players_delete_will_delete
 import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_deactivated
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_deleted
+import mahjongtournamentsuite.adminapp.generated.resources.result_section_not_deleted
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import org.jetbrains.compose.resources.StringResource
@@ -169,8 +171,9 @@ private fun EmaPlayerDeleteFailure?.textRes(): StringResource = when (this) {
 /** The result of a bulk delete: how many players are gone or deactivated, and one line for each player that failed. */
 @Composable
 internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, players: List<Player>, onDismiss: () -> Unit) {
-    val deleted = results.count { it.outcome == EmaPlayerDeleteOutcome.DELETED }
-    val disabled = results.count { it.outcome == EmaPlayerDeleteOutcome.DISABLED }
+    val deleted = results.filter { it.outcome == EmaPlayerDeleteOutcome.DELETED }
+    val disabled = results.filter { it.outcome == EmaPlayerDeleteOutcome.DISABLED }
+    val nameOf = { emaId: String -> players.firstOrNull { it.emaId == emaId }?.let { "${it.displayName} (${it.emaId})" } ?: emaId }
     val failed = results.filter { it.outcome == EmaPlayerDeleteOutcome.FAILED }
     TrackedDialog("DeletePlayersDone") {
         AlertDialog(
@@ -178,23 +181,34 @@ internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, 
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.ema_players_delete_partial_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (deleted > 0) Text(pluralStringResource(Res.plurals.ema_players_delete_deleted, deleted, deleted))
-                    if (disabled > 0) Text(pluralStringResource(Res.plurals.ema_players_delete_deactivated, disabled, disabled))
+                // One section for each outcome that happened: its title, its count and its players. One that failed shows why.
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (deleted.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.Delete,
+                            stringResource(Res.string.result_section_deleted),
+                            deleted.map { PlayerLine(nameOf(it.emaId), emptyList()) },
+                            maxHeight = 120.dp,
+                        )
+                    }
+                    if (disabled.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.Block,
+                            stringResource(Res.string.result_section_deactivated),
+                            disabled.map { PlayerLine(nameOf(it.emaId), emptyList()) },
+                            // Grey, like a deactivated player in the list.
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxHeight = 120.dp,
+                        )
+                    }
                     if (failed.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                pluralStringResource(Res.plurals.ema_players_delete_failed, failed.size, failed.size),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                            PlayerLinesCard(
-                                failed.map { result ->
-                                    val name = players.firstOrNull { it.emaId == result.emaId }?.let { "${it.displayName} (${it.emaId})" } ?: result.emaId
-                                    PlayerLine(name, listOf(stringResource(result.reason.textRes())))
-                                },
-                                detailColor = MaterialTheme.colorScheme.error,
-                            )
-                        }
+                        PlayerLinesSection(
+                            Icons.Filled.ErrorOutline,
+                            stringResource(Res.string.result_section_not_deleted),
+                            failed.map { result -> PlayerLine(nameOf(result.emaId), listOf(stringResource(result.reason.textRes()))) },
+                            color = MaterialTheme.colorScheme.error,
+                            detailColor = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             },

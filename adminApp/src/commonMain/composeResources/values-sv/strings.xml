@@ -591,14 +591,6 @@
     <string name="send_password_reset_count">Skicka lösenordsåterställning (%1$d)</string>
     <string name="password_resets_confirm_title">Skicka e-post för att återställa lösenord?</string>
     <string name="password_resets_confirm_text">Appen skickar e-post till %1$d konton.\n\nVarje person får en länk för att välja ett nytt lösenord.</string>
-    <plurals name="password_resets_sent">
-        <item quantity="one">%1$d e-postmeddelande för att återställa lösenordet skickades.</item>
-        <item quantity="other">%1$d e-postmeddelanden för att återställa lösenordet skickades.</item>
-    </plurals>
-    <plurals name="password_resets_failed">
-        <item quantity="one">%1$d e-postmeddelande kunde inte skickas:</item>
-        <item quantity="other">%1$d e-postmeddelanden kunde inte skickas:</item>
-    </plurals>
     <string name="password_resets_partial_title">Alla e-postmeddelanden skickades inte</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Kontot finns inte.</string>
@@ -610,6 +602,10 @@
     <string name="import_locked_text">Du kan inte importera spelare eftersom ett bord redan har data: platser eller resultat. Importen ersätter alla spelare, och det skulle ändra befintliga resultat. För att ändra en spelare, använd alternativen på spelarens rad.</string>
     <string name="sending_title">Skickar</string>
     <string name="sending_text">Appen skickar e-postmeddelandena. Vänta tills den är klar.</string>
+    <string name="result_section_deleted">Raderade</string>
+    <string name="result_section_deactivated">Inaktiverade</string>
+    <string name="result_section_not_deleted">Inte raderade</string>
+    <string name="result_section_sent">Skickade</string>
     <string name="send_section_invited">Inbjudna</string>
     <string name="send_section_reminded">Påminda</string>
     <string name="send_section_failed">Inte skickade</string>
@@ -819,14 +815,6 @@
     <string name="delete_selected_count">Radera (%1$d)</string>
     <string name="users_delete_confirm_title">Radera konton?</string>
     <string name="users_delete_confirm_text">%1$d konton raderas för gott: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelarna och turneringsresultaten finns kvar.\n\nDetta kan inte ångras.</string>
-    <plurals name="users_deleted">
-        <item quantity="one">%1$d konto raderades.</item>
-        <item quantity="other">%1$d konton raderades.</item>
-    </plurals>
-    <plurals name="users_delete_failed">
-        <item quantity="one">%1$d konto kunde inte raderas:</item>
-        <item quantity="other">%1$d konton kunde inte raderas:</item>
-    </plurals>
     <string name="delete_failure_self">Du kan inte radera ditt eget konto.</string>
     <string name="delete_failure_last_admin">Det är den sista aktiva administratören.</string>
     <string name="delete_failure_unknown">Kontot raderades inte. Försök igen.</string>
@@ -839,18 +827,6 @@
     <plurals name="ema_players_delete_will_deactivate">
         <item quantity="one">%1$d spelare har resultat i turneringar och inaktiveras därför i stället för att raderas. Resultaten finns kvar och listan visar spelaren överstruken.</item>
         <item quantity="other">%1$d spelare har resultat i turneringar och inaktiveras därför i stället för att raderas. Resultaten finns kvar och listan visar dem överstrukna.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deleted">
-        <item quantity="one">%1$d EMA-spelare raderades.</item>
-        <item quantity="other">%1$d EMA-spelare raderades.</item>
-    </plurals>
-    <plurals name="ema_players_delete_deactivated">
-        <item quantity="one">%1$d spelare inaktiverades eftersom spelaren har resultat i turneringar.</item>
-        <item quantity="other">%1$d spelare inaktiverades eftersom de har resultat i turneringar.</item>
-    </plurals>
-    <plurals name="ema_players_delete_failed">
-        <item quantity="one">%1$d spelare kunde inte raderas:</item>
-        <item quantity="other">%1$d spelare kunde inte raderas:</item>
     </plurals>
     <string name="ema_players_delete_cannot_undo">Det går inte att ångra en radering.</string>
     <string name="ema_players_delete_partial_title">Alla raderades inte</string>
