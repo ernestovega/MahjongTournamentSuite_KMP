@@ -240,14 +240,14 @@ fun PlayerAccountsBulkDialog(
                                             onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
                                         )
                                     }
-                                    Text(slot.id.toString(), Modifier.width(idColumnWidth(compact)))
+                                    Text(slot.id.toString(), Modifier.width(idColumnWidth(compact)), textAlign = TextAlign.Center)
                                     val country = countryOf(slot)
                                     Box(Modifier.width(flagColumnWidth(compact)), contentAlignment = Alignment.Center) {
                                         CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
                                     }
                                     if (compact) {
                                         // A phone has no room for the EMA and email columns: they go under the name.
-                                        Column(Modifier.weight(1f)) {
+                                        Column(Modifier.weight(1f).padding(start = CompactNameStartPadding)) {
                                             Text(nameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             Text(
                                                 emaIdOf(slot) ?: "—",
@@ -323,6 +323,9 @@ private fun columnGap(compact: Boolean) = if (compact) 4.dp else 8.dp
 private fun idColumnWidth(compact: Boolean) = if (compact) 28.dp else IdColumnWidth
 private fun flagColumnWidth(compact: Boolean) = if (compact) 28.dp else FlagColumnWidth
 
+// On a phone the gap between columns is small, so the name keeps some extra room after the flag.
+private val CompactNameStartPadding = 6.dp
+
 /** The titles of the columns of the list. They use the same widths as the rows, so each title sits over its column. */
 @Composable
 private fun ColumnTitles(compact: Boolean) {
@@ -342,10 +345,10 @@ private fun ColumnTitles(compact: Boolean) {
             textAlign = align,
         )
         Spacer(Modifier.width(CheckboxColumnWidth))
-        Title(Res.string.id, Modifier.width(idColumnWidth(compact)))
+        Title(Res.string.id, Modifier.width(idColumnWidth(compact)), TextAlign.Center)
         Title(Res.string.country, Modifier.width(flagColumnWidth(compact)), TextAlign.Center)
         if (compact) {
-            Title(Res.string.name, Modifier.weight(1f))
+            Title(Res.string.name, Modifier.weight(1f).padding(start = CompactNameStartPadding))
         } else {
             Title(Res.string.ema_id, Modifier.width(EmaColumnWidth))
             Title(Res.string.name, Modifier.weight(1f))

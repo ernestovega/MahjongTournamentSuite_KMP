@@ -83,6 +83,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -246,6 +248,13 @@ fun TournamentColorPickerDialog(
                             value = brightness,
                             onValueChange = { updateFromHsv(hue, saturation, it) },
                             modifier = Modifier.weight(1f),
+                        )
+                        // The value of the slider, so the user knows where it is.
+                        Text(
+                            "${(brightness * 100).roundToInt()}%",
+                            modifier = Modifier.width(40.dp).testTag("brightness_value"),
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.End,
                         )
                     }
                     Box(
