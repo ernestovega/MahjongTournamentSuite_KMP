@@ -116,7 +116,6 @@ import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.account
 import mahjongtournamentsuite.adminapp.generated.resources.assign
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_list
@@ -151,8 +150,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.search
-import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
-import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
 import mahjongtournamentsuite.adminapp.generated.resources.round
@@ -197,7 +194,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
     var emailSlotId by remember { mutableStateOf<Int?>(null) }
-    var emailThenInvite by remember { mutableStateOf(false) }
     var accountBusy by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<UiText?>(null) }
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
@@ -247,7 +243,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
      */
     fun sendToPlayers(
         playerIds: List<Int>,
-        showOutcome: Boolean = false,
         emails: Map<Int, String> = emptyMap(),
     ) = scope.launch {
         accountBusy = true
@@ -258,7 +253,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             when (val saved = presenter.saveEmails(tournamentId, emails.map { PlayerEmailItem(it.key, it.value) })) {
                 is AppResult.Success -> refused = saved.value.filter { it.outcome == PlayerEmailOutcome.FAILED }.map { it.toFailedAction() }
                 is AppResult.Failure -> {
-                    if (showOutcome) accountOutcome = AccountOutcome(saved.error.toUiText(), isError = true) else accountError = saved.error.toUiText()
+                    accountError = saved.error.toUiText()
                     accountBusy = false
                     return@launch
                 }
@@ -267,10 +262,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         val toSend = playerIds.filter { id -> refused.none { it.playerId == id } }
         if (toSend.isEmpty()) {
             accountResults = refused
-            if (showOutcome) {
-                accountOutcome = refused.firstOrNull()?.toOutcome()
-                accountResults = emptyList()
-            }
             accountBusy = false
             return@launch
         }
@@ -278,29 +269,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             is AppResult.Success -> {
                 accountResults = refused + result.value
                 refresh(force = true).join()
-                if (showOutcome) {
-                    accountOutcome = (refused + result.value).firstOrNull()?.toOutcome()
-                    accountResults = emptyList()
-                }
             }
-            is AppResult.Failure -> {
-                if (showOutcome) {
-                    accountOutcome = AccountOutcome(result.error.toUiText(), isError = true)
-                } else {
-                    accountError = result.error.toUiText()
-                }
-            }
+            is AppResult.Failure -> accountError = result.error.toUiText()
         }
         accountBusy = false
     }
 
-    /** Sets or clears the pending email of one slot, and invites the player when [thenInvite] is true. */
-    fun saveSlotEmail(slotId: Int, email: String, thenInvite: Boolean) {
+    /** Sets or clears the pending email of one slot. */
+    fun saveSlotEmail(slotId: Int, email: String) {
         emailSlotId = null
-        if (thenInvite) {
-            sendToPlayers(listOf(slotId), showOutcome = true, emails = mapOf(slotId to email))
-            return
-        }
         scope.launch {
             accountBusy = true
             when (val saved = presenter.saveEmails(tournamentId, listOf(PlayerEmailItem(slotId, email)))) {
@@ -451,10 +428,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             playerName = slot.assignedEmaId?.let { emaId -> basePlayers.firstOrNull { it.emaId == emaId }?.displayName } ?: playerLabel(slot.id),
             currentEmail = slot.email,
             hasEmail = slot.hasEmail,
-            confirmLabel = stringResource(if (emailThenInvite) Res.string.send_invitation else Res.string.save),
+            confirmLabel = stringResource(Res.string.save),
             busy = accountBusy,
-            onSave = { email -> saveSlotEmail(slot.id, email, thenInvite = emailThenInvite) },
-            onRemove = { saveSlotEmail(slot.id, "", thenInvite = false) },
+            onSave = { email -> saveSlotEmail(slot.id, email) },
+            onRemove = { saveSlotEmail(slot.id, "") },
             onDismiss = { emailSlotId = null },
         )
     }
@@ -1170,7 +1147,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             if (isTeamsTournament) {
                                 TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
                             }
-                            TournamentPlayerHeader(stringResource(Res.string.account), Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
                             Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                         }
                     }
@@ -1221,22 +1197,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
-                                        }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-                                            if (!slot.assignedEmaId.isNullOrBlank()) {
-                                                AccountStateIcon(slot.hasAccount, Modifier.size(16.dp))
-                                            }
-                                            Column(Modifier.weight(1f)) {
-                                                slot.email?.takeIf { it.isNotBlank() }?.let { email ->
-                                                    Text(
-                                                        text = email,
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                    )
-                                                }
-                                            }
                                         }
                                     }
                                 } else {
@@ -1293,25 +1253,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                         )
-                                    }
-                                    Box(
-                                        modifier = Modifier.width(TournamentPlayerAccountColumnWidth),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        if (slot.assignedEmaId.isNullOrBlank()) {
-                                            Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        } else {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                AccountStateIcon(slot.hasAccount)
-                                                Text(
-                                                    text = slot.email ?: "",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                            }
-                                        }
                                     }
                                 }
                                 Box(
@@ -1411,39 +1352,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                     },
                                                 )
                                                 val accountActionsEnabled = !accountBusy && !loading && savingId == null
+                                                // Invitations and reminders go out from the Invitations dialog only. The menu keeps the edit
+                                                // of the email, because that dialog asks only for the emails that are missing.
                                                 if (slot.isAssigned && !slot.hasAccount) {
-                                                    DropdownMenuItem(
-                                                        enabled = accountActionsEnabled,
-                                                        text = { Text(stringResource(Res.string.send_invitation)) },
-                                                        onClick = {
-                                                            actionsMenuOpen = false
-                                                            // A slot with no email needs one first. The dialog then invites.
-                                                            if (slot.hasEmail) {
-                                                                sendToPlayers(listOf(slot.id), showOutcome = true)
-                                                            } else {
-                                                                emailThenInvite = true
-                                                                emailSlotId = slot.id
-                                                            }
-                                                        },
-                                                    )
                                                     DropdownMenuItem(
                                                         enabled = accountActionsEnabled,
                                                         text = { Text(stringResource(Res.string.edit_email)) },
                                                         onClick = {
                                                             actionsMenuOpen = false
-                                                            emailThenInvite = false
                                                             emailSlotId = slot.id
-                                                        },
-                                                    )
-                                                }
-                                                // A player with an account gets a reminder: an email with a link to the tournament.
-                                                if (slot.hasAccount) {
-                                                    DropdownMenuItem(
-                                                        enabled = accountActionsEnabled,
-                                                        text = { Text(stringResource(Res.string.send_reminder)) },
-                                                        onClick = {
-                                                            actionsMenuOpen = false
-                                                            sendToPlayers(listOf(slot.id), showOutcome = true)
                                                         },
                                                     )
                                                 }
@@ -1494,8 +1411,10 @@ private val TournamentPlayerPhotoSize = 40.dp
 private val TournamentPlayerPhotoColumnWidth = 48.dp
 private val TournamentPlayerCountryColumnWidth = 64.dp
 private val TournamentPlayerIdColumnWidth = 48.dp
-private val TournamentPlayerEmaColumnWidth = 104.dp
-private val TournamentPlayerTeamColumnWidth = 144.dp
+private val TournamentPlayerEmaColumnWidth = 96.dp
+
+// The team gives up width first: the name of the player has priority.
+private val TournamentPlayerTeamColumnWidth = 120.dp
 
 // The photo column of a phone. The tables title below it takes the same width.
 private val TournamentPlayerCompactLeadingWidth = 44.dp
@@ -1652,7 +1571,6 @@ private fun RoundTableCell(
         }
     }
 }
-private val TournamentPlayerAccountColumnWidth = 220.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
 private val AssignmentPhotoColumnWidth = 48.dp
 private val AssignmentCountryColumnWidth = 64.dp
