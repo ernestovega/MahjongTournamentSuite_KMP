@@ -31,6 +31,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.platform.preventBrowserAutoSignIn
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 class PlayerSessionPresenter(
@@ -95,6 +96,21 @@ class PlayerTournamentPresenter(
     private val calculateRankings: CalculateTournamentRankingsUseCase,
 ) {
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
+
+    /**
+     * A key that changes when the tables (with their hands), the players or the teams of these tournaments change, so
+     * the places of a player change only when the key does. It costs one manifest request for each tournament.
+     * Null when a check fails, so the caller asks for the places anyway.
+     */
+    suspend fun standingsRevision(tournamentIds: List<String>): String? = coroutineScope {
+        val keys = tournamentIds.sorted().map { id ->
+            async {
+                (tournamentRepository.getTournamentManifest(id) as? AppResult.Success)?.value
+                    ?.let { "$id:${it.tablesRevision}:${it.playersRevision}:${it.teamsRevision}" }
+            }
+        }.awaitAll()
+        if (keys.any { it == null }) null else keys.joinToString(",")
+    }
 
     /** The ids of the tournaments where the signed-in account plays. Empty without an account. */
     suspend fun myTournamentIds(): Set<String> = (tournamentRepository.listMyTournamentSlots() as? AppResult.Success)?.value.orEmpty().mapTo(mutableSetOf()) { it.tournamentId }

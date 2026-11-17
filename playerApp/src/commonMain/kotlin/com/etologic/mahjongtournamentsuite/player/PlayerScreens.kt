@@ -438,8 +438,10 @@ fun TournamentsScreen(navController: NavHostController) {
             myEmaId = session.myEmaId()
         }
     }
-    // Each check of an unchanged list with an own tournament being played asks for the places again, because they change during play.
+    // The places change during play, also when the list does not. A check of an unchanged list asks for them again
+    // only when the revision of the hands, players or teams of an own tournament being played changed.
     var standingsCheck by remember { mutableIntStateOf(0) }
+    var standingsRevision by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         // The first load reads everything. The later checks ask for changes only. [PollSchedule.listDelay] sets how often.
@@ -455,7 +457,13 @@ fun TournamentsScreen(navController: NavHostController) {
                     val unchanged = result.value == items
                     items = result.value
                     message = null
-                    if (unchanged && result.value.any { it.id in mine && statusOf(it) == TournamentStatus.IN_PROGRESS }) standingsCheck++
+                    val playing = result.value.filter { it.id in mine && statusOf(it) == TournamentStatus.IN_PROGRESS }.map { it.id }
+                    if (myEmaId != null && playing.isNotEmpty()) {
+                        val revision = tournaments.standingsRevision(playing)
+                        // A changed list asks for the places anyway. A failed check (null) asks too, so no change is missed.
+                        if (unchanged && (revision == null || revision != standingsRevision)) standingsCheck++
+                        standingsRevision = revision
+                    }
                 }
                 // A failed check does not show a message when the list is already on screen. The next check tries again.
                 is AppResult.Failure -> if (items == null) message = result.error.toUiText()

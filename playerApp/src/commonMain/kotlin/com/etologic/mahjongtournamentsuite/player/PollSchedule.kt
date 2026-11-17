@@ -89,7 +89,7 @@ internal suspend fun <T> pollForChanges(
     forceFirst: Boolean,
     load: suspend (RefreshMode) -> AppResult<T>,
     nextDelay: () -> Duration?,
-    onResult: (AppResult<T>) -> Unit,
+    onResult: suspend (AppResult<T>) -> Unit,
 ): Nothing {
     var forceNext = forceFirst
     while (true) {
