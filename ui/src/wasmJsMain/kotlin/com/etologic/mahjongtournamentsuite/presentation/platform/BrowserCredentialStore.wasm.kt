@@ -34,3 +34,19 @@ private external fun readBrowserCredential(onLoaded: (String, String) -> Unit)
 actual fun loadBrowserCredentials(onLoaded: (email: String, password: String) -> Unit) {
     readBrowserCredential(onLoaded)
 }
+
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+@JsFun(
+    """() => {
+        try {
+            if (navigator.credentials && navigator.credentials.preventSilentAccess) {
+                navigator.credentials.preventSilentAccess().catch(() => {});
+            }
+        } catch (_) {}
+    }""",
+)
+private external fun preventSilentCredentialAccess()
+
+actual fun preventBrowserAutoSignIn() {
+    preventSilentCredentialAccess()
+}

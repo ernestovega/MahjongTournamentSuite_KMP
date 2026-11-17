@@ -14,7 +14,6 @@
     <string name="password_hide">Masquer le mot de passe</string>
     <string name="password_show">Afficher le mot de passe</string>
     <string name="sign_in_forgot_password">Mot de passe oublié ?</string>
-    <string name="sign_in_need_help">Besoin d’aide ?</string>
     <string name="sign_in_contact">Contact</string>
     <string name="sign_in_privacy">Confidentialité</string>
     <string name="support_title">Assistance</string>

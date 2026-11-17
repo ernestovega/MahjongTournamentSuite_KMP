@@ -62,7 +62,7 @@ flowchart TD
 | **Estadísticas globales** | Todos | Pestañas Yo / Mis torneos / Torneo / Jugador. | <img src="../../playerApp/screenshots/statistics-player/phone-light.png" width="140" alt="Estadísticas globales"> |
 | **Combinaciones** | Todos | Las 81 combinaciones MCR con ejemplos de fichas. | <img src="../../playerApp/screenshots/combinations/phone-light.png" width="140" alt="Combinaciones"> |
 | **Penalizaciones** | Todos | Tabla de penalizaciones. | <img src="../../playerApp/screenshots/penalties/phone-light.png" width="140" alt="Penalizaciones"> |
-| **Iniciar sesión** | Todos | Email y contraseña, «¿Olvidaste la contraseña?», «¿Necesitas ayuda?». | <img src="../../playerApp/screenshots/sign-in/phone-light.png" width="140" alt="Iniciar sesión"> |
+| **Iniciar sesión** | Todos | Email y contraseña, «¿Olvidaste la contraseña?». En la barra superior, Contacto y Privacidad. | <img src="../../playerApp/screenshots/sign-in/phone-light.png" width="140" alt="Iniciar sesión"> |
 
 ## App de gestión (admin y editor)
 

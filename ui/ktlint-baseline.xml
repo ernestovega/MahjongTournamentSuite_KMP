@@ -200,10 +200,10 @@
         <error line="97" column="1" source="standard:indent" />
         <error line="98" column="1" source="standard:indent" />
         <error line="99" column="1" source="standard:indent" />
-        <error line="132" column="58" source="standard:argument-list-wrapping" />
-        <error line="133" column="60" source="standard:argument-list-wrapping" />
-        <error line="184" column="95" source="standard:argument-list-wrapping" />
-        <error line="184" column="102" source="standard:argument-list-wrapping" />
+        <error line="135" column="58" source="standard:argument-list-wrapping" />
+        <error line="136" column="60" source="standard:argument-list-wrapping" />
+        <error line="187" column="95" source="standard:argument-list-wrapping" />
+        <error line="187" column="102" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/StatisticsViewsUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

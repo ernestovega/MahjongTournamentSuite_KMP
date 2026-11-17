@@ -44,11 +44,14 @@ fun SignInScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var infoMessage by remember { mutableStateOf<UiText?>(null) }
+    // True when the browser gave the saved email and password: the sign-in then starts by itself.
+    var signInWithSavedCredentials by remember { mutableStateOf(false) }
     LaunchedEffect(authPresenter) {
         // Chrome mediates this request through its password manager UI.
         loadBrowserCredentials { savedEmail, savedPassword ->
             email = savedEmail
             password = savedPassword
+            signInWithSavedCredentials = true
         }
         if (authPresenter.hasActiveSession() && (authPresenter.isManager() as? AppResult.Success)?.value == true) {
             // The check suspends. The navigation must run on the main thread, also in the UI tests.
@@ -96,6 +99,13 @@ fun SignInScreen(
     }
 
     var confirmingReset by remember { mutableStateOf(false) }
+
+    LaunchedEffect(signInWithSavedCredentials) {
+        if (signInWithSavedCredentials) {
+            signInWithSavedCredentials = false
+            if (!isLoading) submit()
+        }
+    }
 
     fun requestPasswordReset() {
         errorMessage = null

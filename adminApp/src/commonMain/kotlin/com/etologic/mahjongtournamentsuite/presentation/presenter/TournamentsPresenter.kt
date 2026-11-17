@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.presentation.platform.preventBrowserAutoSignIn
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -106,7 +107,10 @@ class TournamentsPresenter(
         showTableDiffs = showTableDiffs,
     ).trackAction(telemetry, TelemetryAction.TOURNAMENT_SETTINGS_UPDATED)
 
-    suspend fun signOut() = authRepository.signOut()
+    suspend fun signOut() {
+        authRepository.signOut()
+        preventBrowserAutoSignIn()
+    }
 }
 
 private fun Boolean.toRefreshMode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED

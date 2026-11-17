@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.presentation.platform.preventBrowserAutoSignIn
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
@@ -56,6 +57,7 @@ class AuthPresenter(
     suspend fun signOut() {
         logger.i { "Signing out user." }
         authRepository.signOut()
+        preventBrowserAutoSignIn()
         telemetry.event(TelemetryEvent.LOGOUT)
         telemetry.userProperty(TelemetryProperty.ROLE, null)
     }

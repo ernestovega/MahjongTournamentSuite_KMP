@@ -299,12 +299,15 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
     // Admins and editors choose between this app and the admin app after the sign-in.
     val appSwitcher = currentAppSwitcher()
     var choosingApp by remember { mutableStateOf(false) }
+    // True when the browser gave the saved email and password: the sign-in then starts by itself.
+    var signInWithSavedCredentials by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         // Chrome mediates this request through its password manager UI.
         loadBrowserCredentials { savedEmail, savedPassword ->
             email = savedEmail
             password = savedPassword
+            signInWithSavedCredentials = true
         }
         emailRequester.requestFocus()
     }
@@ -337,6 +340,13 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
             busy = false
+        }
+    }
+
+    LaunchedEffect(signInWithSavedCredentials) {
+        if (signInWithSavedCredentials) {
+            signInWithSavedCredentials = false
+            if (!busy) submit()
         }
     }
 

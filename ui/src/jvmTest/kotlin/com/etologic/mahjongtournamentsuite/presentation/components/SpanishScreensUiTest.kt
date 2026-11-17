@@ -102,7 +102,6 @@ class SpanishScreensUiTest {
         awaitText("Contraseña")
         onNodeWithText("Correo electrónico").assertExists()
         onNodeWithText("¿Has olvidado la contraseña?").assertExists()
-        onNodeWithText("¿Necesitas ayuda?").assertExists()
         onNodeWithContentDescription("Mostrar contraseña").assertExists()
         // Contact and Privacy are in the top bar. The privacy link under the sign-in button is gone.
         onNodeWithText("Contacto").assertExists()

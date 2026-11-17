@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUs
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
+import com.etologic.mahjongtournamentsuite.presentation.platform.preventBrowserAutoSignIn
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -81,6 +82,7 @@ class PlayerSessionPresenter(
     suspend fun signOut() {
         logger.i { "Player signs out." }
         authRepository.signOut()
+        preventBrowserAutoSignIn()
         telemetry.event(TelemetryEvent.LOGOUT)
         telemetry.userProperty(TelemetryProperty.ROLE, null)
     }
