@@ -39,6 +39,8 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -56,6 +58,9 @@ private class GatedServer {
     // The revisions request answers at once, unless a test holds it to see what waits for it.
     var holdRevisions = false
     val revisionsGate = CompletableDeferred<Unit>()
+
+    // The manifest of each tournament, for the places of the tournaments list. A missing one fails.
+    val manifests = mutableMapOf<String, TournamentManifest>()
 
     fun release() = gate.complete(Unit)
 
@@ -108,7 +113,8 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         handPatches: Map<Int, Map<String, Any?>>,
     ) = unusedFakeResult<Pair<TableState, List<TableHand>>>()
 
-    override suspend fun getTournamentManifest(tournamentId: String) = unusedFakeResult<TournamentManifest>()
+    override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> =
+        server.manifests[tournamentId]?.let { AppResult.Success(it) } ?: AppResult.Failure(AppError.Network)
 
     override suspend fun createTournament(request: CreateTournamentRequest) = unusedFakeResult<Tournament>()
 
@@ -298,5 +304,32 @@ class PlayerTournamentLoadTest {
         server.release()
 
         assertEquals(AppError.Network, assertIs<AppResult.Failure>(presenter.load("t1")).error)
+    }
+
+    private fun manifest(tables: Long, players: Long = 1, teams: Long = 1, rounds: Long = 1) =
+        TournamentManifest(tablesRevision = tables, tableVersions = emptyMap(), playersRevision = players, teamsRevision = teams, roundsRevision = rounds)
+
+    @Test
+    fun thePlacesKeyChangesWhenHandsPlayersOrTeamsChange() = runTest {
+        server.manifests["a"] = manifest(tables = 1)
+        server.manifests["b"] = manifest(tables = 1)
+        val first = presenter.standingsRevision(listOf("a", "b"))
+
+        server.manifests["a"] = manifest(tables = 1, rounds = 2)
+        assertEquals(first, presenter.standingsRevision(listOf("b", "a")))
+
+        server.manifests["b"] = manifest(tables = 2)
+        assertNotEquals(first, presenter.standingsRevision(listOf("a", "b")))
+        server.manifests["b"] = manifest(tables = 1, players = 2)
+        assertNotEquals(first, presenter.standingsRevision(listOf("a", "b")))
+        server.manifests["b"] = manifest(tables = 1, teams = 2)
+        assertNotEquals(first, presenter.standingsRevision(listOf("a", "b")))
+    }
+
+    @Test
+    fun aFailedManifestGivesNoPlacesKey() = runTest {
+        server.manifests["a"] = manifest(tables = 1)
+
+        assertNull(presenter.standingsRevision(listOf("a", "missing")))
     }
 }
