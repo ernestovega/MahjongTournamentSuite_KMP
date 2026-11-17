@@ -2,16 +2,14 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.PanTool
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -109,7 +107,7 @@ internal fun standingColor(rank: Int): Color = MtsTheme.colors.position(rank, Ma
 
 /**
  * One line for each place of the player: the ranking, the team, the best hand and the chicken hands. Each line has the
- * place, the icon of the stat in the color of the place, and a small info icon whose tooltip says the details.
+ * place and the icon of the stat in the color of the place. The tooltip of the line says the details.
  */
 @Composable
 internal fun StandingBadges(standing: TournamentStanding, modifier: Modifier = Modifier) {
@@ -170,28 +168,23 @@ private fun StandingLine(icon: Painter, rank: Int, title: StringResource, detail
     val name = stringResource(title)
     // The title is the first line of the tooltip. The details are bullets, one on each line.
     val tooltip = (listOf(name) + details).joinToString("\n")
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        // The number is at the left, so the icons stay aligned whatever the number of digits.
-        Text(
-            "$rank",
-            style = MaterialTheme.typography.titleSmall.inTextFont(),
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Icon(icon, contentDescription = name, Modifier.size(20.dp), tint = standingColor(rank))
-        AppTooltipBox(tooltip, alignEnd = true) {
-            // The tap shows the tooltip. It does not reach the card, so it does not open the tournament.
-            Box(
-                Modifier.size(24.dp).clip(CircleShape).clickable(onClickLabel = stringResource(Res.string.standing_show_details)) { toggleTooltip() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Outlined.Info,
-                    contentDescription = stringResource(Res.string.standing_show_details),
-                    Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    // The whole line (number and icon) is the anchor of the tooltip. A tap shows it and does not reach the card, so it
+    // does not open the tournament.
+    AppTooltipBox(tooltip, alignEnd = true) {
+        Row(
+            Modifier.clip(MaterialTheme.shapes.small).clickable(onClickLabel = stringResource(Res.string.standing_show_details)) { toggleTooltip() }
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            // The number is at the left, so the icons stay aligned whatever the number of digits.
+            Text(
+                "$rank",
+                style = MaterialTheme.typography.titleSmall.inTextFont(),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Icon(icon, contentDescription = name, Modifier.size(20.dp), tint = standingColor(rank))
         }
     }
 }

@@ -146,8 +146,8 @@ class PlayerScreensScreenshotTest {
         variants = componentVariants,
         ready = {
             waitForText("Paris Classic 2026")
-            // The mouse over the info icon of the ranking shows its tooltip.
-            onAllNodes(hasContentDescription("Show the details")).onFirst().performMouseInput { moveTo(center) }
+            // The mouse over the ranking line (its number and icon) shows its tooltip.
+            onAllNodes(hasContentDescription("Ranking")).onFirst().performMouseInput { moveTo(center) }
             waitForText("Ranking", substring = true)
         },
     ) { StandingCards() }
