@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContactSupport
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,7 +59,8 @@ import mahjongtournamentsuite.ui.generated.resources.password_hide
 import mahjongtournamentsuite.ui.generated.resources.password_show
 import mahjongtournamentsuite.ui.generated.resources.sign_in_button
 import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
-import mahjongtournamentsuite.ui.generated.resources.privacy_policy
+import mahjongtournamentsuite.ui.generated.resources.sign_in_contact
+import mahjongtournamentsuite.ui.generated.resources.sign_in_privacy
 import mahjongtournamentsuite.ui.generated.resources.sign_in_need_help
 import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
@@ -79,7 +83,7 @@ fun SignInForm(
     onSubmit: () -> Unit,
     onForgotPassword: () -> Unit,
     onErrorDismiss: () -> Unit,
-    /** Opens the support form. */
+    /** Opens the support form. The "Need help?" button and the Contact button of the top bar call it. */
     onNeedHelp: () -> Unit,
     /** Set when the sign-in is optional: the back button returns to the screen that asked for it. */
     onBack: (() -> Unit)? = null,
@@ -95,6 +99,21 @@ fun SignInForm(
         autoFocusFirst = false,
         showBackgroundLogo = false,
         leadingActions = { AppTopBarLeadingActions(showThemeToggle = true) },
+        // The same Contact and Privacy buttons as the top bar of the list of tournaments.
+        // On a phone they go into the three-dots menu.
+        actions = {
+            val openPrivacyPolicy = rememberOpenPrivacyPolicy()
+            AppTopBarButton(
+                text = stringResource(Res.string.sign_in_contact),
+                icon = Icons.Default.ContactSupport,
+                onClick = onNeedHelp,
+            )
+            AppTopBarButton(
+                text = stringResource(Res.string.sign_in_privacy),
+                icon = Icons.Default.Policy,
+                onClick = openPrivacyPolicy,
+            )
+        },
         onBack = onBack,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -258,14 +277,6 @@ fun SignInForm(
                             } else {
                                 Text(stringResource(Res.string.sign_in_button))
                             }
-                        }
-                        FocusedTextButton(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            enabled = !isLoading,
-                            onClick = rememberOpenPrivacyPolicy(),
-                            contentPadding = LinkButtonPadding,
-                        ) {
-                            Text(stringResource(Res.string.privacy_policy))
                         }
                     }
                 }

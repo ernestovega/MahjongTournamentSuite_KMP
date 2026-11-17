@@ -14,6 +14,8 @@
     <string name="password_show">Passwort anzeigen</string>
     <string name="sign_in_forgot_password">Passwort vergessen?</string>
     <string name="sign_in_need_help">Brauchst du Hilfe?</string>
+    <string name="sign_in_contact">Kontakt</string>
+    <string name="sign_in_privacy">Datenschutz</string>
     <string name="support_title">Support</string>
     <string name="support_intro">Schreib uns und wir antworten dir per E-Mail.</string>
     <string name="support_field_name">Name (optional)</string>

@@ -14,6 +14,8 @@
     <string name="password_show">Visa lösenord</string>
     <string name="sign_in_forgot_password">Glömt lösenordet?</string>
     <string name="sign_in_need_help">Behöver du hjälp?</string>
+    <string name="sign_in_contact">Kontakt</string>
+    <string name="sign_in_privacy">Integritet</string>
     <string name="support_title">Support</string>
     <string name="support_intro">Skriv till oss så svarar vi via e-post.</string>
     <string name="support_field_name">Namn (valfritt)</string>
