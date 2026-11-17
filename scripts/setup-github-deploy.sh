@@ -60,6 +60,11 @@ echo "Granting the build role to the default compute service account..."
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role=roles/cloudbuild.builds.builder --condition=None >/dev/null
+# The functions also run as that account. In those projects it lacks the Editor role that older projects give it, and
+# every read of Firestore fails with 500.
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role=roles/editor --condition=None >/dev/null
 
 echo "Creating the GitHub identity pool and provider..."
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 \
