@@ -3,9 +3,14 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
@@ -19,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
@@ -72,52 +79,64 @@ fun PlayerSubstitutionDialog(
             onDismissRequest = onDismiss,
             // A short title fits one line on a phone. The player goes under it.
             title = { MtsDialogTitle(stringResource(Res.string.substitution), subtitle = playerName) },
+            // The same gap between the sections, and the same height for every radio and checkbox line.
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.substitution_explanation))
-                    Text(stringResource(Res.string.reason), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
-                    SubstitutionReason.entries.forEach { option ->
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = reason == option,
-                                onClick = {
-                                    reason = option
-                                    if (option == SubstitutionReason.LATE) duringSession = false
-                                    if (option != SubstitutionReason.ILLNESS) excluded = false
-                                },
-                            )
-                            Text(
-                                when (option) {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Text(
+                        stringResource(Res.string.substitution_explanation),
+                        Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    SubstitutionSection(stringResource(Res.string.reason)) {
+                        SubstitutionReason.entries.forEach { option ->
+                            ChoiceLine(
+                                text = when (option) {
                                     SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
                                     SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
                                     SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
                                 },
-                            )
+                                modifier = Modifier.selectable(selected = reason == option, role = Role.RadioButton) {
+                                    reason = option
+                                    if (option == SubstitutionReason.LATE) duringSession = false
+                                    if (option != SubstitutionReason.ILLNESS) excluded = false
+                                },
+                            ) { RadioButton(selected = reason == option, onClick = null) }
                         }
                     }
-                    Text(stringResource(Res.string.first_round_of_the_substitute), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
-                    Row(Modifier.align(Alignment.CenterHorizontally).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        rounds.forEach { round ->
-                            FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
+                    SubstitutionSection(stringResource(Res.string.first_round_of_the_substitute)) {
+                        Row(
+                            Modifier.align(Alignment.CenterHorizontally).horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            rounds.forEach { round ->
+                                FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
+                            }
                         }
                     }
-                    if (reason != SubstitutionReason.LATE) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = duringSession, onCheckedChange = { duringSession = it })
-                            Text(stringResource(Res.string.the_player_leaves_after_the_session))
+                    if (reason != SubstitutionReason.DISQUALIFIED) {
+                        Column {
+                            if (reason != SubstitutionReason.LATE) {
+                                ChoiceLine(
+                                    text = stringResource(Res.string.the_player_leaves_after_the_session),
+                                    modifier = Modifier.toggleable(value = duringSession, role = Role.Checkbox) { duringSession = it },
+                                ) { Checkbox(checked = duringSession, onCheckedChange = null) }
+                            }
+                            if (reason == SubstitutionReason.ILLNESS) {
+                                ChoiceLine(
+                                    text = stringResource(Res.string.the_head_referee_excluded_the_player),
+                                    modifier = Modifier.toggleable(value = excluded, role = Role.Checkbox) { excluded = it },
+                                ) { Checkbox(checked = excluded, onCheckedChange = null) }
+                            }
                         }
-                    }
-                    if (reason == SubstitutionReason.ILLNESS) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = excluded, onCheckedChange = { excluded = it })
-                            Text(stringResource(Res.string.the_head_referee_excluded_the_player))
-                        }
-                    }
-                    if (reason == SubstitutionReason.DISQUALIFIED) {
-                        Text(stringResource(Res.string.a_disqualified_player_gets_0_table))
+                    } else {
+                        Text(
+                            stringResource(Res.string.a_disqualified_player_gets_0_table),
+                            Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                        )
                     }
                 }
             },
@@ -139,5 +158,27 @@ fun PlayerSubstitutionDialog(
                 }
             },
         )
+    }
+}
+
+/** A labelled part of the substitution dialog: a small centered title and its content close under it. */
+@Composable
+private fun SubstitutionSection(label: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+        content()
+    }
+}
+
+/** A radio or checkbox line: the whole line takes the tap, with the same padding for one line of text or more. */
+@Composable
+private fun ChoiceLine(text: String, modifier: Modifier, control: @Composable () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).then(modifier).padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        control()
+        Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
     }
 }

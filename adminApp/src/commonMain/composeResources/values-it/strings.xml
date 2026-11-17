@@ -809,7 +809,7 @@
     <string name="round_control_finished_col_round">Turno</string>
     <string name="round_control_finished_col_table">Tavolo</string>
     <string name="round_control_finished_col_hands">Mani</string>
-    <string name="round_control_finished_go">Vai</string>
+    <string name="round_control_finished_go">Vedi</string>
     <string name="round_control_finished_close_selected">Chiudi selezionati</string>
     <string name="round_control_finished_badge">Tavoli aperti: %1$d</string>
     <string name="timer_manual_warning">Controllo manuale del turno attivo: l'orologio non decide cosa possono fare i giocatori.\nCambialo in Controllo del turno.</string>

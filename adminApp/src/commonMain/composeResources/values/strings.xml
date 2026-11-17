@@ -809,7 +809,7 @@
     <string name="round_control_finished_col_round">Round</string>
     <string name="round_control_finished_col_table">Table</string>
     <string name="round_control_finished_col_hands">Hands</string>
-    <string name="round_control_finished_go">Go</string>
+    <string name="round_control_finished_go">See</string>
     <string name="round_control_finished_close_selected">Close selected</string>
     <string name="round_control_finished_badge">Open tables: %1$d</string>
     <string name="timer_manual_warning">Manual round control is on: the clock does not decide what the players can do.\nChange it in Round control.</string>

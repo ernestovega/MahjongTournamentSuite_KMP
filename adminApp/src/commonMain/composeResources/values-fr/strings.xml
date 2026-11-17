@@ -809,7 +809,7 @@
     <string name="round_control_finished_col_round">Tour</string>
     <string name="round_control_finished_col_table">Table</string>
     <string name="round_control_finished_col_hands">Mains</string>
-    <string name="round_control_finished_go">Aller</string>
+    <string name="round_control_finished_go">Voir</string>
     <string name="round_control_finished_close_selected">Fermer la sélection</string>
     <string name="round_control_finished_badge">Tables ouvertes : %1$d</string>
     <string name="timer_manual_warning">Contrôle manuel du tour actif : l'horloge ne décide pas de ce que les joueurs peuvent faire.\nChangez-le dans Contrôle du tour.</string>

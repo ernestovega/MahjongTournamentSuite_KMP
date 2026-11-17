@@ -809,7 +809,7 @@
     <string name="round_control_finished_col_round">Omgång</string>
     <string name="round_control_finished_col_table">Bord</string>
     <string name="round_control_finished_col_hands">Händer</string>
-    <string name="round_control_finished_go">Gå</string>
+    <string name="round_control_finished_go">Visa</string>
     <string name="round_control_finished_close_selected">Stäng valda</string>
     <string name="round_control_finished_badge">Öppna bord: %1$d</string>
     <string name="timer_manual_warning">Manuell omgångskontroll är på: klockan bestämmer inte vad spelarna kan göra.\nÄndra det i Omgångskontroll.</string>
