@@ -669,15 +669,15 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
 /**
  * The tournaments that stay in production. They look like real events, with real EMA players, team names by country
  * and no "Test" in any text. The testers play in all of them but the Uppsala Open. The ongoing one is a big tournament that starts on the
- * day of the seed run and lasts 4 days. Its rounds start every 2 hours and 30 minutes, from 10:00 to 23:00, so the
+ * day of the seed run and lasts 6 days, so it covers the week. Its rounds start at 10:00, 12:30, 18:00 and 20:30, so the
  * testers can play a round in the morning, in the afternoon and at night. The rounds that started before the seed run
  * are complete and over. The last round that started by the planned times is empty and starts at the time of the seed
  * run, without a clock, so Play in the Timer starts it; the whole schedule moves to make it so. The later rounds are
  * empty. `npm run prepare:ongoing-round` does the same later on the stored tournament, after the testers enter hands.
  */
 const PROD_TIMES = ["09:00", "11:30", "14:00", "16:30"];
-const ONGOING_TIMES = ["10:00", "12:30", "15:00", "18:00", "20:30", "23:00"];
-const ONGOING_DAYS = 4;
+const ONGOING_TIMES = ["10:00", "12:30", "18:00", "20:30"];
+const ONGOING_DAYS = 6;
 const ONGOING_START = TESTER_START;
 const ONGOING_ROUNDS = ONGOING_TIMES.length * ONGOING_DAYS;
 /** The last round that started by the planned times at the seed run. Round 1 when no round started yet. */
@@ -753,7 +753,7 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     players: playersByCountry([["ESP", 96], ["FRA", 36], ["ITA", 16], ["GER", 16], ["NED", 12], ["POL", 8], ["SWE", 8], ["FIN", 8]]),
     countBestHands: true, countChickenHands: true,
     schedule: spread(ONGOING_ROUNDS, ONGOING_START, ONGOING_TIMES.length, ONGOING_TIMES),
-    // The rounds leave a free time only between 17:15 and 18:00.
+    // The rounds leave a free afternoon; the dinner break is at 17:15.
     agenda: [
       { title: "Registration and welcome coffee", date: ONGOING_START, startTime: "09:15" },
       ...Array.from({ length: ONGOING_DAYS }, (_, day) => ({ title: "Dinner break", date: addDays(ONGOING_START, day), startTime: "17:15" })),
