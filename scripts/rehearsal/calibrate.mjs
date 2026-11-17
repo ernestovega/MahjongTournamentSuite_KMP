@@ -138,6 +138,7 @@ async function main() {
     slots: Array.from({ length: 16 }, (_, index) => index + 1).filter((slot) => !appSlots.has(slot)),
     accountSuffix: (slot) => `cal${String(slot).padStart(2, "0")}`,
     spectators: Number(args.spectators ?? 20),
+    venuePhones: Number(args["venue-phones"] ?? 0),
     until: Date.now() + (2 * (minutes + extraMinutes + 2) + 5) * 60_000 + waitBeforePlay * 1_000,
     stopped: () => finished,
     handSeconds: [handMin, handMax ?? handMin],

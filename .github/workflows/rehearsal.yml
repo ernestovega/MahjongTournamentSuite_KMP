@@ -28,6 +28,10 @@ on:
         description: "Seconds between two hands of a bot table, as min-max."
         type: string
         default: "60-90"
+      venue_phones:
+        description: "calibrate and bots: phones of one venue wifi, all from one address, that poll like the app at its table (for example 60)."
+        type: number
+        default: 0
       emulators:
         description: "calibrate and bots: the real app on emulators too (slot 1 in a calibration, slots 6-9 in a rehearsal)."
         type: boolean
@@ -243,7 +247,7 @@ jobs:
           app_args=()
           if [ "${{ needs.app.result }}" = "success" ]; then app_args=(--app-slots=1 --wait-before-play=360); fi
           node scripts/rehearsal/calibrate.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
-            --hand-seconds="$HAND_SECONDS" --report=out/calibration.json "${app_args[@]}"
+            --hand-seconds="$HAND_SECONDS" --venue-phones="${{ inputs.venue_phones }}" --report=out/calibration.json "${app_args[@]}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -304,9 +308,41 @@ jobs:
           path: out/
           retention-days: 30
 
+  # The phones of one venue wifi: one machine, one address, many phones polling like the app at their tables.
+  venue:
+    name: Venue wifi (${{ inputs.venue_phones }} phones)
+    if: github.ref == 'refs/heads/main' && inputs.action == 'bots' && inputs.venue_phones > 0
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Poll like the phones of the venue
+        env:
+          TOURNAMENT: ${{ inputs.tournament }}
+          UNTIL: ${{ inputs.until }}
+        run: |
+          until_arg=()
+          if [ -n "$UNTIL" ]; then until_arg=(--until="$UNTIL"); fi
+          node scripts/rehearsal/bots.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --tournament="$TOURNAMENT" --slots="" --venue-phones="${{ inputs.venue_phones }}" \
+            "${until_arg[@]}" --report=out/bots-venue.json --title="Venue wifi"
+        # The bots need no password here: the phones only read.
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bots-venue
+          path: out/
+          retention-days: 30
+
   check:
     name: Checks
-    needs: bots
+    needs: [bots, venue]
     if: always() && github.ref == 'refs/heads/main' && (inputs.action == 'bots' || inputs.action == 'check')
     runs-on: ubuntu-latest
     timeout-minutes: 15

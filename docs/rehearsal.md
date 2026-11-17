@@ -66,7 +66,7 @@ The automatic player of an emulator (`RehearsalPlayerTest`) uses the screens as 
 the seats, Add win or Add draw, the numpad, Review and Confirm. It writes only when its slot is the lowest of its
 table, and follows the table otherwise. `adb logcat -s REHEARSAL` shows what it does.
 
-Options: `--hand-seconds=60-90` (time between hands), `--penalty-rate=0.05`, `--late-tables=2_7` (the scorer starts
+Options: `--venue-phones=60` (phones of one venue wifi, from one address), `--hand-seconds=60-90` (time between hands), `--penalty-rate=0.05`, `--late-tables=2_7` (the scorer starts
 2 minutes late), `--race-tables=1_3` (two phones send the same hand at once), `--spectators=N`, `--verbose`.
 
 ## The checks

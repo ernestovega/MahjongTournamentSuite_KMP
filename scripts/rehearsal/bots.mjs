@@ -328,6 +328,28 @@ async function spectate(context, index) {
   }
 }
 
+/**
+ * A phone in the venue, on the same network as the others: it sits at a table and polls like the app on the table
+ * screen (the manifest every 5 seconds, the table when it changes). Many of them from one process share one address.
+ */
+async function venuePhone(context, index) {
+  const { api, tournament } = context;
+  await sleep((index * 5_000) / Math.max(1, context.venuePhones));
+  let lastVersion = null;
+  while (Date.now() < context.until && !context.stopped()) {
+    const roundId = await tournament.currentRound();
+    const tables = await tournament.tables(roundId);
+    const table = tables.length === 0 ? null : tables[index % tables.length];
+    const reply = await api.call("GET", `/public/tournaments/${tournament.id}/sync/manifest`, { label: "GET manifest (venue)" });
+    const version = table == null ? null : reply.json?.tableVersions?.[`${roundId}_${table.tableId}`];
+    if (reply.status === 200 && table != null && version !== lastVersion) {
+      lastVersion = version;
+      await api.call("GET", `/public/tournaments/${tournament.id}/tables/${roundId}/${table.tableId}`, { label: "GET table (venue)" });
+    }
+    await sleep(context.pollMs);
+  }
+}
+
 export async function findTournament(api, nameOrId) {
   const reply = await api.call("GET", "/public/tournaments", { label: "GET tournaments" });
   if (reply.status !== 200) throw new Error(`Listing the tournaments failed: ${reply.status} ${reply.json?.message ?? ""}`);
@@ -354,6 +376,7 @@ export async function runBots(options) {
     penaltyRate: options.penaltyRate ?? 0.05,
     pollMs: options.pollMs ?? 5_000,
     spectatorPollMs: options.spectatorPollMs ?? 15_000,
+    venuePhones: options.venuePhones ?? 0,
     verbose: options.verbose ?? false,
     lateTables: new Set(options.lateTables ?? []),
     raceTables: new Set(options.raceTables ?? []),
@@ -389,7 +412,10 @@ export async function runBots(options) {
     }
   }
 
-  const spectators = Array.from({ length: options.spectators ?? 0 }, (_, index) => spectate(context, index));
+  const spectators = [
+    ...Array.from({ length: options.spectators ?? 0 }, (_, index) => spectate(context, index)),
+    ...Array.from({ length: context.venuePhones }, (_, index) => venuePhone(context, index)),
+  ];
   await Promise.all([...bots.map((bot) => bot.run().catch((error) => metrics.event("bot-crashed", { slot: bot.slotNumber, error: String(error) }))), ...spectators]);
 
   return {
@@ -433,7 +459,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const password = process.env.REHEARSAL_PASSWORD ?? "";
   const baseEmail = process.env.STAGING_ADMIN_EMAIL ?? "";
-  if (!password || !baseEmail) throw new Error("Set REHEARSAL_PASSWORD and STAGING_ADMIN_EMAIL.");
+  // Phones that only read need no account.
+  if (parseRange(args.slots).length > 0 && (!password || !baseEmail)) throw new Error("Set REHEARSAL_PASSWORD and STAGING_ADMIN_EMAIL.");
   const metrics = new Metrics();
   const api = new Api(args.api ?? STAGING_API, metrics);
   const tournamentId = await findTournament(api, args.tournament);
@@ -444,6 +471,7 @@ async function main() {
     slots: parseRange(args.slots),
     accountSuffix: (slot) => `j${String(slot).padStart(2, "0")}`,
     spectators: Number(args.spectators ?? 0),
+    venuePhones: Number(args["venue-phones"] ?? 0),
     until,
     handSeconds: [handMin, handMax ?? handMin],
     penaltyRate: Number(args["penalty-rate"] ?? 0.05),
