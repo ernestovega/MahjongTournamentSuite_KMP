@@ -102,12 +102,6 @@ class PageRefreshUiTest {
     }
 
     @Test
-    fun theTournamentNameShowsOnTheTablesScreen() = runComposeUiTest {
-        show { TablesScreen(rememberNavController(), "t1") }
-        assertNameShows()
-    }
-
-    @Test
     fun theStoreGetsTheRoleAndTheProfileToo() = runComposeUiTest {
         show { PlayersScreen(rememberNavController(), "t1") }
         assertNameShows()

@@ -177,7 +177,6 @@
     <string name="short_name">Short name</string>
     <string name="from_to">From-to</string>
     <string name="features">Features</string>
-    <string name="open">Open</string>
     <string name="select_ema_player">Select EMA player</string>
     <string name="name_ema_id_or_country">Name, EMA ID or country</string>
     <string name="no_player_found">No player found.</string>
@@ -199,17 +198,9 @@
     <string name="no_players_match_the_search">No players match the search.</string>
     <string name="clear_slot">Clear slot</string>
     <string name="tables">Tables</string>
-    <string name="filter">Filter</string>
-    <string name="all_rounds">All rounds</string>
     <string name="loading">Loading…</string>
-    <string name="no_tables_yet">No tables yet</string>
-    <string name="the_tables_show_here_when_the">The tables show here when the round is drawn.</string>
     <string name="round">Round</string>
     <string name="table">Table</string>
-    <string name="manual_results">Manual Results</string>
-    <string name="edit_coming_soon">Edit (coming soon)</string>
-    <string name="delete_coming_soon">Delete (coming soon)</string>
-    <string name="preview_tournament_2">preview-tournament</string>
     <string name="no_players_in_this_group">No players in this group.</string>
     <string name="reason">Reason</string>
     <string name="first_round_of_the_substitute">First round of the substitute</string>
