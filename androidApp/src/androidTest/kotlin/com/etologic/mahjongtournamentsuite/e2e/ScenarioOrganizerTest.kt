@@ -303,6 +303,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun sendTheInvitations() {
         c.clickButton("Invitations")
         c.waitForText("Invitations and reminders", timeoutMs = 60_000)
+        // The dialog opens on the players without an account. The players with one get a reminder, so all are shown.
+        c.clickButton("All (${slots.size})")
+        c.waitForText("Select all shown (${slots.size})")
         c.clickButton("Select all shown (${slots.size})")
         c.waitForText("${slots.size} selected")
         c.clickButton("Send (${slots.size})")
