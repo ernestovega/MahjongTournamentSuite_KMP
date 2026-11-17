@@ -39,6 +39,22 @@ internal object PollSchedule {
     /** Before the first answer, a failed load is tried again at this interval. */
     val UNKNOWN: Duration = ONGOING
 
+    /** The list of tournaments checks at a slow pace, also when nothing is being played, so a long open screen stays current. */
+    val LIST_IDLE: Duration = 5.minutes
+
+    /** The list checks more often while a tournament of it is being played, because its places and status change. */
+    val LIST_ONGOING: Duration = 1.minutes
+
+    /**
+     * The time until the next check of the list of tournaments. The list never stops checking while it is on screen.
+     * Only a tournament with dates counts as ongoing here, so a tournament without dates does not speed up the list.
+     */
+    fun listDelay(tournaments: List<Tournament>?, now: LocalDateTime): Duration = when {
+        tournaments == null -> UNKNOWN
+        tournaments.any { it.eventStartDate != null && it.pollPhase(now) == PollPhase.ONGOING } -> LIST_ONGOING
+        else -> LIST_IDLE
+    }
+
     /**
      * The time until the next check, or null when the screen does not check again (a finished tournament).
      * [tableRoundId] is the round of the table on screen, null on the other screens. While its matches are played,

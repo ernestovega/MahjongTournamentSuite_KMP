@@ -122,4 +122,28 @@ class PollScheduleTest {
     fun beforeTheFirstAnswerTheLoadIsTriedAgainEvery15Seconds() {
         assertEquals(15.seconds, PollSchedule.nextDelay(null, 1, at("2026-10-10T10:30")))
     }
+
+    @Test
+    fun theListChecksEveryMinuteWhileATournamentIsOngoing() {
+        val list = listOf(tournament(), tournament(start = "2026-12-01", end = "2026-12-02"))
+        assertEquals(1.minutes, PollSchedule.listDelay(list, at("2026-10-10T10:30")))
+    }
+
+    @Test
+    fun theListChecksEveryFiveMinutesWhenNothingIsOngoing() {
+        assertEquals(5.minutes, PollSchedule.listDelay(listOf(tournament()), at("2026-10-09T10:00")))
+        assertEquals(5.minutes, PollSchedule.listDelay(listOf(tournament()), at("2026-10-12T10:00")))
+        assertEquals(5.minutes, PollSchedule.listDelay(listOf(tournament(completed = true)), at("2026-10-10T10:30")))
+        assertEquals(5.minutes, PollSchedule.listDelay(emptyList(), at("2026-10-10T10:30")))
+    }
+
+    @Test
+    fun aTournamentWithoutDatesDoesNotSpeedUpTheList() {
+        assertEquals(5.minutes, PollSchedule.listDelay(listOf(tournament(start = null, end = null)), at("2026-10-10T10:30")))
+    }
+
+    @Test
+    fun beforeTheFirstListTheLoadIsTriedAgainEvery15Seconds() {
+        assertEquals(15.seconds, PollSchedule.listDelay(null, at("2026-10-10T10:30")))
+    }
 }

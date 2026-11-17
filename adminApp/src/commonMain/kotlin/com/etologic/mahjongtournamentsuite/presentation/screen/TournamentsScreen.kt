@@ -68,6 +68,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -119,14 +121,18 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPl
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -256,8 +262,20 @@ fun TournamentsScreen(
         }
     }
 
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(presenter) {
         refresh()
+        // While the list is on screen it checks for changes, quietly and without the progress bar. [TournamentListPoll] sets how often.
+        // A hidden tab or an app in the background does not check. The return checks at once.
+        val isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) }
+        while (true) {
+            withTimeoutOrNull(TournamentListPoll.nextDelay(store.tournaments.value)) {
+                isStarted.first { !it }
+            }
+            isStarted.first { it }
+            // A failed check shows nothing. The list on screen stays, and the next check tries again.
+            (presenter.loadTournaments() as? AppResult.Success)?.let { store.upsertTournaments(it.value) }
+        }
     }
 
     val roleLabel = adminStatus?.let {
