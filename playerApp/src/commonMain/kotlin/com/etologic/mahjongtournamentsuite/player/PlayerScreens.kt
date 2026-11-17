@@ -848,6 +848,7 @@ internal fun rememberTournamentView(
     tournamentId: String,
     reloadKey: Int = 0,
     tableRoundId: Int? = null,
+    tableId: Int? = null,
 ): Pair<PlayerTournamentView?, UiText?> {
     val presenter = koinInject<PlayerTournamentPresenter>()
     var view by remember(tournamentId) { mutableStateOf<PlayerTournamentView?>(null) }
@@ -855,7 +856,7 @@ internal fun rememberTournamentView(
     var failures by remember(tournamentId) { mutableIntStateOf(0) }
     var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(tournamentId, reloadKey, tableRoundId) {
+    LaunchedEffect(tournamentId, reloadKey, tableRoundId, tableId) {
         // Only the first load after a manual reload reads everything again. The later checks ask for changes only.
         // A hidden tab or an app in the background does not check the server. The checks go on when it returns.
         pollForChanges(
@@ -869,6 +870,10 @@ internal fun rememberTournamentView(
                     tableRoundId,
                     tournament?.currentVenueDateTime() ?: currentLocalDateTime(),
                     playsHere = view?.mySlotId != null,
+                    ownTable = view?.let { current ->
+                        val mine = current.mySlotId ?: return@let false
+                        current.tables.any { it.roundId == tableRoundId && it.tableId == tableId && mine in it.playerSlots() }
+                    } ?: false,
                 )
             },
         ) { result ->
@@ -1737,7 +1742,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
 @Composable
 fun TableScreen(navController: NavHostController, tournamentId: String, roundId: Int, tableId: Int) {
     var reloadKey by remember { mutableStateOf(0) }
-    val (view, message) = rememberTournamentView(tournamentId, reloadKey, tableRoundId = roundId)
+    val (view, message) = rememberTournamentView(tournamentId, reloadKey, tableRoundId = roundId, tableId = tableId)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
     // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.

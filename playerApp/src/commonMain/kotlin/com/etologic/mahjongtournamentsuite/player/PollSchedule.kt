@@ -36,6 +36,9 @@ internal object PollSchedule {
     val ONGOING: Duration = 15.seconds
     val TABLE_IN_PLAY: Duration = 5.seconds
 
+    /** The own table of a player while its round is played: the hand of the scorer shows on the other phones soon. */
+    val OWN_TABLE_IN_PLAY: Duration = 2.seconds
+
     /** Before the first answer, a failed load is tried again at this interval. */
     val UNKNOWN: Duration = ONGOING
 
@@ -63,10 +66,17 @@ internal object PollSchedule {
      * [ONGOING]. A player of the tournament ([playsHere]) checks every [TABLE_IN_PLAY] on all its screens while a round
      * is being played, including the extra time to finish the hand and the wait for the starting gong.
      * [tableRoundId] is the round of the table on screen, null on the other screens: that table checks every
-     * [TABLE_IN_PLAY] during its round for everyone, so the hand buttons appear soon after the Play.
+     * [TABLE_IN_PLAY] during its round for everyone, so the hand buttons appear soon after the Play. The player's own
+     * table ([ownTable]) checks every [OWN_TABLE_IN_PLAY] during its round, so a hand reaches the other phones soon.
      * A return from the background always checks at once, whatever this says.
      */
-    fun nextDelay(tournament: Tournament?, tableRoundId: Int?, now: LocalDateTime, playsHere: Boolean = false): Duration {
+    fun nextDelay(
+        tournament: Tournament?,
+        tableRoundId: Int?,
+        now: LocalDateTime,
+        playsHere: Boolean = false,
+        ownTable: Boolean = false,
+    ): Duration {
         if (tournament == null) return UNKNOWN
         return when (tournament.pollPhase(now)) {
             PollPhase.FINISHED -> FINISHED
@@ -77,7 +87,11 @@ internal object PollSchedule {
                     playsHere -> (1..tournament.numRounds).any { tournament.roundIsInPlay(it, now) }
                     else -> false
                 }
-                if (inPlay) TABLE_IN_PLAY else ONGOING
+                when {
+                    !inPlay -> ONGOING
+                    ownTable && tableRoundId != null -> OWN_TABLE_IN_PLAY
+                    else -> TABLE_IN_PLAY
+                }
             }
         }
     }
