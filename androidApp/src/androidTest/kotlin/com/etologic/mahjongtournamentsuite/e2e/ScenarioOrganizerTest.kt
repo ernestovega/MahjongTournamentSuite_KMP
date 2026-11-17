@@ -246,8 +246,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("· Errors: 0 ·", substring = true)
         c.waitForText("Import ($imported)")
         c.clickButton("Import ($imported)")
-        c.waitForText("Replace all players?")
-        c.clickButton("Replace")
+        // The app asks before it replaces players. A new tournament has none, so the import goes on at once.
+        c.waitForAnyText("Replace all players?", "Import finished", timeoutMs = 120_000)
+        if (c.isOnScreen("Replace all players?")) c.clickButton("Replace")
         c.waitForText("Import finished", timeoutMs = 120_000)
         c.waitForText("Players saved: $imported")
         c.clickLastButton("Close")
