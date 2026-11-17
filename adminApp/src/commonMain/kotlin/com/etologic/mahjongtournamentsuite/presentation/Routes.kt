@@ -39,15 +39,6 @@ data class TeamsRoute(
     val tournamentId: String,
 )
 
-@Serializable
-data class TablesRoute(
-    val tournamentId: String,
-)
-
-@Serializable
-data class RankingsRoute(
-    val tournamentId: String,
-)
 
 /**
  * The statistics screen. [scope] is the name of a `StatisticsScope`. The other values give its context.

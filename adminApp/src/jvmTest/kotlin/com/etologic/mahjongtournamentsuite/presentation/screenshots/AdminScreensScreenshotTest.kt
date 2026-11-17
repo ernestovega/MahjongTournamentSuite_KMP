@@ -23,7 +23,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -86,9 +85,6 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun teams() = adminScreenshots("teams", ready = { waitForText("Red Dragons", substring = true) }) { nav -> TeamsScreen(nav, ONGOING) }
-
-    @Test
-    fun tables() = adminScreenshots("tables", ready = { waitForText("13(T4)", substring = true) }) { nav -> TablesScreen(nav, ONGOING) }
 
     @Test
     fun playerBase() = adminScreenshots("player-base", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav -> PlayerBaseScreen(nav) }

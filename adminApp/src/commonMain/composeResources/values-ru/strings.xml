@@ -177,7 +177,6 @@
     <string name="short_name">Короткое название</string>
     <string name="from_to">С-по</string>
     <string name="features">Особенности</string>
-    <string name="open">Открыть</string>
     <string name="select_ema_player">Выберите игрока EMA</string>
     <string name="name_ema_id_or_country">Имя, EMA ID или страна</string>
     <string name="no_player_found">Игрок не найден.</string>
@@ -199,17 +198,9 @@
     <string name="no_players_match_the_search">Нет игроков, соответствующих поиску.</string>
     <string name="clear_slot">Очистить место</string>
     <string name="tables">Столы</string>
-    <string name="filter">Фильтр</string>
-    <string name="all_rounds">Все раунды</string>
     <string name="loading">Загрузка…</string>
-    <string name="no_tables_yet">Столов пока нет</string>
-    <string name="the_tables_show_here_when_the">Столы появятся здесь после жеребьёвки раунда.</string>
     <string name="round">Раунд</string>
     <string name="table">Стол</string>
-    <string name="manual_results">Ручные результаты</string>
-    <string name="edit_coming_soon">Редактировать (скоро)</string>
-    <string name="delete_coming_soon">Удалить (скоро)</string>
-    <string name="preview_tournament_2">предпросмотр-турнира</string>
     <string name="no_players_in_this_group">В этой группе нет игроков.</string>
     <string name="reason">Причина</string>
     <string name="first_round_of_the_substitute">Первый раунд замены</string>

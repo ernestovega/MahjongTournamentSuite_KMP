@@ -1028,10 +1028,6 @@
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableSyncDialogs.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TablesScreen.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="39" column="1" source="standard:no-unused-imports" />
-    </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TextInputs.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="40" column="53" source="standard:function-signature" />
@@ -1314,8 +1310,8 @@
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/PageRefreshUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="122" column="125" source="standard:function-signature" />
-        <error line="125" column="122" source="standard:function-signature" />
+        <error line="116" column="125" source="standard:function-signature" />
+        <error line="119" column="122" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/PlayerAccountsBulkDialogUiTest.kt">
         <error line="150" column="40" source="standard:statement-wrapping" />

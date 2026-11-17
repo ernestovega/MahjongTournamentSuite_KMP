@@ -24,13 +24,11 @@ import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
-import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
-import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -61,7 +59,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandalone
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -211,13 +208,6 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                             tournamentId = args.tournamentId,
                         )
                     }
-                    screen<TablesRoute> { backStackEntry ->
-                        val args = backStackEntry.toRoute<TablesRoute>()
-                        TablesScreen(
-                            navController = navController,
-                            tournamentId = args.tournamentId,
-                        )
-                    }
                     screen<ErrorsRoute> { ErrorsScreen(navController) }
                     screen<ActivityRoute> { backStackEntry ->
                         ActivityScreen(navController, initialTournamentId = backStackEntry.toRoute<ActivityRoute>().tournamentId)
@@ -225,12 +215,6 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<DesignSystemRoute> { DesignSystemScreen(navController) }
                     screen<StatisticsRoute> { backStackEntry ->
                         StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
-                    }
-                    screen<RankingsRoute> { backStackEntry ->
-                        val args = backStackEntry.toRoute<RankingsRoute>()
-                        RankingStandaloneScreen(
-                            tournamentId = args.tournamentId,
-                        )
                     }
                 }
                 // On the web the back and forward of the browser move through the screens like the back of the app.
