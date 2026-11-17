@@ -55,26 +55,38 @@ internal object PollSchedule {
         else -> LIST_IDLE
     }
 
+    /** A finished tournament still checks, slowly, so a late correction of the organizer shows. */
+    val FINISHED: Duration = 5.minutes
+
     /**
-     * The time until the next check, or null when the screen does not check again (a finished tournament).
-     * [tableRoundId] is the round of the table on screen, null on the other screens. While its matches are played,
-     * including the extra time to finish the hand, and while it waits for the starting gong, the table checks every [TABLE_IN_PLAY].
+     * The time until the next check of a screen of [tournament]. Every screen of an ongoing tournament checks every
+     * [ONGOING]. A player of the tournament ([playsHere]) checks every [TABLE_IN_PLAY] on all its screens while a round
+     * is being played, including the extra time to finish the hand and the wait for the starting gong.
+     * [tableRoundId] is the round of the table on screen, null on the other screens: that table checks every
+     * [TABLE_IN_PLAY] during its round for everyone, so the hand buttons appear soon after the Play.
      * A return from the background always checks at once, whatever this says.
      */
-    fun nextDelay(tournament: Tournament?, tableRoundId: Int?, now: LocalDateTime): Duration? {
+    fun nextDelay(tournament: Tournament?, tableRoundId: Int?, now: LocalDateTime, playsHere: Boolean = false): Duration {
         if (tournament == null) return UNKNOWN
         return when (tournament.pollPhase(now)) {
-            PollPhase.FINISHED -> null
+            PollPhase.FINISHED -> FINISHED
             PollPhase.NOT_STARTED -> NOT_STARTED
             PollPhase.ONGOING -> {
-                // A table also checks often while it waits for the starting gong, so the hand buttons appear soon after the Play.
-                val inPlay = tableRoundId != null && tournament.matchPhase(tableRoundId, now).let { phase ->
-                    phase == MatchPhase.PLAYING || phase == MatchPhase.EXTRA_TIME ||
-                        (phase == MatchPhase.NOT_STARTED && tournament.seatingIsOpen(tableRoundId, now))
+                val inPlay = when {
+                    tableRoundId != null -> tournament.roundIsInPlay(tableRoundId, now)
+                    playsHere -> (1..tournament.numRounds).any { tournament.roundIsInPlay(it, now) }
+                    else -> false
                 }
                 if (inPlay) TABLE_IN_PLAY else ONGOING
             }
         }
+    }
+
+    /** True while the matches of the round are played, in their extra time, and while its tables wait for the starting gong. */
+    private fun Tournament.roundIsInPlay(roundId: Int, now: LocalDateTime): Boolean {
+        val phase = matchPhase(roundId, now)
+        if (phase == MatchPhase.PLAYING || phase == MatchPhase.EXTRA_TIME) return true
+        return phase == MatchPhase.NOT_STARTED && seatingIsOpen(roundId, now)
     }
 }
 

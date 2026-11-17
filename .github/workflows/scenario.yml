@@ -179,3 +179,49 @@ jobs:
           name: organizer-setup
           path: out/organizer-setup/
           retention-days: 14
+
+  # Every player opens the invitation of the email and chooses the password, as on the page of the link.
+  invitations:
+    name: Players open their invitations
+    needs: organizer-setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Open the invitations
+        env:
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+          REHEARSAL_IMAP_PASSWORD: ${{ secrets.REHEARSAL_IMAP_PASSWORD }}
+        run: |
+          echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          node scripts/rehearsal/invitations.mjs --plan=out/scenario/plan.json --minutes=30 --report=out/invitations.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: invitations
+          path: out/invitations.json
+          retention-days: 14

@@ -211,6 +211,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun chooseCountry(name: String) {
         c.selectField("Country").performClick()
+        // The menu lists every country and composes only the first ones. Its search field finds the country.
+        c.waitUntil(10_000) { c.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(hasSetTextAction()).onLast().performTextInput(name)
         val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
         c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
         c.onAllNodes(option).onLast().performClick()

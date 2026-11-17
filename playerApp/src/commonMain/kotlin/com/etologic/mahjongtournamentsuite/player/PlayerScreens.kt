@@ -837,9 +837,10 @@ private fun LinkButton(icon: ImageVector, label: String, description: String? = 
 }
 
 /**
- * Loads the tournament and checks for changes while the screen is open. [PollSchedule] sets how often: never again
- * for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a
- * table whose round is being played ([tableRoundId]). A hidden tab or an app in the background does not check.
+ * Loads the tournament and checks for changes while the screen is open. [PollSchedule] sets how often: every
+ * 5 minutes for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every
+ * 5 seconds while a round is being played on the table of that round ([tableRoundId]) and, for a player of the
+ * tournament, on all its screens. A hidden tab or an app in the background does not check.
  * Coming back always checks at once.
  * A failed check does not show a message when the tournament is already on screen.
  * After [STALE_AFTER_FAILURES] failed checks in a row, the message tells how long the data is old.
@@ -865,7 +866,12 @@ internal fun rememberTournamentView(
             load = { mode -> presenter.load(tournamentId, mode) },
             nextDelay = {
                 val tournament = view?.tournament
-                PollSchedule.nextDelay(tournament, tableRoundId, tournament?.currentVenueDateTime() ?: currentLocalDateTime())
+                PollSchedule.nextDelay(
+                    tournament,
+                    tableRoundId,
+                    tournament?.currentVenueDateTime() ?: currentLocalDateTime(),
+                    playsHere = view?.mySlotId != null,
+                )
             },
         ) { result ->
             when (result) {

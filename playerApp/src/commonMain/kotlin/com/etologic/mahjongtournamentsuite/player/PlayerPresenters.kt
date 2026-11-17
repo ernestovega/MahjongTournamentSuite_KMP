@@ -221,29 +221,31 @@ class PlayerStatisticsPresenter(
     private val playerRepository: PlayerRepository,
     private val telemetry: Telemetry = NoTelemetry,
 ) {
+    /** [track] is false for the later checks of a screen, so a screen that stays open counts as one view. */
     suspend fun tournament(
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
-    ): AppResult<TournamentStatisticsData> = loadStatistics.tournament(tournamentId, refreshMode).viewed("tournament")
+        track: Boolean = true,
+    ): AppResult<TournamentStatisticsData> = loadStatistics.tournament(tournamentId, refreshMode).viewed("tournament", track)
 
     /** The statistics of the signed-in player over all tournaments where the player is registered. */
-    suspend fun me(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> {
+    suspend fun me(refreshMode: RefreshMode = RefreshMode.IF_CHANGED, track: Boolean = true): AppResult<PersonStatisticsData> {
         val emaId = when (val result = authRepository.getMe(refreshMode)) {
             is AppResult.Success -> result.value.emaId
             is AppResult.Failure -> return result
         } ?: return AppResult.Failure(AppError.Unexpected("Your account is not linked to a player yet."))
         // The statistics are public, so the own ones are read by the EMA number like those of anyone else.
-        return loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("me")
+        return loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("me", track)
     }
 
     /** The players of the EMA registry. */
     suspend fun players(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>> = playerRepository.listPlayers(refreshMode)
 
     /** The statistics of another player, in the public tournaments. */
-    suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> = loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person")
+    suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED, track: Boolean = true): AppResult<PersonStatisticsData> = loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person", track)
 
     /** The final places of a player in some tournaments. The list shows them for the tournaments on screen. */
     suspend fun standings(emaId: String, tournamentIds: List<String>): Map<String, Standing> = if (emaId.isBlank()) emptyMap() else (loadStored.standings(emaId, own = false, tournamentIds) as? AppResult.Success)?.value.orEmpty()
 
-    private fun <T> AppResult<T>.viewed(scope: String) = track(telemetry, TelemetryEvent.STATISTICS_VIEWED, mapOf(TelemetryParam.SCOPE to scope))
+    private fun <T> AppResult<T>.viewed(scope: String, counts: Boolean) = if (counts) track(telemetry, TelemetryEvent.STATISTICS_VIEWED, mapOf(TelemetryParam.SCOPE to scope)) else this
 }
