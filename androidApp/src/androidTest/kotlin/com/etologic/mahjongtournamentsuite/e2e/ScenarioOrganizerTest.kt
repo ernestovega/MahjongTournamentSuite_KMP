@@ -226,13 +226,16 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         pickNext("players-errors.csv")
         c.clickButton("Import")
         c.waitForText("Import players from a file", timeoutMs = 60_000)
-        c.waitForText("The EMA registry has no player with the number 99999999.", timeoutMs = 60_000)
-        c.waitForText("is not valid.", substring = true)
+        // The preview marks the cells with mistakes and counts them in its summary line.
+        c.waitForText("· Errors: ", substring = true, timeoutMs = 60_000)
+        check(c.onAllNodes(hasText("· Errors: 0 ·", substring = true)).fetchSemanticsNodes().isEmpty()) { "The preview found no mistakes in the file with mistakes" }
         log("the file with mistakes shows its errors")
         pickNext("players.csv")
         c.clickButton("Choose another file")
         val imported = slots.count { it.via == "import" }
-        c.waitForText("Import ($imported)", timeoutMs = 60_000)
+        c.waitForText("Players: $imported ·", substring = true, timeoutMs = 60_000)
+        c.waitForText("· Errors: 0 ·", substring = true)
+        c.waitForText("Import ($imported)")
         c.clickButton("Import ($imported)")
         c.waitForText("Replace all players?")
         c.clickButton("Replace")

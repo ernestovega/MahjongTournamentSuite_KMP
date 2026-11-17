@@ -58,7 +58,9 @@ async function freePlayers(api, token) {
   if (registry.status !== 200 || users.status !== 200) throw new Error(`Reading the registry: ${registry.status}, the accounts: ${users.status}`);
   const owned = new Set((users.json.users ?? []).map((user) => user.emaId).filter(Boolean));
   return (registry.json.players ?? []).filter((player) =>
-    !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName);
+    !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName
+    // The guests of the EMA registry are placeholders, not people.
+    && !/EMA GUEST/i.test(`${player.firstName} ${player.lastName}`));
 }
 
 function csv(rows) {
