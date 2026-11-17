@@ -18,6 +18,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 
+/** The server takes up to 200 players in one request (MAX_BULK_PLAYERS of playerAccountsService.ts). */
+internal const val MAX_PLAYERS_PER_REQUEST = 200
+
 class DefaultPlayerAccountRepository(
     private val backendApi: FunctionsBackendApi,
     private val authRepository: AuthRepository,
@@ -28,6 +31,17 @@ class DefaultPlayerAccountRepository(
         tournamentId: String,
         playerIds: List<Int>,
     ): AppResult<List<PlayerAccountActionResult>> = runCatching {
+        // The server takes up to 200 players in one request, so a bigger tournament goes in several requests.
+        playerIds.chunked(MAX_PLAYERS_PER_REQUEST).flatMap { chunk -> sendChunk(tournamentId, chunk) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Sending to the players failed." }
+            AppResult.Failure(throwable.toRepositoryAppError())
+        },
+    )
+
+    private suspend fun sendChunk(tournamentId: String, playerIds: List<Int>): List<PlayerAccountActionResult> =
         authRepository.withFreshIdToken { idToken ->
             val response = backendApi.sendPlayerAccounts(
                 idToken = idToken,
@@ -47,18 +61,21 @@ class DefaultPlayerAccountRepository(
                 )
             }
         }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Sending to the players failed." }
-            AppResult.Failure(throwable.toRepositoryAppError())
-        },
-    )
 
     override suspend fun saveEmails(
         tournamentId: String,
         items: List<PlayerEmailItem>,
     ): AppResult<List<PlayerEmailResult>> = runCatching {
+        items.chunked(MAX_PLAYERS_PER_REQUEST).flatMap { chunk -> saveEmailsChunk(tournamentId, chunk) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Saving the player emails failed." }
+            AppResult.Failure(throwable.toRepositoryAppError())
+        },
+    )
+
+    private suspend fun saveEmailsChunk(tournamentId: String, items: List<PlayerEmailItem>): List<PlayerEmailResult> =
         authRepository.withFreshIdToken { idToken ->
             val response = backendApi.savePlayerEmails(
                 idToken = idToken,
@@ -74,11 +91,4 @@ class DefaultPlayerAccountRepository(
                 )
             }
         }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Saving the player emails failed." }
-            AppResult.Failure(throwable.toRepositoryAppError())
-        },
-    )
 }

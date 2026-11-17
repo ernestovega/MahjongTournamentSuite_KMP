@@ -68,6 +68,37 @@ class DefaultPlayerAccountRepositoryTest {
     }
 
     @Test
+    fun sendSplitsMoreThanTwoHundredPlayersInSeveralRequestsAndJoinsTheResults() = runTest {
+        val bodies = mutableListOf<List<Int>>()
+        val repository = repository {
+            val ids = Regex("\"playerId\":(\\d+)").findAll((it.body as TextContent).text).map { match -> match.groupValues[1].toInt() }.toList()
+            bodies += ids
+            ids.joinToString(prefix = """{"results":[""", postfix = "]}") { id -> """{"playerId":$id,"outcome":"INVITED"}""" }
+        }
+
+        val results = assertIs<AppResult.Success<List<PlayerAccountActionResult>>>(repository.send("t1", (1..240).toList())).value
+
+        assertEquals(listOf(200, 40), bodies.map { it.size })
+        assertEquals((1..240).toList(), results.map { it.playerId })
+    }
+
+    @Test
+    fun saveEmailsSplitsMoreThanTwoHundredPlayersInSeveralRequests() = runTest {
+        val sizes = mutableListOf<Int>()
+        val repository = repository {
+            val ids = Regex("\"playerId\":(\\d+)").findAll((it.body as TextContent).text).map { match -> match.groupValues[1].toInt() }.toList()
+            sizes += ids.size
+            ids.joinToString(prefix = """{"results":[""", postfix = "]}") { id -> """{"playerId":$id,"outcome":"SAVED"}""" }
+        }
+
+        val items = (1..240).map { PlayerEmailItem(playerId = it, email = "p$it@example.test") }
+        val results = assertIs<AppResult.Success<List<PlayerEmailResult>>>(repository.saveEmails("t1", items)).value
+
+        assertEquals(listOf(200, 40), sizes)
+        assertEquals(240, results.size)
+    }
+
+    @Test
     fun saveEmailsPutsThePlayersMapsOutcomesAndReasonsAndMarksPlayersStale() = runTest {
         var request: HttpRequestData? = null
         val cache = AccountCache()
