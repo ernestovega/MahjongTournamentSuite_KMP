@@ -438,13 +438,31 @@ fun TournamentsScreen(navController: NavHostController) {
             myEmaId = session.myEmaId()
         }
     }
+    // Each check of an unchanged list with an own tournament being played asks for the places again, because they change during play.
+    var standingsCheck by remember { mutableIntStateOf(0) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
-        when (val result = tournaments.listTournaments(RefreshMode.FORCE)) {
-            is AppResult.Success -> items = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
+        // The first load reads everything. The later checks ask for changes only. [PollSchedule.listDelay] sets how often.
+        // A hidden tab or an app in the background does not check. The return checks at once.
+        pollForChanges(
+            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
+            forceFirst = true,
+            load = { mode -> tournaments.listTournaments(mode) },
+            nextDelay = { PollSchedule.listDelay(items, currentLocalDateTime()) },
+        ) { result ->
+            when (result) {
+                is AppResult.Success -> {
+                    val unchanged = result.value == items
+                    items = result.value
+                    message = null
+                    if (unchanged && result.value.any { it.id in mine && statusOf(it) == TournamentStatus.IN_PROGRESS }) standingsCheck++
+                }
+                // A failed check does not show a message when the list is already on screen. The next check tries again.
+                is AppResult.Failure -> if (items == null) message = result.error.toUiText()
+            }
         }
     }
-    LaunchedEffect(items, mine, myEmaId) {
+    LaunchedEffect(items, mine, myEmaId, standingsCheck) {
         // The server keeps the places of the player. One call gets them for all own tournaments that started.
         val emaId = myEmaId ?: return@LaunchedEffect
         val started = items.orEmpty().filter { it.id in mine && statusOf(it).let { status -> status != null && status != TournamentStatus.UPCOMING } }
