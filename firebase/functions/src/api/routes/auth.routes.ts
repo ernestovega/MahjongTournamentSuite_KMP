@@ -56,6 +56,7 @@ export function authRouter(): Router {
 
       // The answer is the same for an unknown email, so it does not tell which emails have an account.
       await sendPasswordResetEmail(email).catch((error: unknown) => {
+        if (error instanceof Error && error.message.startsWith("INVALID_EMAIL")) throw badRequest("INVALID_EMAIL");
         if (!(error instanceof Error) || !error.message.startsWith("EMAIL_NOT_FOUND")) throw error;
       });
       res.status(200).json({ ok: true });
