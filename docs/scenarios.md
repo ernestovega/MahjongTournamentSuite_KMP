@@ -62,6 +62,11 @@ read it, so each one knows its part.
 - A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
   and a hand of several hands before.
 - A hand edited by the editor (the last one and an older one), and the phone of the table shows the correction.
+
+  Done (plan.cornerCases, round 2, tables 2 to 5). The organizer waits until the table has played a few hands, opens
+  it in the table editor and turns Done off and clears the hand, or types another score. The bots of the table see the
+  change: the scorer writes a deleted hand again at once, and the others note it. The checks want each case seen by
+  the scorer and by another phone, at the right hand (the newest or an older one), and no change at any other table.
 - Penalties, a draw, extra time after the gong (finish the hand), a table that stays open and the admin closes it.
 - A table with manual totals.
 - A seat change after the seats are saved.

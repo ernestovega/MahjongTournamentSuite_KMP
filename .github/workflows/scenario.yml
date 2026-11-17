@@ -404,7 +404,7 @@ jobs:
       - name: Check the tournament
         run: |
           node scripts/rehearsal/report.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
-            --tournament="$(jq -r .name out/scenario/plan.json)" --report=out/check.json --title="Game day checks" out/bots.json
+            --tournament="$(jq -r .name out/scenario/plan.json)" --plan=out/scenario/plan.json --report=out/check.json --title="Game day checks" out/bots.json
 
       - uses: actions/upload-artifact@v4
         if: always()

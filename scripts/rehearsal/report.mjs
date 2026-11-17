@@ -9,7 +9,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path";
 
 import { Api, Metrics, STAGING_API, parseArgs } from "./api.mjs";
-import { findTournament } from "./bots.mjs";
+import { findTournament, sameHand } from "./bots.mjs";
 
 const SEATS = ["East", "South", "West", "North"];
 const PLACE_POINTS = [4, 2, 1, 0];
@@ -51,13 +51,6 @@ export function tablePoints(scores) {
   return points;
 }
 
-function sameHand(saved, server) {
-  if (saved.isDraw) return text(server.playerWinnerId) === "";
-  return text(server.playerWinnerId) === text(saved.playerWinnerId)
-    && text(server.playerLooserId).replace(/^-$/, "") === text(saved.playerLooserId)
-    && text(server.handScore) === text(saved.handScore)
-    && Boolean(server.isChickenHand) === Boolean(saved.isChickenHand);
-}
 
 const beats = (a, b) => a.points > b.points || (a.points === b.points && a.score > b.score);
 const round6 = (value) => Math.round(value * 1e6) / 1e6;
@@ -115,9 +108,11 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const changed = [];
   const extra = [];
   const savedByTable = new Map();
+  // The hands that an editor deleted are not counted, and a hand written twice in the same slot counts as the last one.
   for (const report of botReports) {
     for (const saved of report.hands ?? []) {
-      const list = savedByTable.get(saved.table) ?? [];
+      if (saved.deleted) continue;
+      const list = (savedByTable.get(saved.table) ?? []).filter((item) => Number(item.handId) !== Number(saved.handId));
       list.push(saved);
       savedByTable.set(saved.table, list);
     }
@@ -212,6 +207,41 @@ export async function checkStandings(api, tournamentId, check) {
   };
 }
 
+/**
+ * The corner cases of the plan of a game day (plan.cornerCases): each correction of an editor must be seen by the
+ * phones of its table, a deleted hand must be written again, and no other table may have a correction.
+ */
+export function cornerCaseVerdicts(plan, botReports) {
+  const events = botReports.flatMap((report) => report.events ?? []);
+  const lines = [];
+  const add = (ok, textLine) => lines.push(`${ok ? "✅" : "❌"} ${textLine}`);
+  const cases = plan?.cornerCases ?? [];
+  const planned = new Set(cases.filter((item) => item.kind === "delete" || item.kind === "edit").map((item) => `${item.round}_${item.table}`));
+  for (const item of cases) {
+    const key = `${item.round}_${item.table}`;
+    const at = (kind) => events.filter((event) => event.kind === kind && event.table === key);
+    const where = item.which === "last" ? "the last hand" : "an older hand";
+    const position = (event) => (item.which === "last" ? event.handId === event.newest : event.handId < event.newest);
+    if (item.kind === "delete") {
+      const scorer = at("hand-deleted-seen").filter((event) => !event.watcher);
+      const watchers = at("hand-deleted-seen").filter((event) => event.watcher);
+      const again = at("hand-reentered");
+      add(scorer.some(position) && watchers.length > 0 && again.length > 0,
+        `Table ${key}: the editor deleted ${where}, the phones saw it and the player wrote it again (${scorer.length} seen by the scorer, ${watchers.length} by the others, ${again.length} written again${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}` : ""}).`);
+    } else if (item.kind === "edit") {
+      const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
+      const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
+      add(scorer.some(position) && watchers.length > 0,
+        `Table ${key}: the editor corrected ${where} and the phones show the correction (${scorer.length} seen by the scorer, ${watchers.length} by the others${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}, score ${scorer[0].from?.handScore} to ${scorer[0].to?.handScore}` : ""}).`);
+    }
+  }
+  if (cases.length > 0) {
+    const elsewhere = events.filter((event) => (event.kind === "hand-deleted-seen" || event.kind === "hand-corrected-seen") && !planned.has(event.table));
+    add(elsewhere.length === 0, `No hand changed at the other tables (${elsewhere.length}${elsewhere.length ? `: ${[...new Set(elsewhere.map((event) => event.table))].join(", ")}` : ""}).`);
+  }
+  return lines;
+}
+
 /** The targets of docs/rehearsal.md that the bots can measure, as lines with ✅ or ❌. */
 export function verdicts(check, botReports, integrity) {
   const lines = [];
@@ -274,7 +304,8 @@ async function main() {
   const tournamentId = await findTournament(api, args.tournament);
   const check = await checkTournament(api, tournamentId, botReports);
   if (args.standings !== "off") check.standings = await checkStandings(api, tournamentId, check);
-  const lines = verdicts(check, botReports, null);
+  const plan = args.plan ? JSON.parse(readFileSync(String(args.plan), "utf8")) : null;
+  const lines = [...verdicts(check, botReports, null), ...cornerCaseVerdicts(plan, botReports)];
   writeCheck(args.report ?? "out/check.json", args.title ?? "Rehearsal check", check, lines);
   if (lines.some((line) => line.startsWith("❌"))) process.exitCode = 1;
 }

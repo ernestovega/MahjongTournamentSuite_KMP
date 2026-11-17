@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -123,7 +124,7 @@ internal fun HandTableRow(
         }
         Column(modifier = Modifier.weight(1f)) {
         GridRow(height = GridRowHeight, background = rowBackground, topDivider = false) {
-            GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight)) {
+            GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight).testTag("hand-${index + 1}-winner")) {
                 PlayerDropdown(
                     modifier = Modifier.fillMaxWidth(),
                     label = null,
@@ -145,7 +146,7 @@ internal fun HandTableRow(
                     focusRequester = navigation.winner,
                 )
             }
-            GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight)) {
+            GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight).testTag("hand-${index + 1}-loser")) {
                 PlayerDropdown(
                     modifier = Modifier.fillMaxWidth(),
                     label = null,
@@ -167,7 +168,7 @@ internal fun HandTableRow(
                     focusRequester = navigation.loser,
                 )
             }
-            GridCell(modifier = Modifier.width(HandsScoreColumnWidth)) {
+            GridCell(modifier = Modifier.width(HandsScoreColumnWidth).testTag("hand-${index + 1}-score")) {
                 KeyboardAwareOutlinedTextField(
                     value = hand.handScore,
                     onValueChange = { hand.updateHandScore(it) },
@@ -226,7 +227,8 @@ internal fun HandTableRow(
                     )
                 }
             }
-            GridCell(modifier = Modifier.width(HandsDoneColumnWidth), last = true) {
+            // The tags name the cells of each hand for the end-to-end tests of the editor.
+            GridCell(modifier = Modifier.width(HandsDoneColumnWidth).testTag("hand-${index + 1}-done"), last = true) {
                 HandToggleControl(
                     width = 48.dp,
                     label = null,

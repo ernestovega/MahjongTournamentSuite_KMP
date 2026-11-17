@@ -11,6 +11,11 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasSetTextAction
@@ -342,6 +347,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             startRoundOnTheTimer(tournamentId, round)
             log("round $round: Play")
             if (round > 1) closeOpenTablesOfEndedRounds()
+            correctTheHands(tournamentId, round)
             val deadline = System.currentTimeMillis() + (minutes + 2) * 60_000L
             while (System.currentTimeMillis() < deadline && openTables(tournamentId, round) > 0) idle(30_000)
             log("round $round: ${openTables(tournamentId, round)} tables open at the end")
@@ -349,6 +355,132 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The last round has no next round: its clock with the extra time is over, so its open tables show in the review.
         closeOpenTablesOfEndedRounds()
         log("play done")
+    }
+
+    // The corner cases of the editor: a player calls the organization, and the editor deletes or corrects a hand in the
+    // table editor while the table goes on playing. The bots of the table see it, and write a deleted hand again.
+
+    private fun correctTheHands(tournamentId: String, round: Int) {
+        val cases = plan.optJSONArray("cornerCases") ?: return
+        for (index in 0 until cases.length()) {
+            val item = cases.getJSONObject(index)
+            if (item.getInt("round") != round || item.getString("kind") !in setOf("delete", "edit")) continue
+            val table = item.getInt("table")
+            // The player calls when the table has played a few hands.
+            val deadline = System.currentTimeMillis() + 8 * 60_000L
+            var hands = doneHands(tournamentId, round, table)
+            while (hands.size < item.getInt("minHands") && System.currentTimeMillis() < deadline) {
+                idle(10_000)
+                hands = doneHands(tournamentId, round, table)
+            }
+            check(hands.size >= item.getInt("minHands")) { "Table $round-$table played only ${hands.size} hands" }
+            val newest = hands.maxOf { it.getInt("handId") }
+            val handId = if (item.getString("which") == "last") newest else newest - item.optInt("back", 3)
+            val before = hands.first { it.getInt("handId") == handId }
+            openTable(round, table)
+            // A hand of the player saved while the editor types replaces the unsaved changes ("Table updated"), as in a
+            // real venue. The editor reads the message and does it again.
+            var reached = false
+            for (attempt in 1..3) {
+                dismissTableUpdated()
+                if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before)
+                if (c.isOnScreen("Table updated")) continue
+                c.clickButton("Save")
+                idle(3_000)
+                dismissTableUpdated()
+                // The table on the server has the change. A deleted hand can already be written again by the player.
+                val after = handOf(tournamentId, round, table, handId)
+                reached = after == null || !after.optBoolean("isDone") ||
+                    after.optString("handScore") != before.optString("handScore") ||
+                    after.optString("playerWinnerId") != before.optString("playerWinnerId")
+                if (reached) break
+                log("table $round-$table: the ${item.getString("kind")} did not reach the server, attempt $attempt")
+            }
+            check(reached) { "The ${item.getString("kind")} of hand $handId at table $round-$table did not reach the server" }
+            log("table $round-$table: ${item.getString("kind")} of hand $handId (${item.getString("which")}, newest $newest)")
+            closeTheEditor()
+        }
+    }
+
+    private fun tableData(tournamentId: String, round: Int, table: Int): JSONObject? {
+        val reply = runCatching { E2eApi.call("GET", "/public/tournaments/$tournamentId/tables/$round/$table") }.getOrNull()
+        return if (reply?.status == 200) reply.json() else null
+    }
+
+    private fun doneHands(tournamentId: String, round: Int, table: Int): List<JSONObject> {
+        val hands = tableData(tournamentId, round, table)?.optJSONArray("hands") ?: return emptyList()
+        return (0 until hands.length()).map { hands.getJSONObject(it) }.filter { it.optBoolean("isDone") }
+    }
+
+    private fun handOf(tournamentId: String, round: Int, table: Int, handId: Int): JSONObject? {
+        val hands = tableData(tournamentId, round, table)?.optJSONArray("hands") ?: return null
+        return (0 until hands.length()).map { hands.getJSONObject(it) }.firstOrNull { it.getInt("handId") == handId }
+    }
+
+    /** The table editor of the tournament screen: the round with Previous and Next, then the chip of the table. */
+    private fun openTable(round: Int, table: Int) {
+        // The round chooser shows "Round N" between Previous round and Next round.
+        val header = Regex("""^Round (\d+)$""")
+        for (attempt in 1..20) {
+            val current = c.onAllNodes(SemanticsMatcher("round header") { node ->
+                node.config.getOrNull(SemanticsProperties.Text)?.any { header.containsMatchIn(it.text) } == true
+            }).fetchSemanticsNodes().firstNotNullOfOrNull { node ->
+                node.config.getOrNull(SemanticsProperties.Text)?.firstNotNullOfOrNull { header.find(it.text)?.groupValues?.get(1)?.toInt() }
+            }
+            if (current == round) break
+            c.clickButton(if (current != null && current > round) "Previous round" else "Next round")
+            // The button ignores a second press within 500 ms.
+            idle(1_000)
+        }
+        c.selectTable(table)
+        c.waitForText("hands done.", substring = true, timeoutMs = 60_000)
+    }
+
+    private fun cell(handId: Int, field: String) = c.onNode(hasTestTag("hand-$handId-$field"), useUnmergedTree = true)
+
+    private fun tapCell(handId: Int, field: String) {
+        cell(handId, field).apply { runCatching { performScrollTo() } }.performTouchInput { click(center) }
+        c.waitForIdle()
+    }
+
+    private fun scoreField(handId: Int) =
+        c.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$handId-score")), useUnmergedTree = true).onFirst()
+
+    /** Picks "-" in the menu of a player cell: the open menu is the last one in the tree. */
+    private fun clearPlayer(handId: Int, field: String) {
+        tapCell(handId, field)
+        idle(1_000)
+        c.onAllNodes(hasText("-") and hasClickAction()).onLast().performClick()
+        c.waitForIdle()
+    }
+
+    /** The hand no longer counts: Done off, no winner, no loser, no score. */
+    private fun deleteHand(handId: Int) {
+        tapCell(handId, "done")
+        scoreField(handId).performTextReplacement("")
+        clearPlayer(handId, "winner")
+        clearPlayer(handId, "loser")
+    }
+
+    /** Another score that is valid for any hand, also a chicken hand (8 to 12). */
+    private fun editHand(handId: Int, before: JSONObject) {
+        val score = if (before.optString("handScore") == "11") "10" else "11"
+        tapCell(handId, "done")
+        scoreField(handId).performTextReplacement(score)
+        tapCell(handId, "done")
+    }
+
+    /** A save of the player while the editor works shows "Table updated". The organizer reads it and goes on. */
+    private fun dismissTableUpdated() {
+        if (c.isOnScreen("Table updated")) {
+            c.clickLastButton("OK")
+            c.waitForNoText("Table updated")
+        }
+    }
+
+    private fun closeTheEditor() {
+        dismissTableUpdated()
+        c.waitForText("Players & results", timeoutMs = 60_000)
     }
 
     private fun tournamentIdOf(name: String): String {

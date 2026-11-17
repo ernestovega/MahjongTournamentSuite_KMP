@@ -42,6 +42,28 @@ function randomHand(seats) {
   return { playerWinnerId: winner, playerLooserId: loser, handScore: score, ...(isChickenHand ? { isChickenHand: true } : {}) };
 }
 
+const textOf = (value) => String(value ?? "").trim();
+
+/** True when the hand on the server is the hand that the bot sent. */
+export function sameHand(saved, server) {
+  if (saved.isDraw) return textOf(server.playerWinnerId) === "";
+  return textOf(server.playerWinnerId) === textOf(saved.playerWinnerId)
+    && textOf(server.playerLooserId).replace(/^-$/, "") === textOf(saved.playerLooserId)
+    && textOf(server.handScore) === textOf(saved.handScore)
+    && Boolean(server.isChickenHand) === Boolean(saved.isChickenHand);
+}
+
+/** The hand as the server has it, in the form that the bot sends. */
+function handOf(server) {
+  if (textOf(server.playerWinnerId) === "") return { isDraw: true };
+  return {
+    playerWinnerId: textOf(server.playerWinnerId),
+    playerLooserId: textOf(server.playerLooserId).replace(/^-$/, ""),
+    handScore: textOf(server.handScore),
+    ...(server.isChickenHand ? { isChickenHand: true } : {}),
+  };
+}
+
 function seatsOf(table) {
   const seats = [table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId];
   return seats.every((id) => id != null && String(id).trim() !== "" && String(id) !== "null") ? seats.map(String) : null;
@@ -105,6 +127,7 @@ class PlayerBot {
     this.playerId = null;
     this.lastManifest = null;
     this.seen = new Map();
+    this.signatures = new Map();
   }
 
   log(message) {
@@ -137,6 +160,48 @@ class PlayerBot {
       this.seen.set(id, Date.now());
       const sentAt = this.sentAt.get(id);
       if (sentAt != null && !this.writes(key)) this.delays.push(Date.now() - sentAt);
+    }
+  }
+
+  /**
+   * Compares the hands that this bot wrote with the table on the server. A hand that is no longer done was deleted by
+   * an editor, and a hand with other values was corrected. Both are events. A corrected hand is now the right one, so
+   * the record of the bot takes its new values. Returns true when a hand was deleted.
+   */
+  noteCorrections(key, data) {
+    let deleted = false;
+    const latest = new Map();
+    for (const entry of this.handLog) if (entry.table === key && !entry.deleted) latest.set(entry.handId, entry);
+    // The newest hand of the table: the checks tell a correction of the last hand from one of an older hand.
+    const newest = Math.max(0, ...[...latest.keys()].map(Number));
+    for (const entry of latest.values()) {
+      const server = data.hands.find((hand) => Number(hand.handId) === Number(entry.handId));
+      if (server == null) continue;
+      if (!server.isDone) {
+        entry.deleted = true;
+        deleted = true;
+        this.metrics.event("hand-deleted-seen", { table: key, handId: entry.handId, newest, slot: this.slotNumber });
+      } else if (!sameHand(entry.hand, server)) {
+        this.metrics.event("hand-corrected-seen", {
+          table: key, handId: entry.handId, newest, slot: this.slotNumber, from: entry.hand, to: handOf(server),
+        });
+        entry.hand = handOf(server);
+        entry.corrected = true;
+      }
+    }
+    return deleted;
+  }
+
+  /** The other phones of the table see a correction of the editor as a change of a hand that they had already seen. */
+  noteWatchedCorrections(key, data) {
+    for (const hand of data?.hands ?? []) {
+      const id = `${key}#${hand.handId}`;
+      const signature = hand.isDone ? JSON.stringify(handOf(hand)) : "";
+      const before = this.signatures.get(id);
+      this.signatures.set(id, signature);
+      if (before == null || before === "" || before === signature) continue;
+      const kind = signature === "" ? "hand-deleted-seen" : "hand-corrected-seen";
+      this.metrics.event(kind, { table: key, handId: hand.handId, slot: this.slotNumber, watcher: true });
     }
   }
 
@@ -194,9 +259,17 @@ class PlayerBot {
         continue;
       }
       this.noteHands(key, data);
+      // An editor of the organization deleted or corrected one of the hands of this table in the admin app.
+      const deleted = this.noteCorrections(key, data);
       if (data.table.isCompleted) {
         this.metrics.event("table-completed", { table: key, hands: data.hands.filter((hand) => hand.isDone).length });
         return;
+      }
+      if (deleted) {
+        // The player who called the organization writes the right hand again, at once.
+        const seatsNow = seatsOf(data.table);
+        if (seatsNow != null && (await this.writeHand(roundId, table, key, seatsNow, "reentry")) === "done") return;
+        continue;
       }
       if (!(await this.tournament.hasClock(roundId)) && seatsOf(data.table) != null) {
         await sleep(this.pollMs);
@@ -248,7 +321,7 @@ class PlayerBot {
   }
 
   /** Preview, then save, as the app does. Returns "ok", "wait" or "done". */
-  async writeHand(roundId, table, key, seats) {
+  async writeHand(roundId, table, key, seats, kind = "hand") {
     const path = `/player/tournaments/${this.tournament.id}/tables/${roundId}/${table.tableId}/hands`;
     const hand = randomHand(seats);
     for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -267,7 +340,8 @@ class PlayerBot {
       if (reply.status === 200) {
         const id = `${key}#${reply.json.handId}`;
         this.sentAt.set(id, Date.now());
-        this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString() });
+        this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString(), ...(kind === "reentry" ? { reentry: true } : {}) });
+        if (kind === "reentry") this.metrics.event("hand-reentered", { table: key, handId: reply.json.handId, slot: this.slotNumber });
         return "ok";
       }
       if (reply.status !== 409 || !/changed/i.test(reply.json?.message ?? "")) return this.refusal(reply, key);
@@ -300,6 +374,7 @@ class PlayerBot {
         this.lastManifest = version;
         const data = await this.readTable(roundId, table.tableId);
         this.noteHands(key, data);
+        this.noteWatchedCorrections(key, data);
         if (data?.table?.isCompleted) return;
       }
       if ((await this.tournament.currentRound()) !== roundId) return;
