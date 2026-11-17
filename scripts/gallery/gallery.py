@@ -196,8 +196,22 @@ def github(path, raw=False):
     request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
     if token:
         request.add_header("Authorization", f"Bearer {token}")
+    if raw:
+        # Artifacts redirect to a storage URL that refuses the GitHub token: follow it without the token.
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, *args, **kwargs):
+                return None
+
+        try:
+            with urllib.request.build_opener(NoRedirect).open(request, timeout=120) as response:
+                return response.read()
+        except urllib.error.HTTPError as error:
+            if error.code not in (301, 302, 303, 307, 308):
+                raise
+            with urllib.request.urlopen(error.headers["Location"], timeout=600) as response:
+                return response.read()
     with urllib.request.urlopen(request, timeout=120) as response:
-        return response.read() if raw else json.load(response)
+        return json.load(response)
 
 
 def last_verify(repo, head):
