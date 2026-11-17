@@ -26,6 +26,11 @@ if [ -n "$serial" ]; then adb_cmd+=(-s "$serial"); fi
 base="$(printf '%s' "$STAGING_ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')"
 local_part="${base%@*}"
 local_part="${local_part%%+*}"
+# The logs of GitHub are public: the addresses of the accounts never show in them.
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+  echo "::add-mask::$local_part"
+  if [ -n "${REHEARSAL_IMAP_USER:-}" ]; then echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"; fi
+fi
 email="$(printf '%s+mts-botadmin@%s' "$local_part" "${base#*@}")"
 
 app_apk="$(find "$apks" -path '*androidTest*' -prune -o -name '*staging*.apk' -print | head -n 1)"

@@ -113,6 +113,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         log("${plan.getString("name")}: ${slots.size} players")
         app.launch()
         c.signIn(email, password)
+        // An account that is a player and staff chooses the part of the app after the sign-in.
+        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
         slots.filter { it.accountBefore }.forEach { createAccountInUsers(it) }
         createTheTournamentWithTheForm()

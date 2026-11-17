@@ -25,6 +25,8 @@ if [ -n "$serial" ]; then adb_cmd+=(-s "$serial"); fi
 base="$(printf '%s' "$STAGING_ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')"
 local_part="${base%@*}"
 local_part="${local_part%%+*}"
+# The logs of GitHub are public: the addresses of the accounts never show in them.
+if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::add-mask::$local_part"; fi
 # REHEARSAL_ACCOUNT: the letters of the account before the slot number, "j" (rehearsal) or "cal" (calibration).
 email="$(printf '%s+mts-%s%02d@%s' "$local_part" "${REHEARSAL_ACCOUNT:-j}" "$slot" "${base#*@}")"
 
