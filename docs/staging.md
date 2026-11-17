@@ -36,6 +36,8 @@ production data.
 - The same workflow, action `seed`: countries, the admin account of `STAGING_ADMIN_EMAIL` (a new one gets the
   password reset email) and the EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
   (the people registered for the next tournament, plus fictitious 9999xxxx numbers). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
+  Before that it loads the whole EMA ranking from the EMA website, as production has it, with the photos in the
+  staging bucket.
 
 ## The Android app
 
