@@ -1,13 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.runtime.Composable
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.language.AppLanguage
-import mahjongtournamentsuite.playerapp.generated.resources.Res
-import mahjongtournamentsuite.playerapp.generated.resources.menu_green_book
-import org.jetbrains.compose.resources.stringResource
 
 /*
  * The Green Book: the official MCR rules, in English, Spanish and Russian. The editions are big (1 to 5 MB),
@@ -43,14 +37,3 @@ internal const val GREEN_BOOK_BUNDLED_FILE = "files/GreenBook_EN.pdf"
 /** Opens the Green Book in the language of the app: in a PDF app on Android, in a new tab on the web. */
 @Composable
 internal expect fun rememberOpenGreenBook(): () -> Unit
-
-/** The Green Book button, for the actions of an AppScaffold. */
-@Composable
-fun GreenBookButton() {
-    val openGreenBook = rememberOpenGreenBook()
-    AppTopBarButton(
-        text = stringResource(Res.string.menu_green_book),
-        icon = Icons.Default.Book,
-        onClick = openGreenBook,
-    )
-}

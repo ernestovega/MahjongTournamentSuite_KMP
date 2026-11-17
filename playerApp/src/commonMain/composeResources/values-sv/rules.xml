@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The texts of the combinations and penalties screens of the table. -->
 <resources>
+    <string name="menu_rules">Regler</string>
+    <string name="menu_penalties_overview">Översikt över straffen</string>
     <string name="combinations_title">Kombinationer</string>
     <string name="combinations_search_hint">Namn, poäng eller beskrivning</string>
     <string name="combinations_empty">Ingen kombination matchar sökningen.</string>

@@ -8,13 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.core.content.FileProvider
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -28,6 +28,12 @@ import java.net.URL
 private const val SITE = "https://mts.mahjongmadrid.com"
 
 /**
+ * The download does not belong to the button: in the menu of the top bar, the button leaves the screen as soon as
+ * the menu closes, and a scope of the composition would cancel the download at that moment.
+ */
+private val greenBookScope = MainScope()
+
+/**
  * The first time, the app downloads the edition of its language and keeps it on the phone, so it opens without
  * internet after that. Without internet the first time, it opens the short English edition inside the app.
  * Other apps cannot read the files of the app, so the FileProvider of the manifest of playerApp shares the PDF
@@ -37,7 +43,6 @@ private const val SITE = "https://mts.mahjongmadrid.com"
 internal actual fun rememberOpenGreenBook(): () -> Unit {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    val scope = rememberCoroutineScope()
     val edition = greenBookEdition(LocalLanguageController.current.language)
     val downloadingText = stringResource(Res.string.green_book_downloading)
     val offlineText = stringResource(Res.string.green_book_offline)
@@ -45,7 +50,7 @@ internal actual fun rememberOpenGreenBook(): () -> Unit {
     return {
         if (!busy) {
             busy = true
-            scope.launch {
+            greenBookScope.launch {
                 try {
                     val kept = keptEdition(context, edition)
                     val file = if (kept.exists()) {

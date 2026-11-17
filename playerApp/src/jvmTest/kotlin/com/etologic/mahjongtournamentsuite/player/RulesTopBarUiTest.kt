@@ -26,6 +26,7 @@ import kotlin.test.Test
 /**
  * The buttons of the top bars of the Combinations and Penalties screens and the info buttons of the list of
  * tournaments: on a wide screen they show in the bar, and on a phone they are in the three-dots menu.
+ * The Rules button opens its own menu on a wide screen. On a phone its options are in the three-dots menu, not in a second menu.
  */
 @OptIn(ExperimentalTestApi::class)
 class RulesTopBarUiTest {
@@ -44,6 +45,8 @@ class RulesTopBarUiTest {
                 NavHost(nav, startDestination = "screen") {
                     composable("screen") { screen(nav) }
                     composable<SupportRoute> { Text("Support form") }
+                    composable<CombinationsRoute> { Text("Combinations screen") }
+                    composable<PenaltiesRoute> { Text("Penalties screen") }
                 }
             }
         }
@@ -101,16 +104,36 @@ class RulesTopBarUiTest {
     @Test
     fun onAWideScreenTheInfoButtonsAreInTheBar() = runDesktopComposeUiTest(width = 1200, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
-        listOf("Green Book", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
+        listOf("Rules", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
+        button("Green Book").assertDoesNotExist()
         onNodeWithContentDescription("Menu").assertDoesNotExist()
     }
 
     @Test
-    fun onAPhoneTheInfoButtonsAreInTheMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
+    fun onAWideScreenRulesOpensAMenuWithItsThreeOptions() = runDesktopComposeUiTest(width = 1200, height = 800) {
+        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        button("Rules").performClick()
+        listOf("Green Book", "Combinations", "Penalties overview").forEach { button(it).assertExists() }
+        button("Penalties overview").performClick()
+        onNodeWithText("Penalties screen").assertExists()
+        button("Green Book").assertDoesNotExist()
+    }
+
+    @Test
+    fun onAPhoneTheRulesOptionsAreInTheMenuUnderAHeadingWithoutASecondMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
         button("Version").assertDoesNotExist()
         openMenu()
-        listOf("Green Book", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
+        // The heading Rules and its options, one level only, then the other buttons.
+        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
+        button("Combinations").performClick()
+        onNodeWithText("Combinations screen").assertExists()
+    }
+
+    @Test
+    fun onAPhoneTheContactOfTheInfoButtonsOpensTheForm() = runDesktopComposeUiTest(width = 400, height = 800) {
+        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        openMenu()
         button("Contact").performClick()
         onNodeWithText("Support form").assertExists()
     }

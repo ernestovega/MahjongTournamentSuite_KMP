@@ -38,7 +38,8 @@ flowchart TD
   TR -- "jugador" --> J
   J -- "mesa" --> M
   T -- "pestaña Estadísticas" --> E["Estadísticas globales<br/>Yo · Mis torneos · Torneo · Jugador"]
-  T -- "menú" --> C["Combinaciones"] & P["Penalizaciones"] & GB["Green Book (PDF)"] & SUP["Ayuda / soporte"]
+  T -- "menú" --> R["Reglas"] & SUP["Ayuda / soporte"]
+  R --> C["Combinaciones"] & P["Penalizaciones"] & GB["Green Book (PDF)"]
   T -- "menú «Iniciar sesión»<br/>o «Inicia sesión para apuntar manos»" --> L["Iniciar sesión"]
   L --> T
   M -. "recordatorio «tu mesa»" .-> M

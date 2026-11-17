@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The texts of the combinations and penalties screens of the table. -->
 <resources>
+    <string name="menu_rules">Правила</string>
+    <string name="menu_penalties_overview">Обзор штрафов</string>
     <string name="combinations_title">Комбинации</string>
     <string name="combinations_search_hint">Название, очки или описание</string>
     <string name="combinations_empty">Ни одна комбинация не подходит под поиск.</string>
