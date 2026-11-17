@@ -377,7 +377,8 @@ export async function runBots(options) {
     stopped: options.stopped ?? (() => false),
     handSeconds: options.handSeconds ?? [60, 90],
     penaltyRate: options.penaltyRate ?? 0.05,
-    pollMs: options.pollMs ?? 5_000,
+    // The app checks the own table every 2 s while its round is in play (PollSchedule.OWN_TABLE_IN_PLAY).
+    pollMs: options.pollMs ?? 2_000,
     spectatorPollMs: options.spectatorPollMs ?? 15_000,
     venuePhones: options.venuePhones ?? 0,
     verbose: options.verbose ?? false,
