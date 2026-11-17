@@ -76,5 +76,15 @@ jobs:
       - name: Publish
         run: python3 scripts/gallery/gallery.py publish --out "$OUT" --site "$SITE" --project "$STAGING"
 
+      - name: Check the published site
+        run: |
+          sleep 10
+          curl -fsS "https://$SITE.web.app/" | grep -q "MTS screenshot gallery"
+          curl -fsS "https://$SITE.web.app/manifest.json" -o published.json
+          oid=$(jq -r '.files.img[0]' published.json)
+          curl -fsS -o /dev/null "https://$SITE.web.app/thumb/$oid.webp"
+          curl -fsS -o /dev/null "https://$SITE.web.app/img/$oid.png"
+          jq -r '"\(.versions | length) versions, \(.images | length) images, \(.videos | length) game days with video, head \(.head[0:7])"' published.json
+
       - name: Show the address
         run: echo "### Gallery at https://$SITE.web.app" >> "$GITHUB_STEP_SUMMARY"
