@@ -60,6 +60,15 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const reply = await api.call("GET", `/public/tournaments/${tournamentId}/tables-with-hands`, { label: "GET all tables" });
   if (reply.status !== 200) throw new Error(`Reading the tables failed: ${reply.status} ${reply.json?.message ?? ""}`);
   const tables = reply.json.tables;
+  // A substitute plays for a slot from a round on: the results of the slot in those rounds do not count for it
+  // (playerSubstitution.ts). A disqualified slot counts in no round.
+  const players = await api.call("GET", `/public/tournaments/${tournamentId}/players`, { label: "GET players" });
+  const substitutionOf = new Map((players.json?.players ?? []).filter((player) => player.substitution != null)
+    .map((player) => [String(player.id), player.substitution]));
+  const ignored = (slot, roundId) => {
+    const substitution = substitutionOf.get(String(slot));
+    return substitution != null && (substitution.reason === "DISQUALIFIED" || roundId >= Number(substitution.fromRound));
+  };
   const byKey = new Map(tables.map((item) => [`${item.table.roundId}_${item.table.tableId}`, item]));
   const scoreProblems = [];
   const openTables = [];
@@ -80,7 +89,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     const bestHere = new Map();
     for (const hand of counted) {
       const winner = text(hand.playerWinnerId);
-      if (winner === "" || !/^\d+$/.test(text(hand.handScore))) continue;
+      if (winner === "" || !/^\d+$/.test(text(hand.handScore)) || ignored(winner, table.roundId)) continue;
       bestHere.set(winner, Math.max(bestHere.get(winner) ?? 0, Number(text(hand.handScore))));
       if (hand.isChickenHand) chickenBySlot.set(winner, (chickenBySlot.get(winner) ?? 0) + 1);
     }
@@ -96,6 +105,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
       if (Number(storedPoints) !== points[index]) {
         scoreProblems.push(`${key} ${name}: table points ${storedPoints} on the server, ${points[index]} here`);
       }
+      if (ignored(seats[index], table.roundId)) return;
       const entry = ranking.get(seats[index]) ?? { playerId: seats[index], points: 0, score: 0 };
       entry.points += points[index];
       entry.score += scores[index];
@@ -143,6 +153,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     races: races.length,
     raceDuplicates: raceDuplicates.length,
     ranking: sorted,
+    substitutions: Object.fromEntries(substitutionOf),
     chickenBySlot: Object.fromEntries(chickenBySlot),
     bestBySlotTable,
   };
@@ -211,7 +222,7 @@ export async function checkStandings(api, tournamentId, check) {
  * The corner cases of the plan of a game day (plan.cornerCases): each correction of an editor must be seen by the
  * phones of its table, a deleted hand must be written again, and no other table may have a correction.
  */
-export function cornerCaseVerdicts(plan, botReports) {
+export function cornerCaseVerdicts(plan, botReports, check = null) {
   const events = botReports.flatMap((report) => report.events ?? []);
   const lines = [];
   const add = (ok, textLine) => lines.push(`${ok ? "✅" : "❌"} ${textLine}`);
@@ -228,6 +239,15 @@ export function cornerCaseVerdicts(plan, botReports) {
       const again = at("hand-reentered");
       add(scorer.some(position) && watchers.length > 0 && again.length > 0,
         `Table ${key}: the editor deleted ${where}, the phones saw it and the player wrote it again (${scorer.length} seen by the scorer, ${watchers.length} by the others, ${again.length} written again${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}` : ""}).`);
+    } else if (item.kind === "late") {
+      const late = events.filter((event) => event.kind === "late-table" && event.table === key);
+      const done = events.filter((event) => event.kind === "table-completed" && event.table === key);
+      add(late.length > 0 && done.length > 0, `Table ${key} started ${item.minutes} minutes late and still played to the end (${done[0]?.hands ?? 0} hands).`);
+    } else if (item.kind === "substitution") {
+      const found = Object.entries(check?.substitutions ?? {}).filter(([, value]) => value.reason === item.reason && Number(value.fromRound) === item.round);
+      const ranked = found.filter(([slot]) => check.ranking.some((entry) => entry.playerId === slot));
+      add(found.length > 0 && ranked.length === 0,
+        `A player of table ${key} was substituted (${item.reason.toLowerCase()}, from round ${item.round}) and has no result in the ranking (${found.map(([slot]) => `slot ${slot}`).join(", ") || "none"}).`);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
@@ -305,7 +325,7 @@ async function main() {
   const check = await checkTournament(api, tournamentId, botReports);
   if (args.standings !== "off") check.standings = await checkStandings(api, tournamentId, check);
   const plan = args.plan ? JSON.parse(readFileSync(String(args.plan), "utf8")) : null;
-  const lines = [...verdicts(check, botReports, null), ...cornerCaseVerdicts(plan, botReports)];
+  const lines = [...verdicts(check, botReports, null), ...cornerCaseVerdicts(plan, botReports, check)];
   writeCheck(args.report ?? "out/check.json", args.title ?? "Rehearsal check", check, lines);
   if (lines.some((line) => line.startsWith("❌"))) process.exitCode = 1;
 }

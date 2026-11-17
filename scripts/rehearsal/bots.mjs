@@ -249,7 +249,7 @@ class PlayerBot {
     const late = this.lateTables.has(key);
     if (late) {
       this.metrics.event("late-table", { table: key });
-      await sleep(120_000);
+      await sleep(this.lateMs);
     }
     let nextHandAt = Date.now() + randomBetween(...this.handSeconds) * 1_000 * 0.5;
     while (Date.now() < this.until && !this.stopped()) {
@@ -458,6 +458,8 @@ export async function runBots(options) {
     venuePhones: options.venuePhones ?? 0,
     verbose: options.verbose ?? false,
     lateTables: new Set(options.lateTables ?? []),
+    // How long the scorer of a late table arrives after the gong.
+    lateMs: options.lateMs ?? 120_000,
     raceTables: new Set(options.raceTables ?? []),
     raceSessions: new Map(),
     raced: new Set(),
@@ -560,7 +562,12 @@ async function main() {
     until,
     handSeconds: [handMin, handMax ?? handMin],
     penaltyRate: Number(args["penalty-rate"] ?? 0.05),
-    lateTables: String(args["late-tables"] ?? "").split(",").filter(Boolean),
+    // The late tables of the plan of a game day, and those of --late-tables.
+    lateTables: [
+      ...String(args["late-tables"] ?? "").split(",").filter(Boolean),
+      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "late").map((item) => `${item.round}_${item.table}`),
+    ],
+    lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
     raceTables: String(args["race-tables"] ?? "").split(",").filter(Boolean),
     verbose: Boolean(args.verbose),
   });

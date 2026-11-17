@@ -58,6 +58,11 @@ read it, so each one knows its part.
 
 - A table starts late; its scorer arrives minutes after the gong. A substitution of a player at that table, minutes
   after the first gong of round 1.
+
+  Done (plan.cornerCases, round 1, table 3). The scorer of the table arrives 4 minutes after the gong. A minute after
+  the gong the organizer substitutes the highest slot of the table in Players (the player came late, from round 1).
+  The checks want the table played to the end, and the substituted slot with no result in the ranking (the
+  independent count leaves out the rounds of the substitute, as the server does).
 - Two phones send the same hand at once (race).
 - A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
   and a hand of several hands before.

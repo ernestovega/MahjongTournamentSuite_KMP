@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onFirst
@@ -347,6 +348,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             startRoundOnTheTimer(tournamentId, round)
             log("round $round: Play")
             if (round > 1) closeOpenTablesOfEndedRounds()
+            substituteALatePlayer(tournamentId, round)
             correctTheHands(tournamentId, round)
             val deadline = System.currentTimeMillis() + (minutes + 2) * 60_000L
             while (System.currentTimeMillis() < deadline && openTables(tournamentId, round) > 0) idle(30_000)
@@ -400,6 +402,43 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             log("table $round-$table: ${item.getString("kind")} of hand $handId (${item.getString("which")}, newest $newest)")
             closeTheEditor()
         }
+    }
+
+    /**
+     * A player of a late table did not come. Minutes after the gong the organizer substitutes the player in Players:
+     * the reason is late, from this round. The highest slot of the table, so the scorer of the bots stays.
+     */
+    private fun substituteALatePlayer(tournamentId: String, round: Int) {
+        val cases = plan.optJSONArray("cornerCases") ?: return
+        val item = (0 until cases.length()).map { cases.getJSONObject(it) }
+            .firstOrNull { it.getString("kind") == "substitution" && it.getInt("round") == round } ?: return
+        idle(item.optLong("afterMinutes", 1) * 60_000)
+        val table = item.getInt("table")
+        val list = E2eApi.call("GET", "/public/tournaments/$tournamentId/tables?roundId=$round").json().getJSONArray("tables")
+        val ids = (0 until list.length()).map { list.getJSONObject(it) }.firstOrNull { it.getInt("tableId") == table }?.optJSONArray("playerIds")
+        checkNotNull(ids) { "Table $round-$table has no players" }
+        val slotId = (0 until ids.length()).maxOf { ids.getInt(it) }
+        val slot = slots.first { it.slot == slotId }
+        c.clickButton("Players")
+        c.waitForText("Tournament players", timeoutMs = 60_000)
+        c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(slot.emaId)
+        c.waitUntil(20_000) { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
+        c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().performClick()
+        c.waitForText("Substitute")
+        c.clickLastButton("Substitute")
+        c.waitForText("A substitute plays for this player from the chosen round.", substring = true)
+        c.onAllNodes(hasText("The player came late.")).onLast().performClick()
+        c.onAllNodes(hasText("$round") and hasClickAction()).onLast().performClick()
+        c.clickLastButton("Substitute")
+        c.waitForNoText("A substitute plays for this player from the chosen round.", substring = true, timeoutMs = 60_000)
+        val saved = E2eApi.call("GET", "/public/tournaments/$tournamentId/players").json().getJSONArray("players")
+        val substitution = (0 until saved.length()).map { saved.getJSONObject(it) }.first { it.getInt("id") == slotId }.optJSONObject("substitution")
+        check(substitution?.optString("reason") == item.getString("reason") && substitution.optInt("fromRound") == round) {
+            "The substitution of slot $slotId is not on the server: $substitution"
+        }
+        log("slot $slotId of table $round-$table substituted (late, from round $round)")
+        shell("input keyevent KEYCODE_BACK")
+        c.waitForText("Players & results", timeoutMs = 60_000)
     }
 
     private fun tableData(tournamentId: String, round: Int, table: Int): JSONObject? {
