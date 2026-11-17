@@ -23,7 +23,9 @@ button { font:inherit; color:inherit; }
 .muted { color:var(--muted); }
 
 /* header */
-header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; }
+header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; transition:transform .2s ease; }
+/* Hidden while scrolling down; back as soon as the page scrolls up a little. */
+header.hidden { transform:translateY(-100%); box-shadow:none; }
 .head { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
 h1 { font-size:17px; margin:0; white-space:nowrap; }
 nav.tabs { display:flex; gap:2px; }
@@ -309,6 +311,14 @@ async function load() {
   renderStatus();
   window.addEventListener("hashchange", route);
   window.addEventListener("resize", measure);
+  let lastY = window.scrollY;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY, header = $("#header");
+    if (y < header.offsetHeight) header.classList.remove("hidden");
+    else if (y > lastY + 4) header.classList.add("hidden");
+    else if (y < lastY - 4) header.classList.remove("hidden");
+    if (Math.abs(y - lastY) > 4) lastY = y;
+  }, { passive: true });
   route();
 }
 
