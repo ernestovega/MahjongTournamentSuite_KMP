@@ -237,15 +237,6 @@ fun SignInForm(
                             )
                         }
 
-                        FocusedTextButton(
-                            modifier = Modifier.align(Alignment.End),
-                            enabled = !isLoading,
-                            onClick = onForgotPassword,
-                            contentPadding = LinkButtonPadding,
-                        ) {
-                            Text(stringResource(Res.string.sign_in_forgot_password))
-                        }
-
                         FocusedButton(
                             enabled = !isLoading,
                             onClick = onSubmit,
@@ -262,6 +253,14 @@ fun SignInForm(
                                 Text(stringResource(Res.string.sign_in_button))
                             }
                         }
+                        FocusedTextButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            enabled = !isLoading,
+                            onClick = onForgotPassword,
+                            contentPadding = LinkButtonPadding,
+                        ) {
+                            Text(stringResource(Res.string.sign_in_forgot_password))
+                        }
                     }
                 }
             }
@@ -273,5 +272,5 @@ fun SignInForm(
     }
 }
 
-/** The forgot password link above the sign-in button uses little padding, so it lines up with the fields. */
+/** The forgot password link under the sign-in button uses little padding, so the card does not grow. */
 private val LinkButtonPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
