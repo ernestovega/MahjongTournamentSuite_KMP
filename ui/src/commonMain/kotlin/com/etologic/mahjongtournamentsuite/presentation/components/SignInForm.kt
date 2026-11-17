@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.TitleFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
@@ -45,10 +46,12 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.field_password
@@ -121,11 +124,27 @@ fun SignInForm(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
             ) {
+                // The name of the suite is a brand: the same text and the same font (Gang of Three) in every language.
+                Text(
+                    text = APP_NAME,
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontFamily = TitleFontFamily("en"),
+                        lineHeight = 40.sp,
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                )
                 AppLogo(size = 144.dp)
 
                 Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                     Column(
-                        modifier = Modifier.padding(MtsTheme.spacing.lg),
+                        // Less space at the bottom: the forgot password link closes the card, and its button already has some.
+                        modifier = Modifier.padding(
+                            start = MtsTheme.spacing.lg,
+                            top = MtsTheme.spacing.lg,
+                            end = MtsTheme.spacing.lg,
+                            bottom = MtsTheme.spacing.xs,
+                        ),
                         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                     ) {
                         OutlinedTextField(
@@ -237,29 +256,34 @@ fun SignInForm(
                             )
                         }
 
-                        FocusedButton(
-                            enabled = !isLoading,
-                            onClick = onSubmit,
+                        // The link sits right under the button, without the gap between the other rows.
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            buttonModifier = Modifier.fillMaxWidth(),
-                            focusRequester = loginButtonRequester,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Text(stringResource(Res.string.sign_in_button))
+                            FocusedButton(
+                                enabled = !isLoading,
+                                onClick = onSubmit,
+                                modifier = Modifier.fillMaxWidth(),
+                                buttonModifier = Modifier.fillMaxWidth(),
+                                focusRequester = loginButtonRequester,
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Text(stringResource(Res.string.sign_in_button))
+                                }
                             }
-                        }
-                        FocusedTextButton(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            enabled = !isLoading,
-                            onClick = onForgotPassword,
-                            contentPadding = LinkButtonPadding,
-                        ) {
-                            Text(stringResource(Res.string.sign_in_forgot_password))
+                            FocusedTextButton(
+                                enabled = !isLoading,
+                                onClick = onForgotPassword,
+                                contentPadding = LinkButtonPadding,
+                            ) {
+                                Text(stringResource(Res.string.sign_in_forgot_password))
+                            }
                         }
                     }
                 }
@@ -274,3 +298,6 @@ fun SignInForm(
 
 /** The forgot password link under the sign-in button uses little padding, so the card does not grow. */
 private val LinkButtonPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+
+/** The name of the suite over the logo of the sign-in screen, one word on each line. */
+private const val APP_NAME = "Mahjong\nTournament\nSuite"
