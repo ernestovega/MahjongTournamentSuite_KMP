@@ -43,7 +43,12 @@ export const PUBLIC_CACHE_SECONDS = {
 
 /** The browser keeps an answer for a few seconds only, so polling sees new data soon after the CDN does. */
 const BROWSER_MAX_AGE_SECONDS = 5;
-const READS_PER_MINUTE = 600;
+/**
+ * The reads of one address in a minute, counted by each instance. Players share one address on the wifi of a venue:
+ * the biggest tournaments (about 240 players and a few hundred people in the room) read about 4500 times a minute from
+ * one address. This leaves four times that, and still stops a flood from one place. maxInstances caps the bill.
+ */
+const READS_PER_MINUTE = 20_000;
 
 function cacheFor(res: Response, seconds: number): void {
   res.setHeader("Cache-Control", `public, max-age=${Math.min(seconds, BROWSER_MAX_AGE_SECONDS)}, s-maxage=${seconds}`);
