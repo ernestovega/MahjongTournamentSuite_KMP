@@ -133,6 +133,12 @@ internal fun MissingEmailsDialog(
                                 singleLine = true,
                                 label = { Text("${slot.id} · ${nameOf(slot)}") },
                                 isError = value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN),
+                                // Same message as the single email dialog, so the user knows why the field is red.
+                                supportingText = if (value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN)) {
+                                    { Text(stringResource(Res.string.email_invalid)) }
+                                } else {
+                                    null
+                                },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             )
                         }

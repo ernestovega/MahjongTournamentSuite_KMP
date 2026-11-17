@@ -66,6 +66,7 @@
     <string name="card_size">Card size</string>
     <string name="width_mm">Width (mm)</string>
     <string name="height_mm">Height (mm)</string>
+    <string name="card_orientation">Orientation</string>
     <string name="portrait">Portrait</string>
     <string name="landscape">Landscape</string>
     <string name="front_sheet">Front sheet</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Send password reset (%1$d)</string>
     <string name="password_resets_confirm_title">Send password reset emails?</string>
     <string name="password_resets_confirm_text">The app sends an email to %1$d accounts.\n\nEach person gets a link to choose a new password.</string>
-    <string name="password_resets_summary">Emails sent: %1$d\nFailed: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">%1$d password reset email was sent.</item>
+        <item quantity="other">%1$d password reset emails were sent.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">%1$d email could not be sent:</item>
+        <item quantity="other">%1$d emails could not be sent:</item>
+    </plurals>
+    <string name="password_resets_partial_title">Not all emails were sent</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">The account does not exist.</string>
     <string name="reset_failure_no_email">The account has no email.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Clear dates</string>
     <string name="activity_search_clear">Clear search</string>
     <string name="reset_table">Clear table</string>
-    <string name="reset_table_confirm_title">Clear round %1$d · table %2$d?</string>
-    <string name="reset_table_confirm_text">This removes the seat assignments, the scores and every hand of this table. The players of the table stay, so you can seat them again. Unsaved changes to this table are lost. The change is recorded in the activity log.</string>
+    <string name="reset_table_confirm_title">Clear table %1$d?</string>
+    <string name="reset_table_removes_label">This is removed:</string>
+    <string name="reset_table_removes_items">• The seat assignments\n• The scores\n• Every hand\n• Unsaved changes to this table</string>
+    <string name="reset_table_keeps_label">This stays:</string>
+    <string name="reset_table_keeps_items">• The players of the table, so you can seat them again</string>
+    <string name="reset_table_logged">The change is recorded in the activity log.</string>
     <string name="activity_filter_kind">Type</string>
     <string name="activity_filter_origin">Origin</string>
     <string name="activity_filter_period">Period</string>

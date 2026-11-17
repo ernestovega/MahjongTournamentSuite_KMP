@@ -498,10 +498,21 @@ fun TournamentLogoLibraryDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(Res.string.reuse_tournament_logo)) },
+            // With no logos the dialog is only a message: title, text and button go centered.
+            title = {
+                Text(
+                    stringResource(Res.string.reuse_tournament_logo),
+                    modifier = if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
+                    textAlign = if (logos.isEmpty()) TextAlign.Center else null,
+                )
+            },
             text = {
                 if (logos.isEmpty()) {
-                    Text(stringResource(Res.string.no_saved_tournament_logos_are_available))
+                    Text(
+                        stringResource(Res.string.no_saved_tournament_logos_are_available),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                    )
                 } else {
                     FlowRow(
                         modifier = Modifier
@@ -536,16 +547,21 @@ fun TournamentLogoLibraryDialog(
             },
             confirmButton = {},
             dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    focusRequester = cancelFocusRequester,
-                    buttonModifier = if (itemFocusRequesters.isEmpty()) {
-                        Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
-                    } else {
-                        Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
-                    },
+                Box(
+                    if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = if (itemFocusRequesters.isEmpty()) {
+                            Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
+                        } else {
+                            Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
+                        },
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             },
         )

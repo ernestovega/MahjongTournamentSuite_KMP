@@ -66,6 +66,7 @@
     <string name="card_size">Tamaño de la tarjeta</string>
     <string name="width_mm">Ancho (mm)</string>
     <string name="height_mm">Alto (mm)</string>
+    <string name="card_orientation">Orientación</string>
     <string name="portrait">Vertical</string>
     <string name="landscape">Horizontal</string>
     <string name="front_sheet">Hoja delantera</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Enviar restablecimiento de contraseña (%1$d)</string>
     <string name="password_resets_confirm_title">¿Enviar emails de restablecimiento de contraseña?</string>
     <string name="password_resets_confirm_text">La app envía un email a %1$d cuentas.\n\nCada persona recibe un enlace para elegir una contraseña nueva.</string>
-    <string name="password_resets_summary">Emails enviados: %1$d\nFallidos: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">Se ha enviado %1$d email para restablecer la contraseña.</item>
+        <item quantity="other">Se han enviado %1$d emails para restablecer la contraseña.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">No se ha podido enviar %1$d email:</item>
+        <item quantity="other">No se han podido enviar %1$d emails:</item>
+    </plurals>
+    <string name="password_resets_partial_title">No se han enviado todos los emails</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">La cuenta no existe.</string>
     <string name="reset_failure_no_email">La cuenta no tiene email.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Quitar fechas</string>
     <string name="activity_search_clear">Borrar búsqueda</string>
     <string name="reset_table">Vaciar mesa</string>
-    <string name="reset_table_confirm_title">¿Vaciar la ronda %1$d · mesa %2$d?</string>
-    <string name="reset_table_confirm_text">Se borran las asignaciones de asientos, las puntuaciones y todas las manos de esta mesa. Los jugadores de la mesa se mantienen, así que puedes volver a sentarlos. Los cambios sin guardar de esta mesa se pierden. El cambio queda registrado en la actividad.</string>
+    <string name="reset_table_confirm_title">¿Vaciar mesa %1$d?</string>
+    <string name="reset_table_removes_label">Se borra:</string>
+    <string name="reset_table_removes_items">• Las asignaciones de asientos\n• Las puntuaciones\n• Todas las manos\n• Los cambios sin guardar de esta mesa</string>
+    <string name="reset_table_keeps_label">Se mantiene:</string>
+    <string name="reset_table_keeps_items">• Los jugadores de la mesa, para que puedas volver a sentarlos</string>
+    <string name="reset_table_logged">El cambio queda registrado en la actividad.</string>
     <string name="activity_filter_kind">Tipo</string>
     <string name="activity_filter_origin">Origen</string>
     <string name="activity_filter_period">Periodo</string>

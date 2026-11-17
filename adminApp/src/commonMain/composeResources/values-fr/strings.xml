@@ -66,6 +66,7 @@
     <string name="card_size">Taille de la carte</string>
     <string name="width_mm">Largeur (mm)</string>
     <string name="height_mm">Hauteur (mm)</string>
+    <string name="card_orientation">Orientation</string>
     <string name="portrait">Portrait</string>
     <string name="landscape">Paysage</string>
     <string name="front_sheet">Feuille recto</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Envoyer la réinitialisation du mot de passe (%1$d)</string>
     <string name="password_resets_confirm_title">Envoyer les e-mails de réinitialisation du mot de passe ?</string>
     <string name="password_resets_confirm_text">L'app envoie un e-mail à %1$d comptes.\n\nChaque personne reçoit un lien pour choisir un nouveau mot de passe.</string>
-    <string name="password_resets_summary">E-mails envoyés : %1$d\nÉchecs : %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">%1$d e-mail de réinitialisation du mot de passe a été envoyé.</item>
+        <item quantity="other">%1$d e-mails de réinitialisation du mot de passe ont été envoyés.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">%1$d e-mail n’a pas pu être envoyé :</item>
+        <item quantity="other">%1$d e-mails n’ont pas pu être envoyés :</item>
+    </plurals>
+    <string name="password_resets_partial_title">Tous les e-mails n’ont pas été envoyés</string>
     <string name="reset_failure_line">• %1$s : %2$s</string>
     <string name="reset_failure_not_found">Le compte n'existe pas.</string>
     <string name="reset_failure_no_email">Le compte n'a pas d'adresse e-mail.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Effacer les dates</string>
     <string name="activity_search_clear">Effacer la recherche</string>
     <string name="reset_table">Vider la table</string>
-    <string name="reset_table_confirm_title">Vider le tour %1$d · table %2$d ?</string>
-    <string name="reset_table_confirm_text">Cela supprime l’attribution des places, les scores et toutes les mains de cette table. Les joueurs de la table restent, vous pouvez donc les placer à nouveau. Les modifications non enregistrées de cette table sont perdues. Le changement est enregistré dans l’activité.</string>
+    <string name="reset_table_confirm_title">Vider la table %1$d ?</string>
+    <string name="reset_table_removes_label">Ce qui est supprimé :</string>
+    <string name="reset_table_removes_items">• L’attribution des places\n• Les scores\n• Toutes les mains\n• Les modifications non enregistrées de cette table</string>
+    <string name="reset_table_keeps_label">Ce qui reste :</string>
+    <string name="reset_table_keeps_items">• Les joueurs de la table, pour que vous puissiez les placer à nouveau</string>
+    <string name="reset_table_logged">Le changement est enregistré dans l’activité.</string>
     <string name="activity_filter_kind">Type</string>
     <string name="activity_filter_origin">Origine</string>
     <string name="activity_filter_period">Période</string>

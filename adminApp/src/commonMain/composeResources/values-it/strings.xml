@@ -66,6 +66,7 @@
     <string name="card_size">Dimensione del cartellino</string>
     <string name="width_mm">Larghezza (mm)</string>
     <string name="height_mm">Altezza (mm)</string>
+    <string name="card_orientation">Orientamento</string>
     <string name="portrait">Verticale</string>
     <string name="landscape">Orizzontale</string>
     <string name="front_sheet">Foglio fronte</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Invia reimpostazione password (%1$d)</string>
     <string name="password_resets_confirm_title">Inviare le email di reimpostazione password?</string>
     <string name="password_resets_confirm_text">L'app invia un'email a %1$d account.\n\nOgni persona riceve un link per scegliere una nuova password.</string>
-    <string name="password_resets_summary">Email inviate: %1$d\nNon riuscite: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">È stata inviata %1$d email di reimpostazione password.</item>
+        <item quantity="other">Sono state inviate %1$d email di reimpostazione password.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">Non è stato possibile inviare %1$d email:</item>
+        <item quantity="other">Non è stato possibile inviare %1$d email:</item>
+    </plurals>
+    <string name="password_resets_partial_title">Non tutte le email sono state inviate</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">L'account non esiste.</string>
     <string name="reset_failure_no_email">L'account non ha email.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Cancella date</string>
     <string name="activity_search_clear">Cancella ricerca</string>
     <string name="reset_table">Svuota tavolo</string>
-    <string name="reset_table_confirm_title">Svuotare il turno %1$d · tavolo %2$d?</string>
-    <string name="reset_table_confirm_text">Vengono eliminati l’assegnazione dei posti, i punteggi e tutte le mani di questo tavolo. I giocatori del tavolo restano, quindi puoi farli sedere di nuovo. Le modifiche non salvate di questo tavolo vanno perse. La modifica viene registrata nell’attività.</string>
+    <string name="reset_table_confirm_title">Svuota tavolo %1$d?</string>
+    <string name="reset_table_removes_label">Viene eliminato:</string>
+    <string name="reset_table_removes_items">• L’assegnazione dei posti\n• I punteggi\n• Tutte le mani\n• Le modifiche non salvate di questo tavolo</string>
+    <string name="reset_table_keeps_label">Resta:</string>
+    <string name="reset_table_keeps_items">• I giocatori del tavolo, così puoi farli sedere di nuovo</string>
+    <string name="reset_table_logged">La modifica viene registrata nell’attività.</string>
     <string name="activity_filter_kind">Tipo</string>
     <string name="activity_filter_origin">Origine</string>
     <string name="activity_filter_period">Periodo</string>

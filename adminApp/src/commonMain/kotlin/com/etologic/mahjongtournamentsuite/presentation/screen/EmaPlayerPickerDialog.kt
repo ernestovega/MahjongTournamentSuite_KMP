@@ -1,10 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -15,7 +15,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,9 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -39,6 +42,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.select_ema_player
 import mahjongtournamentsuite.adminapp.generated.resources.showing_first_of
 import mahjongtournamentsuite.adminapp.generated.resources.used_by
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 private const val MAX_RESULTS = 100
 
@@ -58,6 +62,7 @@ internal fun EmaPlayerPickerDialog(
 ) {
     var query by remember { mutableStateOf("") }
     val focus = remember { FocusRequester() }
+    val compact = LocalCompactLayout.current
     LaunchedEffect(Unit) { focus.requestFocus() }
     val terms = query.trim().split(' ').filter { it.isNotEmpty() }
     val matches = players.filter { player ->
@@ -90,24 +95,35 @@ internal fun EmaPlayerPickerDialog(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
+                                    // Name, flag and EMA number on one line. "Used by" follows them on a wide window
+                                    // and goes to a second line on a phone, where it does not fit.
                                     Column(Modifier.weight(1f)) {
-                                        Text(
-                                            player.displayName.ifBlank { player.emaId },
-                                            fontWeight = if (player.emaId == selectedEmaId) FontWeight.Bold else null,
-                                            color = if (owner == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                        Text(
-                                            listOf(player.emaId, player.country).filter { it.isNotBlank() }.joinToString(" · "),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                    if (owner != null) {
-                                        Text(
-                                            stringResource(Res.string.used_by, owner),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            Text(
+                                                player.displayName.ifBlank { player.emaId },
+                                                Modifier.weight(1f, fill = false),
+                                                fontWeight = if (player.emaId == selectedEmaId) FontWeight.Bold else null,
+                                                color = if (owner == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            CountryFlag(code = player.country, width = 20.dp)
+                                            Text(
+                                                player.emaId,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                            )
+                                            if (owner != null && !compact) {
+                                                Spacer(Modifier.weight(1f))
+                                                UsedBy(owner)
+                                            }
+                                        }
+                                        if (owner != null && compact) UsedBy(owner)
                                     }
                                 }
                                 HorizontalDivider()
@@ -128,3 +144,11 @@ internal fun EmaPlayerPickerDialog(
         )
     }
 }
+
+@Composable
+private fun UsedBy(owner: String) = Text(
+    stringResource(Res.string.used_by, owner),
+    style = MaterialTheme.typography.labelMedium,
+    color = MaterialTheme.colorScheme.error,
+    maxLines = 1,
+)

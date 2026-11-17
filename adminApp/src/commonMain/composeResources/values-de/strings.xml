@@ -66,6 +66,7 @@
     <string name="card_size">Ausweisgröße</string>
     <string name="width_mm">Breite (mm)</string>
     <string name="height_mm">Höhe (mm)</string>
+    <string name="card_orientation">Ausrichtung</string>
     <string name="portrait">Hochformat</string>
     <string name="landscape">Querformat</string>
     <string name="front_sheet">Vorderseite</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Passwort-Zurücksetzung senden (%1$d)</string>
     <string name="password_resets_confirm_title">E-Mails zum Zurücksetzen des Passworts senden?</string>
     <string name="password_resets_confirm_text">Die App sendet eine E-Mail an %1$d Konten.\n\nJede Person erhält einen Link, um ein neues Passwort festzulegen.</string>
-    <string name="password_resets_summary">Gesendete E-Mails: %1$d\nFehlgeschlagen: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">%1$d E-Mail zum Zurücksetzen des Passworts wurde gesendet.</item>
+        <item quantity="other">%1$d E-Mails zum Zurücksetzen des Passworts wurden gesendet.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">%1$d E-Mail konnte nicht gesendet werden:</item>
+        <item quantity="other">%1$d E-Mails konnten nicht gesendet werden:</item>
+    </plurals>
+    <string name="password_resets_partial_title">Nicht alle E-Mails wurden gesendet</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Das Konto existiert nicht.</string>
     <string name="reset_failure_no_email">Das Konto hat keine E-Mail-Adresse.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Daten löschen</string>
     <string name="activity_search_clear">Suche löschen</string>
     <string name="reset_table">Tisch leeren</string>
-    <string name="reset_table_confirm_title">Runde %1$d · Tisch %2$d leeren?</string>
-    <string name="reset_table_confirm_text">Dadurch werden die Platzzuordnungen, die Ergebnisse und alle Hände dieses Tisches entfernt. Die Spieler des Tisches bleiben, damit du sie neu setzen kannst. Ungespeicherte Änderungen an diesem Tisch gehen verloren. Die Änderung wird im Aktivitätsprotokoll erfasst.</string>
+    <string name="reset_table_confirm_title">Tisch %1$d leeren?</string>
+    <string name="reset_table_removes_label">Das wird entfernt:</string>
+    <string name="reset_table_removes_items">• Die Platzzuordnungen\n• Die Ergebnisse\n• Alle Hände\n• Ungespeicherte Änderungen an diesem Tisch</string>
+    <string name="reset_table_keeps_label">Das bleibt:</string>
+    <string name="reset_table_keeps_items">• Die Spieler des Tisches, damit du sie neu setzen kannst</string>
+    <string name="reset_table_logged">Die Änderung wird im Aktivitätsprotokoll erfasst.</string>
     <string name="activity_filter_kind">Art</string>
     <string name="activity_filter_origin">Herkunft</string>
     <string name="activity_filter_period">Zeitraum</string>

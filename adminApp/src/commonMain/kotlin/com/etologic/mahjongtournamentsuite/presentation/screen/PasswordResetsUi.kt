@@ -6,16 +6,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
@@ -39,10 +35,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.password_resets_summary
+import mahjongtournamentsuite.adminapp.generated.resources.password_resets_failed
+import mahjongtournamentsuite.adminapp.generated.resources.password_resets_partial_title
+import mahjongtournamentsuite.adminapp.generated.resources.password_resets_sent
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_email_failed
-import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_line
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_no_email
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_not_found
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_unknown
@@ -50,6 +47,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
@@ -108,11 +106,23 @@ internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: (
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
-            icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
-            title = { Text(stringResource(Res.string.password_resets_confirm_title)) },
-            text = { Text(stringResource(Res.string.password_resets_confirm_text, count)) },
-            confirmButton = { Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) } },
-            dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+            title = {
+                Text(stringResource(Res.string.password_resets_confirm_title), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            },
+            text = {
+                Text(
+                    stringResource(Res.string.password_resets_confirm_text, count),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            },
+            // Everything goes centered, with Cancel under Send, in every window size.
+            confirmButton = {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) }
+                    TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                }
+            },
         )
     }
 }
@@ -130,23 +140,25 @@ private fun PasswordResetFailure?.textRes(): StringResource = when (this) {
 internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, users: List<ManagedUser>, onDismiss: () -> Unit) {
     val sent = results.count { it.outcome == PasswordResetOutcome.SENT }
     val failed = results.filter { it.outcome == PasswordResetOutcome.FAILED }
-    val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     TrackedDialog("PasswordResetsDone") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
-            icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
-            title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
+            title = { Text(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.password_resets_summary, sent, failed.size))
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                        items(failed, key = { it.uid }) { result ->
-                            val name = users.firstOrNull { it.uid == result.uid }?.email ?: result.uid
-                            Text(
-                                stringResource(Res.string.reset_failure_line, name, stringResource(result.reason.textRes())),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (sent > 0) Text(pluralStringResource(Res.plurals.password_resets_sent, sent, sent))
+                    if (failed.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(pluralStringResource(Res.plurals.password_resets_failed, failed.size, failed.size), color = MaterialTheme.colorScheme.error)
+                            PlayerLinesCard(
+                                failed.map { result ->
+                                    PlayerLine(
+                                        users.firstOrNull { it.uid == result.uid }?.email ?: result.uid,
+                                        listOf(stringResource(result.reason.textRes())),
+                                    )
+                                },
+                                detailColor = MaterialTheme.colorScheme.error,
                             )
                         }
                     }

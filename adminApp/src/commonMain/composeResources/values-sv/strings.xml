@@ -66,6 +66,7 @@
     <string name="card_size">Kortstorlek</string>
     <string name="width_mm">Bredd (mm)</string>
     <string name="height_mm">Höjd (mm)</string>
+    <string name="card_orientation">Orientering</string>
     <string name="portrait">Stående</string>
     <string name="landscape">Liggande</string>
     <string name="front_sheet">Framsida</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Skicka lösenordsåterställning (%1$d)</string>
     <string name="password_resets_confirm_title">Skicka e-post för att återställa lösenord?</string>
     <string name="password_resets_confirm_text">Appen skickar e-post till %1$d konton.\n\nVarje person får en länk för att välja ett nytt lösenord.</string>
-    <string name="password_resets_summary">Skickade e-postmeddelanden: %1$d\nMisslyckade: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">%1$d e-postmeddelande för att återställa lösenordet skickades.</item>
+        <item quantity="other">%1$d e-postmeddelanden för att återställa lösenordet skickades.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">%1$d e-postmeddelande kunde inte skickas:</item>
+        <item quantity="other">%1$d e-postmeddelanden kunde inte skickas:</item>
+    </plurals>
+    <string name="password_resets_partial_title">Alla e-postmeddelanden skickades inte</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Kontot finns inte.</string>
     <string name="reset_failure_no_email">Kontot har ingen e-postadress.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Rensa datum</string>
     <string name="activity_search_clear">Rensa sökningen</string>
     <string name="reset_table">Töm bordet</string>
-    <string name="reset_table_confirm_title">Tömma omgång %1$d · bord %2$d?</string>
-    <string name="reset_table_confirm_text">Detta tar bort platstilldelningarna, resultaten och alla händer vid det här bordet. Bordets spelare finns kvar, så du kan placera dem igen. Osparade ändringar vid bordet går förlorade. Ändringen registreras i aktivitetsloggen.</string>
+    <string name="reset_table_confirm_title">Tömma bord %1$d?</string>
+    <string name="reset_table_removes_label">Det här tas bort:</string>
+    <string name="reset_table_removes_items">• Platstilldelningarna\n• Resultaten\n• Alla händer\n• Osparade ändringar vid bordet</string>
+    <string name="reset_table_keeps_label">Det här finns kvar:</string>
+    <string name="reset_table_keeps_items">• Bordets spelare, så att du kan placera dem igen</string>
+    <string name="reset_table_logged">Ändringen registreras i aktivitetsloggen.</string>
     <string name="activity_filter_kind">Typ</string>
     <string name="activity_filter_origin">Ursprung</string>
     <string name="activity_filter_period">Period</string>

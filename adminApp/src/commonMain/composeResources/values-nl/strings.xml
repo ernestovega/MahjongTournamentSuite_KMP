@@ -66,6 +66,7 @@
     <string name="card_size">Kaartformaat</string>
     <string name="width_mm">Breedte (mm)</string>
     <string name="height_mm">Hoogte (mm)</string>
+    <string name="card_orientation">Oriëntatie</string>
     <string name="portrait">Staand</string>
     <string name="landscape">Liggend</string>
     <string name="front_sheet">Voorkant</string>
@@ -591,7 +592,15 @@
     <string name="send_password_reset_count">Nieuw wachtwoord sturen (%1$d)</string>
     <string name="password_resets_confirm_title">E-mails voor nieuw wachtwoord sturen?</string>
     <string name="password_resets_confirm_text">De app stuurt een e-mail naar %1$d accounts.\n\nIedereen krijgt een link om een nieuw wachtwoord te kiezen.</string>
-    <string name="password_resets_summary">Verstuurde e-mails: %1$d\nMislukt: %2$d</string>
+    <plurals name="password_resets_sent">
+        <item quantity="one">%1$d e-mail voor een nieuw wachtwoord is verstuurd.</item>
+        <item quantity="other">%1$d e-mails voor een nieuw wachtwoord zijn verstuurd.</item>
+    </plurals>
+    <plurals name="password_resets_failed">
+        <item quantity="one">%1$d e-mail kon niet worden verstuurd:</item>
+        <item quantity="other">%1$d e-mails konden niet worden verstuurd:</item>
+    </plurals>
+    <string name="password_resets_partial_title">Niet alle e-mails zijn verstuurd</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Het account bestaat niet.</string>
     <string name="reset_failure_no_email">Het account heeft geen e-mailadres.</string>
@@ -747,8 +756,12 @@
     <string name="activity_period_clear">Datums wissen</string>
     <string name="activity_search_clear">Zoekopdracht wissen</string>
     <string name="reset_table">Tafel wissen</string>
-    <string name="reset_table_confirm_title">Ronde %1$d · tafel %2$d wissen?</string>
-    <string name="reset_table_confirm_text">Hiermee worden de plaatstoewijzingen, de scores en elke hand van deze tafel verwijderd. De spelers van de tafel blijven, zodat je ze opnieuw kunt plaatsen. Niet-opgeslagen wijzigingen aan deze tafel gaan verloren. De wijziging wordt vastgelegd in het activiteitenlogboek.</string>
+    <string name="reset_table_confirm_title">Tafel %1$d wissen?</string>
+    <string name="reset_table_removes_label">Dit wordt verwijderd:</string>
+    <string name="reset_table_removes_items">• De plaatstoewijzingen\n• De scores\n• Elke hand\n• Niet-opgeslagen wijzigingen aan deze tafel</string>
+    <string name="reset_table_keeps_label">Dit blijft:</string>
+    <string name="reset_table_keeps_items">• De spelers van de tafel, zodat je ze opnieuw kunt plaatsen</string>
+    <string name="reset_table_logged">De wijziging wordt vastgelegd in het activiteitenlogboek.</string>
     <string name="activity_filter_kind">Soort</string>
     <string name="activity_filter_origin">Bron</string>
     <string name="activity_filter_period">Periode</string>

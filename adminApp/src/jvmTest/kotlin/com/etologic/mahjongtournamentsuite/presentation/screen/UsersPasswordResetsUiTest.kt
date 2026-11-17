@@ -94,7 +94,7 @@ class UsersPasswordResetsUiTest {
         onNodeWithText("The app sends an email to 2 accounts.\n\nEach person gets a link to choose a new password.").assertExists()
         assertEquals(emptyList(), admin.calls.filter { it.startsWith("reset") })
         onAllNodesWithText("Send password reset (2)").onLast().performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Emails sent: 2\nFailed: 0").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("2 password reset emails were sent.").fetchSemanticsNodes().isNotEmpty() }
 
         assertEquals(listOf("reset p1,p2"), admin.calls.filter { it.startsWith("reset") })
         onNodeWithText("OK").performClick()
@@ -139,7 +139,7 @@ class UsersPasswordResetsUiTest {
         onNodeWithText("1 selected").assertExists()
         onNodeWithText("Send password reset (1)").performClick()
         onAllNodesWithText("Send password reset (1)").onLast().performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Emails sent: 1\nFailed: 0").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("1 password reset email was sent.").fetchSemanticsNodes().isNotEmpty() }
 
         assertEquals(listOf("reset p2"), admin.calls.filter { it.startsWith("reset") })
     }
@@ -154,11 +154,15 @@ class UsersPasswordResetsUiTest {
         onNodeWithText("Select all shown (3)").performClick()
         onNodeWithText("Send password reset (3)").performClick()
         onAllNodesWithText("Send password reset (3)").onLast().performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Emails sent: 1\nFailed: 2").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("2 emails could not be sent:").fetchSemanticsNodes().isNotEmpty() }
 
-        onNodeWithText("• cy@example.test: The account is disabled.").assertExists()
-        onNodeWithText("• bob@example.test: The email could not be sent.").assertExists()
-        onAllNodesWithText("• ann@example.test", substring = true).assertCountEquals(0)
+        // Each failed account shows in the list behind the dialog and in the dialog card.
+        onAllNodesWithText("cy@example.test").assertCountEquals(2)
+        onNodeWithText("The account is disabled.").assertExists()
+        onAllNodesWithText("bob@example.test").assertCountEquals(2)
+        onNodeWithText("The email could not be sent.").assertExists()
+        onNodeWithText("1 password reset email was sent.").assertExists()
+        onAllNodesWithText("ann@example.test").assertCountEquals(1)
     }
 
     @Test

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.CropPortrait
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -57,6 +58,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
 import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.card_orientation
 import mahjongtournamentsuite.adminapp.generated.resources.card_size
 import mahjongtournamentsuite.adminapp.generated.resources.cards_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.create_id_cards
@@ -276,8 +278,11 @@ fun IdCardsExportDialog(
                             modifier = Modifier.weight(1f),
                         )
                     }
+                    // Orientation has its own line, with an icon and a title like the sliders above.
                     val orientation: @Composable () -> Unit = {
-                        Row {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.ScreenRotation, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Text(stringResource(Res.string.card_orientation), modifier = Modifier.padding(start = 8.dp).width(110.dp))
                             FilledTonalIconToggleButton(
                                 checked = !layout.landscape,
                                 onCheckedChange = { applyOrientation(false) },
@@ -293,16 +298,15 @@ fun IdCardsExportDialog(
                         }
                     }
                     if (compact) {
-                        // On a phone the fields need the whole width, so the orientation goes to a line of its own.
+                        // On a phone the fields need the whole width.
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { sizeFields() }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { orientation() }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(20.dp))
                             sizeFields()
-                            orientation()
                         }
                     }
+                    orientation()
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
                         SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
                         SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
