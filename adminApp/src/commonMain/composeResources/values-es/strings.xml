@@ -347,7 +347,7 @@
     <string name="create_required_note">Los campos marcados con * son obligatorios.</string>
     <string name="create_players_placeholder">Múltiplo de 4, mínimo %1$d</string>
     <string name="create_teams_info">Agrupa a los jugadores en equipos de cuatro.\nLos miembros de un equipo no juegan juntos.</string>
-    <string name="create_heavy_info">Usa más CPU para calcular el calendario más rápido.</string>
+    <string name="create_heavy_info">Usa más CPU para calcular los enfrentamientos más rápido.</string>
     <string name="logo_from">Logotipo de %1$s</string>
     <string name="logo_none">Sin logotipo</string>
     <string name="logo_choose">Elegir logotipo</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Logotipo actual · %1$s</string>
     <string name="logo_current">Logotipo actual</string>
     <string name="create_saving">Guardando el torneo…</string>
-    <string name="create_calculating">Calculando el calendario…</string>
+    <string name="create_calculating">Calculando enfrentamientos…</string>
     <string name="create_tried">Intentos: %1$s</string>
     <string name="create_cancel_calculation">Cancelar el cálculo</string>
     <string name="create_progress_title">Creando el torneo</string>

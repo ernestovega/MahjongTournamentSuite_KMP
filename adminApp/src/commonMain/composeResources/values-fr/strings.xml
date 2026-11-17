@@ -347,7 +347,7 @@
     <string name="create_required_note">Les champs marqués d'un * sont obligatoires.</string>
     <string name="create_players_placeholder">Multiple de 4, minimum %1$d</string>
     <string name="create_teams_info">Regroupez les joueurs en équipes de quatre.\nLes membres d'une équipe ne joueront pas ensemble.</string>
-    <string name="create_heavy_info">Utilise plus de processeur pour calculer le programme plus vite.</string>
+    <string name="create_heavy_info">Utilise plus de processeur pour calculer les rencontres plus vite.</string>
     <string name="logo_from">Logo de %1$s</string>
     <string name="logo_none">Aucun logo</string>
     <string name="logo_choose">Choisir un logo</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Logo actuel · %1$s</string>
     <string name="logo_current">Logo actuel</string>
     <string name="create_saving">Enregistrement du tournoi…</string>
-    <string name="create_calculating">Calcul du programme…</string>
+    <string name="create_calculating">Calcul des rencontres…</string>
     <string name="create_tried">Essais : %1$s</string>
     <string name="create_cancel_calculation">Annuler le calcul</string>
     <string name="create_progress_title">Création du tournoi</string>

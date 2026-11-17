@@ -347,7 +347,7 @@
     <string name="create_required_note">Mit * markierte Felder sind erforderlich.</string>
     <string name="create_players_placeholder">Vielfaches von 4, mindestens %1$d</string>
     <string name="create_teams_info">Spieler in Teams zu viert einteilen.\nTeammitglieder spielen nicht zusammen.</string>
-    <string name="create_heavy_info">Mehr CPU nutzen, um den Spielplan schneller zu berechnen.</string>
+    <string name="create_heavy_info">Mehr CPU nutzen, um die Begegnungen schneller zu berechnen.</string>
     <string name="logo_from">Logo von %1$s</string>
     <string name="logo_none">Kein Logo</string>
     <string name="logo_choose">Logo wählen</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Aktuelles Logo · %1$s</string>
     <string name="logo_current">Aktuelles Logo</string>
     <string name="create_saving">Turnier wird gespeichert…</string>
-    <string name="create_calculating">Spielplan wird berechnet…</string>
+    <string name="create_calculating">Begegnungen werden berechnet…</string>
     <string name="create_tried">Versucht: %1$s</string>
     <string name="create_cancel_calculation">Berechnung abbrechen</string>
     <string name="create_progress_title">Turnier wird erstellt</string>

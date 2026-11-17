@@ -347,7 +347,7 @@
     <string name="create_required_note">Поля, отмеченные *, обязательны.</string>
     <string name="create_players_placeholder">Кратно 4, минимум %1$d</string>
     <string name="create_teams_info">Разделить игроков на команды по четыре.\nЧлены команды не будут играть друг против друга.</string>
-    <string name="create_heavy_info">Использовать больше ресурсов процессора, чтобы быстрее рассчитать расписание.</string>
+    <string name="create_heavy_info">Использовать больше ресурсов процессора, чтобы быстрее рассчитать встречи игроков.</string>
     <string name="logo_from">Логотип из %1$s</string>
     <string name="logo_none">Без логотипа</string>
     <string name="logo_choose">Выбрать логотип</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Текущий логотип · %1$s</string>
     <string name="logo_current">Текущий логотип</string>
     <string name="create_saving">Сохранение турнира…</string>
-    <string name="create_calculating">Расчёт расписания…</string>
+    <string name="create_calculating">Расчёт встреч игроков…</string>
     <string name="create_tried">Попыток: %1$s</string>
     <string name="create_cancel_calculation">Отменить расчёт</string>
     <string name="create_progress_title">Создание турнира</string>

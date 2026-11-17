@@ -347,7 +347,7 @@
     <string name="create_required_note">I campi contrassegnati con * sono obbligatori.</string>
     <string name="create_players_placeholder">Multiplo di 4, minimo %1$d</string>
     <string name="create_teams_info">Raggruppa i giocatori in squadre di quattro.\nI membri di una squadra non giocheranno insieme.</string>
-    <string name="create_heavy_info">Usa più CPU per calcolare il programma più in fretta.</string>
+    <string name="create_heavy_info">Usa più CPU per calcolare gli abbinamenti più in fretta.</string>
     <string name="logo_from">Logo da %1$s</string>
     <string name="logo_none">Nessun logo</string>
     <string name="logo_choose">Scegli il logo</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Logo attuale · %1$s</string>
     <string name="logo_current">Logo attuale</string>
     <string name="create_saving">Salvataggio del torneo…</string>
-    <string name="create_calculating">Calcolo del programma…</string>
+    <string name="create_calculating">Calcolo degli abbinamenti…</string>
     <string name="create_tried">Tentativi: %1$s</string>
     <string name="create_cancel_calculation">Annulla il calcolo</string>
     <string name="create_progress_title">Creazione del torneo</string>

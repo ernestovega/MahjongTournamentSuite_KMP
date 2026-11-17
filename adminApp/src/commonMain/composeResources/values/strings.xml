@@ -347,7 +347,7 @@
     <string name="create_required_note">Fields marked with * are required.</string>
     <string name="create_players_placeholder">Multiple of 4, minimum %1$d</string>
     <string name="create_teams_info">Group players into teams of four.\nTeam members will not play together.</string>
-    <string name="create_heavy_info">Use more CPU to calculate the schedule faster.</string>
+    <string name="create_heavy_info">Use more CPU to calculate the matchups faster.</string>
     <string name="logo_from">Logo from %1$s</string>
     <string name="logo_none">No logo</string>
     <string name="logo_choose">Choose logo</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Current logo · %1$s</string>
     <string name="logo_current">Current logo</string>
     <string name="create_saving">Saving tournament…</string>
-    <string name="create_calculating">Calculating schedule…</string>
+    <string name="create_calculating">Calculating matchups…</string>
     <string name="create_tried">Tried: %1$s</string>
     <string name="create_cancel_calculation">Cancel calculation</string>
     <string name="create_progress_title">Creating the tournament</string>

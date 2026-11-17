@@ -347,7 +347,7 @@
     <string name="create_required_note">Fält markerade med * krävs.</string>
     <string name="create_players_placeholder">Multipel av 4, minst %1$d</string>
     <string name="create_teams_info">Dela in spelarna i lag om fyra.\nLagmedlemmar spelar inte mot varandra.</string>
-    <string name="create_heavy_info">Använd mer CPU för att beräkna schemat snabbare.</string>
+    <string name="create_heavy_info">Använd mer CPU för att beräkna mötena snabbare.</string>
     <string name="logo_from">Logotyp från %1$s</string>
     <string name="logo_none">Ingen logotyp</string>
     <string name="logo_choose">Välj logotyp</string>
@@ -356,7 +356,7 @@
     <string name="logo_current_info">Nuvarande logotyp · %1$s</string>
     <string name="logo_current">Nuvarande logotyp</string>
     <string name="create_saving">Sparar turneringen…</string>
-    <string name="create_calculating">Beräknar schemat…</string>
+    <string name="create_calculating">Beräknar mötena…</string>
     <string name="create_tried">Försökt: %1$s</string>
     <string name="create_cancel_calculation">Avbryt beräkningen</string>
     <string name="create_progress_title">Skapar turneringen</string>
