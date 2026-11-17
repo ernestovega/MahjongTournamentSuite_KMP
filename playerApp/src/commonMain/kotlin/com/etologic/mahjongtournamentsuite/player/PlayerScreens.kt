@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.foundation.BorderStroke
@@ -732,12 +733,16 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
                             if (status != null) StatusChip(status)
                             // The own tournaments are marked, so they stand out in the list of all tournaments.
                             if (mine) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = stringResource(Res.string.tournament_you_play),
-                                    Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
+                                // The tooltip says what the icon means. A tap shows it and does not open the tournament.
+                                val youPlay = stringResource(Res.string.tournament_you_play)
+                                AppTooltipBox(youPlay) {
+                                    Box(
+                                        Modifier.size(24.dp).clip(CircleShape).clickable(onClickLabel = youPlay) { toggleTooltip() },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(Icons.Default.Person, contentDescription = youPlay, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
                             }
                         }
                     }
