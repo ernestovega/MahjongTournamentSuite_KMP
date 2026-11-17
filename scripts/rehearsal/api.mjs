@@ -59,8 +59,19 @@ export class Api {
     this.metrics = metrics;
   }
 
-  /** Returns { status, json }. A network failure counts as status 0. It never throws. */
-  async call(method, path, { token, body, label } = {}) {
+  /**
+   * Returns { status, json }. A network failure counts as status 0. It never throws. A read that fails on the network
+   * is tried once more after a second, as the app does on its next poll; the report counts the retry as an event.
+   */
+  async call(method, path, options = {}) {
+    const reply = await this.once(method, path, options, method === "GET");
+    if (reply.status !== 0 || method !== "GET") return reply;
+    this.metrics.event("network-retry", { label: options.label ?? `${method} ${path}`, message: reply.json?.message });
+    await sleep(1_000);
+    return this.once(method, path, options, false);
+  }
+
+  async once(method, path, { token, body, label } = {}, mayRetry = false) {
     const started = performance.now();
     let status = 0;
     let json = null;
@@ -86,6 +97,7 @@ export class Api {
       json = { message: String(error?.cause?.code ?? error?.name ?? error).slice(0, 120) };
     }
     const ms = performance.now() - started;
+    if (status === 0 && mayRetry) return { status, json, ms };
     this.metrics.record(label ?? `${method} ${path}`, status, ms, status >= 400 || status === 0 ? json?.message : null);
     return { status, json, ms };
   }
