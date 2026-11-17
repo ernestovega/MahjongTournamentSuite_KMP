@@ -59,9 +59,10 @@ async function freePlayers(api, token) {
   const owned = new Set((users.json.users ?? []).map((user) => user.emaId).filter(Boolean));
   return (registry.json.players ?? []).filter((player) =>
     !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName
-    && Number(player.emaId) > 0
-    // The test players of the registry, as the one of the Google Play reviewers, are not people of a tournament.
-    && !/GOOGLE PLAY/i.test(`${player.firstName} ${player.lastName}`));
+    // The test players of the registry are not people of a tournament: the numbers from 00 (the Google Play
+    // reviewers have 00000000) and the names with "test", as the seeds leave them out.
+    && !player.emaId.startsWith("00")
+    && !/test/i.test(`${player.firstName} ${player.lastName}`));
 }
 
 function csv(rows) {
