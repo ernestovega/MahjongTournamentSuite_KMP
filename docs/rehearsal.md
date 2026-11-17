@@ -34,7 +34,7 @@ gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts-
 ## The workflow (Actions > Rehearsal)
 
 - `calibrate`: creates the 16 calibration accounts (`+mts-cal01..16`, EMA 99980001-16) and the bot admin
-  (`+mts-botadmin`), plays a tournament of 16 bots in 2 short rounds, checks it, and deletes it. About 25 minutes.
+  (`+mts-botadmin`), plays a tournament of 16 bots in 2 short rounds and checks it. The tournament stays in staging, with the time of the run in its name. About 25 minutes.
   It tests the bots, a race between two phones on the same hand, a table that starts late, penalties, extra time and
   the admin closing open tables. With `emulators` on, slot 1 plays with the real app on an emulator.
 - `passwords`: the rehearsal password for the accounts j02-j60. Run it after the invitations.

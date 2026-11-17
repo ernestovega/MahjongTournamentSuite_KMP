@@ -2,7 +2,7 @@
 // A short tournament played only by bots, to check the bots, the API and the checks before the real rehearsal.
 // It needs the accounts of `rehearsalAccounts --calibration-setup`: 16 players (+mts-cal01..16, EMA 99980001-16)
 // and an admin (+mts-botadmin). It acts as Ernesto: it creates the tournament, assigns the players, presses Play of
-// each round, closes the tables that stay open, and deletes the tournament at the end (unless --keep).
+// each round and closes the tables that stay open. The tournament stays in staging (--delete removes it at the end).
 //
 //   node scripts/rehearsal/calibrate.mjs --minutes=8 --hand-seconds=20-30 --spectators=20 --report=out/calibration.json
 //
@@ -14,7 +14,8 @@ import { Api, Metrics, STAGING_API, Session, parseArgs, parseRange, rehearsalEma
 import { runBots, writeReport } from "./bots.mjs";
 import { checkTournament, verdicts, writeCheck } from "./report.mjs";
 
-const NAME = "Calibración bots";
+/** Every calibration stays in staging, with the time of its start in the name, so it feeds the statistics. */
+const NAME = `Calibración bots ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
 const FIRST_EMA = 99980001;
 /** 16 players in 2 rounds without a repeated pair: the rows of a 4x4 grid in round 1, its columns in round 2. */
 const TABLES = [
@@ -39,13 +40,6 @@ async function must(promise, what) {
 async function adminTournaments(api, token) {
   const reply = await must(api.call("GET", "/tournaments", { token, label: "admin GET tournaments" }), "Listing the tournaments");
   return reply.json.tournaments ?? [];
-}
-
-async function removeOld(api, token) {
-  for (const tournament of (await adminTournaments(api, token)).filter((item) => item.name === NAME)) {
-    await must(api.call("DELETE", `/tournaments/${tournament.id}`, { token, label: "admin DELETE tournament" }), "Deleting an old calibration");
-    console.log(`Deleted an old calibration tournament (${tournament.id}).`);
-  }
 }
 
 async function createTournament(api, token, minutes, extraMinutes) {
@@ -128,7 +122,6 @@ async function main() {
 
   const admin = new Session(api, rehearsalEmail(baseEmail, "botadmin"), password);
   if (!(await admin.signIn())) throw new Error("The bot admin could not sign in. Run rehearsalAccounts --calibration-setup.");
-  await removeOld(api, admin.token);
   const tournamentId = await createTournament(api, admin.token, minutes, extraMinutes);
   console.log(`Created the calibration tournament ${tournamentId}.`);
 
@@ -182,7 +175,7 @@ async function main() {
     console.log("Integrity findings:", JSON.stringify(integrity.json.findings, null, 2));
   }
 
-  if (!args.keep) {
+  if (args.delete) {
     await api.call("DELETE", `/tournaments/${tournamentId}`, { token: await admin.bearer(), label: "admin DELETE tournament" });
     console.log("Deleted the calibration tournament.");
   }

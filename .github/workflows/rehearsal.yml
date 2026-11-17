@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "calibrate: a short tournament of 16 bots, created and deleted by the run. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts."
+        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts."
         type: choice
         options: [calibrate, passwords, bots, check, calibration-cleanup]
         default: calibrate
