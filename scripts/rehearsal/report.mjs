@@ -55,8 +55,12 @@ function sameHand(saved, server) {
   if (saved.isDraw) return text(server.playerWinnerId) === "";
   return text(server.playerWinnerId) === text(saved.playerWinnerId)
     && text(server.playerLooserId).replace(/^-$/, "") === text(saved.playerLooserId)
-    && text(server.handScore) === text(saved.handScore);
+    && text(server.handScore) === text(saved.handScore)
+    && Boolean(server.isChickenHand) === Boolean(saved.isChickenHand);
 }
+
+const beats = (a, b) => a.points > b.points || (a.points === b.points && a.score > b.score);
+const round6 = (value) => Math.round(value * 1e6) / 1e6;
 
 /** Reads the tournament and checks it. [botReports] are the reports of bots.mjs, from every process. */
 export async function checkTournament(api, tournamentId, botReports = []) {
@@ -67,6 +71,9 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const scoreProblems = [];
   const openTables = [];
   const ranking = new Map();
+  // The chicken hands of each slot, and the best hand of each slot at each table (the winning hand with most points).
+  const chickenBySlot = new Map();
+  const bestBySlotTable = [];
   let doneHands = 0;
 
   for (const [key, { table, hands }] of byKey) {
@@ -74,8 +81,17 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     const seats = SEATS.map((name) => text(table[`player${name}Id`]));
     doneHands += hands.filter((hand) => hand.isDone).length;
     if (seats.some((seat) => seat === "") || table.useTotalsOnly) continue;
-    const changes = hands.filter((hand) => hand.isDone || table.isCompleted).map((hand) => handChange(hand, seats)).filter(Boolean);
+    const counted = hands.filter((hand) => hand.isDone || table.isCompleted);
+    const changes = counted.map((hand) => handChange(hand, seats)).filter(Boolean);
     if (changes.length === 0) continue;
+    const bestHere = new Map();
+    for (const hand of counted) {
+      const winner = text(hand.playerWinnerId);
+      if (winner === "" || !/^\d+$/.test(text(hand.handScore))) continue;
+      bestHere.set(winner, Math.max(bestHere.get(winner) ?? 0, Number(text(hand.handScore))));
+      if (hand.isChickenHand) chickenBySlot.set(winner, (chickenBySlot.get(winner) ?? 0) + 1);
+    }
+    bestHere.forEach((best, slot) => bestBySlotTable.push({ slot, best }));
     const scores = changes.reduce((totals, change) => change.map((value, index) => totals[index] + value), [0, 0, 0, 0]);
     const points = tablePoints(scores);
     SEATS.forEach((name, index) => {
@@ -132,6 +148,67 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     races: races.length,
     raceDuplicates: raceDuplicates.length,
     ranking: sorted,
+    chickenBySlot: Object.fromEntries(chickenBySlot),
+    bestBySlotTable,
+  };
+}
+
+/**
+ * The places that the server gives each person (the standings of the list of tournaments: podium, team, chicken
+ * hands and best hand), compared with the same places counted here from the hands. Returns the differences.
+ */
+export async function checkStandings(api, tournamentId, check) {
+  const reply = await api.call("GET", `/public/tournaments/${tournamentId}/players`, { label: "GET players" });
+  if (reply.status !== 200) throw new Error(`Reading the players failed: ${reply.status}`);
+  const players = reply.json.players.filter((player) => player.assignedEmaId);
+  const rows = check.ranking.map((entry) => ({ ...entry, points: round6(entry.points) }));
+  const teamOf = new Map(players.map((player) => [String(player.id), player.team]));
+  const teamRows = [...new Set(rows.map((row) => teamOf.get(row.playerId)).filter((team) => team > 0))].map((team) => {
+    const members = rows.filter((row) => teamOf.get(row.playerId) === team);
+    return { team, points: round6(members.reduce((sum, row) => sum + row.points, 0)), score: members.reduce((sum, row) => sum + row.score, 0) };
+  });
+  const chicken = (slot) => check.chickenBySlot[slot] ?? 0;
+  const best = (slot) => check.bestBySlotTable.filter((entry) => entry.slot === slot).reduce((max, entry) => Math.max(max, entry.best), 0);
+  const problems = [];
+  let compared = 0;
+  for (const player of players) {
+    const slot = String(player.id);
+    const mine = rows.find((row) => row.playerId === slot);
+    if (mine == null) continue;
+    const answer = await api.call("GET", `/public/statistics/persons/${player.assignedEmaId}/standings?tournaments=${tournamentId}`, { label: "GET standings" });
+    // A person who asked to stay hidden has no public standings.
+    if (answer.status === 404) continue;
+    const standing = answer.json?.standings?.[0];
+    if (answer.status !== 200 || standing == null) {
+      problems.push(`slot ${slot}: no standing (${answer.status})`);
+      continue;
+    }
+    compared += 1;
+    const myTeam = teamRows.find((row) => row.team === teamOf.get(slot));
+    const expected = {
+      rank: rows.filter((row) => beats(row, mine)).length + 1,
+      points: mine.points,
+      score: mine.score,
+      teamRank: myTeam == null ? null : teamRows.filter((row) => beats(row, myTeam)).length + 1,
+      teamPoints: myTeam == null ? null : myTeam.points,
+      chickenHands: chicken(slot),
+      chickenRank: chicken(slot) === 0
+        ? null
+        : rows.filter((row) => chicken(row.playerId) > chicken(slot) || (chicken(row.playerId) === chicken(slot) && beats(row, mine))).length + 1,
+      bestHand: best(slot),
+      bestHandRank: best(slot) === 0 ? null : check.bestBySlotTable.filter((entry) => entry.best > best(slot)).length + 1,
+    };
+    for (const [field, value] of Object.entries(expected)) {
+      const stored = typeof value === "number" && standing[field] != null ? round6(Number(standing[field])) : standing[field] ?? null;
+      if (stored !== value) problems.push(`slot ${slot} ${field}: ${standing[field]} on the server, ${value} here`);
+    }
+  }
+  return {
+    compared,
+    problems,
+    teams: teamRows.length,
+    chickenHands: Object.values(check.chickenBySlot).reduce((sum, count) => sum + count, 0),
+    bestHand: check.bestBySlotTable.reduce((max, entry) => Math.max(max, entry.best), 0),
   };
 }
 
@@ -161,6 +238,11 @@ export function verdicts(check, botReports, integrity) {
   add(p95 != null && p95 < 1_500, `Saving a hand takes p95 ${p95 ?? "-"} ms (target under 1500 ms).`);
   if (delays.length > 0) add(Math.max(...delays) < 20_000, `A hand reaches the other phones of the table in p95 ${Math.max(...delays)} ms (target under 20 s).`);
   add(check.openTables.length === 0, `Every table is closed (${check.openTables.length} open${check.openTables.length ? `: ${check.openTables.join(", ")}` : ""}).`);
+  if (check.standings != null) {
+    const s = check.standings;
+    add(s.problems.length === 0 && s.compared > 0,
+      `Places of every player (ranking, team, chicken hands and best hand) match an independent count (${s.problems.length} differences in ${s.compared} players; ${s.teams} teams, ${s.chickenHands} chicken hands, best hand ${s.bestHand}).`);
+  }
   if (integrity != null) add(integrity.counts?.errors === 0, `Integrity check: ${integrity.counts?.errors ?? "?"} errors, ${integrity.counts?.warnings ?? "?"} warnings.`);
   return lines;
 }
@@ -168,7 +250,7 @@ export function verdicts(check, botReports, integrity) {
 export function checkMarkdown(title, check, lines) {
   const out = [`### ${title}`, "", ...lines.map((line) => `- ${line}`), ""];
   out.push(`Tables: ${check.tables}. Hands on the server: ${check.doneHands}. Saved by the bots of these reports: ${check.handsSavedByBots}.`);
-  for (const [name, list] of [["Score differences", check.scoreProblems], ["Lost hands", check.lost], ["Changed hands", check.changed], ["Extra hands", check.extra]]) {
+  for (const [name, list] of [["Place differences", check.standings?.problems ?? []], ["Score differences", check.scoreProblems], ["Lost hands", check.lost], ["Changed hands", check.changed], ["Extra hands", check.extra]]) {
     if (list.length > 0) out.push("", `${name}:`, ...list.slice(0, 30).map((item) => `- ${item}`));
   }
   out.push("", "Top of the ranking (independent count):", "", "| # | Player | Points | Score |", "| --- | --- | --- | --- |");
@@ -191,6 +273,7 @@ async function main() {
   const api = new Api(args.api ?? STAGING_API, new Metrics());
   const tournamentId = await findTournament(api, args.tournament);
   const check = await checkTournament(api, tournamentId, botReports);
+  if (args.standings !== "off") check.standings = await checkStandings(api, tournamentId, check);
   const lines = verdicts(check, botReports, null);
   writeCheck(args.report ?? "out/check.json", args.title ?? "Rehearsal check", check, lines);
   if (lines.some((line) => line.startsWith("❌"))) process.exitCode = 1;

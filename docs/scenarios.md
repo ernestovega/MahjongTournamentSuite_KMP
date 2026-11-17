@@ -69,3 +69,7 @@ read it, so each one knows its part.
 
 `report.mjs` scores every table again with its own count (teams, chicken hands, best hands, penalties) and compares it
 with the server, together with the hands of the bots, the times and the errors (docs/rehearsal.md, The checks).
+
+It also asks the server the places of every player, as the list of tournaments shows them (podium, team, chicken
+hands and best hand), and compares each one with its own count. The bots mark about a third of the hands won on a
+discard with 8 to 12 points as chicken hands, so every scenario has some.

@@ -36,7 +36,10 @@ function randomHand(seats) {
   const winner = pick(seats);
   const score = String(pick(SCORES));
   if (roll < 0.55) return { playerWinnerId: winner, playerLooserId: "", handScore: score };
-  return { playerWinnerId: winner, playerLooserId: pick(seats.filter((seat) => seat !== winner)), handScore: score };
+  const loser = pick(seats.filter((seat) => seat !== winner));
+  // A chicken hand is won on a discard with 8 to 12 points. The players mark about a third of those.
+  const isChickenHand = Number(score) <= 12 && Math.random() < 0.35;
+  return { playerWinnerId: winner, playerLooserId: loser, handScore: score, ...(isChickenHand ? { isChickenHand: true } : {}) };
 }
 
 function seatsOf(table) {
