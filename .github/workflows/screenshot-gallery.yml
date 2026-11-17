@@ -1,0 +1,80 @@
+# The gallery of the screenshot tests and the game day videos (docs/screenshot-gallery.md), a web page on its own
+# Hosting site in the staging project. It runs after every push to main that changes a reference image, after every
+# run of Screenshot tests and Game day, and by hand. It checks nothing and blocks nothing.
+name: Screenshot gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*/screenshots/**"
+      - "scripts/gallery/**"
+      - ".github/workflows/screenshot-gallery.yml"
+  workflow_run:
+    workflows: ["Screenshot tests", "Game day"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: screenshot-gallery
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gallery:
+    name: Publish the gallery
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
+      SITE: ${{ vars.GALLERY_SITE || 'mts-staging-screenshots' }}
+      GITHUB_TOKEN: ${{ github.token }}
+      OUT: build/screenshot-gallery
+    steps:
+      - name: Check the staging project
+        run: |
+          if [ -z "$STAGING" ] || [ "$STAGING" = "mahjong-tournament-suite" ]; then
+            echo "STAGING_FIREBASE_PROJECT is empty or names the production project." >&2
+            exit 1
+          fi
+
+      # The whole history of main, without the LFS images: the script downloads only the ones the site lacks.
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          lfs: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Pillow and ffmpeg
+        run: |
+          pip install --quiet pillow
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+
+      - name: Build the page and the new images
+        run: python3 scripts/gallery/gallery.py build --out "$OUT" --previous "https://$SITE.web.app"
+
+      - name: Add the videos of the last game days
+        run: python3 scripts/gallery/gallery.py videos --out "$OUT"
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Publish
+        run: python3 scripts/gallery/gallery.py publish --out "$OUT" --site "$SITE" --project "$STAGING"
+
+      - name: Show the address
+        run: echo "### Gallery at https://$SITE.web.app" >> "$GITHUB_STEP_SUMMARY"

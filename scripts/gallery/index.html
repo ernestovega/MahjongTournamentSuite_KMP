@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>MTS screenshot gallery</title>
+<style>
+:root { --bg:#f5f7f5; --card:#fff; --text:#1a1f1b; --muted:#5b655e; --line:#dce2de; --accent:#1f7a4d; --chip:#e8eee9;
+  --ok:#1f7a4d; --warn:#9a6400; --bad:#b3261e; --okbg:#e3f3ea; --warnbg:#fbf0d9; --badbg:#fbe4e2; }
+@media (prefers-color-scheme: dark) { :root { --bg:#111412; --card:#1b1f1c; --text:#e6ebe7; --muted:#9aa49d; --line:#2c332e;
+  --accent:#5cc48f; --chip:#252b27; --ok:#6fd19c; --warn:#f0b54a; --bad:#ff8a80; --okbg:#173023; --warnbg:#33290f; --badbg:#3a1a18; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+a { color:var(--accent); }
+header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 16px 8px; }
+h1 { font-size:18px; margin:0; }
+.meta { color:var(--muted); font-size:13px; }
+.status { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px; }
+.pill { font-size:12px; border-radius:999px; padding:3px 10px; border:1px solid transparent; white-space:nowrap; }
+.pill.ok { background:var(--okbg); color:var(--ok); } .pill.warn { background:var(--warnbg); color:var(--warn); } .pill.bad { background:var(--badbg); color:var(--bad); }
+.pill a { color:inherit; }
+nav.tabs { display:flex; gap:4px; margin-top:8px; }
+nav.tabs a { text-decoration:none; color:var(--muted); padding:6px 12px; border-radius:8px; font-weight:600; font-size:14px; }
+nav.tabs a.on { background:var(--chip); color:var(--text); }
+.bar { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; }
+.bar input, .bar select, select { padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); font:inherit; font-size:14px; min-width:0; }
+.bar input { flex:1 1 160px; }
+.chip { border:1px solid var(--line); background:var(--chip); color:var(--text); border-radius:999px; padding:4px 11px; font:inherit; font-size:13px; cursor:pointer; }
+.chip[aria-pressed=true] { background:var(--accent); border-color:var(--accent); color:#fff; }
+.sep { width:1px; height:22px; background:var(--line); margin:0 2px; }
+main { padding:6px 16px 48px; }
+@media (max-width:700px) { header { position:static; } figure img { height:160px; } }
+h2 { font-size:16px; margin:22px 0 6px; }
+.screen { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px 12px; margin:10px 0; }
+.screen h3 { font-size:14px; margin:0 0 8px; font-weight:600; }
+.row { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; align-items:flex-start; }
+figure { margin:0; flex:0 0 auto; cursor:zoom-in; position:relative; }
+figure img { display:block; height:200px; width:auto; min-width:60px; border:1px solid var(--line); border-radius:6px; background:var(--chip); }
+figcaption { font-size:12px; color:var(--muted); margin-top:3px; }
+.badge { position:absolute; top:6px; left:6px; font-size:11px; font-weight:700; background:var(--warn); color:#fff; border-radius:6px; padding:1px 6px; }
+.removed { height:200px; width:110px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:6px; color:var(--muted); font-size:12px; text-align:center; padding:6px; }
+.empty { color:var(--muted); padding:24px 0; }
+details.version { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:10px 0; }
+details.version summary { cursor:pointer; padding:10px 12px; list-style:none; }
+details.version summary::-webkit-details-marker { display:none; }
+.vtitle { font-weight:600; } .vmeta { color:var(--muted); font-size:13px; }
+.changes { padding:0 12px 12px; display:flex; flex-wrap:wrap; gap:14px; }
+.pair { display:flex; flex-direction:column; gap:4px; cursor:zoom-in; }
+.pair .imgs { display:flex; gap:4px; align-items:center; }
+.pair img { height:130px; border:1px solid var(--line); border-radius:6px; background:var(--chip); }
+.pair .lbl { font-size:12px; color:var(--muted); max-width:300px; overflow-wrap:anywhere; }
+.pair .removed { height:130px; width:70px; }
+.videos { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+.vcard { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+.vcard video { width:100%; border-radius:8px; background:#000; margin-top:8px; display:block; }
+.speeds { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+/* viewer */
+#viewer { position:fixed; inset:0; z-index:10; background:rgba(8,10,9,.94); color:#eee; display:none; flex-direction:column; }
+#viewer.open { display:flex; }
+#viewer .top { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid #333; }
+#viewer .top .name { font-weight:600; flex:1 1 220px; overflow-wrap:anywhere; }
+#viewer .chip { background:#262b28; border-color:#3a413c; color:#eee; }
+#viewer .chip[aria-pressed=true] { background:var(--accent); border-color:var(--accent); }
+#viewer select { background:#1c201d; color:#eee; border-color:#3a413c; }
+#viewer .stage { flex:1; min-height:0; display:flex; gap:10px; align-items:center; justify-content:center; padding:10px; overflow:auto; }
+#viewer .stage .side { display:flex; flex-direction:column; align-items:center; min-width:0; max-height:100%; }
+#viewer .stage img { max-width:100%; max-height:calc(100vh - 170px); object-fit:contain; background:#777; }
+#viewer .stage .cap { font-size:12px; color:#bbb; margin-top:4px; text-align:center; }
+.slider { position:relative; display:inline-block; max-width:100%; user-select:none; touch-action:none; }
+.slider img { display:block; }
+.slider .over { position:absolute; inset:0; overflow:hidden; }
+.slider .over img { max-width:none !important; }
+.slider .handle { position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 0 1px #000; cursor:ew-resize; }
+.slider .handle::after { content:"⇔"; position:absolute; top:50%; left:-13px; width:28px; height:28px; margin-top:-14px; border-radius:50%; background:#fff; color:#000; text-align:center; line-height:28px; font-size:14px; }
+.diff { position:relative; display:inline-block; }
+.diff img + img { position:absolute; inset:0; mix-blend-mode:difference; }
+#viewer .history { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:8px 12px 12px; border-top:1px solid #333; font-size:13px; }
+#viewer .nav { background:rgba(255,255,255,.12); color:#fff; border:0; font-size:24px; width:40px; height:40px; border-radius:8px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>MTS screenshot gallery</h1>
+  <div class="meta" id="meta">Loading…</div>
+  <div class="status" id="status"></div>
+  <nav class="tabs" id="tabs">
+    <a href="#screens" data-tab="screens">Screens</a>
+    <a href="#changes" data-tab="changes">Changes</a>
+    <a href="#videos" data-tab="videos">Game day videos</a>
+  </nav>
+  <div id="filters">
+    <div class="bar" id="modules"></div>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Search">
+      <select id="version" title="Version"></select>
+      <span id="devices"></span><span class="sep"></span><span id="themes"></span>
+      <button class="chip" id="onlyChanged" aria-pressed="false" title="Only the images that changed in this version">changed</button>
+    </div>
+  </div>
+</header>
+<main id="main"></main>
+
+<div id="viewer" role="dialog" aria-modal="true">
+  <div class="top">
+    <button class="nav" id="vPrev" aria-label="Previous">‹</button>
+    <button class="nav" id="vNext" aria-label="Next">›</button>
+    <span class="name" id="vName"></span>
+    <span id="vModes"></span>
+    <label style="font-size:13px">vs <select id="vCompare"></select></label>
+    <button class="nav" id="vClose" aria-label="Close">✕</button>
+  </div>
+  <div class="stage" id="vStage"></div>
+  <div class="history" id="vHistory"></div>
+</div>
+
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) e[k] = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("g." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("g." + k, JSON.stringify(v)); } catch (e) {} },
+};
+const DEVICES = ["phone", "narrow", "tablet", "desktop"];
+const THEMES = ["light", "dark"];
+let M = null, KEYS = [], LABELS = {};
+const state = {
+  tab: "screens", module: store.get("module", "all"), devices: new Set(store.get("devices", [])),
+  themes: new Set(store.get("themes", [])), q: "", version: 0, onlyChanged: false,
+};
+
+const short = (sha) => (sha || "").slice(0, 7);
+const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+const ago = (iso) => {
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  return `${Math.round(s / 86400)} days ago`;
+};
+const commitUrl = (sha) => `https://github.com/${M.repo}/commit/${sha}`;
+const thumb = (oid) => `thumb/${oid}.webp`;
+const full = (oid) => `img/${oid}.png`;
+const vLabel = (i) => { const v = M.versions[i]; return `${short(v.sha)} · ${fmtDate(v.date)}${v.web ? " · web " + v.web : ""}`; };
+
+// An image's entries are [version index, id or null], newest first. At version k it is the first entry with index >= k.
+function entryAt(key, k) { return (M.images[key] || []).find((e) => e[0] >= k) || null; }
+function oidAt(key, k) { const e = entryAt(key, k); return e ? e[1] : null; }
+function changedIn(key, k) { return k < M.versions.length - 1 && (M.images[key] || []).some((e) => e[0] === k); }
+function previousOid(key, k) { const e = entryAt(key, k); if (!e) return null; const p = (M.images[key] || []).find((x) => x[0] > e[0]); return p ? p[1] : null; }
+const moduleOf = (key) => key.split("/")[0];
+const screenOf = (key) => key.slice(key.indexOf("/") + 1, key.lastIndexOf("/"));
+const variantOf = (key) => key.slice(key.lastIndexOf("/") + 1);
+
+async function load() {
+  const res = await fetch("manifest.json", { cache: "no-cache" });
+  M = await res.json();
+  KEYS = Object.keys(M.images).sort();
+  for (const m of M.modules) LABELS[m.id] = m.label;
+  renderHeader();
+  const sel = $("#version");
+  M.versions.forEach((v, i) => sel.append(el("option", { value: i, text: (i === 0 ? "Current: " : "") + vLabel(i) })));
+  sel.onchange = () => { state.version = +sel.value; render(); };
+  $("#q").oninput = (e) => { state.q = e.target.value; render(); };
+  $("#onlyChanged").onclick = () => { state.onlyChanged = !state.onlyChanged; $("#onlyChanged").setAttribute("aria-pressed", state.onlyChanged); render(); };
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+function renderHeader() {
+  const cur = M.versions[0];
+  const count = KEYS.filter((k) => oidAt(k, 0)).length;
+  $("#meta").replaceChildren(
+    `${count} images · images of `, el("a", { href: commitUrl(cur.sha), text: short(cur.sha) }),
+    ` (${fmtDate(cur.date)}${cur.web ? ", web " + cur.web : ""}${cur.app ? ", app " + cur.app : ""}) · `,
+    `${M.versions.length} versions kept · page built ${ago(M.generated)}`,
+  );
+  const st = $("#status"); st.replaceChildren();
+  const v = M.verify;
+  if (v) {
+    const ok = v.conclusion === "success";
+    const behind = v.commitsBehind ? `, ${v.commitsBehind} commits behind main` : ", on the latest commit";
+    st.append(el("span", { class: "pill " + (ok ? (v.commitsBehind > 0 ? "warn" : "ok") : "bad"), title: "Last run of Actions > Screenshot tests" },
+      el("a", { href: v.url, text: `Screenshot tests ${ok ? "passed" : "failed"} ${ago(v.date)}${behind}` })));
+  } else st.append(el("span", { class: "pill warn", text: "Screenshot tests have never run in Actions" }));
+  for (const m of M.modules) {
+    const stale = m.codeCommitsAfter > 0;
+    const title = stale ? `Code of ${m.label} changed after its images: ${m.codeCommitsAfter} commits, last ${short(m.lastCode.sha)} ${m.lastCode.subject}. The images may be out of date: run the tests to know.` : `No code of ${m.label} changed after its images (${short(m.imagesSha)}).`;
+    st.append(el("span", { class: "pill " + (stale ? "warn" : "ok"), title },
+      el("a", { href: commitUrl(stale ? m.lastCode.sha : m.imagesSha), text: stale ? `${m.label}: code changed after the images (${m.codeCommitsAfter})` : `${m.label}: images up to date` })));
+  }
+}
+
+function chip(label, pressed, onclick, title) { return el("button", { class: "chip", "aria-pressed": String(pressed), onclick, title, text: label }); }
+function renderFilters() {
+  const mods = $("#modules"); mods.replaceChildren();
+  const k = state.version;
+  const n = (m) => KEYS.filter((key) => (m === "all" || moduleOf(key) === m) && oidAt(key, k)).length;
+  mods.append(chip(`All (${n("all")})`, state.module === "all", () => setModule("all")));
+  for (const m of M.modules) mods.append(chip(`${m.label} (${n(m.id)})`, state.module === m.id, () => setModule(m.id)));
+  for (const [id, values, set, name] of [["#devices", DEVICES, state.devices, "devices"], ["#themes", THEMES, state.themes, "themes"]]) {
+    const box = $(id); box.replaceChildren();
+    for (const v of values) box.append(chip(v, set.has(v), () => { set.has(v) ? set.delete(v) : set.add(v); store.set(name, [...set]); render(); }));
+  }
+  $("#version").value = state.version;
+}
+function setModule(m) { state.module = m; store.set("module", m); render(); }
+
+function route() {
+  const h = location.hash.slice(1) || "screens";
+  state.tab = ["screens", "changes", "videos"].includes(h) ? h : "screens";
+  for (const a of document.querySelectorAll("#tabs a")) a.classList.toggle("on", a.dataset.tab === state.tab);
+  $("#filters").style.display = state.tab === "screens" ? "" : "none";
+  render();
+}
+function render() {
+  if (!M) return;
+  if (state.tab === "screens") { renderFilters(); renderScreens(); }
+  else if (state.tab === "changes") renderChanges();
+  else renderVideos();
+}
+
+let visible = [];
+function matches(key) {
+  if (state.module !== "all" && moduleOf(key) !== state.module) return false;
+  const parts = variantOf(key).split("-");
+  if (state.devices.size && !parts.some((p) => state.devices.has(p))) return false;
+  if (state.themes.size && !parts.some((p) => state.themes.has(p))) return false;
+  const q = state.q.trim().toLowerCase();
+  if (q && !key.toLowerCase().includes(q)) return false;
+  if (state.onlyChanged && !changedIn(key, state.version)) return false;
+  return !!oidAt(key, state.version);
+}
+function renderScreens() {
+  const main = $("#main"); main.replaceChildren(); visible = [];
+  const k = state.version;
+  let lastModule = null, box = null, row = null, lastScreen = null;
+  for (const key of KEYS) {
+    if (!matches(key)) continue;
+    const mod = moduleOf(key), screen = screenOf(key);
+    if (mod !== lastModule) { main.append(el("h2", { text: `${LABELS[mod] || mod} · ${mod}` })); lastModule = mod; lastScreen = null; }
+    if (screen !== lastScreen) {
+      row = el("div", { class: "row" });
+      box = el("section", { class: "screen" }, el("h3", { text: screen }), row);
+      main.append(box); lastScreen = screen;
+    }
+    const i = visible.length; visible.push(key);
+    const oid = oidAt(key, k);
+    row.append(el("figure", { onclick: () => openViewer(i) },
+      el("img", { loading: "lazy", decoding: "async", src: thumb(oid), alt: `${screen} ${variantOf(key)}` }),
+      changedIn(key, k) ? el("span", { class: "badge", text: previousOid(key, k) ? "changed" : "new" }) : null,
+      el("figcaption", { text: variantOf(key) })));
+  }
+  if (!visible.length) main.append(el("p", { class: "empty", text: "No images match." }));
+}
+
+function renderChanges() {
+  const main = $("#main"); main.replaceChildren();
+  main.append(el("p", { class: "vmeta", text: `The last ${M.versions.length} commits of main that changed reference images. The oldest one is the starting point.` }));
+  M.versions.forEach((v, i) => {
+    const last = i === M.versions.length - 1;
+    const d = el("details", { class: "version" },
+      el("summary", {},
+        el("div", { class: "vtitle", text: v.subject }),
+        el("div", { class: "vmeta" }, el("a", { href: commitUrl(v.sha), text: short(v.sha), onclick: (e) => e.stopPropagation() }),
+          ` · ${fmtDate(v.date)}${v.web ? " · web " + v.web : ""}${v.app ? " · app " + v.app : ""} · `,
+          last ? "starting point" : `${v.changed} images changed`)));
+    const body = el("div", { class: "changes" });
+    d.append(body);
+    d.ontoggle = () => {
+      if (!d.open || body.childElementCount || last) return;
+      const keys = KEYS.filter((key) => (M.images[key] || []).some((e) => e[0] === i));
+      for (const key of keys) {
+        const after = oidAt(key, i), before = oidAt(key, i + 1);
+        body.append(el("div", { class: "pair", onclick: () => openViewer(0, { list: keys, key, version: i, compare: i + 1, mode: after && before ? "slider" : "single" }) },
+          el("div", { class: "imgs" },
+            before ? el("img", { loading: "lazy", src: thumb(before), alt: "before" }) : el("div", { class: "removed", text: "new" }),
+            "→",
+            after ? el("img", { loading: "lazy", src: thumb(after), alt: "after" }) : el("div", { class: "removed", text: "removed" })),
+          el("div", { class: "lbl", text: key })));
+      }
+    };
+    main.append(d);
+  });
+}
+
+function renderVideos() {
+  const main = $("#main"); main.replaceChildren();
+  main.append(el("p", { class: "vmeta", text: "The organizer tablet of the last game days (Actions > Game day), compressed: only the frames that change are kept, the times are real. Older runs are removed." }));
+  if (!M.videos || !M.videos.length) { main.append(el("p", { class: "empty", text: "No game day videos yet." })); return; }
+  const grid = el("div", { class: "videos" });
+  for (const run of M.videos) {
+    for (const item of run.items.length ? run.items : [null]) {
+      const card = el("div", { class: "vcard" },
+        el("div", { class: "vtitle", text: item ? `${run.title} · ${item.name}` : run.title }),
+        el("div", { class: "vmeta" }, el("a", { href: run.url, text: `Run #${run.number}` }), ` · ${fmtDate(run.date)} · ${run.conclusion || ""}`,
+          item ? ` · ${item.duration ? Math.round(item.duration / 60) + " min" : ""} · ${(item.size / 1e6).toFixed(1)} MB` : " · no video"));
+      if (item) {
+        const video = el("video", { controls: "", preload: "none", src: item.src, poster: item.poster || null, playsinline: "" });
+        const speeds = el("div", { class: "speeds" });
+        for (const s of [1, 2, 4, 8, 16]) speeds.append(chip(`${s}×`, s === 1, () => { video.playbackRate = s; for (const b of speeds.children) b.setAttribute("aria-pressed", b.textContent === `${s}×`); }));
+        card.append(video, speeds);
+      }
+      grid.append(card);
+    }
+  }
+  main.append(grid);
+}
+
+// ---------------------------------------------------------------- viewer
+const V = { list: [], index: 0, key: null, version: 0, compare: null, mode: store.get("mode", "single") };
+function openViewer(i, opts = {}) {
+  V.list = opts.list || visible; V.index = opts.key ? V.list.indexOf(opts.key) : i;
+  V.version = opts.version ?? state.version;
+  V.forced = opts.compare;
+  if (opts.mode) V.mode = opts.mode;
+  showViewer();
+  $("#viewer").classList.add("open");
+}
+function showViewer() {
+  V.key = V.list[(V.index + V.list.length) % V.list.length];
+  const key = V.key;
+  const entries = (M.images[key] || []);
+  // The other version: the one asked for, or the previous change of this image.
+  let compare = V.forced;
+  if (compare == null) { const cur = entryAt(key, V.version); const p = cur && entries.find((e) => e[0] > cur[0]); compare = p ? p[0] : null; }
+  V.compare = compare; V.forced = undefined;
+  $("#vName").textContent = key;
+  const modes = $("#vModes"); modes.replaceChildren();
+  for (const [m, label] of [["single", "Image"], ["side", "Side by side"], ["slider", "Slider"], ["diff", "Difference"]]) {
+    modes.append(chip(label, V.mode === m, () => { V.mode = m; store.set("mode", m); V.forced = V.compare; showViewer(); }));
+  }
+  const sel = $("#vCompare"); sel.replaceChildren(el("option", { value: "", text: "—" }));
+  for (const e of entries) if (e[1]) sel.append(el("option", { value: e[0], text: vLabel(e[0]) }));
+  sel.value = V.compare == null ? "" : String(entryAt(key, V.compare)?.[0] ?? "");
+  sel.onchange = () => { V.forced = sel.value === "" ? null : +sel.value; if (V.mode === "single" && V.forced != null) V.mode = "slider"; showViewer(); };
+
+  const a = oidAt(key, V.version), b = V.compare == null ? null : oidAt(key, V.compare);
+  const stage = $("#vStage"); stage.replaceChildren();
+  const side = (oid, cap) => el("div", { class: "side" }, oid ? el("img", { src: full(oid), alt: cap }) : el("div", { class: "removed", text: "not in this version" }), el("div", { class: "cap", text: cap }));
+  const capA = `${vLabel(V.version)}`, capB = V.compare == null ? "" : vLabel(V.compare);
+  if (V.mode === "single" || !b || !a) stage.append(side(a, capA));
+  else if (V.mode === "side") stage.append(side(b, "before: " + capB), side(a, "after: " + capA));
+  else if (V.mode === "diff") {
+    stage.append(el("div", { class: "side" }, el("div", { class: "diff" }, el("img", { src: full(b) }), el("img", { src: full(a) })),
+      el("div", { class: "cap", text: `Difference: black where both are equal. ${capB} vs ${capA}` })));
+  } else stage.append(slider(b, a, capB, capA));
+
+  const hist = $("#vHistory"); hist.replaceChildren(el("span", { text: "Changes of this image:" }));
+  for (const e of entries) {
+    const label = `${short(M.versions[e[0]].sha)} ${new Date(M.versions[e[0]].date).toLocaleDateString()}${e[1] ? "" : " (removed)"}`;
+    hist.append(chip(label, e[0] === (entryAt(key, V.version) || [])[0], () => { V.version = e[0]; showViewer(); }, M.versions[e[0]].subject));
+  }
+  if (entries.length && entries[entries.length - 1][0] === M.versions.length - 1) hist.append(el("span", { style: "color:#999", text: "(and older, not kept)" }));
+}
+function slider(before, after, capB, capA) {
+  const base = el("img", { src: full(after), alt: "after" });
+  const overImg = el("img", { src: full(before), alt: "before" });
+  const over = el("div", { class: "over" }, overImg);
+  const handle = el("div", { class: "handle" });
+  const wrap = el("div", { class: "slider" }, base, over, handle);
+  const set = (f) => { f = Math.min(1, Math.max(0, f)); over.style.width = f * 100 + "%"; handle.style.left = f * 100 + "%"; };
+  const sync = () => { overImg.style.width = base.clientWidth + "px"; overImg.style.height = base.clientHeight + "px"; };
+  base.onload = sync; new ResizeObserver(sync).observe(base);
+  const move = (e) => { const r = wrap.getBoundingClientRect(); set((e.clientX - r.left) / r.width); };
+  wrap.onpointerdown = (e) => { wrap.setPointerCapture(e.pointerId); move(e); wrap.onpointermove = move; };
+  wrap.onpointerup = () => { wrap.onpointermove = null; };
+  set(0.5);
+  return el("div", { class: "side" }, wrap, el("div", { class: "cap", text: `◀ before: ${capB} · after: ${capA} ▶` }));
+}
+function closeViewer() { $("#viewer").classList.remove("open"); $("#vStage").replaceChildren(); }
+$("#vClose").onclick = closeViewer;
+$("#vPrev").onclick = () => { V.index--; showViewer(); };
+$("#vNext").onclick = () => { V.index++; showViewer(); };
+document.addEventListener("keydown", (e) => {
+  if (!$("#viewer").classList.contains("open")) return;
+  if (e.key === "Escape") closeViewer();
+  else if (e.key === "ArrowLeft") { V.index--; showViewer(); }
+  else if (e.key === "ArrowRight") { V.index++; showViewer(); }
+});
+
+load().catch((e) => { $("#meta").textContent = "Could not load the gallery: " + e; });
+</script>
+</body>
+</html>

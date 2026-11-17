@@ -55,6 +55,8 @@ has the actual image (`*_actual.png`) and the comparison (`*_compare.png`).
 `record`. It uploads the images as an artifact. The trigger on the pull requests to main is commented out until the
 release.
 
+The images of main, their history and comparisons are on a web page: docs/screenshot-gallery.md.
+
 ## Git LFS
 
 The reference images are in Git LFS (`.gitattributes`). Install it once on each machine: `brew install git-lfs` and
