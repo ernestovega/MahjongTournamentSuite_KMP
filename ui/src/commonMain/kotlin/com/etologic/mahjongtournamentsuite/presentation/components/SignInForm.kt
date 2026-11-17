@@ -131,7 +131,7 @@ fun SignInForm(
                         fontFamily = TitleFontFamily("en"),
                         lineHeight = 40.sp,
                     ),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MtsTheme.colors.brandTitle,
                     textAlign = TextAlign.Center,
                 )
                 AppLogo(size = 144.dp)

@@ -140,6 +140,11 @@ data class MtsColors(
     /** Text and icons on the green header (top bar, tabs). */
     val onHeader: Color,
     val onHeaderMuted: Color,
+    /**
+     * The name of the suite over the logo of the sign-in screen: the darkest grey of the palette.
+     * In the dark theme it is white, like the logo, because the grey would not show on the dark background.
+     */
+    val brandTitle: Color,
     /** The player levels, from the lowest to the highest. `ui` maps a `PlayerLevel` to them with `level()`. */
     val levels: List<MtsLevelColors>,
 ) {
@@ -185,6 +190,7 @@ internal val LightMtsColors = MtsColors(
     firstPlaceHighlight = MedalGold,
     onHeader = Color.White,
     onHeaderMuted = Color.White.copy(alpha = 0.85f),
+    brandTitle = AppDarkGraySurface,
     levels = LevelColorsByLevel,
 )
 
@@ -192,6 +198,7 @@ internal val LightMtsColors = MtsColors(
 internal val DarkMtsColors = LightMtsColors.copy(
     changed = MahjongGreenDarker,
     info = Color(0xFF4D9BFF),
+    brandTitle = Color.White,
 )
 
 /** Text roles on top of the Material type scale. */
