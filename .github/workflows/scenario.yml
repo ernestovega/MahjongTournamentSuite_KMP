@@ -246,7 +246,6 @@ jobs:
   organizer-play:
     name: Organizer runs the rounds
     needs: [app, organizer-setup, invitations]
-    if: always() && needs.organizer-setup.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 340
     permissions:
@@ -316,7 +315,6 @@ jobs:
   bots:
     name: Players play the tables
     needs: [organizer-setup, invitations]
-    if: always() && needs.organizer-setup.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 340
     permissions:
@@ -369,7 +367,8 @@ jobs:
   check:
     name: Checks
     needs: [bots, organizer-play]
-    if: always() && needs.bots.result != 'skipped'
+    # The checks also run when a round failed, to tell what went wrong. A cancelled run stops here.
+    if: ${{ !cancelled() && needs.bots.result != 'skipped' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
