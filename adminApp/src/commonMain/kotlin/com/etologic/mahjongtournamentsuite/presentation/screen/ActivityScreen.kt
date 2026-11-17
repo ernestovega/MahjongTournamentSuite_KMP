@@ -96,6 +96,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_playe
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_import
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_substitute
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_delete
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_photo
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_round_clock
@@ -814,6 +815,7 @@ private val ACTION_LABELS: Map<String, StringResource> = mapOf(
     "registry.create" to Res.string.activity_action_registry_create,
     "registry.update" to Res.string.activity_action_registry_update,
     "registry.photo" to Res.string.activity_action_registry_photo,
+    "registry.delete" to Res.string.activity_action_registry_delete,
     "table.save" to Res.string.activity_action_table_save,
     "table.reset" to Res.string.activity_action_table_reset,
     "table.conflict" to Res.string.activity_action_table_conflict,

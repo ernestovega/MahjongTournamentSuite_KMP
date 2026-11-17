@@ -34,8 +34,17 @@ Firestore and Storage client rules deny every direct read and write. Clients mus
 | Assign a base player in a tournament | Assigned `EDITOR` or `ADMIN` |
 | Manage tournament editors | Assigned `EDITOR` or `ADMIN` |
 | Create or delete a tournament | `ADMIN` |
+| Delete or deactivate base players | `ADMIN` |
 
-There is no player-delete API. The sync never deletes registry records. This protects tournament history.
+Admins delete base players from the Player base (`POST /ema-player-registry/delete`, up to 50 per request).
+- A player without data in any tournament is deleted. Its account, if any, stays: it only loses the EMA number.
+- A player seated in a tournament is never deleted: it is deactivated (`disabled: true`), so the results keep the
+  name. The admin app shows it grey and crossed out, does not offer it for new seats, and an admin can reactivate it
+  in its details. `POST /ema-player-registry/delete/preview` lists the tournaments of each such player, and the app
+  shows them in the warning before the delete.
+- Deleting an account (Users) never deletes its EMA player, and deleting an EMA player never deletes an account.
+
+The sync never deletes registry records. It can add back a deleted player that appears in a new EMA tournament.
 
 Custom claims are checked on every protected API request. After changing a claim, the user must sign out and sign in again to receive a new token.
 

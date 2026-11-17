@@ -29,8 +29,10 @@ data class TournamentPlayer(
 enum class SubstitutionReason {
     /** The player came late. The round starts when the substitute is at the table. */
     LATE,
+
     /** The player is ill. */
     ILLNESS,
+
     /** The player is disqualified. The player gets 0 table points for the whole tournament. */
     DISQUALIFIED,
 }
@@ -83,6 +85,8 @@ data class Player(
     val photoUrl: String? = null,
     /** The person asked not to be shown publicly: everyone without an account sees "#<slot>" and no profile. */
     val hiddenFromPublic: Boolean = false,
+    /** An admin deleted the player, but it has data in tournaments, so it stays deactivated. */
+    val disabled: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

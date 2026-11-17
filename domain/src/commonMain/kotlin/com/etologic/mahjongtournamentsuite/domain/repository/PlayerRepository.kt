@@ -1,8 +1,9 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 
 /** Access to the shared player base. EMA number is the player primary key. */
 interface PlayerRepository {
@@ -18,6 +19,9 @@ interface PlayerRepository {
         bytes: ByteArray,
     ): AppResult<Player>
 
-    /** Deletes the account of each EMA player, never the EMA player. Every player has its own result. Up to 50 per request. */
-    suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<PlayerAccountDeleteResult>>
+    /** Deletes EMA players, never their accounts. A player in a tournament stays. Every player has its own result. Up to 50 per request. */
+    suspend fun deleteEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerDeleteResult>>
+
+    /** The tournaments where each EMA player has data, before a delete. Players without data are left out. Up to 50 per request. */
+    suspend fun tournamentsOfEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerTournaments>>
 }

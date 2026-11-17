@@ -30,15 +30,16 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcome
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcomeDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.OpenTablesReviewDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountDeletesConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerWithData
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialogContent
@@ -258,19 +259,27 @@ class AdminDialogsScreenshotTest {
     }
 
     @Test
-    fun playerAccountDeletesConfirm() = dialog("player-account-deletes-confirm") { PlayerAccountDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
+    fun emaPlayerDeletesConfirm() = dialog("ema-player-deletes-confirm") {
+        EmaPlayerDeletesConfirmDialog(
+            count = 3,
+            busy = false,
+            onConfirm = {},
+            onDismiss = {},
+            withData = listOf(PlayerWithData("ALAN TURING (00010003)", listOf("Open de Madrid 2026", "Riichi Cup 2025"))),
+        )
+    }
 
     @Test
-    fun playerAccountDeletesResult() = dialog("player-account-deletes-result") {
-        PlayerAccountDeletesResultDialog(
-            results = ScreenshotData.players.take(2).mapIndexed { index, player ->
-                if (index == 0) {
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.DELETED)
-                } else {
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(
+    fun emaPlayerDeletesResult() = dialog("ema-player-deletes-result") {
+        EmaPlayerDeletesResultDialog(
+            results = ScreenshotData.players.take(3).mapIndexed { index, player ->
+                when (index) {
+                    0 -> com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome.DELETED)
+                    1 -> com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult(player.emaId, com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome.DISABLED)
+                    else -> com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult(
                         player.emaId,
-                        com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.FAILED,
-                        com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteFailure.NO_ACCOUNT,
+                        com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome.FAILED,
+                        com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteFailure.NOT_FOUND,
                     )
                 }
             },

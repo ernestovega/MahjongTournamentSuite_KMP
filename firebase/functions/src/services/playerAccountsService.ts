@@ -105,7 +105,7 @@ export async function getPlayerRegistration(
 }
 
 /** The ids of the tournaments that hold an EMA id in a slot. */
-async function tournamentIdsOfEmaId(emaId: string): Promise<string[]> {
+export async function tournamentIdsOfEmaId(emaId: string): Promise<string[]> {
   const slots = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).get();
   return slots.docs.flatMap((slot) => (slot.ref.parent.parent == null ? [] : [slot.ref.parent.parent.id]));
 }

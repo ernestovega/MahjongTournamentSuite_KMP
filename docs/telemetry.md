@@ -70,7 +70,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed` |
-| EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated` |
+| EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated`, `registry_players_deleted` |
 
 Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.
 The events carry no name and no account id. Split them with the user property `role` to compare administrators and editors.

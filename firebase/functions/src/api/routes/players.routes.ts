@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { recordActivity } from "../../services/activityLog";
-import { deleteAccountsOfPlayers } from "../../services/accountDeletes";
+import { deleteEmaPlayers, tournamentsOfEmaPlayers } from "../../services/emaPlayerDeletes";
 import { actorFromToken } from "../../services/changeLog";
 
 import { badRequest, forbidden } from "../httpError";
@@ -47,18 +47,29 @@ export function playersRouter(): Router {
     }
   });
 
-  // Deletes the accounts of many EMA players at once, from the Player base. The EMA players stay.
-  router.post("/accounts/delete", requireAuth, requireAdmin, async (req, res, next) => {
+  // Before a delete: the tournaments where each chosen player has data. Those players are deactivated, not deleted.
+  router.post("/delete/preview", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const actor = res.locals.auth as { uid: string };
       const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
       const emaIds = raw.map((value) => validateEmaId(value));
-      const results = await deleteAccountsOfPlayers(actor.uid, emaIds);
+      res.status(200).json({ players: await tournamentsOfEmaPlayers(emaIds) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Deletes many EMA players at once, from the Player base. Their accounts stay, without the EMA number.
+  router.post("/delete", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
+      const emaIds = raw.map((value) => validateEmaId(value));
+      const results = await deleteEmaPlayers(emaIds);
       const deleted = results.filter((result) => result.outcome === "DELETED").map((result) => result.emaId);
-      if (deleted.length > 0) {
+      const disabled = results.filter((result) => result.outcome === "DISABLED").map((result) => result.emaId);
+      if (deleted.length + disabled.length > 0) {
         await recordActivity({
-          action: "user.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length} users`,
-          details: { emaIds: deleted },
+          action: "registry.delete", actor: actorFromToken(res.locals.auth), target: `${deleted.length + disabled.length} EMA players`,
+          details: { deleted, disabled },
         });
       }
       res.status(200).json({ results });
@@ -78,10 +89,11 @@ export function playersRouter(): Router {
       // An empty country is a player without country (a guest).
       if (!/^([A-Z]{3})?$/.test(country)) throw badRequest("Player country must use a three-letter EMA code or be empty");
       const hiddenFromPublic = typeof req.body?.hiddenFromPublic === "boolean" ? req.body.hiddenFromPublic : undefined;
-      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country, hiddenFromPublic });
+      const disabled = typeof req.body?.disabled === "boolean" ? req.body.disabled : undefined;
+      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country, hiddenFromPublic, disabled });
       await recordActivity({
         action: "registry.update", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`,
-        details: { emaId: newEmaId, firstName, lastName, country, hiddenFromPublic },
+        details: { emaId: newEmaId, firstName, lastName, country, hiddenFromPublic, disabled },
       });
       res.status(200).json({ ok: true });
     } catch (error) {

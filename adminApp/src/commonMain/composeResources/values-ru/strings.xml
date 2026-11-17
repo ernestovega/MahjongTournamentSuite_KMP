@@ -732,6 +732,7 @@
     <string name="activity_action_registry_create">Игрок EMA создан</string>
     <string name="activity_action_registry_update">Игрок EMA изменён</string>
     <string name="activity_action_registry_photo">Фото игрока EMA изменено</string>
+    <string name="activity_action_registry_delete">Игроки EMA удалены или деактивированы</string>
     <string name="activity_action_table_save">Стол сохранён</string>
     <string name="activity_action_table_reset">Стол очищен</string>
     <string name="activity_action_table_conflict">Сохранение отклонено: стол был изменён</string>
@@ -823,12 +824,13 @@
     <string name="delete_failure_self">Нельзя удалить собственный аккаунт.</string>
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>
-    <string name="player_accounts_delete_confirm_title">Удалить аккаунты?</string>
-    <string name="player_accounts_delete_confirm_text">Аккаунты %1$d игроков EMA будут удалены навсегда: вход, email, псевдоним и фото.\n\nИгроки EMA и результаты турниров сохранятся.\n\nЭто нельзя отменить.</string>
-    <string name="player_accounts_delete_summary">Удалено аккаунтов: %1$d\nНе удалено: %2$d</string>
-    <string name="delete_accounts_count">Удалить аккаунты (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">У игрока нет аккаунта.</string>
-    <string name="player_account_delete_failure_self">Это ваш собственный аккаунт.</string>
-    <string name="player_account_delete_failure_last_admin">Это последний активный админ.</string>
-    <string name="player_account_delete_failure_unknown">Аккаунт не удалён. Попробуйте ещё раз.</string>
+    <string name="ema_players_delete_confirm_title">Удалить игроков EMA?</string>
+    <string name="ema_players_delete_confirm_text">%1$d игроков EMA будут удалены навсегда.\n\nИх аккаунты сохранятся. Аккаунт только теряет номер EMA.\n\nЭто нельзя отменить.</string>
+    <string name="ema_players_delete_with_data">У этих игроков есть данные в турнирах. Они не будут удалены: их деактивируют, и в списке они будут зачёркнуты.</string>
+    <string name="ema_players_delete_summary">Удалено: %1$d\nДеактивировано: %2$d\nНе удалено: %3$d</string>
+    <string name="delete_players_count">Удалить игроков (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">Игрока больше нет.</string>
+    <string name="ema_player_delete_failure_unknown">Игрок не удалён. Попробуйте ещё раз.</string>
+    <string name="player_disabled">Деактивирован</string>
+    <string name="player_disabled_description">У игрока есть данные в турнирах, поэтому он деактивирован, а не удалён.\n\nВыключите, чтобы снова активировать игрока.</string>
 </resources>

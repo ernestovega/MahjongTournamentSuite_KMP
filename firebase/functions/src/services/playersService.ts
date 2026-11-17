@@ -17,6 +17,8 @@ export type Player = {
   photoUrl: string | null;
   /** The person asked not to be shown publicly. The public routes show the slot number and no profile. */
   hiddenFromPublic: boolean;
+  /** An admin deleted the player, but it has data in tournaments, so it stays deactivated instead. */
+  disabled: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -34,6 +36,7 @@ export function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): P
     country: storedCountry === "EU" ? "" : storedCountry,
     photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
     hiddenFromPublic: data.hiddenFromPublic === true,
+    disabled: data.disabled === true,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
   };
@@ -99,6 +102,8 @@ export async function updatePlayer(params: {
   country: string;
   /** Undefined keeps the stored value. */
   hiddenFromPublic?: boolean;
+  /** Undefined keeps the stored value. False reactivates a deactivated player. */
+  disabled?: boolean;
 }): Promise<void> {
   const previousRef = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.previousEmaId);
   const previousSnapshot = await previousRef.get();
@@ -114,6 +119,7 @@ export async function updatePlayer(params: {
     lastName: normalizePlayerNamePart(params.lastName),
     country: params.country,
     ...(params.hiddenFromPublic === undefined ? {} : { hiddenFromPublic: params.hiddenFromPublic }),
+    ...(params.disabled === undefined ? {} : { disabled: params.disabled }),
     updatedAt: FieldValue.serverTimestamp(),
   };
   const visibilityChanged = params.hiddenFromPublic !== undefined

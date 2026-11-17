@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">EMA-speler aangemaakt</string>
     <string name="activity_action_registry_update">EMA-speler gewijzigd</string>
     <string name="activity_action_registry_photo">Foto van EMA-speler gewijzigd</string>
+    <string name="activity_action_registry_delete">EMA-spelers verwijderd of gedeactiveerd</string>
     <string name="activity_action_table_save">Tafel opgeslagen</string>
     <string name="activity_action_table_reset">Tafel gewist</string>
     <string name="activity_action_table_conflict">Opslaan geweigerd: de tafel was gewijzigd</string>
@@ -819,12 +820,13 @@
     <string name="delete_failure_self">Je kunt je eigen account niet verwijderen.</string>
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
-    <string name="player_accounts_delete_confirm_title">Accounts verwijderen?</string>
-    <string name="player_accounts_delete_confirm_text">De accounts van %1$d EMA-spelers worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven bewaard.\n\nDit kan niet ongedaan worden gemaakt.</string>
-    <string name="player_accounts_delete_summary">Verwijderde accounts: %1$d\nNiet verwijderd: %2$d</string>
-    <string name="delete_accounts_count">Accounts verwijderen (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">De speler heeft geen account.</string>
-    <string name="player_account_delete_failure_self">Het is je eigen account.</string>
-    <string name="player_account_delete_failure_last_admin">Het is de laatste actieve admin.</string>
-    <string name="player_account_delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
+    <string name="ema_players_delete_confirm_title">EMA-spelers verwijderen?</string>
+    <string name="ema_players_delete_confirm_text">%1$d EMA-spelers worden definitief verwijderd.\n\nHun accounts blijven bestaan. Een account verliest alleen zijn EMA-nummer.\n\nDit kan niet ongedaan worden gemaakt.</string>
+    <string name="ema_players_delete_with_data">Deze spelers hebben gegevens in toernooien. Ze worden niet verwijderd: ze worden gedeactiveerd en de lijst toont ze doorgestreept.</string>
+    <string name="ema_players_delete_summary">Verwijderd: %1$d\nGedeactiveerd: %2$d\nNiet verwijderd: %3$d</string>
+    <string name="delete_players_count">Spelers verwijderen (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">De speler bestaat niet meer.</string>
+    <string name="ema_player_delete_failure_unknown">De speler is niet verwijderd. Probeer het opnieuw.</string>
+    <string name="player_disabled">Gedeactiveerd</string>
+    <string name="player_disabled_description">De speler heeft gegevens in toernooien en is daarom gedeactiveerd in plaats van verwijderd.\n\nZet dit uit om de speler weer te activeren.</string>
 </resources>

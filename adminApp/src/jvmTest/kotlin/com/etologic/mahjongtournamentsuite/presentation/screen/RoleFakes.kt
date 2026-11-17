@@ -220,17 +220,22 @@ internal class FakePlayerRepository(private val players: List<Player> = emptyLis
     }
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
 
+    /** The tournaments where each EMA player has data, for the warning before a delete. */
+    val tournamentsOf = mutableMapOf<String, List<com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournament>>()
+
+    override suspend fun tournamentsOfEmaPlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments>> = AppResult.Success(emaIds.mapNotNull { id -> tournamentsOf[id]?.let { com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments(id, it) } })
+
     /** The result of a bulk delete by EMA number. A player with no entry gets DELETED. */
-    val deleteResults = mutableMapOf<String, com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>()
+    val deleteResults = mutableMapOf<String, com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult>()
     val deleteRequests = mutableListOf<List<String>>()
 
-    override suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult>> {
+    override suspend fun deleteEmaPlayers(emaIds: List<String>): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult>> {
         deleteRequests += emaIds
         return AppResult.Success(
             emaIds.map {
-                deleteResults[it] ?: com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(
+                deleteResults[it] ?: com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult(
                     it,
-                    com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.DELETED,
+                    com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome.DELETED,
                 )
             },
         )

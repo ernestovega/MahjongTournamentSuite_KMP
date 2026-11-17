@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">EMA-spelare skapad</string>
     <string name="activity_action_registry_update">EMA-spelare ändrad</string>
     <string name="activity_action_registry_photo">EMA-spelarens foto ändrat</string>
+    <string name="activity_action_registry_delete">EMA-spelare raderade eller inaktiverade</string>
     <string name="activity_action_table_save">Bord sparat</string>
     <string name="activity_action_table_reset">Bord återställt</string>
     <string name="activity_action_table_conflict">Sparning avvisad: bordet hade ändrats</string>
@@ -819,12 +820,13 @@
     <string name="delete_failure_self">Du kan inte radera ditt eget konto.</string>
     <string name="delete_failure_last_admin">Det är den sista aktiva administratören.</string>
     <string name="delete_failure_unknown">Kontot raderades inte. Försök igen.</string>
-    <string name="player_accounts_delete_confirm_title">Radera kontona?</string>
-    <string name="player_accounts_delete_confirm_text">Kontona för %1$d EMA-spelare raderas för alltid: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelarna och turneringsresultaten finns kvar.\n\nDet går inte att ångra.</string>
-    <string name="player_accounts_delete_summary">Raderade konton: %1$d\nInte raderade: %2$d</string>
-    <string name="delete_accounts_count">Radera konton (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">Spelaren har inget konto.</string>
-    <string name="player_account_delete_failure_self">Det är ditt eget konto.</string>
-    <string name="player_account_delete_failure_last_admin">Det är den sista aktiva admin.</string>
-    <string name="player_account_delete_failure_unknown">Kontot raderades inte. Försök igen.</string>
+    <string name="ema_players_delete_confirm_title">Radera EMA-spelarna?</string>
+    <string name="ema_players_delete_confirm_text">%1$d EMA-spelare raderas för alltid.\n\nDeras konton finns kvar. Ett konto förlorar bara sitt EMA-nummer.\n\nDet går inte att ångra.</string>
+    <string name="ema_players_delete_with_data">De här spelarna har data i turneringar. De raderas inte: de inaktiveras, och listan visar dem överstrukna.</string>
+    <string name="ema_players_delete_summary">Raderade: %1$d\nInaktiverade: %2$d\nInte raderade: %3$d</string>
+    <string name="delete_players_count">Radera spelare (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">Spelaren finns inte längre.</string>
+    <string name="ema_player_delete_failure_unknown">Spelaren raderades inte. Försök igen.</string>
+    <string name="player_disabled">Inaktiverad</string>
+    <string name="player_disabled_description">Spelaren har data i turneringar, så den inaktiverades i stället för att raderas.\n\nStäng av det här för att återaktivera spelaren.</string>
 </resources>

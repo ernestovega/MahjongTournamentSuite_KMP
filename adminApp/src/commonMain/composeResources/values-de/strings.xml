@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">EMA-Spieler erstellt</string>
     <string name="activity_action_registry_update">EMA-Spieler geändert</string>
     <string name="activity_action_registry_photo">Foto des EMA-Spielers geändert</string>
+    <string name="activity_action_registry_delete">EMA-Spieler gelöscht oder deaktiviert</string>
     <string name="activity_action_table_save">Tisch gespeichert</string>
     <string name="activity_action_table_reset">Tisch zurückgesetzt</string>
     <string name="activity_action_table_conflict">Speichern abgelehnt: Der Tisch hatte sich geändert</string>
@@ -819,12 +820,13 @@
     <string name="delete_failure_self">Du kannst dein eigenes Konto nicht löschen.</string>
     <string name="delete_failure_last_admin">Es ist der letzte aktive Admin.</string>
     <string name="delete_failure_unknown">Das Konto wurde nicht gelöscht. Versuche es erneut.</string>
-    <string name="player_accounts_delete_confirm_title">Konten löschen?</string>
-    <string name="player_accounts_delete_confirm_text">Die Konten von %1$d EMA-Spielern werden endgültig gelöscht: Anmeldung, E-Mail, Alias und Foto.\n\nDie EMA-Spieler und die Turnierergebnisse bleiben erhalten.\n\nDies kann nicht rückgängig gemacht werden.</string>
-    <string name="player_accounts_delete_summary">Gelöschte Konten: %1$d\nNicht gelöscht: %2$d</string>
-    <string name="delete_accounts_count">Konten löschen (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">Der Spieler hat kein Konto.</string>
-    <string name="player_account_delete_failure_self">Es ist dein eigenes Konto.</string>
-    <string name="player_account_delete_failure_last_admin">Es ist der letzte aktive Admin.</string>
-    <string name="player_account_delete_failure_unknown">Das Konto wurde nicht gelöscht. Versuche es erneut.</string>
+    <string name="ema_players_delete_confirm_title">EMA-Spieler löschen?</string>
+    <string name="ema_players_delete_confirm_text">%1$d EMA-Spieler werden endgültig gelöscht.\n\nIhre Konten bleiben erhalten. Ein Konto verliert nur seine EMA-Nummer.\n\nDies kann nicht rückgängig gemacht werden.</string>
+    <string name="ema_players_delete_with_data">Diese Spieler haben Daten in Turnieren. Sie werden nicht gelöscht, sondern deaktiviert, und die Liste zeigt sie durchgestrichen.</string>
+    <string name="ema_players_delete_summary">Gelöscht: %1$d\nDeaktiviert: %2$d\nNicht gelöscht: %3$d</string>
+    <string name="delete_players_count">Spieler löschen (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">Den Spieler gibt es nicht mehr.</string>
+    <string name="ema_player_delete_failure_unknown">Der Spieler wurde nicht gelöscht. Versuche es erneut.</string>
+    <string name="player_disabled">Deaktiviert</string>
+    <string name="player_disabled_description">Der Spieler hat Daten in Turnieren und wurde deshalb deaktiviert statt gelöscht.\n\nSchalte dies aus, um den Spieler wieder zu aktivieren.</string>
 </resources>

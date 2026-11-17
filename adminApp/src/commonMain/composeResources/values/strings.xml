@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">EMA player created</string>
     <string name="activity_action_registry_update">EMA player changed</string>
     <string name="activity_action_registry_photo">EMA player photo changed</string>
+    <string name="activity_action_registry_delete">EMA players deleted or deactivated</string>
     <string name="activity_action_table_save">Table saved</string>
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
@@ -819,12 +820,13 @@
     <string name="delete_failure_self">You cannot delete your own account.</string>
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
-    <string name="player_accounts_delete_confirm_title">Delete the accounts?</string>
-    <string name="player_accounts_delete_confirm_text">The accounts of %1$d EMA players will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</string>
-    <string name="player_accounts_delete_summary">Accounts deleted: %1$d\nNot deleted: %2$d</string>
-    <string name="delete_accounts_count">Delete accounts (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">The player has no account.</string>
-    <string name="player_account_delete_failure_self">It is your own account.</string>
-    <string name="player_account_delete_failure_last_admin">It is the last enabled admin.</string>
-    <string name="player_account_delete_failure_unknown">The account was not deleted. Try again.</string>
+    <string name="ema_players_delete_confirm_title">Delete the EMA players?</string>
+    <string name="ema_players_delete_confirm_text">%1$d EMA players will be deleted for good.\n\nTheir accounts stay. An account only loses its EMA number.\n\nThis cannot be undone.</string>
+    <string name="ema_players_delete_with_data">These players have data in tournaments. They will not be deleted: they will be deactivated, and the list will show them crossed out.</string>
+    <string name="ema_players_delete_summary">Deleted: %1$d\nDeactivated: %2$d\nNot deleted: %3$d</string>
+    <string name="delete_players_count">Delete players (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">The player no longer exists.</string>
+    <string name="ema_player_delete_failure_unknown">The player was not deleted. Try again.</string>
+    <string name="player_disabled">Deactivated</string>
+    <string name="player_disabled_description">The player has data in tournaments, so it was deactivated instead of deleted.\n\nTurn this off to reactivate the player.</string>
 </resources>

@@ -33,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -55,16 +56,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -127,6 +131,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_base
 import mahjongtournamentsuite.adminapp.generated.resources.player_base_summary
 import mahjongtournamentsuite.adminapp.generated.resources.player_details
+import mahjongtournamentsuite.adminapp.generated.resources.player_disabled
+import mahjongtournamentsuite.adminapp.generated.resources.player_disabled_description
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_country
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_digits
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_exists
@@ -163,11 +169,13 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val admin by store.adminStatus.collectAsState()
     val canEdit = admin?.canEditPlayers == true
     val canEditEmaNumber = admin?.isAdmin == true
-    // Admins select players in the list and delete their accounts in one go. The EMA players are never deleted.
+    // Admins select EMA players in the list and delete them in one go. Their accounts are never deleted.
+    // A player with data in tournaments is deactivated instead, and the list shows it crossed out.
     val canDelete = admin?.isAdmin == true
     var checkedEmaIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var confirmDeleteOpen by remember { mutableStateOf(false) }
-    var deleteResults by remember { mutableStateOf<List<PlayerAccountDeleteResult>?>(null) }
+    var deleteWithData by remember { mutableStateOf<List<EmaPlayerTournaments>>(emptyList()) }
+    var deleteResults by remember { mutableStateOf<List<EmaPlayerDeleteResult>?>(null) }
     var deleteResultPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var selectedEmaId by remember { mutableStateOf<String?>(null) }
     var emaId by remember { mutableStateOf("") }
@@ -176,6 +184,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var country by remember { mutableStateOf("") }
     var photoUrl by remember { mutableStateOf("") }
     var hiddenFromPublic by remember { mutableStateOf(false) }
+    var disabled by remember { mutableStateOf(false) }
     var pendingPhoto by remember { mutableStateOf<SelectedImage?>(null) }
     var showNewPlayerDialog by remember { mutableStateOf(false) }
     var showSaveConfirmation by remember { mutableStateOf(false) }
@@ -201,6 +210,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             lastName.trim() != player.lastName ||
             country.trim() != player.country ||
             hiddenFromPublic != player.hiddenFromPublic ||
+            disabled != player.disabled ||
             pendingPhoto != null
     } == true
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
@@ -254,6 +264,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         country = player?.country.orEmpty()
         photoUrl = player?.photoUrl.orEmpty()
         hiddenFromPublic = player?.hiddenFromPublic == true
+        disabled = player?.disabled == true
         pendingPhoto = null
     }
     fun upsertPlayerLocally(previousEmaId: String, player: Player) {
@@ -295,6 +306,20 @@ fun PlayerBaseScreen(navController: NavHostController) {
         newPlayerError = null
         showNewPlayerDialog = true
     }
+
+    // Before the delete, the server says which chosen players have data in tournaments. Those are deactivated instead.
+    fun openDeleteConfirmation() = scope.launch {
+        saving = true
+        error = null
+        when (val result = presenter.tournamentsOfEmaPlayers(chosenEmaIds)) {
+            is AppResult.Success -> {
+                deleteWithData = result.value
+                confirmDeleteOpen = true
+            }
+            is AppResult.Failure -> error = result.error.toUiText()
+        }
+        saving = false
+    }
     fun refresh(force: Boolean = false) = scope.launch {
         loading = true
         when (val result = presenter.loadPlayers(force)) {
@@ -328,6 +353,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             country = country.trim().uppercase(),
             photoUrl = currentPlayer.photoUrl,
             hiddenFromPublic = hiddenFromPublic,
+            disabled = disabled,
         )
         val savedPlayer = when (val result = presenter.updatePlayer(currentPlayer.emaId, player)) {
             is AppResult.Success -> player
@@ -643,21 +669,33 @@ fun PlayerBaseScreen(navController: NavHostController) {
 
     if (confirmDeleteOpen) {
         val emaIds = chosenEmaIds
-        PlayerAccountDeletesConfirmDialog(
+        val namesByEmaId = players.associate { it.emaId to "${it.displayName} (${it.emaId})" }
+        EmaPlayerDeletesConfirmDialog(
             count = emaIds.size,
             busy = saving,
+            withData = deleteWithData.map { player ->
+                PlayerWithData(namesByEmaId[player.emaId] ?: player.emaId, player.tournaments.map { it.name })
+            },
             onDismiss = { confirmDeleteOpen = false },
             onConfirm = {
                 scope.launch {
                     saving = true
                     error = null
-                    when (val result = presenter.deletePlayerAccounts(emaIds)) {
+                    when (val result = presenter.deleteEmaPlayers(emaIds)) {
                         is AppResult.Success -> {
-                            val deleted = result.value.filter { it.outcome == PlayerAccountDeleteOutcome.DELETED }.map { it.emaId }.toSet()
-                            // Only the accounts go. The EMA players stay in the list.
+                            val deleted = result.value.filter { it.outcome == EmaPlayerDeleteOutcome.DELETED }.map { it.emaId }.toSet()
+                            val deactivated = result.value.filter { it.outcome == EmaPlayerDeleteOutcome.DISABLED }.map { it.emaId }.toSet()
                             deleteResultPlayers = players
                             deleteResults = result.value
-                            checkedEmaIds = checkedEmaIds - deleted
+                            checkedEmaIds = checkedEmaIds - deleted - deactivated
+                            // The deleted players leave the list at once. The deactivated ones stay, crossed out.
+                            store.upsertBasePlayers(
+                                players.filterNot { it.emaId in deleted }.map { if (it.emaId in deactivated) it.copy(disabled = true) else it },
+                            )
+                            when (selectedEmaId) {
+                                in deleted -> select(null)
+                                in deactivated -> disabled = true
+                            }
                         }
                         is AppResult.Failure -> error = result.error.toUiText()
                     }
@@ -667,7 +705,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             },
         )
     }
-    deleteResults?.let { PlayerAccountDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
+    deleteResults?.let { EmaPlayerDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
 
     AppScaffold(
         title = stringResource(Res.string.players),
@@ -795,7 +833,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     busy = saving || loading,
                                     onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
                                     onClear = { checkedEmaIds = emptySet() },
-                                    onDelete = { confirmDeleteOpen = true },
+                                    onDelete = { openDeleteConfirmation() },
                                 )
                             }
                             if (!compact) {
@@ -858,18 +896,19 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         }
                                         if (compact) {
                                             Column(Modifier.weight(1f)) {
-                                                Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                                Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis, style = player.rowTextStyle())
                                                 Text(
                                                     "EMA ${player.emaId}",
-                                                    style = MaterialTheme.typography.bodySmall,
+                                                    style = MaterialTheme.typography.bodySmall.merge(player.rowTextStyle()),
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
                                             }
                                         } else {
-                                            Text(player.displayName, modifier = Modifier.weight(1f))
+                                            Text(player.displayName, modifier = Modifier.weight(1f), style = player.rowTextStyle())
                                             Text(
                                                 player.emaId,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                style = player.rowTextStyle(),
                                                 modifier = Modifier.width(PlayerEmaColumnWidth),
                                             )
                                         }
@@ -928,6 +967,16 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         allowNoCountry = true,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
+                                    // Only a deactivated player shows it. Turning it off reactivates the player.
+                                    if (selected.disabled) {
+                                        TournamentOptionSwitch(
+                                            label = stringResource(Res.string.player_disabled),
+                                            description = stringResource(Res.string.player_disabled_description),
+                                            checked = disabled,
+                                            enabled = canDelete && !saving,
+                                            onCheckedChange = { disabled = it },
+                                        )
+                                    }
                                     TournamentOptionSwitch(
                                         label = stringResource(Res.string.player_hidden_from_public),
                                         description = stringResource(Res.string.player_hidden_from_public_description),
@@ -988,6 +1037,17 @@ fun PlayerBaseScreen(navController: NavHostController) {
             }
         }
     }
+}
+
+/** A deactivated player is grey and crossed out in the list. */
+@Composable
+private fun Player.rowTextStyle(): TextStyle = if (disabled) {
+    LocalTextStyle.current.copy(
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+        textDecoration = TextDecoration.LineThrough,
+    )
+} else {
+    LocalTextStyle.current
 }
 
 private val PlayerCheckboxColumnWidth = 48.dp

@@ -430,7 +430,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val assignedEmaIds = remember(players) { players.mapNotNullTo(mutableSetOf()) { it.assignedEmaId } }
     val filteredBasePlayers = remember(basePlayers, countries, assignmentSearchQuery, assignedEmaIds) {
         val query = normalizeSearchText(assignmentSearchQuery.trim())
-        val availablePlayers = basePlayers.filterNot { it.emaId in assignedEmaIds }
+        // A deactivated EMA player is not offered for new seats. Its existing seats keep it.
+        val availablePlayers = basePlayers.filterNot { it.emaId in assignedEmaIds || it.disabled }
         if (query.isEmpty()) {
             availablePlayers
         } else {

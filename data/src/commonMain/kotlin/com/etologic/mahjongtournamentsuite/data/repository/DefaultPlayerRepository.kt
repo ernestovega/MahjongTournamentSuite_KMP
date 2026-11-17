@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountDeletesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaPlayerDeletesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
@@ -13,10 +13,12 @@ import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteFailure
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournament
+import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteFailure
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -43,7 +45,7 @@ class DefaultPlayerRepository(
         backendApi.updatePlayer(
             token,
             previousEmaId,
-            UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country, player.hiddenFromPublic),
+            UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country, player.hiddenFromPublic, player.disabled),
         )
         cache.markStale(PLAYERS_CACHE_KEY)
     }
@@ -63,18 +65,24 @@ class DefaultPlayerRepository(
         ).toPlayer().also { cache.markStale(PLAYERS_CACHE_KEY) }
     }
 
-    override suspend fun deletePlayerAccounts(emaIds: List<String>): AppResult<List<PlayerAccountDeleteResult>> = request("Deleting accounts of shared players") { token ->
+    override suspend fun deleteEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerDeleteResult>> = request("Deleting shared players") { token ->
         try {
-            backendApi.deletePlayerAccounts(token, PlayerAccountDeletesRequestDto(emaIds)).results.map { dto ->
-                PlayerAccountDeleteResult(
+            backendApi.deleteEmaPlayers(token, EmaPlayerDeletesRequestDto(emaIds)).results.map { dto ->
+                EmaPlayerDeleteResult(
                     emaId = dto.emaId,
-                    outcome = PlayerAccountDeleteOutcome.entries.firstOrNull { it.name == dto.outcome } ?: PlayerAccountDeleteOutcome.FAILED,
-                    reason = dto.reason?.let { name -> PlayerAccountDeleteFailure.entries.firstOrNull { it.name == name } ?: PlayerAccountDeleteFailure.UNKNOWN },
+                    outcome = EmaPlayerDeleteOutcome.entries.firstOrNull { it.name == dto.outcome } ?: EmaPlayerDeleteOutcome.FAILED,
+                    reason = dto.reason?.let { name -> EmaPlayerDeleteFailure.entries.firstOrNull { it.name == name } ?: EmaPlayerDeleteFailure.UNKNOWN },
                 )
             }
         } finally {
-            // Some accounts can be gone even when the request fails half way.
+            // Some players can be gone even when the request fails half way.
             cache.markStale(PLAYERS_CACHE_KEY)
+        }
+    }
+
+    override suspend fun tournamentsOfEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerTournaments>> = request("Listing tournaments of shared players") { token ->
+        backendApi.previewEmaPlayerDeletes(token, EmaPlayerDeletesRequestDto(emaIds)).players.map { dto ->
+            EmaPlayerTournaments(dto.emaId, dto.tournaments.map { EmaPlayerTournament(it.id, it.name) })
         }
     }
 
@@ -126,6 +134,7 @@ class DefaultPlayerRepository(
         country = country.toPlayerCountryCode(),
         photoUrl = photoUrl,
         hiddenFromPublic = hiddenFromPublic,
+        disabled = disabled,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )

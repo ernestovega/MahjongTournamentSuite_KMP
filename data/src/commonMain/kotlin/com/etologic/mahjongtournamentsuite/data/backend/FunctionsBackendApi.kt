@@ -2,10 +2,14 @@ package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaPlayerDeletesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaPlayerDeletesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorGroupDetailDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorGroupsResponseDto
@@ -26,8 +30,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountDeletesRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountDeletesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
@@ -44,8 +46,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
@@ -451,11 +451,20 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun deletePlayerAccounts(
+    suspend fun deleteEmaPlayers(
         idToken: String,
-        request: PlayerAccountDeletesRequestDto,
-    ): PlayerAccountDeletesResponseDto = post(
-        path = "/ema-player-registry/accounts/delete",
+        request: EmaPlayerDeletesRequestDto,
+    ): EmaPlayerDeletesResponseDto = post(
+        path = "/ema-player-registry/delete",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun previewEmaPlayerDeletes(
+        idToken: String,
+        request: EmaPlayerDeletesRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.EmaPlayerDeletesPreviewResponseDto = post(
+        path = "/ema-player-registry/delete/preview",
         requestBody = request,
         idToken = idToken,
     )

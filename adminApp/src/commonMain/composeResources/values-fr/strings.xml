@@ -730,6 +730,7 @@
     <string name="activity_action_registry_create">Joueur EMA créé</string>
     <string name="activity_action_registry_update">Joueur EMA modifié</string>
     <string name="activity_action_registry_photo">Photo du joueur EMA modifiée</string>
+    <string name="activity_action_registry_delete">Joueurs EMA supprimés ou désactivés</string>
     <string name="activity_action_table_save">Table enregistrée</string>
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
@@ -819,12 +820,13 @@
     <string name="delete_failure_self">Vous ne pouvez pas supprimer votre propre compte.</string>
     <string name="delete_failure_last_admin">C’est le dernier admin actif.</string>
     <string name="delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
-    <string name="player_accounts_delete_confirm_title">Supprimer les comptes ?</string>
-    <string name="player_accounts_delete_confirm_text">Les comptes de %1$d joueurs EMA seront supprimés définitivement : la connexion, l’e-mail, le pseudo et la photo.\n\nLes joueurs EMA et les résultats des tournois restent.\n\nAction irréversible.</string>
-    <string name="player_accounts_delete_summary">Comptes supprimés : %1$d\nNon supprimés : %2$d</string>
-    <string name="delete_accounts_count">Supprimer les comptes (%1$d)</string>
-    <string name="player_account_delete_failure_no_account">Le joueur n’a pas de compte.</string>
-    <string name="player_account_delete_failure_self">C’est votre propre compte.</string>
-    <string name="player_account_delete_failure_last_admin">C’est le dernier admin actif.</string>
-    <string name="player_account_delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
+    <string name="ema_players_delete_confirm_title">Supprimer les joueurs EMA ?</string>
+    <string name="ema_players_delete_confirm_text">%1$d joueurs EMA seront supprimés définitivement.\n\nLeurs comptes restent. Un compte perd seulement son numéro EMA.\n\nAction irréversible.</string>
+    <string name="ema_players_delete_with_data">Ces joueurs ont des données dans des tournois. Ils ne seront pas supprimés : ils seront désactivés, et la liste les affichera barrés.</string>
+    <string name="ema_players_delete_summary">Supprimés : %1$d\nDésactivés : %2$d\nNon supprimés : %3$d</string>
+    <string name="delete_players_count">Supprimer les joueurs (%1$d)</string>
+    <string name="ema_player_delete_failure_not_found">Le joueur n’existe plus.</string>
+    <string name="ema_player_delete_failure_unknown">Le joueur n’a pas été supprimé. Réessayez.</string>
+    <string name="player_disabled">Désactivé</string>
+    <string name="player_disabled_description">Le joueur a des données dans des tournois, il a donc été désactivé au lieu d’être supprimé.\n\nDécochez pour réactiver le joueur.</string>
 </resources>

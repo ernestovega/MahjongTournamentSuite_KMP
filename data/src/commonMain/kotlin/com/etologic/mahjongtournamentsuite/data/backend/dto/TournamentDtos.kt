@@ -248,6 +248,7 @@ data class PlayerDto(
     val country: String = "",
     val photoUrl: String? = null,
     val hiddenFromPublic: Boolean = false,
+    val disabled: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
@@ -272,6 +273,7 @@ data class UpdatePlayerRequestDto(
     val lastName: String,
     val country: String,
     val hiddenFromPublic: Boolean = false,
+    val disabled: Boolean = false,
 )
 
 @Serializable
@@ -288,20 +290,37 @@ data class EmaReportRequestDto(
 )
 
 @Serializable
-data class PlayerAccountDeletesRequestDto(
+data class EmaPlayerDeletesRequestDto(
     val emaIds: List<String>,
 )
 
 @Serializable
-data class PlayerAccountDeleteResultDto(
+data class EmaPlayerDeleteResultDto(
     val emaId: String,
     val outcome: String,
     val reason: String? = null,
 )
 
 @Serializable
-data class PlayerAccountDeletesResponseDto(
-    val results: List<PlayerAccountDeleteResultDto> = emptyList(),
+data class EmaPlayerDeletesResponseDto(
+    val results: List<EmaPlayerDeleteResultDto> = emptyList(),
+)
+
+@Serializable
+data class EmaPlayerTournamentDto(
+    val id: String,
+    val name: String,
+)
+
+@Serializable
+data class EmaPlayerTournamentsDto(
+    val emaId: String,
+    val tournaments: List<EmaPlayerTournamentDto> = emptyList(),
+)
+
+@Serializable
+data class EmaPlayerDeletesPreviewResponseDto(
+    val players: List<EmaPlayerTournamentsDto> = emptyList(),
 )
 
 @Serializable

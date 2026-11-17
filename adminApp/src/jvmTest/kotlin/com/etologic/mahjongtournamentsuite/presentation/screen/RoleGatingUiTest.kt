@@ -240,15 +240,15 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun adminDeletesTheAccountsOfSelectedEmaPlayersAndThePlayersStay() = runComposeUiTest {
+    fun adminDeletesEmaPlayersAndThoseWithTournamentDataAreDeactivatedInstead() = runComposeUiTest {
         val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
         val babbage = Player(emaId = "10002", firstName = "Charles", lastName = "Babbage", country = "GBR")
         val turing = Player(emaId = "10003", firstName = "Alan", lastName = "Turing", country = "GBR")
         val registry = FakePlayerRepository(listOf(player, babbage, turing)).apply {
-            deleteResults["10003"] = com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteResult(
+            tournamentsOf["10003"] = listOf(com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournament("t1", "Open de Madrid"))
+            deleteResults["10003"] = com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteResult(
                 "10003",
-                com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteOutcome.FAILED,
-                com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountDeleteFailure.NO_ACCOUNT,
+                com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerDeleteOutcome.DISABLED,
             )
         }
         show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
@@ -256,19 +256,24 @@ class RoleGatingUiTest {
         awaitText("10002")
         onNodeWithContentDescription("10002", substring = true).performClick()
         onNodeWithContentDescription("10003", substring = true).performClick()
-        onNodeWithText("Delete accounts (2)").performClick()
-        onNodeWithText("Delete the accounts?").assertExists()
+        onNodeWithText("Delete players (2)").performClick()
+        awaitText("Delete the EMA players?")
+        // The warning names the player with data and its tournaments: it is deactivated, not deleted.
+        onNodeWithText("These players have data in tournaments", substring = true).assertExists()
+        onNodeWithText("ALAN TURING (10003)").assertExists()
+        onNodeWithText("• Open de Madrid").assertExists()
         assertEquals(emptyList(), registry.deleteRequests)
-        onAllNodesWithText("Delete accounts (2)").onLast().performClick()
-        awaitText("Accounts deleted: 1\nNot deleted: 1")
+        onAllNodesWithText("Delete players (2)").onLast().performClick()
+        awaitText("Deleted: 1\nDeactivated: 1\nNot deleted: 0")
 
         assertEquals(listOf(listOf("10002", "10003")), registry.deleteRequests)
-        onNodeWithText("The player has no account.", substring = true).assertExists()
         onNodeWithText("OK").performClick()
         waitForIdle()
-        onAllNodesWithText("10002", substring = true).onFirst().assertExists()
-        onAllNodesWithText("10003", substring = true).onFirst().assertExists()
-        onNodeWithText("1 selected").assertExists()
+        // The deleted player leaves the list at once. The deactivated one stays, and its details say so.
+        onAllNodesWithText("10002", substring = true).assertCountEquals(0)
+        onAllNodesWithText("10003", substring = true).onFirst().performClick()
+        awaitText("Deactivated")
+        onNodeWithText("0 selected").assertExists()
     }
 
     @Test
@@ -277,7 +282,7 @@ class RoleGatingUiTest {
         show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }
 
         awaitText("10001")
-        onAllNodesWithText("Delete accounts (0)").assertCountEquals(0)
+        onAllNodesWithText("Delete players (0)").assertCountEquals(0)
         onAllNodesWithContentDescription("10001", substring = true).assertCountEquals(0)
     }
 
