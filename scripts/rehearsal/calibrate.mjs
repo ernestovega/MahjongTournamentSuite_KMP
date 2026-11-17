@@ -6,8 +6,11 @@
 //
 //   node scripts/rehearsal/calibrate.mjs --minutes=8 --hand-seconds=20-30 --spectators=20 --report=out/calibration.json
 //
+// --app-slots=1 leaves slot 1 to an emulator with the real app (emulator-player.sh with REHEARSAL_ACCOUNT=cal), and
+// --wait-before-play=240 gives it time to start before the first Play.
+//
 // Environment: REHEARSAL_PASSWORD and STAGING_ADMIN_EMAIL.
-import { Api, Metrics, STAGING_API, Session, parseArgs, rehearsalEmail, sleep } from "./api.mjs";
+import { Api, Metrics, STAGING_API, Session, parseArgs, parseRange, rehearsalEmail, sleep } from "./api.mjs";
 import { runBots, writeReport } from "./bots.mjs";
 import { checkTournament, verdicts, writeCheck } from "./report.mjs";
 
@@ -118,6 +121,8 @@ async function main() {
   const minutes = Number(args.minutes ?? 8);
   const extraMinutes = Number(args["extra-minutes"] ?? 2);
   const [handMin, handMax] = String(args["hand-seconds"] ?? "20-30").split("-").map(Number);
+  const appSlots = new Set(parseRange(args["app-slots"] ?? ""));
+  const waitBeforePlay = Number(args["wait-before-play"] ?? 50);
   const metrics = new Metrics();
   const api = new Api(args.api ?? STAGING_API, metrics);
 
@@ -130,10 +135,10 @@ async function main() {
   let finished = false;
   const bots = runBots({
     api, metrics, tournamentId, baseEmail, password,
-    slots: Array.from({ length: 16 }, (_, index) => index + 1),
+    slots: Array.from({ length: 16 }, (_, index) => index + 1).filter((slot) => !appSlots.has(slot)),
     accountSuffix: (slot) => `cal${String(slot).padStart(2, "0")}`,
     spectators: Number(args.spectators ?? 20),
-    until: Date.now() + (2 * (minutes + extraMinutes + 2) + 5) * 60_000,
+    until: Date.now() + (2 * (minutes + extraMinutes + 2) + 5) * 60_000 + waitBeforePlay * 1_000,
     stopped: () => finished,
     handSeconds: [handMin, handMax ?? handMin],
     penaltyRate: Number(args["penalty-rate"] ?? 0.1),
@@ -145,7 +150,7 @@ async function main() {
   let failure = null;
   try {
     // The 16 bots sign in one every 2.5 seconds. Play waits until they are in, as players sit before the start.
-    await sleep(50_000);
+    await sleep(waitBeforePlay * 1_000);
     await playRound(api, admin, metrics, tournamentId, 1, minutes, extraMinutes);
     await playRound(api, admin, metrics, tournamentId, 2, minutes, extraMinutes);
     await sleep(20_000);
@@ -159,6 +164,18 @@ async function main() {
   const check = await checkTournament(api, tournamentId, [report]);
   const integrity = await api.call("GET", `/tournaments/${tournamentId}/integrity`, { token: await admin.bearer(), label: "admin GET integrity" });
   const lines = verdicts(check, [report], integrity.status === 200 ? integrity.json : null);
+  if (appSlots.size > 0) {
+    // The tables where the app is the scorer: the lowest slot of the table plays with the app.
+    const appTables = TABLES.filter((table) => appSlots.has(Math.min(...table.playerIds)));
+    const all = await api.call("GET", `/public/tournaments/${tournamentId}/tables-with-hands`, { label: "admin GET all tables" });
+    const byKey = new Map((all.json?.tables ?? []).map((item) => [`${item.table.roundId}_${item.table.tableId}`, item]));
+    const written = appTables.map((table) => {
+      const item = byKey.get(`${table.roundId}_${table.tableId}`);
+      return `${table.roundId}_${table.tableId}: ${(item?.hands ?? []).filter((hand) => hand.isDone).length} hands`;
+    });
+    const ok = written.every((line) => !line.endsWith(": 0 hands"));
+    lines.push(`${ok ? "✅" : "❌"} The app on the emulator wrote the hands of its tables (${written.join(", ")}).`);
+  }
   writeCheck(String(args.report ?? "out/calibration.json").replace(/\.json$/, "-check.json"), "Calibration: checks", check, lines);
   if (integrity.status === 200 && integrity.json.findings?.length) {
     console.log("Integrity findings:", JSON.stringify(integrity.json.findings, null, 2));

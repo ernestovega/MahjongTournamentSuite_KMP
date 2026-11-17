@@ -28,6 +28,10 @@ on:
         description: "Seconds between two hands of a bot table, as min-max."
         type: string
         default: "60-90"
+      emulators:
+        description: "calibrate and bots: the real app on emulators too (slot 1 in a calibration, slots 6-9 in a rehearsal)."
+        type: boolean
+        default: true
 
 concurrency:
   group: rehearsal
@@ -97,10 +101,118 @@ jobs:
           esac
           node lib/scripts/rehearsalAccounts.js "$mode" --apply --project="$STAGING"
 
+  # The staging app and its automatic player (RehearsalPlayerTest), built once for every emulator.
+  app:
+    name: Staging app for the emulators
+    if: github.ref == 'refs/heads/main' && inputs.emulators && (inputs.action == 'calibrate' || inputs.action == 'bots')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - run: ./gradlew :androidApp:assembleStaging :androidApp:assembleStagingAndroidTest -Pmts.testBuildType=staging
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rehearsal-apks
+          path: androidApp/build/outputs/apk/
+          retention-days: 7
+
+  # One emulator per machine, as phones on different networks.
+  emulators:
+    name: Emulator slot ${{ matrix.slot }}
+    needs: app
+    if: always() && needs.app.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        slot: ${{ fromJSON(inputs.action == 'calibrate' && '[1]' || '[6, 7, 8, 9]') }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: rehearsal-apks
+          path: apks/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Prepare the player
+        env:
+          ACTION: ${{ inputs.action }}
+          TOURNAMENT: ${{ inputs.tournament }}
+          UNTIL: ${{ inputs.until }}
+        run: |
+          password="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$password"
+          if [ "$ACTION" = "calibrate" ]; then
+            minutes=40; account=cal; tournament="Calibración bots"; hands="20-30"
+          else
+            minutes=150; account=j; tournament="$TOURNAMENT"; hands="${{ inputs.hand_seconds }}"
+            if [ -n "$UNTIL" ]; then minutes=$(( ($(date -d "$UNTIL" +%s) - $(date +%s)) / 60 )); fi
+          fi
+          {
+            echo "REHEARSAL_PASSWORD=$password"
+            echo "REHEARSAL_MINUTES=$minutes"
+            echo "REHEARSAL_ACCOUNT=$account"
+            echo "REHEARSAL_TOURNAMENT=$tournament"
+            echo "REHEARSAL_HAND_SECONDS=$hands"
+            echo "REHEARSAL_API=https://europe-southwest1-$STAGING.cloudfunctions.net/api"
+            echo "REHEARSAL_APKS=apks"
+            echo "REHEARSAL_LOGCAT=$GITHUB_WORKSPACE/out/emulator-${{ matrix.slot }}-logcat.txt"
+          } >> "$GITHUB_ENV"
+          mkdir -p out
+
+      - name: Play with the app
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell wm size 720x1600 && adb shell wm density 280
+            scripts/rehearsal/emulator-player.sh ${{ matrix.slot }} | tee out/emulator-${{ matrix.slot }}.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-${{ matrix.slot }}
+          path: out/
+          retention-days: 30
+
   calibrate:
     name: Calibration
-    needs: accounts
-    if: inputs.action == 'calibrate'
+    needs: [accounts, app]
+    if: always() && inputs.action == 'calibrate' && needs.accounts.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -128,8 +240,10 @@ jobs:
           REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
           echo "::add-mask::$REHEARSAL_PASSWORD"
           export REHEARSAL_PASSWORD
+          app_args=()
+          if [ "${{ needs.app.result }}" = "success" ]; then app_args=(--app-slots=1 --wait-before-play=360); fi
           node scripts/rehearsal/calibrate.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
-            --hand-seconds="$HAND_SECONDS" --report=out/calibration.json
+            --hand-seconds="$HAND_SECONDS" --report=out/calibration.json "${app_args[@]}"
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -36,22 +36,35 @@ gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts-
 - `calibrate`: creates the 16 calibration accounts (`+mts-cal01..16`, EMA 99980001-16) and the bot admin
   (`+mts-botadmin`), plays a tournament of 16 bots in 2 short rounds, checks it, and deletes it. About 25 minutes.
   It tests the bots, a race between two phones on the same hand, a table that starts late, penalties, extra time and
-  the admin closing open tables.
+  the admin closing open tables. With `emulators` on, slot 1 plays with the real app on an emulator.
 - `passwords`: the rehearsal password for the accounts j02-j60. Run it after the invitations.
-- `bots`: the bots j10-j48 and the spectators, in three jobs, until `until`. Then the checks.
+- `bots`: the bots j10-j48 and the spectators, in three jobs, and the app on four emulators (j06-j09), until `until`.
+  Then the checks.
 - `check`: the checks alone, for example after the bots of the Mac.
 - `calibration-cleanup`: removes the calibration accounts and EMA players.
 
-## The bots of the Mac
+## The Mac part
 
-From the project folder, with Node 22:
+Start four emulators, then from the project folder, with Node 22:
 
 ```bash
 export STAGING_ADMIN_EMAIL=<the staging admin email>
 export REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts---staging)"
+scripts/rehearsal/mac.sh 2026-11-19T19:45:00+01:00
+```
+
+It builds the staging app with its automatic player, puts slots 2-5 on the emulators
+(`scripts/rehearsal/emulator-player.sh`), and runs the bots 49-60. The logs and reports go to `build/rehearsal`.
+The bots alone:
+
+```bash
 node scripts/rehearsal/bots.mjs --tournament="Ensayo General MTS 2026" --slots=49-60 \
   --until=<end, as 2026-11-19T19:45:00+01:00> --report=build/rehearsal/bots-mac.json --title="Bots 49-60 (Mac)"
 ```
+
+The automatic player of an emulator (`RehearsalPlayerTest`) uses the screens as a person: the reminder of the round,
+the seats, Add win or Add draw, the numpad, Review and Confirm. It writes only when its slot is the lowest of its
+table, and follows the table otherwise. `adb logcat -s REHEARSAL` shows what it does.
 
 Options: `--hand-seconds=60-90` (time between hands), `--penalty-rate=0.05`, `--late-tables=2_7` (the scorer starts
 2 minutes late), `--race-tables=1_3` (two phones send the same hand at once), `--spectators=N`, `--verbose`.
