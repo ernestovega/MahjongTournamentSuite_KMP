@@ -16,7 +16,14 @@ The tournaments stay in staging after the run, with the time of the run in their
 | `medium` | 64 (16 tables) | 7 | on | 16 (14-15 at a few tables) | 3 h 15 |
 | `small` | 16-24 | 3-4 | each combination on and off | 16 | 2 h |
 
-The round lasts 25 minutes: the emulator that writes the hands takes about 70 seconds per hand.
+The round lasts 25 minutes with phone emulators: the emulator that writes the hands takes about 70 seconds per hand.
+The workflow has a checkbox for the phone emulators. Without them only bots play, the rounds last about 12 minutes
+(large 2 h 30, medium 1 h 30, small 50 min), and the tablet still prepares and runs the tournament.
+A job of GitHub lasts at most 6 hours, so `large` with phone emulators plays in two parts (rounds 1-6 and 7-11); between
+them every phone and bot signs in again, as after the lunch break.
+
+Each run starts with a short preflight (about 10 minutes): the tablet creates a tournament of 16, imports and invites, and
+one phone writes two hands. When a screen has changed, the run stops there.
 
 ## Who does what
 
@@ -45,8 +52,9 @@ read it, so each one knows its part.
 - A table starts late; its scorer arrives minutes after the gong. A substitution of a player at that table, minutes
   after the first gong of round 1.
 - Two phones send the same hand at once (race).
-- A wrong hand: the editor deletes it in the admin app and the phone writes it again.
-- A hand edited by the editor, and the phone of the table shows the correction.
+- A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
+  and a hand of several hands before.
+- A hand edited by the editor (the last one and an older one), and the phone of the table shows the correction.
 - Penalties, a draw, extra time after the gong (finish the hand), a table that stays open and the admin closes it.
 - A table with manual totals.
 - A seat change after the seats are saved.
