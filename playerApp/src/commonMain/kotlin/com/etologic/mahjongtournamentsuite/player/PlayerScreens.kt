@@ -119,6 +119,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenPrivacyPolicy
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenVersions
+import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
@@ -1391,6 +1392,8 @@ private data class RankingRow(
     val country: String? = null,
     val chip: String,
     val chipChicken: Boolean = false,
+    /** A row of the best hands: the first three show a gold, silver or bronze hand instead of a trophy. */
+    val bestHand: Boolean = false,
     val score: String? = null,
     val mine: Boolean = false,
     val playerId: Int? = null,
@@ -1479,6 +1482,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
                 chip = "${row.handScore}",
+                bestHand = true,
                 mine = row.playerId == view.mySlotId,
                 playerId = row.playerId,
             )
@@ -1507,7 +1511,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                                         RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp))
                                         RankingKind.TEAMS -> Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(20.dp))
                                         RankingKind.CHICKEN -> ChickenIcon(size = 20.dp)
-                                        RankingKind.BEST -> PositionTrophy(1, size = 20.dp)
+                                        RankingKind.BEST -> BestHandIcon(size = 20.dp, contentDescription = null)
                                     }
                                 },
                             )
@@ -1637,11 +1641,13 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
         if (!compact) {
             Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) {
                 if (row.position <= 3) {
-                    // A circle behind the trophy keeps it visible on the colored card.
+                    // A circle behind the trophy or the hand keeps it visible on the colored card.
                     Box(
                         Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                         contentAlignment = Alignment.Center,
-                    ) { PositionTrophy(row.position, size = 24.dp) }
+                    ) {
+                        if (row.bestHand) BestHandIcon(row.position, size = 24.dp) else PositionTrophy(row.position, size = 24.dp)
+                    }
                 } else {
                     Text("${row.position}", fontWeight = FontWeight.Bold)
                 }
@@ -1950,7 +1956,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
             }
         }
         // The chicken and the best hand mark the winning hand, so they go under its score, which saves width.
-        // The best hand is a gold, silver or bronze trophy for the three best hands of the tournament.
+        // The best hand is a gold, silver or bronze hand for the three best hands of the tournament.
         val bestHandRank = view.bestHandRank(hand)
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (kind != HandKind.DRAW) {
@@ -1959,7 +1965,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
             if (hand.isChickenHand || bestHandRank != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (hand.isChickenHand) ChickenIcon()
-                    bestHandRank?.let { PositionTrophy(it, size = 24.dp) }
+                    bestHandRank?.let { BestHandIcon(it, size = 24.dp) }
                 }
             }
         }

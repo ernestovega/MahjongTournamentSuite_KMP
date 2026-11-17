@@ -151,7 +151,7 @@
     <string name="penalty">Penalty</string>
     <string name="done">Done</string>
     <string name="total_scores">Total Scores</string>
-    <string name="calculated_from_hands_trophies_show_the">Calculated from hands.\nTrophies show the best hands of the tournament that this table holds.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calculated from hands.\nThe gold, silver and bronze hands show the best hands of the tournament that this table holds.</string>
     <string name="show_how_the_chicken_and_best">Show how the chicken and best hand values are calculated</string>
     <string name="save_and_next_table">Save and next table</string>
     <string name="preview_tournament">Preview Tournament</string>

@@ -151,7 +151,7 @@
     <string name="penalty">Штраф</string>
     <string name="done">Готово</string>
     <string name="total_scores">Итоговый счёт</string>
-    <string name="calculated_from_hands_trophies_show_the">Рассчитано по раздачам.\nКубки показывают лучшие раздачи турнира, сыгранные за этим столом.</string>
+    <string name="calculated_from_hands_trophies_show_the">Рассчитано по раздачам.\nЗолотая, серебряная и бронзовая ладони показывают лучшие раздачи турнира, сыгранные за этим столом.</string>
     <string name="show_how_the_chicken_and_best">Показать, как рассчитываются значения куриц и лучших раздач</string>
     <string name="save_and_next_table">Сохранить и следующий стол</string>
     <string name="preview_tournament">Предпросмотр турнира</string>
