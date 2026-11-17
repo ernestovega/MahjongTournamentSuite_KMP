@@ -38,9 +38,22 @@ env:
   STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
 
 jobs:
+  # Main goes to staging first: the app of the test and the backend it talks to are the same commit.
+  staging:
+    name: Deploy main to staging
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/staging.yml
+    with:
+      action: deploy
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+
   # The plan: who plays each slot, and the import files. It reads the EMA registry and the accounts of staging.
   plan:
     name: Plan of the scenario
+    needs: staging
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -14,6 +14,12 @@ on:
         type: choice
         options: [deploy, seed, android]
         default: deploy
+  # The Game day deploys main here before it plays, so the app and the backend of the test are the same commit.
+  workflow_call:
+    inputs:
+      action:
+        type: string
+        default: deploy
 
 concurrency:
   # One queue per action: a pending run of one action never cancels a run of another.

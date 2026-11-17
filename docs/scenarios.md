@@ -27,6 +27,11 @@ them every phone and bot signs in again, as after the lunch break.
 Each run starts with a short preflight (about 10 minutes): the tablet creates a tournament of 16, imports and invites, and
 one phone writes two hands. When a screen has changed, the run stops there.
 
+## Staging first
+
+Each run deploys main to staging before anything else (the job "Deploy main to staging", the same deploy as Actions >
+Deploy staging). The app of the test and the backend it talks to are always the same commit.
+
 ## Who does what
 
 - **Organizer (tablet emulator, admin app, `ScenarioOrganizerTest`).** Signs in as the bot admin, creates the tournament
