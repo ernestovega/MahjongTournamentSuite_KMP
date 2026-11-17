@@ -107,11 +107,17 @@ async function main() {
   const tournamentIds = [...new Set(found.flatMap((player) => player.slots.map((slot) => slot.tournamentId)))];
   const seated = await seatedIn(tournamentIds);
   const owned = new Set((await db.collection("emaIdIndex").select().get()).docs.map((doc) => doc.id));
+  // The proposals play in no tournament at all, have no account, and come first when they share the country.
+  const seatedAnywhere = new Set((await db.collectionGroup("players").select("assignedEmaId").get()).docs
+    .flatMap((doc) => (typeof doc.get("assignedEmaId") === "string" ? [String(doc.get("assignedEmaId"))] : [])));
+  const countries = new Set(found.map((player) => player.country));
   const candidates = registry
-    .filter((player) => !player.disabled && !seated.has(player.id) && !matches.includes(player)
-      && !normalized(fullName(player)).includes("test"))
-    .map((player) => ({ id: player.id, name: fullName(player), country: player.country, hasAccount: owned.has(player.id) }))
-    .sort((left, right) => Number(left.hasAccount) - Number(right.hasAccount) || left.name.localeCompare(right.name))
+    .filter((player) => !player.disabled && !seatedAnywhere.has(player.id) && !owned.has(player.id)
+      && !matches.includes(player) && !player.id.startsWith("00") && !normalized(fullName(player)).includes("test")
+      && player.country !== "")
+    .map((player) => ({ id: player.id, name: fullName(player), country: player.country }))
+    .sort((left, right) => Number(!countries.has(left.country)) - Number(!countries.has(right.country))
+      || left.name.localeCompare(right.name))
     .slice(0, 40);
 
   const report = {

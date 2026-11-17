@@ -1309,9 +1309,24 @@ function buildTournament(spec: TournamentSpec, registry: Registry, avoidStored: 
 
 // -- Run -------------------------------------------------------------------------------------
 
+/**
+ * EMA players made by hand, which no seed may seat: their EMA id starts with 00 (no EMA country has it, for example
+ * 00000000 of the Google Play reviewers), or their name says "test". The deactivated players are left out too.
+ */
+function isSeedablePlayer(player: { id: string; firstName: string; lastName: string; disabled?: boolean }): boolean {
+  if (player.disabled === true || player.id.startsWith("00")) return false;
+  return !/\btest/i.test(`${player.firstName} ${player.lastName}`);
+}
+
 async function loadRegistry(): Promise<Registry> {
-  const snapshot = await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).select("firstName", "lastName", "country").get();
+  const snapshot = await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).select("firstName", "lastName", "country", "disabled").get();
   return snapshot.docs
+    .filter((doc) => isSeedablePlayer({
+      id: doc.id,
+      firstName: String(doc.get("firstName") ?? ""),
+      lastName: String(doc.get("lastName") ?? ""),
+      disabled: doc.get("disabled") === true,
+    }))
     .map((doc) => ({
       id: doc.id,
       firstName: String(doc.get("firstName") ?? "").trim(),
