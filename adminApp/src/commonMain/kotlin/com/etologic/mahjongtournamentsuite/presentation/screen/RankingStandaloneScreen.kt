@@ -59,6 +59,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.BestHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.ChickenHandRanking
@@ -79,6 +81,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
+import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
@@ -91,7 +94,9 @@ import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -181,7 +186,25 @@ private fun RankingStandaloneContent(
         loading = false
     }
 
-    LaunchedEffect(tournamentId) { refresh() }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(tournamentId) {
+        refresh().join()
+        // The ranking stays on a screen of the venue for hours, so it checks for new hands while it is open, quietly:
+        // the page that shows stays. [TournamentListPoll.rankingDelay] sets how often. A hidden tab does not check.
+        val isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) }
+        while (true) {
+            withTimeoutOrNull(TournamentListPoll.rankingDelay(snapshot?.tournament)) {
+                isStarted.first { !it }
+            }
+            isStarted.first { it }
+            val result = presenter.load(tournamentId, checkChanges = true)
+            if (result is AppResult.Success) {
+                if (result.value != snapshot) snapshot = result.value
+                // The label tells how current the data is, so it moves on with every good check.
+                loadedAt = clock.now()
+            }
+        }
+    }
     val labels = rememberRankingLabels()
     val pages = remember(snapshot, showTopThree, labels) {
         snapshot?.toPages(showTopThree, labels).orEmpty()

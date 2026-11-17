@@ -45,12 +45,21 @@ class RankingPresenter(
     ): AppResult<ByteArray> = tournamentRepository.generateEmaReport(tournamentId, rankings)
         .trackAction(telemetry, TelemetryAction.EMA_REPORT_EXPORTED)
 
-    suspend fun load(tournamentId: String, force: Boolean = false): AppResult<RankingSnapshot> {
+    /**
+     * [checkChanges] asks the server for what changed since the held data, for a ranking screen that checks while it
+     * is open. One manifest request answers the revision checks of all the reads.
+     */
+    suspend fun load(tournamentId: String, force: Boolean = false, checkChanges: Boolean = false): AppResult<RankingSnapshot> {
         logger.i { "Loading tournament rankings." }
 
-        // A ranking screen stays still while it is open. It uses what the app holds and asks the server only
-        // when nothing is held yet. The table editor keeps the held tables current.
-        val refreshMode = if (force) RefreshMode.FORCE else RefreshMode.CACHED
+        // Without [checkChanges] the ranking uses what the app holds and asks the server only when nothing is held
+        // yet. The table editor keeps the held tables current.
+        val refreshMode = when {
+            force -> RefreshMode.FORCE
+            checkChanges -> RefreshMode.IF_CHANGED
+            else -> RefreshMode.CACHED
+        }
+        if (checkChanges) tournamentRepository.prefetchRevisions(tournamentId)
         val tournaments = when (val result = tournamentRepository.listTournaments(refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result

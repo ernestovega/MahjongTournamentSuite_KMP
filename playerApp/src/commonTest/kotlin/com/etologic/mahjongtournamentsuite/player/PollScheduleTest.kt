@@ -9,7 +9,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,14 +50,14 @@ class PollScheduleTest {
     private fun at(dateTime: String) = LocalDateTime.parse(dateTime)
 
     @Test
-    fun aFinishedTournamentIsNotCheckedAgain() {
-        assertNull(PollSchedule.nextDelay(tournament(), null, at("2026-10-12T09:00")))
-        assertNull(PollSchedule.nextDelay(tournament(), 1, at("2026-10-12T09:00")))
+    fun aFinishedTournamentIsCheckedEveryFiveMinutes() {
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(), null, at("2026-10-12T09:00")))
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(), 1, at("2026-10-12T09:00")))
     }
 
     @Test
     fun aCompletedTournamentIsFinishedEvenOnItsDays() {
-        assertNull(PollSchedule.nextDelay(tournament(completed = true), 1, at("2026-10-10T10:30")))
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(completed = true), 1, at("2026-10-10T10:30")))
     }
 
     @Test
@@ -115,7 +114,7 @@ class PollScheduleTest {
     @Test
     fun aTournamentWithoutAnEndDateEndsOnItsStartDay() {
         assertEquals(15.seconds, PollSchedule.nextDelay(tournament(end = null), null, at("2026-10-10T20:00")))
-        assertNull(PollSchedule.nextDelay(tournament(end = null), null, at("2026-10-11T00:00")))
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(end = null), null, at("2026-10-11T00:00")))
     }
 
     @Test
@@ -145,5 +144,24 @@ class PollScheduleTest {
     @Test
     fun beforeTheFirstListTheLoadIsTriedAgainEvery15Seconds() {
         assertEquals(15.seconds, PollSchedule.listDelay(null, at("2026-10-10T10:30")))
+    }
+
+    @Test
+    fun aPlayerOfTheTournamentChecksEveryFiveSecondsOnAllScreensWhileARoundIsInPlay() {
+        assertEquals(5.seconds, PollSchedule.nextDelay(tournament(), null, at("2026-10-10T10:30"), playsHere = true))
+        assertEquals(5.seconds, PollSchedule.nextDelay(tournament(), null, at("2026-10-10T12:05"), playsHere = true))
+        assertEquals(5.seconds, PollSchedule.nextDelay(tournament(round2Started = false), null, at("2026-10-10T14:50"), playsHere = true))
+    }
+
+    @Test
+    fun aPlayerOfTheTournamentChecksEvery15SecondsBetweenRounds() {
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(round2Started = false), null, at("2026-10-10T13:00"), playsHere = true))
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), null, at("2026-10-11T10:00"), playsHere = true))
+        assertEquals(5.minutes, PollSchedule.nextDelay(tournament(), null, at("2026-10-12T10:00"), playsHere = true))
+    }
+
+    @Test
+    fun someoneElseChecksEvery15SecondsWhileARoundIsInPlay() {
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), null, at("2026-10-10T10:30")))
     }
 }

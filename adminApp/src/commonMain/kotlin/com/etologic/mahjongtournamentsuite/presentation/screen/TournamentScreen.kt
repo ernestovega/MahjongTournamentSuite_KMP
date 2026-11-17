@@ -115,7 +115,7 @@ fun TournamentScreen(
     tournamentId: String,
     // Tests replace these to control the clock and the polling pace.
     activity: ActivityTracker = remember { ActivityTracker() },
-    pollSchedule: PollSchedule = remember { PollSchedule() },
+    pollSchedule: PollSchedule = PollSchedule.TOURNAMENT_SCREEN,
 ) {
     val tablesPresenter = koinInject<TablesPresenter>()
     val tablePresenter = koinInject<TableManagerPresenter>()
