@@ -79,4 +79,15 @@ class RankingPresenterTest {
         assertEquals(listOf("tournaments CACHED"), repository.calls.filter { it.startsWith("tournaments") })
         assertEquals(listOf("players CACHED"), repository.calls.filter { it.startsWith("players") })
     }
+
+    @Test
+    fun aCheckOfTheRankingScreenAsksForChangesOnly() = runTest {
+        val repository = server()
+
+        presenter(repository).load("t1", checkChanges = true)
+
+        assertEquals(listOf("all IF_CHANGED"), repository.calls.filter { it.startsWith("all") })
+        assertEquals(listOf("tournaments IF_CHANGED"), repository.calls.filter { it.startsWith("tournaments") })
+        assertEquals(listOf("players IF_CHANGED"), repository.calls.filter { it.startsWith("players") })
+    }
 }
