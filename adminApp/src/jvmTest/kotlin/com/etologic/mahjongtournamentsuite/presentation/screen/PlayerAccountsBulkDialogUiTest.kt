@@ -252,7 +252,8 @@ class PlayerAccountsBulkDialogUiTest {
             ),
         )
 
-        onNodeWithText("Invited").assertIsDisplayed()
+        // The rows of the list behind also say Invited or Reminded.
+        onAllNodesWithText("Invited").onLast().assertIsDisplayed()
         onNodeWithText("The player has no email. Add an email and try again.").assertIsDisplayed()
     }
 
@@ -272,7 +273,8 @@ class PlayerAccountsBulkDialogUiTest {
 
         onNodeWithText("Reminder sent").assertIsDisplayed()
         onNodeWithText(localizedDateTimeOrNull(reminderAt)!!).assertIsDisplayed()
-        onNodeWithText("Invited").assertIsDisplayed()
+        // The rows of the list behind also say Invited or Reminded.
+        onAllNodesWithText("Invited").onLast().assertIsDisplayed()
         onNodeWithText(localizedDateTimeOrNull(invitationAt)!!).assertIsDisplayed()
     }
 
@@ -286,7 +288,8 @@ class PlayerAccountsBulkDialogUiTest {
         )
 
         onNodeWithText("The player has no email. Add an email and try again.").assertIsDisplayed()
-        onNodeWithText("Invited").assertIsDisplayed()
+        // The rows of the list behind also say Invited or Reminded.
+        onAllNodesWithText("Invited").onLast().assertIsDisplayed()
         onAllNodesWithText(localizedDateTimeOrNull("2026-10-28T13:05:00.000Z")!!).assertCountEquals(0)
     }
 
@@ -366,9 +369,10 @@ class PlayerAccountsBulkDialogUiTest {
         host.busy = false
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Not all emails were sent").fetchSemanticsNodes().isNotEmpty() }
 
-        onNodeWithText("1 account was created and its invitation sent.").assertIsDisplayed()
-        onNodeWithText("2 reminders were sent.").assertIsDisplayed()
-        onNodeWithText("1 email could not be sent:").assertIsDisplayed()
+        // The rows of the list behind also say Invited or Reminded.
+        onAllNodesWithText("Invited").onLast().assertIsDisplayed()
+        onAllNodesWithText("Reminded").onLast().assertIsDisplayed()
+        onAllNodesWithText("Not sent").onLast().assertIsDisplayed()
         onNodeWithText("3 · P3").assertIsDisplayed()
         // The reason shows in the row of the list too.
         onAllNodesWithText("Another account or another player already uses this email.").onLast().assertIsDisplayed()

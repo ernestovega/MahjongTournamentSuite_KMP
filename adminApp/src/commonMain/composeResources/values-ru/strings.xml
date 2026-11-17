@@ -466,11 +466,12 @@
     <string name="field_player_west_penalty">Штраф игрока Запад</string>
     <string name="field_player_north_penalty">Штраф игрока Север</string>
     <string name="hand_field_label">Раздача %1$d · %2$s</string>
-    <string name="table_headline_rejected">Раунд %1$d · Стол %2$d: кто-то другой сохранил этот стол раньше. Ваши изменения не сохранены.</string>
-    <string name="table_headline_replaced">Раунд %1$d · Стол %2$d: другой пользователь изменил этот стол. Ваши несохранённые изменения заменены.</string>
-    <string name="table_headline_latest">Раунд %1$d · Стол %2$d: другой пользователь изменил этот стол. Сейчас показаны последние данные.</string>
+    <string name="table_headline_rejected">Кто-то другой сохранил этот стол раньше.\nВаши изменения не сохранены.</string>
+    <string name="table_headline_replaced">Другой пользователь изменил этот стол.\nВаши несохранённые изменения заменены.</string>
+    <string name="table_headline_latest">Другой пользователь изменил этот стол.\nСейчас показаны последние данные.</string>
     <string name="value_empty">пусто</string>
-    <string name="lost_change_line">• %1$s: %2$s</string>
+    <string name="lost_change_line">%1$s: %2$s</string>
+    <string name="table_notice_where">Раунд %1$d · Стол %2$d</string>
     <string name="table_updated">Стол обновлён</string>
     <string name="tables_updated">Столы обновлены</string>
     <string name="round_n">Раунд %1$d</string>
@@ -615,18 +616,9 @@
     <string name="import_locked_text">Нельзя импортировать игроков, потому что у стола уже есть данные: рассадка или результаты. Импорт заменяет всех игроков, и это изменило бы существующие результаты. Чтобы изменить одного игрока, используйте действия в его строке.</string>
     <string name="sending_title">Отправка</string>
     <string name="sending_text">Приложение отправляет письма. Дождитесь окончания.</string>
-    <plurals name="send_invited">
-        <item quantity="one">Создана %1$d учётная запись, приглашение отправлено.</item>
-        <item quantity="few">Создано %1$d учётные записи, приглашения отправлены.</item>
-        <item quantity="many">Создано %1$d учётных записей, приглашения отправлены.</item>
-        <item quantity="other">Создано %1$d учётные записи, приглашения отправлены.</item>
-    </plurals>
-    <plurals name="send_reminded">
-        <item quantity="one">Отправлено %1$d напоминание.</item>
-        <item quantity="few">Отправлено %1$d напоминания.</item>
-        <item quantity="many">Отправлено %1$d напоминаний.</item>
-        <item quantity="other">Отправлено %1$d напоминания.</item>
-    </plurals>
+    <string name="send_section_invited">Приглашены</string>
+    <string name="send_section_reminded">Напомнили</string>
+    <string name="send_section_failed">Не отправлено</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Игроков: %1$d · Изменено: %2$d · Ошибок: %3$d · Удалено: %4$d</string>
     <string name="import_legend_changed">Новые или изменённые</string>

@@ -466,11 +466,12 @@
     <string name="field_player_west_penalty">Straf speler west</string>
     <string name="field_player_north_penalty">Straf speler noord</string>
     <string name="hand_field_label">Hand %1$d · %2$s</string>
-    <string name="table_headline_rejected">Ronde %1$d · Tafel %2$d: iemand anders heeft deze tafel eerst opgeslagen. Je wijzigingen zijn niet opgeslagen.</string>
-    <string name="table_headline_replaced">Ronde %1$d · Tafel %2$d: een andere gebruiker heeft deze tafel gewijzigd. Je niet-opgeslagen wijzigingen zijn vervangen.</string>
-    <string name="table_headline_latest">Ronde %1$d · Tafel %2$d: een andere gebruiker heeft deze tafel gewijzigd. Ze toont nu de nieuwste gegevens.</string>
+    <string name="table_headline_rejected">Iemand anders heeft deze tafel eerst opgeslagen.\nJe wijzigingen zijn niet opgeslagen.</string>
+    <string name="table_headline_replaced">Een andere gebruiker heeft deze tafel gewijzigd.\nJe niet-opgeslagen wijzigingen zijn vervangen.</string>
+    <string name="table_headline_latest">Een andere gebruiker heeft deze tafel gewijzigd.\nZe toont nu de nieuwste gegevens.</string>
     <string name="value_empty">leeg</string>
-    <string name="lost_change_line">• %1$s: %2$s</string>
+    <string name="lost_change_line">%1$s: %2$s</string>
+    <string name="table_notice_where">Ronde %1$d · Tafel %2$d</string>
     <string name="table_updated">Tafel bijgewerkt</string>
     <string name="tables_updated">Tafels bijgewerkt</string>
     <string name="round_n">Ronde %1$d</string>
@@ -609,14 +610,9 @@
     <string name="import_locked_text">Je kunt geen spelers importeren omdat een tafel al gegevens heeft: plaatsen of resultaten. De import vervangt alle spelers, en dat zou bestaande resultaten wijzigen. Gebruik de opties in de rij van een speler om één speler te wijzigen.</string>
     <string name="sending_title">Versturen</string>
     <string name="sending_text">De app verstuurt de e-mails. Wacht tot ze klaar is.</string>
-    <plurals name="send_invited">
-        <item quantity="one">%1$d account is aangemaakt en de uitnodiging is verstuurd.</item>
-        <item quantity="other">%1$d accounts zijn aangemaakt en de uitnodigingen zijn verstuurd.</item>
-    </plurals>
-    <plurals name="send_reminded">
-        <item quantity="one">%1$d herinnering is verstuurd.</item>
-        <item quantity="other">%1$d herinneringen zijn verstuurd.</item>
-    </plurals>
+    <string name="send_section_invited">Uitgenodigd</string>
+    <string name="send_section_reminded">Herinnerd</string>
+    <string name="send_section_failed">Niet verzonden</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Spelers: %1$d · Gewijzigd: %2$d · Fouten: %3$d · Verwijderd: %4$d</string>
     <string name="import_legend_changed">Nieuw of gewijzigd</string>

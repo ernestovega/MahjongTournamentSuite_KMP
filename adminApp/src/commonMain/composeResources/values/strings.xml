@@ -466,11 +466,12 @@
     <string name="field_player_west_penalty">Player west penalty</string>
     <string name="field_player_north_penalty">Player north penalty</string>
     <string name="hand_field_label">Hand %1$d · %2$s</string>
-    <string name="table_headline_rejected">Round %1$d · Table %2$d: someone else saved this table first. Your changes were not saved.</string>
-    <string name="table_headline_replaced">Round %1$d · Table %2$d: another user changed this table. Your unsaved changes were replaced.</string>
-    <string name="table_headline_latest">Round %1$d · Table %2$d: another user changed this table. It now shows the latest data.</string>
+    <string name="table_headline_rejected">Someone else saved this table first.\nYour changes were not saved.</string>
+    <string name="table_headline_replaced">Another user changed this table.\nYour unsaved changes were replaced.</string>
+    <string name="table_headline_latest">Another user changed this table.\nIt now shows the latest data.</string>
     <string name="value_empty">empty</string>
-    <string name="lost_change_line">• %1$s: %2$s</string>
+    <string name="lost_change_line">%1$s: %2$s</string>
+    <string name="table_notice_where">Round %1$d · Table %2$d</string>
     <string name="table_updated">Table updated</string>
     <string name="tables_updated">Tables updated</string>
     <string name="round_n">Round %1$d</string>
@@ -609,14 +610,9 @@
     <string name="import_locked_text">You cannot import players because a table already has data: seats or results. The import replaces all players, and that would change results that exist. To change one player, use the options in the row of the player.</string>
     <string name="sending_title">Sending</string>
     <string name="sending_text">The app is sending the emails. Wait until it finishes.</string>
-    <plurals name="send_invited">
-        <item quantity="one">%1$d account was created and its invitation sent.</item>
-        <item quantity="other">%1$d accounts were created and their invitations sent.</item>
-    </plurals>
-    <plurals name="send_reminded">
-        <item quantity="one">%1$d reminder was sent.</item>
-        <item quantity="other">%1$d reminders were sent.</item>
-    </plurals>
+    <string name="send_section_invited">Invited</string>
+    <string name="send_section_reminded">Reminded</string>
+    <string name="send_section_failed">Not sent</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Players: %1$d · Changed: %2$d · Errors: %3$d · Removed: %4$d</string>
     <string name="import_legend_changed">New or changed</string>

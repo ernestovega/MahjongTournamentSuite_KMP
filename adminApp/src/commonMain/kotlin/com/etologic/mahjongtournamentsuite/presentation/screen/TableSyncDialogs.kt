@@ -1,15 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,17 +47,21 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_n
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_latest
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_rejected
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_replaced
+import mahjongtournamentsuite.adminapp.generated.resources.table_notice_where
 import mahjongtournamentsuite.adminapp.generated.resources.table_updated
 import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
-/** The headline of one notice. The wording tells the user what happened to the typed values. */
+/** Where one notice happened: its round and table. */
+internal fun TableUpdateNotice.where(): UiText = UiText.of(Res.string.table_notice_where, key.roundId, key.tableId)
+
+/** What happened in one notice, in two short lines. The wording tells the user what happened to the typed values. */
 internal fun TableUpdateNotice.headline(): UiText = when {
-    saveRejected -> UiText.of(Res.string.table_headline_rejected, key.roundId, key.tableId)
-    lostChanges.isNotEmpty() -> UiText.of(Res.string.table_headline_replaced, key.roundId, key.tableId)
-    else -> UiText.of(Res.string.table_headline_latest, key.roundId, key.tableId)
+    saveRejected -> UiText.of(Res.string.table_headline_rejected)
+    lostChanges.isNotEmpty() -> UiText.of(Res.string.table_headline_replaced)
+    else -> UiText.of(Res.string.table_headline_latest)
 }
 
 /** Tells the user that server data replaced one or more tables. The user must accept it. */
@@ -79,21 +84,26 @@ internal fun TableUpdatesDialog(
                     state = scrollState,
                     modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
                 ) {
+                    // One block for each table: where, in a small title; what happened; and the values to type again in a card.
                     notices.forEachIndexed { index, notice ->
-                        if (index > 0) Spacer(Modifier.height(16.dp))
-                        Text(notice.headline().asString(), Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                        if (notice.lostChanges.isNotEmpty()) {
-                            Spacer(Modifier.height(6.dp))
+                        if (index > 0) HorizontalDivider(Modifier.padding(vertical = 16.dp))
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                stringResource(Res.string.enter_these_values_again_if_they),
-                                Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodySmall,
+                                notice.where().asString(),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Center,
                             )
-                            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                notice.lostChanges.forEach { change ->
-                                    Text(stringResource(Res.string.lost_change_line, change.label.asString(), change.value.asString()), style = MaterialTheme.typography.bodyMedium)
-                                }
+                            Text(notice.headline().asString(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                            if (notice.lostChanges.isNotEmpty()) {
+                                Text(
+                                    stringResource(Res.string.enter_these_values_again_if_they),
+                                    Modifier.padding(top = 4.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                )
+                                LostChangesCard(notice.lostChanges.map { stringResource(Res.string.lost_change_line, it.label.asString(), it.value.asString()) })
                             }
                         }
                     }
@@ -165,5 +175,20 @@ private fun ResetTableGroup(label: String, items: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
         Text(items, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+/** The values that the user typed and lost, in a soft card so they read apart from the text. */
+@Composable
+private fun LostChangesCard(lines: List<String>) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            lines.forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        }
     }
 }

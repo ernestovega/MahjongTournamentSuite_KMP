@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
@@ -42,15 +45,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.failure_unexpected
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_invited
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_reminded
-import mahjongtournamentsuite.adminapp.generated.resources.password_resets_failed
 import mahjongtournamentsuite.adminapp.generated.resources.password_resets_partial_title
-import mahjongtournamentsuite.adminapp.generated.resources.send_invited
-import mahjongtournamentsuite.adminapp.generated.resources.send_reminded
+import mahjongtournamentsuite.adminapp.generated.resources.send_section_failed
+import mahjongtournamentsuite.adminapp.generated.resources.send_section_invited
+import mahjongtournamentsuite.adminapp.generated.resources.send_section_reminded
 import mahjongtournamentsuite.adminapp.generated.resources.sending_text
 import mahjongtournamentsuite.adminapp.generated.resources.sending_title
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
@@ -131,29 +133,43 @@ internal fun SendSummaryDialog(
     nameOf: (Int) -> String,
     onDismiss: () -> Unit,
 ) {
-    val invited = results.count { it.outcome == PlayerAccountOutcome.INVITED }
-    val reminded = results.count { it.outcome == PlayerAccountOutcome.REMINDED }
+    val invited = results.filter { it.outcome == PlayerAccountOutcome.INVITED }
+    val reminded = results.filter { it.outcome == PlayerAccountOutcome.REMINDED }
     val failed = results.filter { it.outcome == PlayerAccountOutcome.FAILED }
     TrackedDialog("AccountActionsDone") {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(if (failed.isEmpty()) Res.string.dialog_done_title else Res.string.password_resets_partial_title)) },
-            // One sentence for each count that is not zero, and the failed players in a card with their reason.
+            // One section for each outcome that happened: its title, its count and its players. A failed one shows its reason.
             text = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (invited > 0) Text(pluralStringResource(Res.plurals.send_invited, invited, invited))
-                    if (reminded > 0) Text(pluralStringResource(Res.plurals.send_reminded, reminded, reminded))
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (invited.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.PersonAdd,
+                            stringResource(Res.string.send_section_invited),
+                            invited.map { PlayerLine(nameOf(it.playerId), emptyList()) },
+                            maxHeight = 120.dp,
+                        )
+                    }
+                    if (reminded.isNotEmpty()) {
+                        PlayerLinesSection(
+                            Icons.Filled.NotificationsActive,
+                            stringResource(Res.string.send_section_reminded),
+                            reminded.map { PlayerLine(nameOf(it.playerId), emptyList()) },
+                            maxHeight = 120.dp,
+                        )
+                    }
                     if (failed.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(pluralStringResource(Res.plurals.password_resets_failed, failed.size, failed.size), color = MaterialTheme.colorScheme.error)
-                            PlayerLinesCard(
-                                failed.map { result ->
-                                    PlayerLine(nameOf(result.playerId), listOf(stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())))
-                                },
-                                detailColor = MaterialTheme.colorScheme.error,
-                            )
-                        }
+                        PlayerLinesSection(
+                            Icons.Filled.ErrorOutline,
+                            stringResource(Res.string.send_section_failed),
+                            failed.map { result ->
+                                PlayerLine(nameOf(result.playerId), listOf(stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())))
+                            },
+                            color = MaterialTheme.colorScheme.error,
+                            detailColor = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             },

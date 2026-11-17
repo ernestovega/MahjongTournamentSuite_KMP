@@ -111,7 +111,7 @@ class SpanishMessagesTest {
         spanish()
         val notice = TableUpdateNotice(TableKey(2, 5), emptyList())
         assertEquals(
-            "Ronda 2 · Mesa 5: otro usuario cambió esta mesa. Ahora muestra los datos más recientes.",
+            "Otro usuario cambió esta mesa.\nAhora muestra los datos más recientes.",
             notice.headline().render(),
         )
         val lost = TableReconciler.lostChangesOf(emptyMap(), mapOf(1 to mapOf("handScore" to "16", "isDone" to true)))

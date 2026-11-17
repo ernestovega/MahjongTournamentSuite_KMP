@@ -23,9 +23,10 @@ class TableSyncDialogsUiTest {
         }
 
         onNodeWithText("Table updated").assertExists()
-        onNodeWithText("Round 2 · Table 5: another user changed this table. Your unsaved changes were replaced.").assertExists()
-        onNodeWithText("• Hand 3 · Hand score: 24").assertExists()
-        onNodeWithText("• Hand 3 · Player winner id: 2").assertExists()
+        onNodeWithText("Round 2 · Table 5").assertExists()
+        onNodeWithText("Another user changed this table.\nYour unsaved changes were replaced.").assertExists()
+        onNodeWithText("Hand 3 · Hand score: 24").assertExists()
+        onNodeWithText("Hand 3 · Player winner id: 2").assertExists()
     }
 
     @Test
@@ -36,7 +37,7 @@ class TableSyncDialogsUiTest {
             }
         }
 
-        onNodeWithText("Round 1 · Table 1: another user changed this table. It now shows the latest data.").assertExists()
+        onNodeWithText("Another user changed this table.\nIt now shows the latest data.").assertExists()
         onNodeWithText("Enter these values again if they are still correct:").assertDoesNotExist()
     }
 
@@ -48,7 +49,7 @@ class TableSyncDialogsUiTest {
             }
         }
 
-        onNodeWithText("Round 1 · Table 4: someone else saved this table first. Your changes were not saved.").assertExists()
+        onNodeWithText("Someone else saved this table first.\nYour changes were not saved.").assertExists()
     }
 
     @Test
@@ -63,8 +64,8 @@ class TableSyncDialogsUiTest {
         }
 
         onNodeWithText("Tables updated").assertExists()
-        onNodeWithText("Round 1 · Table 1: another user changed this table. It now shows the latest data.").assertExists()
-        onNodeWithText("Round 1 · Table 2: another user changed this table. Your unsaved changes were replaced.").assertExists()
+        onNodeWithText("Another user changed this table.\nIt now shows the latest data.").assertExists()
+        onNodeWithText("Another user changed this table.\nYour unsaved changes were replaced.").assertExists()
     }
 
     @Test

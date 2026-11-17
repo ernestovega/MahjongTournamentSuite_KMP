@@ -178,15 +178,15 @@ class TableReconcilerTest {
         val key = TableKey(2, 5)
 
         assertEquals(
-            "Round 2 · Table 5: another user changed this table. It now shows the latest data.",
+            "Another user changed this table.\nIt now shows the latest data.",
             TableUpdateNotice(key, emptyList()).headline().render(),
         )
         assertEquals(
-            "Round 2 · Table 5: another user changed this table. Your unsaved changes were replaced.",
+            "Another user changed this table.\nYour unsaved changes were replaced.",
             TableUpdateNotice(key, listOf(LostChange(UiText.Plain("Hand 1 · Hand score"), UiText.Plain("8")))).headline().render(),
         )
         assertEquals(
-            "Round 2 · Table 5: someone else saved this table first. Your changes were not saved.",
+            "Someone else saved this table first.\nYour changes were not saved.",
             TableUpdateNotice(key, listOf(LostChange(UiText.Plain("Hand 1 · Hand score"), UiText.Plain("8"))), saveRejected = true).headline().render(),
         )
     }

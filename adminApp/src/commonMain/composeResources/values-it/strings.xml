@@ -466,11 +466,12 @@
     <string name="field_player_west_penalty">Penalità del giocatore ovest</string>
     <string name="field_player_north_penalty">Penalità del giocatore nord</string>
     <string name="hand_field_label">Mano %1$d · %2$s</string>
-    <string name="table_headline_rejected">Turno %1$d · Tavolo %2$d: qualcun altro ha salvato prima questo tavolo. Le tue modifiche non sono state salvate.</string>
-    <string name="table_headline_replaced">Turno %1$d · Tavolo %2$d: un altro utente ha modificato questo tavolo. Le tue modifiche non salvate sono state sostituite.</string>
-    <string name="table_headline_latest">Turno %1$d · Tavolo %2$d: un altro utente ha modificato questo tavolo. Ora mostra gli ultimi dati.</string>
+    <string name="table_headline_rejected">Qualcun altro ha salvato prima questo tavolo.\nLe tue modifiche non sono state salvate.</string>
+    <string name="table_headline_replaced">Un altro utente ha modificato questo tavolo.\nLe tue modifiche non salvate sono state sostituite.</string>
+    <string name="table_headline_latest">Un altro utente ha modificato questo tavolo.\nOra mostra gli ultimi dati.</string>
     <string name="value_empty">vuoto</string>
-    <string name="lost_change_line">• %1$s: %2$s</string>
+    <string name="lost_change_line">%1$s: %2$s</string>
+    <string name="table_notice_where">Turno %1$d · Tavolo %2$d</string>
     <string name="table_updated">Tavolo aggiornato</string>
     <string name="tables_updated">Tavoli aggiornati</string>
     <string name="round_n">Turno %1$d</string>
@@ -609,14 +610,9 @@
     <string name="import_locked_text">Non puoi importare giocatori perché un tavolo ha già dei dati: posti o risultati. L'importazione sostituisce tutti i giocatori e cambierebbe risultati già esistenti. Per cambiare un giocatore, usa le opzioni della sua riga.</string>
     <string name="sending_title">Invio in corso</string>
     <string name="sending_text">L'app sta inviando le email. Attendi che finisca.</string>
-    <plurals name="send_invited">
-        <item quantity="one">È stato creato %1$d account e inviato il suo invito.</item>
-        <item quantity="other">Sono stati creati %1$d account e inviati i loro inviti.</item>
-    </plurals>
-    <plurals name="send_reminded">
-        <item quantity="one">È stato inviato %1$d promemoria.</item>
-        <item quantity="other">Sono stati inviati %1$d promemoria.</item>
-    </plurals>
+    <string name="send_section_invited">Invitati</string>
+    <string name="send_section_reminded">Sollecitati</string>
+    <string name="send_section_failed">Non inviati</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
     <string name="import_summary_line">Giocatori: %1$d · Cambiano: %2$d · Errori: %3$d · Rimossi: %4$d</string>
     <string name="import_legend_changed">Nuovo o cambia</string>
