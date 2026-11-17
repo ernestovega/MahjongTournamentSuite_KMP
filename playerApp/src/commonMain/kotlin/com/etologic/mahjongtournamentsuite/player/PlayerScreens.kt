@@ -92,11 +92,13 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
@@ -139,7 +141,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChoos
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsOutlinedTag
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
@@ -167,6 +168,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.icon_chicken_mono
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
@@ -241,6 +243,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_ti
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -633,12 +636,23 @@ internal fun statusColor(status: TournamentStatus): Color = when (status) {
     TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
 }
 
+/**
+ * The status of a tournament: a big text in the color of the status, with no border. The letters are about as tall as
+ * the old bordered tag (24 dp), and the line keeps that height, so the row of the dates does not grow.
+ */
 @Composable
 private fun StatusChip(status: TournamentStatus) {
-    val color = statusColor(status)
-    MtsOutlinedTag(color) {
-        Text(stringResource(status.label), style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
-    }
+    Text(
+        stringResource(status.label),
+        style = MaterialTheme.typography.labelMedium.copy(
+            fontSize = 22.sp,
+            lineHeight = 24.sp,
+            lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+        ),
+        color = statusColor(status),
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+    )
 }
 
 /** The logo of the tournament. A neutral box with a trophy shows while the tournament has no logo. */
@@ -1518,7 +1532,8 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                                     when (item) {
                                         RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp))
                                         RankingKind.TEAMS -> Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(20.dp))
-                                        RankingKind.CHICKEN -> ChickenIcon(size = 20.dp)
+                                        // The one-color chicken, in the color of the other tab icons, so it does not stand out.
+                                        RankingKind.CHICKEN -> Icon(painterResource(Res.drawable.icon_chicken_mono), contentDescription = null, Modifier.size(20.dp))
                                         RankingKind.BEST -> BestHandIcon(size = 20.dp, contentDescription = null)
                                     }
                                 },

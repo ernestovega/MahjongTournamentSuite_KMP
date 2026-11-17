@@ -29,7 +29,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
@@ -90,13 +89,10 @@ import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
-import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -938,26 +934,10 @@ private fun CompactTournamentCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.People, contentDescription = stringResource(Res.string.players), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("${tournament.numPlayers}", style = MaterialTheme.typography.labelLarge)
-                        }
-                        if (tournament.isTeams) {
-                            AppTooltipBox(stringResource(Res.string.feature_team)) {
-                                Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.feature_team), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                        if (tournament.countBestHands) {
-                            AppTooltipBox(stringResource(Res.string.feature_best_on)) {
-                                BestHandIcon(1, size = 18.dp, contentDescription = stringResource(Res.string.feature_best_on))
-                            }
-                        }
-                        if (tournament.countChickenHands) {
-                            AppTooltipBox(stringResource(Res.string.feature_chicken_on)) {
-                                ChickenIcon(contentDescription = stringResource(Res.string.feature_chicken_on), modifier = Modifier.size(18.dp))
-                            }
-                        }
+                    // Only the number of players. The team, best hand and chicken icons said nothing useful (Ernesto, 17-nov).
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.People, contentDescription = stringResource(Res.string.players), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${tournament.numPlayers}", style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 if (showEdit) {
