@@ -108,6 +108,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     // Older Espresso versions fail on the newest Android emulator images (InputManager.getInstance).
     androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.espresso.intents)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     "stagingImplementation"(libs.androidx.compose.ui.test.manifest)

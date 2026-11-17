@@ -1,0 +1,180 @@
+# A game day scenario in staging (docs/scenarios.md): a whole tournament played without anybody, through the apps.
+# Run it by hand from Actions > Game day. It never touches the production project. The tournaments stay in staging.
+name: Game day
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "The tournament: small (24 players, 4 rounds), medium (64 players, 7 rounds) or large (240 players, 11 rounds)."
+        type: choice
+        options: [small, medium, large]
+        default: small
+      phone_emulators:
+        description: "Phone emulators: on about 5 h / 3 h 15 / 2 h, off about 2 h 30 / 1 h 30 / 50 min (240 / 64 / 24 players). The admin tablet plays always."
+        type: boolean
+        default: false
+      teams:
+        description: "Teams."
+        type: boolean
+        default: true
+      chicken:
+        description: "Chicken hands counted."
+        type: boolean
+        default: true
+      best:
+        description: "Best hands counted."
+        type: boolean
+        default: true
+
+concurrency:
+  group: scenario
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
+
+jobs:
+  # The plan: who plays each slot, and the import files. It reads the EMA registry and the accounts of staging.
+  plan:
+    name: Plan of the scenario
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check the staging project
+        run: |
+          if [ -z "$STAGING" ] || [ "$STAGING" = "mahjongtournamentsuite" ]; then
+            echo "::error::Set the variable STAGING_FIREBASE_PROJECT to the staging project."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Write the plan
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+        run: |
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          node scripts/rehearsal/scenario.mjs plan --scenario="${{ inputs.scenario }}" \
+            --teams="${{ inputs.teams }}" --chicken="${{ inputs.chicken }}" --best="${{ inputs.best }}" \
+            ${{ inputs.phone_emulators && '--phone-emulators' || '' }} \
+            --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" --out=out/scenario
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+          retention-days: 7
+
+  # The staging app with the automatic organizer and player, built once.
+  app:
+    name: Staging app
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - run: ./gradlew :androidApp:assembleStaging :androidApp:assembleStagingAndroidTest -Pmts.testBuildType=staging
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scenario-apks
+          path: androidApp/build/outputs/apk/
+          retention-days: 7
+
+  # The organizer on a tablet: it creates the tournament, imports, assigns and invites. Its screen is recorded.
+  organizer-setup:
+    name: Organizer prepares the tournament
+    needs: [plan, app]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-apks
+          path: apks/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Prepare the organizer
+        run: |
+          password="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$password"
+          {
+            echo "REHEARSAL_PASSWORD=$password"
+            echo "REHEARSAL_API=https://europe-southwest1-$STAGING.cloudfunctions.net/api"
+            echo "REHEARSAL_APKS=apks"
+          } >> "$GITHUB_ENV"
+
+      - name: Prepare the tournament on the tablet
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell wm size 1280x800 && adb shell wm density 160
+            scripts/rehearsal/emulator-organizer.sh setup out/scenario
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: organizer-setup
+          path: out/organizer-setup/
+          retention-days: 14
