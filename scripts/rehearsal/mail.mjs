@@ -34,7 +34,7 @@ export class Mailbox {
     await this.until((text) => /^\* OK/m.test(text));
     this.buffer = "";
     await this.command(`LOGIN ${quote(this.user)} ${quote(this.password)}`);
-    await this.command("SELECT INBOX");
+    await this.select("INBOX");
     return this;
   }
 
@@ -74,25 +74,71 @@ export class Mailbox {
     return answer;
   }
 
-  async count() {
-    const answer = await this.command("STATUS INBOX (MESSAGES)");
-    return Number(answer.match(/MESSAGES (\d+)/)?.[1] ?? 0);
+  /** The folders of the mailbox. The filter of the server can put an email in the spam folder, and an address with
+   * +<tag> can go to a folder of that name, so the searches look in all of them. */
+  async folders() {
+    const answer = await this.command('LIST "" "*"');
+    return answer.split(/\r?\n/).map((line) => line.match(/^\* LIST \(([^)]*)\) (?:"[^"]*"|NIL) (.+)$/))
+      .filter((match) => match && !/\\Noselect/i.test(match[1]))
+      .map((match) => match[2].trim().replace(/^"(.*)"$/, "$1"));
   }
 
-  /** The numbers of the emails to an address, oldest first. */
+  async select(folder) {
+    if (this.selected === folder) return;
+    await this.command(`SELECT ${quote(folder)}`);
+    this.selected = folder;
+  }
+
+  async count() {
+    let total = 0;
+    for (const folder of await this.folders()) {
+      const answer = await this.command(`STATUS ${quote(folder)} (MESSAGES)`);
+      total += Number(answer.match(/MESSAGES (\d+)/)?.[1] ?? 0);
+    }
+    return total;
+  }
+
+  /** How many emails each folder has, and the subject and date of the newest ones, without their addresses. */
+  async summary(newest = 5) {
+    const rows = [];
+    for (const folder of await this.folders()) {
+      this.selected = null;
+      await this.select(folder);
+      const all = (await this.command("SEARCH ALL")).match(/^\* SEARCH(.*)$/m)?.[1]?.trim().split(/\s+/).filter(Boolean) ?? [];
+      const latest = [];
+      for (const number of all.slice(-newest).reverse()) {
+        const email = await this.read({ folder, number: Number(number) });
+        latest.push(`${email.date} | ${email.subject}`);
+      }
+      rows.push({ folder, emails: all.length, latest });
+    }
+    return rows;
+  }
+
+  /** The emails to an address in every folder, oldest first, as { folder, number }. */
   async search(to, sinceDate) {
     const since = sinceDate ? ` SINCE ${imapDate(sinceDate)}` : "";
-    const answer = await this.command(`SEARCH TO ${quote(to)}${since}`);
-    return (answer.match(/^\* SEARCH(.*)$/m)?.[1] ?? "").trim().split(/\s+/).filter(Boolean).map(Number);
+    const found = [];
+    for (const folder of await this.folders()) {
+      // A new SELECT each time: the server shows the emails that arrived after the last one.
+      this.selected = null;
+      await this.select(folder);
+      const answer = await this.command(`SEARCH TO ${quote(to)}${since}`);
+      (answer.match(/^\* SEARCH(.*)$/m)?.[1] ?? "").trim().split(/\s+/).filter(Boolean)
+        .forEach((number) => found.push({ folder, number: Number(number) }));
+    }
+    return found;
   }
 
   /** The subject, the date and the text of an email, with its quoted-printable soft breaks joined. */
-  async read(number) {
+  async read(ref) {
+    const { folder, number } = typeof ref === "number" ? { folder: this.selected ?? "INBOX", number: ref } : ref;
+    await this.select(folder);
     const answer = await this.command(`FETCH ${number} (BODY.PEEK[HEADER.FIELDS (SUBJECT DATE TO)] BODY.PEEK[TEXT])`);
     const subject = answer.match(/^Subject: (.*)$/mi)?.[1]?.trim() ?? "";
     const date = answer.match(/^Date: (.*)$/mi)?.[1]?.trim() ?? "";
     const text = decodeQuotedPrintable(answer);
-    return { number, subject, date, text, links: links(text) };
+    return { folder, number, subject, date, text, links: links(text) };
   }
 
   close() {
@@ -149,7 +195,12 @@ async function main() {
   const mailbox = await new Mailbox().open();
   try {
     if (args.check) {
-      console.log(`The mailbox answers. It has ${await mailbox.count()} emails.`);
+      const rows = await mailbox.summary();
+      console.log(`The mailbox answers. It has ${rows.reduce((sum, row) => sum + row.emails, 0)} emails.`);
+      rows.forEach((row) => {
+        console.log(`  ${row.folder}: ${row.emails}`);
+        row.latest.forEach((line) => console.log(`    ${line}`));
+      });
     } else if (args.to) {
       const minutes = Number(args["since-minutes"] ?? 60);
       const email = await waitForEmail(mailbox, String(args.to), { sinceDate: new Date(Date.now() - minutes * 60_000), timeoutMs: 1 });
