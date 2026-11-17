@@ -151,7 +151,7 @@
     <string name="penalty">Pénalité</string>
     <string name="done">Fait</string>
     <string name="total_scores">Scores totaux</string>
-    <string name="calculated_from_hands_trophies_show_the">Calculés à partir des mains.\nLes trophées montrent les meilleures mains du tournoi que cette table détient.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calculés à partir des mains.\nLes mains or, argent et bronze montrent les meilleures mains du tournoi que cette table détient.</string>
     <string name="show_how_the_chicken_and_best">Montrer comment les valeurs des mains poule et des meilleures mains sont calculées</string>
     <string name="save_and_next_table">Enregistrer et table suivante</string>
     <string name="preview_tournament">Aperçu du tournoi</string>

@@ -8,9 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.icon_chicken
-import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy
-import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_bronze
-import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_silver
 import org.jetbrains.compose.resources.painterResource
 
 /** Chicken image from the app resources (`drawable/icon_chicken.png`, Twemoji). */
@@ -34,32 +31,6 @@ data class HandStatOptions(
 
 /** Hand statistic options of the open tournament. The tournament screen provides them. */
 val LocalHandStatOptions = compositionLocalOf { HandStatOptions() }
-
-/** Medal color of a trophy. */
-enum class TrophyMedal { Gold, Silver, Bronze }
-
-/**
- * Trophy image from the app resources (`drawable/icon_trophy*.png`, Twemoji with changed colors).
- * The [medal] sets the color: gold, silver or bronze.
- */
-@Composable
-fun TrophyIcon(
-    contentDescription: String? = null,
-    modifier: Modifier = Modifier.size(22.dp),
-    medal: TrophyMedal = TrophyMedal.Gold,
-) {
-    Image(
-        painter = painterResource(
-            when (medal) {
-                TrophyMedal.Gold -> Res.drawable.icon_trophy
-                TrophyMedal.Silver -> Res.drawable.icon_trophy_silver
-                TrophyMedal.Bronze -> Res.drawable.icon_trophy_bronze
-            },
-        ),
-        contentDescription = contentDescription,
-        modifier = modifier,
-    )
-}
 
 /**
  * Shows [text] in a tooltip on hover (desktop), and while a finger touches [content].

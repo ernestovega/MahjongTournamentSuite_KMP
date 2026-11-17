@@ -151,7 +151,7 @@
     <string name="penalty">Straf</string>
     <string name="done">Klaar</string>
     <string name="total_scores">Totaalscores</string>
-    <string name="calculated_from_hands_trophies_show_the">Berekend uit de handen.\nDe trofeeën tonen de beste handen van het toernooi die deze tafel heeft.</string>
+    <string name="calculated_from_hands_trophies_show_the">Berekend uit de handen.\nDe gouden, zilveren en bronzen handen tonen de beste handen van het toernooi die deze tafel heeft.</string>
     <string name="show_how_the_chicken_and_best">Toon hoe de waarden van kippenhanden en beste handen berekend worden</string>
     <string name="save_and_next_table">Opslaan en volgende tafel</string>
     <string name="preview_tournament">Toernooivoorbeeld</string>

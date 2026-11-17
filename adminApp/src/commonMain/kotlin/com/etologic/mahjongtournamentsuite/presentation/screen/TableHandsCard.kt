@@ -40,13 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.TrophyMedal
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -354,13 +353,8 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
         bestHands.forEach { (score, winnerId) ->
             // Tied scores share the place.
             val place = tournamentScores.count { it > score } + 1
-            val medal = when (place) {
-                1 -> TrophyMedal.Gold
-                2 -> TrophyMedal.Silver
-                else -> TrophyMedal.Bronze
-            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                TrophyIcon(contentDescription = stringResource(Res.string.tournament_best_hand_n, place), medal = medal)
+                BestHandIcon(place, contentDescription = stringResource(Res.string.tournament_best_hand_n, place))
                 Text("$score", style = MaterialTheme.typography.titleLarge)
                 winnerId?.let {
                     Text(

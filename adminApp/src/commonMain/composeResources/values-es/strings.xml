@@ -151,7 +151,7 @@
     <string name="penalty">Penalización</string>
     <string name="done">Hecha</string>
     <string name="total_scores">Puntos</string>
-    <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos.\nLos trofeos muestran las mejores manos del torneo que tiene esta mesa.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos.\nLas manos de oro, plata y bronce muestran las mejores manos del torneo que tiene esta mesa.</string>
     <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos de pollo y de las mejores manos</string>
     <string name="save_and_next_table">Guardar e ir a la mesa siguiente</string>
     <string name="preview_tournament">Vista previa del torneo</string>

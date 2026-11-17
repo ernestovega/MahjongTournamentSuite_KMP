@@ -137,6 +137,7 @@ internal fun StandingBadges(standing: TournamentStanding, modifier: Modifier = M
         }
         standing.bestHandRank?.let { rank ->
             StandingLine(
+                // The same raised hand as BestHandIcon, the best hand everywhere in the apps.
                 icon = rememberVectorPainter(Icons.Default.PanTool),
                 rank = rank,
                 title = Res.string.standing_title_best_hand,

@@ -95,6 +95,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActi
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -110,7 +111,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
@@ -950,7 +950,7 @@ private fun CompactTournamentCard(
                         }
                         if (tournament.countBestHands) {
                             AppTooltipBox(stringResource(Res.string.feature_best_on)) {
-                                TrophyIcon(contentDescription = stringResource(Res.string.feature_best_on), modifier = Modifier.size(18.dp))
+                                BestHandIcon(1, size = 18.dp, contentDescription = stringResource(Res.string.feature_best_on))
                             }
                         }
                         if (tournament.countChickenHands) {
