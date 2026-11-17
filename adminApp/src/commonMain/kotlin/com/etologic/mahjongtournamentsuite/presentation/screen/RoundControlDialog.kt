@@ -426,7 +426,7 @@ private fun RoundStrip(
                 selected = round == selected,
                 onClick = { onSelect(round) },
                 label = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(stringResource(Res.string.round_n, round))
                         openTablesByRound[round]?.takeIf { it > 0 }?.let { count ->
                             val description = stringResource(Res.string.round_control_finished_badge, count)

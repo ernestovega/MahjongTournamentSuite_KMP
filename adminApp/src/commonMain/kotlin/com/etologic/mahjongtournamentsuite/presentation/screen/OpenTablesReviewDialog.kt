@@ -183,7 +183,7 @@ private fun TableRow(
     val style = if (header) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium
     val weight = if (header) FontWeight.SemiBold else FontWeight.Normal
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
