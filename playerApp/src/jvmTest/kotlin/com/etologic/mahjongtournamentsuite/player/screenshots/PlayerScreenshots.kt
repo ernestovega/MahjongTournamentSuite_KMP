@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
@@ -31,15 +32,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.player.MyTableReminderPresenter
-import com.etologic.mahjongtournamentsuite.player.PlayerSessionPresenter
-import com.etologic.mahjongtournamentsuite.player.PlayerStatisticsPresenter
-import com.etologic.mahjongtournamentsuite.player.PlayerTablePresenter
-import com.etologic.mahjongtournamentsuite.player.PlayerTournamentPresenter
+import com.etologic.mahjongtournamentsuite.player.playerModule
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
@@ -74,7 +67,7 @@ private class NoHands : PlayerHandRepository {
     override suspend fun assignSeats(tournamentId: String, roundId: Int, tableId: Int, seats: List<Int>, expectedVersion: Long): AppResult<Unit> = no()
 }
 
-/** The presenters of the player app over the fake data. [account] is the signed-in account, or a guest when null. */
+/** The real presenters of the player app over the fake data. [account] is the signed-in account, or a guest when null. */
 internal fun playerModules(
     account: UserProfile? = ScreenshotData.playerAccount,
     tournaments: TournamentRepository = ScreenshotTournamentRepository(),
@@ -88,16 +81,9 @@ internal fun playerModules(
         single<FeatureFlagsRepository> { ScreenshotFeatureFlagsRepository() }
         single<SupportRepository> { ScreenshotSupportRepository() }
         single<PlayerHandRepository> { NoHands() }
-        factory { PlayerSessionPresenter(get(), get()) }
-        factory { CalculateTournamentRankingsUseCase() }
-        factory { CalculateStatisticsUseCase() }
-        factory { LoadStatisticsUseCase(get(), get(), get()) }
-        factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
-        factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
-        factory { PlayerTablePresenter(get()) }
-        factory { MyTableReminderPresenter(get()) }
-        factory { PlayerStatisticsPresenter(get(), get(), get(), get()) }
     },
+    useCasesModule,
+    playerModule,
 )
 
 /** Screenshots of a player screen with the frame of the player app. The images go to playerApp/screenshots/<name>/. */

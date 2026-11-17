@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
+import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -50,6 +51,7 @@ internal fun adminModules(
     statistics: StatisticsRepository = ScreenshotStatisticsRepository(),
     auth: AuthRepository = ScreenshotAuthRepository(),
 ): List<Module> = listOf(
+    useCasesModule,
     presentationModule,
     module {
         single<TournamentRepository> { tournaments }

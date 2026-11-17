@@ -22,4 +22,7 @@ class ReportingTelemetry(
         analytics.setConsent(granted)
         if (granted) reporter.flushPending()
     }
+
+    /** Stops the reports still on their way. The Koin graph of the app calls it when it closes. */
+    fun close() = reporter.close()
 }

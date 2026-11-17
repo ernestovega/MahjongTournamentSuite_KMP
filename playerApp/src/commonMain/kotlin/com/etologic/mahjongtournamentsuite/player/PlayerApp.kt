@@ -24,22 +24,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
+import com.etologic.mahjongtournamentsuite.data.di.publicRepositoriesModule
+import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
+import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
-import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
-import com.etologic.mahjongtournamentsuite.data.repository.DefaultStatisticsRepository
-import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerHandRepository
-import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
-import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
-import org.koin.core.qualifier.named
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
@@ -61,12 +49,6 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import org.koin.compose.getKoin
-import org.koin.compose.KoinApplication
-import org.koin.compose.KoinIsolatedContext
-import org.koin.dsl.KoinConfiguration
-import org.koin.dsl.koinApplication
-import androidx.compose.runtime.DisposableEffect
-import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
 
 @Serializable
@@ -113,28 +95,17 @@ data class StatisticsRoute(
     val slotId: Int? = null,
 )
 
-/** The cache of the public answers. They are the same for everyone, so signing in or out keeps them. */
-private val PublicCache = named("publicCache")
-
-private val playerModule = module {
-    // Everyone reads every public tournament without an account. The account only writes hands and marks the own player.
-    single<RepositoryCache>(PublicCache) { SessionRepositoryCache(logger = get(), persisted = get()) }
-    single<TournamentRepository> {
-        DefaultTournamentRepository(get(), get(), get(), get(PublicCache), get(), persisted = get(), publicReads = true)
-    }
-    single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get(PublicCache), publicReads = true) }
-    single<StatisticsRepository> { DefaultStatisticsRepository(get(), get(), get(), publicReads = true) }
-    single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get(PublicCache)) }
+/** The presenters of the player app. The data comes from dataModule, publicRepositoriesModule and useCasesModule. */
+internal val playerModule = module {
     factory { PlayerSessionPresenter(get(), get(), telemetry()) }
-    factory { CalculateTournamentRankingsUseCase() }
-    factory { CalculateStatisticsUseCase() }
-    factory { LoadStatisticsUseCase(get(), get(), get()) }
-    factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get(), telemetry()) }
     factory { MyTableReminderPresenter(get()) }
     factory { PlayerStatisticsPresenter(get(), get(), get(), get(), telemetry()) }
 }
+
+/** The whole Koin graph of the player app. */
+internal val playerAppModules = listOf(dataModule, publicRepositoriesModule, useCasesModule, playerModule)
 
 /**
  * The player application.
@@ -152,10 +123,10 @@ fun PlayerApp(
     openSupport: Boolean = false,
     /** True on a phone or a tablet app: the score of a hand is typed on a numpad of the app, not on the system keyboard. */
     numpadEntry: Boolean = false,
-    /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */
+    /** True in the Android app of the suite, which also holds the admin part. See [AppKoin]. */
     isolatedKoin: Boolean = false,
 ) {
-    PlayerKoin(isolatedKoin, koinConfiguration { modules(dataModule, playerModule) }) {
+    AppKoin(isolatedKoin, playerAppModules) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
             LocalTelemetry provides (getKoin().getOrNull<Telemetry>() ?: NoTelemetry),
@@ -245,20 +216,4 @@ private fun PlayerNavHost(
         screen<CombinationsRoute> { CombinationsScreen(navController) }
         screen<PenaltiesRoute> { PenaltiesScreen(navController) }
     }
-}
-
-/**
- * Starts the Koin graph of the app. Normally it is the global graph of Koin, which the other windows of the app share.
- * The Android app of the suite holds the player part and the admin part, which need different graphs, so each part
- * gets its own [isolated] graph, closed when the part leaves the screen.
- */
-@Composable
-internal fun PlayerKoin(isolated: Boolean, configuration: KoinConfiguration, content: @Composable () -> Unit) {
-    if (!isolated) {
-        KoinApplication(configuration = configuration, content = content)
-        return
-    }
-    val application = remember { koinApplication(configuration) }
-    DisposableEffect(application) { onDispose { application.close() } }
-    KoinIsolatedContext(application, content)
 }

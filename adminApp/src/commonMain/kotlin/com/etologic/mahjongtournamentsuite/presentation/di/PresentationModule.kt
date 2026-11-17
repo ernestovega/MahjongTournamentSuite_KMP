@@ -17,14 +17,14 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresente
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.data.di.adminRepositoriesModule
+import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
+import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
 import org.koin.dsl.module
 
+/** The presenters of the admin app. The data comes from dataModule, adminRepositoriesModule and useCasesModule. */
 val presentationModule = module {
     single { AppMemoryStore() }
     factory { AuthPresenter(get(), get(), telemetry()) }
@@ -38,13 +38,12 @@ val presentationModule = module {
     factory { PlayerBasePresenter(get(), get(), telemetry()) }
     factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get(), telemetry()) }
-    factory { CalculateTournamentRankingsUseCase() }
-    factory { CalculateStatisticsUseCase() }
-    factory { LoadStatisticsUseCase(get(), get(), get()) }
-    factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { StatisticsPresenter(get(), get(), get(), get(), get(), telemetry()) }
     factory { RankingPresenter(get(), get(), get(), get(), telemetry()) }
     factory { IdCardProofPresenter(get(), telemetry()) }
     factory { ErrorsPresenter(get()) }
     factory { ActivityPresenter(get()) { get<TournamentRepository>().listTournaments() } }
 }
+
+/** The whole Koin graph of the admin app. */
+val adminAppModules = listOf(dataModule, adminRepositoriesModule, useCasesModule, presentationModule)

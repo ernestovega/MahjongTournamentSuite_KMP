@@ -12,7 +12,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -46,7 +45,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersi
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
-import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
 import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
@@ -78,14 +76,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.KoinApplication
-import org.koin.compose.KoinIsolatedContext
-import org.koin.dsl.KoinConfiguration
-import org.koin.dsl.koinApplication
-import androidx.compose.runtime.DisposableEffect
 import org.koin.compose.getKoin
+import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
+import com.etologic.mahjongtournamentsuite.presentation.di.adminAppModules
 import org.koin.compose.koinInject
-import org.koin.dsl.koinConfiguration
 
 /** [appVersion] is the version shown to the user. The web entry point passes the web version. */
 @Composable
@@ -121,12 +115,7 @@ fun RankingApp(tournamentId: String) {
 
 @Composable
 private fun AppWithModules(isolatedKoin: Boolean = false, content: @Composable () -> Unit) {
-    AppKoin(
-        isolated = isolatedKoin,
-        configuration = koinConfiguration {
-            modules(dataModule, presentationModule)
-        },
-    ) {
+    AppKoin(isolated = isolatedKoin, modules = adminAppModules) {
         val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
         CompositionLocalProvider(
             LocalTelemetry provides telemetry,
@@ -251,20 +240,4 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
             }
         }
     }
-}
-
-/**
- * Starts the Koin graph of the app. Normally it is the global graph of Koin, which the other windows of the app share.
- * The Android app of the suite holds the player part and the admin part, which need different graphs, so each part
- * gets its own [isolated] graph, closed when the part leaves the screen.
- */
-@Composable
-internal fun AppKoin(isolated: Boolean, configuration: KoinConfiguration, content: @Composable () -> Unit) {
-    if (!isolated) {
-        KoinApplication(configuration = configuration, content = content)
-        return
-    }
-    val application = remember { koinApplication(configuration) }
-    DisposableEffect(application) { onDispose { application.close() } }
-    KoinIsolatedContext(application, content)
 }

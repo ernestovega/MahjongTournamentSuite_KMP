@@ -50,6 +50,8 @@ kotlin {
             // The web apps tie the back stack of the navigation to the history of the browser.
             implementation(libs.androidx.navigation.compose)
             api(projects.designsystem)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.core)
             implementation(projects.domain)
         }
         androidMain.dependencies {

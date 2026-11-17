@@ -12,6 +12,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -114,6 +115,9 @@ class ErrorReporter(
         status?.let { fields["httpStatus"] = JsonPrimitive(it) }
         return JsonObject(fields)
     }
+
+    /** Stops the sends still on their way. The Koin graph of the app calls it when it closes. */
+    fun close() = scope.cancel()
 
     private fun post(body: JsonObject) {
         scope.launch {

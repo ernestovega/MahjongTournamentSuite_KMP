@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +65,9 @@ interface RepositoryCache {
     suspend fun markStale(vararg keyPrefixes: String)
 
     suspend fun clear()
+
+    /** Stops the loads still running. The Koin graph of the app calls it when it closes. */
+    fun close() = Unit
 }
 
 /**
@@ -284,6 +288,8 @@ class SessionRepositoryCache(
     }
 
     private fun Entry.isFresh(): Boolean = revision != STALE_REVISION && confirmedAt.elapsedNow() < freshFor
+
+    override fun close() = scope.cancel()
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> Any.cast(): T = this as T

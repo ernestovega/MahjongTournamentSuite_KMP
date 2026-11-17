@@ -71,6 +71,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(projects.screenshotTesting)
             implementation(libs.compose.ui.test.junit4.desktop)
+            implementation(libs.koin.test)
         }
         wasmJsMain.dependencies {
             implementation(npm("@js-joda/timezone", "3.1.0"))
