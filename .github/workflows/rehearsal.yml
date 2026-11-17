@@ -1,0 +1,227 @@
+# The bots of a rehearsal in staging (docs/rehearsal.md). Run it by hand from Actions > Rehearsal. It never touches
+# the production project. It needs what Deploy staging needs (the STAGING_* variables and the STAGING_ADMIN_EMAIL
+# secret). The password of the bot accounts lives in the Secret Manager of staging as REHEARSAL_PASSWORD: the first run
+# creates it.
+name: Rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "calibrate: a short tournament of 16 bots, created and deleted by the run. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts."
+        type: choice
+        options: [calibrate, passwords, bots, check, calibration-cleanup]
+        default: calibrate
+      tournament:
+        description: "bots and check: the name of the rehearsal tournament, as in the public list."
+        type: string
+        default: "Ensayo General MTS 2026"
+      until:
+        description: "bots: when the bots stop, as 2026-11-19T19:45:00+01:00. Empty: 150 minutes after the start."
+        type: string
+        default: ""
+      spectators:
+        description: "bots: spectators, split over the three bot jobs."
+        type: number
+        default: 99
+      hand_seconds:
+        description: "Seconds between two hands of a bot table, as min-max."
+        type: string
+        default: "60-90"
+
+concurrency:
+  group: rehearsal
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
+
+jobs:
+  # The accounts and the password, with the Admin SDK of staging.
+  accounts:
+    name: Accounts
+    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check the staging project
+        run: |
+          if [ -z "$STAGING" ] || [ "$STAGING" = "mahjong-tournament-suite" ]; then
+            echo "STAGING_FIREBASE_PROJECT is empty or names the production project." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - run: npm ci --no-audit --no-fund --prefix firebase/functions && npm run build --prefix firebase/functions
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create the password of the bots
+        run: |
+          if ! gcloud secrets describe REHEARSAL_PASSWORD --project="$STAGING" >/dev/null 2>&1; then
+            openssl rand -base64 24 | tr -d '/+=\n' | head -c 24 | gcloud secrets create REHEARSAL_PASSWORD --data-file=- --project="$STAGING"
+          fi
+
+      - name: Prepare the accounts
+        working-directory: firebase/functions
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          export GCLOUD_PROJECT="$STAGING" EMA_FIREBASE_PROJECT="$STAGING"
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          case "$ACTION" in
+            calibrate) mode=--calibration-setup ;;
+            passwords) mode=--passwords ;;
+            calibration-cleanup) mode=--calibration-cleanup ;;
+          esac
+          node lib/scripts/rehearsalAccounts.js "$mode" --apply --project="$STAGING"
+
+  calibrate:
+    name: Calibration
+    needs: accounts
+    if: inputs.action == 'calibrate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Play the calibration tournament
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          HAND_SECONDS: ${{ inputs.hand_seconds == '60-90' && '20-30' || inputs.hand_seconds }}
+        run: |
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          node scripts/rehearsal/calibrate.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --hand-seconds="$HAND_SECONDS" --report=out/calibration.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calibration-report
+          path: out/
+          retention-days: 30
+
+  # Three jobs, three machines with their own address, as phones on different networks.
+  bots:
+    name: Bots ${{ matrix.slots }}
+    if: github.ref == 'refs/heads/main' && inputs.action == 'bots'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        slots: ["10-22", "23-35", "36-48"]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Play
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          TOURNAMENT: ${{ inputs.tournament }}
+          UNTIL: ${{ inputs.until }}
+          SPECTATORS: ${{ inputs.spectators }}
+          HAND_SECONDS: ${{ inputs.hand_seconds }}
+          SLOTS: ${{ matrix.slots }}
+        run: |
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          until_arg=()
+          if [ -n "$UNTIL" ]; then until_arg=(--until="$UNTIL"); fi
+          node scripts/rehearsal/bots.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --tournament="$TOURNAMENT" --slots="$SLOTS" --spectators=$(( SPECTATORS / 3 )) --hand-seconds="$HAND_SECONDS" \
+            "${until_arg[@]}" --report="out/bots-${SLOTS}.json" --title="Bots $SLOTS (GitHub)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bots-${{ matrix.slots }}
+          path: out/
+          retention-days: 30
+
+  check:
+    name: Checks
+    needs: bots
+    if: always() && github.ref == 'refs/heads/main' && (inputs.action == 'bots' || inputs.action == 'check')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # The reports of the bot jobs of this run. A check run alone checks the tournament without them.
+      - uses: actions/download-artifact@v4
+        if: inputs.action == 'bots'
+        with:
+          pattern: bots-*
+          path: out/
+          merge-multiple: true
+
+      - name: Check the tournament
+        env:
+          TOURNAMENT: ${{ inputs.tournament }}
+        run: |
+          shopt -s nullglob
+          node scripts/rehearsal/report.mjs --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" \
+            --tournament="$TOURNAMENT" --report=out/check.json --title="Rehearsal checks" out/bots-*.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rehearsal-check
+          path: out/check.json
+          retention-days: 30
