@@ -36,5 +36,4 @@ private val EMAIL_FORMAT = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
  * The error to show when [email] cannot be an email, or null. A well formed email never gets an error: whether an
  * account exists, the answer is the same.
  */
-fun passwordResetEmailError(email: String): UiText? =
-    if (EMAIL_FORMAT.matches(email.trim())) null else UiText.of(Res.string.password_reset_invalid_email)
+fun passwordResetEmailError(email: String): UiText? = if (EMAIL_FORMAT.matches(email.trim())) null else UiText.of(Res.string.password_reset_invalid_email)

@@ -108,6 +108,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.passwordReset
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import coil3.compose.AsyncImage
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -363,10 +364,10 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         confirmingReset = false
         busy = true
         scope.launch {
-            when (val result = presenter.resetPassword(email)) {
-                is AppResult.Success ->
-                    infoMessage = UiText.of(Res.string.sign_in_reset_sent)
-                is AppResult.Failure -> errorMessage = result.error.toUiText()
+            when (val result = presenter.resetPassword(email.trim())) {
+                // A well formed email never gets an error: only a lost connection is worth telling.
+                is AppResult.Failure if result.error == AppError.Network -> errorMessage = result.error.toUiText()
+                else -> infoMessage = UiText.of(Res.string.sign_in_reset_sent)
             }
             busy = false
         }

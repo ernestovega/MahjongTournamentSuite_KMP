@@ -48,6 +48,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LevelChangeTa
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedal
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedalTag
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelRibbonBadge
+import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
@@ -283,6 +284,11 @@ class UiComponentsScreenshotTest {
 
     @Test
     fun appChooserDialog() = component("dialog-app-chooser", variants = componentDialogVariants) { SuiteAppChooserDialog(onChoose = {}) }
+
+    @Test
+    fun passwordResetConfirmDialog() = component("dialog-password-reset-confirm", variants = componentDialogVariants) {
+        PasswordResetConfirmDialog(email = "lucia@example.test", onConfirm = {}, onDismiss = {})
+    }
 
     @Test
     fun aiTranslationDialog() = component("dialog-ai-translation", variants = componentDialogVariants) {

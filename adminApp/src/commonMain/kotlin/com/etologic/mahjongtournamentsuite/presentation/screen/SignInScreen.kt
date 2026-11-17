@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
@@ -117,10 +118,9 @@ fun SignInScreen(
         isLoading = true
         coroutineScope.launch {
             when (val result = authPresenter.requestPasswordReset(email.trim())) {
-                is AppResult.Success -> {
-                    infoMessage = UiText.of(Res.string.sign_in_reset_sent)
-                }
-                is AppResult.Failure -> errorMessage = result.error.toUiText()
+                // A well formed email never gets an error: only a lost connection is worth telling.
+                is AppResult.Failure if result.error == AppError.Network -> errorMessage = result.error.toUiText()
+                else -> infoMessage = UiText.of(Res.string.sign_in_reset_sent)
             }
             isLoading = false
         }
