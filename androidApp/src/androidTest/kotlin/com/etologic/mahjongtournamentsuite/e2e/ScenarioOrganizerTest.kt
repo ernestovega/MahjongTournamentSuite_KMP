@@ -270,6 +270,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     /** The empty slots have an Assign button each. The search of the list brings the slot to the screen. */
     private fun openAssignDialogOf(slot: Int) {
         val title = "ASSIGN EMA PLAYER TO PLAYER $slot"
+        // The list is lazy and the free slots are at its end: it scrolls until an Assign button is composed.
+        c.scrollListTo("Assign")
         val buttons = c.onAllNodes(hasText("Assign") and hasClickAction())
         c.waitUntil(20_000) { buttons.fetchSemanticsNodes().isNotEmpty() }
         // The free slots are the last ones, so the first Assign button left is the slot of the plan.
