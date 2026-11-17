@@ -14,10 +14,12 @@ const data = {
 test("standing gives the place, the place of the team, the chicken hand place and the best hand place", () => {
   // Team 7 has 12 points. Team 8 has -12 points.
   assert.deepEqual(standingOf("t", 1, data), {
-    tournamentId: "t", rank: 1, of: 4, points: 10, score: 100, teamRank: 1, teamOf: 2, chickenRank: null, bestHandRank: 3,
+    tournamentId: "t", rank: 1, of: 4, points: 10, score: 100, teamRank: 1, teamOf: 2, teamPoints: 12,
+    chickenRank: null, chickenHands: 0, chickenOf: 2, bestHandRank: 3, bestHand: 40, bestHandOf: 4,
   });
   assert.deepEqual(standingOf("t", 2, data), {
-    tournamentId: "t", rank: 2, of: 4, points: 5, score: 50, teamRank: 2, teamOf: 2, chickenRank: 1, bestHandRank: 1,
+    tournamentId: "t", rank: 2, of: 4, points: 5, score: 50, teamRank: 2, teamOf: 2, teamPoints: -12,
+    chickenRank: 1, chickenHands: 2, chickenOf: 2, bestHandRank: 1, bestHand: 64, bestHandOf: 4,
   });
 });
 
@@ -31,7 +33,8 @@ test("chicken hand places break a tie of hands with the points and the score", (
 test("standing has no team place without teams and no hand places without hands", () => {
   const plain = { totals: data.totals };
   assert.deepEqual(standingOf("t", 2, plain), {
-    tournamentId: "t", rank: 2, of: 4, points: 5, score: 50, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null,
+    tournamentId: "t", rank: 2, of: 4, points: 5, score: 50, teamRank: null, teamOf: null, teamPoints: null,
+    chickenRank: null, chickenHands: 0, chickenOf: 0, bestHandRank: null, bestHand: 0, bestHandOf: 0,
   });
 });
 

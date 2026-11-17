@@ -102,7 +102,7 @@ describe("substitution of a player", () => {
     const totals = (await db.collection("statsTournaments").doc(id).get()).get("totals");
     assert.equal(totals["1"].score, 30);
     assert.equal(totals["2"].score, 20);
-    assert.deepEqual((await loadStandings(`${tag}-2`, [id])).map(({ points: _points, ...rest }) => rest), [{ tournamentId: id, rank: 2, of: 4, score: 20, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null }]);
+    assert.deepEqual((await loadStandings(`${tag}-2`, [id])).map(({ points: _points, ...rest }) => rest), [{ tournamentId: id, rank: 2, of: 4, score: 20, teamRank: null, teamOf: null, teamPoints: null, chickenRank: null, chickenHands: 0, chickenOf: 0, bestHandRank: null, bestHand: 0, bestHandOf: 0 }]);
 
     await substitute(id, 1, null);
     assert.equal((await db.collection("statsPlayers").doc(`${tag}-1`).get()).get("tables"), 2);

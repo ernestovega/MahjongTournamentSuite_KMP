@@ -7944,6 +7944,13 @@
       ],
       "format": "int32"
      },
+     "teamPoints": {
+      "type": [
+       "number",
+       "null"
+      ],
+      "format": "double"
+     },
      "chickenRank": {
       "type": [
        "integer",
@@ -7951,11 +7958,27 @@
       ],
       "format": "int32"
      },
+     "chickenHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "chickenOf": {
+      "type": "integer",
+      "format": "int32"
+     },
      "bestHandRank": {
       "type": [
        "integer",
        "null"
       ],
+      "format": "int32"
+     },
+     "bestHand": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "bestHandOf": {
+      "type": "integer",
       "format": "int32"
      }
     }

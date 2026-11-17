@@ -62,6 +62,15 @@ data class Standing(
     val chickenRank: Int? = null,
     /** The place of the best hand of the player. Null when the player won no hand. */
     val bestHandRank: Int? = null,
+    /** The number of teams, and the points of the team of the player. Null when the team is not known. */
+    val teamOf: Int? = null,
+    val teamPoints: Double? = null,
+    /** The chicken hands of the player, and the number of players with a chicken hand. */
+    val chickenHands: Int = 0,
+    val chickenOf: Int = 0,
+    /** The value of the best hand of the player, and the number of best hands it is compared with. */
+    val bestHand: Int = 0,
+    val bestHandOf: Int = 0,
 )
 
 class LoadStatisticsUseCase(

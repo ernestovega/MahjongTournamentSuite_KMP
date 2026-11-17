@@ -10,10 +10,17 @@ class StandingMappingTest {
     fun keepsThePlaceTheTeamPlaceAndThePlacesOfTheHands() {
         val standing = StandingDto(
             tournamentId = "t1", rank = 3, of = 20, points = 4.5, score = 60,
-            teamRank = 2, teamOf = 5, chickenRank = 1, bestHandRank = 3,
+            teamRank = 2, teamOf = 5, teamPoints = 12.5, chickenRank = 1, chickenHands = 3, chickenOf = 9,
+            bestHandRank = 3, bestHand = 64, bestHandOf = 120,
         ).toStanding()
 
-        assertEquals(Standing(3, 20, 4.5, 60, teamRank = 2, chickenRank = 1, bestHandRank = 3), standing)
+        assertEquals(
+            Standing(
+                3, 20, 4.5, 60, teamRank = 2, chickenRank = 1, bestHandRank = 3,
+                teamOf = 5, teamPoints = 12.5, chickenHands = 3, chickenOf = 9, bestHand = 64, bestHandOf = 120,
+            ),
+            standing,
+        )
     }
 
     @Test
