@@ -19,7 +19,7 @@ import { runScript } from "./scriptRun";
  * they play, and some EMA players that could take their place. To write, pass the replacement and --apply:
  *   ... --ema=<id> --with=<emaId of the replacement> --apply
  * --project must name the project of the credentials (EMA_FIREBASE_PROJECT, default production), as a confirmation.
- * Before it writes, it saves the registry document and the slots in output/replaced-ema-player-<id>-<date>.json.
+ * Before it writes, it saves the registry document and the slots in output/replaced-ema-player-<project>-<id>-<date>.json.
  */
 const args = process.argv.slice(2);
 const option = (name: string) => args.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3).trim() ?? "";
@@ -151,7 +151,7 @@ async function main() {
   }
 
   mkdirSync("output", { recursive: true });
-  const backup = `output/replaced-ema-player-${target.id}-${new Date().toISOString().slice(0, 10)}.json`;
+  const backup = `output/replaced-ema-player-${firebaseProjectId}-${target.id}-${new Date().toISOString().slice(0, 10)}.json`;
   const registryDoc = await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(target.id).get();
   writeFileSync(backup, JSON.stringify({ registry: registryDoc.data(), ...target }, null, 2));
   console.log(`Backup: ${backup}`);
