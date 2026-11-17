@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.show_information
@@ -20,6 +21,8 @@ import org.jetbrains.compose.resources.stringResource
 fun InfoTooltipIcon(
     description: String,
     contentDescription: String = stringResource(Res.string.show_information),
+    /** The size of the drawn icon. The touch target stays 32 dp. */
+    iconSize: Dp = 24.dp,
 ) {
     AppTooltipBox(description) {
         FocusedIconButton(
@@ -32,6 +35,7 @@ fun InfoTooltipIcon(
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(iconSize),
             )
         }
     }

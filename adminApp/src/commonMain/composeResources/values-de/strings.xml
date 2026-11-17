@@ -746,7 +746,7 @@
     <string name="timer_reset_confirm_message">Damit wird die Uhr der Runde zurückgesetzt. Gespeicherte Hände bleiben, aber die Spieler können keine weiteren eintragen, bis du wieder Start drückst. Um die gespielte Zeit zu behalten, nutze beim Starten „Die Runde hat früher begonnen“.</string>
     <string name="timer_reset_confirm">Zurücksetzen</string>
     <string name="timer_tournament_completed">Das Turnier ist abgeschlossen. Seine Uhren können sich nicht ändern.</string>
-    <string name="timer_late_start">Der geplante Beginn (%1$s) ist vorbei und die Runde hat nicht begonnen. Drücke Start, wenn der Startgong ertönt: Bis dahin können die Spieler keine Hände eintragen.</string>
+    <string name="timer_late_start">Die Runde sollte um %1$s beginnen.\nDrücke Start, wenn der Gong ertönt. Bis dahin können die Spieler keine Hände eintragen.</string>
     <string name="timer_stop">Runde beenden</string>
     <string name="timer_stop_confirm_title">Runde beenden?</string>
     <string name="timer_stop_confirm_message">Die Runde endet jetzt, bevor ihre Zeit abgelaufen ist, ohne Nachspielzeit. Die Tische mit Händen werden geschlossen und die Spieler können keine Hände mehr eintragen.</string>

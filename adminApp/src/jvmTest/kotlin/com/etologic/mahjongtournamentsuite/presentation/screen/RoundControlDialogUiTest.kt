@@ -289,7 +289,7 @@ class RoundControlDialogUiTest {
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
         show(server)
 
-        onNodeWithText("Reset timer").performClick()
+        onNodeWithText("Reset timer").performScrollTo().performClick()
         settle()
         onNodeWithText("Reset the round clock?").assertExists()
         assertTrue(server.clockActions.isEmpty())

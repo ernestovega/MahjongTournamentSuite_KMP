@@ -746,7 +746,7 @@
     <string name="timer_reset_confirm_message">Se borra el reloj de la ronda. Las manos guardadas se conservan, pero los jugadores no podrán añadir más hasta que vuelvas a pulsar Iniciar. Para conservar el tiempo jugado, usa «La ronda empezó antes» al iniciarla.</string>
     <string name="timer_reset_confirm">Reiniciar</string>
     <string name="timer_tournament_completed">El torneo está completado. Sus relojes no se pueden cambiar.</string>
-    <string name="timer_late_start">Ya pasó la hora prevista (%1$s) y la ronda no ha empezado. Pulsa Iniciar cuando suene el gong: hasta entonces los jugadores no pueden añadir manos.</string>
+    <string name="timer_late_start">La ronda debía empezar a las %1$s.\nPulsa Iniciar cuando suene el gong. Hasta entonces, los jugadores no pueden añadir manos.</string>
     <string name="timer_stop">Terminar la ronda</string>
     <string name="timer_stop_confirm_title">¿Terminar la ronda?</string>
     <string name="timer_stop_confirm_message">La ronda termina ya, antes de que acabe su tiempo y sin tiempo extra. Las mesas con manos se cierran y los jugadores no podrán añadir más manos.</string>

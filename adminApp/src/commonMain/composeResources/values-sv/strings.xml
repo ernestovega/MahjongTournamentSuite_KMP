@@ -746,7 +746,7 @@
     <string name="timer_reset_confirm_message">Detta återställer omgångens klocka. Sparade händer finns kvar, men spelarna kan inte lägga till fler förrän du trycker på Start igen. För att behålla den spelade tiden, använd ”Omgången började tidigare” när du startar den.</string>
     <string name="timer_reset_confirm">Återställ</string>
     <string name="timer_tournament_completed">Turneringen är klar. Dess klockor kan inte ändras.</string>
-    <string name="timer_late_start">Den planerade starten (%1$s) har passerat och omgången har inte börjat. Tryck på Start när startgongen ljuder: tills dess kan spelarna inte lägga till händer.</string>
+    <string name="timer_late_start">Omgången skulle ha börjat %1$s.\nTryck på Start när gongen ljuder. Tills dess kan spelarna inte lägga till händer.</string>
     <string name="timer_stop">Stoppa omgången</string>
     <string name="timer_stop_confirm_title">Stoppa omgången?</string>
     <string name="timer_stop_confirm_message">Omgången slutar nu, innan tiden är slut, utan förlängning. Borden med händer stängs och spelarna kan inte lägga till fler händer.</string>

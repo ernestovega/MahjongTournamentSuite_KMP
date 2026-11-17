@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +23,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
@@ -30,6 +34,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,10 +48,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -331,14 +340,7 @@ internal fun RoundControlDialogContent(
             modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 1120.dp).fillMaxWidth(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
-            title = {
-                Column {
-                    Text(stringResource(Res.string.round_control_title))
-                    state.tournament?.name?.ifBlank { null }?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            },
+            title = { Text(stringResource(Res.string.round_control_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Above the rounds: it is about the whole tournament, not the selected round.
@@ -367,7 +369,15 @@ internal fun RoundControlDialogContent(
                                     ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
                                 }
                                 val rules: @Composable (Modifier) -> Unit = { modifier ->
-                                    PlayersCard(state.control.hands, state.control.seats, enabled = !busy, modifier = modifier, onChange = ::change)
+                                    PlayersCard(
+                                        state.control.hands,
+                                        state.control.seats,
+                                        enabled = !busy,
+                                        // A wide window gives each card half the width, still room for both groups.
+                                        groupsSideBySide = maxWidth >= RADIO_GROUPS_SIDE_BY_SIDE_MIN_WIDTH,
+                                        modifier = modifier,
+                                        onChange = ::change,
+                                    )
                                 }
                                 if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -420,7 +430,18 @@ private fun RoundStrip(
         if (scrolledOnce) listState.animateScrollToItem(target) else listState.scrollToItem(target)
         scrolledOnce = true
     }
-    LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    // The strip spreads over the dialog padding, so the chips scroll up to the dialog edges.
+    LazyRow(
+        state = listState,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = DialogHorizontalPadding),
+        modifier = Modifier.fillMaxWidth().layout { measurable, constraints ->
+            val extra = DialogHorizontalPadding.roundToPx()
+            val width = constraints.maxWidth + 2 * extra
+            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+            layout(constraints.maxWidth, placeable.height) { placeable.place(-extra, 0) }
+        },
+    ) {
         items((1..numRounds.coerceAtLeast(1)).toList()) { round ->
             FilterChip(
                 selected = round == selected,
@@ -483,7 +504,11 @@ private fun ClockCard(
         }
         // Like the Timer: an ended round shows its time and its state in red.
         val color = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        ) {
             Text(formatHms(remaining), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = color)
             Text(
                 stringResource(status),
@@ -491,19 +516,37 @@ private fun ClockCard(
                 color = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (state.isOffline) Text(stringResource(Res.string.timer_offline), color = MaterialTheme.colorScheme.error)
-        state.latePlannedStart(now)?.let { Text(stringResource(Res.string.timer_late_start, it), color = MaterialTheme.colorScheme.error) }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (state.isOffline) {
+            Text(stringResource(Res.string.timer_offline), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+        }
+        state.latePlannedStart(now)?.let {
+            Text(
+                stringResource(Res.string.timer_late_start, it),
+                Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
+        // Centered rows of buttons: the main action first and the others under it. Plain rows instead of a FlowRow,
+        // because a FlowRow reports one line as its intrinsic height and the two column layout measures with intrinsics.
+        val buttonRow: @Composable (@Composable RowScope.() -> Unit) -> Unit = { buttons ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), content = buttons)
+        }
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             when {
                 !state.isStarted -> {
-                    FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
-                        Text(stringResource(Res.string.timer_gong_start))
+                    buttonRow {
+                        FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
+                            Text(stringResource(Res.string.timer_gong_start))
+                        }
                     }
-                    FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.StartedAgo) }) {
-                        Text(stringResource(Res.string.timer_started_ago))
+                    buttonRow {
+                        FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.StartedAgo) }) {
+                            Text(stringResource(Res.string.timer_started_ago))
+                        }
                     }
                 }
-                !finished -> {
+                !finished -> buttonRow {
                     if (state.isRunning) {
                         FocusedButton(enabled = canClock, onClick = { scope.launch { controller.pause() } }) {
                             Text(stringResource(Res.string.timer_pause))
@@ -519,11 +562,13 @@ private fun ClockCard(
                 }
             }
             if (state.isStarted) {
-                FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.SetTime) }) {
-                    Text(stringResource(Res.string.set_time))
-                }
-                FocusedOutlinedButton(enabled = canClock, onClick = { scope.launch { controller.askReset() } }) {
-                    Text(stringResource(Res.string.reset_timer))
+                buttonRow {
+                    FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.SetTime) }) {
+                        Text(stringResource(Res.string.set_time))
+                    }
+                    FocusedOutlinedButton(enabled = canClock, onClick = { scope.launch { controller.askReset() } }) {
+                        Text(stringResource(Res.string.reset_timer))
+                    }
                 }
             }
         }
@@ -536,18 +581,39 @@ private fun PlayersCard(
     hands: ControlMode,
     seats: ControlMode,
     enabled: Boolean,
+    groupsSideBySide: Boolean,
     modifier: Modifier,
     onChange: (RoundControlChange) -> Unit,
 ) {
     Card(title = stringResource(Res.string.round_control_players), info = null, modifier = modifier) {
-        LabeledModes(
-            label = stringResource(Res.string.round_control_hands),
-            info = stringResource(Res.string.round_control_hands_help),
-        ) { ModeChips(tag = "hands", selected = hands, enabled = enabled) { onChange(RoundControlChange(hands = it)) } }
-        LabeledModes(
-            label = stringResource(Res.string.round_control_seats),
-            info = stringResource(Res.string.round_control_seats_help),
-        ) { ModeChips(tag = "seats", selected = seats, enabled = enabled) { onChange(RoundControlChange(seats = it)) } }
+        val handsGroup: @Composable (Modifier) -> Unit = { groupModifier ->
+            LabeledModes(
+                label = stringResource(Res.string.round_control_hands),
+                info = stringResource(Res.string.round_control_hands_help),
+                modifier = groupModifier,
+            ) { ModeRadios(tag = "hands", selected = hands, enabled = enabled) { onChange(RoundControlChange(hands = it)) } }
+        }
+        val seatsGroup: @Composable (Modifier) -> Unit = { groupModifier ->
+            LabeledModes(
+                label = stringResource(Res.string.round_control_seats),
+                info = stringResource(Res.string.round_control_seats_help),
+                modifier = groupModifier,
+            ) { ModeRadios(tag = "seats", selected = seats, enabled = enabled) { onChange(RoundControlChange(seats = it)) } }
+        }
+        // Three options as radio buttons, one under the other: they read the same on a phone and on a big screen.
+        // The two groups sit side by side when the dialog is wide enough. No BoxWithConstraints here: the two column
+        // layout measures the cards with intrinsics.
+        if (groupsSideBySide) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                handsGroup(Modifier.weight(1f))
+                seatsGroup(Modifier.weight(1f))
+            }
+        } else {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                handsGroup(Modifier.fillMaxWidth())
+                seatsGroup(Modifier.fillMaxWidth())
+            }
+        }
     }
 }
 
@@ -636,15 +702,45 @@ private fun SubCard(title: String, content: @Composable () -> Unit) {
     }
 }
 
-/** A label with an info button, above its chips. */
+/** A centered label with an info button, above its options. */
 @Composable
-private fun LabeledModes(label: String, info: String, chips: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun LabeledModes(label: String, info: String, modifier: Modifier = Modifier, options: @Composable () -> Unit) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(label, style = MaterialTheme.typography.titleSmall)
-            InfoTooltipIcon(info)
+            InfoTooltipIcon(info, iconSize = INFO_ICON_SIZE)
         }
-        chips()
+        options()
+    }
+}
+
+/** The three modes as radio buttons, one per line. The block is centered and its lines read from the left. */
+@Composable
+private fun ModeRadios(
+    tag: String,
+    selected: ControlMode,
+    enabled: Boolean,
+    onSelect: (ControlMode) -> Unit,
+) {
+    Column(Modifier.selectableGroup()) {
+        ControlMode.entries.forEach { mode ->
+            val label = when (mode) {
+                ControlMode.AUTO -> Res.string.round_control_auto
+                ControlMode.OPEN -> Res.string.round_control_open
+                ControlMode.CLOSED -> Res.string.round_control_closed
+            }
+            Row(
+                Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .selectable(selected = mode == selected, enabled = enabled, role = Role.RadioButton) { if (mode != selected) onSelect(mode) }
+                    .padding(end = 12.dp)
+                    .testTag("${tag}_${mode.name.lowercase()}"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = mode == selected, onClick = null, enabled = enabled, modifier = Modifier.padding(8.dp))
+                Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
     }
 }
 
@@ -680,9 +776,9 @@ private fun ModeChips(
 private fun Card(title: String, info: String?, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
     OutlinedCard(modifier = modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                info?.let { InfoTooltipIcon(it) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                info?.let { InfoTooltipIcon(it, iconSize = INFO_ICON_SIZE) }
             }
             content()
         }
@@ -747,3 +843,12 @@ private fun ConfirmDialog(
         )
     }
 }
+
+/** The info icons of the sections are smaller than the default, so they do not compete with the titles. */
+private val INFO_ICON_SIZE = 18.dp
+
+/** Below this dialog content width the two radio groups of the players card go one under the other. */
+private val RADIO_GROUPS_SIDE_BY_SIDE_MIN_WIDTH = 440.dp
+
+/** The horizontal padding of the AlertDialog content. The round strip spreads over it. */
+private val DialogHorizontalPadding = 24.dp

@@ -746,7 +746,7 @@
     <string name="timer_reset_confirm_message">L'horloge du tour est réinitialisée. Les mains enregistrées restent, mais les joueurs ne peuvent plus en ajouter avant un nouveau Démarrer. Pour garder le temps joué, utilisez « Le tour a commencé plus tôt » au démarrage.</string>
     <string name="timer_reset_confirm">Réinitialiser</string>
     <string name="timer_tournament_completed">Le tournoi est terminé. Ses horloges ne peuvent plus changer.</string>
-    <string name="timer_late_start">L'heure prévue (%1$s) est passée et le tour n'a pas commencé. Appuyez sur Démarrer au son du gong : d'ici là, les joueurs ne peuvent pas ajouter de mains.</string>
+    <string name="timer_late_start">Le tour devait commencer à %1$s.\nAppuyez sur Démarrer au son du gong. D’ici là, les joueurs ne peuvent pas ajouter de mains.</string>
     <string name="timer_stop">Terminer le tour</string>
     <string name="timer_stop_confirm_title">Terminer le tour ?</string>
     <string name="timer_stop_confirm_message">Le tour se termine maintenant, avant la fin de son temps et sans temps supplémentaire. Les tables avec des mains se ferment et les joueurs ne peuvent plus ajouter de mains.</string>

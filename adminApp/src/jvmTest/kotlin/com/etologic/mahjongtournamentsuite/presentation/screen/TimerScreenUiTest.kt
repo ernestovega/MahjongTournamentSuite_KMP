@@ -283,7 +283,7 @@ class TimerScreenUiTest {
         }
         show(server)
 
-        onNodeWithText("The planned start (13:00) is past", substring = true).assertExists()
+        onNodeWithText("The round should have started at 13:00.", substring = true).assertExists()
     }
 
     @Test

@@ -746,7 +746,7 @@
     <string name="timer_reset_confirm_message">Hiermee wordt de klok van de ronde gereset. Opgeslagen handen blijven, maar de spelers kunnen er geen meer toevoegen tot je weer op Start drukt. Gebruik “De ronde begon eerder” bij het starten om de gespeelde tijd te behouden.</string>
     <string name="timer_reset_confirm">Resetten</string>
     <string name="timer_tournament_completed">Het toernooi is voltooid. De klokken kunnen niet meer veranderen.</string>
-    <string name="timer_late_start">De geplande start (%1$s) is voorbij en de ronde is niet begonnen. Druk op Start als de startgong klinkt: tot dan kunnen de spelers geen handen toevoegen.</string>
+    <string name="timer_late_start">De ronde had om %1$s moeten beginnen.\nDruk op Start als de gong klinkt. Tot dan kunnen de spelers geen handen toevoegen.</string>
     <string name="timer_stop">De ronde stoppen</string>
     <string name="timer_stop_confirm_title">De ronde stoppen?</string>
     <string name="timer_stop_confirm_message">De ronde eindigt nu, voordat de tijd om is, zonder extra tijd. De tafels met handen sluiten en de spelers kunnen geen handen meer toevoegen.</string>
