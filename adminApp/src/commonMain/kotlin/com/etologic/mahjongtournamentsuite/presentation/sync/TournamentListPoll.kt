@@ -17,8 +17,7 @@ object TournamentListPoll {
     val ONGOING: Duration = 1.minutes
 
     /** [today] is the date on this device. */
-    fun nextDelay(tournaments: List<Tournament>, today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date): Duration =
-        if (tournaments.any { it.isOngoingOn(today) }) ONGOING else IDLE
+    fun nextDelay(tournaments: List<Tournament>, today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date): Duration = if (tournaments.any { it.isOngoingOn(today) }) ONGOING else IDLE
 
     /** A tournament is ongoing from its start date to its end date, unless it is completed. Without a valid start date it is not. */
     private fun Tournament.isOngoingOn(today: LocalDate): Boolean {
