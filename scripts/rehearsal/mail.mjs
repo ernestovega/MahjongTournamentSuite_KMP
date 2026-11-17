@@ -83,6 +83,15 @@ export class Mailbox {
       .map((match) => match[2].trim().replace(/^"(.*)"$/, "$1"));
   }
 
+  /** The folders, read again at most once a minute: a new email to a new address makes a new folder. */
+  async cachedFolders() {
+    if (this.folderList == null || Date.now() - this.folderListAt > 60_000) {
+      this.folderList = await this.folders();
+      this.folderListAt = Date.now();
+    }
+    return this.folderList;
+  }
+
   async select(folder) {
     if (this.selected === folder) return;
     await this.command(`SELECT ${quote(folder)}`);
@@ -119,7 +128,14 @@ export class Mailbox {
   async search(to, sinceDate) {
     const since = sinceDate ? ` SINCE ${imapDate(sinceDate)}` : "";
     const found = [];
-    for (const folder of await this.folders()) {
+    // The server files an address with +<tag> in the folder INBOX.<tag>. The folders of the other players are skipped,
+    // so a scenario of 240 players does not read 240 folders for each address.
+    const tag = String(to).split("@")[0].split("+")[1]?.toLowerCase();
+    const folders = (await this.cachedFolders()).filter((folder) => {
+      const last = folder.split(/[./]/).pop().toLowerCase();
+      return !/-s\d{3}$/.test(last) || last === tag;
+    });
+    for (const folder of folders) {
       // A new SELECT each time: the server shows the emails that arrived after the last one.
       this.selected = null;
       await this.select(folder);
