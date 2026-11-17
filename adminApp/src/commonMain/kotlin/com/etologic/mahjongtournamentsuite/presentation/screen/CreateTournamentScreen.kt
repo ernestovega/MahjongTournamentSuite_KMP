@@ -430,11 +430,12 @@ fun CreateTournamentDialog(
         progress = null
         calcStartMark = TimeSource.Monotonic.markNow()
 
+        // The draw reports its progress from the worker threads: the state of the dialog changes on the main thread only.
         val progressSink: (CreateTournamentPresenter.Progress) -> Unit = { p ->
-            coroutineScope.launch { progress = p }
+            coroutineScope.launch(Dispatchers.Main) { progress = p }
         }
 
-        createJob = coroutineScope.launch {
+        createJob = coroutineScope.launch(Dispatchers.Main) {
             try {
                 when (
                     val result = presenter.createTournament(
