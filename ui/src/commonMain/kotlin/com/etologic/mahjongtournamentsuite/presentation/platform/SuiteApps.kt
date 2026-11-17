@@ -30,3 +30,9 @@ fun currentAppSwitcher(): ((SuiteApp) -> Unit)? = LocalSuiteAppSwitcher.current 
  * its own sign-in: the desktop, and the local dev server, which serves the admin app at the root.
  */
 expect fun leaveAdminForPlayerApp(signIn: Boolean): Boolean
+
+/**
+ * True where the switch to the other application loads another page: the web. The app that leaves must not change its
+ * screens after the switch, because a back in the browser history stops the load of the other page.
+ */
+expect val appSwitchLeavesPage: Boolean

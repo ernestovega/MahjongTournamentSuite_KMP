@@ -21,3 +21,5 @@ actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean {
     host(SuiteApp.PLAYER, signIn)
     return true
 }
+
+actual val appSwitchLeavesPage: Boolean = false

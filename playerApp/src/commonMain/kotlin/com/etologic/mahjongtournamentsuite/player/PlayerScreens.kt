@@ -149,6 +149,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
+import com.etologic.mahjongtournamentsuite.presentation.platform.appSwitchLeavesPage
 import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
@@ -316,8 +317,9 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
 
     fun openAdminApp(switcher: (SuiteApp) -> Unit) {
         switcher(SuiteApp.ADMIN)
-        // On Android the admin app opens over this one. Back returns here, signed in.
-        continueInPlayerApp()
+        // On Android the admin app opens over this one. Back returns here, signed in. On the web the admin app is
+        // another page: closing the sign-in here goes back in the browser history, which would stop that page loading.
+        if (!appSwitchLeavesPage) continueInPlayerApp()
     }
 
     fun submit() {

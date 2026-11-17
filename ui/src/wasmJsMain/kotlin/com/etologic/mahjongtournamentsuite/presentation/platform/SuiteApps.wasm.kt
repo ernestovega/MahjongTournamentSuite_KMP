@@ -20,3 +20,5 @@ actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean {
     window.location.replace(if (signIn) "/?signin=1" else "/")
     return true
 }
+
+actual val appSwitchLeavesPage: Boolean = true

@@ -6,3 +6,5 @@ import androidx.compose.runtime.Composable
 actual fun rememberAppSwitcher(): ((SuiteApp) -> Unit)? = null
 
 actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean = false
+
+actual val appSwitchLeavesPage: Boolean = false
