@@ -59,8 +59,9 @@ async function freePlayers(api, token) {
   const owned = new Set((users.json.users ?? []).map((user) => user.emaId).filter(Boolean));
   return (registry.json.players ?? []).filter((player) =>
     !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName
-    // The guests of the EMA registry are placeholders, not people.
-    && !/EMA GUEST/i.test(`${player.firstName} ${player.lastName}`));
+    && Number(player.emaId) > 0
+    // The guests of the registry and the account of the Google Play reviewers are not people of a tournament.
+    && !/EMA GUEST|GOOGLE PLAY/i.test(`${player.firstName} ${player.lastName}`));
 }
 
 function csv(rows) {

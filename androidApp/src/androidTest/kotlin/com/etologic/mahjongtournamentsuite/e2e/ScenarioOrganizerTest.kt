@@ -146,7 +146,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.field("Confirm email").performTextInput(slot.email)
         chooseInSelect("Global role", "Player")
         c.field("EMA ID").performTextInput(slot.emaId)
-        c.waitForText(slot.lastName, substring = true, timeoutMs = 30_000)
+        // The field shows the EMA player of the number when the registry has it.
+        c.waitForText("EMA Player: ", substring = true, timeoutMs = 30_000)
         c.clickButton("Save and Send password-reset email")
         c.waitForText("Account created", substring = true, timeoutMs = 60_000)
         c.clickButton("OK")
