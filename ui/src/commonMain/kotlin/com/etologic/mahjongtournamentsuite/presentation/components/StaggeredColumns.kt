@@ -11,18 +11,20 @@ import kotlin.math.max
 /**
  * Places the children in columns of equal width. The number of columns grows with the available width.
  * Each child goes into the shortest column, like a staggered grid. The parent must give a bounded width.
+ * [maxColumns] caps the number of columns on a wide screen.
  */
 @Composable
 fun StaggeredColumns(
     modifier: Modifier = Modifier,
     minColumnWidth: Dp = 420.dp,
     spacing: Dp = 16.dp,
+    maxColumns: Int = Int.MAX_VALUE,
     content: @Composable () -> Unit,
 ) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->
         val gap = spacing.roundToPx()
         val total = constraints.maxWidth
-        val columns = max(1, (total + gap) / (minColumnWidth.roundToPx() + gap)).coerceAtMost(max(1, measurables.size))
+        val columns = max(1, (total + gap) / (minColumnWidth.roundToPx() + gap)).coerceAtMost(max(1, minOf(measurables.size, maxColumns)))
         val columnWidth = (total - gap * (columns - 1)) / columns
         val heights = IntArray(columns)
         val placeables = measurables.map { it.measure(Constraints(minWidth = columnWidth, maxWidth = columnWidth)) }

@@ -396,7 +396,8 @@ private fun LeadersCard(
     )
     if (leaders.isEmpty()) return
     StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
-        StaggeredColumns(minColumnWidth = 280.dp) {
+        // At most two charts side by side, so a wide screen shows them two by two and big enough to read.
+        StaggeredColumns(minColumnWidth = 280.dp, maxColumns = 2) {
             leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
         }
     }
