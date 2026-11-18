@@ -1,16 +1,24 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
@@ -49,9 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupPositionProvider
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
-import com.etologic.mahjongtournamentsuite.domain.model.PointsDiff
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -84,6 +91,7 @@ import mahjongtournamentsuite.ui.generated.resources.wind_east
 import mahjongtournamentsuite.ui.generated.resources.wind_north
 import mahjongtournamentsuite.ui.generated.resources.wind_south
 import mahjongtournamentsuite.ui.generated.resources.wind_west
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -140,8 +148,7 @@ fun SeatLevelMedal(seat: SeatDisplay, size: Dp = 26.dp) {
 fun chairOf(initialIndex: Int, handNumber: Int): Int = initialIndex xor ((handNumber - 1).coerceIn(0, 15) / 4)
 
 /** The wind of a chair during a hand. The winds turn after every hand. */
-fun windOfChair(chair: Int, handNumber: Int): SeatWind =
-    SeatWind.entries[(chair - (handNumber - 1).coerceIn(0, 15) % 4 + 4) % 4]
+fun windOfChair(chair: Int, handNumber: Int): SeatWind = SeatWind.entries[(chair - (handNumber - 1).coerceIn(0, 15) % 4 + 4) % 4]
 
 /** The wind of the round of a hand: hands 1 to 4 are East, 5 to 8 South, and so on. */
 fun roundWindOf(handNumber: Int): SeatWind = SeatWind.entries[(handNumber - 1).coerceIn(0, 15) / 4]
@@ -251,8 +258,14 @@ private class AnimatedScore(initial: Int) {
     val value = Animatable(initial.toFloat())
     var delta by mutableIntStateOf(0)
 
-    /** Grows with each change, so the rising difference starts again. Zero means no change yet. */
-    var deltaKey by mutableIntStateOf(0)
+    /**
+     * From 0 to 1 while the difference rises, then 1. The score keeps the color of the change until the difference
+     * fades, and both fade together.
+     */
+    val rise = Animatable(1f)
+
+    /** How much of the color of the change the score and the difference have now: 0 is none, 1 is all. */
+    val accentWeight: Float get() = if (rise.value >= 1f) 0f else minOf((1f - rise.value) * 2.5f, 1f)
 }
 
 @Composable
@@ -266,7 +279,8 @@ private fun rememberAnimatedScore(target: Int, animate: Boolean): AnimatedScore 
             return@LaunchedEffect
         }
         score.delta = target - from
-        score.deltaKey++
+        score.rise.snapTo(0f)
+        launch { score.rise.animateTo(1f, tween(DELTA_RISE_MILLIS, easing = LinearEasing)) }
         score.value.animateTo(target.toFloat(), tween(SCORE_COUNT_MILLIS, easing = FastOutSlowInEasing))
     }
     return score
@@ -274,6 +288,7 @@ private fun rememberAnimatedScore(target: Int, animate: Boolean): AnimatedScore 
 
 private const val SCORE_COUNT_MILLIS = 1_800
 private const val DELTA_RISE_MILLIS = 3_600
+private const val CENTER_LABEL_MILLIS = 1_200
 
 /**
  * The four players of a table.
@@ -340,7 +355,7 @@ fun TableSeatsView(
         } else if (leading != null) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { leading() }
         }
-        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
+        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, animateScoreChanges, onPlayerClick)
     }
 }
 
@@ -366,9 +381,11 @@ private fun SeatsCross(
     showPoints: Boolean,
     showDiffs: Boolean,
     showIds: Boolean,
+    animateChanges: Boolean,
     onPlayerClick: (Int) -> Unit,
 ) {
     val viewerChair = placed.firstOrNull { it.seat.isMine }?.chair ?: 0
+
     // Bottom, right, top and left follow the order of the chairs.
     fun at(position: Int): PlacedSeat = placed.first { it.chair == (viewerChair + position) % 4 }
 
@@ -398,13 +415,27 @@ private fun SeatsCross(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer,
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            centerLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
+                    // A new hand slides the new number in from below, slowly, like the totals.
+                    AnimatedContent(
+                        targetState = centerLabel,
+                        contentAlignment = Alignment.Center,
+                        transitionSpec = {
+                            if (animateChanges) {
+                                (slideInVertically(tween(CENTER_LABEL_MILLIS)) { it } + fadeIn(tween(CENTER_LABEL_MILLIS)))
+                                    .togetherWith(slideOutVertically(tween(CENTER_LABEL_MILLIS)) { -it } + fadeOut(tween(CENTER_LABEL_MILLIS)))
+                            } else {
+                                EnterTransition.None togetherWith ExitTransition.None
+                            }
+                        },
+                    ) { label ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                        }
                     }
                 }
             }
@@ -491,39 +522,33 @@ private fun SeatCard(
  */
 @Composable
 private fun SeatScore(text: String, score: AnimatedScore) {
-    val counting = score.value.isRunning
     val accent = if (score.delta >= 0) MtsTheme.colors.gain else MaterialTheme.colorScheme.error
-    val color by animateColorAsState(if (counting) accent else MaterialTheme.colorScheme.onSurface)
+    val weight = score.accentWeight
     Box {
         Text(
-            if (counting) "${score.value.value.roundToInt()}" else text.ifBlank { "0" },
+            if (score.value.isRunning) "${score.value.value.roundToInt()}" else text.ifBlank { "0" },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = color,
+            color = lerp(MaterialTheme.colorScheme.onSurface, accent, weight),
         )
-        if (score.deltaKey > 0) RisingDelta(score.delta, score.deltaKey, accent, Modifier.align(Alignment.CenterEnd))
+        if (score.rise.value < 1f) RisingDelta(score, accent, Modifier.align(Alignment.CenterEnd))
     }
 }
 
 @Composable
-private fun RisingDelta(delta: Int, key: Int, color: Color, modifier: Modifier) {
-    val progress = remember { Animatable(1f) }
-    LaunchedEffect(key) {
-        progress.snapTo(0f)
-        progress.animateTo(1f, tween(DELTA_RISE_MILLIS, easing = LinearEasing))
-    }
-    if (progress.value >= 1f) return
+private fun RisingDelta(score: AnimatedScore, color: Color, modifier: Modifier) {
+    val delta = score.delta
     Text(
         if (delta > 0) "+$delta" else "$delta",
         modifier
             // Placed after the end of the score, rising from its middle, with no size of its own.
             .layout { measurable, _ ->
                 val placeable = measurable.measure(Constraints())
-                val rise = (progress.value * 20.dp.toPx()).roundToInt()
+                val rise = (score.rise.value * 20.dp.toPx()).roundToInt()
                 layout(0, 0) { placeable.place(4.dp.roundToPx(), -placeable.height / 2 - rise) }
             }
-            // It appears fast, stays and fades out at the end.
-            .graphicsLayer { alpha = (minOf(progress.value * 6f, 1f) * minOf((1f - progress.value) * 2.5f, 1f)) },
+            // It appears fast, stays and fades out at the end, together with the color of the score.
+            .graphicsLayer { alpha = minOf(score.rise.value * 6f, 1f) * score.accentWeight },
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         color = color,
@@ -566,8 +591,7 @@ private fun DiffsRow(label: String, self: String, him: String, other: String, he
  * decides. A substitute with forced 0 points has a low score sometimes, so the points come first.
  */
 @Suppress("UNUSED_PARAMETER")
-private fun rankedSeatIndices(placed: List<PlacedSeat>, showPoints: Boolean): List<Int> =
-    placed.indices.sortedWith(
-        compareByDescending<Int> { placed[it].seat.points.replace(',', '.').trim().toDoubleOrNull() ?: 0.0 }
-            .thenByDescending { placed[it].seat.score.trim().toIntOrNull() ?: 0 },
-    )
+private fun rankedSeatIndices(placed: List<PlacedSeat>, showPoints: Boolean): List<Int> = placed.indices.sortedWith(
+    compareByDescending<Int> { placed[it].seat.points.replace(',', '.').trim().toDoubleOrNull() ?: 0.0 }
+        .thenByDescending { placed[it].seat.score.trim().toIntOrNull() ?: 0 },
+)
