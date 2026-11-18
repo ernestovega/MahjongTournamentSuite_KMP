@@ -226,6 +226,15 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
   const events = botReports.flatMap((report) => report.events ?? []);
   const lines = [];
   const add = (ok, textLine) => lines.push(`${ok ? "✅" : "❌"} ${textLine}`);
+  // A corner case that fails shows what the bots of its table saved and saw, to find the cause from the job log.
+  const detail = (key) => {
+    const saved = botReports.flatMap((report) => report.hands ?? []).filter((hand) => hand.table === key)
+      .map((hand) => `#${hand.handId} ${hand.at?.slice(11, 19)} ${hand.hand?.handScore ?? ""}${hand.reentry ? " again" : ""}`);
+    const seen = events.filter((event) => event.table === key && /hand-(deleted|corrected)-seen|hand-reentered/.test(event.kind))
+      .map((event) => `${event.at?.slice(11, 19)} ${event.kind} #${event.handId} slot ${event.slot}${event.watcher ? " (watcher)" : ""}`);
+    lines.push(`  Saved at ${key}: ${saved.join(", ") || "none"}.`);
+    lines.push(`  Seen at ${key}: ${seen.join(", ") || "nothing"}.`);
+  };
   const cases = plan?.cornerCases ?? [];
   const planned = new Set(cases.filter((item) => item.kind === "delete" || item.kind === "edit").map((item) => `${item.round}_${item.table}`));
   for (const item of cases) {
@@ -237,8 +246,10 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       const scorer = at("hand-deleted-seen").filter((event) => !event.watcher);
       const watchers = at("hand-deleted-seen").filter((event) => event.watcher);
       const again = at("hand-reentered");
-      add(scorer.some(position) && watchers.length > 0 && again.length > 0,
+      const okDelete = scorer.some(position) && watchers.length > 0 && again.length > 0;
+      add(okDelete,
         `Table ${key}: the editor deleted ${where}, the phones saw it and the player wrote it again (${scorer.length} seen by the scorer, ${watchers.length} by the others, ${again.length} written again${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}` : ""}).`);
+      if (!okDelete) detail(key);
     } else if (item.kind === "late") {
       const late = events.filter((event) => event.kind === "late-table" && event.table === key);
       const done = events.filter((event) => event.kind === "table-completed" && event.table === key);
@@ -251,8 +262,10 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
-      add(scorer.some(position) && watchers.length > 0,
+      const okEdit = scorer.some(position) && watchers.length > 0;
+      add(okEdit,
         `Table ${key}: the editor corrected ${where} and the phones show the correction (${scorer.length} seen by the scorer, ${watchers.length} by the others${scorer[0] ? `, hand ${scorer[0].handId} of ${scorer[0].newest}, score ${scorer[0].from?.handScore} to ${scorer[0].to?.handScore}` : ""}).`);
+      if (!okEdit) detail(key);
     }
   }
   if (cases.length > 0) {
