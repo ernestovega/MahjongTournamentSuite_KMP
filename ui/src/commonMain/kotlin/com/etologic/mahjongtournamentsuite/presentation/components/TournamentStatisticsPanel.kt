@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
@@ -54,6 +56,7 @@ import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
+import mahjongtournamentsuite.ui.generated.resources.rounds_title
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
 import mahjongtournamentsuite.ui.generated.resources.stat_average_winning_hand
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
@@ -117,7 +120,7 @@ fun TournamentStatisticsPanel(
             TournamentHandsCard(
                 shown,
                 showPenalties = statistics.penaltyCount > 0,
-                // The trend by round shows only with the whole tournament, when two rounds or more have hands.
+                // The trend by round shows only with the whole tournament, when three rounds or more have hands.
                 trend = if (round == null && roundIds != null) remember(statistics, roundIds) { handsTrend(statistics, roundIds) } else null,
             )
             TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
@@ -236,6 +239,48 @@ private fun TournamentHandsCard(statistics: TournamentStatistics, showPenalties:
                 }
             }
         }
+        // The trend by round goes under the ring, and the averages and the penalties close the card.
+        if (trend != null) {
+            HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.sm))
+            Text(
+                stringResource(Res.string.rounds_title),
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Center,
+            )
+            var selected by remember(trend) { mutableStateOf<Int?>(null) }
+            val share = { part: Int, of: Int -> if (of > 0) part * 100.0 / of else null }
+            val discard = trend.map { share(it.winsByDiscard, it.handsPlayed) }
+            val selfDraw = trend.map { share(it.selfDraws, it.handsPlayed) }
+            val drawn = trend.map { share(it.drawnHands, it.handsPlayed) }
+            val top = listOf(discard, selfDraw, drawn).flatten().filterNotNull().maxOrNull() ?: 100.0
+            // A round scale in tens, so the guides read as whole percentages.
+            val scaleTop = (ceil(top * 1.1 / 10) * 10).coerceIn(20.0, 100.0)
+            val labels = parts.map { it.first }
+            val titles = trend.map { stringResource(Res.string.rounds_hands_of_round, it.roundId, it.handsPlayed) }
+            RoundLineChart(
+                names = trend.map { stringResource(Res.string.round_short, it.roundId) },
+                series = listOf(
+                    LineSeries(discard, parts[0].third),
+                    LineSeries(selfDraw, parts[1].third),
+                    LineSeries(drawn, parts[2].third),
+                ),
+                minValue = 0.0,
+                maxValue = scaleTop,
+                selected = selected,
+                onSelect = { selected = if (selected == it) null else it },
+                format = { "${it.roundToInt()}%" },
+                axisValues = true,
+                height = 200.dp,
+                // The bubble of the chosen round: its hands, then the share of each way to end them.
+                tooltip = selected?.let { index ->
+                    (
+                        listOf(titles[index]) +
+                            listOf(discard, selfDraw, drawn).mapIndexed { line, values -> "${labels[line]}: ${values[index]?.roundToInt() ?: 0}%" }
+                        ).joinToString("\n")
+                },
+            )
+        }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
         StatGrid(Modifier.fillMaxWidth()) {
             BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal())
@@ -249,37 +294,6 @@ private fun TournamentHandsCard(statistics: TournamentStatistics, showPenalties:
                     info = stringResource(Res.string.stat_penalties_info),
                 )
             }
-        }
-        if (trend != null) {
-            HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.sm))
-            var selected by remember(trend) { mutableStateOf<Int?>(null) }
-            val share = { part: Int, of: Int -> if (of > 0) part * 100.0 / of else null }
-            val discard = trend.map { share(it.winsByDiscard, it.handsPlayed) }
-            val selfDraw = trend.map { share(it.selfDraws, it.handsPlayed) }
-            val drawn = trend.map { share(it.drawnHands, it.handsPlayed) }
-            val top = listOf(discard, selfDraw, drawn).flatten().filterNotNull().maxOrNull() ?: 100.0
-            val labels = parts.map { it.first }
-            val titles = trend.map { stringResource(Res.string.rounds_hands_of_round, it.roundId, it.handsPlayed) }
-            RoundLineChart(
-                names = trend.map { stringResource(Res.string.round_short, it.roundId) },
-                series = listOf(
-                    LineSeries(discard, parts[0].third),
-                    LineSeries(selfDraw, parts[1].third),
-                    LineSeries(drawn, parts[2].third),
-                ),
-                minValue = 0.0,
-                maxValue = (top * 1.15).coerceAtMost(100.0),
-                selected = selected,
-                onSelect = { selected = if (selected == it) null else it },
-                format = { "${it.roundToInt()}%" },
-                // The bubble of the chosen round: its hands, then the share of each way to end them.
-                tooltip = selected?.let { index ->
-                    (
-                        listOf(titles[index]) +
-                            listOf(discard, selfDraw, drawn).mapIndexed { line, values -> "${labels[line]}: ${values[index]?.roundToInt() ?: 0}%" }
-                        ).joinToString("\n")
-                },
-            )
         }
     }
 }
@@ -438,5 +452,5 @@ private fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable Ro
     }
 }
 
-/** The rounds with hands, for the trend of the Hands card. Null with fewer than two of them. */
-private fun handsTrend(statistics: TournamentStatistics, roundIds: List<Int>): List<TournamentRoundTotals>? = statistics.byRound(roundIds).map { it.round }.filter { it.handsPlayed > 0 }.takeIf { it.size >= 2 }
+/** The rounds with hands, for the trend of the Hands card. Null with fewer than three of them: two points make no trend. */
+private fun handsTrend(statistics: TournamentStatistics, roundIds: List<Int>): List<TournamentRoundTotals>? = statistics.byRound(roundIds).map { it.round }.filter { it.handsPlayed > 0 }.takeIf { it.size >= 3 }
