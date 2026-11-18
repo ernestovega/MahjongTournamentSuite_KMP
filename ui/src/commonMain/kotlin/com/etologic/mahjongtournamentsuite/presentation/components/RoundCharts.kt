@@ -231,6 +231,8 @@ fun RoundLineChart(
     tooltip: String? = null,
     /** True writes the value over every point of the first line, not only over the selected one. */
     allValues: Boolean = false,
+    /** True writes the value of each guide line at its left end, with [format]. */
+    axisValues: Boolean = false,
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
@@ -248,6 +250,13 @@ fun RoundLineChart(
         // The guides at the top, the middle and the bottom of the scale.
         listOf(top, (top + bottom) / 2f, bottom).forEach { gy ->
             drawLine(colors.outlineVariant, Offset(0f, gy), Offset(size.width, gy), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+        }
+        if (axisValues) {
+            // The value of each guide, just over its left end.
+            listOf(maxValue, (minValue + maxValue) / 2, minValue).forEach { v ->
+                val layout = measurer.measure(format(v), TextStyle(fontSize = 10.sp, color = colors.onSurfaceVariant))
+                drawText(layout, topLeft = Offset(2.dp.toPx(), y(v) - layout.size.height - 1.dp.toPx()))
+            }
         }
         series.forEach { line ->
             val points = line.values.mapIndexed { index, value -> value?.let { Offset(slot * index + slot / 2f, y(it)) } }

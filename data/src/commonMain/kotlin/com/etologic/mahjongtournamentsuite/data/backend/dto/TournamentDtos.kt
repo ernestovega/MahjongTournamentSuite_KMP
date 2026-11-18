@@ -448,6 +448,8 @@ data class TableHandDto(
     val playerSouthPenalty: String = "",
     val playerWestPenalty: String = "",
     val playerNorthPenalty: String = "",
+    /** When the hand was marked done, in milliseconds since 1970. Null for older hands. */
+    val doneAtMs: Long? = null,
 )
 
 @Serializable

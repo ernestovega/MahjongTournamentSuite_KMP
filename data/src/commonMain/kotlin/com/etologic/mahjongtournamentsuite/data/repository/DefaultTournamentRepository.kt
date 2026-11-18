@@ -1146,6 +1146,7 @@ private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHan
         playerSouthPenalty = hand.playerSouthPenalty,
         playerWestPenalty = hand.playerWestPenalty,
         playerNorthPenalty = hand.playerNorthPenalty,
+        doneAtMs = hand.doneAtMs,
     )
 }
 

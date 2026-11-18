@@ -214,6 +214,8 @@
     <string name="hands_won_by_self_draw">Победы со стены</string>
     <string name="hands_drawn">Ничьи</string>
     <string name="stat_average_winning_hand">Ср. выигрышная рука</string>
+    <string name="stat_average_hand_time">Ср. время раздачи</string>
+    <string name="stat_average_hand_time_info">Время между раздачей и предыдущей, если обе были внесены за столом во время игры.\nРаздачи, внесённые одна за другой или после перерыва дольше 30 минут, не учитываются.</string>
     <string name="actions">Действия</string>
     <string name="scope_me">Я</string>
     <string name="scope_my_tournaments">Мои турниры</string>

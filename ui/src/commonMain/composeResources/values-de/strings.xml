@@ -214,6 +214,8 @@
     <string name="hands_won_by_self_draw">Selbst gezogen gewonnen</string>
     <string name="hands_drawn">Remis</string>
     <string name="stat_average_winning_hand">Ø Gewinnhand</string>
+    <string name="stat_average_hand_time">Ø Zeit pro Hand</string>
+    <string name="stat_average_hand_time_info">Die Zeit zwischen einer Hand und der Hand davor, wenn beide während des Spiels am Tisch eingetragen wurden.\nHände, die direkt nacheinander oder nach einer Pause von mehr als 30 Minuten eingetragen wurden, zählen nicht.</string>
     <string name="actions">Aktionen</string>
     <string name="scope_me">Ich</string>
     <string name="scope_my_tournaments">Meine Turniere</string>

@@ -215,6 +215,8 @@
     <string name="hands_won_by_self_draw">Vinte dal muro</string>
     <string name="hands_drawn">Patte</string>
     <string name="stat_average_winning_hand">Media mano vincente</string>
+    <string name="stat_average_hand_time">Tempo medio per mano</string>
+    <string name="stat_average_hand_time_info">Il tempo tra una mano e quella precedente, quando entrambe sono state inserite al tavolo durante il gioco.\nNon contano le mani inserite una dopo l\'altra, né quelle dopo una pausa di più di 30 minuti.</string>
     <string name="actions">Azioni</string>
     <string name="scope_me">Io</string>
     <string name="scope_my_tournaments">I miei tornei</string>

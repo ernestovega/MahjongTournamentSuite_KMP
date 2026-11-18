@@ -215,6 +215,8 @@
     <string name="hands_won_by_self_draw">Gagnées du mur</string>
     <string name="hands_drawn">Nulles</string>
     <string name="stat_average_winning_hand">Moy. main gagnante</string>
+    <string name="stat_average_hand_time">Temps moy. par main</string>
+    <string name="stat_average_hand_time_info">Le temps entre une main et la précédente, quand les deux ont été saisies à la table pendant le jeu.\nLes mains saisies l\'une après l\'autre, ou après une pause de plus de 30 minutes, ne comptent pas.</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Moi</string>
     <string name="scope_my_tournaments">Mes tournois</string>

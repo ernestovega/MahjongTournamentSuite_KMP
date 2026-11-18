@@ -116,6 +116,15 @@ object ScreenshotData {
                     TableHand(handId, "$winner", "$loser", score, chicken, true, penalty, "0", "0", "0")
                 }
             }
+        }.withDoneTimes(Random(roundId * 1000 + tableId))
+    }
+
+    /** The time when each hand was done: 2 to 8 minutes after the hand before it, from a fixed start. */
+    private fun List<TableHand>.withDoneTimes(random: Random): List<TableHand> {
+        var at = 1_800_000_000_000L
+        return map { hand ->
+            at += (120 + random.nextInt(360)) * 1000L
+            hand.copy(doneAtMs = at)
         }
     }
 
