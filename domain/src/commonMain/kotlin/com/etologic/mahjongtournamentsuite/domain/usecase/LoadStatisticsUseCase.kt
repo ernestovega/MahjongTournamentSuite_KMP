@@ -36,6 +36,8 @@ data class TournamentStatisticsData(
     val profiles: Map<Int, PlayerProfile>,
     /** Display name of every rival key. See `RivalTally.opponent`. */
     val rivalNames: Map<String, String> = emptyMap(),
+    /** The tables with their hands, for the rankings at the end of each round. */
+    val tables: List<RankingTable> = emptyList(),
 )
 
 /** The statistics of one person over every tournament where the person plays. */
@@ -110,9 +112,10 @@ class LoadStatisticsUseCase(
             is AppResult.Success -> result.value
             is AppResult.Failure -> return@coroutineScope result
         }
+        val rankingTables = tables.map { (table, hands) -> RankingTable(table, hands) }
         val statistics = calculateStatistics(
             players = slots,
-            tables = tables.map { (table, hands) -> RankingTable(table, hands) },
+            tables = rankingTables,
             tournamentId = tournament.id,
         )
         val names = slotNames(slots, registry)
@@ -120,7 +123,7 @@ class LoadStatisticsUseCase(
             slot.assignedEmaId.orEmpty().ifBlank { "${tournament.id}#${slot.id}" } to names.getValue(slot.id)
         }
         AppResult.Success(
-            TournamentStatisticsData(tournament, slots, statistics, names, slotProfiles(slots, registry), rivalNames),
+            TournamentStatisticsData(tournament, slots, statistics, names, slotProfiles(slots, registry), rivalNames, rankingTables),
         )
     }
 

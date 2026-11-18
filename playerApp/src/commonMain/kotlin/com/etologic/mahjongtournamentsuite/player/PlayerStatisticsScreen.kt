@@ -5,17 +5,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollableTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,11 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PersonSearch
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -45,8 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -60,7 +51,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsDa
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
@@ -75,15 +66,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
-import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabContentColor
-import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.async
@@ -106,7 +94,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.stats_unavailable
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
@@ -555,7 +542,7 @@ private fun ChosenPlayerStatistics(
             HideOnScrollTabs(emaId) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (profile != null && !changing) {
-                        ChosenPlayerBar(profile) { changing = true }
+                        ChosenPlayerBar(profile, stringResource(Res.string.action_change), { changing = true }, PlayerTabsMaxWidth)
                         // The same line that a tab row has at its bottom, so the bar and the tabs under it do not merge.
                         HorizontalDivider(Modifier.widthIn(max = PlayerTabsMaxWidth).fillMaxWidth())
                     }
@@ -594,47 +581,6 @@ private fun ChosenPlayerStatistics(
         }
     }
 }
-
-/** The bar with the flag and the name of the player, and the button to choose another player. The name never hides the button. */
-@Composable
-private fun ChosenPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
-    Row(
-        Modifier.widthIn(max = PlayerTabsMaxWidth).fillMaxWidth().height(PlayerBarHeight).background(mtsTabRowColor()).padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            // A player of the EMA list without country is a guest: the flag is the globe.
-            if (profile.country.isNotBlank() || profile.emaId.isNotBlank()) {
-                CountryFlag(profile.country, width = 24.dp)
-                Spacer(Modifier.width(12.dp))
-            }
-            Text(
-                profile.name,
-                Modifier.weight(1f, fill = false),
-                style = MaterialTheme.typography.titleMedium.inTextFont(),
-                fontWeight = FontWeight.Bold,
-                color = mtsTabContentColor(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        OutlinedButton(
-            onClick = onChange,
-            modifier = Modifier.height(32.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = mtsTabContentColor()),
-            border = BorderStroke(1.dp, mtsTabContentColor()),
-        ) {
-            Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.action_change), maxLines = 1, softWrap = false)
-        }
-    }
-}
-
-/** The height of the bar with the flag and the name of the player. */
-private val PlayerBarHeight = 44.dp
 
 /** The maximum width of the header and the tab rows of the chosen player. It is the width of the tab rows above. */
 private val PlayerTabsMaxWidth = 720.dp
