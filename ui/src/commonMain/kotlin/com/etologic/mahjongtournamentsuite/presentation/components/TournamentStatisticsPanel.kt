@@ -277,7 +277,8 @@ private fun TournamentHandsCard(
                 minValue = 0.0,
                 maxValue = scaleTop,
                 selected = selected,
-                onSelect = { selected = if (selected == it) null else it },
+                // Every move of the pointer over a round selects it again, so the selection must not toggle.
+                onSelect = { selected = it },
                 format = { "${it.roundToInt()}%" },
                 axisValues = true,
                 height = 200.dp,
