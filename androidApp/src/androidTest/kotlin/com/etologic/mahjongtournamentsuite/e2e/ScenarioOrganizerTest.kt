@@ -446,7 +446,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             "The substitution of slot $slotId is not on the server: $substitution"
         }
         log("slot $slotId of table $round-$table substituted (late, from round $round)")
-        shell("input keyevent KEYCODE_BACK")
+        // The search field keeps the focus, so the back key of the system only closes the keyboard: the Back of the top bar.
+        repeat(3) {
+            if (c.isOnScreen("Players & results")) return@repeat
+            c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick()
+            runCatching { c.waitForText("Players & results", timeoutMs = 20_000) }
+        }
         c.waitForText("Players & results", timeoutMs = 60_000)
     }
 
