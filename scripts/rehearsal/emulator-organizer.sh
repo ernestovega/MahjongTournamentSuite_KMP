@@ -44,6 +44,9 @@ fi
 "${adb_cmd[@]}" install -r -g "$app_apk" >/dev/null
 "${adb_cmd[@]}" install -r -g "$test_apk" >/dev/null
 "${adb_cmd[@]}" shell settings put global hide_error_dialogs 1
+# The tablet of the organizer is in Madrid, as the plan: the form of a new tournament dates it with the day of the
+# tablet, and the rounds of the plan are on the day in Madrid.
+"${adb_cmd[@]}" shell cmd alarm set-timezone Europe/Madrid >/dev/null 2>&1 || true
 "${adb_cmd[@]}" shell rm -rf /data/local/tmp/scenario
 "${adb_cmd[@]}" push "$plan_dir" /data/local/tmp/scenario >/dev/null
 
