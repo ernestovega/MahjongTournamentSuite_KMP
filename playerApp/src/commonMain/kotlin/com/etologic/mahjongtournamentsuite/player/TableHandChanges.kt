@@ -1,6 +1,15 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlinx.coroutines.delay
 
 /** Whether the list of hands shows the hand: it has a result or a penalty. */
 internal fun TableHand.isListed(): Boolean = isDone || penaltyRows().isNotEmpty()
@@ -45,3 +54,35 @@ internal class TableChangeTracker {
         return change.takeIf { animate }
     }
 }
+
+/** How long a new hand takes to come in, and a gone hand to fold away. */
+internal const val HAND_ENTER_MILLIS = 1_350
+internal const val HAND_EXIT_MILLIS = 1_200
+
+/**
+ * The glow of a hand, from 0 (none) to 1. A new hand starts lit and fades out after it came in. A corrected hand
+ * glows twice softly.
+ */
+@Composable
+internal fun rememberHandGlow(handId: Int, change: HandListChange?): Float {
+    val glow = remember { Animatable(0f) }
+    LaunchedEffect(change?.serial) {
+        when {
+            change == null -> Unit
+            handId in change.added -> {
+                glow.snapTo(1f)
+                delay(HAND_ENTER_MILLIS.toLong())
+                glow.animateTo(0f, tween(3_000))
+            }
+            handId in change.edited -> repeat(2) {
+                glow.animateTo(1f, tween(750))
+                glow.animateTo(0f, tween(1_050))
+            }
+        }
+    }
+    return glow.value
+}
+
+/** Green for a new hand, the primary color for a corrected one. */
+@Composable
+internal fun handGlowColor(handId: Int, change: HandListChange?): Color = if (change != null && handId in change.edited) MaterialTheme.colorScheme.primary else MtsTheme.colors.gain

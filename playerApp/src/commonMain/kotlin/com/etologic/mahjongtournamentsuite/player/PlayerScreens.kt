@@ -5,7 +5,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -1877,7 +1876,7 @@ private fun HandHistory(
         }
     }
     if (details) {
-        HandDetailsTable(table) { seat -> SeatWind.entries.getOrNull(seat) }
+        HandDetailsTable(table, change) { seat -> SeatWind.entries.getOrNull(seat) }
     } else if (table.hands.none { it.isDone || it.penaltyRows().isNotEmpty() }) {
         EmptyState(Icons.Default.Edit, stringResource(Res.string.details_no_hands_title), stringResource(Res.string.details_no_hands_message))
     } else {
@@ -1900,7 +1899,7 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable, change: Han
     (shown + gone).sortedByDescending { it.first.handId }.forEach { (hand, isGone) ->
         key(hand.handId, isGone) {
             val isNew = change != null && hand.handId in change.added
-            val visible = remember { MutableTransitionState(!isNew && !isGone) }
+            val visible = remember { MutableTransitionState(!isNew) }
             visible.targetState = !isGone
             AnimatedVisibility(
                 visibleState = visible,
@@ -1915,33 +1914,16 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable, change: Han
     }
 }
 
-private const val HAND_ENTER_MILLIS = 1_350
-private const val HAND_EXIT_MILLIS = 1_200
-
 @Composable
 private fun HandCard(view: PlayerTournamentView, table: PlayerTable, hand: TableHand, change: HandListChange?) {
     val penalties = hand.penaltyRows().asReversed()
-    val glow = remember { Animatable(0f) }
-    LaunchedEffect(change?.serial) {
-        when {
-            change == null -> Unit
-            hand.handId in change.added -> {
-                glow.snapTo(1f)
-                delay(HAND_ENTER_MILLIS.toLong())
-                glow.animateTo(0f, tween(3_000))
-            }
-            hand.handId in change.edited -> repeat(2) {
-                glow.animateTo(1f, tween(750))
-                glow.animateTo(0f, tween(1_050))
-            }
-        }
-    }
+    val glow = rememberHandGlow(hand.handId, change)
     val base = MaterialTheme.colorScheme.surfaceContainerHigh
-    val accent = if (change != null && hand.handId in change.edited) MaterialTheme.colorScheme.primary else MtsTheme.colors.gain
+    val accent = handGlowColor(hand.handId, change)
     Card(
         Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = lerp(base, accent.copy(alpha = 0.35f).compositeOver(base), glow.value)),
-        border = if (glow.value > 0f) BorderStroke(2.dp, accent.copy(alpha = glow.value)) else null,
+        colors = CardDefaults.cardColors(containerColor = lerp(base, accent.copy(alpha = 0.35f).compositeOver(base), glow)),
+        border = if (glow > 0f) BorderStroke(2.dp, accent.copy(alpha = glow)) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         // The hand number is in a narrow column at the start, centered on the whole card. The dividers stay in

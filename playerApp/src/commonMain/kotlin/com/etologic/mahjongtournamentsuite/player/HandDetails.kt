@@ -1,5 +1,12 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,7 +16,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.People
@@ -18,11 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -113,10 +121,12 @@ private sealed interface DetailRow {
     data class Subtotal(val totals: List<Int>) : DetailRow
 }
 
-private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> {
-    val rows = mutableListOf<DetailRow>()
+/** The lines of each hand, by hand number, in the order of the hands. */
+private fun detailRows(hands: List<TableHand>, seatIds: List<Int>): Map<Int, List<DetailRow>> {
+    val groups = LinkedHashMap<Int, List<DetailRow>>()
     val totals = MutableList(4) { 0 }
-    table.hands.sortedBy { it.handId }.forEach { hand ->
+    hands.sortedBy { it.handId }.forEach { hand ->
+        val rows = mutableListOf<DetailRow>()
         val penalties = hand.penaltyRows()
         if (hand.isDone) {
             val change = hand.resultChange(seatIds)
@@ -131,8 +141,9 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
             if (hand.isDone) values.forEachIndexed { seat, value -> totals[seat] += value }
         }
         if (hand.isDone) rows += DetailRow.Subtotal(totals.toList())
+        if (rows.isNotEmpty()) groups[hand.handId] = rows
     }
-    return rows
+    return groups
 }
 
 /**
@@ -140,14 +151,14 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
  * The space is small, so the winner and the loser are player ids. The header shows the id of each seat.
  */
 @Composable
-fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
+internal fun HandDetailsTable(table: PlayerTable, change: HandListChange? = null, windOf: (Int) -> SeatWind?) {
     val seatIds = table.seatIds().filterNotNull()
     if (seatIds.size != 4) {
         AppEmptyState(Icons.Default.People, stringResource(Res.string.details_no_seats_title), stringResource(Res.string.details_no_seats_message), compact = true)
         return
     }
-    val rows = detailRows(table, seatIds)
-    if (rows.isEmpty()) {
+    val groups = detailRows(table.hands, seatIds)
+    if (groups.isEmpty()) {
         AppEmptyState(Icons.Default.Edit, stringResource(Res.string.details_no_hands_title), stringResource(Res.string.details_no_hands_message), compact = true)
         return
     }
@@ -195,11 +206,39 @@ fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
             }
             HorizontalDivider()
         }
-        rows.forEach { row ->
-            when (row) {
-                is DetailRow.Result -> ResultLine(row)
-                is DetailRow.Penalty -> PenaltyLine(row)
-                is DetailRow.Subtotal -> SubtotalLine(row)
+        // A gone hand stays as it was, with the totals it had, until it has folded away.
+        val gone = change?.removed.orEmpty().filter { it.handId !in groups }.mapNotNull { old ->
+            detailRows(table.hands.filter { it.handId != old.handId } + old, seatIds)[old.handId]?.let { old.handId to it }
+        }
+        val shown = groups.map { (id, rows) -> Triple(id, rows, false) } + gone.map { (id, rows) -> Triple(id, rows, true) }
+        shown.sortedBy { it.first }.forEach { (handId, rows, isGone) ->
+            key(handId, isGone) {
+                val isNew = change != null && handId in change.added
+                val visible = remember { MutableTransitionState(!isNew) }
+                visible.targetState = !isGone
+                AnimatedVisibility(
+                    visibleState = visible,
+                    enter = expandVertically(tween(HAND_ENTER_MILLIS), expandFrom = Alignment.Top) + fadeIn(tween(HAND_ENTER_MILLIS)),
+                    exit = shrinkVertically(tween(HAND_EXIT_MILLIS), shrinkTowards = Alignment.Top) + fadeOut(tween(HAND_EXIT_MILLIS)),
+                ) {
+                    val glow = rememberHandGlow(handId, change)
+                    val accent = handGlowColor(handId, change)
+                    // The glow lies over the lines, so it also covers the background of the subtotal.
+                    Column(
+                        Modifier.fillMaxWidth().drawWithContent {
+                            drawContent()
+                            drawRect(accent.copy(alpha = 0.3f * glow))
+                        },
+                    ) {
+                        rows.forEach { row ->
+                            when (row) {
+                                is DetailRow.Result -> ResultLine(row)
+                                is DetailRow.Penalty -> PenaltyLine(row)
+                                is DetailRow.Subtotal -> SubtotalLine(row)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
