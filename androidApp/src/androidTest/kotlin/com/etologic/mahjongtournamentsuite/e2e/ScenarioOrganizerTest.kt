@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
@@ -399,6 +400,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 if (saved.isFailure) {
                     c.waitForIdle()
                     if (tableUpdatedShown()) continue
+                    closeOpenMenu()
                     c.clickButton("Save")
                 }
                 idle(3_000)
@@ -510,6 +512,19 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         idle(1_000)
         c.onAllNodes(hasText("-") and hasClickAction()).onLast().performClick()
         c.waitForIdle()
+        closeOpenMenu()
+    }
+
+    /**
+     * A menu of a player cell that stays open takes the touches of the screen: no tap reaches the editor. The menu is a
+     * window of its own, so there is more than one root, and the back key closes it without leaving the editor.
+     */
+    private fun closeOpenMenu() {
+        repeat(3) {
+            if (c.onAllNodes(isRoot()).fetchSemanticsNodes().size <= 1 || tableUpdatedShown()) return
+            shell("input keyevent KEYCODE_BACK")
+            idle(1_000)
+        }
     }
 
     /**
