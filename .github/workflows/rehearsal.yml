@@ -178,6 +178,10 @@ jobs:
             }) | map(select((.saves | length) > 0))
             | .[] | "\(.t)0  saves \(.saves | length)  p50 \(.saves | pct(0.5))  p95 \(.saves | pct(0.95))  max \(.saves | max)"
           ' requests.jsonl
+          echo "--- the slowest reads (GET over 2 s): time, latency in s, status, size, path ---"
+          gcloud logging read "resource.type=\"cloud_run_revision\" AND logName:\"run.googleapis.com%2Frequests\" AND httpRequest.requestMethod=\"GET\" AND httpRequest.latency>\"2s\" AND timestamp>=\"$since\"" \
+            --project="$STAGING" --limit=60 --format=json \
+            | jq -r '.[] | "\(.timestamp[0:19])  \(.httpRequest.latency)  \(.httpRequest.status)  \(.httpRequest.responseSize // "-")  \(.httpRequest.requestUrl | sub("^https://[^/]+"; "") | sub("\\?.*"; ""))"'
           echo "--- new instances started (the first request of an instance waits for it) ---"
           gcloud logging read "resource.type=\"cloud_run_revision\" AND timestamp>=\"$since\" AND (textPayload:\"STARTUP\" OR textPayload:\"Starting new instance\")" \
             --project="$STAGING" --limit=500 --format="value(timestamp)" | cut -c1-15 | sort | uniq -c
