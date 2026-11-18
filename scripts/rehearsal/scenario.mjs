@@ -17,6 +17,8 @@ export const SCENARIOS = {
   small: { players: 24, rounds: 4 },
   medium: { players: 64, rounds: 7 },
   large: { players: 240, rounds: 11 },
+  // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1.
+  corners: { players: 24, rounds: 2, minutes: 8, cornerRound: 1 },
 };
 
 /** Minutes of a round: the emulator that writes the hands takes about 70 s per hand, a bot about 40 s. */
@@ -96,7 +98,11 @@ export async function makePlan(args) {
   const start = madrid(new Date(now.getTime() + 60 * 60_000));
   const stamp = madrid(now);
   const tag = `gd${stamp.date.slice(5).replace("-", "")}${Math.random().toString(36).slice(2, 6)}`;
-  const minutes = roundMinutes(phoneEmulators);
+  const minutes = size.minutes ?? roundMinutes(phoneEmulators);
+  // The cases of the editor play in round 2, so the first round plays as usual. In corners they play in round 1, at
+  // tables other than the late one.
+  const fix = size.cornerRound ?? 2;
+  const fixTables = fix === 1 ? [2, 4, 5, 6] : [2, 3, 4, 5];
   // About 1 in 4 players has an account before the tournament, made by hand in Users. The last slots (1 in 10, at
   // least 2) are not in the file: the organizer assigns them by hand and types their emails in the invitations.
   const manualCount = Math.max(2, Math.round(size.players / 10));
@@ -138,10 +144,10 @@ export async function makePlan(args) {
     cornerCases: [
       { kind: "late", round: 1, table: 3, minutes: 4 },
       { kind: "substitution", round: 1, table: 3, reason: "LATE", afterMinutes: 1 },
-      { kind: "delete", round: 2, table: 2, which: "last", minHands: 4 },
-      { kind: "delete", round: 2, table: 3, which: "older", minHands: 6, back: 3 },
-      { kind: "edit", round: 2, table: 4, which: "last", minHands: 4 },
-      { kind: "edit", round: 2, table: 5, which: "older", minHands: 6, back: 3 },
+      { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
+      { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
+      { kind: "edit", round: fix, table: fixTables[2], which: "last", minHands: 4 },
+      { kind: "edit", round: fix, table: fixTables[3], which: "older", minHands: 6, back: 3 },
     ],
     roundSchedules: Array.from({ length: size.rounds }, (_, index) => ({ roundId: index + 1, date: start.date, startTime: start.time })),
     slots,

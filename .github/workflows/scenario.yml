@@ -6,10 +6,14 @@ on:
   workflow_dispatch:
     inputs:
       scenario:
-        description: "The tournament: small (24 players, 4 rounds), medium (64 players, 7 rounds) or large (240 players, 11 rounds)."
+        description: "The tournament: small (24 players, 4 rounds), medium (64 players, 7 rounds), large (240 players, 11 rounds), or corners (24 players, 2 rounds of 8 minutes: the corner cases only, about 45 min)."
         type: choice
-        options: [small, medium, large]
+        options: [small, medium, large, corners]
         default: small
+      deploy_staging:
+        description: "Deploy main to staging first. Off only when the backend and the web did not change since the last deploy."
+        type: boolean
+        default: true
       phone_emulators:
         description: "Phone emulators: on about 5 h / 3 h 15 / 2 h, off about 2 h 30 / 1 h 30 / 50 min (240 / 64 / 24 players). The admin tablet plays always."
         type: boolean
@@ -41,7 +45,7 @@ jobs:
   # Main goes to staging first: the app of the test and the backend it talks to are the same commit.
   staging:
     name: Deploy main to staging
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && inputs.deploy_staging
     uses: ./.github/workflows/staging.yml
     with:
       action: deploy
@@ -54,7 +58,7 @@ jobs:
   plan:
     name: Plan of the scenario
     needs: staging
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.staging.result == 'success' || needs.staging.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -144,6 +148,8 @@ jobs:
   organizer-setup:
     name: Organizer prepares the tournament
     needs: [plan, app]
+    # The deploy of staging can be skipped: the results of the direct needs decide, not the whole chain.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.app.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -213,6 +219,7 @@ jobs:
   invitations:
     name: Players open their invitations
     needs: organizer-setup
+    if: ${{ !cancelled() && needs.organizer-setup.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -259,6 +266,7 @@ jobs:
   organizer-play:
     name: Organizer runs the rounds
     needs: [app, organizer-setup, invitations]
+    if: ${{ !cancelled() && needs.app.result == 'success' && needs.organizer-setup.result == 'success' && needs.invitations.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 340
     permissions:
@@ -328,6 +336,7 @@ jobs:
   bots:
     name: Players play the tables
     needs: [organizer-setup, invitations]
+    if: ${{ !cancelled() && needs.organizer-setup.result == 'success' && needs.invitations.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 340
     permissions:
@@ -412,3 +421,17 @@ jobs:
           name: check
           path: out/check.json
           retention-days: 30
+
+  # The organizer stopped: the bots would play to the end of the schedule for nothing. The whole run stops.
+  fail-fast:
+    name: Stop when the organizer fails
+    needs: [organizer-setup, organizer-play]
+    if: ${{ failure() && (needs.organizer-setup.result == 'failure' || needs.organizer-play.result == 'failure') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - run: gh run cancel "${{ github.run_id }}" --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -88,3 +88,10 @@ with the server, together with the hands of the bots, the times and the errors (
 It also asks the server the places of every player, as the list of tournaments shows them (podium, team, chicken
 hands and best hand), and compares each one with its own count. The bots mark about a third of the hands won on a
 discard with 8 to 12 points as chicken hands, so every scenario has some.
+
+## Corners: the corner cases in minutes
+
+`corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The late
+table and its substitution are at table 3, and the deleted and edited hands at tables 2, 4, 5 and 6. It takes about
+45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
+organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.
