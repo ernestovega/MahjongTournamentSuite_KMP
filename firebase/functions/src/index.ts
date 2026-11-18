@@ -14,6 +14,11 @@ export const api = onRequest(
     region: "europe-southwest1",
     // The code needs about 170 MB just to load. The default of 256 MiB is too small and the container is killed at start.
     memory: "512MiB",
+    // A whole CPU: below 1 CPU an instance serves one request at a time, and with the phones of a tournament reading
+    // every 2 s the saves of hands waited in the queue (p95 about 2 s in the game day of 2026-11-18). With 1 CPU an
+    // instance serves many requests at once, and fewer instances cost about the same.
+    cpu: 1,
+    concurrency: 80,
     // A brake on the bill: the public routes are open to everyone, and a flood of requests must not scale without end.
     maxInstances: 20,
     // The exports (ID cards, ID list, EMA report) and the creation of a big tournament can take long. The apps wait up

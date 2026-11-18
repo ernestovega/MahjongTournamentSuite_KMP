@@ -885,6 +885,7 @@ internal fun rememberTournamentView(
                         val mine = current.mySlotId ?: return@let false
                         current.tables.any { it.roundId == tableRoundId && it.tableId == tableId && mine in it.playerSlots() }
                     } ?: false,
+                    tableCompleted = view?.tables?.any { it.roundId == tableRoundId && it.tableId == tableId && it.table.isCompleted } ?: false,
                 )
             },
         ) { result ->

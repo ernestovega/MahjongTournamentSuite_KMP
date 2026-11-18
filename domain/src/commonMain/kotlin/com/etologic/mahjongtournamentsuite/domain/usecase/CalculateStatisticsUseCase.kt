@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableScoreSwing
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TableStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.handTimesMs
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
@@ -72,6 +73,7 @@ class CalculateStatisticsUseCase {
                 penaltyCount = analysis.results.sumOf { it.second.penaltyCount },
                 swing = analysis.swing,
                 bestHandGain = analysis.winningGains.maxOrNull(),
+                handTimesMs = if (analysis.hasHands) handTimesMs(analysis.table.hands) else emptyList(),
             )
         }
 

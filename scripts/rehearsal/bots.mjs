@@ -177,6 +177,7 @@ class PlayerBot {
     for (const entry of latest.values()) {
       const server = data.hands.find((hand) => Number(hand.handId) === Number(entry.handId));
       if (server == null) continue;
+      if (!server.isDone || !sameHand(entry.hand, server)) this.holdTables.delete(key);
       if (!server.isDone) {
         entry.deleted = true;
         deleted = true;
@@ -284,6 +285,18 @@ class PlayerBot {
         await sleep(Math.min(this.pollMs, nextHandAt - Date.now()));
         await this.manifest();
         continue;
+      }
+      const hold = this.holdTables.get(key);
+      if (hold != null && data.hands.filter((hand) => hand.isDone).length >= hold) {
+        if (!this.holdUntil.has(key)) {
+          this.holdUntil.set(key, Date.now() + 4 * 60_000);
+          this.metrics.event("table-waits-for-editor", { table: key, hands: hold });
+        }
+        if (Date.now() < this.holdUntil.get(key)) {
+          await sleep(this.pollMs);
+          continue;
+        }
+        this.holdTables.delete(key);
       }
       if (Math.random() < this.penaltyRate) await this.penalty(roundId, table.tableId, seats, data.table.version);
       const outcome = await this.writeHand(roundId, table, key, seats);
@@ -458,6 +471,10 @@ export async function runBots(options) {
     venuePhones: options.venuePhones ?? 0,
     verbose: options.verbose ?? false,
     lateTables: new Set(options.lateTables ?? []),
+    // The tables where the editor corrects the newest hand: the table stops after [minHands] hands and waits for the
+    // editor, as players who called the organization do. Without the wait the next hand would make it an older one.
+    holdTables: new Map(Object.entries(options.holdTables ?? {})),
+    holdUntil: new Map(),
     // How long the scorer of a late table arrives after the gong.
     lateMs: options.lateMs ?? 120_000,
     raceTables: new Set(options.raceTables ?? []),
@@ -537,6 +554,33 @@ export function writeReport(path, title, report) {
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n\n`);
 }
 
+/**
+ * Looks at the last round every 30 s with a plain read that the metrics do not count. [done] turns true a minute after
+ * all its tables are completed, so the phones see the last saves and the corrections first.
+ */
+function watchTheLastRound(base, tournamentId, lastRound) {
+  const state = { done: false, completedAt: null };
+  const look = async () => {
+    try {
+      const response = await fetch(`${base.replace(/\/$/, "")}/public/tournaments/${tournamentId}/rounds/${lastRound}/tables-with-hands`);
+      if (!response.ok) return;
+      const tables = (await response.json()).tables ?? [];
+      const completed = tables.length > 0 && tables.every((item) => item.table?.isCompleted);
+      if (!completed) state.completedAt = null;
+      else state.completedAt ??= Date.now();
+      if (state.completedAt != null && Date.now() - state.completedAt >= 60_000) {
+        if (!state.done) console.log(`Every table of round ${lastRound} is completed: the bots stop.`);
+        state.done = true;
+      }
+    } catch {
+      // The next look tries again.
+    }
+  };
+  const timer = setInterval(look, 30_000);
+  state.stop = () => clearInterval(timer);
+  return state;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const password = process.env.REHEARSAL_PASSWORD ?? "";
@@ -552,6 +596,8 @@ async function main() {
   const tournamentId = await findTournament(api, args.tournament);
   const until = args.until ? Date.parse(args.until) : Date.now() + Number(args.minutes ?? 150) * 60_000;
   const [handMin, handMax] = String(args["hand-seconds"] ?? "60-90").split("-").map(Number);
+  // In a game day the bots stop a minute after every table of the last round is completed, not at the deadline.
+  const finished = plan ? watchTheLastRound(args.api ?? STAGING_API, tournamentId, plan.rounds) : null;
   const report = await runBots({
     api, metrics, tournamentId, baseEmail, password,
     slots: parseRange(args.slots),
@@ -568,9 +614,14 @@ async function main() {
       ...(plan?.cornerCases ?? []).filter((item) => item.kind === "late").map((item) => `${item.round}_${item.table}`),
     ],
     lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
+    holdTables: Object.fromEntries((plan?.cornerCases ?? [])
+      .filter((item) => (item.kind === "delete" || item.kind === "edit") && item.which === "last")
+      .map((item) => [`${item.round}_${item.table}`, item.minHands])),
     raceTables: String(args["race-tables"] ?? "").split(",").filter(Boolean),
     verbose: Boolean(args.verbose),
+    stopped: finished ? () => finished.done : undefined,
   });
+  finished?.stop();
   writeReport(args.report ?? "out/bots.json", args.title ?? "Bots", report);
 }
 

@@ -161,4 +161,28 @@ class RoundStatisticsTest {
         // A value that the whole tournament does not know stays unknown in the round.
         assertNull(statistics.copy(highestHandGain = null).forRound(1).highestHandGain)
     }
+
+    private fun hand(id: Int, doneAtMs: Long?, done: Boolean = true) = TableHand(
+        handId = id, playerWinnerId = "", playerLooserId = "", handScore = "", isChickenHand = false, isDone = done,
+        playerEastPenalty = "", playerSouthPenalty = "", playerWestPenalty = "", playerNorthPenalty = "", doneAtMs = doneAtMs,
+    )
+
+    @Test
+    fun theTimeOfAHandIsTheGapToTheHandBeforeWhenItLooksLikePlay() {
+        val minute = 60_000L
+        val hands = listOf(
+            hand(1, 0),
+            hand(2, 4 * minute),
+            // Entered right after hand 2: not play.
+            hand(3, 4 * minute + 10_000),
+            hand(4, 9 * minute),
+            // After a long break: not play.
+            hand(5, 60 * minute),
+            // No time: hand 7 has no hand before it with a time.
+            hand(6, null),
+            hand(7, 64 * minute),
+            hand(8, 70 * minute, done = false),
+        )
+        assertEquals(listOf(4 * minute, 9 * minute - (4 * minute + 10_000)), handTimesMs(hands))
+    }
 }

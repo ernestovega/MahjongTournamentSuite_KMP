@@ -318,6 +318,8 @@ data class TableStatistics(
     val swing: List<TableScoreSwing>,
     /** The most points that one winning hand of the table added to its winner, without penalties. Null without hands. */
     val bestHandGain: Int? = null,
+    /** The time of each hand that has one, see [handTimesMs]. Empty for hands saved before the server kept the time. */
+    val handTimesMs: List<Long> = emptyList(),
 )
 
 data class TournamentStatistics(
@@ -340,6 +342,10 @@ data class TournamentStatistics(
     val penaltyPoints: Int? = null,
     val tables: List<TableStatistics>,
 ) {
+    /** The average time of a hand, from the completed tables with hands. Null when no hand has a time. */
+    val averageHandTimeMs: Long?
+        get() = tables.filter { it.isCompleted && it.hasHands }.flatMap { it.handTimesMs }.takeIf { it.isNotEmpty() }?.average()?.toLong()
+
     val drawRate: Double? get() = if (handsPlayed > 0) drawnHands.toDouble() / handsPlayed else null
 
     /** The hands that a completed table with hands played, on average. */

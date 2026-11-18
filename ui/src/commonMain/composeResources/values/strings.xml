@@ -215,6 +215,8 @@
     <string name="hands_won_by_self_draw">Won by self-draw</string>
     <string name="hands_drawn">Drawn</string>
     <string name="stat_average_winning_hand">Avg. winning hand</string>
+    <string name="stat_average_hand_time">Avg. time per hand</string>
+    <string name="stat_average_hand_time_info">The time between a hand and the one before it, when both were entered at the table during play.\nHands entered one after the other, or after a break of more than 30 minutes, do not count.</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Me</string>
     <string name="scope_my_tournaments">My tournaments</string>

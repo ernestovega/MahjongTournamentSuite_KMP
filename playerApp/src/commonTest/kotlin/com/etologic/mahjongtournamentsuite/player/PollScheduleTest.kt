@@ -176,4 +176,10 @@ class PollScheduleTest {
         assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T15:30"), playsHere = true, ownTable = true))
         assertEquals(5.minutes, PollSchedule.nextDelay(tournament(), 1, at("2026-10-12T10:00"), playsHere = true, ownTable = true))
     }
+
+    @Test
+    fun aCompletedTableChecksEvery15SecondsWhileItsRoundGoesOn() {
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T10:00"), playsHere = true, ownTable = true, tableCompleted = true))
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T10:00"), tableCompleted = true))
+    }
 }
