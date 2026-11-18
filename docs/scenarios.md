@@ -87,6 +87,10 @@ read it, so each one knows its part.
   end of the match time. The checks want that hand saved in the extra time, as the last hand of the table, and the
   table completed by it.
 - A table that stays open and the admin closes it.
+
+  Done (plan.cornerCases, last round, table 2). The players leave after 3 hands. When the time is over, the organizer
+  closes the open tables of the ended rounds in the review of Round control. The checks want the table completed with
+  those 3 hands.
 - A table with manual totals.
 - A seat change after the seats are saved.
 

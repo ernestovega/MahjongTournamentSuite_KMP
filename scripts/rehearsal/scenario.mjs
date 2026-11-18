@@ -151,6 +151,8 @@ export async function makePlan(args) {
       { kind: "seat-change", round: 1, table: 4 },
       // The last round, table 1: a slow table that plays its last hand in the extra time after the gong.
       { kind: "extra-time", round: size.rounds, table: 1, afterHands: 3 },
+      // The last round, table 2: the players leave after 3 hands, and the organizer closes the table in the review.
+      { kind: "abandoned", round: size.rounds, table: 2, afterHands: 3 },
       { kind: "substitution", round: 1, table: 3, reason: "LATE", afterMinutes: 1 },
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
       { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
