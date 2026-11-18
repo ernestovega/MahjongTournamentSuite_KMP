@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.platform.testTag
 import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -617,7 +618,7 @@ fun CreateTournamentDialog(
                                         onClick = { showDrawExplanation = true },
                                         modifier = Modifier.testTag("drawExplanationButton"),
                                     ) {
-                                        Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                                         Spacer(Modifier.width(8.dp))
                                         Text(stringResource(Res.string.draw_help_button))
                                     }

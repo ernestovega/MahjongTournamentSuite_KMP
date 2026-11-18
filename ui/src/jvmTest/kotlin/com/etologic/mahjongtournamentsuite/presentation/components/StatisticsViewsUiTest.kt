@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -15,8 +19,6 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -99,13 +101,13 @@ class StatisticsViewsUiTest {
     }
 
     @Test
-    fun tournamentListShowsTheFiveNewestFirstAndLoadsMoreOnRequest() = runComposeUiTest {
+    fun tournamentListShowsEveryTournamentWithItsSummaryAndFiltersByYear() = runComposeUiTest {
         val statistics = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
-        // The list comes in play order, the oldest first.
+        // The list comes in play order, the oldest first: three tournaments in 2025 and five in 2026.
         val items = (1..8).map { number ->
             Tournament(
                 id = "t$number", name = "Open $number", isTeams = false, numPlayers = 4, numRounds = 3,
-                eventStartDate = "2026-0$number-10",
+                eventStartDate = if (number <= 3) "2025-0$number-10" else "2026-0$number-10",
             ) to statistics
         }
         val asked = mutableListOf<List<String>>()
@@ -120,19 +122,61 @@ class StatisticsViewsUiTest {
             }
         }
         waitForIdle()
-        // The section asks for the places of the five newest tournaments only.
-        assertEquals(listOf(listOf("t8", "t7", "t6", "t5", "t4")), asked)
-        assertEquals(5, onAllNodesWithText("2 of 8").fetchSemanticsNodes().size)
-        listOf("Open 8", "Open 7", "Open 6", "Open 5", "Open 4").forEach { onNodeWithText(it).assertExists() }
-        listOf("Open 3", "Open 2", "Open 1").forEach { onNodeWithText(it).assertDoesNotExist() }
-        onNodeWithText("Showing 5 of 8 tournaments. The newest tournaments come first.").assertExists()
+        // Every tournament shows, the newest first, and the places of all of them load in one call.
+        assertEquals(listOf((8 downTo 1).map { "t$it" }), asked)
+        (1..8).forEach { onNodeWithText("Open $it").assertExists() }
+        // Every card says the place under its name, folded or not.
+        assertEquals(8, onAllNodesWithText("2 of 8").fetchSemanticsNodes().size)
+        listOf("All", "2026", "2025").forEach { onNodeWithText(it).assertExists() }
 
-        // The button is below the test window, so the test calls its click action and sends no touch.
-        onNodeWithText("Show 5 more").performSemanticsAction(SemanticsActions.OnClick)
-        listOf("Open 3", "Open 2", "Open 1").forEach { onNodeWithText(it).assertExists() }
+        // A year shows only its tournaments.
+        onNodeWithText("2025").performClick()
         waitForIdle()
-        // A new page asks for its own tournaments, not for the first five again.
-        assertEquals(listOf(listOf("t8", "t7", "t6", "t5", "t4"), listOf("t3", "t2", "t1")), asked)
+        (1..3).forEach { onNodeWithText("Open $it").assertExists() }
+        (4..8).forEach { onNodeWithText("Open $it").assertDoesNotExist() }
+        // A tap on the chosen year shows all the years again.
+        onNodeWithText("2025").performClick()
+        waitForIdle()
+        onNodeWithText("Open 8").assertExists()
+        assertEquals(1, asked.size)
+    }
+
+    @Test
+    fun theTournamentBarShowsOnlyTheChosenTournament() = runComposeUiTest {
+        val statistics = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
+        val items = (1..4).map { number ->
+            Tournament(
+                id = "t$number",
+                name = "Open $number",
+                isTeams = false,
+                numPlayers = 4,
+                numRounds = 3,
+                eventStartDate = "202$number-05-10",
+            ) to statistics
+        }
+        setContent {
+            var chosen by remember { mutableStateOf<String?>(null) }
+            MtsTheme(useDarkTheme = false) {
+                Column(Modifier.width(900.dp).padding(16.dp)) {
+                    ChosenTournamentBar(items.map { it.first }, chosen, { chosen = it }, "Change", 720.dp)
+                    PlayerTournamentsSection(items, tournamentId = chosen)
+                }
+            }
+        }
+        waitForIdle()
+        // At the start the bar says "All tournaments" and every tournament shows, with the year chips.
+        onNodeWithText("All tournaments").assertExists()
+        (1..4).forEach { onNodeWithText("Open $it").assertExists() }
+        onNodeWithText("2022").assertExists()
+
+        onNodeWithText("Change").performClick()
+        onNodeWithText("Tournament").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Open 2").fetchSemanticsNodes().size > 1 }
+        onAllNodesWithText("Open 2").let { it[it.fetchSemanticsNodes().size - 1] }.performClick()
+        waitForIdle()
+        // The bar shows the chosen tournament, and the list shows only that one, without the year chips.
+        assertEquals(2, onAllNodesWithText("Open 2").fetchSemanticsNodes().size)
+        listOf("Open 1", "Open 3", "Open 4", "2022").forEach { onNodeWithText(it).assertDoesNotExist() }
     }
 
     @Test
@@ -197,29 +241,6 @@ class StatisticsViewsUiTest {
     }
 
     @Test
-    fun tournamentListBarWorksWithTheDropdownAndTheDates() = runComposeUiTest {
-        val statistics = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
-        val items = (1..5).map { number ->
-            Tournament(
-                id = "t$number", name = "Open $number", isTeams = false, numPlayers = 4, numRounds = 3,
-                eventStartDate = "2026-0$number-10",
-            ) to statistics
-        }
-        setContent {
-            MtsTheme(useDarkTheme = false) {
-                Column(Modifier.width(900.dp).padding(16.dp)) { PlayerTournamentsSection(items) }
-            }
-        }
-        waitForIdle()
-        onNodeWithText("Tournament").performClick()
-        waitForIdle()
-        onAllNodesWithText("Open 1")[onAllNodesWithText("Open 1").fetchSemanticsNodes().size - 1].performClick()
-        waitForIdle()
-        // The dropdown shows the name and the unfolded card shows it too.
-        assertEquals(2, onAllNodesWithText("Open 1").fetchSemanticsNodes().size)
-    }
-
-    @Test
     fun aRoundChipOfATournamentCardShowsOnlyThatRound() = runComposeUiTest {
         val statistics = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
         val items = listOf(Tournament(id = "t1", name = "Open 1", isTeams = false, numPlayers = 4, numRounds = 3, eventStartDate = "2026-01-10") to statistics)
@@ -233,17 +254,18 @@ class StatisticsViewsUiTest {
         waitForIdle()
         // Totals shows the place and the score of the whole tournament.
         listOf("Totals", "R1", "R2", "R3").forEach { onNodeWithText(it).assertExists() }
-        onNodeWithText("2 of 8", substring = true).assertExists()
-        onNodeWithText("66").assertExists()
-        // Round 2 shows only its own table: 22 points of score, and no place in the tournament.
+        // The place and the score of the whole tournament show in the summary under the name.
+        onNodeWithText("2 of 8").assertExists()
+        onNodeWithText("Score 66").assertExists()
+        // Round 2 shows only its own table: 22 points of score. The summary keeps the whole tournament.
         onNodeWithText("R2").performClick()
         waitForIdle()
-        onNodeWithText("2 of 8", substring = true).assertDoesNotExist()
+        onNodeWithText("2 of 8").assertExists()
         assertTrue(onAllNodesWithText("22").fetchSemanticsNodes().isNotEmpty())
         // A tap on the chosen round goes back to the whole tournament.
         onNodeWithText("R2").performClick()
         waitForIdle()
-        onNodeWithText("66").assertExists()
+        onNodeWithText("Score 66").assertExists()
     }
 
     @Test
@@ -264,7 +286,6 @@ class StatisticsViewsUiTest {
             }
         }
         waitForIdle()
-        onNodeWithText("Tournament").performClick()
-        waitForIdle()
+        onNodeWithText("Open 1").assertExists()
     }
 }

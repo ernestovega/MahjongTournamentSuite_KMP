@@ -184,22 +184,12 @@
     <string name="places_last">Последние %1$d</string>
     <string name="places_avg_place">ср. место</string>
     <string name="skill_score_n">Оценка мастерства %1$d</string>
-    <string name="field_tournament">Турнир</string>
-    <string name="date_from">С</string>
-    <string name="date_to">По</string>
-    <string name="fold_all">Свернуть все</string>
-    <string name="unfold_all">Развернуть все</string>
     <string name="stat_rank">Место</string>
     <string name="stat_best_table_score">Лучший счёт за столом</string>
     <string name="stat_best_hand">Лучшая раздача</string>
     <string name="stat_chicken_hands">Курицы</string>
     <string name="stat_penalties">Штрафы</string>
     <string name="stat_penalties_info">Это число штрафов.\nЧисло в скобках — сумма потерянных очков.</string>
-    <string name="range_none">В этом периоде нет турниров.</string>
-    <string name="range_some">%1$d из %2$d турниров в этом периоде.</string>
-    <string name="tournaments_showing">Показано %1$d из %2$d турниров. Сначала самые новые.</string>
-    <string name="tournaments_show_more">Показать ещё %1$d</string>
-    <string name="tournaments_show_all">Показать все</string>
     <string name="round_n">Раунд %1$d</string>
     <string name="table_n">Стол %1$d</string>
     <string name="places_history_title">Место за последние %1$d столов</string>
@@ -558,4 +548,6 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Политика конфиденциальности</string>
     <string name="dev_staging">Staging (тестовый сайт)</string>
+    <string name="years_all">Все</string>
+    <string name="stats_all_tournaments">Все турниры</string>
 </resources>

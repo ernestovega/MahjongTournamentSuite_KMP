@@ -5,18 +5,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,13 +43,23 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.domain.model.byRound
+import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
+import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenTournamentBar
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenStatisticsBar
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
+import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabContentColor
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import androidx.compose.material3.HorizontalDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
@@ -62,7 +69,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
@@ -87,7 +93,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournaments
 import mahjongtournamentsuite.adminapp.generated.resources.use_the_field_above_to_search
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The width of one tab on a wide screen. */
@@ -209,6 +214,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     // The player card sits between the tab rows. The button on it opens the search field to choose another player.
     var changingPlayer by remember { mutableStateOf(false) }
     var changingTournament by remember { mutableStateOf(false) }
+    // The tournament chosen in By tournaments. Null shows all of them. Another player starts again with all of them.
+    var personTournamentId by remember(personEma) { mutableStateOf<String?>(null) }
     val personProfile = person?.profile ?: registry.firstOrNull { it.emaId == personEma }?.let {
         PlayerProfile(it.displayName, it.emaId, it.country, it.photoUrl)
     }
@@ -248,105 +255,97 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     }
                 }
             }
-            // The selector sits between the tab rows.
+            // The chosen tournament or player sits between the tab rows, in a bar like the one of the player app.
+            // Without a choice, or while the editor changes it, a field takes its place.
             val pickerData = tournamentData
-            if (scope == StatisticsScope.TOURNAMENT ||
-                scope == StatisticsScope.PERSON ||
-                scope == StatisticsScope.PERSON_TOURNAMENTS ||
-                (scope == StatisticsScope.PLAYER && pickerData != null)
-            ) {
-                // The name moves to the top bar when this card, with the name of the player, scrolls out of view.
+            val barWidth = StatisticsTabWidth * mainTabs.size
+            val slotProfile = pickerData?.profiles?.get(effectiveSlot ?: pickerData.slots.firstOrNull()?.id)
+            val barShown = when (scope) {
+                StatisticsScope.TOURNAMENT -> chosenTournament != null && !changingTournament
+                StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> personProfile != null && !changingPlayer
+                StatisticsScope.PLAYER -> slotProfile != null && !changingPlayer
+                StatisticsScope.TABLE -> false
+            }
+            if (scope != StatisticsScope.TABLE && barShown) {
+                // The name moves to the top bar when this bar scrolls out of view.
                 TrackScrollOut(
-                    enabled = when (scope) {
-                        StatisticsScope.TOURNAMENT -> chosenTournament != null && !changingTournament
-                        StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> personProfile != null && !changingPlayer
-                        else -> false
-                    },
+                    enabled = true,
                     onChange = { nameScrolledOut = it },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val fieldModifier = Modifier.widthIn(max = 520.dp).fillMaxWidth()
-                    when (scope) {
-                        StatisticsScope.TOURNAMENT -> {
-                            if (chosenTournament != null && !changingTournament) {
-                                // The card is as wide as its content and sits in the middle.
-                                TournamentStatisticsHeader(
-                                    chosenTournament,
-                                    fillWidth = false,
-                                    action = {
-                                        OutlinedButton(onClick = { changingTournament = true }) {
-                                            Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(stringResource(Res.string.change))
-                                        }
-                                    },
-                                )
-                            } else {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        val changeLabel = stringResource(Res.string.change)
+                        when (scope) {
+                            StatisticsScope.TOURNAMENT -> ChosenStatisticsBar(
+                                title = chosenTournament!!.name,
+                                changeLabel = changeLabel,
+                                onChange = { changingTournament = true },
+                                maxWidth = barWidth,
+                                leading = { Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = mtsTabContentColor()) },
+                            )
+                            StatisticsScope.PLAYER -> ChosenPlayerBar(slotProfile!!, changeLabel, { changingPlayer = true }, barWidth)
+                            else -> ChosenPlayerBar(personProfile!!, changeLabel, { changingPlayer = true }, barWidth)
+                        }
+                        // The same line that a tab row has at its bottom, so the bar and the tabs under it do not merge.
+                        if (scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS) HorizontalDivider(Modifier.widthIn(max = barWidth).fillMaxWidth())
+                    }
+                }
+            } else if (scope != StatisticsScope.TABLE && (scope != StatisticsScope.PLAYER || pickerData != null)) {
+                Box(
+                    Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = MtsTheme.spacing.md),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(
+                        Modifier.widthIn(max = 520.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        when (scope) {
+                            StatisticsScope.TOURNAMENT -> {
                                 val allTournamentsLabel = stringResource(Res.string.all_tournaments)
                                 val options = remember(tournaments, allTournamentsLabel) {
                                     listOf<Pair<String?, String>>(null to allTournamentsLabel) + tournaments.map { it.id to it.name }
                                 }
-                                Row(
-                                    Modifier.widthIn(max = 520.dp).fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    SelectField(
-                                        stringResource(Res.string.tournament),
-                                        options,
-                                        tournamentId,
-                                        {
-                                            tournamentId = it
-                                            changingTournament = false
-                                        },
-                                        Modifier.weight(1f),
-                                    )
-                                    if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text(stringResource(Res.string.cancel)) }
-                                }
-                            }
-                        }
-                        StatisticsScope.PLAYER -> PlayerDropdownField(
-                            names = pickerData!!.names,
-                            selectedId = effectiveSlot ?: pickerData.slots.firstOrNull()?.id,
-                            onChoose = { chosenSlotText = it.toString() },
-                            modifier = fieldModifier,
-                        )
-                        else -> {
-                            if (personProfile != null && !changingPlayer) {
-                                // The card is as wide as its content and sits in the middle.
-                                PlayerStatisticsHeader(
-                                    personProfile,
-                                    fillWidth = false,
-                                    action = {
-                                        OutlinedButton(onClick = { changingPlayer = true }) {
-                                            Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(stringResource(Res.string.change))
-                                        }
+                                SelectField(
+                                    stringResource(Res.string.tournament),
+                                    options,
+                                    tournamentId,
+                                    {
+                                        tournamentId = it
+                                        changingTournament = false
                                     },
+                                    Modifier.weight(1f),
                                 )
-                            } else {
+                                if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text(stringResource(Res.string.cancel)) }
+                            }
+                            StatisticsScope.PLAYER -> {
+                                PlayerDropdownField(
+                                    names = pickerData!!.names,
+                                    selectedId = effectiveSlot ?: pickerData.slots.firstOrNull()?.id,
+                                    onChoose = {
+                                        chosenSlotText = it.toString()
+                                        changingPlayer = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (slotProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
+                            }
+                            else -> {
                                 val options = remember(registry) {
                                     registry.sortedBy { it.displayName }.map { it.emaId to "${it.displayName} (${it.emaId})" }
                                 }
-                                Row(
-                                    Modifier.widthIn(max = 520.dp).fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    SelectField(
-                                        stringResource(Res.string.stats_player_field),
-                                        options,
-                                        personEma,
-                                        {
-                                            emaId = it
-                                            changingPlayer = false
-                                        },
-                                        Modifier.weight(1f),
-                                    )
-                                    if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
-                                }
+                                SelectField(
+                                    stringResource(Res.string.stats_player_field),
+                                    options,
+                                    personEma,
+                                    {
+                                        emaId = it
+                                        changingPlayer = false
+                                    },
+                                    Modifier.weight(1f),
+                                )
+                                if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
                             }
                         }
                     }
@@ -374,6 +373,18 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                         }
                     }
                 }
+                val personTournaments = person?.tournaments
+                if (scope == StatisticsScope.PERSON_TOURNAMENTS && personTournaments != null && personTournaments.size > 1) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        ChosenTournamentBar(
+                            personTournaments.map { it.first },
+                            personTournamentId,
+                            { personTournamentId = it },
+                            stringResource(Res.string.change),
+                            StatisticsTabWidth * mainTabs.size,
+                        )
+                    }
+                }
             }
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
@@ -389,11 +400,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                 statistics = specific.statistics,
                                 names = specific.names,
                                 roundIds = (1..specific.tournament.numRounds).toList(),
+                                // Like in the player app, a player opens with the statistics of this tournament.
                                 onOpenPlayer = { slot ->
                                     chosenSlotText = slot.toString()
-                                    val ema = specific.slots.firstOrNull { it.id == slot }?.assignedEmaId?.takeIf { it.isNotBlank() }
-                                    if (ema != null) emaId = ema
-                                    scope = if (ema != null) StatisticsScope.PERSON else StatisticsScope.PLAYER
+                                    changingPlayer = false
+                                    scope = StatisticsScope.PLAYER
                                 },
                             )
                         } else if (tournamentId == null && !overviewAllowed) {
@@ -424,14 +435,29 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
 
                     StatisticsScope.PLAYER -> tournamentData?.let { data ->
                         val slotId = effectiveSlot ?: data.slots.firstOrNull()?.id
+                        // The place, points and score in the tournament, and the place at the end of each round, like in the player app.
+                        val rankings = remember(data) {
+                            val calculate = CalculateTournamentRankingsUseCase()
+                            val rounds = data.statistics.playedRounds((1..data.tournament.numRounds).toList())
+                            calculate(data.slots, data.tables, data.tournament.isTeams) to
+                                calculate.afterEachRound(data.slots, data.tables, data.tournament.isTeams, rounds)
+                        }
+                        val ranking = rankings.first.players.firstOrNull { it.playerId == slotId }
+                        val places = rankings.second.mapNotNull { (round, byRound) ->
+                            byRound.players.firstOrNull { it.playerId == slotId }?.let { round to it.position }
+                        }.toMap()
+                        ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth()) }
                         data.statistics.players.firstOrNull { it.playerId == slotId }?.let { stats ->
                             PlayerStatisticsPanel(
                                 stats,
-                                header = data.profiles[slotId]?.let { profile -> { NameHeader(profile) { nameScrolledOut = it } } },
+                                afterPlaces = { modifier ->
+                                    PlayerRoundsCard(stats.byRound((1..data.tournament.numRounds).toList()), places, data.slots.size, modifier)
+                                },
                                 tournaments = listOf(data.tournament),
                                 rivalNames = data.rivalNames,
                                 onOpenRival = { ema ->
                                     emaId = ema
+                                    changingPlayer = false
                                     scope = StatisticsScope.PERSON
                                 },
                             )
@@ -451,18 +477,13 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
 
                     StatisticsScope.PERSON_TOURNAMENTS -> {
                         person?.let { data ->
-                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
+                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) }, tournamentId = personTournamentId)
                         } ?: if (personEma == null) PickPlayerHint() else Unit
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-private fun NameHeader(profile: PlayerProfile, onScrolledOut: (Boolean) -> Unit) {
-    TrackScrollOut(enabled = true, onChange = onScrolledOut) { PlayerStatisticsHeader(profile) }
 }
 
 /**

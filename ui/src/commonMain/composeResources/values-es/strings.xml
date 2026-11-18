@@ -185,22 +185,12 @@
     <string name="places_last">Últimas %1$d</string>
     <string name="places_avg_place">puesto medio</string>
     <string name="skill_score_n">Puntuación de habilidad %1$d</string>
-    <string name="field_tournament">Torneo</string>
-    <string name="date_from">Desde</string>
-    <string name="date_to">Hasta</string>
-    <string name="fold_all">Plegar todo</string>
-    <string name="unfold_all">Desplegar todo</string>
     <string name="stat_rank">Puesto</string>
     <string name="stat_best_table_score">Mejor puntuación de mesa</string>
     <string name="stat_best_hand">Mejor mano</string>
     <string name="stat_chicken_hands">Manos de pollo</string>
     <string name="stat_penalties">Penalizaciones</string>
     <string name="stat_penalties_info">Este es el número de penalizaciones.\nEl número entre paréntesis es el total de puntos perdidos.</string>
-    <string name="range_none">Ningún torneo en este rango de fechas.</string>
-    <string name="range_some">%1$d de %2$d torneos en este rango de fechas.</string>
-    <string name="tournaments_showing">Se muestran %1$d de %2$d torneos. Los torneos más nuevos van primero.</string>
-    <string name="tournaments_show_more">Mostrar %1$d más</string>
-    <string name="tournaments_show_all">Mostrar todos</string>
     <string name="round_n">Ronda %1$d</string>
     <string name="table_n">Mesa %1$d</string>
     <string name="places_history_title">Puesto en las últimas %1$d mesas</string>
@@ -562,4 +552,6 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Política de privacidad</string>
     <string name="dev_staging">Staging (web de pruebas)</string>
+    <string name="years_all">Todos</string>
+    <string name="stats_all_tournaments">Todos los torneos</string>
 </resources>

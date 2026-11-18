@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasAnyAncestor
@@ -126,12 +127,12 @@ class PlayerAppRule {
 
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.waitForText(text: String, substring: Boolean = false, timeoutMs: Long = WAIT_MS) {
-    waitUntilAtLeastOneExists(hasText(text, substring = substring) or hasContentDescription(text, substring = substring), timeoutMs)
+    waitUntilAtLeastOneExists(hasLabel(text, substring), timeoutMs)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.waitForNoText(text: String, substring: Boolean = false, timeoutMs: Long = WAIT_MS) {
-    waitUntilDoesNotExist(hasText(text, substring = substring) or hasContentDescription(text, substring = substring), timeoutMs)
+    waitUntilDoesNotExist(hasLabel(text, substring), timeoutMs)
 }
 
 fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
@@ -157,10 +158,18 @@ fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWOR
 }
 
 /** Presses a button by its text. A screen title can have the same text, so only nodes that click are used. */
+/** A node whose click action has this label, such as the profile button with the photo and the name. */
+private fun hasClickLabel(label: String): SemanticsMatcher =
+    SemanticsMatcher("OnClick label = '$label'") { it.config.getOrNull(SemanticsActions.OnClick)?.label == label }
+
+/** A node that shows the text, or describes itself with it, or has it as the label of its click action. */
+private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher =
+    hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
+
 fun ComposeTestRule.clickButton(text: String) {
     // On a phone the keyboard can cover the button.
     runCatching { androidx.test.espresso.Espresso.closeSoftKeyboard() }
-    val label = hasText(text) or hasContentDescription(text)
+    val label = hasLabel(text)
     // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
     if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
         waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }

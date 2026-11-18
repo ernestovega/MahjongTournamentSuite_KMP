@@ -478,7 +478,7 @@ private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: 
  * and scrolls sideways when the chips do not fit. When they fit, they sit in the middle.
  */
 @Composable
-private fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable RowScope.() -> Unit) {
+internal fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable RowScope.() -> Unit) {
     BoxWithConstraints(
         modifier.layout { measurable, constraints ->
             val extra = (bleed * 2).roundToPx()

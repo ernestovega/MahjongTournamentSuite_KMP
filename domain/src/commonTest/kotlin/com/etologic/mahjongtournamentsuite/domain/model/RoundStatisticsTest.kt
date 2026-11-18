@@ -86,6 +86,60 @@ class RoundStatisticsTest {
         assertEquals(10.0, rounds[0].round.averageHandScore)
     }
 
+    private fun threeTables() = TournamentStatistics(
+        tablesTotal = 3,
+        tablesCompleted = 2,
+        tablesWithHands = 2,
+        players = listOf(PlayerStatistics(1, listOf(result(1, won = 7, played = 16), result(2, won = 3, played = 16)))),
+        handsPlayed = 32,
+        drawnHands = 4,
+        selfDraws = 6,
+        averageHandScore = null,
+        highestHand = 88,
+        highestHandGain = 120,
+        chickenHands = 0,
+        penaltyCount = 3,
+        penaltyPoints = 30,
+        tables = listOf(
+            table(1, 1, true, 16, 2, 4, mapOf(1 to result(1, score = 120, won = 7, played = 16, bestHand = 40))),
+            table(2, 1, true, 16, 2, 2, mapOf(3 to result(2, score = 200, won = 14, played = 16, bestHand = 24))),
+            table(2, 2, false, 5, 0, 1, mapOf(4 to result(2, score = 300, won = 5, played = 5, bestHand = 88))),
+        ),
+    )
+
+    /** One round keeps only its tables. The hand values come from its completed tables, like in the whole tournament. */
+    @Test
+    fun oneRoundKeepsOnlyItsTablesAndCountsTheCompletedOnes() {
+        val round = threeTables().forRound(2)
+        assertEquals(2, round.tablesTotal)
+        assertEquals(1, round.tablesCompleted)
+        assertEquals(1, round.tablesWithHands)
+        assertEquals(16, round.handsPlayed)
+        assertEquals(2, round.drawnHands)
+        assertEquals(2, round.selfDraws)
+        // The best hand of the open table (88) is not counted yet.
+        assertEquals(24, round.highestHand)
+        assertEquals(10.0, round.averageHandScore)
+        assertEquals(listOf(2), round.players.single().results.map { it.roundId })
+    }
+
+    /** A value that the whole tournament does not know stays unknown in a round. */
+    @Test
+    fun oneRoundKeepsUnknownValuesUnknown() {
+        val unknown = threeTables().copy(highestHandGain = null, penaltyPoints = null).forRound(1)
+        assertNull(unknown.highestHandGain)
+        assertNull(unknown.penaltyPoints)
+        val known = threeTables().forRound(1)
+        assertEquals(0, known.penaltyPoints)
+    }
+
+    @Test
+    fun aRoundWithoutCompletedTablesWasNotPlayed() {
+        assertEquals(listOf(1, 2), threeTables().playedRounds(listOf(3, 2, 1)))
+        val onlyOpen = threeTables().copy(tables = threeTables().tables.filter { !it.isCompleted })
+        assertEquals(emptyList(), onlyOpen.playedRounds(listOf(1, 2)))
+    }
+
     @Test
     fun anEmptyRoundHasNoRates() {
         val round = TournamentRoundTotals(3, 0, 0, 0, 0, 0, 0, 0, null, null)
