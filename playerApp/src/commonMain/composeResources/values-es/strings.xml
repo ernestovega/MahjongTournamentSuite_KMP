@@ -24,7 +24,6 @@
     <string name="scope_players">Jugadores</string>
     <string name="scope_me">Yo</string>
     <string name="scope_my_tournaments">Mis torneos</string>
-    <string name="scope_others">Otros</string>
     <string name="scope_overall">General</string>
     <string name="scope_by_tournaments">Por torneos</string>
     <string name="scope_player">Jugador</string>

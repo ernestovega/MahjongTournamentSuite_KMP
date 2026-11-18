@@ -39,7 +39,7 @@ private inline fun <reified T : Any> fake(crossinline answer: (name: String) -> 
 
 private object NotUsed
 
-/** The tabs of the statistics: the statistics of a tournament without inner tabs, and the tabs of a guest. */
+/** The tabs of the statistics: the statistics of a tournament and the general statistics, both without inner tabs of scopes. */
 @OptIn(ExperimentalTestApi::class)
 class StatisticsTabsUiTest {
     @AfterTest
@@ -107,21 +107,22 @@ class StatisticsTabsUiTest {
     }
 
     @Test
-    fun aGuestSeesOnlyThePlayersTabInTheGeneralStatistics() = runComposeUiTest {
+    fun aGuestSeesThePlayerPickerWithoutTabs() = runComposeUiTest {
         show(session = null) { MyStatisticsTab() }
-        waitForText("Players")
         waitForText("Choose a player")
+        onNodeWithText("Players").assertDoesNotExist()
         onNodeWithText("Me").assertDoesNotExist()
         onNodeWithText("My tournaments").assertDoesNotExist()
         onNodeWithText("Others").assertDoesNotExist()
     }
 
     @Test
-    fun aSignedInPlayerSeesMeMyTournamentsAndOthers() = runComposeUiTest {
+    fun aSignedInPlayerSeesThePlayerPickerWithoutTabs() = runComposeUiTest {
+        // The account has no linked player here, so the screen asks to choose one.
         show(session = AuthSession(uid = "u1", idToken = "id", refreshToken = "refresh")) { MyStatisticsTab() }
-        waitForText("Others")
-        onNodeWithText("Me").assertExists()
-        onNodeWithText("My tournaments").assertExists()
-        onNodeWithText("Players").assertDoesNotExist()
+        waitForText("Choose a player")
+        onNodeWithText("Me").assertDoesNotExist()
+        onNodeWithText("My tournaments").assertDoesNotExist()
+        onNodeWithText("Others").assertDoesNotExist()
     }
 }

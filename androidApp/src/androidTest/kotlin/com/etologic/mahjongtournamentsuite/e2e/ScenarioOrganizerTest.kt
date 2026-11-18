@@ -638,6 +638,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
      */
     private fun backToTheTournament() {
         repeat(4) {
+            if (c.isOnScreen("Players & results") && mainActivityResumed()) return
+            // The tree of a window in the background is still readable, but its back keys go to the window in front.
+            bringTheAppToTheFront()
             if (c.isOnScreen("Players & results")) return
             shell("input keyevent KEYCODE_BACK")
             runCatching { c.waitForText("Players & results", timeoutMs = 5_000) }
@@ -654,6 +657,32 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Players & results", timeoutMs = 60_000)
     }
 
+    private fun resumedActivities(): List<String> {
+        var names = emptyList<String>()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            names = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                .map { it.javaClass.simpleName }
+        }
+        return names
+    }
+
+    private fun mainActivityResumed() = "MainActivity" in resumedActivities()
+
+    /**
+     * The Timer and the rankings open in tasks of their own. When one of them closes, the task of the app is not
+     * always the one in front: the launcher intent brings it back, as a tap on the icon of the app.
+     */
+    private fun bringTheAppToTheFront() {
+        if (mainActivityResumed()) return
+        val packageName = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.packageName
+        log("the app is not in front (resumed: ${resumedActivities()}), so the test brings it back")
+        shell("am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $packageName/com.etologic.mahjongtournamentsuite.MainActivity")
+        val until = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < until && !mainActivityResumed()) Thread.sleep(500)
+        runCatching { c.waitForIdle() }
+    }
+
     /** Finishes the Timer activity, which is what its back key does. */
     private fun closeTheTimerWindow() {
         val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -664,6 +693,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 .forEach { it.finish() }
         }
         log("the back key did not close the Timer, so the test closed it")
+        Thread.sleep(1_000)
+        bringTheAppToTheFront()
     }
 
     /** Round control warns of open tables in ended rounds. The review closes them all, as the organizer at the end. */

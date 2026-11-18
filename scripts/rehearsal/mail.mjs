@@ -22,7 +22,8 @@ export class Mailbox {
     this.waiting = null;
   }
 
-  /** The mail host sometimes does not answer a connection: it is tried again, 5 times in about 2 minutes. */
+  /** The mail host sometimes does not answer a connection: it is tried again for about 12 minutes (it was
+   * once down for more than 3 minutes). */
   async open() {
     if (!this.user || !this.password) throw new Error("Set REHEARSAL_IMAP_USER and REHEARSAL_IMAP_PASSWORD.");
     for (let attempt = 1; ; attempt += 1) {
@@ -30,9 +31,9 @@ export class Mailbox {
         return await this.connect();
       } catch (error) {
         this.socket?.destroy();
-        if (attempt >= 5) throw error;
+        if (attempt >= 12) throw error;
         console.log(`The mailbox did not open (${error.message}), attempt ${attempt}. It is tried again.`);
-        await new Promise((resolve) => setTimeout(resolve, attempt * 5_000));
+        await new Promise((resolve) => setTimeout(resolve, Math.min(attempt * 10_000, 60_000)));
       }
     }
   }
