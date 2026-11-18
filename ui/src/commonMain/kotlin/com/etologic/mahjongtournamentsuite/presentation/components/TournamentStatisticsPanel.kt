@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
+import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.forRound
@@ -160,6 +161,36 @@ fun TournamentRoundChips(
     edge: Dp = 0.dp,
 ) {
     val played = remember(statistics, roundIds) { statistics.playedRounds(roundIds) }
+    if (played.isEmpty()) return
+    RoundChipsRow(modifier, edge) {
+        FilterChip(
+            selected = selected == null,
+            onClick = { onSelect(null) },
+            label = { Text(stringResource(Res.string.stats_totals)) },
+        )
+        played.forEach { roundId ->
+            FilterChip(
+                selected = roundId == selected,
+                onClick = { onSelect(if (roundId == selected) null else roundId) },
+                label = { Text(stringResource(Res.string.round_short, roundId)) },
+            )
+        }
+    }
+}
+
+/**
+ * The chips of the rounds that a player played in one tournament, from [results]: Totals and one chip per round.
+ * They work like [TournamentRoundChips]: a tap on the chosen round goes back to Totals.
+ */
+@Composable
+fun PlayerRoundChips(
+    results: List<TableResult>,
+    selected: Int?,
+    onSelect: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+    edge: Dp = 0.dp,
+) {
+    val played = remember(results) { results.map { it.roundId }.distinct().sorted() }
     if (played.isEmpty()) return
     RoundChipsRow(modifier, edge) {
         FilterChip(

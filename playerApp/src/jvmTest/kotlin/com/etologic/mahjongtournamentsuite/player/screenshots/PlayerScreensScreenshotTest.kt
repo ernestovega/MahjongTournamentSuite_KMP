@@ -160,6 +160,48 @@ class PlayerScreensScreenshotTest {
         TournamentsScreen(nav)
     }
 
+    /** The Stats tab of the start screen: the own player is chosen, with the picker to change it on top. */
+    @Test
+    fun statisticsTab() = playerScreenshots(
+        "statistics-tab",
+        ready = {
+            openStatsTab()
+            waitForText("Skills", substring = true)
+        },
+    ) { nav -> TournamentsScreen(nav) }
+
+    /** The tournaments of the own player, each card with its round chips, the second round chosen in the newest one. */
+    @Test
+    fun statisticsTabByTournaments() = playerScreenshots(
+        "statistics-tab-by-tournaments",
+        ready = {
+            openStatsTab()
+            waitForText("Skills", substring = true)
+            onAllNodesWithText("By tournaments").onFirst().performClick()
+            waitForText("R2")
+            onAllNodesWithText("R2").onFirst().performClick()
+            waitForIdle()
+        },
+    ) { nav -> TournamentsScreen(nav) }
+
+    /** Without an account the Stats tab asks to choose a player. */
+    @Test
+    fun statisticsTabGuest() = playerScreenshots(
+        "statistics-tab-guest",
+        modules = { playerModules(account = null) },
+        ready = {
+            openStatsTab()
+            waitForText("Choose a player", substring = true)
+        },
+    ) { nav -> TournamentsScreen(nav) }
+
+    private fun ComposeUiTest.openStatsTab() {
+        waitForText("Madrid Open 2026", substring = true)
+        val title = listOf("Stats", "Estadísticas", "Statistiken", "Statistiques", "Statistiche", "Statistieken", "Статистика", "Statistik").first { onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText(title).onFirst().performClick()
+        waitForIdle()
+    }
+
     @Test
     fun tournamentsGuest() = playerScreenshots(
         "tournaments-guest",
