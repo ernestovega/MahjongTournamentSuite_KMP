@@ -34,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.a_disqualified_player_gets_0_table
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -81,7 +82,7 @@ fun PlayerSubstitutionDialog(
             title = { MtsDialogTitle(stringResource(Res.string.substitution), subtitle = playerName) },
             // The same gap between the sections, and the same height for every radio and checkbox line.
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
                     Text(
                         stringResource(Res.string.substitution_explanation),
                         Modifier.fillMaxWidth(),

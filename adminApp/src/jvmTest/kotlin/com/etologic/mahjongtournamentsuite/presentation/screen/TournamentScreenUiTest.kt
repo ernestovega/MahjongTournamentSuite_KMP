@@ -302,7 +302,8 @@ class TournamentScreenUiTest {
             pass(1) // checks run at the short pace while there are unsaved edits
 
             onNodeWithText("Table updated").assertExistsOnScreen()
-            onNodeWithText("Round 1 · Table 1: another user changed this table. Your unsaved changes were replaced.").assertExistsOnScreen()
+            onNodeWithText("Round 1 · Table 1").assertExistsOnScreen()
+            onNodeWithText("Another user changed this table.\nYour unsaved changes were replaced.").assertExistsOnScreen()
             onAllNodesWithText("Save").assertCountEquals(0)
         }
     }
@@ -317,7 +318,8 @@ class TournamentScreenUiTest {
             onNodeWithText("Save").performClick()
             waitForIdle()
 
-            onNodeWithText("Round 1 · Table 1: someone else saved this table first. Your changes were not saved.").assertExistsOnScreen()
+            onNodeWithText("Round 1 · Table 1").assertExistsOnScreen()
+            onNodeWithText("Someone else saved this table first.\nYour changes were not saved.").assertExistsOnScreen()
         }
     }
 
@@ -452,7 +454,8 @@ class TournamentScreenUiTest {
             pass(2)
 
             onNodeWithText("Table updated").assertExistsOnScreen()
-            onNodeWithText("Round 1 · Table 1: another user changed this table. It now shows the latest data.").assertExistsOnScreen()
+            onNodeWithText("Round 1 · Table 1").assertExistsOnScreen()
+            onNodeWithText("Another user changed this table.\nIt now shows the latest data.").assertExistsOnScreen()
         }
     }
 
