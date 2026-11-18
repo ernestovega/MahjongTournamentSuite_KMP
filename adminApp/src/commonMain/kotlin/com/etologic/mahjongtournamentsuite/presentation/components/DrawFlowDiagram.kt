@@ -2,12 +2,13 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,7 +27,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -65,7 +65,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_yes
 import org.jetbrains.compose.resources.stringResource
 
 /*
- * The flowchart of the draw of the pairings, as GenerateTournamentScheduleBruteForceParallelUseCase does it.
+ * The flowchart of the draw of the pairings, as GenerateTournamentScheduleBruteForceParallelUseCase does it, in the
+ * notation of a UML activity diagram: a filled circle starts it, actions are rounded boxes, decisions are diamonds with
+ * the guards [Yes] and [No] on their arrows, and a ringed circle ends it (Ernesto, 2026-11-18).
  *
  * The main path goes down the left column. The "yes" branch of the rule check goes to the right column, and three
  * dashed arrows go back up:
@@ -74,21 +76,23 @@ import org.jetbrains.compose.resources.stringResource
  * - "Seats left? Yes" goes back to the next free seat, on the left side.
  */
 
-private enum class NodeKind { Terminal, Process, Decision, Failure }
+private enum class NodeKind { Initial, Final, Action, Decision, Failure }
 
 private data class FlowNode(val kind: NodeKind, val text: String, val note: String? = null)
 
 // The rows of the main column, top to bottom.
-private const val START = 0
-private const val SEED = 1
-private const val ATTEMPT = 2
-private const val NEXT_SEAT = 3
-private const val PICK = 4
-private const val CHECK = 5
-private const val SEAT = 6
-private const val MORE_SEATS = 7
-private const val DONE = 8
-private const val MAIN_COUNT = 9
+private const val INITIAL = 0
+private const val START = 1
+private const val SEED = 2
+private const val ATTEMPT = 3
+private const val NEXT_SEAT = 4
+private const val PICK = 5
+private const val CHECK = 6
+private const val SEAT = 7
+private const val MORE_SEATS = 8
+private const val DONE = 9
+private const val FINAL = 10
+private const val MAIN_COUNT = 11
 
 // The side column shares the rows of CHECK, SEAT and MORE_SEATS.
 private const val SIDE_FIRST_ROW = CHECK
@@ -97,23 +101,26 @@ private const val SIDE_FIRST_ROW = CHECK
 @Composable
 fun DrawFlowDiagram(modifier: Modifier = Modifier) {
     val main = listOf(
-        FlowNode(NodeKind.Terminal, stringResource(Res.string.draw_flow_start)),
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_seed)),
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_attempt), stringResource(Res.string.draw_flow_attempt_note)),
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_next_seat), stringResource(Res.string.draw_flow_next_seat_note)),
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_pick)),
+        FlowNode(NodeKind.Initial, ""),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_start)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_seed)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_attempt), stringResource(Res.string.draw_flow_attempt_note)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_next_seat), stringResource(Res.string.draw_flow_next_seat_note)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_pick)),
         FlowNode(NodeKind.Decision, stringResource(Res.string.draw_flow_check)),
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_seat)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_seat)),
         FlowNode(NodeKind.Decision, stringResource(Res.string.draw_flow_more_seats)),
-        FlowNode(NodeKind.Terminal, stringResource(Res.string.draw_flow_done), stringResource(Res.string.draw_flow_done_note)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_done), stringResource(Res.string.draw_flow_done_note)),
+        FlowNode(NodeKind.Final, ""),
     )
     val side = listOf(
-        FlowNode(NodeKind.Process, stringResource(Res.string.draw_flow_discard)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_discard)),
         FlowNode(NodeKind.Decision, stringResource(Res.string.draw_flow_candidates)),
         FlowNode(NodeKind.Failure, stringResource(Res.string.draw_flow_failed)),
     )
-    val yes = stringResource(Res.string.draw_flow_yes)
-    val no = stringResource(Res.string.draw_flow_no)
+    // The guards of a decision, between brackets as in UML.
+    val yes = "[" + stringResource(Res.string.draw_flow_yes) + "]"
+    val no = "[" + stringResource(Res.string.draw_flow_no) + "]"
     val description = stringResource(Res.string.draw_flow_description)
 
     val colors = MaterialTheme.colorScheme
@@ -152,8 +159,13 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
             val mainWidth = (available * (if (compact) 0.6f else 0.58f)).toInt()
             val sideWidth = available - mainWidth
 
-            val mainPlaceables = measurables.take(MAIN_COUNT).map { it.measure(Constraints.fixedWidth(mainWidth)) }
-            val sidePlaceables = measurables.drop(MAIN_COUNT).map { it.measure(Constraints.fixedWidth(sideWidth)) }
+            // Actions fill their column. Circles and diamonds keep their own size and go in the middle of it.
+            fun constraintsFor(node: FlowNode, columnWidth: Int): Constraints {
+                val fills = node.kind == NodeKind.Action || node.kind == NodeKind.Failure
+                return if (fills) Constraints.fixedWidth(columnWidth) else Constraints(maxWidth = columnWidth)
+            }
+            val mainPlaceables = measurables.take(MAIN_COUNT).mapIndexed { i, m -> m.measure(constraintsFor(main[i], mainWidth)) }
+            val sidePlaceables = measurables.drop(MAIN_COUNT).mapIndexed { i, m -> m.measure(constraintsFor(side[i], sideWidth)) }
 
             val mainX = leftGutter
             val sideX = leftGutter + mainWidth + columnGap
@@ -164,10 +176,12 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
                 val sidePlaceable = sidePlaceables.getOrNull(row - SIDE_FIRST_ROW)
                 val rowHeight = maxOf(placeable.height, sidePlaceable?.height ?: 0)
                 val mainTop = y + (rowHeight - placeable.height) / 2
-                mainRects += Rect(Offset(mainX.toFloat(), mainTop.toFloat()), Size(placeable.width.toFloat(), placeable.height.toFloat()))
+                val mainLeft = mainX + (mainWidth - placeable.width) / 2
+                mainRects += Rect(Offset(mainLeft.toFloat(), mainTop.toFloat()), Size(placeable.width.toFloat(), placeable.height.toFloat()))
                 if (sidePlaceable != null) {
                     val sideTop = y + (rowHeight - sidePlaceable.height) / 2
-                    sideRects += Rect(Offset(sideX.toFloat(), sideTop.toFloat()), Size(sidePlaceable.width.toFloat(), sidePlaceable.height.toFloat()))
+                    val sideLeft = sideX + (sideWidth - sidePlaceable.width) / 2
+                    sideRects += Rect(Offset(sideLeft.toFloat(), sideTop.toFloat()), Size(sidePlaceable.width.toFloat(), sidePlaceable.height.toFloat()))
                 }
                 y += rowHeight + rowGap
             }
@@ -196,79 +210,87 @@ private class FlowGeometry(
     val failLoopX: Float,
 )
 
-/** The points of a decision: a hexagon with a point on each side. */
-private val DecisionShape: Shape = GenericShape { size, _ ->
-    val inset = minOf(size.height / 2f, size.width * 0.12f)
-    moveTo(inset, 0f)
-    lineTo(size.width - inset, 0f)
-    lineTo(size.width, size.height / 2f)
-    lineTo(size.width - inset, size.height)
-    lineTo(inset, size.height)
-    lineTo(0f, size.height / 2f)
-    close()
-}
-
 @Composable
 private fun FlowNodeBox(node: FlowNode, compact: Boolean) {
     val colors = MaterialTheme.colorScheme
-    val shape: Shape
-    val container: Color
-    val content: Color
-    val border: Color
-    var horizontalPadding = if (compact) 6.dp else 10.dp
+    val textStyle = MaterialTheme.typography.bodySmall.copy(
+        fontSize = if (compact) (if (node.kind == NodeKind.Decision) 10.sp else 11.sp) else MaterialTheme.typography.bodySmall.fontSize,
+        lineHeight = if (compact) (if (node.kind == NodeKind.Decision) 13.sp else 14.sp) else MaterialTheme.typography.bodySmall.lineHeight,
+        fontWeight = if (node.kind == NodeKind.Decision) FontWeight.SemiBold else FontWeight.Normal,
+    )
     when (node.kind) {
-        NodeKind.Terminal -> {
-            shape = RoundedCornerShape(20.dp)
-            container = colors.primary
-            content = colors.onPrimary
-            border = colors.primary
-            horizontalPadding = if (compact) 6.dp else 14.dp
+        NodeKind.Initial -> {
+            // UML initial node: a filled circle.
+            val color = colors.onSurface
+            Box(Modifier.size(20.dp).drawBehind { drawCircle(color) })
         }
-        NodeKind.Process -> {
-            shape = RoundedCornerShape(10.dp)
-            container = colors.surfaceContainerHigh
-            content = colors.onSurface
-            border = colors.outlineVariant
-        }
-        NodeKind.Decision -> {
-            shape = DecisionShape
-            container = colors.secondaryContainer
-            content = colors.onSecondaryContainer
-            border = colors.secondary
-            horizontalPadding = if (compact) 9.dp else 18.dp
-        }
-        NodeKind.Failure -> {
-            shape = RoundedCornerShape(10.dp)
-            container = colors.errorContainer
-            content = colors.onErrorContainer
-            border = colors.error
-        }
-    }
-    Column(
-        modifier = Modifier
-            .background(container, shape)
-            .border(1.dp, border, shape)
-            .padding(horizontal = horizontalPadding, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            node.text,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = if (compact) 11.sp else MaterialTheme.typography.bodySmall.fontSize,
-                lineHeight = if (compact) 14.sp else MaterialTheme.typography.bodySmall.lineHeight,
-                fontWeight = if (node.kind == NodeKind.Terminal || node.kind == NodeKind.Decision) FontWeight.SemiBold else FontWeight.Normal,
-            ),
-            color = content,
-            textAlign = TextAlign.Center,
-        )
-        node.note?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = if (compact) 10.sp else MaterialTheme.typography.labelSmall.fontSize),
-                color = content.copy(alpha = 0.78f),
-                textAlign = TextAlign.Center,
+        NodeKind.Final -> {
+            // UML final node: a filled circle inside a ring.
+            val color = colors.onSurface
+            Box(
+                Modifier.size(24.dp).drawBehind {
+                    drawCircle(color, radius = size.minDimension / 2f - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
+                    drawCircle(color, radius = size.minDimension / 2f - 5.dp.toPx())
+                },
             )
         }
+        NodeKind.Decision -> DecisionNode(node.text, textStyle, colors.secondaryContainer, colors.secondary, colors.onSecondaryContainer, compact)
+        NodeKind.Action, NodeKind.Failure -> {
+            val failure = node.kind == NodeKind.Failure
+            val shape = RoundedCornerShape(if (compact) 12.dp else 14.dp)
+            val content = if (failure) colors.onErrorContainer else colors.onSurface
+            Column(
+                modifier = Modifier
+                    .background(if (failure) colors.errorContainer else colors.surfaceContainerHigh, shape)
+                    .border(1.dp, if (failure) colors.error else colors.outline, shape)
+                    .padding(horizontal = if (compact) 6.dp else 10.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(node.text, style = textStyle, color = content, textAlign = TextAlign.Center)
+                node.note?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = if (compact) 10.sp else MaterialTheme.typography.labelSmall.fontSize),
+                        color = content.copy(alpha = 0.78f),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A UML decision: a diamond with the question inside. The diamond takes the size its text needs, up to the width of its
+ * column, so that the text fits between its four sides.
+ */
+@Composable
+private fun DecisionNode(text: String, style: TextStyle, container: Color, border: Color, content: Color, compact: Boolean) {
+    Layout(
+        content = { Text(text, style = style, color = content, textAlign = TextAlign.Center) },
+        modifier = Modifier.drawBehind {
+            val diamond = Path().apply {
+                moveTo(size.width / 2f, 0f)
+                lineTo(size.width, size.height / 2f)
+                lineTo(size.width / 2f, size.height)
+                lineTo(0f, size.height / 2f)
+                close()
+            }
+            drawPath(diamond, container)
+            drawPath(diamond, border, style = Stroke(1.5.dp.toPx(), join = StrokeJoin.Round))
+        },
+    ) { measurables, constraints ->
+        val columnWidth = constraints.maxWidth
+        // The longest word never breaks: on a phone the text may take more of the diamond, which then grows taller.
+        val longestWord = measurables.first().minIntrinsicWidth(Int.MAX_VALUE)
+        // On a wide column the text wraps sooner, so the diamond does not take the whole width.
+        val textMax = maxOf((columnWidth * (if (compact) 0.6f else 0.42f)).toInt(), longestWord).coerceAtMost((columnWidth * 0.8f).toInt())
+        val text = measurables.first().measure(Constraints(maxWidth = textMax))
+        // A text box fits in a diamond when (text width / diamond width) + (text height / diamond height) <= 1.
+        val width = (text.width / 0.56f).toInt().coerceAtMost(columnWidth)
+        val widthShare = text.width.toFloat() / width
+        val height = maxOf((text.height / (1f - widthShare)).toInt() + 6.dp.roundToPx(), (width * 0.42f).toInt())
+        layout(width, height) { text.place((width - text.width) / 2, (height - text.height) / 2) }
     }
 }
 
