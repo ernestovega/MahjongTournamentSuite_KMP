@@ -253,7 +253,7 @@
     <string name="logo_of">Логотип %1$s</string>
     <string name="app_version_label">v%1$s</string>
     <string name="theme_title">Тема</string>
-    <string name="theme_system">Системная</string>
+    <string name="theme_system">Авто</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_description">Тема: %1$s</string>

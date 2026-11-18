@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
@@ -321,7 +322,11 @@ internal fun TimerContent(
                 style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                // A long word of another language ("Omgång 3") gets smaller, so the + button stays on a phone.
+                modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp),
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 64.sp, stepSize = 2.sp),
             )
             if (showRoundButtons) {
                 FocusedIconButton(

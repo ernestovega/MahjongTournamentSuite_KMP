@@ -200,7 +200,7 @@
     <string name="filter_year">Jaar</string>
     <string name="filter_all_years">Alle</string>
     <string name="filter_clear">Filters wissen</string>
-    <string name="privacy_public_notice">Toernooien, uitslagen en statistieken zijn openbaar. Ze tonen de naam, het land en het EMA-nummer van elke speler, nooit e-mails of foto\'s. Wil je er niet in staan, vraag het dan aan de organisatoren: je wordt dan alleen als nummer getoond.</string>
+    <string name="privacy_public_notice">Toernooien, uitslagen en statistieken zijn openbaar. Ze tonen de naam, het land en het EMA-nummer van elke speler, nooit e-mails of foto's. Wil je er niet in staan, vraag het dan aan de organisatoren: je wordt dan alleen als nummer getoond.</string>
     <string name="filter_status">Status</string>
     <string name="filter_all_statuses">Alle</string>
     <string name="sign_in_needed_title">Log in om de jouwe te zien</string>

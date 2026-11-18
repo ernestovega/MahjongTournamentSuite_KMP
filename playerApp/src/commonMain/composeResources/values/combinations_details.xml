@@ -10,13 +10,13 @@
     <string name="comb_detail_one_voided_suit">A hand that uses tiles from only two of the three suits (it lacks any tiles from one of the three suits).</string>
     <string name="comb_detail_no_honors">A hand formed entirely of suit tiles, without Winds or Dragons.</string>
     <string name="comb_detail_edge_wait">Waiting solely for a 3 to form a 1-2-3 chow, or solely for a 7 to form a 7-8-9 chow.\n\nNot valid if waiting for more than one tile.\n\nNot valid if the edge wait is combined with any other waits.</string>
-    <string name="comb_detail_closed_wait">Waiting solely for a tile whose number is \"inside\" (in the middle) to form a chow.\n\nNot valid if waiting for more than one tile.\n\nNot valid if the closed wait is combined with other waits.</string>
+    <string name="comb_detail_closed_wait">Waiting solely for a tile whose number is "inside" (in the middle) to form a chow.\n\nNot valid if waiting for more than one tile.\n\nNot valid if the closed wait is combined with other waits.</string>
     <string name="comb_detail_single_waiting">Waiting solely for a tile to form a pair.\n\nNot valid if waiting for more than one tile (for example, holding 1-2-3-4 and waiting on the 1 and 4).</string>
     <string name="comb_detail_self_drawn">Winning with a tile you drew from the wall.</string>
     <string name="comb_detail_flower_tiles">Each tile carved with Chinese word for Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo or Chrysanthemum, will award you one point when you succeed in Hu.\n\nIn case of “Hu” on a Flower replacement, the point for Self-Drawn can be added, but not the points for Out with Replacement Tile.\n\nFlower Tiles may be discarded (without taking a replacement).</string>
     <string name="comb_detail_dragon_pung">A Pung or Kong of Dragon Tiles.</string>
     <string name="comb_detail_prevalent_wind">A Pung or Kong of the Wind Tile corresponding to the current Prevalent Wind.</string>
-    <string name="comb_detail_seat_wind">A Pung or Kong of the Wind Tile corresponding to the player\'s Seat position at the table.\n\n(Dealer is East; proceeding counter-clockwise from the Dealer; other players\' seats are South, West, and North.)</string>
+    <string name="comb_detail_seat_wind">A Pung or Kong of the Wind Tile corresponding to the player's Seat position at the table.\n\n(Dealer is East; proceeding counter-clockwise from the Dealer; other players' seats are South, West, and North.)</string>
     <string name="comb_detail_concealed_hand">All the tiles are Concealed; winning on a discard.</string>
     <string name="comb_detail_all_chows">Hand consists of all Chows and no Honors. No Honors is implied.</string>
     <string name="comb_detail_tile_hog">Using all four of a single suit tile, without using them as any kind of Kong.</string>

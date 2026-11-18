@@ -28,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
 import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
 import com.etologic.mahjongtournamentsuite.player.CreditsDialog
+import com.etologic.mahjongtournamentsuite.player.MainTab
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
@@ -52,11 +53,11 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.COMPLETED
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.INDIVIDUAL
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
+import com.etologic.mahjongtournamentsuite.screenshots.phoneInEveryLanguage
 import kotlinx.coroutines.runBlocking
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
 import org.jetbrains.compose.resources.getPluralString
-import com.etologic.mahjongtournamentsuite.player.MainTab
 import kotlin.test.Test
 
 /** Every screen and tab of the player app with the data of ScreenshotData, signed in as Lucía (player 1). */
@@ -225,16 +226,18 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournamentsMoreMenu() = playerScreenshots(
         "tournaments-more-menu",
-        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) } + phoneInEveryLanguage,
         ready = {
             waitForText("Madrid Open 2026", substring = true)
-            val menus = onAllNodes((hasText("More") or hasContentDescription("More") or hasContentDescription("Menu")) and hasClickAction())
+            val more = playerText("menu_more")
+            val privacy = playerText("menu_privacy")
+            val menus = onAllNodes((hasText(more) or hasContentDescription(more) or hasContentDescription(uiText("menu"))) and hasClickAction())
             var index = 0
-            while (onAllNodesWithText("Privacy").fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
+            while (onAllNodesWithText(privacy).fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
                 menus[index++].performClick()
                 waitForIdle()
             }
-            waitForText("Privacy")
+            waitForText(privacy)
         },
     ) { nav -> TournamentsScreen(nav) }
 

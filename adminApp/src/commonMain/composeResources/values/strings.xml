@@ -675,7 +675,7 @@
     <string name="show_table_diffs">Differences on tables</string>
     <string name="show_table_diffs_description">Players see the button that shows the differences on the table screen.\nThe player app gets the change in about a minute, without a new release.</string>
     <string name="player_hidden_from_public">Hide from the public</string>
-    <string name="player_hidden_from_public_description">At the person\'s request: without an account, the tournaments show the slot number instead of the name, and there is no public profile or statistics.</string>
+    <string name="player_hidden_from_public_description">At the person's request: without an account, the tournaments show the slot number instead of the name, and there is no public profile or statistics.</string>
     <string name="app_activity">Activity</string>
     <string name="activity_all_tournaments">All tournaments</string>
     <string name="activity_tournament">Tournament</string>

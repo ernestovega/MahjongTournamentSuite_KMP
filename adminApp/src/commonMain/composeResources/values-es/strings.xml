@@ -147,11 +147,11 @@
     <string name="at_least_one_hand_is_invalid">Al menos una mano no es válida. No se puede marcar como hecha ni como completada.</string>
     <string name="winner">Ganador</string>
     <string name="loser">Perdedor</string>
-    <string name="score">Puntos</string>
+    <string name="score">Puntuación</string>
     <string name="chicken">Pollo</string>
     <string name="penalty">Penalización</string>
     <string name="done">Hecha</string>
-    <string name="total_scores">Puntos</string>
+    <string name="total_scores">Puntuación</string>
     <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos.\nLas manos de oro, plata y bronce muestran las mejores manos del torneo que tiene esta mesa.</string>
     <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos de pollo y de las mejores manos</string>
     <string name="save_and_next_table">Guardar e ir a la mesa siguiente</string>

@@ -118,7 +118,7 @@
     <string name="select_results">Seleziona i risultati</string>
     <string name="clear_all">Cancella tutto</string>
     <string name="disable_account">Disattivare l'account?</string>
-    <string name="delete_account">Eliminare l\'account?</string>
+    <string name="delete_account">Eliminare l'account?</string>
     <string name="disable">Disattiva</string>
     <string name="save_player_changes">Salva le modifiche al giocatore</string>
     <string name="new_player">Nuovo giocatore</string>
@@ -152,7 +152,7 @@
     <string name="penalty">Penalità</string>
     <string name="done">Fatto</string>
     <string name="total_scores">Punteggi totali</string>
-    <string name="calculated_from_hands_trophies_show_the">Calcolati dalle mani.\nLe mani d\'oro, d\'argento e di bronzo mostrano le mani migliori del torneo che questo tavolo detiene.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calcolati dalle mani.\nLe mani d'oro, d'argento e di bronzo mostrano le mani migliori del torneo che questo tavolo detiene.</string>
     <string name="show_how_the_chicken_and_best">Mostra come si calcolano i valori delle mani pollo e delle mani migliori</string>
     <string name="save_and_next_table">Salva e tavolo successivo</string>
     <string name="preview_tournament">Anteprima del torneo</string>
@@ -301,12 +301,12 @@
     <string name="plus_more">+%1$d altri</string>
     <string name="enable_account">Attiva l'account</string>
     <string name="disable_account_action">Disattiva l'account</string>
-    <string name="delete_account_action">Elimina l\'account</string>
+    <string name="delete_account_action">Elimina l'account</string>
     <string name="selected_count">%1$d selezionati</string>
     <string name="no_tournaments_selected">Nessun torneo è selezionato.</string>
     <string name="no_tournaments_match">Nessun torneo corrisponde alla ricerca.</string>
     <string name="disable_user_message">%1$s non potrà accedere. Il suo profilo e la sua cronologia restano.</string>
-    <string name="delete_user_message">%1$s sarà eliminato per sempre: l\'accesso, l\'email, l\'alias e la foto. Il giocatore EMA e i risultati dei tornei restano. Non si può annullare.</string>
+    <string name="delete_user_message">%1$s sarà eliminato per sempre: l'accesso, l'email, l'alias e la foto. Il giocatore EMA e i risultati dei tornei restano. Non si può annullare.</string>
     <string name="role_editor">Editor</string>
     <string name="role_admin">Amministratore</string>
     <string name="role_player">Giocatore</string>
@@ -616,13 +616,13 @@
     <string name="import_column_player">Giocatore/ID EMA</string>
     <string name="import_legend_warning">Avviso o rimosso</string>
     <string name="import_tip_changed">Questo dato cambia.</string>
-    <string name="import_tip_removed">Il file non include questo posto, quindi l\'importazione rimuove questo giocatore.</string>
+    <string name="import_tip_removed">Il file non include questo posto, quindi l'importazione rimuove questo giocatore.</string>
     <string name="import_state_changed">Cambia</string>
     <string name="import_state_error">Errore</string>
     <string name="import_state_warning">Avviso</string>
     <string name="import_state_removed">Rimosso</string>
     <string name="import_state_unchanged">Nessun cambio</string>
-    <string name="app_errors">Errori dell\'app</string>
+    <string name="app_errors">Errori dell'app</string>
     <string name="errors_summary">%1$d problemi su %2$d</string>
     <string name="errors_kpi_problems">Problemi</string>
     <string name="errors_kpi_occurrences">Occorrenze</string>
@@ -673,7 +673,7 @@
     <string name="public_tournament">Torneo pubblico</string>
     <string name="public_tournament_description">Chiunque può vedere il torneo, i risultati e le statistiche senza account.\nDisattivalo per un torneo di prova: lo vedrà solo il suo staff.</string>
     <string name="show_table_diffs">Differenze ai tavoli</string>
-    <string name="show_table_diffs_description">I giocatori vedono il pulsante che mostra le differenze nella schermata del tavolo.\nL\'app dei giocatori riceve la modifica in circa un minuto, senza una nuova versione.</string>
+    <string name="show_table_diffs_description">I giocatori vedono il pulsante che mostra le differenze nella schermata del tavolo.\nL'app dei giocatori riceve la modifica in circa un minuto, senza una nuova versione.</string>
     <string name="player_hidden_from_public">Nascondi al pubblico</string>
     <string name="player_hidden_from_public_description">Su richiesta della persona: senza account, i tornei mostrano il numero del posto invece del nome e non ci sono scheda né statistiche pubbliche.</string>
     <string name="app_activity">Attività</string>
@@ -720,8 +720,8 @@
     <string name="activity_action_user_disable">Utente disattivato</string>
     <string name="activity_action_user_delete">Utente eliminato</string>
     <string name="activity_action_user_enable">Utente attivato</string>
-    <string name="activity_action_user_photo">Foto dell\'utente modificata</string>
-    <string name="activity_action_user_photo_remove">Foto dell\'utente rimossa</string>
+    <string name="activity_action_user_photo">Foto dell'utente modificata</string>
+    <string name="activity_action_user_photo_remove">Foto dell'utente rimossa</string>
     <string name="activity_action_registry_create">Giocatore EMA creato</string>
     <string name="activity_action_registry_update">Giocatore EMA modificato</string>
     <string name="activity_action_registry_photo">Foto del giocatore EMA modificata</string>
@@ -793,7 +793,7 @@
     <string name="round_control_no_tables">Questo turno non ha ancora tavoli.</string>
     <string name="round_control_completed_notice">Il torneo è completato. Puoi ancora riaprire tavoli, ma i suoi orologi non possono cambiare.</string>
     <plurals name="round_control_finished_notice">
-        <item quantity="one">C\'è %1$d tavolo aperto nei turni finiti</item>
+        <item quantity="one">C'è %1$d tavolo aperto nei turni finiti</item>
         <item quantity="other">Ci sono %1$d tavoli aperti nei turni finiti</item>
     </plurals>
     <string name="round_control_finished_review">Controlla</string>
@@ -814,10 +814,10 @@
     <string name="round_control_table_status">Stato</string>
     <string name="delete_selected_count">Elimina (%1$d)</string>
     <string name="users_delete_confirm_title">Eliminare gli account?</string>
-    <string name="users_delete_confirm_text">%1$d account saranno eliminati per sempre: l\'accesso, l\'email, l\'alias e la foto.\n\nI giocatori EMA e i risultati dei tornei restano.\n\nNon si può annullare.</string>
+    <string name="users_delete_confirm_text">%1$d account saranno eliminati per sempre: l'accesso, l'email, l'alias e la foto.\n\nI giocatori EMA e i risultati dei tornei restano.\n\nNon si può annullare.</string>
     <string name="delete_failure_self">Non puoi eliminare il tuo account.</string>
-    <string name="delete_failure_last_admin">È l\'ultimo admin attivo.</string>
-    <string name="delete_failure_unknown">L\'account non è stato eliminato. Riprova.</string>
+    <string name="delete_failure_last_admin">È l'ultimo admin attivo.</string>
+    <string name="delete_failure_unknown">L'account non è stato eliminato. Riprova.</string>
     <string name="ema_players_delete_confirm_title">Eliminare i giocatori EMA?</string>
     <string name="delete_players_count">Elimina giocatori (%1$d)</string>
     <plurals name="ema_players_delete_will_delete">
@@ -833,7 +833,7 @@
     <string name="ema_player_delete_failure_not_found">Il giocatore non esiste più.</string>
     <string name="ema_player_delete_failure_unknown">Il giocatore non è stato eliminato. Riprova.</string>
     <string name="player_disabled">Disattivato</string>
-    <string name="player_disabled_description">Il giocatore ha dati nei tornei, quindi è stato disattivato invece di essere eliminato.\n\nDisattiva l\'opzione per riattivare il giocatore.</string>
+    <string name="player_disabled_description">Il giocatore ha dati nei tornei, quindi è stato disattivato invece di essere eliminato.\n\nDisattiva l'opzione per riattivare il giocatore.</string>
     <string name="draw_help_button">Come funziona il sorteggio?</string>
     <string name="draw_help_title">Come funziona il sorteggio</string>
     <string name="draw_help_intro">Quando crei il torneo, l’app distribuisce i giocatori ai tavoli di tutti i turni.\nUsa numeri di giocatore (1, 2, 3…). I nomi si associano a quei numeri dopo.</string>

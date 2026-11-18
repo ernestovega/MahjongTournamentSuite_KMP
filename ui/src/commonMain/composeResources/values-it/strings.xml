@@ -27,7 +27,7 @@
     <string name="sign_in_button">Accedi</string>
     <string name="app_logo_description">Logo di Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utenti</string>
-    <string name="top_bar_app_errors">Errori dell\'app</string>
+    <string name="top_bar_app_errors">Errori dell'app</string>
     <string name="top_bar_screenshots">Screenshot</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Classifica</string>
@@ -163,13 +163,13 @@
     <string name="outcome_hands_drawn">Mani patte</string>
     <string name="outcome_hands_unit">mani</string>
     <string name="skill_win_rate">Percentuale di vittorie</string>
-    <string name="skill_win_rate_info">È quanto spesso vinci una mano.\nSono le mani vinte divise per le mani giocate.\nL\'asse è pieno al 40%.</string>
+    <string name="skill_win_rate_info">È quanto spesso vinci una mano.\nSono le mani vinte divise per le mani giocate.\nL'asse è pieno al 40%.</string>
     <string name="skill_self_draw">Percentuale di vittorie dal muro</string>
-    <string name="skill_self_draw_info">È quanto spesso le tue vittorie vengono dalla pesca della tessera vincente.\nSono le vittorie dal muro divise per le mani vinte.\nL\'asse è pieno al 50%.</string>
+    <string name="skill_self_draw_info">È quanto spesso le tue vittorie vengono dalla pesca della tessera vincente.\nSono le vittorie dal muro divise per le mani vinte.\nL'asse è pieno al 50%.</string>
     <string name="skill_deal_in_rate">Percentuale di sconfitte su scarto</string>
-    <string name="skill_deal_in_rate_info">È quanto spesso scarti la tessera con cui vince un altro giocatore.\nSono le sconfitte su scarto divise per le mani giocate.\nUn valore più basso è migliore.\nL\'asse è pieno al 25%.</string>
+    <string name="skill_deal_in_rate_info">È quanto spesso scarti la tessera con cui vince un altro giocatore.\nSono le sconfitte su scarto divise per le mani giocate.\nUn valore più basso è migliore.\nL'asse è pieno al 25%.</string>
     <string name="skill_hand_value">Valore della mano</string>
-    <string name="skill_hand_value_info">È la media dei punti delle mani che hai vinto.\nSono i punti di tutte le mani vincenti divisi per le mani vinte.\nL\'asse parte da 8, il valore minimo di una mano, ed è pieno a 32.</string>
+    <string name="skill_hand_value_info">È la media dei punti delle mani che hai vinto.\nSono i punti di tutte le mani vincenti divisi per le mani vinte.\nL'asse parte da 8, il valore minimo di una mano, ed è pieno a 32.</string>
     <string name="skill_sub_avg">media</string>
     <string name="level_info">Il punteggio di abilità va da 0 a 100. È la media delle quattro abilità del grafico.\nOgni abilità dà da 0 a 100 punti:\n• Percentuale di vittorie: %1$d% o più dà 100.\n• Percentuale di vittorie dal muro: %2$d% o più dà 100.\n• Percentuale di sconfitte su scarto: 0% dà 100 e %3$d% o più dà 0.\n• Valore della mano: %4$d dà 0 e %5$d o più dà 100.\nIl livello segue il punteggio. L'elenco a destra mostra i limiti.\nUn livello richiede %6$d mani. È provvisorio sotto le %7$d mani.</string>
     <string name="level_not_rated">Livello: non ancora valutato</string>
@@ -215,7 +215,7 @@
     <string name="hands_drawn">Patte</string>
     <string name="stat_average_winning_hand">Media mano vincente</string>
     <string name="stat_average_hand_time">Tempo medio per mano</string>
-    <string name="stat_average_hand_time_info">Il tempo tra una mano e quella precedente, quando entrambe sono state inserite al tavolo durante il gioco.\nNon contano le mani inserite una dopo l\'altra, né quelle dopo una pausa di più di 30 minuti.</string>
+    <string name="stat_average_hand_time_info">Il tempo tra una mano e quella precedente, quando entrambe sono state inserite al tavolo durante il gioco.\nNon contano le mani inserite una dopo l'altra, né quelle dopo una pausa di più di 30 minuti.</string>
     <string name="actions">Azioni</string>
     <string name="scope_me">Io</string>
     <string name="scope_my_tournaments">I miei tornei</string>
@@ -514,29 +514,29 @@
     <string name="spreadsheet_error_read">L'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
     <string name="spreadsheet_error_save">L'app non è riuscita a salvare il file. Riprova.</string>
     <string name="consent_title">Analisi anonima</string>
-    <string name="consent_intro">Questa app raccoglie dati anonimi su come viene usata e sugli errori. Il team usa i dati solo per trovare problemi e per migliorare l\'app.</string>
-    <string name="consent_collects">L\'app registra questi dati:
+    <string name="consent_intro">Questa app raccoglie dati anonimi su come viene usata e sugli errori. Il team usa i dati solo per trovare problemi e per migliorare l'app.</string>
+    <string name="consent_collects">L'app registra questi dati:
 • Le schermate, le finestre di dialogo e le schede che apri, e per quanto tempo.
 • Le azioni che usi, come salvare un tavolo.
 • Gli errori e gli arresti anomali, con dettagli tecnici come il tipo di errore.</string>
-    <string name="consent_not_collected">L\'app non registra il tuo nome, il tuo indirizzo e-mail, il tuo numero EMA né alcun testo che scrivi. I dati non ti identificano.</string>
-    <string name="consent_required">Puoi usare l\'app solo se accetti. Se non accetti, non puoi entrare nell\'app.</string>
+    <string name="consent_not_collected">L'app non registra il tuo nome, il tuo indirizzo e-mail, il tuo numero EMA né alcun testo che scrivi. I dati non ti identificano.</string>
+    <string name="consent_required">Puoi usare l'app solo se accetti. Se non accetti, non puoi entrare nell'app.</string>
     <string name="consent_accept">Accetta e continua</string>
     <string name="consent_decline">Rifiuta</string>
-    <string name="consent_declined_note">Non puoi usare l\'app senza l\'analisi anonima. Puoi chiudere l\'app oppure accettare per continuare.</string>
-    <string name="consent_withdraw">Ritira il consenso all\'analisi</string>
+    <string name="consent_declined_note">Non puoi usare l'app senza l'analisi anonima. Puoi chiudere l'app oppure accettare per continuare.</string>
+    <string name="consent_withdraw">Ritira il consenso all'analisi</string>
     <string name="profile_delete_account">Elimina il mio account</string>
     <string name="profile_delete_account_title">Eliminare il tuo account?</string>
-    <string name="profile_delete_account_message">Il tuo account viene eliminato per sempre: l\'accesso, l\'email, l\'alias e la foto. Il tuo giocatore EMA e i tuoi risultati dei tornei restano. Non si può annullare.</string>
+    <string name="profile_delete_account_message">Il tuo account viene eliminato per sempre: l'accesso, l'email, l'alias e la foto. Il tuo giocatore EMA e i tuoi risultati dei tornei restano. Non si può annullare.</string>
     <string name="profile_delete_account_confirm">Elimina</string>
     <string name="privacy_policy">Informativa sulla privacy</string>
-    <string name="consent_withdraw_info">L\'app interrompe l\'analisi e te lo chiede di nuovo. Non puoi usare l\'app finché non accetti.</string>
+    <string name="consent_withdraw_info">L'app interrompe l'analisi e te lo chiede di nuovo. Non puoi usare l'app finché non accetti.</string>
     <string name="stat_best_hand_points">Più punti in una mano</string>
     <string name="stat_average_hands_per_table">Media mani per tavolo</string>
     <string name="app_switch_to_admin">Gestione</string>
     <string name="app_switch_to_player">Vista giocatore</string>
     <string name="app_chooser_title">Cosa vuoi aprire?</string>
-    <string name="app_chooser_hint">Potrai poi passare da un\'app all\'altra in qualsiasi momento con il pulsante della barra in alto.</string>
+    <string name="app_chooser_hint">Potrai poi passare da un'app all'altra in qualsiasi momento con il pulsante della barra in alto.</string>
     <string name="top_bar_activity">Attività</string>
     <string name="design_system">Design system</string>
     <string name="rounds_title">Per turno</string>

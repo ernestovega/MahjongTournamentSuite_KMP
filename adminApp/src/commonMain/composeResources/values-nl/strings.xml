@@ -55,7 +55,7 @@
     <string name="crop_tournament_logo">Toernooilogo bijsnijden</string>
     <string name="drag_the_image_or_use_the">Sleep de afbeelding of gebruik de knoppen. De cirkel toont het logogebied van de ID-kaart.</string>
     <string name="reuse_tournament_logo">Toernooilogo hergebruiken</string>
-    <string name="no_saved_tournament_logos_are_available">Er zijn geen opgeslagen toernooilogo\'s.</string>
+    <string name="no_saved_tournament_logos_are_available">Er zijn geen opgeslagen toernooilogo's.</string>
     <string name="select_time">Kies de tijd</string>
     <string name="finish_the_hand_in_play">Hand in spel afmaken</string>
     <string name="when_the_time_is_over_the">Als de tijd om is, kunnen de spelers tijdens de extra tijd nog één hand invoeren.</string>
@@ -138,7 +138,7 @@
     <string name="choose_a_player">Kies een speler</string>
     <string name="use_the_field_above_to_search">Gebruik het veld hierboven om een speler op naam of EMA-nummer te zoeken en zijn/haar vaardigheden te zien.</string>
     <string name="players_results">Spelers &amp; resultaten</string>
-    <string name="manual_scores">Handmatige scores</string>
+    <string name="manual_scores">Handmatig</string>
     <string name="when_on_enter_each_player_s">Als dit aan staat, voer je zelf de eindscore van elke speler in.\nDe handen tellen niet mee (behalve voor het tellen van kippenhanden en beste handen).</string>
     <string name="hands">Handen</string>
     <string name="when_on_mark_the_table_complete">Als dit aan staat, wordt de tafel als voltooid gemarkeerd en worden de handen vergrendeld.\nElke hand moet geldig zijn voordat je dit kunt aanzetten.</string>
@@ -151,7 +151,7 @@
     <string name="chicken">Kip</string>
     <string name="penalty">Straf</string>
     <string name="done">Klaar</string>
-    <string name="total_scores">Totaalscores</string>
+    <string name="total_scores">Totaal</string>
     <string name="calculated_from_hands_trophies_show_the">Berekend uit de handen.\nDe gouden, zilveren en bronzen handen tonen de beste handen van het toernooi die deze tafel heeft.</string>
     <string name="show_how_the_chicken_and_best">Toon hoe de waarden van kippenhanden en beste handen berekend worden</string>
     <string name="save_and_next_table">Opslaan en volgende tafel</string>

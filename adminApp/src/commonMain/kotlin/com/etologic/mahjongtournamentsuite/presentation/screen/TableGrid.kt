@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,11 +37,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_east
@@ -196,12 +202,10 @@ internal fun RowScope.GridHeaderCell(
                         colorFilter = ColorFilter.tint(LocalContentColor.current),
                     )
                 }
-                Text(
+                WholeWordsText(
                     text = text,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    textAlign = TextAlign.Center,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
                 )
             }
             if (subtext != null) {
@@ -245,4 +249,25 @@ internal fun seatMarksByPlayerId(east: String, south: String, west: String, nort
         marks.getOrPut(id) { mutableListOf() }.add(seat)
     }
     return marks.mapValues { (_, seats) -> seats.joinToString(separator = ",") }
+}
+
+/**
+ * A centered [text] whose font gets smaller, down to 9 sp, until its longest word fits in the width and the whole text
+ * fits in [maxLines], so a long word of another language is not cut in the middle and three words are not cut at the end.
+ */
+@Composable
+private fun WholeWordsText(text: String, style: TextStyle, maxLines: Int) {
+    BoxWithConstraints(contentAlignment = Alignment.Center) {
+        val measurer = rememberTextMeasurer()
+        val width = constraints.maxWidth
+        val fitted = remember(text, style, width) {
+            val words = text.split(' ', '\n').filter { it.isNotBlank() }
+            var size = style.fontSize
+            fun longest() = words.maxOfOrNull { measurer.measure(it, style.copy(fontSize = size), softWrap = false, maxLines = 1).size.width } ?: 0
+            fun overflows() = measurer.measure(text, style.copy(fontSize = size), maxLines = maxLines, constraints = Constraints(maxWidth = width)).hasVisualOverflow
+            while (width != Constraints.Infinity && size.value > 9f && (longest() > width || overflows())) size = (size.value - 0.5f).sp
+            style.copy(fontSize = size)
+        }
+        Text(text = text, style = fitted, textAlign = TextAlign.Center, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
+    }
 }

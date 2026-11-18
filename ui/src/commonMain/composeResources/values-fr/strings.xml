@@ -27,8 +27,8 @@
     <string name="sign_in_button">Se connecter</string>
     <string name="app_logo_description">Logo de Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utilisateurs</string>
-    <string name="top_bar_app_errors">Erreurs de l\'app</string>
-    <string name="top_bar_screenshots">Captures d\'écran</string>
+    <string name="top_bar_app_errors">Erreurs de l'app</string>
+    <string name="top_bar_screenshots">Captures d'écran</string>
     <string name="top_bar_timer">Minuteur</string>
     <string name="top_bar_ranking">Classement</string>
     <string name="date_field_clear">Effacer %1$s</string>
@@ -41,7 +41,7 @@
     <string name="profile_title">Profil</string>
     <string name="profile_alias">Pseudo</string>
     <string name="profile_ema_number">Numéro EMA</string>
-    <string name="profile_ema_number_info">Seul un administrateur peut modifier le numéro EMA.\nIl le fait dans l\'écran de gestion des utilisateurs.</string>
+    <string name="profile_ema_number_info">Seul un administrateur peut modifier le numéro EMA.\nIl le fait dans l'écran de gestion des utilisateurs.</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
     <string name="photo_edit">Modifier la photo</string>
@@ -77,7 +77,7 @@
     <string name="import_file_missing_columns">La première ligne du fichier doit contenir ces colonnes : %1$s.</string>
     <string name="import_file_no_rows">Le fichier ne contient aucune ligne de joueur.</string>
     <string name="import_file_too_many_rows">Le fichier contient plus de %1$s lignes. Divisez-le en fichiers plus petits.</string>
-    <string name="import_file_tournament_started">Le tournoi a déjà des données de tables, donc ses joueurs ne peuvent pas changer. Utilisez le remplacement d\'un joueur.</string>
+    <string name="import_file_tournament_started">Le tournoi a déjà des données de tables, donc ses joueurs ne peuvent pas changer. Utilisez le remplacement d'un joueur.</string>
     <string name="import_file_has_errors">Le fichier contient des erreurs. Corrigez-les et choisissez à nouveau le fichier.</string>
     <string name="image_error_read">La photo n'a pas pu être lue.</string>
     <string name="image_error_open">La photo sélectionnée n'a pas pu être ouverte.</string>
@@ -131,11 +131,11 @@
     <string name="stat_highest_hand_score">Main de plus grande valeur</string>
     <string name="stat_hands_won_on_table">Plus de mains gagnées à une table</string>
     <string name="stat_highest_penalty">Pénalité la plus lourde reçue</string>
-    <string name="stat_tables_won_row">Plus de tables gagnées d\'affilée</string>
-    <string name="stat_hands_won_row">Plus de mains gagnées d\'affilée</string>
+    <string name="stat_tables_won_row">Plus de tables gagnées d'affilée</string>
+    <string name="stat_hands_won_row">Plus de mains gagnées d'affilée</string>
     <string name="stat_most_chicken_hands">Plus de mains poule</string>
     <string name="stat_chicken_hands_on_table">Plus de mains poule sur une table</string>
-    <string name="stat_hands_without_dealin">Plus de mains d\'affilée sans donner la main</string>
+    <string name="stat_hands_without_dealin">Plus de mains d'affilée sans donner la main</string>
     <string name="rivals_title">Meilleurs rivaux</string>
     <string name="rivals_info">Les rivaux sont classés selon un score. Un score plus élevé indique un rival plus redoutable.\nTout ne compte que sur les tables où vous avez joué avec ce rival.\nLe score ajoute des points pour chacun de ces nombres :\n• %1$d pour chaque « Devant vous » : une table où le rival a fini au-dessus de vous.\n• %2$d pour chaque « Vous a battu sur défausse » : une main que vous avez défaussée et que le rival a gagnée.\n• %3$d pour chaque « Vous a battu du mur » : une main que le rival a gagnée du mur.\n• %4$d pour chaque « A gagné sur défausse d'un autre » : une main que le rival a gagnée sur la défausse d'un autre joueur, pas la vôtre.\nLa somme est divisée par le nombre de tables partagées, pour qu'un rival ne soit pas premier uniquement parce que vous vous êtes souvent croisés.</string>
     <string name="rivals_none">Aucun rival pour l'instant. Il faut %1$d tables partagées.</string>
@@ -163,13 +163,13 @@
     <string name="outcome_hands_drawn">Mains nulles</string>
     <string name="outcome_hands_unit">mains</string>
     <string name="skill_win_rate">Taux de victoire</string>
-    <string name="skill_win_rate_info">C\'est la fréquence à laquelle vous gagnez une main.\nCe sont les mains gagnées divisées par les mains jouées.\nL\'axe est plein à 40 %.</string>
+    <string name="skill_win_rate_info">C'est la fréquence à laquelle vous gagnez une main.\nCe sont les mains gagnées divisées par les mains jouées.\nL'axe est plein à 40 %.</string>
     <string name="skill_self_draw">Taux de victoires du mur</string>
-    <string name="skill_self_draw_info">C\'est la fréquence à laquelle vos victoires viennent de la pioche de la tuile gagnante dans le mur.\nCe sont les victoires du mur divisées par les mains gagnées.\nL\'axe est plein à 50 %.</string>
+    <string name="skill_self_draw_info">C'est la fréquence à laquelle vos victoires viennent de la pioche de la tuile gagnante dans le mur.\nCe sont les victoires du mur divisées par les mains gagnées.\nL'axe est plein à 50 %.</string>
     <string name="skill_deal_in_rate">Taux de défaites sur défausse</string>
-    <string name="skill_deal_in_rate_info">C\'est la fréquence à laquelle vous défaussez la tuile avec laquelle un autre joueur gagne.\nCe sont les défaites sur défausse divisées par les mains jouées.\nUne valeur plus basse est meilleure.\nL\'axe est plein à 25 %.</string>
+    <string name="skill_deal_in_rate_info">C'est la fréquence à laquelle vous défaussez la tuile avec laquelle un autre joueur gagne.\nCe sont les défaites sur défausse divisées par les mains jouées.\nUne valeur plus basse est meilleure.\nL'axe est plein à 25 %.</string>
     <string name="skill_hand_value">Valeur de main</string>
-    <string name="skill_hand_value_info">C\'est la moyenne des points des mains que vous avez gagnées.\nCe sont les points de toutes les mains gagnantes divisés par les mains gagnées.\nL\'axe commence à 8, la valeur minimale d\'une main, et est plein à 32.</string>
+    <string name="skill_hand_value_info">C'est la moyenne des points des mains que vous avez gagnées.\nCe sont les points de toutes les mains gagnantes divisés par les mains gagnées.\nL'axe commence à 8, la valeur minimale d'une main, et est plein à 32.</string>
     <string name="skill_sub_avg">moy.</string>
     <string name="level_info">Le score de compétence va de 0 à 100. C'est la moyenne des quatre compétences du graphique.\nChaque compétence donne de 0 à 100 points :\n• Taux de victoire : %1$d% ou plus donne 100.\n• Taux de victoires du mur : %2$d% ou plus donne 100.\n• Taux de défaites sur défausse : 0 % donne 100 et %3$d% ou plus donne 0.\n• Valeur de main : %4$d donne 0 et %5$d ou plus donne 100.\nLe niveau suit le score. La liste à droite montre les limites.\nUn niveau demande %6$d mains. Il est provisoire sous %7$d mains.</string>
     <string name="level_not_rated">Niveau : pas encore évalué</string>
@@ -215,7 +215,7 @@
     <string name="hands_drawn">Nulles</string>
     <string name="stat_average_winning_hand">Moy. main gagnante</string>
     <string name="stat_average_hand_time">Temps moy. par main</string>
-    <string name="stat_average_hand_time_info">Le temps entre une main et la précédente, quand les deux ont été saisies à la table pendant le jeu.\nLes mains saisies l\'une après l\'autre, ou après une pause de plus de 30 minutes, ne comptent pas.</string>
+    <string name="stat_average_hand_time_info">Le temps entre une main et la précédente, quand les deux ont été saisies à la table pendant le jeu.\nLes mains saisies l'une après l'autre, ou après une pause de plus de 30 minutes, ne comptent pas.</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Moi</string>
     <string name="scope_my_tournaments">Mes tournois</string>
@@ -514,29 +514,29 @@
     <string name="spreadsheet_error_read">L'application n'a pas pu lire le fichier. Choisissez un fichier CSV ou Excel et réessayez.</string>
     <string name="spreadsheet_error_save">L'application n'a pas pu enregistrer le fichier. Réessayez.</string>
     <string name="consent_title">Analyse anonyme</string>
-    <string name="consent_intro">Cette application collecte des données anonymes sur son utilisation et sur les erreurs. L\'équipe utilise ces données uniquement pour trouver des problèmes et pour améliorer l\'application.</string>
-    <string name="consent_collects">L\'application enregistre les données suivantes :
+    <string name="consent_intro">Cette application collecte des données anonymes sur son utilisation et sur les erreurs. L'équipe utilise ces données uniquement pour trouver des problèmes et pour améliorer l'application.</string>
+    <string name="consent_collects">L'application enregistre les données suivantes :
 • Les écrans, les boîtes de dialogue et les onglets que vous ouvrez, et pendant combien de temps.
-• Les actions que vous utilisez, comme l\'enregistrement d\'une table.
-• Les erreurs et les plantages, avec des détails techniques comme le type de l\'erreur.</string>
-    <string name="consent_not_collected">L\'application n\'enregistre pas votre nom, votre adresse e-mail, votre numéro EMA ni aucun texte que vous saisissez. Les données ne vous identifient pas.</string>
-    <string name="consent_required">Vous pouvez utiliser l\'application seulement si vous acceptez. Si vous n\'acceptez pas, vous ne pouvez pas entrer dans l\'application.</string>
+• Les actions que vous utilisez, comme l'enregistrement d'une table.
+• Les erreurs et les plantages, avec des détails techniques comme le type de l'erreur.</string>
+    <string name="consent_not_collected">L'application n'enregistre pas votre nom, votre adresse e-mail, votre numéro EMA ni aucun texte que vous saisissez. Les données ne vous identifient pas.</string>
+    <string name="consent_required">Vous pouvez utiliser l'application seulement si vous acceptez. Si vous n'acceptez pas, vous ne pouvez pas entrer dans l'application.</string>
     <string name="consent_accept">Accepter et continuer</string>
     <string name="consent_decline">Refuser</string>
-    <string name="consent_declined_note">Vous ne pouvez pas utiliser l\'application sans l\'analyse anonyme. Vous pouvez fermer l\'application ou accepter pour continuer.</string>
-    <string name="consent_withdraw">Retirer le consentement à l\'analyse</string>
+    <string name="consent_declined_note">Vous ne pouvez pas utiliser l'application sans l'analyse anonyme. Vous pouvez fermer l'application ou accepter pour continuer.</string>
+    <string name="consent_withdraw">Retirer le consentement à l'analyse</string>
     <string name="profile_delete_account">Supprimer mon compte</string>
     <string name="profile_delete_account_title">Supprimer votre compte ?</string>
-    <string name="profile_delete_account_message">Votre compte est supprimé définitivement : la connexion, l\'e-mail, le pseudo et la photo. Votre joueur EMA et vos résultats de tournois restent. Action irréversible.</string>
+    <string name="profile_delete_account_message">Votre compte est supprimé définitivement : la connexion, l'e-mail, le pseudo et la photo. Votre joueur EMA et vos résultats de tournois restent. Action irréversible.</string>
     <string name="profile_delete_account_confirm">Supprimer</string>
     <string name="privacy_policy">Politique de confidentialité</string>
-    <string name="consent_withdraw_info">L\'application arrête l\'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l\'application tant que vous n\'acceptez pas.</string>
+    <string name="consent_withdraw_info">L'application arrête l'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l'application tant que vous n'acceptez pas.</string>
     <string name="stat_best_hand_points">Plus de points en une main</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
     <string name="app_switch_to_admin">Gestion</string>
     <string name="app_switch_to_player">Vue joueur</string>
     <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
-    <string name="app_chooser_hint">Vous pourrez ensuite passer d\'une app à l\'autre à tout moment avec le bouton de la barre du haut.</string>
+    <string name="app_chooser_hint">Vous pourrez ensuite passer d'une app à l'autre à tout moment avec le bouton de la barre du haut.</string>
     <string name="top_bar_activity">Activité</string>
     <string name="design_system">Design system</string>
     <string name="rounds_title">Par tour</string>

@@ -151,7 +151,7 @@
     <string name="chicken">Huhn</string>
     <string name="penalty">Strafe</string>
     <string name="done">Erledigt</string>
-    <string name="total_scores">Gesamtergebnisse</string>
+    <string name="total_scores">Ergebnis</string>
     <string name="calculated_from_hands_trophies_show_the">Aus den Händen berechnet.\nDie goldenen, silbernen und bronzenen Hände zeigen die besten Hände des Turniers, die dieser Tisch hält.</string>
     <string name="show_how_the_chicken_and_best">Zeigen, wie die Werte für Hühnerhände und beste Hände berechnet werden</string>
     <string name="save_and_next_table">Speichern und nächster Tisch</string>
@@ -329,7 +329,7 @@
     <string name="weekday_sunday">Sonntag</string>
     <string name="tab_general">Allgemein</string>
     <string name="tab_venue">Ort</string>
-    <string name="tab_branding">Erscheinungsbild</string>
+    <string name="tab_branding">Aussehen</string>
     <string name="tab_schedule">Zeitplan</string>
     <string name="tab_data">Daten</string>
     <string name="field_error_name_required">Der Name ist erforderlich.</string>
