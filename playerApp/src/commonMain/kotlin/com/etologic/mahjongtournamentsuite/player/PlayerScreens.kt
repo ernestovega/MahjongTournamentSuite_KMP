@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
@@ -53,6 +54,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
@@ -100,7 +102,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -724,7 +725,8 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
         TournamentStatus.UPCOMING -> upcomingBlue()
         else -> null
     }
-    val uriHandler = LocalUriHandler.current
+    val openDirections = rememberOpenLink(TelemetryLink.VENUE_DIRECTIONS)
+    val openEmail = rememberOpenLink(TelemetryLink.ORGANIZER_EMAIL)
     val mapLink = venueMapLink(tournament)
     val email = tournament.venue.contactEmail
     val dates = datesOf(tournament)
@@ -793,7 +795,7 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
                     }
                     if (mapLink != null) {
                         LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
-                            uriHandler.openUri(mapLink)
+                            openDirections(mapLink)
                         }
                     }
                 }
@@ -806,7 +808,7 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (email.isNotBlank()) {
-                        LinkButton(Icons.Default.Email, stringResource(Res.string.info_contact), stringResource(Res.string.contact_send_email)) { uriHandler.openUri("mailto:$email") }
+                        LinkButton(Icons.Default.Email, stringResource(Res.string.info_contact), stringResource(Res.string.contact_send_email)) { openEmail("mailto:$email") }
                     }
                     if (hasSchedule(tournament)) {
                         LinkButton(Icons.Default.Schedule, stringResource(if (expanded) Res.string.schedule_hide else Res.string.info_schedule)) { expanded = !expanded }

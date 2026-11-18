@@ -52,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenTournamentBar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
@@ -477,6 +478,8 @@ private fun ChosenPlayerStatistics(
     var changing by remember { mutableStateOf(false) }
     var viewName by rememberPersistentText("others-view", PlayerView.OVERALL.name)
     val view = PlayerView.entries.firstOrNull { it.name == viewName } ?: PlayerView.OVERALL
+    // The tournament chosen in By tournaments. Null shows all of them. Another player starts again with all of them.
+    var chosenTournamentId by rememberSaveable(emaId) { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         when (val result = presenter.players()) {
             is AppResult.Success -> players = result.value
@@ -547,6 +550,16 @@ private fun ChosenPlayerStatistics(
                         HorizontalDivider(Modifier.widthIn(max = PlayerTabsMaxWidth).fillMaxWidth())
                     }
                     PlayerViewTabs(view) { viewName = it.name }
+                    val tournaments = data?.tournaments
+                    if (view == PlayerView.BY_TOURNAMENTS && tournaments != null && tournaments.size > 1) {
+                        ChosenTournamentBar(
+                            tournaments.map { it.first },
+                            chosenTournamentId,
+                            { chosenTournamentId = it },
+                            stringResource(Res.string.action_change),
+                            PlayerTabsMaxWidth,
+                        )
+                    }
                 }
             }
         }
@@ -569,6 +582,7 @@ private fun ChosenPlayerStatistics(
                     PlayerView.BY_TOURNAMENTS -> PlayerTournamentsSection(
                         loaded.tournaments,
                         loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
+                        tournamentId = chosenTournamentId,
                     )
                     PlayerView.OVERALL -> PlayerStatisticsPanel(
                         loaded.overall,

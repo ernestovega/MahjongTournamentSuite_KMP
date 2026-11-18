@@ -75,4 +75,6 @@ kotlin {
 tasks.withType<Test>().configureEach {
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
+    // Until the release no new check runs in CI: the analytics coverage runs only on a developer machine.
+    if (System.getenv("CI") != null) filter { excludeTestsMatching("*AnalyticsCoverageTest") }
 }

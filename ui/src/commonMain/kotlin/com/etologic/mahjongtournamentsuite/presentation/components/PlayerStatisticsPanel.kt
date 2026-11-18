@@ -21,14 +21,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.UnfoldLess
-import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -44,9 +43,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -59,11 +56,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -78,10 +70,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -93,16 +83,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.card_fold
 import mahjongtournamentsuite.ui.generated.resources.card_unfold
 import mahjongtournamentsuite.ui.generated.resources.column_points
 import mahjongtournamentsuite.ui.generated.resources.column_score
-import mahjongtournamentsuite.ui.generated.resources.date_from
-import mahjongtournamentsuite.ui.generated.resources.date_to
-import mahjongtournamentsuite.ui.generated.resources.field_tournament
-import mahjongtournamentsuite.ui.generated.resources.fold_all
 import mahjongtournamentsuite.ui.generated.resources.level_info
 import mahjongtournamentsuite.ui.generated.resources.level_needs_hands
 import mahjongtournamentsuite.ui.generated.resources.level_not_rated
@@ -130,8 +117,6 @@ import mahjongtournamentsuite.ui.generated.resources.places_all
 import mahjongtournamentsuite.ui.generated.resources.places_avg_place
 import mahjongtournamentsuite.ui.generated.resources.places_history_title
 import mahjongtournamentsuite.ui.generated.resources.places_last
-import mahjongtournamentsuite.ui.generated.resources.range_none
-import mahjongtournamentsuite.ui.generated.resources.range_some
 import mahjongtournamentsuite.ui.generated.resources.rank_of
 import mahjongtournamentsuite.ui.generated.resources.rival_ahead_of_you
 import mahjongtournamentsuite.ui.generated.resources.rival_deal_ins
@@ -185,10 +170,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_skills
 import mahjongtournamentsuite.ui.generated.resources.stats_standing
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.table_n
-import mahjongtournamentsuite.ui.generated.resources.tournaments_show_all
-import mahjongtournamentsuite.ui.generated.resources.tournaments_show_more
-import mahjongtournamentsuite.ui.generated.resources.tournaments_showing
-import mahjongtournamentsuite.ui.generated.resources.unfold_all
+import mahjongtournamentsuite.ui.generated.resources.years_all
 import org.jetbrains.compose.resources.stringResource
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
@@ -198,8 +180,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** Two cards side by side need at least this width. Narrower screens stack the cards. */
 private val WideLayoutWidth = 760.dp
@@ -298,6 +278,8 @@ fun StatCard(
     info: String? = null,
     /** An optional line around the card, for cards in a list that must not merge. */
     border: BorderStroke? = null,
+    /** A line under the title of a card that folds. It stays visible, and a tap on it folds the card too. */
+    summary: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -316,7 +298,10 @@ fun StatCard(
             if (title != null && onToggle != null) {
                 run {
                     Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
-                        CardTitle(title, Modifier.weight(1f), info)
+                        Column(Modifier.weight(1f)) {
+                            CardTitle(title, info = info, bottomGap = if (summary != null) MtsTheme.spacing.xs else 12.dp)
+                            summary?.invoke()
+                        }
                         Icon(
                             if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                             contentDescription = stringResource(if (expanded) Res.string.card_fold else Res.string.card_unfold),
@@ -338,9 +323,10 @@ private fun CardTitle(
     modifier: Modifier = Modifier,
     info: String? = null,
     style: TextStyle = MaterialTheme.typography.headlineMedium,
+    bottomGap: Dp = 12.dp,
 ) {
     Row(
-        modifier.fillMaxWidth().padding(bottom = 12.dp),
+        modifier.fillMaxWidth().padding(bottom = bottomGap),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1110,10 +1096,11 @@ private fun LevelMedalWithScore(statistics: PlayerStatistics, modifier: Modifier
 }
 
 /**
- * The tournaments of one person. Each tournament is a card with its numbers, skills, places and hands.
- * A card folds. The 5 latest tournaments start unfolded. The bar on top sticks while the screen scrolls.
- * It has a tournament dropdown that accepts typing, and a from and a to date.
- * The dropdown unfolds the chosen tournament and scrolls to it. A date range replaces the paging.
+ * The tournaments of one person, the newest first. Each tournament is a card. Folded, the card already says the dates,
+ * the place, the points and the score of the player, so the list works as a summary of the whole career.
+ * Unfolded, it shows the numbers, skills, places and hands of that tournament. Only the newest card starts unfolded.
+ * With tournaments in more than one year, a row of year chips on top filters the list.
+ * With [tournamentId], chosen in the bar of [ChosenTournamentBar], the section shows only that tournament, unfolded.
  */
 @Composable
 fun PlayerTournamentsSection(
@@ -1121,38 +1108,36 @@ fun PlayerTournamentsSection(
     modifier: Modifier = Modifier,
     /** Gives the final places in some tournaments. The section asks only for the tournaments that it shows. */
     loadStandings: (suspend (List<String>) -> Map<String, Standing>)? = null,
+    /** The one tournament to show. Null shows all of them. */
+    tournamentId: String? = null,
 ) {
-    val screen = LocalScreenScroll.current
-    val scope = rememberCoroutineScope()
-    // The newest tournament comes first. Only the newest ones show at the start, and the newest ones are open.
     val sorted = remember(items) {
         items.sortedWith(
             compareByDescending<Pair<Tournament, PlayerStatistics>> { it.first.eventStartDate ?: "" }.thenByDescending { it.first.id },
         )
     }
-    val expanded = remember(sorted.map { it.first.id }) {
-        mutableStateMapOf<String, Boolean>().apply { sorted.forEachIndexed { index, item -> put(item.first.id, index < INITIAL_TOURNAMENTS) } }
+    val ids = sorted.map { it.first.id }
+    val expanded = remember(ids) {
+        mutableStateMapOf<String, Boolean>().apply { sorted.firstOrNull()?.let { put(it.first.id, true) } }
     }
-    var shown by remember(sorted.map { it.first.id }) { mutableStateOf(INITIAL_TOURNAMENTS) }
-    val standings = remember(sorted.map { it.first.id }) { mutableStateMapOf<String, Standing>() }
+    val standings = remember(ids) { mutableStateMapOf<String, Standing>() }
     // The round that each tournament card shows. A card without a round shows the whole tournament.
-    val rounds = remember(sorted.map { it.first.id }) { mutableStateMapOf<String, Int>() }
-    val requested = remember(sorted.map { it.first.id }) { mutableSetOf<String>() }
-    // A date range replaces the "show more" paging. An empty date means no limit on that side.
-    var from by remember { mutableStateOf("") }
-    var to by remember { mutableStateOf("") }
-    val rangeActive = from.isNotEmpty() || to.isNotEmpty()
-    val visible = remember(sorted, shown, from, to) {
-        if (rangeActive) {
-            sorted.filter { item ->
-                val date = item.first.eventStartDate ?: ""
-                (from.isEmpty() || date >= from) && (to.isEmpty() || (date.isNotEmpty() && date <= to))
-            }
-        } else {
-            sorted.take(shown)
+    val rounds = remember(ids) { mutableStateMapOf<String, Int>() }
+    val requested = remember(ids) { mutableSetOf<String>() }
+    // The years with a tournament, the newest first. Null means all the years.
+    val years = remember(sorted) { sorted.mapNotNull { it.first.tournamentYear() }.distinct() }
+    var year by remember(ids) { mutableStateOf<Int?>(null) }
+    val single = sorted.firstOrNull { it.first.id == tournamentId }
+    val visible = remember(sorted, year, single) {
+        when {
+            single != null -> listOf(single)
+            year == null -> sorted
+            else -> sorted.filter { it.first.tournamentYear() == year }
         }
     }
-    // The final places load for the tournaments on screen. A new page asks only for its own tournaments.
+    // The chosen tournament opens unfolded.
+    LaunchedEffect(single?.first?.id) { single?.let { expanded[it.first.id] = true } }
+    // The places load for the tournaments on screen. A new year asks only for its own tournaments.
     LaunchedEffect(visible.map { it.first.id }) {
         val missing = visible.map { it.first.id }.filter { it !in requested }
         if (missing.isEmpty() || loadStandings == null) return@LaunchedEffect
@@ -1164,100 +1149,38 @@ fun PlayerTournamentsSection(
             throw cancelled
         }
     }
-    val cardTops = remember { mutableMapOf<String, Float>() }
-    var selectedId by remember { mutableStateOf<String?>(null) }
-    var sectionHeight by remember { mutableStateOf(0) }
-    var placeholderTop by remember { mutableStateOf(0f) }
-    var placeholderInSection by remember { mutableStateOf(0) }
-    var barHeight by remember { mutableStateOf(0) }
 
-    fun contentY(coordinates: LayoutCoordinates): Float = coordinates.positionInRoot().y - (screen?.viewportTop ?: 0f) + (screen?.state?.value ?: 0)
-
-    LaunchedEffect(selectedId) {
-        val index = sorted.indexOfFirst { it.first.id == selectedId }
-        if (index < 0) return@LaunchedEffect
-        val match = sorted[index].first
-        // A tournament outside the date range, or not shown yet, appears when the user picks it.
-        val date = match.eventStartDate ?: ""
-        if (rangeActive && !((from.isEmpty() || date >= from) && (to.isEmpty() || date <= to))) {
-            from = ""
-            to = ""
-        }
-        if (index >= shown) shown = index + 1
-        expanded[match.id] = true
-        // Wait for the layout of the new or unfolded card, then scroll under the sticky bar.
-        withFrameNanos { }
-        withFrameNanos { }
-        val top = cardTops[match.id] ?: return@LaunchedEffect
-        screen?.state?.animateScrollTo((top - barHeight - 8).toInt().coerceAtLeast(0))
-    }
-
-    Column(modifier.onGloballyPositioned { sectionHeight = it.size.height }, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Box(
-            Modifier.fillMaxWidth().zIndex(1f).onGloballyPositioned {
-                placeholderTop = contentY(it)
-                placeholderInSection = it.positionInParent().y.toInt()
-            },
-        ) {
-            FlowRow(
-                Modifier
-                    .fillMaxWidth()
-                    .offset {
-                        val limit = (sectionHeight - placeholderInSection - barHeight).coerceAtLeast(0)
-                        val pushed = ((screen?.state?.value ?: 0) - placeholderTop).toInt()
-                        IntOffset(0, if (screen == null) 0 else pushed.coerceIn(0, limit))
-                    }
-                    .onSizeChanged { barHeight = it.height }
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                val options = remember(sorted) { sorted.map { it.first.id to it.first.name } }
-                SelectField(
-                    stringResource(Res.string.field_tournament),
-                    options,
-                    selectedId,
-                    { selectedId = it },
-                    Modifier.widthIn(min = 240.dp).weight(1f),
-                )
-                // The two dates stay in one line. On a narrow screen they share the full width.
-                Row(Modifier.widthIn(max = 392.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DateField(stringResource(Res.string.date_from), from, { from = it }, Modifier.weight(1f))
-                    DateField(stringResource(Res.string.date_to), to, { to = it }, Modifier.weight(1f))
-                }
-                val anyOpen = expanded.values.any { it }
-                TextButton(onClick = { visible.forEach { expanded[it.first.id] = !anyOpen } }) {
-                    Icon(if (anyOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(if (anyOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (single == null && years.size > 1) {
+            RoundChipsRow(Modifier.fillMaxWidth(), 0.dp) {
+                FilterChip(selected = year == null, onClick = { year = null }, label = { Text(stringResource(Res.string.years_all)) })
+                years.forEach { y ->
+                    FilterChip(
+                        selected = y == year,
+                        onClick = {
+                            year = if (y == year) null else y
+                            // A year with every card folded opens its newest tournament, so the screen is not empty.
+                            val first = sorted.firstOrNull { year == null || it.first.tournamentYear() == year }?.first?.id
+                            if (first != null && sorted.none { (year == null || it.first.tournamentYear() == year) && expanded[it.first.id] == true }) {
+                                expanded[first] = true
+                            }
+                        },
+                        label = { Text(y.toString()) },
+                    )
                 }
             }
         }
-        // The same button as the one on top. It is also at the end of the list, so the user does not scroll back up.
-        val foldAllButton: @Composable () -> Unit = {
-            val anyVisibleOpen = visible.any { expanded[it.first.id] == true }
-            OutlinedButton(onClick = { visible.forEach { expanded[it.first.id] = !anyVisibleOpen } }) {
-                Icon(if (anyVisibleOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(if (anyVisibleOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
-            }
-        }
-        visible.forEachIndexed { index, (tournament, wholeStats) ->
+        visible.forEach { (tournament, wholeStats) ->
             val open = expanded[tournament.id] ?: false
             val round = rounds[tournament.id]
+            val standing = standings[tournament.id]
             // With a round chosen, every number and chart of the card counts only the tables of that round.
             val stats = remember(wholeStats, round) {
                 round?.let { r -> PlayerStatistics(wholeStats.playerId, wholeStats.results.filter { it.roundId == r }) } ?: wholeStats
             }
             StatCard(
                 tournament.name,
-                // More room between two tournaments and a line around each card, so the tournaments do not merge.
-                Modifier
-                    .padding(top = if (index > 0) TOURNAMENT_CARD_EXTRA_GAP else 0.dp)
-                    .fillMaxWidth()
-                    .onGloballyPositioned { cardTops[tournament.id] = contentY(it) },
+                Modifier.fillMaxWidth(),
                 expanded = open,
                 onToggle = { expanded[tournament.id] = !open },
                 // In the dark theme the line is darker than the card, not lighter.
@@ -1265,6 +1188,7 @@ fun PlayerTournamentsSection(
                     1.dp,
                     if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color.Black.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant,
                 ),
+                summary = { TournamentSummary(tournament, standing) },
             ) {
                 val hasHands = stats.tablesWithHands > 0
                 // The rounds of the tournament: Totals or one round. The row reaches the sides of the card.
@@ -1276,13 +1200,9 @@ fun PlayerTournamentsSection(
                 )
                 StatGrid(Modifier.fillMaxWidth()) {
                     LevelMedalWithScore(stats)
-                    val standing = standings[tournament.id]
-                    if (round == null) {
-                        standing?.let { BigNumber(stringResource(Res.string.stat_rank), it.rank.toString(), suffix = " " + stringResource(Res.string.rank_of, it.of)) }
-                        standing?.let { BigNumber(stringResource(Res.string.column_points), formatPoints(it.points)) }
-                        standing?.let { BigNumber(stringResource(Res.string.column_score), it.score.toString()) }
-                    } else {
-                        // The rank is that of the whole tournament, so one round shows only its own points and score.
+                    // The place, the points and the score of the whole tournament are in the summary under the name.
+                    // One round shows its own points and score here.
+                    if (round != null) {
                         BigNumber(stringResource(Res.string.column_points), formatPoints(stats.results.sumOf { it.points }))
                         BigNumber(stringResource(Res.string.column_score), stats.results.sumOf { it.score }.toString())
                     }
@@ -1321,32 +1241,65 @@ fun PlayerTournamentsSection(
                 }
             }
         }
-        if (rangeActive) {
-            Text(
-                if (visible.isEmpty()) stringResource(Res.string.range_none) else stringResource(Res.string.range_some, visible.size, sorted.size),
-                Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            if (visible.size > 1) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { foldAllButton() }
-        } else {
-            ShowMoreTournaments(
-                shown = visible.size,
-                total = sorted.size,
-                onShowMore = { shown = (shown + TOURNAMENTS_STEP).coerceAtMost(sorted.size) },
-                onShowAll = { shown = sorted.size },
-                foldAll = if (visible.size > 1) foldAllButton else null,
-            )
+    }
+}
+
+private fun Tournament.tournamentYear(): Int? = eventStartDate?.take(4)?.toIntOrNull()
+
+/**
+ * The line under the name of a folded tournament card: the dates, the place in the ranking with its medal color, the
+ * points and the score. The place, the points and the score show once the places have loaded.
+ */
+@Composable
+private fun TournamentSummary(tournament: Tournament, standing: Standing?) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)?.let { dates ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                Icon(Icons.Default.Event, contentDescription = null, Modifier.size(18.dp), tint = muted)
+                Text(dates, style = MaterialTheme.typography.bodyMedium, color = muted)
+            }
+        }
+        standing?.let { place ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                Icon(
+                    Icons.Default.Leaderboard,
+                    contentDescription = stringResource(Res.string.stat_rank),
+                    Modifier.size(18.dp),
+                    tint = MtsTheme.colors.position(place.rank, muted),
+                )
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) { append(place.rank.toString()) }
+                        append(" " + stringResource(Res.string.rank_of, place.of))
+                    },
+                    style = MaterialTheme.typography.bodyMedium.inTextFont(),
+                    color = muted,
+                )
+            }
+            SummaryValue(stringResource(Res.string.column_points), formatPoints(place.points))
+            SummaryValue(stringResource(Res.string.column_score), place.score.toString())
         }
     }
 }
 
-/** The room between two tournament cards, on top of the gap of the section. */
-private val TOURNAMENT_CARD_EXTRA_GAP = 16.dp
-
-/** The number of tournaments that show at the start, and the number that one tap of "show more" adds. */
-private const val INITIAL_TOURNAMENTS = 5
+/** A label and its value in bold, like "Points 12.5". */
+@Composable
+private fun SummaryValue(label: String, value: String) {
+    Text(
+        buildAnnotatedString {
+            append("$label ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) { append(value) }
+        },
+        style = MaterialTheme.typography.bodyMedium.inTextFont(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
 
 /** A chart block of a tournament card with its title on top. The titles of a row line up at the top. */
 @Composable
@@ -1360,41 +1313,6 @@ private fun TitledBlock(title: String, modifier: Modifier, content: @Composable 
 
 /** The least width of a chart block in a tournament card. A narrower space moves the block to the next row. */
 private val TOURNAMENT_BLOCK_MIN_WIDTH = 340.dp
-
-private const val TOURNAMENTS_STEP = 5
-
-/** The way to load more tournaments: by quantity or by date. Nothing shows when all tournaments are visible. */
-@Composable
-private fun ShowMoreTournaments(
-    shown: Int,
-    total: Int,
-    onShowMore: () -> Unit,
-    onShowAll: () -> Unit,
-    /** The button that folds or unfolds all the cards. It sits with the buttons that show more tournaments. */
-    foldAll: (@Composable () -> Unit)? = null,
-) {
-    if (total <= INITIAL_TOURNAMENTS && foldAll == null) return
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        if (total > INITIAL_TOURNAMENTS) {
-            Text(
-                stringResource(Res.string.tournaments_showing, shown, total),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (shown < total) {
-                OutlinedButton(onClick = onShowMore) { Text(stringResource(Res.string.tournaments_show_more, TOURNAMENTS_STEP)) }
-                OutlinedButton(onClick = onShowAll) { Text(stringResource(Res.string.tournaments_show_all)) }
-            }
-            foldAll?.invoke()
-        }
-    }
-}
 
 /** Date and time of the table, in two lines. The date comes from the schedule of the round. */
 private fun tableTime(result: TableResult, tournaments: List<Tournament>): String {

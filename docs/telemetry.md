@@ -43,7 +43,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |
 | `screen_load` | A screen shows its content after loading | `kind` (`open` for the first load of the screen, `tab` for a later load such as a tab change), `screen`, `tab` (the open tab, if any), `ms` |
 | `login`, `logout` | Sign in worked, sign out | none |
-| `password_reset_requested` | A reset email went out | `kind=bulk`, `players` for the mass reset |
+| `password_reset_requested` | A reset email went out | `kind=bulk`, `players` for the mass reset. `kind=single`, `players=1` for the reset of one account in Users. Nothing for the reset of the sign-in screen |
 | `tournament_created` | A tournament is created | `players`, `rounds`, `is_teams` |
 | `tournament_deleted` | A tournament is deleted | none |
 | `table_saved` | An editor saves a table | `hands` |
@@ -53,9 +53,12 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
-| `round_clock` | A button of the Timer (admin app) | `action`: `started` (the gong), `paused`, `resumed`, `started_ago` ("The round started N minutes ago"), `time_set`, `reset`. `kind`: `tournament` or `independent`. The confirmation of a reset of a round with hands is not counted again |
+| `round_clock` | A button of the Timer (admin app) | `action`: `started` (the gong), `paused`, `resumed`, `started_ago` ("The round started N minutes ago"), `time_set`, `reset`, `stopped` (the round ends before its time). `kind`: `tournament` or `independent`. The confirmation of a reset of a round with hands is not counted again |
 | `table_reminder` | The reminder of the own table (player app) | `action`: `shown` (once for each round), `opened` (the button to the table), `closed`, `button` (the floating "Go to my table" button while the round plays). `kind`: `starts_soon`, `awaiting_gong` or `playing` |
 | `support_sent` | The support form sent a message (sign-in of both apps) | none |
+| `link_opened` | A page, a map or an email outside the app opens (both apps) | `kind`: `privacy_policy`, `versions`, `screenshot_gallery`, `api_docs`, `staging` (DEV menu), `green_book`, `venue_map`, `venue_directions`, `organizer_email`, `combinations_source`. The address is never sent |
+| `profile_updated` | The user changed the own profile (both apps). Only a change that worked | `action`: `alias`, `photo_updated`, `photo_removed`, `account_deleted` |
+| `preference_changed` | The user changed the theme or the language (profile dialog or top bar) | `kind`: `theme` or `language`. `action`: the new value, `system`, `light` or `dark`, or the language tag such as `es` |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
 | `app_crash` | The app stopped | `report_id`, `kind` |
@@ -67,6 +70,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Group | Words |
 | --- | --- |
 | Tournament | `tournament_renamed`, `tournament_settings_updated`, `table_reset` |
+| Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed` |
@@ -77,6 +81,16 @@ The events carry no name and no account id. Split them with the user property `r
 
 `reason` of `action_failed` is `network`, `timeout`, `auth`, `conflict`, `client_error`, `server_error` or `unexpected`.
 Only `server_error` and `unexpected` also create an `app_error` and an error report. The others are normal events, such as a user with no network.
+
+## Add a screen or an action
+
+`AnalyticsCoverageTest` fails until the new code counts itself:
+
+- **Screen:** add the route with `screen<MyRoute> { ... }`. The name of the route class, without `Route`, is the screen name. A screen outside the navigation goes in `TrackedScreen("Name") { ... }`.
+- **Dialog or bottom sheet:** wrap it in `TrackedDialog("Name") { ... }`. The name is a fixed word.
+- **Tab:** use `CompactTab(trackingName = ...)`, or call `TrackedTab(name)` while the tab is selected.
+- **Write to the server:** end the call with `.trackAction(telemetry, TelemetryAction.X)` in the admin app, or `.track(telemetry, TelemetryEvent.X)`. A new word goes in `TelemetryEvent.kt`, in its `all` list and in this file. When another function counts the press, add the call to `writesCountedElsewhere` of the test with the reason.
+- **Link:** open it with `rememberOpenLink(TelemetryLink.X)`.
 
 ## Time on screen and user journeys
 
@@ -200,6 +214,7 @@ Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, 
 | --- | --- | --- |
 | `Ga4RulesTest` (domain) | Names of events, parameters and user properties follow the rules of GA4. The lists `all` hold every constant. | `./gradlew :domain:jvmTest` |
 | `AdminActionTrackingTest` (adminApp) | Every write of the admin app sends one `admin_action`, with `ok` or `failed`. | `./gradlew :adminApp:jvmTest` |
+| `AnalyticsCoverageTest` (ui) | Reads the sources of both apps: every route uses `screen<>`, every screen shows inside a route or `TrackedScreen`, every dialog and bottom sheet is in a `TrackedDialog`, every tab is a `CompactTab` or has a `TrackedTab`, every repository function that changes data is called from a function that counts it, every link uses `rememberOpenLink`, and every event and word is sent and described here. Not in CI until the release (the build skips it when `CI` is set). | `./gradlew :ui:jvmTest --tests '*AnalyticsCoverageTest*'` |
 | `telemetryJs.test.ts` (firebase/functions) | Both copies of `telemetry.js` run in a fake page with a fake SDK: consent, events, crash reports, limits. The crash body passes `parseErrorReport` of the server. | `cd firebase/functions && npm test` |
 | `DesktopTelemetryTest` (data) | The desktop app posts the right body to a local server, only after consent. | `./gradlew :data:jvmTest` |
 | `Ga4ValidationSmokeTest` (data) | Google accepts every event of the app. It uses the validation address of the Measurement Protocol, which stores nothing. | See below. It does nothing without the variables. |

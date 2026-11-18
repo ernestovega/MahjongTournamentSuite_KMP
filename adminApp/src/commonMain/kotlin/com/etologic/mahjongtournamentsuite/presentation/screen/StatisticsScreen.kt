@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
+import com.etologic.mahjongtournamentsuite.presentation.components.ChosenTournamentBar
 import com.etologic.mahjongtournamentsuite.presentation.components.ChosenStatisticsBar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
@@ -213,6 +214,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     // The player card sits between the tab rows. The button on it opens the search field to choose another player.
     var changingPlayer by remember { mutableStateOf(false) }
     var changingTournament by remember { mutableStateOf(false) }
+    // The tournament chosen in By tournaments. Null shows all of them. Another player starts again with all of them.
+    var personTournamentId by remember(personEma) { mutableStateOf<String?>(null) }
     val personProfile = person?.profile ?: registry.firstOrNull { it.emaId == personEma }?.let {
         PlayerProfile(it.displayName, it.emaId, it.country, it.photoUrl)
     }
@@ -370,6 +373,18 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                         }
                     }
                 }
+                val personTournaments = person?.tournaments
+                if (scope == StatisticsScope.PERSON_TOURNAMENTS && personTournaments != null && personTournaments.size > 1) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        ChosenTournamentBar(
+                            personTournaments.map { it.first },
+                            personTournamentId,
+                            { personTournamentId = it },
+                            stringResource(Res.string.change),
+                            StatisticsTabWidth * mainTabs.size,
+                        )
+                    }
+                }
             }
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
@@ -462,7 +477,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
 
                     StatisticsScope.PERSON_TOURNAMENTS -> {
                         person?.let { data ->
-                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
+                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) }, tournamentId = personTournamentId)
                         } ?: if (personEma == null) PickPlayerHint() else Unit
                     }
                 }

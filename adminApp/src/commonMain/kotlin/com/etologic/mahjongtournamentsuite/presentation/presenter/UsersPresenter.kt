@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class UsersPresenter(
@@ -98,7 +99,9 @@ class UsersPresenter(
         }
     }
 
+    /** The reset of one account from its menu in Users. */
     suspend fun requestPasswordReset(email: String): AppResult<Unit> = authRepository.requestPasswordReset(email)
+        .track(telemetry, TelemetryEvent.PASSWORD_RESET_REQUESTED, mapOf(TelemetryParam.KIND to "single", TelemetryParam.PLAYERS to 1))
 
     suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.mode())
 }

@@ -184,22 +184,12 @@
     <string name="places_last">Letzte %1$d</string>
     <string name="places_avg_place">Ø Platz</string>
     <string name="skill_score_n">Können-Wert %1$d</string>
-    <string name="field_tournament">Turnier</string>
-    <string name="date_from">Von</string>
-    <string name="date_to">Bis</string>
-    <string name="fold_all">Alle einklappen</string>
-    <string name="unfold_all">Alle ausklappen</string>
     <string name="stat_rank">Rang</string>
     <string name="stat_best_table_score">Bester Tisch-Score</string>
     <string name="stat_best_hand">Beste Hand</string>
     <string name="stat_chicken_hands">Hühnerhände</string>
     <string name="stat_penalties">Strafen</string>
     <string name="stat_penalties_info">Das ist die Anzahl der Strafen.\nDie Zahl in Klammern ist die Summe der verlorenen Punkte.</string>
-    <string name="range_none">Kein Turnier in diesem Zeitraum.</string>
-    <string name="range_some">%1$d von %2$d Turnieren in diesem Zeitraum.</string>
-    <string name="tournaments_showing">%1$d von %2$d Turnieren werden angezeigt. Die neuesten Turniere stehen oben.</string>
-    <string name="tournaments_show_more">%1$d weitere anzeigen</string>
-    <string name="tournaments_show_all">Alle anzeigen</string>
     <string name="round_n">Runde %1$d</string>
     <string name="table_n">Tisch %1$d</string>
     <string name="places_history_title">Platz an den letzten %1$d Tischen</string>
@@ -559,4 +549,6 @@
     <string name="dev_privacy_policy">Datenschutzerklärung</string>
     <string name="dev_staging">Staging (Testseite)</string>
     <string name="open_player_statistics">Statistik des Spielers öffnen</string>
+    <string name="years_all">Alle</string>
+    <string name="stats_all_tournaments">Alle Turniere</string>
 </resources>

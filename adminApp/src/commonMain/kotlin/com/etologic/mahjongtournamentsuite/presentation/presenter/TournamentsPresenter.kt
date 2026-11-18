@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProfileAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import com.etologic.mahjongtournamentsuite.presentation.platform.preventBrowserAutoSignIn
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -33,14 +36,17 @@ class TournamentsPresenter(
 
     suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = tournamentRepository.resolveVenueLink(url)
 
-    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
+    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias).profileUpdated(TelemetryProfileAction.ALIAS)
 
     suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = authRepository.updatePhoto(contentType, bytes)
+        .profileUpdated(TelemetryProfileAction.PHOTO_UPDATED)
 
-    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
+    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto().profileUpdated(TelemetryProfileAction.PHOTO_REMOVED)
 
     /** Deletes the own account. On success the session ends. */
-    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount()
+    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount().profileUpdated(TelemetryProfileAction.ACCOUNT_DELETED)
+
+    private fun <T> AppResult<T>.profileUpdated(action: String) = track(telemetry, TelemetryEvent.PROFILE_UPDATED, mapOf(TelemetryParam.ACTION to action))
 
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.toRefreshMode())
 
@@ -110,6 +116,8 @@ class TournamentsPresenter(
     suspend fun signOut() {
         authRepository.signOut()
         preventBrowserAutoSignIn()
+        telemetry.event(TelemetryEvent.LOGOUT)
+        telemetry.userProperty(TelemetryProperty.ROLE, null)
     }
 }
 

@@ -184,22 +184,12 @@
     <string name="places_last">Senaste %1$d</string>
     <string name="places_avg_place">snittplacering</string>
     <string name="skill_score_n">Färdighetspoäng %1$d</string>
-    <string name="field_tournament">Turnering</string>
-    <string name="date_from">Från</string>
-    <string name="date_to">Till</string>
-    <string name="fold_all">Fäll ihop alla</string>
-    <string name="unfold_all">Fäll ut alla</string>
     <string name="stat_rank">Rang</string>
     <string name="stat_best_table_score">Bästa bordsresultat</string>
     <string name="stat_best_hand">Bästa hand</string>
     <string name="stat_chicken_hands">Kycklinghänder</string>
     <string name="stat_penalties">Straff</string>
     <string name="stat_penalties_info">Det här är antalet straff.\nTalet inom parentes är summan av förlorade poäng.</string>
-    <string name="range_none">Ingen turnering i den här perioden.</string>
-    <string name="range_some">%1$d av %2$d turneringar i den här perioden.</string>
-    <string name="tournaments_showing">Visar %1$d av %2$d turneringar. De nyaste turneringarna kommer först.</string>
-    <string name="tournaments_show_more">Visa %1$d till</string>
-    <string name="tournaments_show_all">Visa alla</string>
     <string name="round_n">Omgång %1$d</string>
     <string name="table_n">Bord %1$d</string>
     <string name="places_history_title">Placering vid de senaste %1$d borden</string>
@@ -559,4 +549,6 @@
     <string name="dev_privacy_policy">Integritetspolicy</string>
     <string name="dev_staging">Staging (testsajt)</string>
     <string name="open_player_statistics">Öppna spelarens statistik</string>
+    <string name="years_all">Alla</string>
+    <string name="stats_all_tournaments">Alla turneringar</string>
 </resources>

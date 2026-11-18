@@ -23,7 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalUriHandler
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.design_system
 import mahjongtournamentsuite.ui.generated.resources.dev_api_docs
@@ -62,17 +63,20 @@ private class DevMenuEntry(val text: String, val icon: ImageVector, val dividerA
  */
 @Composable
 fun DevMenuButton(actions: DevMenuActions) {
-    val uriHandler = LocalUriHandler.current
-    fun open(url: String): () -> Unit = { runCatching { uriHandler.openUri(url) } }
+    val openGallery = rememberOpenLink(TelemetryLink.SCREENSHOT_GALLERY)
+    val openVersions = rememberOpenVersions()
+    val openPrivacyPolicy = rememberOpenPrivacyPolicy()
+    val openApiDocs = rememberOpenLink(TelemetryLink.API_DOCS)
+    val openStaging = rememberOpenLink(TelemetryLink.STAGING)
     val entries = listOf(
         DevMenuEntry(stringResource(Res.string.top_bar_activity), Icons.Default.History, false, actions.onActivity),
         DevMenuEntry(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, false, actions.onAppErrors),
         DevMenuEntry(stringResource(Res.string.design_system), Icons.Default.Palette, false, actions.onDesignSystem),
-        DevMenuEntry(stringResource(Res.string.top_bar_screenshots), Icons.Default.PhotoLibrary, true, open(SCREENSHOT_GALLERY_URL)),
-        DevMenuEntry(stringResource(Res.string.dev_versions), Icons.Default.NewReleases, false, open(VERSIONS_URL)),
-        DevMenuEntry(stringResource(Res.string.dev_privacy_policy), Icons.Default.Policy, false, open(PRIVACY_POLICY_URL)),
-        DevMenuEntry(stringResource(Res.string.dev_api_docs), Icons.Default.Api, false, open(API_DOCS_URL)),
-        DevMenuEntry(stringResource(Res.string.dev_staging), Icons.Default.Science, false, open(STAGING_ADMIN_URL)),
+        DevMenuEntry(stringResource(Res.string.top_bar_screenshots), Icons.Default.PhotoLibrary, true, { openGallery(SCREENSHOT_GALLERY_URL) }),
+        DevMenuEntry(stringResource(Res.string.dev_versions), Icons.Default.NewReleases, false, openVersions),
+        DevMenuEntry(stringResource(Res.string.dev_privacy_policy), Icons.Default.Policy, false, openPrivacyPolicy),
+        DevMenuEntry(stringResource(Res.string.dev_api_docs), Icons.Default.Api, false, { openApiDocs(API_DOCS_URL) }),
+        DevMenuEntry(stringResource(Res.string.dev_staging), Icons.Default.Science, false, { openStaging(STAGING_ADMIN_URL) }),
     )
     val label = stringResource(Res.string.dev_menu)
     val outerMenu = LocalTopBarMenu.current

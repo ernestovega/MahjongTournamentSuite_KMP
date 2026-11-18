@@ -82,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubst
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
@@ -522,14 +523,16 @@ private fun RankingControls(
             }
         }
         if (settingsOpen) {
-            ModalBottomSheet(onDismissRequest = { settingsOpen = false }) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp).appFocusGroup(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(stringResource(Res.string.settings), style = MaterialTheme.typography.titleMedium)
-                    settings()
+            TrackedDialog("RankingsSettings") {
+                ModalBottomSheet(onDismissRequest = { settingsOpen = false }) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp).appFocusGroup(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(Res.string.settings), style = MaterialTheme.typography.titleMedium)
+                        settings()
+                    }
                 }
             }
         }

@@ -836,13 +836,13 @@
     <string name="player_disabled_description">Spelaren har data i turneringar, så den inaktiverades i stället för att raderas.\n\nStäng av det här för att återaktivera spelaren.</string>
     <string name="draw_help_button">Hur fungerar lottningen?</string>
     <string name="draw_help_title">Så fungerar lottningen</string>
-    <string name="draw_help_intro">När du skapar turneringen fördelar appen spelarna på borden i alla rundor.\nDen använder spelarnummer (1, 2, 3…). Namnen kopplas till numren senare.</string>
+    <string name="draw_help_intro">När du skapar turneringen lottas borden för alla rundor på en gång. Så här går det till:</string>
     <string name="draw_help_how_title">Så fungerar det</string>
     <string name="draw_help_how">• Appen fyller borden en stol i taget, runda efter runda.\n• För varje stol drar den slumpvis en spelare som ännu inte har något bord i rundan.\n• Om spelaren redan har spelat mot någon vid bordet, eller är i samma lag, provar den en annan.\n• Om ingen passar någon gång börjar den om från början.\n• Den provar många fördelningar samtidigt och behåller den första som fungerar. Tung beräkning provar ännu fler samtidigt, så stora turneringar blir klara snabbare.</string>
     <string name="draw_help_rules_title">Vad som garanteras</string>
     <string name="draw_help_rules">• Ingen spelar mot samma person två gånger under hela turneringen.\n• I en lagturnering sitter två spelare från samma lag aldrig vid samma bord.\n• Ordningen på stolarna vid varje bord är också slumpad.</string>
     <string name="draw_help_random_title">100 % slump</string>
-    <string name="draw_help_random">• Borden lottas på riktigt. Bakom finns inga formler, fasta tabeller eller parningssystem.\n• Ingens ranking, nivå eller land räknas. Alla bord är bestämda innan den första given spelas.\n• Varje ledig spelare har samma chans till varje stol, så inga mönster upprepas från en turnering till nästa.\n• Varje turnering får sin egen lottning, och ingen kan veta i förväg hur den blir.\n• Tips: koppla namnen till numren utan att titta på borden först, till exempel i anmälningsordning. Då kan ingen välja vem den spelar mot.</string>
+    <string name="draw_help_random">• Borden lottas på riktigt. Bakom finns inga formler, fasta tabeller eller parningssystem.\n• Ingens ranking, nivå eller land räknas. Alla bord är bestämda innan den första given spelas.\n• Varje ledig spelare har samma chans till varje stol, så inga mönster upprepas från en turnering till nästa.\n• Varje turnering får sin egen lottning, och ingen kan veta i förväg hur den blir.\n• Tips: lottningen görs med spelarnummer (1, 2, 3…). Koppla namnen till de numren utan att titta på borden först, till exempel i anmälningsordning. Då kan ingen välja vem den spelar mot.</string>
     <string name="draw_flow_description">Flödesschema för lottningen</string>
     <string name="draw_flow_start">Spelare, rundor och lag</string>
     <string name="draw_flow_seed">Blanda</string>

@@ -13,20 +13,31 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_cancel
+import mahjongtournamentsuite.ui.generated.resources.scope_tournament
+import mahjongtournamentsuite.ui.generated.resources.stats_all_tournaments
+import org.jetbrains.compose.resources.stringResource
 
 /** The height of the bar with the chosen player or tournament. */
 private val ChosenBarHeight = 44.dp
@@ -93,3 +104,54 @@ fun ChosenPlayerBar(profile: PlayerProfile, changeLabel: String, onChange: () ->
         },
     )
 }
+
+/**
+ * The bar of the tournaments of a player: the chosen tournament, or all of them, and the button to choose another one.
+ * The button swaps the bar for a tournament dropdown with "All tournaments" first and the newest tournaments next.
+ * [chosenId] is null for all the tournaments.
+ */
+@Composable
+fun ChosenTournamentBar(
+    tournaments: List<Tournament>,
+    chosenId: String?,
+    onChoose: (String?) -> Unit,
+    changeLabel: String,
+    maxWidth: Dp,
+) {
+    var changing by remember { mutableStateOf(false) }
+    val all = stringResource(Res.string.stats_all_tournaments)
+    if (!changing) {
+        ChosenStatisticsBar(
+            title = tournaments.firstOrNull { it.id == chosenId }?.name ?: all,
+            changeLabel = changeLabel,
+            onChange = { changing = true },
+            maxWidth = maxWidth,
+            leading = { Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = mtsTabContentColor()) },
+        )
+        return
+    }
+    val options = remember(tournaments, all) {
+        listOf(ALL_TOURNAMENTS_KEY to all) +
+            tournaments.sortedByDescending { it.eventStartDate.orEmpty() }.map { it.id to it.name }
+    }
+    Row(
+        Modifier.widthIn(max = maxWidth).fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SelectField(
+            stringResource(Res.string.scope_tournament),
+            options,
+            chosenId ?: ALL_TOURNAMENTS_KEY,
+            {
+                onChoose(it.takeIf { id -> id != ALL_TOURNAMENTS_KEY })
+                changing = false
+            },
+            Modifier.weight(1f),
+        )
+        DebouncedTextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
+    }
+}
+
+/** The key of "All tournaments" in the dropdown. No tournament id is empty. */
+private const val ALL_TOURNAMENTS_KEY = ""
