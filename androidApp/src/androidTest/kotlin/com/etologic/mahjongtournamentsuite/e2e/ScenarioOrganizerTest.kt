@@ -451,8 +451,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The search finds the slot by its EMA number. The email of the slot is the other key that only it has: it is
         // tried when the EMA number shows no single row.
         val oneRow = { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
+        val rowsBefore = c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size
+        val unassignedBefore = c.onAllNodes(hasText("Not assigned")).fetchSemanticsNodes().size
+        log("players screen: $rowsBefore rows shown, $unassignedBefore of them not assigned")
         c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(slot.emaId)
-        if (!runCatching { c.waitUntil(20_000) { oneRow() } }.isSuccess) {
+        // The EMA registry and the tables load after the slots: the row of the player can take a while to show.
+        if (!runCatching { c.waitUntil(90_000) { oneRow() } }.isSuccess) {
             val rows = c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size
             log("the search of EMA ${slot.emaId} (slot $slotId) shows $rows rows, so the test searches the email")
             c.onAllNodes(hasSetTextAction()).onLast().performTextClearance()
@@ -460,11 +464,15 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             c.waitUntil(20_000) { oneRow() }
         }
         // The list filters while the search is typed: a tap on the row being replaced is lost, so the menu is opened again.
-        repeat(3) {
-            if (c.isOnScreen("Substitute")) return@repeat
+        // The menu has Substitute once the tables of the tournament show progress: until then it is closed and opened again.
+        for (attempt in 1..8) {
+            if (c.isOnScreen("Substitute")) break
             c.waitForIdle()
             c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().performClick()
-            runCatching { c.waitForText("Substitute", timeoutMs = 10_000) }
+            if (runCatching { c.waitForText("Substitute", timeoutMs = 10_000) }.isSuccess) break
+            log("the menu of slot $slotId has no Substitute yet, attempt $attempt")
+            closeOpenMenu()
+            idle(10_000)
         }
         c.waitForText("Substitute")
         c.clickLastButton("Substitute")
