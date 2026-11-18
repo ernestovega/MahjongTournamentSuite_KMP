@@ -70,8 +70,8 @@ Build the bundle for Google Play by hand (CI does it on every merge to `main`, s
 
 ## Automatic upload to Google Play
 
-The job **Publish to Google Play** of the workflow **Tests and deploy** (`.github/workflows/firebase.yml`) runs when
-the workflow is started by hand on `main` (Actions > Tests and deploy > Run workflow). Since 2026-11-11 it no longer
+The job **Publish to Google Play** of the workflow **Deploy · Production** (`.github/workflows/firebase.yml`) runs when
+the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). Since 2026-11-11 it no longer
 runs on every push, so small changes do not reach Google Play. Starting the workflow also deploys Firebase. For each app it asks Google Play which version codes the app
 already has, and only builds and uploads the app when its version code in `gradle/libs.versions.toml` is new
 (see [versioning.md](versioning.md)). A merge that does not bump an app does not upload it. When the version code is
@@ -85,7 +85,7 @@ repository variables in **Settings > Secrets and variables > Actions > Variables
 | `PLAY_TRACK` | `internal` | `internal`, `alpha` (closed testing), `beta` (open testing), `production` |
 | `PLAY_RELEASE_STATUS` | `completed` | `completed` (roll out at once), `draft` (prepare it, roll it out by hand in Play Console) |
 
-The script that talks to Google Play is `scripts/play.py`. The job also runs from **Actions > Tests and deploy > Run
+The script that talks to Google Play is `scripts/play.py`. The job also runs from **Actions > Deploy · Production > Run
 workflow** on `main`, for example to retry a failed upload.
 
 ### Setup

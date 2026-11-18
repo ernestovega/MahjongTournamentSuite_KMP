@@ -1,8 +1,8 @@
 # Screenshot tests (Roborazzi on the JVM): every screen in phone, tablet and desktop width, light and dark, compared
 # with the reference images in <module>/screenshots/. See docs/screenshot-tests.md.
-# Paused until the release (Ernesto, 2026-11-13): it only runs by hand (Actions > Screenshot tests > Run workflow).
+# Paused until the release (Ernesto, 2026-11-13): it only runs by hand (Actions > Test · Screenshots > Run workflow).
 # To run it on the pull requests to main, uncomment the trigger below.
-name: Screenshot tests
+name: Test · Screenshots
 
 on:
   # pull_request:

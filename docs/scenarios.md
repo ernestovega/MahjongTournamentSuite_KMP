@@ -30,7 +30,7 @@ one phone writes two hands. When a screen has changed, the run stops there.
 ## Staging first
 
 Each run deploys main to staging before anything else (the job "Deploy main to staging", the same deploy as Actions >
-Deploy staging). The app of the test and the backend it talks to are always the same commit.
+Deploy · Staging). The app of the test and the backend it talks to are always the same commit.
 
 ## Who does what
 

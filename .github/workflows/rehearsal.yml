@@ -1,8 +1,8 @@
-# The bots of a rehearsal in staging (docs/rehearsal.md). Run it by hand from Actions > Rehearsal. It never touches
-# the production project. It needs what Deploy staging needs (the STAGING_* variables and the STAGING_ADMIN_EMAIL
+# The bots of a rehearsal in staging (docs/rehearsal.md). Run it by hand from Actions > Test · Game day · Participating. It never touches
+# the production project. It needs what Deploy · Staging needs (the STAGING_* variables and the STAGING_ADMIN_EMAIL
 # secret). The password of the bot accounts lives in the Secret Manager of staging as REHEARSAL_PASSWORD: the first run
 # creates it.
-name: Rehearsal
+name: Test · Game day · Participating
 
 on:
   workflow_dispatch:

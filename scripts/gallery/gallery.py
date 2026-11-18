@@ -9,7 +9,7 @@ build: the history of the reference images comes from git (the last N commits of
 image is stored once, by its Git LFS id: img/<id>.png (the original) and thumb2/<id>.webp (a WebP up to 900 px high, for the lists).
 Only the ids that the site does not have yet are downloaded from Git LFS, so a run costs little LFS bandwidth.
 
-videos: the screen recordings of the last game days (the organizer tablet of Actions > Game day), compressed to a
+videos: the screen recordings of the last game days (the organizer tablet of Actions > Test · Game day · Auto), compressed to a
 few MB each and kept for the last KEEP_GAME_DAYS runs.
 
 publish: Firebase Hosting through its REST API. A new version lists every file by the hash of its content, and

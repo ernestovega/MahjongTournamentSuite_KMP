@@ -1,10 +1,10 @@
 # Deploys main to the staging Firebase project, a copy of production with test data only. Run it by hand from
-# Actions > Deploy staging. It never touches the production project. See docs/staging.md.
+# Actions > Deploy · Staging. It never touches the production project. See docs/staging.md.
 # Needs the repository variables STAGING_FIREBASE_PROJECT, STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER and
 # STAGING_GCP_DEPLOY_SERVICE_ACCOUNT, the repository secret STAGING_ADMIN_EMAIL, and the secrets MTS_SMTP_URI,
 # PLACES_API_KEY and MTS_ID_TOOLKIT_API_KEY in the Secret Manager of the staging project. The deploy creates
 # MTS_SUPPORT_EMAIL there (the staging admin) when it is missing.
-name: Deploy staging
+name: Deploy · Staging
 
 on:
   workflow_dispatch:

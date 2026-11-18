@@ -1,6 +1,6 @@
 # A game day scenario in staging (docs/scenarios.md): a whole tournament played without anybody, through the apps.
-# Run it by hand from Actions > Game day. It never touches the production project. The tournaments stay in staging.
-name: Game day
+# Run it by hand from Actions > Test · Game day · Auto. It never touches the production project. The tournaments stay in staging.
+name: Test · Game day · Auto
 
 on:
   workflow_dispatch:

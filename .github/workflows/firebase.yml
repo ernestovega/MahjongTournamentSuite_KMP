@@ -2,7 +2,7 @@
 # Android apps that have a new version code on Google Play (docs/android-release.md).
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 # The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
-name: Tests and deploy
+name: Deploy · Production
 
 on:
   pull_request:
@@ -146,7 +146,7 @@ jobs:
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 
   # The UI tests do not run here until the apps are in production: they take close to an hour. Run them by hand with
-  # Actions > UI tests > Run workflow. See docs/instrumented-ui-tests.md.
+  # Actions > Test · UI (emulators) > Run workflow. See docs/instrumented-ui-tests.md.
 
   check:
     name: Build and test
@@ -216,7 +216,7 @@ jobs:
           --force
 
       # The table of versions in the summary of the run. Google Play is shown by the job below and by
-      # Actions > Versions.
+      # Actions > Check · Published versions.
       - name: Show the versions
         if: always()
         run: python3 scripts/versions.py status

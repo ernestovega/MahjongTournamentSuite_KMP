@@ -20,9 +20,9 @@ The admin app opens it with **DEV > Screenshots** in the top bar of the tourname
   between fit and real pixels.
 - **Copy reference** (the floating button, or C): copies a text with the screen, the variant, the file in the
   repository, the version and a link that opens the same image. Paste it in the chat to ask about that screen.
-- **Game day videos**: the screen of the organizer tablet in the last 3 runs of Actions > Game day.
+- **Game day videos**: the screen of the organizer tablet in the last 3 runs of Actions > Test · Game day · Auto.
 - **Status** (top right): whether the images are up to date:
-  - the last run of Actions > Screenshot tests, and how many commits of main came after it;
+  - the last run of Actions > Test · Screenshots, and how many commits of main came after it;
   - for each module, whether its main code (`src/*Main`, plus `ui`, `designsystem` and `screenshotTesting` where
     they apply) changed after its images. That is only a hint: running the tests is the real check.
 
@@ -40,7 +40,7 @@ The admin app opens it with **DEV > Screenshots** in the top bar of the tourname
 ## How it runs
 
 `.github/workflows/screenshot-gallery.yml` runs after every push to main that changes an image or the gallery, after
-every run of Screenshot tests and Game day, and by hand (Actions > Screenshot gallery). It uses the variables of
+every run of Test · Screenshots and Test · Game day · Auto, and by hand (Actions > Publish · Screenshot gallery). It uses the variables of
 staging (`STAGING_FIREBASE_PROJECT` and its deploy account) and creates the site the first time. The optional
 variable `GALLERY_SITE` changes its name.
 
