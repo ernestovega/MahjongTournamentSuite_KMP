@@ -45,13 +45,13 @@ jobs:
           fi
 
       # The whole history of main, without the LFS images: the script downloads only the ones the site lacks.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
           lfs: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -71,7 +71,7 @@ jobs:
           workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: Publish
         run: python3 scripts/gallery/gallery.py publish --out "$OUT" --site "$SITE" --project "$STAGING"

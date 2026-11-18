@@ -24,17 +24,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # The reference images live in Git LFS.
           lfs: true
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: ${{ inputs.mode == 'record' && 'Record' || 'Verify' }} the screenshots
         # --continue runs every module even when one fails, so the artifact has all the differences.
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload the images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ inputs.mode || 'verify' }}
           # The reference images (new ones in record mode) and, when a verify fails, the actual image and the comparison.
