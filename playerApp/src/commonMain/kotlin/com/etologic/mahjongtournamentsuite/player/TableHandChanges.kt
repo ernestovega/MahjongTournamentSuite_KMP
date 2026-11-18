@@ -1,9 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 /** Whether the list of hands shows the hand: it has a result or a penalty. */
 internal fun TableHand.isListed(): Boolean = isDone || penaltyRows().isNotEmpty()
@@ -31,22 +28,12 @@ internal fun handListChange(before: List<TableHand>, after: List<TableHand>, ser
 }
 
 /**
- * Follows the hands of the table screen between loads and says which change to animate. The first load and the
- * player's own hands show at once: the player already saw them in the dialog. A hand that another device saved
- * animates, unless the device asks for less motion.
+ * Follows the hands of the table screen between loads and says which change to animate. The first load shows at once.
+ * A later change animates, also on the phone that saved it, unless the device asks for less motion.
  */
-internal class TableChangeTracker(
-    private val timeSource: TimeSource = TimeSource.Monotonic,
-    private val ownChangeWindow: Duration = 20.seconds,
-) {
+internal class TableChangeTracker {
     private var last: List<TableHand>? = null
     private var serial = 0
-    private var ownMark: kotlin.time.TimeMark? = null
-
-    /** The player saved a hand or a penalty. The next change is that one, so it does not animate. */
-    fun expectOwnChange() {
-        ownMark = timeSource.markNow()
-    }
 
     /** The change to animate for these hands, or null when nothing should move. */
     fun update(hands: List<TableHand>, animate: Boolean): HandListChange? {
@@ -55,8 +42,6 @@ internal class TableChangeTracker(
         if (before == null) return null
         val change = handListChange(before, hands, serial + 1) ?: return null
         serial = change.serial
-        val own = ownMark?.let { it.elapsedNow() < ownChangeWindow } == true
-        ownMark = null
-        return change.takeIf { animate && !own }
+        return change.takeIf { animate }
     }
 }

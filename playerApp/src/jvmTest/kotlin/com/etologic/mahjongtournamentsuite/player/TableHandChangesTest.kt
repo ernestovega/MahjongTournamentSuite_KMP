@@ -5,8 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TestTimeSource
 
 class TableHandChangesTest {
     private fun hand(id: Int, done: Boolean = true, score: String = "8", eastPenalty: String = "") = TableHand(
@@ -51,25 +49,10 @@ class TableHandChangesTest {
     }
 
     @Test
-    fun theFirstLoadAndOwnHandsDoNotAnimate() {
-        val time = TestTimeSource()
-        val tracker = TableChangeTracker(time)
+    fun theFirstLoadDoesNotAnimate() {
+        val tracker = TableChangeTracker()
         assertNull(tracker.update(twoHands, animate = true))
-        tracker.expectOwnChange()
-        val withThird = listOf(hand(1), hand(2), hand(3))
-        assertNull(tracker.update(withThird, animate = true))
-        // A later hand from another device animates.
-        assertEquals(setOf(4), tracker.update(withThird + hand(4), animate = true)?.added)
-    }
-
-    @Test
-    fun anOldOwnSaveDoesNotHideARemoteHand() {
-        val time = TestTimeSource()
-        val tracker = TableChangeTracker(time)
-        tracker.update(twoHands, animate = true)
-        tracker.expectOwnChange()
-        time += 30.seconds
-        assertNotNull(tracker.update(listOf(hand(1), hand(2), hand(3)), animate = true))
+        assertEquals(setOf(3), tracker.update(listOf(hand(1), hand(2), hand(3)), animate = true)?.added)
     }
 
     @Test

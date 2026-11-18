@@ -1756,7 +1756,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     var reloadKey by remember { mutableStateOf(0) }
     val (view, message) = rememberTournamentView(tournamentId, reloadKey, tableRoundId = roundId, tableId = tableId)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
-    // A hand that another device saves while the screen is open animates in, and the totals count to their new values.
+    // A hand that arrives while the screen is open animates in, and the totals count to their new values. The phone that
+    // saved it animates too, so the four players see the same.
     val reduceMotion = rememberReduceMotion()
     val changes = remember { TableChangeTracker() }
     val change = remember(table?.hands) { table?.let { changes.update(it.hands, animate = !reduceMotion) } }
@@ -1837,7 +1838,6 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 now = now,
                 preselectWinner = preselectWinner,
                 onPreselectHandled = { preselectWinner = null },
-                onRecorded = { changes.expectOwnChange() },
                 onSaved = { reloadKey++ },
             )
             if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
@@ -1915,8 +1915,8 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable, change: Han
     }
 }
 
-private const val HAND_ENTER_MILLIS = 450
-private const val HAND_EXIT_MILLIS = 400
+private const val HAND_ENTER_MILLIS = 1_350
+private const val HAND_EXIT_MILLIS = 1_200
 
 @Composable
 private fun HandCard(view: PlayerTournamentView, table: PlayerTable, hand: TableHand, change: HandListChange?) {
@@ -1928,11 +1928,11 @@ private fun HandCard(view: PlayerTournamentView, table: PlayerTable, hand: Table
             hand.handId in change.added -> {
                 glow.snapTo(1f)
                 delay(HAND_ENTER_MILLIS.toLong())
-                glow.animateTo(0f, tween(1_000))
+                glow.animateTo(0f, tween(3_000))
             }
             hand.handId in change.edited -> repeat(2) {
-                glow.animateTo(1f, tween(250))
-                glow.animateTo(0f, tween(350))
+                glow.animateTo(1f, tween(750))
+                glow.animateTo(0f, tween(1_050))
             }
         }
     }

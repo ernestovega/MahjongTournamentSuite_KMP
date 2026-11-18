@@ -243,7 +243,7 @@ fun LastPlaceIcon(size: Dp = 28.dp) {
 private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWind?, val score: AnimatedScore)
 
 /**
- * The score of a seat on screen. When a hand from another device changes it, the number counts from the old score to
+ * The score of a seat on screen. When a new hand changes it, the number counts from the old score to
  * the new one and the difference rises over it, green for a gain and red for a loss.
  */
 @Stable
@@ -258,7 +258,7 @@ private class AnimatedScore(initial: Int) {
 @Composable
 private fun rememberAnimatedScore(target: Int, animate: Boolean): AnimatedScore {
     val score = remember { AnimatedScore(target) }
-    // The flag belongs to the same load as the new score, so a load of the player's own hand jumps to the new score.
+    // The flag belongs to the same load as the new score, so the first load jumps to the scores.
     LaunchedEffect(target) {
         val from = score.value.targetValue.roundToInt()
         if (!animate || from == target) {
@@ -272,8 +272,8 @@ private fun rememberAnimatedScore(target: Int, animate: Boolean): AnimatedScore 
     return score
 }
 
-private const val SCORE_COUNT_MILLIS = 600
-private const val DELTA_RISE_MILLIS = 1_200
+private const val SCORE_COUNT_MILLIS = 1_800
+private const val DELTA_RISE_MILLIS = 3_600
 
 /**
  * The four players of a table.
@@ -300,7 +300,7 @@ fun TableSeatsView(
     leading: @Composable (() -> Unit)? = null,
     /**
      * When true, a new score counts from the old one and its difference rises over it. The screen sets it for the
-     * hands that come from other devices, and leaves it off for the first load and the player's own hands.
+     * hands that arrive while it is open, and leaves it off for the first load.
      */
     animateScoreChanges: Boolean = false,
     onPlayerClick: (Int) -> Unit = {},
@@ -524,7 +524,7 @@ private fun RisingDelta(delta: Int, key: Int, color: Color, modifier: Modifier) 
             }
             // It appears fast, stays and fades out at the end.
             .graphicsLayer { alpha = (minOf(progress.value * 6f, 1f) * minOf((1f - progress.value) * 2.5f, 1f)) },
-        style = MaterialTheme.typography.titleMedium,
+        style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         color = color,
         maxLines = 1,
