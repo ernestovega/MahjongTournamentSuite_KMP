@@ -21,6 +21,7 @@ import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
@@ -520,9 +521,23 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForIdle()
     }
 
+    /**
+     * A done hand is locked: Done off opens its fields. A tap can land while the table is drawn again after a poll and
+     * do nothing, so the editor looks at the score field and taps again.
+     */
+    private fun unlockHand(handId: Int) {
+        val open = hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$handId-score")) and isEnabled()
+        repeat(3) {
+            if (c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) return
+            tapCell(handId, "done")
+            runCatching { c.waitUntil(5_000) { c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() } }
+        }
+        check(c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) { "Hand $handId stays locked after Done off" }
+    }
+
     /** The hand no longer counts: Done off, no winner, no loser, no score. */
     private fun deleteHand(handId: Int) {
-        tapCell(handId, "done")
+        unlockHand(handId)
         scoreField(handId).performTextReplacement("")
         clearPlayer(handId, "winner")
         clearPlayer(handId, "loser")
@@ -531,7 +546,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     /** Another score that is valid for any hand, also a chicken hand (8 to 12). */
     private fun editHand(handId: Int, before: JSONObject) {
         val score = if (before.optString("handScore") == "11") "10" else "11"
-        tapCell(handId, "done")
+        unlockHand(handId)
         scoreField(handId).performTextReplacement(score)
         tapCell(handId, "done")
     }
