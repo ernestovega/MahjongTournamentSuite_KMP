@@ -2,9 +2,11 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
@@ -89,6 +91,16 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
 private fun HelpSection(title: String, body: String) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-        Text(body, style = MaterialTheme.typography.bodyMedium)
+        // Each line is its own paragraph. A bullet line hangs, so its text lines up under the first word.
+        body.split("\n").filter { it.isNotBlank() }.forEach { line ->
+            if (line.startsWith("• ")) {
+                Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
+                    Text("•", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(16.dp))
+                    Text(line.removePrefix("• "), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                }
+            } else {
+                Text(line, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
     }
 }
