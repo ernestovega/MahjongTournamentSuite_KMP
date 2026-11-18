@@ -10,11 +10,14 @@ resizes something on a screen fails the test and shows where.
 - Each screen is drawn in six variants: phone (412×915 dp, compact), tablet (800×1280 dp, medium) and desktop
   (1440×900 dp, expanded), each one light and dark. Density 1. A component gallery is drawn on the phone only
   (`componentVariants`), and a dialog on the phone and the desktop (`dialogVariants`), light and dark.
-- Every dialog also has a small phone in Spanish (`narrow-light-es.png`, 360×760 dp): the Spanish texts are longer, so
-  this variant shows the labels, titles and buttons that do not fit on a phone. A new dialog uses `dialogVariants`
-  (or `componentDialogVariants` in `ui`), so it gets this variant too. A `ready` step that waits for a text must accept
-  the Spanish one as well (see `myTableReminder` in the player app).
-- The images are in `<module>/screenshots/<name>/<size>-<theme>.png`:
+- Every screen is also drawn on the phone, light, in each of the other seven languages (`phone-light-<language>.png`:
+  de, es, fr, it, nl, ru, sv), and every dialog on a small phone (`narrow-light-<language>.png`, 360×760 dp). They show
+  the texts that are missing, cut or too long in a language. A new screen or dialog gets them from `allVariants`,
+  `dialogVariants` or `componentDialogVariants`.
+- A `ready` step that waits for or clicks a text must find it in every language: it takes the text from the resources
+  with `playerText("key")`, `adminText("key")` or `uiText("key")` (`resourceText` of `:screenshotTesting`), never an
+  English literal. Names and numbers of the fake data are the same in every language.
+- The images are in `<module>/screenshots/<name>/<size>-<theme>[-<language>].png`:
   - `designsystem`: the catalog and the galleries of its components (`components/...`).
   - `ui`: the shared components (`components/...`) and the shared dialogs (`dialog-...`).
   - `adminApp`: every screen, including the Timer and the standalone ranking, and its dialogs (`dialogs/...`).

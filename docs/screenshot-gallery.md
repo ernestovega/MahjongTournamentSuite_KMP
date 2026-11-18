@@ -8,7 +8,7 @@ It is a second Hosting site of the staging project, so it never touches the stag
 
 The admin app opens it with **DEV > Screenshots** in the top bar of the tournament list (administrators only).
 
-- **Screens**: every image, grouped by module and screen, with filters by device and theme, a search and four sizes
+- **Screens**: every image, grouped by module and screen, with filters by device, theme and language (EN, DE, ES, FR, IT, NL, RU, SV), a search and four sizes
   (S, M, L, Fit). **One screen** shows a single screen at a time, as big as the window (J and K, or the buttons, move
   to the next one). The version menu shows the images as they were on an older date, and **Changed only** keeps what
   changed then. Versions are named by date and web version.

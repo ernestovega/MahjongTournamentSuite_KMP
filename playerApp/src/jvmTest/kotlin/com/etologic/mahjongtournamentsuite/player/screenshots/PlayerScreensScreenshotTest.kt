@@ -28,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
 import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
 import com.etologic.mahjongtournamentsuite.player.CreditsDialog
+import com.etologic.mahjongtournamentsuite.player.MainTab
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
@@ -52,17 +53,21 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.COMPLETED
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.INDIVIDUAL
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
-import java.util.Locale
+import com.etologic.mahjongtournamentsuite.screenshots.phoneInEveryLanguage
+import kotlinx.coroutines.runBlocking
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.combinations_points
+import org.jetbrains.compose.resources.getPluralString
 import kotlin.test.Test
 
 /** Every screen and tab of the player app with the data of ScreenshotData, signed in as Lucía (player 1). */
 @OptIn(ExperimentalTestApi::class)
 class PlayerScreensScreenshotTest {
-    /** Opens a main tab of the tournament by its title, once the tournament is loaded. */
-    private fun ComposeUiTest.openTab(vararg titles: String) {
+    /** Opens a main tab of the tournament ([MainTab]) by its title in the language of the screenshot, once the tournament is loaded. */
+    private fun ComposeUiTest.openTab(tab: Int) {
         waitForText("Madrid Open 2026", substring = true)
-        waitUntil(timeoutMillis = 10_000) { titles.any { onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() } }
-        val title = titles.first { onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
+        val title = playerText(MainTab.title(tab).key)
+        waitForText(title)
         onAllNodesWithText(title).onFirst().performClick()
         waitForIdle()
     }
@@ -71,7 +76,7 @@ class PlayerScreensScreenshotTest {
     fun myTableReminder() = playerScreenshots(
         "dialogs/my-table-reminder",
         variants = dialogVariants,
-        ready = { waitForText(if (Locale.getDefault().language == "es") "Ir a mi mesa" else "Go to my table") },
+        ready = { waitForText(playerText("my_table_go")) },
     ) {
         MyTableReminderDialog("Madrid Open 2026", roundId = 3, tableId = 7, moment = RoundMoment.StartedAgo(12 * 60_000L), onOpen = {}, onDismiss = {})
     }
@@ -169,7 +174,7 @@ class PlayerScreensScreenshotTest {
         "statistics-tab",
         ready = {
             openStatsTab()
-            waitForText("Skills", substring = true)
+            waitForText(uiText("stats_skills"), substring = true)
         },
     ) { nav -> TournamentsScreen(nav) }
 
@@ -179,10 +184,11 @@ class PlayerScreensScreenshotTest {
         "statistics-tab-by-tournaments",
         ready = {
             openStatsTab()
-            waitForText("Skills", substring = true)
-            onAllNodesWithText("By tournaments").onFirst().performClick()
-            waitForText("R2")
-            onAllNodesWithText("R2").onFirst().performClick()
+            waitForText(uiText("stats_skills"), substring = true)
+            onAllNodesWithText(playerText("scope_by_tournaments")).onFirst().performClick()
+            val round = uiText("round_short", 2)
+            waitForText(round)
+            onAllNodesWithText(round).onFirst().performClick()
             waitForIdle()
         },
     ) { nav -> TournamentsScreen(nav) }
@@ -194,13 +200,14 @@ class PlayerScreensScreenshotTest {
         modules = { playerModules(account = null) },
         ready = {
             openStatsTab()
-            waitForText("Choose a player", substring = true)
+            waitForText(playerText("stats_choose_player_title"), substring = true)
         },
     ) { nav -> TournamentsScreen(nav) }
 
     private fun ComposeUiTest.openStatsTab() {
         waitForText("Madrid Open 2026", substring = true)
-        val title = listOf("Stats", "Estadísticas", "Statistiken", "Statistiques", "Statistiche", "Statistieken", "Статистика", "Statistik").first { onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
+        val title = playerText("stats_title")
+        waitForText(title)
         onAllNodesWithText(title).onFirst().performClick()
         waitForIdle()
     }
@@ -219,27 +226,29 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournamentsMoreMenu() = playerScreenshots(
         "tournaments-more-menu",
-        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) } + phoneInEveryLanguage,
         ready = {
             waitForText("Madrid Open 2026", substring = true)
-            val menus = onAllNodes((hasText("More") or hasContentDescription("More") or hasContentDescription("Menu")) and hasClickAction())
+            val more = playerText("menu_more")
+            val privacy = playerText("menu_privacy")
+            val menus = onAllNodes((hasText(more) or hasContentDescription(more) or hasContentDescription(uiText("menu"))) and hasClickAction())
             var index = 0
-            while (onAllNodesWithText("Privacy").fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
+            while (onAllNodesWithText(privacy).fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
                 menus[index++].performClick()
                 waitForIdle()
             }
-            waitForText("Privacy")
+            waitForText(privacy)
         },
     ) { nav -> TournamentsScreen(nav) }
 
     @Test
-    fun tournamentTables() = playerScreenshots("tournament-tables", ready = { openTab("Tables") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentTables() = playerScreenshots("tournament-tables", ready = { openTab(MainTab.TABLES) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentRanking() = playerScreenshots("tournament-ranking", ready = { openTab("Ranking") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentRanking() = playerScreenshots("tournament-ranking", ready = { openTab(MainTab.RANKING) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab("Players") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab(MainTab.PLAYERS) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
     fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("EMA 04010001", substring = true) }) { nav ->
@@ -256,22 +265,22 @@ class PlayerScreensScreenshotTest {
     fun tournamentPlayerAllTournaments() = playerScreenshots(
         "tournament-player-all-tournaments",
         ready = {
-            waitForText("Totals")
+            waitForText(uiText("stats_totals"))
             onAllNodesWithText("Madrid Open 2026").onFirst().performClick()
             waitForIdle()
-            onAllNodesWithText("All").onFirst().performClick()
-            waitForText("Tournaments")
+            onAllNodesWithText(playerText("player_tournaments_all")).onFirst().performClick()
+            waitForText(uiText("stat_tournaments"))
         },
     ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
 
     @Test
-    fun tournamentTeams() = playerScreenshots("tournament-teams", ready = { openTab("Teams") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentTeams() = playerScreenshots("tournament-teams", ready = { openTab(MainTab.TEAMS) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentStatistics() = playerScreenshots("tournament-statistics", ready = { openTab("Stats", "Statistics") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentStatistics() = playerScreenshots("tournament-statistics", ready = { openTab(MainTab.STATISTICS) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentInfo() = playerScreenshots("tournament-info", ready = { openTab("Info") }) { nav -> TournamentScreen(nav, ONGOING) }
+    fun tournamentInfo() = playerScreenshots("tournament-info", ready = { openTab(MainTab.INFO) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
     fun tableCompleted() = playerScreenshots("table-completed", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav ->
@@ -284,14 +293,14 @@ class PlayerScreensScreenshotTest {
     }
 
     @Test
-    fun combinations() = playerScreenshots("combinations", ready = { waitForText("Pure double chow") }) { nav -> CombinationsScreen(nav) }
+    fun combinations() = playerScreenshots("combinations", ready = { waitForText(playerText("comb_pure_double_chow")) }) { nav -> CombinationsScreen(nav) }
 
     @Test
     fun combinationsFolded() = playerScreenshots(
         "combinations-folded",
         ready = {
-            waitForText("Pure double chow")
-            onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
+            waitForText(playerText("comb_pure_double_chow"))
+            onNode(hasText(playerText("combinations_fold_all")) or hasContentDescription(playerText("combinations_fold_all"))).performClick()
             waitForIdle()
         },
     ) { nav -> CombinationsScreen(nav) }
@@ -300,15 +309,15 @@ class PlayerScreensScreenshotTest {
     fun combinationsOneValue() = playerScreenshots(
         "combinations-one-value",
         ready = {
-            waitForText("Pure double chow")
-            onNode(hasText("Fold all") or hasContentDescription("Fold all")).performClick()
-            onNode(hasText("24 points (9)")).performScrollTo().performClick()
+            waitForText(playerText("comb_pure_double_chow"))
+            onNode(hasText(playerText("combinations_fold_all")) or hasContentDescription(playerText("combinations_fold_all"))).performClick()
+            onNode(hasText(runBlocking { getPluralString(Res.plurals.combinations_points, 24, 24) } + " (9)")).performScrollTo().performClick()
             waitForIdle()
         },
     ) { nav -> CombinationsScreen(nav) }
 
     @Test
-    fun penalties() = playerScreenshots("penalties", ready = { waitForText("Dead hand") }) { nav -> PenaltiesScreen(nav) }
+    fun penalties() = playerScreenshots("penalties", ready = { waitForText(playerText("penalties_section_dead_hand")) }) { nav -> PenaltiesScreen(nav) }
 
     @Test
     fun statisticsTournament() = playerScreenshots("statistics-tournament", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->
@@ -321,7 +330,7 @@ class PlayerScreensScreenshotTest {
     }
 
     @Test
-    fun statisticsPerson() = playerScreenshots("statistics-person", ready = { waitForText("Skills", substring = true) }) { nav ->
+    fun statisticsPerson() = playerScreenshots("statistics-person", ready = { waitForText(uiText("stats_skills"), substring = true) }) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name))
     }
 
@@ -330,8 +339,8 @@ class PlayerScreensScreenshotTest {
     fun statisticsPersonPlaces() = playerScreenshots(
         "statistics-person-places",
         ready = {
-            waitForText("Skills", substring = true)
-            onAllNodesWithText("Place in the last", substring = true, ignoreCase = true).onFirst().performScrollTo()
+            waitForText(uiText("stats_skills"), substring = true)
+            onAllNodesWithText(uiText("places_history_title", 10).substringBefore("10").trim(), substring = true, ignoreCase = true).onFirst().performScrollTo()
             // The chart is under its title. A swipe brings it into view.
             onAllNodes(isRoot()).onFirst().performTouchInput { swipeUp(startY = centerY + 160f, endY = centerY - 160f) }
             waitForIdle()

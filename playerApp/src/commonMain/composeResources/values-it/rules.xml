@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Ammonizione e penalità progressiva</string>
     <string name="penalties_section_dead_hand">Mano morta</string>
     <string name="penalties_section_points">Penalità in punti e sanzioni gravi</string>
-    <string name="penalties_progressive">Prima infrazione: ammonizione. Seconda: 5 punti di penalità. Infrazioni successive: 10, 20, 30 punti e così via. Il conteggio riparte all'inizio di ogni sessione, tranne per il gioco ostruzionistico, compresi i ritardi deliberati.</string>
+    <string name="penalties_progressive">• Prima infrazione: ammonizione.\n• Seconda: 5 punti di penalità.\n• Infrazioni successive: 10, 20, 30 punti e così via.\n\nIl conteggio riparte all'inizio di ogni sessione, tranne per il gioco ostruzionistico, compresi i ritardi deliberati.</string>
     <string name="penalties_source">Regole di competizione del Mahjong dell'EMA, versione del 20 giugno 2009.</string>
     <string name="penalty_w1">Chiamata errata di kong, pong, chow o hua: il giocatore chiama ma non esegue l'azione, usa un termine sbagliato o chiama pong troppo tardi.</string>
     <string name="penalty_w2">Mostrare pedine prima di chiamare kong, pong, chow o hua: la chiamata non è valida e le pedine mostrate devono essere scartate.</string>

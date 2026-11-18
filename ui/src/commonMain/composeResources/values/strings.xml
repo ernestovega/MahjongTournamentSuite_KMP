@@ -552,6 +552,7 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Privacy policy</string>
     <string name="dev_staging">Staging (test site)</string>
+    <string name="open_player_statistics">Open the statistics of the player</string>
     <string name="years_all">All</string>
     <string name="stats_all_tournaments">All tournaments</string>
 </resources>

@@ -999,7 +999,7 @@ fun TournamentOptionSwitch(
                 enabled = enabled,
                 interactionSource = interactionSource,
             )
-            Text(text = label)
+            Text(text = label, modifier = Modifier.weight(1f, fill = false))
             InfoTooltipIcon(
                 description = description,
                 contentDescription = stringResource(Res.string.show_info_for, label),

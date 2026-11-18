@@ -77,8 +77,8 @@
     <string name="comb_example_mixed_triple_chow_2">Si combina con “Sopra il cinque”, “Tutte scale” e uno tra “Due scale uguali di colore” o “Due scale uguali miste” (non entrambi).</string>
     <string name="comb_example_mixed_shifted_pungs_1">Si combina con “Sotto il cinque”, “Tutti tris”, “Due tris uguali” e “Senza teste”.</string>
     <string name="comb_example_mixed_shifted_pungs_2">Si combina con “Tre superiori”, “Tutte e quattro” e “Tris di Testa”.</string>
-    <string name="comb_example_chicken_hand_1">Pedine nascoste: la coppia di Draghi Rossi e 3-4 di cerchi, in attesa del 2 o del 5 di cerchi.\n\nIl 2 o il 5 di cerchi non può essere l\'ultima pedina né pescato dal muro.</string>
-    <string name="comb_example_two_concealed_kongs_1">Con due poker nascosti, un tris di Vento Sud e una scala 7-8-9 di caratteri; si chiude pescando l\'8 di caratteri dal muro.\n\nSi combina con “Tris di Testa” ×3, “Senza un seme”, “Chiusura pescata” e “A punto sulla coppia”.</string>
+    <string name="comb_example_chicken_hand_1">Pedine nascoste: la coppia di Draghi Rossi e 3-4 di cerchi, in attesa del 2 o del 5 di cerchi.\n\nIl 2 o il 5 di cerchi non può essere l'ultima pedina né pescato dal muro.</string>
+    <string name="comb_example_two_concealed_kongs_1">Con due poker nascosti, un tris di Vento Sud e una scala 7-8-9 di caratteri; si chiude pescando l'8 di caratteri dal muro.\n\nSi combina con “Tris di Testa” ×3, “Senza un seme”, “Chiusura pescata” e “A punto sulla coppia”.</string>
     <string name="comb_example_all_pungs_1">Si combina con “Tre tris uguali”, “Tutti i tipi” e “Tris di Drago”.</string>
     <string name="comb_example_half_flush_1">Si combina con “Tre scale incastrate di colore” e “Due scale laterali di colore”.</string>
     <string name="comb_example_mixed_shifted_chows_1">Si combina con “Tutte scale” e “Serpentino”.</string>
@@ -88,7 +88,7 @@
     <string name="comb_example_outside_hand_2">Si combina con “Mano pura”, “Due scale uguali di colore” e “Due scale laterali di colore” ×2.\n\nOppure: Si combina con “Due scale laterali di colore” e “Due scale uguali di colore” ×2.</string>
     <string name="comb_example_outside_hand_3">Si combina con “Due scale uguali miste”, “Due scale laterali di colore”, “Senza un seme” e “Tris di Testa”.</string>
     <string name="comb_example_fully_concealed_hand_1">Si combina con “Tutte scale”, “Senza teste”, “Serpentino”, “Due scale uguali miste” e “A punto su incastro”.\n\nIl 7 di bambù è pescato dal muro.</string>
-    <string name="comb_example_two_melded_kongs_1">Due poker scoperti e un tris di Drago Rosso, si vince con l\'1 di caratteri scartato.\n\nSi combina con “Tutti tris”, “Tris di Drago”, “Due tris uguali”, “Tris di Testa” e “Senza un seme”.</string>
+    <string name="comb_example_two_melded_kongs_1">Due poker scoperti e un tris di Drago Rosso, si vince con l'1 di caratteri scartato.\n\nSi combina con “Tutti tris”, “Tris di Drago”, “Due tris uguali”, “Tris di Testa” e “Senza un seme”.</string>
     <string name="comb_example_two_melded_kongs_2">Un poker scoperto e uno nascosto, si vince con il 4 di cerchi scartato.\n\nSi combina con “Senza verso”, “Tris di Drago” e “A punto su incastro”.\n\nUn poker scoperto e uno nascosto valgono 6 punti.</string>
     <string name="comb_example_concealed_hand_1">Si combina con “Tutte scale”, “Senza teste” e “Serpentino” ×2.</string>
     <string name="comb_example_all_chows_1">Si combina con “Tre scale incastrate nei tre semi” e “Serpentino”.</string>

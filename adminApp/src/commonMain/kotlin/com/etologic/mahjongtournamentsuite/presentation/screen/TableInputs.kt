@@ -70,6 +70,8 @@ internal fun LabeledSwitch(
         ) {
             Text(
                 text = label,
+                // A long name wraps, so the switch and the info icon stay in the row.
+                modifier = Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

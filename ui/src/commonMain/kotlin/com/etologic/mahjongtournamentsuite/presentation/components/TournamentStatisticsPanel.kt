@@ -56,6 +56,7 @@ import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
+import mahjongtournamentsuite.ui.generated.resources.open_player_statistics
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
 import mahjongtournamentsuite.ui.generated.resources.rounds_title
@@ -440,6 +441,7 @@ private fun LeadersCard(
 @Composable
 private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
     val playerId = leader.player.playerId
+    val openLabel = stringResource(Res.string.open_player_statistics)
     // A subcard, like the small stats of Hands and Records.
     Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
         Column(Modifier.fillMaxWidth().padding(MtsTheme.spacing.md), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
@@ -447,7 +449,7 @@ private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: 
             Row(
                 Modifier.then(
                     if (onOpenPlayer != null) {
-                        Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(playerId) }
+                        Modifier.clickable(onClickLabel = openLabel) { onOpenPlayer(playerId) }
                     } else {
                         Modifier
                     },

@@ -548,6 +548,7 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Datenschutzerklärung</string>
     <string name="dev_staging">Staging (Testseite)</string>
+    <string name="open_player_statistics">Statistik des Spielers öffnen</string>
     <string name="years_all">Alle</string>
     <string name="stats_all_tournaments">Alle Turniere</string>
 </resources>

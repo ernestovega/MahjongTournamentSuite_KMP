@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -173,6 +174,7 @@ import mahjongtournamentsuite.ui.generated.resources.years_all
 import org.jetbrains.compose.resources.stringResource
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
@@ -884,12 +886,14 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
     val grid = MaterialTheme.colorScheme.outlineVariant
     val count = skills.size
     val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
+    // The layout makes the radar smaller when a name at a side does not fit next to it, and the canvas draws it that size.
+    val laidOutRadius = remember { mutableFloatStateOf(0f) }
     Layout(
         modifier = modifier,
         content = {
             Canvas(Modifier.fillMaxSize()) {
                 val center = Offset(size.width / 2f, size.height / 2f)
-                val radius = radiusFor(size.width, size.height, density)
+                val radius = laidOutRadius.floatValue.takeIf { it > 0f } ?: radiusFor(size.width, size.height, density)
                 fun point(index: Int, fraction: Float): Offset {
                     val angle = -PI / 2 + 2 * PI * index / count
                     return Offset(center.x + (radius * fraction * cos(angle)).toFloat(), center.y + (radius * fraction * sin(angle)).toFloat())
@@ -961,8 +965,20 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val canvas = measurables.first().measure(Constraints.fixed(width, height))
-        val radius = radiusFor(width.toFloat(), height.toFloat(), density)
-        val labels = measurables.drop(1).map { it.measure(Constraints(maxWidth = width / 3)) }
+        val names = measurables.drop(1)
+        // A name at a side (left or right) has only the room between the radar and the edge. Its longest word must fit
+        // there, or it is cut in the middle or covers the radar, so the radar gets smaller for it. A name above or below
+        // the radar may be wider.
+        val atSide = names.indices.map { abs(cos(-PI / 2 + 2 * PI * it / count)) > 0.3 }
+        val longestSideWord = names.indices.filter { atSide[it] }.maxOfOrNull { names[it].minIntrinsicWidth(height) } ?: 0
+        val minRadius = 40f * density
+        var radius = radiusFor(width.toFloat(), height.toFloat(), density)
+        if (width / 2f - radius - gap < longestSideWord) radius = max(minRadius, width / 2f - gap - longestSideWord)
+        laidOutRadius.floatValue = radius
+        val sideRoom = max(0, (width / 2f - radius - gap).toInt())
+        val labels = names.mapIndexed { index, name ->
+            name.measure(Constraints(maxWidth = if (atSide[index]) max(sideRoom, longestSideWord).coerceAtMost(width / 2) else width * 3 / 5))
+        }
         layout(width, height) {
             canvas.place(0, 0)
             labels.forEachIndexed { index, label ->

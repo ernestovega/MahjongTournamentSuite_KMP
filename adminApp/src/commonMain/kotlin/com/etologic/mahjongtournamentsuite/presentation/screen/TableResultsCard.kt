@@ -53,6 +53,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.score_sum_zero
 import mahjongtournamentsuite.adminapp.generated.resources.score_target_penalties
 import mahjongtournamentsuite.adminapp.generated.resources.score_target_zero
 import mahjongtournamentsuite.adminapp.generated.resources.seat_positions_first
+import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.table_done
 import mahjongtournamentsuite.adminapp.generated.resources.table_points
 import mahjongtournamentsuite.adminapp.generated.resources.total_scores
@@ -215,12 +216,13 @@ internal fun TableResultsCard(
                 }
             }
         }
+        val substituteLabel = stringResource(Res.string.substitute)
         val pointsCell: @Composable (Int) -> Unit = { seat ->
             // A substitute who left during the session gets 0 table points by the EMA rules.
             val isSubstituteSeat = editor.forcedZeroPlayerId.isNotBlank() &&
                 seatIds[seat].trim() == editor.forcedZeroPlayerId.trim()
             Text(
-                text = points[seat].ifBlank { "-" } + if (isSubstituteSeat) " (substitute)" else "",
+                text = points[seat].ifBlank { "-" } + if (isSubstituteSeat) " ($substituteLabel)" else "",
                 style = bigNumberStyle,
                 maxLines = if (compact) 2 else 1,
             )

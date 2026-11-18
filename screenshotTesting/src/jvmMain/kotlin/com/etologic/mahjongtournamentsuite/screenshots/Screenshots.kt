@@ -24,35 +24,44 @@ import javax.imageio.ImageIO
 enum class ScreenSize(val width: Int, val height: Int) {
     Phone(412, 915),
 
-    /** A small phone. With the Spanish texts, which are longer than the English ones, it shows what does not fit. */
+    /** A small phone. With the texts of the other languages, often longer than the English ones, it shows what does not fit. */
     Narrow(360, 760),
     Tablet(800, 1280),
     Desktop(1440, 900),
 }
 
-/** One screenshot of a screen: a window size, a theme and a language (English, or Spanish when [spanish]). */
-data class Variant(val size: ScreenSize, val dark: Boolean, val spanish: Boolean = false) {
-    val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}${if (spanish) "-es" else ""}.png"
+/** The languages of the apps besides English. A screen and a dialog get a screenshot in each one, see [allVariants]. */
+val otherLanguages: List<String> = listOf("de", "es", "fr", "it", "nl", "ru", "sv")
+
+/** One screenshot of a screen: a window size, a theme and a language (English when [language] is null). */
+data class Variant(val size: ScreenSize, val dark: Boolean, val language: String? = null) {
+    val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}${language?.let { "-$it" }.orEmpty()}.png"
 }
 
-/** A small phone in Spanish, light: the longest texts in the least space. */
-val narrowSpanish: Variant = Variant(ScreenSize.Narrow, dark = false, spanish = true)
+/** A small phone, light, in each language besides English: the texts that do not fit or break the layout of a dialog. */
+val narrowInEveryLanguage: List<Variant> = otherLanguages.map { Variant(ScreenSize.Narrow, dark = false, language = it) }
+
+/** A phone, light, in each language besides English: the same window as `phone-light.png`, to compare them side by side. */
+val phoneInEveryLanguage: List<Variant> = otherLanguages.map { Variant(ScreenSize.Phone, dark = false, language = it) }
 
 /** Components: phone width, light and dark. Their size does not depend on the window. */
 val componentVariants: List<Variant> = listOf(Variant(ScreenSize.Phone, false), Variant(ScreenSize.Phone, true))
 
 /**
- * Dialogs: phone and desktop, light and dark, and a small phone in Spanish. A dialog keeps its width on a tablet, so the
- * tablet adds nothing. On a phone a dialog takes the width of the window, so the small phone catches the texts that do not fit.
+ * Dialogs: phone and desktop, light and dark, and a small phone in every other language. A dialog keeps its width on a
+ * tablet, so the tablet adds nothing. On a phone a dialog takes the width of the window, so the small phone catches the
+ * texts that do not fit.
  */
 val dialogVariants: List<Variant> =
-    listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) } + narrowSpanish
+    listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) } + narrowInEveryLanguage
 
-/** A component that is a dialog: [componentVariants] and the small phone in Spanish. */
-val componentDialogVariants: List<Variant> = componentVariants + narrowSpanish
+/** A component that is a dialog: [componentVariants] and the small phone in every other language. */
+val componentDialogVariants: List<Variant> = componentVariants + narrowInEveryLanguage
 
-/** Screens: phone, tablet and desktop, light and dark. */
-val allVariants: List<Variant> = listOf(ScreenSize.Phone, ScreenSize.Tablet, ScreenSize.Desktop).flatMap { size -> listOf(Variant(size, false), Variant(size, true)) }
+/** Screens: phone, tablet and desktop, light and dark, and the phone in every other language. */
+val allVariants: List<Variant> =
+    listOf(ScreenSize.Phone, ScreenSize.Tablet, ScreenSize.Desktop).flatMap { size -> listOf(Variant(size, false), Variant(size, true)) } +
+        phoneInEveryLanguage
 
 /** Small differences of antialiasing between machines do not fail a test; a changed color or a moved text does. */
 @OptIn(ExperimentalRoborazziApi::class)
@@ -61,7 +70,7 @@ private val options = RoborazziOptions(
 )
 
 /**
- * Takes a screenshot of [content] in every [Variant] and saves it in `screenshots/<name>/<size>-<theme>.png` of the module.
+ * Takes a screenshot of [content] in every [Variant] and saves it in `screenshots/<name>/<size>-<theme>[-<language>].png` of the module.
  * [content] gets the variant and must set the theme itself (see [screenshotsInMtsTheme]). [ready] waits until the screen
  * shows its data, for example with `waitUntil { onAllNodesWithText("...").fetchSemanticsNodes().isNotEmpty() }`.
  * With `recordRoborazziJvm` it writes the reference images, with `verifyRoborazziJvm` it compares against them, and with a
@@ -80,7 +89,7 @@ fun screenshots(
     val locale = Locale.getDefault()
     for (variant in variants) {
         // The texts of the apps follow the language of the system.
-        Locale.setDefault(if (variant.spanish) Locale.forLanguageTag("es") else locale)
+        Locale.setDefault(variant.language?.let(Locale::forLanguageTag) ?: locale)
         try {
             runDesktopComposeUiTest(variant.size.width, variant.size.height) {
                 setContent { content(variant) }

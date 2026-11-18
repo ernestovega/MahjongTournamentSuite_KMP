@@ -151,7 +151,7 @@
     <string name="chicken">Kyckling</string>
     <string name="penalty">Straff</string>
     <string name="done">Gjord</string>
-    <string name="total_scores">Slutresultat</string>
+    <string name="total_scores">Resultat</string>
     <string name="calculated_from_hands_trophies_show_the">Beräknat från händerna.\nGuld-, silver- och bronshänderna visar turneringens bästa händer som det här bordet har.</string>
     <string name="show_how_the_chicken_and_best">Visa hur värdena för kycklinghänder och bästa händer beräknas</string>
     <string name="save_and_next_table">Spara och nästa bord</string>

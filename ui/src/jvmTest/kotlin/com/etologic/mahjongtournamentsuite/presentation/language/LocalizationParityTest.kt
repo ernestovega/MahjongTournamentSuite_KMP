@@ -74,6 +74,21 @@ class LocalizationParityTest {
         }
     }
 
+    /**
+     * Compose resources do not undo \' and \" as Android does: the app shows the backslash ("Jusqu\'au"). An apostrophe
+     * or a quote is written as it is.
+     */
+    @Test
+    fun noTextEscapesAQuote() {
+        modules.forEach { module ->
+            resources(module).walkTopDown().filter { it.extension == "xml" && it.parentFile.name.startsWith("values") }.forEach { file ->
+                file.readLines().forEachIndexed { index, line ->
+                    assertTrue("\\'" !in line && "\\\"" !in line, "${file.path}:${index + 1} escapes a quote with a backslash")
+                }
+            }
+        }
+    }
+
     @Test
     fun noSpanishTextIsEmpty() {
         modules.forEach { module ->

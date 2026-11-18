@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.allVariants
+import com.etologic.mahjongtournamentsuite.screenshots.resourceText
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo
@@ -80,3 +81,9 @@ internal fun adminScreenshots(
 internal fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) {
     waitUntil(timeoutMillis = 10_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }
+
+/** The text [key] of the adminApp in the language of the screenshot, with its placeholders filled with [args]. */
+internal fun adminText(key: String, vararg args: Any): String = resourceText("adminApp", key, *args)
+
+/** The text [key] of the shared ui module in the language of the screenshot, with its placeholders filled with [args]. */
+internal fun uiText(key: String, vararg args: Any): String = resourceText("ui", key, *args)

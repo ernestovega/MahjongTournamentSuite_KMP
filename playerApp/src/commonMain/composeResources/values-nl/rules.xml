@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Waarschuwing en oplopende straf</string>
     <string name="penalties_section_dead_hand">Dode hand</string>
     <string name="penalties_section_points">Puntenstraffen en zware straffen</string>
-    <string name="penalties_progressive">Eerste overtreding: waarschuwing. Tweede: 5 punten aftrek. Volgende overtredingen: 10, 20, 30 punten, enzovoort. De telling begint opnieuw aan het begin van elke sessie, behalve bij obstructief spel, inclusief opzettelijke vertraging.</string>
+    <string name="penalties_progressive">• Eerste overtreding: waarschuwing.\n• Tweede: 5 punten aftrek.\n• Volgende overtredingen: 10, 20, 30 punten, enzovoort.\n\nDe telling begint opnieuw aan het begin van elke sessie, behalve bij obstructief spel, inclusief opzettelijke vertraging.</string>
     <string name="penalties_source">Mahjong Competition Rules van de EMA, versie van 20 juni 2009.</string>
     <string name="penalty_w1">Foute kong-, pong-, chow- of hua-melding: de speler meldt maar voert de actie niet uit, gebruikt een verkeerde term of meldt pong te laat.</string>
     <string name="penalty_w2">Stenen tonen vóór een kong-, pong-, chow- of hua-melding: de melding is ongeldig en de getoonde stenen moeten worden afgelegd.</string>

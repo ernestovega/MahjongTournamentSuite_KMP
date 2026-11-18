@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Varning och stegrande straff</string>
     <string name="penalties_section_dead_hand">Död hand</string>
     <string name="penalties_section_points">Poängstraff och allvarliga straff</string>
-    <string name="penalties_progressive">Första förseelsen: varning. Andra: 5 poängs avdrag. Följande förseelser: 10, 20, 30 poäng och så vidare. Räkningen börjar om vid varje session, utom vid obstruktivt spel, inklusive avsiktliga förseningar.</string>
+    <string name="penalties_progressive">• Första förseelsen: varning.\n• Andra: 5 poängs avdrag.\n• Följande förseelser: 10, 20, 30 poäng och så vidare.\n\nRäkningen börjar om vid varje session, utom vid obstruktivt spel, inklusive avsiktliga förseningar.</string>
     <string name="penalties_source">EMA:s Mahjong Competition Rules, version av den 20 juni 2009.</string>
     <string name="penalty_w1">Felaktigt kong-, pong-, chow- eller hua-rop: spelaren ropar men utför inte handlingen, använder fel ord eller ropar pong för sent.</string>
     <string name="penalty_w2">Visa brickor före ett kong-, pong-, chow- eller hua-rop: ropet är ogiltigt och de visade brickorna måste kastas.</string>
