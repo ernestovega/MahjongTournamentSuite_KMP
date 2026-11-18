@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -45,18 +46,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_attempt
-import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_attempt_note
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_candidates
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_check
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_description
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_discard
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_done
-import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_done_note
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_failed
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_more_seats
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_next_seat
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_next_seat_note
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_no
+import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_parallel
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_pick
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_seat
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_seed
@@ -104,13 +104,13 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
         FlowNode(NodeKind.Initial, ""),
         FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_start)),
         FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_seed)),
-        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_attempt), stringResource(Res.string.draw_flow_attempt_note)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_attempt)),
         FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_next_seat), stringResource(Res.string.draw_flow_next_seat_note)),
         FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_pick)),
         FlowNode(NodeKind.Decision, stringResource(Res.string.draw_flow_check)),
         FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_seat)),
         FlowNode(NodeKind.Decision, stringResource(Res.string.draw_flow_more_seats)),
-        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_done), stringResource(Res.string.draw_flow_done_note)),
+        FlowNode(NodeKind.Action, stringResource(Res.string.draw_flow_done)),
         FlowNode(NodeKind.Final, ""),
     )
     val side = listOf(
@@ -122,6 +122,7 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
     val yes = "[" + stringResource(Res.string.draw_flow_yes) + "]"
     val no = "[" + stringResource(Res.string.draw_flow_no) + "]"
     val description = stringResource(Res.string.draw_flow_description)
+    val parallelNote = stringResource(Res.string.draw_flow_parallel)
 
     val colors = MaterialTheme.colorScheme
     val lineColor = colors.onSurfaceVariant
@@ -130,6 +131,8 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
     val labelBackground = colors.surfaceContainerHigh
     val labelStyle = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = colors.onSurface)
     val textMeasurer = rememberTextMeasurer()
+    val regionColor = colors.onSurfaceVariant
+    val noteStyle = MaterialTheme.typography.labelSmall.copy(color = colors.onSurfaceVariant, textAlign = TextAlign.End)
 
     // Filled by the layout and read by the drawing of the arrows.
     var geometry by remember { mutableStateOf<FlowGeometry?>(null) }
@@ -147,6 +150,7 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
                 .semantics { contentDescription = description }
                 .drawBehind {
                     val g = geometry ?: return@drawBehind
+                    drawParallelRegion(g, regionColor)
                     drawArrows(g, yes, no, lineColor, loopColor, failColor, labelBackground, textMeasurer, labelStyle)
                 },
         ) { measurables, constraints ->
@@ -158,6 +162,21 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
             val available = (width - leftGutter - rightGutter - columnGap).coerceAtLeast(1)
             val mainWidth = (available * (if (compact) 0.6f else 0.58f)).toInt()
             val sideWidth = available - mainWidth
+
+            // The note of the part that runs in parallel goes in its top right corner, right of the arrow that enters it.
+            val note = textMeasurer.measure(
+                parallelNote,
+                noteStyle,
+                constraints = Constraints(maxWidth = (width - leftGutter - mainWidth / 2 - 24.dp.roundToPx()).coerceAtLeast(1)),
+            )
+            val regionPad = 8.dp.roundToPx()
+
+            // Room above the first row of the region for the note, and under the last one for its bottom side.
+            fun extraGapBefore(row: Int): Int = when (row) {
+                ATTEMPT -> note.size.height + regionPad + 4.dp.roundToPx()
+                DONE -> 14.dp.roundToPx()
+                else -> 0
+            }
 
             // Actions fill their column. Circles and diamonds keep their own size and go in the middle of it.
             fun constraintsFor(node: FlowNode, columnWidth: Int): Constraints {
@@ -173,6 +192,7 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
             val sideRects = ArrayList<Rect>(sidePlaceables.size)
             var y = 0
             mainPlaceables.forEachIndexed { row, placeable ->
+                y += extraGapBefore(row)
                 val sidePlaceable = sidePlaceables.getOrNull(row - SIDE_FIRST_ROW)
                 val rowHeight = maxOf(placeable.height, sidePlaceable?.height ?: 0)
                 val mainTop = y + (rowHeight - placeable.height) / 2
@@ -192,6 +212,13 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
                 leftLoopX = leftGutter / 2f,
                 rightLoopX = (width - rightGutter + (if (compact) 11.dp else 14.dp).roundToPx()).toFloat(),
                 failLoopX = (width - (if (compact) 4.dp else 6.dp).roundToPx()).toFloat(),
+                region = Rect(
+                    left = 2.dp.toPx(),
+                    top = mainRects[ATTEMPT].top - note.size.height - regionPad,
+                    right = width - 1.5.dp.toPx(),
+                    bottom = maxOf(mainRects[MORE_SEATS].bottom, sideRects.last().bottom) + 6.dp.toPx(),
+                ),
+                note = note,
             )
 
             layout(width, height) {
@@ -208,7 +235,22 @@ private class FlowGeometry(
     val leftLoopX: Float,
     val rightLoopX: Float,
     val failLoopX: Float,
+    /** The part of the diagram that runs many times at once, in a dashed box. */
+    val region: Rect,
+    val note: TextLayoutResult,
 )
+
+private fun DrawScope.drawParallelRegion(g: FlowGeometry, color: Color) {
+    val dash = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
+    drawRoundRect(
+        color = color.copy(alpha = 0.7f),
+        topLeft = g.region.topLeft,
+        size = g.region.size,
+        cornerRadius = CornerRadius(12.dp.toPx()),
+        style = Stroke(width = 1.dp.toPx(), pathEffect = dash),
+    )
+    drawText(g.note, topLeft = Offset(g.region.right - 8.dp.toPx() - g.note.size.width, g.region.top + 4.dp.toPx()))
+}
 
 @Composable
 private fun FlowNodeBox(node: FlowNode, compact: Boolean) {

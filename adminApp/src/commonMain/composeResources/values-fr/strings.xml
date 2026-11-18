@@ -847,7 +847,8 @@
     <string name="draw_flow_start">Joueurs, manches et équipes</string>
     <string name="draw_flow_seed">Mélanger</string>
     <string name="draw_flow_attempt">Nouvelle répartition</string>
-    <string name="draw_flow_attempt_note">Beaucoup à la fois</string>
+    <string name="draw_flow_parallel">Plusieurs répartitions en même temps
+La première qui marche gagne</string>
     <string name="draw_flow_next_seat">Siège libre suivant</string>
     <string name="draw_flow_next_seat_note">Manche, table et siège</string>
     <string name="draw_flow_pick">Tirer un joueur sans table dans cette manche</string>
@@ -855,7 +856,6 @@
     <string name="draw_flow_seat">S’assoit</string>
     <string name="draw_flow_more_seats">Reste-t-il des sièges ?</string>
     <string name="draw_flow_done">Rencontres prêtes</string>
-    <string name="draw_flow_done_note">La première répartition qui marche</string>
     <string name="draw_flow_discard">En essayer un autre</string>
     <string name="draw_flow_candidates">Reste-t-il d’autres ?</string>
     <string name="draw_flow_failed">Répartition ratée</string>
