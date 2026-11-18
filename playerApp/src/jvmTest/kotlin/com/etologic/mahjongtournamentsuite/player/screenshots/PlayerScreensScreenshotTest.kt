@@ -222,7 +222,7 @@ class PlayerScreensScreenshotTest {
         variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
         ready = {
             waitForText("Madrid Open 2026", substring = true)
-            val menus = onAllNodes((hasContentDescription("More") or hasContentDescription("Menu")) and hasClickAction())
+            val menus = onAllNodes((hasText("More") or hasContentDescription("More") or hasContentDescription("Menu")) and hasClickAction())
             var index = 0
             while (onAllNodesWithText("Privacy").fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
                 menus[index++].performClick()
