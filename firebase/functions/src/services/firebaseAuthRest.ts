@@ -39,6 +39,8 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 
   if (!res.ok) {
     const message = (json as FirebaseAuthError).error?.message ?? `HTTP ${res.status}`;
+    // The whole answer of Google says more than its message. It never holds the address: the request is not logged.
+    console.error(`Google auth API answered ${res.status}`, JSON.stringify(json).replace(/[^\s"@]+@[^\s"]+/g, "<email>"));
     throw new Error(message);
   }
 
