@@ -187,7 +187,7 @@
     <string name="menu_sign_in">Accedi</string>
     <string name="menu_contact">Contatti</string>
     <string name="menu_privacy">Privacy</string>
-    <string name="menu_more">Altre opzioni</string>
+    <string name="menu_more">Altro</string>
     <string name="menu_green_book">Green Book</string>
     <string name="green_book_downloading">Download del Green Book…</string>
     <string name="green_book_offline">Non è stato possibile scaricare il Green Book nella tua lingua.\nSi apre la versione inglese.</string>
