@@ -17,10 +17,10 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     }
 
     @Test
-    fun tournamentStatisticsShowTotals() {
+    fun tournamentStatisticsShowTheHands() {
         openTournamentStatistics()
-        c.waitForText("Totals")
-        c.waitForText("34 of 60")
+        // No Totals card for one tournament: the ring of the Hands card has the number of hands.
+        c.waitForText("Won by discard")
         c.waitForText("528")
     }
 

@@ -210,7 +210,6 @@
     <string name="leader_most_self_draws">Più vittorie dal muro</string>
     <string name="tables_completed_of">%1$d su %2$d</string>
     <string name="stat_players">Giocatori</string>
-    <string name="stat_rounds">Turni</string>
     <string name="hands_won_by_discard">Vinte su scarto</string>
     <string name="hands_won_by_self_draw">Vinte dal muro</string>
     <string name="hands_drawn">Patte</string>

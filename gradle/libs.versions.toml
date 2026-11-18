@@ -6,9 +6,9 @@ agp = "9.4.1"
 # Bump the patch with: python3 scripts/versions.py bump <web|admin|backend>
 # See the published ones with: python3 scripts/versions.py status
 # MAJOR and MINOR only change by hand, when the owner decides.
-web-versionName = "1.0.290"
-admin-versionName = "1.0.226"
-admin-versionCode = "226"
+web-versionName = "1.0.291"
+admin-versionName = "1.0.227"
+admin-versionCode = "227"
 backend-versionName = "1.0.21"
 android-compileSdk = "37"
 android-minSdk = "24"

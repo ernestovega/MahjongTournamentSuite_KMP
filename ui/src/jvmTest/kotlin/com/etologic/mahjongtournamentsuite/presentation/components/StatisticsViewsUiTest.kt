@@ -149,7 +149,8 @@ class StatisticsViewsUiTest {
                 }
             }
         }
-        onNodeWithText("Totals").assertExists()
+        onNodeWithText("Totals").assertDoesNotExist()
+        onNodeWithText("Records").assertExists()
         onNodeWithText("Madrid Open").assertExists()
         snapshot("statistics-tournament", onRoot().captureToImage())
     }

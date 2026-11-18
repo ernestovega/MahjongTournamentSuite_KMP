@@ -71,7 +71,6 @@ import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
 import mahjongtournamentsuite.ui.generated.resources.stat_players
-import mahjongtournamentsuite.ui.generated.resources.stat_rounds
 import mahjongtournamentsuite.ui.generated.resources.stat_tables
 import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
@@ -118,7 +117,8 @@ fun TournamentStatisticsPanel(
             TournamentRoundChips(statistics, roundIds, ownRound, { ownRound = it }, edge = 0.dp)
         }
         StaggeredColumns(minColumnWidth = 480.dp) {
-            TournamentTotalsCard(shown, tournamentCount, playerCount, roundIds, oneRound = round != null)
+            // One tournament has no Totals card: the Hands card shows its hands. All tournaments keep it.
+            if (tournamentCount != null) TournamentTotalsCard(shown, tournamentCount, playerCount)
             TournamentHandsCard(
                 shown,
                 showPenalties = statistics.penaltyCount > 0,
@@ -176,10 +176,10 @@ fun TournamentRoundChips(
 }
 
 @Composable
-private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCount: Int?, playerCount: Int?, roundIds: List<Int>?, oneRound: Boolean) {
+private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCount: Int, playerCount: Int?) {
     StatCard(stringResource(Res.string.stats_totals), Modifier.fillMaxWidth()) {
         StatGrid(Modifier.fillMaxWidth()) {
-            if (tournamentCount != null) BigNumber(stringResource(Res.string.stat_tournaments), tournamentCount.toString())
+            BigNumber(stringResource(Res.string.stat_tournaments), tournamentCount.toString())
             BigNumber(
                 stringResource(Res.string.stat_tables),
                 if (statistics.tablesCompleted == statistics.tablesTotal) {
@@ -188,18 +188,7 @@ private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCou
                     stringResource(Res.string.tables_completed_of, statistics.tablesCompleted, statistics.tablesTotal)
                 },
             )
-            if (tournamentCount != null) {
-                BigNumber(stringResource(Res.string.stat_players), (playerCount ?: statistics.players.count { it.tablesPlayed > 0 }).toString())
-            } else if (!oneRound) {
-                // The rounds whose tables are all completed, of all the rounds of the tournament. Not for one round.
-                val tablesByRound = statistics.tables.groupBy { it.roundId }
-                val total = roundIds?.size ?: tablesByRound.size
-                val completed = tablesByRound.count { (_, tables) -> tables.all { it.isCompleted } }
-                BigNumber(
-                    stringResource(Res.string.stat_rounds),
-                    if (completed == total) total.toString() else stringResource(Res.string.tables_completed_of, completed, total),
-                )
-            }
+            BigNumber(stringResource(Res.string.stat_players), (playerCount ?: statistics.players.count { it.tablesPlayed > 0 }).toString())
             BigNumber(stringResource(Res.string.stat_hands), if (statistics.handsPlayed > 0) statistics.handsPlayed.toString() else EMPTY)
         }
     }

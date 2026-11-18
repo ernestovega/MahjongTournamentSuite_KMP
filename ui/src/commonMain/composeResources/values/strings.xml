@@ -210,7 +210,6 @@
     <string name="leader_most_self_draws">Most self-draws</string>
     <string name="tables_completed_of">%1$d of %2$d</string>
     <string name="stat_players">Players</string>
-    <string name="stat_rounds">Rounds</string>
     <string name="hands_won_by_discard">Won by discard</string>
     <string name="hands_won_by_self_draw">Won by self-draw</string>
     <string name="hands_drawn">Drawn</string>
