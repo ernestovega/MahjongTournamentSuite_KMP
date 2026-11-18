@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Advertencia y sanción progresiva</string>
     <string name="penalties_section_dead_hand">Mano muerta</string>
     <string name="penalties_section_points">Penalizaciones en puntos y sanciones graves</string>
-    <string name="penalties_progressive">Primera infracción: advertencia. Segunda: descuento de 5 puntos. Infracciones siguientes: descuentos de 10, 20, 30 puntos, etc. El recuento se reinicia al comenzar cada sesión, salvo en caso de juego obstructivo, incluidas las demoras deliberadas.</string>
+    <string name="penalties_progressive">• Primera infracción: advertencia.\n• Segunda: descuento de 5 puntos.\n• Infracciones siguientes: descuentos de 10, 20, 30 puntos, etc.\n\nEl recuento se reinicia al comenzar cada sesión, salvo en caso de juego obstructivo, incluidas las demoras deliberadas.</string>
     <string name="penalties_source">Reglas de Competición de Mahjong de la EMA, versión de 20 de junio de 2009.</string>
     <string name="penalty_w1">Canto erróneo de kong, pong, chow o hua: el jugador canta pero no realiza la acción, emplea un término incorrecto o canta pong demasiado tarde.</string>
     <string name="penalty_w2">Mostrar fichas antes de cantar kong, pong, chow o hua: el canto queda invalidado y deben descartarse las fichas mostradas.</string>

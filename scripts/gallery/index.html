@@ -246,15 +246,18 @@ const store = {
   set(k, v) { try { localStorage.setItem("gallery." + k, JSON.stringify(v)); } catch (e) {} },
 };
 
-const DEVICES = [["phone", "Phone"], ["narrow", "Narrow ES"], ["tablet", "Tablet"], ["desktop", "Desktop"]];
+const DEVICES = [["phone", "Phone"], ["narrow", "Small phone"], ["tablet", "Tablet"], ["desktop", "Desktop"]];
+// The language is the third part of a variant ("phone-light-de"); without it the image is in English.
+const LANGUAGES = [["en", "EN", "English"], ["de", "DE", "Deutsch"], ["es", "ES", "Español"], ["fr", "FR", "Français"], ["it", "IT", "Italiano"], ["nl", "NL", "Nederlands"], ["ru", "RU", "Русский"], ["sv", "SV", "Svenska"]];
+const languageOf = (variant) => variant.split("-")[2] || "en";
 const THEMES = [["light", "Light"], ["dark", "Dark"]];
 const SIZES = [["s", "S", 220], ["m", "M", 380], ["l", "L", 600], ["fit", "Fit", 0]];
-const VARIANT_ORDER = ["phone-light", "phone-dark", "narrow-light-es", "tablet-light", "tablet-dark", "desktop-light", "desktop-dark"];
+const VARIANT_ORDER = ["phone-light", "phone-dark", "narrow-light", "tablet-light", "tablet-dark", "desktop-light", "desktop-dark"];
 
 let M = null, KEYS = [], LABELS = {}, THUMBS = "thumb";
 const state = {
   tab: "screens", module: store.get("module", "all"), devices: new Set(store.get("devices", [])),
-  themes: new Set(store.get("themes", [])), q: "", version: 0, onlyChanged: false,
+  themes: new Set(store.get("themes", [])), languages: new Set(store.get("languages", [])), q: "", version: 0, onlyChanged: false,
   size: store.get("size", "m"), paged: store.get("paged", false), page: 0, filtersOpen: false,
 };
 
@@ -284,12 +287,18 @@ const moduleOf = (key) => key.split("/")[0];
 const screenOf = (key) => key.slice(key.indexOf("/") + 1, key.lastIndexOf("/"));
 const variantOf = (key) => key.slice(key.lastIndexOf("/") + 1);
 function variantName(variant) {
-  if (variant === "narrow-light-es") return "Narrow phone · Spanish";
-  const [device, theme] = variant.split("-");
-  const d = { phone: "Phone", tablet: "Tablet", desktop: "Desktop" }[device] || device;
-  return theme ? `${d} · ${theme}` : d;
+  const [device, theme, language] = variant.split("-");
+  const d = { phone: "Phone", narrow: "Small phone", tablet: "Tablet", desktop: "Desktop" }[device] || device;
+  const l = language ? LANGUAGES.find((x) => x[0] === language) : null;
+  return [d, theme, language ? (l ? l[2] : language) : null].filter(Boolean).join(" · ");
 }
-function variantRank(key) { const i = VARIANT_ORDER.indexOf(variantOf(key)); return i < 0 ? 99 : i; }
+/** English first, in the order of VARIANT_ORDER, then the other languages in the order of LANGUAGES. */
+function variantRank(key) {
+  const variant = variantOf(key);
+  const i = VARIANT_ORDER.indexOf(variant.split("-").slice(0, 2).join("-"));
+  const l = LANGUAGES.findIndex((x) => x[0] === languageOf(variant));
+  return (l < 0 ? 99 : l) * 100 + (i < 0 ? 99 : i);
+}
 
 // An image's entries are [version index, id or null], newest first. At version k it is the first entry with index >= k.
 const entriesOf = (key) => M.images[key] || [];
@@ -387,7 +396,7 @@ function renderToolbar() {
   ver.value = state.version;
   ver.onchange = () => { state.version = +ver.value; state.page = 0; render(); };
   const toggle = (set, name) => (id) => { set.has(id) ? set.delete(id) : set.add(id); store.set(name, [...set]); state.page = 0; render(); };
-  const active = state.devices.size + state.themes.size + (state.onlyChanged ? 1 : 0) + (state.module !== "all" ? 1 : 0);
+  const active = state.devices.size + state.themes.size + state.languages.size + (state.onlyChanged ? 1 : 0) + (state.module !== "all" ? 1 : 0);
   bar.append(
     search,
     h("button", { class: "btn", id: "filtersBtn", onclick: () => { state.filtersOpen = !state.filtersOpen; renderToolbar(); }, text: `Filters${active ? " (" + active + ")" : ""} ${state.filtersOpen ? "▴" : "▾"}` }),
@@ -395,6 +404,7 @@ function renderToolbar() {
       mod, ver,
       ...group(DEVICES, (id) => state.devices.has(id), toggle(state.devices, "devices")),
       ...group(THEMES, (id) => state.themes.has(id), toggle(state.themes, "themes")),
+      ...group(LANGUAGES.map(([id, t, name]) => [id, t, name]), (id) => state.languages.has(id), toggle(state.languages, "languages")),
       ...group([["changed", "Changed only", "Only the images that changed in the chosen version"]], () => state.onlyChanged, () => { state.onlyChanged = !state.onlyChanged; state.page = 0; render(); }),
       ...sizeGroup,
       ...group([["grid", "All"], ["paged", "One screen"]], (id) => (id === "paged") === state.paged, (id) => { state.paged = id === "paged"; store.set("paged", state.paged); render(); }, "Show"),
@@ -435,6 +445,7 @@ function matches(key) {
   const parts = variantOf(key).split("-");
   if (state.devices.size && !parts.some((p) => state.devices.has(p))) return false;
   if (state.themes.size && !parts.some((p) => state.themes.has(p))) return false;
+  if (state.languages.size && !state.languages.has(languageOf(variantOf(key)))) return false;
   const q = state.q.trim().toLowerCase();
   if (q && !key.toLowerCase().replace(/-/g, " ").includes(q.replace(/-/g, " "))) return false;
   if (state.onlyChanged && !changedIn(key, state.version)) return false;

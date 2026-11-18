@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Avertissement et pénalité progressive</string>
     <string name="penalties_section_dead_hand">Main morte</string>
     <string name="penalties_section_points">Pénalités en points et sanctions graves</string>
-    <string name="penalties_progressive">Première infraction : avertissement. Deuxième : retrait de 5 points. Infractions suivantes : 10, 20, 30 points, etc. Le compte repart à zéro au début de chaque session, sauf pour le jeu obstructif, y compris les retards délibérés.</string>
+    <string name="penalties_progressive">• Première infraction : avertissement.\n• Deuxième : retrait de 5 points.\n• Infractions suivantes : 10, 20, 30 points, etc.\n\nLe compte repart à zéro au début de chaque session, sauf pour le jeu obstructif, y compris les retards délibérés.</string>
     <string name="penalties_source">Règles de compétition de Mahjong de l'EMA, version du 20 juin 2009.</string>
     <string name="penalty_w1">Annonce erronée de kong, pong, chow ou hua : le joueur annonce mais n'exécute pas l'action, emploie un terme incorrect ou annonce pong trop tard.</string>
     <string name="penalty_w2">Montrer des tuiles avant d'annoncer kong, pong, chow ou hua : l'annonce est invalide et les tuiles montrées doivent être défaussées.</string>

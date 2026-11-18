@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Warning and progressive penalty</string>
     <string name="penalties_section_dead_hand">Dead hand</string>
     <string name="penalties_section_points">Point penalties and severe penalties</string>
-    <string name="penalties_progressive">First offence: warning. Second: 5-point deduction. Subsequent offences: 10, 20, 30 points, and so on. The count resets at the start of each session, except for obstructive play, including deliberate delays.</string>
+    <string name="penalties_progressive">• First offence: warning.\n• Second: 5-point deduction.\n• Subsequent offences: 10, 20, 30 points, and so on.\n\nThe count resets at the start of each session, except for obstructive play, including deliberate delays.</string>
     <string name="penalties_source">Mahjong Competition Rules of the EMA, version of 20 June 2009.</string>
     <string name="penalty_w1">Erroneous kong, pong, chow or hua call: the player calls but fails to perform the action, uses an incorrect term, or calls pong too late.</string>
     <string name="penalty_w2">Revealing tiles before a kong, pong, chow or hua call: the call is invalid, and the revealed tiles must be discarded.</string>

@@ -49,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotPlayerRepo
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotStatisticsRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotSupportRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
+import com.etologic.mahjongtournamentsuite.screenshots.resourceText
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo
@@ -123,3 +124,9 @@ internal fun playerScreenshots(
 internal fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) {
     waitUntil(timeoutMillis = 10_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }
+
+/** The text [key] of the playerApp in the language of the screenshot, with its placeholders filled with [args]. */
+internal fun playerText(key: String, vararg args: Any): String = resourceText("playerApp", key, *args)
+
+/** The text [key] of the shared ui module in the language of the screenshot, with its placeholders filled with [args]. */
+internal fun uiText(key: String, vararg args: Any): String = resourceText("ui", key, *args)

@@ -22,7 +22,7 @@
     <string name="penalties_section_warning">Verwarnung und steigende Strafe</string>
     <string name="penalties_section_dead_hand">Tote Hand</string>
     <string name="penalties_section_points">Punktstrafen und schwere Strafen</string>
-    <string name="penalties_progressive">Erster Verstoß: Verwarnung. Zweiter: 5 Punkte Abzug. Weitere Verstöße: 10, 20, 30 Punkte und so weiter. Die Zählung beginnt mit jeder Session neu, außer bei Behinderung des Spiels, einschließlich absichtlicher Verzögerungen.</string>
+    <string name="penalties_progressive">• Erster Verstoß: Verwarnung.\n• Zweiter: 5 Punkte Abzug.\n• Weitere Verstöße: 10, 20, 30 Punkte und so weiter.\n\nDie Zählung beginnt mit jeder Session neu, außer bei Behinderung des Spiels, einschließlich absichtlicher Verzögerungen.</string>
     <string name="penalties_source">Mahjong Competition Rules der EMA, Fassung vom 20. Juni 2009.</string>
     <string name="penalty_w1">Falscher Kong-, Pong-, Chow- oder Hua-Ruf: Der Spieler ruft, führt die Aktion aber nicht aus, benutzt einen falschen Begriff oder ruft Pong zu spät.</string>
     <string name="penalty_w2">Steine vor einem Kong-, Pong-, Chow- oder Hua-Ruf zeigen: Der Ruf ist ungültig, und die gezeigten Steine müssen abgeworfen werden.</string>

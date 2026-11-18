@@ -558,4 +558,5 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Integritetspolicy</string>
     <string name="dev_staging">Staging (testsajt)</string>
+    <string name="open_player_statistics">Öppna spelarens statistik</string>
 </resources>

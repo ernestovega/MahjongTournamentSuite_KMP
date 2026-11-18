@@ -118,7 +118,7 @@ class AdminScreensScreenshotTest {
         "player-base-selected",
         ready = {
             waitForText("LUCÍA MARTÍN", substring = true)
-            onAllNodesWithText("Select all shown", substring = true).onFirst().performClick()
+            onAllNodesWithText(adminText("select_all_shown", 0).substringBefore("(").trim(), substring = true).onFirst().performClick()
             waitForIdle()
         },
     ) { nav -> PlayerBaseScreen(nav) }
@@ -135,13 +135,13 @@ class AdminScreensScreenshotTest {
     ) { nav -> GlobalUsersScreen(nav) }
 
     @Test
-    fun statistics() = adminScreenshots("statistics", ready = { waitForText("Top players") }) { nav ->
+    fun statistics() = adminScreenshots("statistics", ready = { waitForText(uiText("stats_leaders")) }) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = ONGOING))
     }
 
     /** The statistics of one person: the second tab row is as wide as the first one. */
     @Test
-    fun statisticsPerson() = adminScreenshots("statistics-person", ready = { waitForText("Skills", substring = true) }) { nav ->
+    fun statisticsPerson() = adminScreenshots("statistics-person", ready = { waitForText(uiText("stats_skills"), substring = true) }) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name, emaId = ScreenshotData.playerAccount.emaId))
     }
 

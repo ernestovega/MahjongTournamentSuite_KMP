@@ -558,4 +558,5 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Политика конфиденциальности</string>
     <string name="dev_staging">Staging (тестовый сайт)</string>
+    <string name="open_player_statistics">Открыть статистику игрока</string>
 </resources>
