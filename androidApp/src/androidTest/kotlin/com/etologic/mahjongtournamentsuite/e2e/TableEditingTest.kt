@@ -132,7 +132,7 @@ class TableEditingTest : AdminE2eTest() {
         openLastTable()
         E2eApi.otherEditorFinishesLastHand()
         c.waitForText("Table updated", timeoutMs = 60_000)
-        c.waitForText("another user changed this table", substring = true)
+        c.waitForText("Another user changed this table.", substring = true)
         c.clickButton("OK")
         c.waitForNoText("Table updated")
         c.waitForText("16 of 16 hands done.")

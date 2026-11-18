@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_attempt
 import mahjongtournamentsuite.adminapp.generated.resources.draw_flow_candidates
@@ -155,10 +155,10 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
                 },
         ) { measurables, constraints ->
             val width = if (constraints.hasBoundedWidth) constraints.maxWidth else 520.dp.roundToPx()
-            val leftGutter = (if (compact) 22.dp else 30.dp).roundToPx()
-            val rightGutter = (if (compact) 28.dp else 40.dp).roundToPx()
-            val columnGap = (if (compact) 20.dp else 30.dp).roundToPx()
-            val rowGap = (if (compact) 22.dp else 24.dp).roundToPx()
+            val leftGutter = (if (compact) 24.dp else 30.dp).roundToPx()
+            val rightGutter = (if (compact) 36.dp else 46.dp).roundToPx()
+            val columnGap = (if (compact) 16.dp else 30.dp).roundToPx()
+            val rowGap = 24.dp.roundToPx()
             val available = (width - leftGutter - rightGutter - columnGap).coerceAtLeast(1)
             val mainWidth = (available * (if (compact) 0.6f else 0.58f)).toInt()
             val sideWidth = available - mainWidth
@@ -174,7 +174,7 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
             // Room above the first row of the region for the note, and under the last one for its bottom side.
             fun extraGapBefore(row: Int): Int = when (row) {
                 ATTEMPT -> note.size.height + regionPad + 4.dp.roundToPx()
-                DONE -> 14.dp.roundToPx()
+                DONE -> 16.dp.roundToPx()
                 else -> 0
             }
 
@@ -210,13 +210,14 @@ fun DrawFlowDiagram(modifier: Modifier = Modifier) {
                 main = mainRects,
                 side = sideRects,
                 leftLoopX = leftGutter / 2f,
-                rightLoopX = (width - rightGutter + (if (compact) 11.dp else 14.dp).roundToPx()).toFloat(),
-                failLoopX = (width - (if (compact) 4.dp else 6.dp).roundToPx()).toFloat(),
+                rightLoopX = (width - rightGutter + (if (compact) 12.dp else 16.dp).roundToPx()).toFloat(),
+                // Well inside the dashed box, so the red line and the side of the box do not run together.
+                failLoopX = (width - (if (compact) 11.dp else 13.dp).roundToPx()).toFloat(),
                 region = Rect(
                     left = 2.dp.toPx(),
                     top = mainRects[ATTEMPT].top - note.size.height - regionPad,
-                    right = width - 1.5.dp.toPx(),
-                    bottom = maxOf(mainRects[MORE_SEATS].bottom, sideRects.last().bottom) + 6.dp.toPx(),
+                    right = width - 1.dp.toPx(),
+                    bottom = maxOf(mainRects[MORE_SEATS].bottom, sideRects.last().bottom) + 8.dp.toPx(),
                 ),
                 note = note,
             )
@@ -264,7 +265,7 @@ private fun FlowNodeBox(node: FlowNode, compact: Boolean) {
         NodeKind.Initial -> {
             // UML initial node: a filled circle.
             val color = colors.onSurface
-            Box(Modifier.size(20.dp).drawBehind { drawCircle(color) })
+            Box(Modifier.size(24.dp).drawBehind { drawCircle(color, radius = size.minDimension / 2f - 2.dp.toPx()) })
         }
         NodeKind.Final -> {
             // UML final node: a filled circle inside a ring.
@@ -279,13 +280,13 @@ private fun FlowNodeBox(node: FlowNode, compact: Boolean) {
         NodeKind.Decision -> DecisionNode(node.text, textStyle, colors.secondaryContainer, colors.secondary, colors.onSecondaryContainer, compact)
         NodeKind.Action, NodeKind.Failure -> {
             val failure = node.kind == NodeKind.Failure
-            val shape = RoundedCornerShape(if (compact) 12.dp else 14.dp)
+            val shape = MaterialTheme.shapes.medium
             val content = if (failure) colors.onErrorContainer else colors.onSurface
             Column(
                 modifier = Modifier
                     .background(if (failure) colors.errorContainer else colors.surfaceContainerHigh, shape)
                     .border(1.dp, if (failure) colors.error else colors.outline, shape)
-                    .padding(horizontal = if (compact) 6.dp else 10.dp, vertical = 8.dp),
+                    .padding(horizontal = if (compact) MtsTheme.spacing.xs else MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(node.text, style = textStyle, color = content, textAlign = TextAlign.Center)
@@ -331,7 +332,7 @@ private fun DecisionNode(text: String, style: TextStyle, container: Color, borde
         // A text box fits in a diamond when (text width / diamond width) + (text height / diamond height) <= 1.
         val width = (text.width / 0.56f).toInt().coerceAtMost(columnWidth)
         val widthShare = text.width.toFloat() / width
-        val height = maxOf((text.height / (1f - widthShare)).toInt() + 6.dp.roundToPx(), (width * 0.42f).toInt())
+        val height = maxOf((text.height / (1f - widthShare)).toInt() + 8.dp.roundToPx(), (width * 0.42f).toInt())
         layout(width, height) { text.place((width - text.width) / 2, (height - text.height) / 2) }
     }
 }
@@ -348,7 +349,7 @@ private fun DrawScope.drawArrows(
     labelStyle: TextStyle,
 ) {
     val stroke = 1.5.dp.toPx()
-    val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
+    val dash = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 4.dp.toPx()))
     // A label on a straight arrow goes beside it, so it does not hide the arrowhead. A label on a long loop goes on it.
     val beside = ArrayList<Pair<String, Offset>>()
     val above = ArrayList<Pair<String, Offset>>()

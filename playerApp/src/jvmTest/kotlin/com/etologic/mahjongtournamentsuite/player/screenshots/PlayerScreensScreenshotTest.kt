@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
@@ -43,6 +44,8 @@ import com.etologic.mahjongtournamentsuite.player.TournamentScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentStanding
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
+import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
@@ -213,6 +216,26 @@ class PlayerScreensScreenshotTest {
         "tournaments-guest",
         modules = { playerModules(account = null) },
         ready = { waitForText("Madrid Open 2026", substring = true) },
+    ) { nav -> TournamentsScreen(nav) }
+
+    /**
+     * The More menu of the top bar, open: Contact, Privacy and the rules. On a phone they are entries of the three-dots
+     * menu of the bar, so the test opens the menus until Privacy shows.
+     */
+    @Test
+    fun tournamentsMoreMenu() = playerScreenshots(
+        "tournaments-more-menu",
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        ready = {
+            waitForText("Madrid Open 2026", substring = true)
+            val menus = onAllNodes((hasText("More") or hasContentDescription("More") or hasContentDescription("Menu")) and hasClickAction())
+            var index = 0
+            while (onAllNodesWithText("Privacy").fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
+                menus[index++].performClick()
+                waitForIdle()
+            }
+            waitForText("Privacy")
+        },
     ) { nav -> TournamentsScreen(nav) }
 
     @Test

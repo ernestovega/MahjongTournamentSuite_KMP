@@ -145,6 +145,12 @@ class AdminScreensScreenshotTest {
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name, emaId = ScreenshotData.playerAccount.emaId))
     }
 
+    /** One player in one tournament, opened from the tournament statistics: standing, then the cards with By round. */
+    @Test
+    fun statisticsPlayer() = adminScreenshots("statistics-player", ready = { waitForText("Skills", substring = true) }) { nav ->
+        StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PLAYER.name, tournamentId = ONGOING, slotId = 1))
+    }
+
     @Test
     fun activity() = adminScreenshots("activity") { nav -> ActivityScreen(nav) }
 

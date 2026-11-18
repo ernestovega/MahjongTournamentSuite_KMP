@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,7 +41,12 @@ fun ProfileTopBarButton(
             text = name,
             icon = Icons.Default.Person,
             onClick = onClick,
-            iconContent = { ProfilePhoto(photoUrl = profile.photoUrl, name = name, size = 28.dp) },
+            // The photo shows no word, so TalkBack and the UI tests find the button by [clickLabel].
+            iconContent = {
+                Box(Modifier.semantics { contentDescription = clickLabel }) {
+                    ProfilePhoto(photoUrl = profile.photoUrl, name = name, size = 28.dp)
+                }
+            },
         )
         return
     }

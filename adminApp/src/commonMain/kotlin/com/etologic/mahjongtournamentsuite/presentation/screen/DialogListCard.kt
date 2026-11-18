@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /** One line in a [PlayerLinesCard]: a name (a player or an account) and the lines under it. */
 internal class PlayerLine(val name: String, val details: List<String>)
@@ -72,14 +73,14 @@ internal fun PlayerLinesSection(
     detailColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     maxHeight: Dp = 200.dp,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
             Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = color)
             Surface(shape = CircleShape, color = color.copy(alpha = 0.12f)) {
                 Text(
                     lines.size.toString(),
-                    Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                    Modifier.padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.xxs),
                     style = MaterialTheme.typography.labelLarge,
                     color = color,
                 )
