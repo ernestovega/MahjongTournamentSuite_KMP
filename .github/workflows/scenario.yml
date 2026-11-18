@@ -203,7 +203,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           ram-size: 4096M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -timezone Europe/Madrid
           script: |
             adb shell wm size 1280x800 && adb shell wm density 160
             scripts/rehearsal/emulator-organizer.sh setup out/scenario
@@ -320,7 +320,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           ram-size: 4096M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -timezone Europe/Madrid
           script: |
             adb shell wm size 1280x800 && adb shell wm density 160
             scripts/rehearsal/emulator-organizer.sh play out/scenario
