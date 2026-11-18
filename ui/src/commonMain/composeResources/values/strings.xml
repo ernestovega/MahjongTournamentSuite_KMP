@@ -185,22 +185,12 @@
     <string name="places_last">Last %1$d</string>
     <string name="places_avg_place">avg. place</string>
     <string name="skill_score_n">Skill score %1$d</string>
-    <string name="field_tournament">Tournament</string>
-    <string name="date_from">From</string>
-    <string name="date_to">To</string>
-    <string name="fold_all">Fold all</string>
-    <string name="unfold_all">Unfold all</string>
     <string name="stat_rank">Rank</string>
     <string name="stat_best_table_score">Best table score</string>
     <string name="stat_best_hand">Best hand</string>
     <string name="stat_chicken_hands">Chicken hands</string>
     <string name="stat_penalties">Penalties</string>
     <string name="stat_penalties_info">This is the number of penalties.\nThe number in brackets is the total of points lost.</string>
-    <string name="range_none">No tournament in this date range.</string>
-    <string name="range_some">%1$d of %2$d tournaments in this date range.</string>
-    <string name="tournaments_showing">Showing %1$d of %2$d tournaments. The newest tournaments come first.</string>
-    <string name="tournaments_show_more">Show %1$d more</string>
-    <string name="tournaments_show_all">Show all</string>
     <string name="round_n">Round %1$d</string>
     <string name="table_n">Table %1$d</string>
     <string name="places_history_title">Place in the last %1$d tables</string>
@@ -562,4 +552,6 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Privacy policy</string>
     <string name="dev_staging">Staging (test site)</string>
+    <string name="years_all">All</string>
+    <string name="stats_all_tournaments">All tournaments</string>
 </resources>

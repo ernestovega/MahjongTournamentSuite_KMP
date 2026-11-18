@@ -184,22 +184,12 @@
     <string name="places_last">Laatste %1$d</string>
     <string name="places_avg_place">gem. plaats</string>
     <string name="skill_score_n">Vaardigheidsscore %1$d</string>
-    <string name="field_tournament">Toernooi</string>
-    <string name="date_from">Van</string>
-    <string name="date_to">Tot</string>
-    <string name="fold_all">Alles inklappen</string>
-    <string name="unfold_all">Alles uitklappen</string>
     <string name="stat_rank">Rang</string>
     <string name="stat_best_table_score">Beste tafelscore</string>
     <string name="stat_best_hand">Beste hand</string>
     <string name="stat_chicken_hands">Kippenhanden</string>
     <string name="stat_penalties">Straffen</string>
     <string name="stat_penalties_info">Dit is het aantal straffen.\nHet getal tussen haakjes is het totaal aan verloren punten.</string>
-    <string name="range_none">Geen toernooi in deze periode.</string>
-    <string name="range_some">%1$d van %2$d toernooien in deze periode.</string>
-    <string name="tournaments_showing">%1$d van %2$d toernooien worden getoond. De nieuwste toernooien staan bovenaan.</string>
-    <string name="tournaments_show_more">Nog %1$d tonen</string>
-    <string name="tournaments_show_all">Alle tonen</string>
     <string name="round_n">Ronde %1$d</string>
     <string name="table_n">Tafel %1$d</string>
     <string name="places_history_title">Plaats aan de laatste %1$d tafels</string>
@@ -558,4 +548,6 @@
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_privacy_policy">Privacybeleid</string>
     <string name="dev_staging">Staging (testsite)</string>
+    <string name="years_all">Alle</string>
+    <string name="stats_all_tournaments">Alle toernooien</string>
 </resources>
