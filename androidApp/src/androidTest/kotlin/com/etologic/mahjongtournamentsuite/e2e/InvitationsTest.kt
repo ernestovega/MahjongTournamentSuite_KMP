@@ -55,7 +55,7 @@ class InvitationsTest : AdminE2eTest() {
         c.clickLastButton("Send (1)")
         // When the send ends, a summary counts what happened.
         c.waitForText("Done")
-        c.waitForText("Accounts created and invitations sent: 1")
+        c.waitForText("Invited")
         val mails = E2eApi.sentEmails()
         check(mails.size == 1 && mails[0].getString("to") == "typed.guest@example.test") { "Unexpected emails: $mails" }
     }
@@ -68,7 +68,7 @@ class InvitationsTest : AdminE2eTest() {
         c.clickButton("Send (1)")
         // When the send ends, a summary counts what happened.
         c.waitForText("Done")
-        c.waitForText("Accounts created and invitations sent: 1")
+        c.waitForText("Invited")
         val mails = E2eApi.sentEmails()
         check(mails.size == 1) { "Expected one email, found ${mails.size}." }
         check(mails[0].getString("to").endsWith("@example.test")) { "The email went to ${mails[0].getString("to")}." }

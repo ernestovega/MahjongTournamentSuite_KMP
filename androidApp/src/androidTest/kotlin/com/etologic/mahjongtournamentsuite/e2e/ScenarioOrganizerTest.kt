@@ -327,7 +327,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         }
         c.waitForText("Done", timeoutMs = 300_000)
         val invited = slots.count { !it.accountBefore }
-        c.waitForText("Accounts created and invitations sent: $invited", substring = true, timeoutMs = 60_000)
+        // The summary has one section for each outcome: its title, then its count.
+        c.waitForText("Invited", timeoutMs = 60_000)
+        check(c.onAllNodes(hasText("$invited")).fetchSemanticsNodes().isNotEmpty()) { "The summary does not count $invited invited players." }
+        if (invited < slots.size) c.waitForText("Reminded")
         log("invitations sent: $invited new accounts, ${slots.size - invited} reminders")
     }
 
