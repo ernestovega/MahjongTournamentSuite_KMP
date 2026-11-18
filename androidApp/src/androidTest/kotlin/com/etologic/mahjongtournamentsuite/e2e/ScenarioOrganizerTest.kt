@@ -392,7 +392,14 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 val typed = runCatching { if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before) }
                 if (tableUpdatedShown()) continue
                 typed.getOrThrow()
-                c.clickButton("Save")
+                // The message can also open just as Save is tapped: the tap goes nowhere, and the editor does it again.
+                val saved = runCatching { c.clickButton("Save") }
+                if (tableUpdatedShown()) continue
+                if (saved.isFailure) {
+                    c.waitForIdle()
+                    if (tableUpdatedShown()) continue
+                    c.clickButton("Save")
+                }
                 idle(3_000)
                 dismissTableUpdated()
                 // The table on the server has the change. A deleted hand can already be written again by the player.
