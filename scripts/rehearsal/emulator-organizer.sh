@@ -85,4 +85,13 @@ result="$("${adb_cmd[@]}" shell am instrument -w -r \
   com.etologic.mahjongtournamentsuite.staging.test/androidx.test.runner.AndroidJUnitRunner)"
 printf '%s\n' "$result" | tee "$out/instrument.txt"
 # am instrument ends with OK when the test passed.
-printf '%s\n' "$result" | grep -q '^OK (1 test)' || { echo "The organizer failed in the phase $phase." >&2; exit 1; }
+if ! printf '%s\n' "$result" | grep -q '^OK (1 test)'; then
+  echo "The organizer failed in the phase $phase." >&2
+  # The artifacts cannot always be read: the last steps of the organizer and any crash of the app go to the job log.
+  sleep 2
+  echo "--- last steps of the organizer ---"
+  grep -E 'SCENARIO|E2E' "$out/logcat.txt" | tail -n 25 || true
+  echo "--- crashes of the app ---"
+  grep -A 40 'FATAL EXCEPTION' "$out/logcat.txt" | head -n 80 || true
+  exit 1
+fi
