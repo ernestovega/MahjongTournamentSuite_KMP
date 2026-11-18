@@ -178,6 +178,9 @@ fun ProfileDialog(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     // The photo is small. The EMA number, a short field, sits beside it.
+                    // The theme comes first, under the title, apart from the profile by a line with room above and below.
+                    ThemeSelector(Modifier.padding(top = 4.dp))
+                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
                     // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
                     // window there is room, so it is as tall as both fields.
                     val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
@@ -243,7 +246,6 @@ fun ProfileDialog(
                         FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
                         FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
                     }
-                    ThemeSelector()
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
                     val withdrawConsent = LocalWithdrawConsent.current
@@ -251,12 +253,12 @@ fun ProfileDialog(
                         // The same room above and below the line, more than between the fields.
                         HorizontalDivider(Modifier.padding(vertical = 12.dp))
                         AccountActions {
-                            onSignOut?.let { DestructiveButton(Res.string.action_logout, !saving, outlined = true, onClick = it) }
-                            // Special cases, rarely used: red text without a border.
-                            withdrawConsent?.let { DestructiveButton(Res.string.consent_withdraw, !saving, outlined = false, onClick = it) }
+                            // The special cases, rarely used, first and as red text without a border. Logout last, red and filled.
                             if (onDeleteAccount != null) {
-                                DestructiveButton(Res.string.profile_delete_account, !saving, outlined = false) { confirmingDelete = true }
+                                DestructiveButton(Res.string.profile_delete_account, !saving, filled = false) { confirmingDelete = true }
                             }
+                            withdrawConsent?.let { DestructiveButton(Res.string.consent_withdraw, !saving, filled = false, onClick = it) }
+                            onSignOut?.let { DestructiveButton(Res.string.action_logout, !saving, filled = true, onClick = it) }
                         }
                     }
                 }
@@ -277,17 +279,16 @@ private fun AccountActions(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** A red button of the account: outlined for the usual action (logout), only text for the special ones. */
+/** A red button of the account: filled for the usual action (logout), only text for the special ones. */
 @Composable
-private fun DestructiveButton(text: StringResource, enabled: Boolean, outlined: Boolean, onClick: () -> Unit) {
-    if (outlined) {
-        FocusedOutlinedButton(
+private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Boolean, onClick: () -> Unit) {
+    if (filled) {
+        FocusedButton(
             enabled = enabled,
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
             buttonModifier = Modifier.fillMaxWidth(),
-            colors = MtsButtons.destructiveOutlinedColors(),
-            border = MtsButtons.destructiveBorder(enabled),
+            colors = MtsButtons.destructiveColors(),
         ) { Text(stringResource(text), textAlign = TextAlign.Center) }
     } else {
         FocusedTextButton(
