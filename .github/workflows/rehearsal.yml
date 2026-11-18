@@ -137,6 +137,11 @@ jobs:
             --format=json \
             | jq -c '.[] | {timestamp, severity, text: .textPayload, json: .jsonPayload, status: .httpRequest.status, url: .httpRequest.requestUrl}' \
             | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' | cut -c1-3000
+          echo "--- what the API wrote about errors ---"
+          gcloud logging read "timestamp>=\"$since\" AND (textPayload:\"rror\" OR jsonPayload.message:\"rror\" OR textPayload:\"xception\")" \
+            --project="$STAGING" --limit=40 --order=desc --format=json \
+            | jq -c '.[] | {timestamp, severity, text: .textPayload, json: .jsonPayload}' \
+            | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' | cut -c1-3000
 
   # The mailbox of the game day scenarios (docs/scenarios.md), read by IMAP.
   mail:
