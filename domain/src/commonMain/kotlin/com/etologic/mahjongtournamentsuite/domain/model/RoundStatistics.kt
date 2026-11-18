@@ -95,3 +95,37 @@ fun TournamentStatistics.byRound(rounds: List<Int>): List<TournamentRoundSlice> 
     }
     return single.runningReduce { total, next -> total + next }.zip(single) { cumulative, round -> TournamentRoundSlice(round, cumulative) }
 }
+
+/**
+ * The statistics of one round of the tournament, in the same shape as those of the whole tournament.
+ * The players keep only their results of that round. Like in the whole tournament, the hand values come from the
+ * completed tables with hands. A value that the whole tournament does not know (null) stays unknown.
+ */
+fun TournamentStatistics.forRound(roundId: Int): TournamentStatistics {
+    val roundTables = tables.filter { it.roundId == roundId }
+    val counted = roundTables.filter { it.isCompleted && it.hasHands }
+    val countedResults = counted.flatMap { table -> table.players.flatMap { it.results } }
+    val handsWon = countedResults.sumOf { it.handsWon }
+    return TournamentStatistics(
+        tablesTotal = roundTables.size,
+        tablesCompleted = roundTables.count { it.isCompleted },
+        tablesWithHands = counted.size,
+        players = players.map { player -> PlayerStatistics(player.playerId, player.results.filter { it.roundId == roundId }) },
+        handsPlayed = counted.sumOf { it.handsPlayed },
+        drawnHands = counted.sumOf { it.drawnHands },
+        selfDraws = counted.sumOf { it.selfDraws },
+        averageHandScore = if (handsWon > 0) countedResults.sumOf { it.winningScoreSum }.toDouble() / handsWon else null,
+        highestHand = counted.mapNotNull { it.bestHand }.maxOrNull(),
+        highestHandGain = highestHandGain?.let { counted.mapNotNull { it.bestHandGain }.maxOrNull() },
+        chickenHands = counted.sumOf { it.chickenHands },
+        penaltyCount = counted.sumOf { it.penaltyCount },
+        penaltyPoints = penaltyPoints?.let { countedResults.sumOf { it.penaltyPoints } },
+        tables = roundTables,
+    )
+}
+
+/** The rounds of [rounds] that have at least one completed table, in order. The others were not played yet. */
+fun TournamentStatistics.playedRounds(rounds: List<Int>): List<Int> {
+    val played = tables.filter { it.isCompleted }.map { it.roundId }.toSet()
+    return rounds.sorted().filter { it in played }
+}

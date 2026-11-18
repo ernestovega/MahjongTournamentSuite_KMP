@@ -128,14 +128,14 @@
     <string name="stats_leaders">Meilleurs joueurs</string>
     <string name="rank_of">sur %1$d</string>
     <string name="stat_highest_table_score">Meilleur score de table</string>
-    <string name="stat_highest_hand_score">Meilleure combinaison</string>
-    <string name="stat_hands_won_on_table">Plus de mains gagnées sur une table</string>
+    <string name="stat_highest_hand_score">Main de plus grande valeur</string>
+    <string name="stat_hands_won_on_table">Plus de mains gagnées à une table</string>
     <string name="stat_highest_penalty">Pénalité la plus lourde reçue</string>
-    <string name="stat_tables_won_row">Meilleure série de tables gagnées</string>
-    <string name="stat_hands_won_row">Meilleure série de mains gagnées</string>
+    <string name="stat_tables_won_row">Plus de tables gagnées d\'affilée</string>
+    <string name="stat_hands_won_row">Plus de mains gagnées d\'affilée</string>
     <string name="stat_most_chicken_hands">Plus de mains poule</string>
     <string name="stat_chicken_hands_on_table">Plus de mains poule sur une table</string>
-    <string name="stat_hands_without_dealin">Plus longue série sans donner la main</string>
+    <string name="stat_hands_without_dealin">Plus de mains d\'affilée sans donner la main</string>
     <string name="rivals_title">Meilleurs rivaux</string>
     <string name="rivals_info">Les rivaux sont classés selon un score. Un score plus élevé indique un rival plus redoutable.\nTout ne compte que sur les tables où vous avez joué avec ce rival.\nLe score ajoute des points pour chacun de ces nombres :\n• %1$d pour chaque « Devant vous » : une table où le rival a fini au-dessus de vous.\n• %2$d pour chaque « Vous a battu sur défausse » : une main que vous avez défaussée et que le rival a gagnée.\n• %3$d pour chaque « Vous a battu du mur » : une main que le rival a gagnée du mur.\n• %4$d pour chaque « A gagné sur défausse d'un autre » : une main que le rival a gagnée sur la défausse d'un autre joueur, pas la vôtre.\nLa somme est divisée par le nombre de tables partagées, pour qu'un rival ne soit pas premier uniquement parce que vous vous êtes souvent croisés.</string>
     <string name="rivals_none">Aucun rival pour l'instant. Il faut %1$d tables partagées.</string>
@@ -214,7 +214,7 @@
     <string name="hands_won_by_discard">Gagnées sur défausse</string>
     <string name="hands_won_by_self_draw">Gagnées du mur</string>
     <string name="hands_drawn">Nulles</string>
-    <string name="stat_average_winning_hand">Main gagnante moyenne</string>
+    <string name="stat_average_winning_hand">Moy. main gagnante</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Moi</string>
     <string name="scope_my_tournaments">Mes tournois</string>
@@ -530,7 +530,7 @@
     <string name="profile_delete_account_confirm">Supprimer</string>
     <string name="privacy_policy">Politique de confidentialité</string>
     <string name="consent_withdraw_info">L\'application arrête l\'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l\'application tant que vous n\'acceptez pas.</string>
-    <string name="stat_best_hand_points">Main la plus haute</string>
+    <string name="stat_best_hand_points">Plus de points en une main</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
     <string name="app_switch_to_admin">Gestion</string>
     <string name="app_switch_to_player">Vue joueur</string>

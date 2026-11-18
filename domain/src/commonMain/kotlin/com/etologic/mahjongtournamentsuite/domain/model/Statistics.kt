@@ -316,6 +316,8 @@ data class TableStatistics(
     val chickenHands: Int,
     val penaltyCount: Int,
     val swing: List<TableScoreSwing>,
+    /** The most points that one winning hand of the table added to its winner, without penalties. Null without hands. */
+    val bestHandGain: Int? = null,
 )
 
 data class TournamentStatistics(

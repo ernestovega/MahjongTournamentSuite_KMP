@@ -106,7 +106,7 @@ class GlobalScreensTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Statistics")
         c.waitForText("Records")
-        c.waitForText("Highest combination")
+        c.waitForText("Highest hand value")
         c.waitForText("All tournaments")
     }
 

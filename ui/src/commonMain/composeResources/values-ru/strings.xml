@@ -127,14 +127,14 @@
     <string name="stats_leaders">Лучшие игроки</string>
     <string name="rank_of">из %1$d</string>
     <string name="stat_highest_table_score">Лучший счёт за столом</string>
-    <string name="stat_highest_hand_score">Самая дорогая комбинация</string>
+    <string name="stat_highest_hand_score">Самая дорогая рука</string>
     <string name="stat_hands_won_on_table">Больше всего побед за одним столом</string>
     <string name="stat_highest_penalty">Самый большой штраф</string>
-    <string name="stat_tables_won_row">Самая длинная серия выигранных столов</string>
-    <string name="stat_hands_won_row">Самая длинная серия выигранных раздач</string>
+    <string name="stat_tables_won_row">Больше всего столов, выигранных подряд</string>
+    <string name="stat_hands_won_row">Больше всего раздач, выигранных подряд</string>
     <string name="stat_most_chicken_hands">Больше всего куриц</string>
     <string name="stat_chicken_hands_on_table">Больше всего куриц за одним столом</string>
-    <string name="stat_hands_without_dealin">Самая длинная серия без сброса в руку</string>
+    <string name="stat_hands_without_dealin">Больше всего раздач подряд без сброса в руку</string>
     <string name="rivals_title">Главные соперники</string>
     <string name="rivals_info">Соперники отсортированы по оценке. Чем выше оценка, тем сильнее соперник.\nУчитываются только столы, за которыми вы играли с этим соперником.\nОценка складывает очки за каждое из этих чисел:\n• %1$d за каждое «Выше вас»: стол, на котором соперник занял место выше вас.\n• %2$d за каждый «Сброс в руку»: раздача, где вы сбросили, а соперник выиграл.\n• %3$d за каждую «Со стены»: раздача, которую соперник выиграл тайлом со стены.\n• %4$d за каждый «Сброс третьего»: раздача, которую соперник выиграл на сбросе другого игрока, не вашем.\nСумма делится на число общих столов, чтобы соперник не оказался первым только потому, что вы часто встречались.</string>
     <string name="rivals_none">Соперников пока нет. Нужно %1$d общих столов.</string>
@@ -213,7 +213,7 @@
     <string name="hands_won_by_discard">Победы на сбросе</string>
     <string name="hands_won_by_self_draw">Победы со стены</string>
     <string name="hands_drawn">Ничьи</string>
-    <string name="stat_average_winning_hand">Средняя выигрышная рука</string>
+    <string name="stat_average_winning_hand">Ср. выигрышная рука</string>
     <string name="actions">Действия</string>
     <string name="scope_me">Я</string>
     <string name="scope_my_tournaments">Мои турниры</string>
@@ -275,7 +275,7 @@
     <string name="profile_delete_account_confirm">Удалить</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="consent_withdraw_info">Приложение остановит аналитику и спросит вас снова. Пользоваться приложением можно будет только после согласия.</string>
-    <string name="stat_best_hand_points">Самая дорогая рука</string>
+    <string name="stat_best_hand_points">Больше всего очков за одну руку</string>
     <string name="stat_average_hands_per_table">Ср. раздач за столом</string>
     <string name="app_switch_to_admin">Управление</string>
     <string name="app_switch_to_player">Вид игрока</string>

@@ -80,6 +80,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentSta
 import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabContentColor
 import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -327,19 +329,34 @@ fun TournamentStatisticsTab(
     val data = polled.data
     val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
-            .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
-    ) {
-        message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
-        val loaded = data ?: return@Column
-        TournamentStatisticsPanel(
-            statistics = loaded.statistics,
-            names = loaded.names,
-            onOpenPlayer = onOpenPlayer,
-            roundIds = loaded.tournament.roundIds(),
+    message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
+    val loaded = data ?: return
+    val roundIds = loaded.tournament.roundIds()
+    var round by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
+    Column(Modifier.fillMaxSize()) {
+        // The chips of the rounds stay above the statistics while they scroll. Every card shows the chosen round.
+        TournamentRoundChips(
+            loaded.statistics,
+            roundIds,
+            round,
+            { round = it },
+            Modifier.padding(top = MtsTheme.spacing.md),
+            edge = MtsTheme.spacing.lg,
         )
+        Column(
+            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
+        ) {
+            TournamentStatisticsPanel(
+                statistics = loaded.statistics,
+                names = loaded.names,
+                onOpenPlayer = onOpenPlayer,
+                roundIds = roundIds,
+                selectedRound = round,
+                onSelectRound = { round = it },
+            )
+        }
     }
 }
 
