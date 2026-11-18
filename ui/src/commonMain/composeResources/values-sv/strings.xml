@@ -214,6 +214,8 @@
     <string name="hands_won_by_self_draw">Vunna självdragna</string>
     <string name="hands_drawn">Oavgjorda</string>
     <string name="stat_average_winning_hand">Snitt vinsthand</string>
+    <string name="stat_average_hand_time">Snittid per hand</string>
+    <string name="stat_average_hand_time_info">Tiden mellan en hand och handen före, när båda fördes in vid bordet under spelet.\nHänder som förs in direkt efter varandra, eller efter en paus på mer än 30 minuter, räknas inte.</string>
     <string name="actions">Åtgärder</string>
     <string name="scope_me">Jag</string>
     <string name="scope_my_tournaments">Mina turneringar</string>

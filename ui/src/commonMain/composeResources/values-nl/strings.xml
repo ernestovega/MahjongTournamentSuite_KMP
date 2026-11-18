@@ -214,6 +214,8 @@
     <string name="hands_won_by_self_draw">Gewonnen zelf getrokken</string>
     <string name="hands_drawn">Remise</string>
     <string name="stat_average_winning_hand">Gem. winnende hand</string>
+    <string name="stat_average_hand_time">Gem. tijd per hand</string>
+    <string name="stat_average_hand_time_info">De tijd tussen een hand en de hand ervoor, als beide tijdens het spel aan tafel zijn ingevoerd.\nHanden die direct na elkaar of na een pauze van meer dan 30 minuten zijn ingevoerd, tellen niet mee.</string>
     <string name="actions">Acties</string>
     <string name="scope_me">Ik</string>
     <string name="scope_my_tournaments">Mijn toernooien</string>

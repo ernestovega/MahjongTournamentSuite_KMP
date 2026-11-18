@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   calculateTableSummary,
   defaultHand,
+  doneStamps,
   HANDS_COPY_FIELD,
   handsCopyUpdate,
   handsCopyVersionUpdate,
@@ -237,4 +238,37 @@ test("a new version keeps a valid copy valid and leaves an old copy alone", () =
 
   assert.deepEqual(handsCopyVersionUpdate(valid, 3), { [`${HANDS_COPY_FIELD}.version`]: 3 });
   assert.deepEqual(handsCopyVersionUpdate({ ...valid, version: 3 }, 4), {});
+});
+
+test("a hand gets the time when it becomes done, keeps it while done and loses it when undone", () => {
+  const before = new Map<string, Record<string, unknown>>([
+    ["1", { isDone: false }],
+    ["2", { isDone: true, doneAtMs: 1000 }],
+    ["3", { isDone: true, doneAtMs: 2000 }],
+    ["4", { isDone: true }],
+  ]);
+  const after = new Map<string, Record<string, unknown>>([
+    ["1", { isDone: true }],
+    ["2", { isDone: true, doneAtMs: 1000, handScore: "12" }],
+    ["3", { isDone: false, doneAtMs: 2000 }],
+    ["4", { isDone: true }],
+  ]);
+  const stamps = doneStamps(before, after, [1, 2, 3, 4], 5000);
+  assert.equal(stamps.get(1), 5000);
+  assert.equal(stamps.get(2), 1000);
+  assert.equal(stamps.get(3), null);
+  // A hand done before the stamps existed stays without one.
+  assert.equal(stamps.has(4), false);
+});
+
+test("the hands read back their done time, or null without one", () => {
+  const hands = handsFromCopy({
+    [HANDS_COPY_FIELD]: {
+      version: 1,
+      hands: Array.from({ length: HANDS_PER_TABLE }, (_, i) => ({ handId: i + 1, isDone: i === 0, ...(i === 0 ? { doneAtMs: 42 } : {}) })),
+    },
+    version: 1,
+  });
+  assert.equal(hands?.[0].doneAtMs, 42);
+  assert.equal(hands?.[1].doneAtMs, null);
 });

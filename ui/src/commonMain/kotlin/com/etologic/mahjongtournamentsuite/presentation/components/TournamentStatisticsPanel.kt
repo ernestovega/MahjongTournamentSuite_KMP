@@ -57,6 +57,8 @@ import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
 import mahjongtournamentsuite.ui.generated.resources.rounds_title
+import mahjongtournamentsuite.ui.generated.resources.stat_average_hand_time
+import mahjongtournamentsuite.ui.generated.resources.stat_average_hand_time_info
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
 import mahjongtournamentsuite.ui.generated.resources.stat_average_winning_hand
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
@@ -120,6 +122,7 @@ fun TournamentStatisticsPanel(
             TournamentHandsCard(
                 shown,
                 showPenalties = statistics.penaltyCount > 0,
+                showHandTime = statistics.averageHandTimeMs != null,
                 // The trend by round shows only with the whole tournament, when three rounds or more have hands.
                 trend = if (round == null && roundIds != null) remember(statistics, roundIds) { handsTrend(statistics, roundIds) } else null,
             )
@@ -205,10 +208,16 @@ private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCou
 /**
  * How the hands ended: won by discard, won by self-draw or drawn, and the averages and the penalties.
  * [showPenalties] is true when the whole tournament has penalties, so the card keeps its shape in a round without them.
+ * [showHandTime] is the same for the time per hand, which only hands saved with a time have.
  * [trend] adds a line chart with the share of each way to end a hand in each round.
  */
 @Composable
-private fun TournamentHandsCard(statistics: TournamentStatistics, showPenalties: Boolean, trend: List<TournamentRoundTotals>?) {
+private fun TournamentHandsCard(
+    statistics: TournamentStatistics,
+    showPenalties: Boolean,
+    showHandTime: Boolean,
+    trend: List<TournamentRoundTotals>?,
+) {
     if (statistics.handsPlayed == 0) return
     val byDiscard = (statistics.handsPlayed - statistics.drawnHands - statistics.selfDraws).coerceAtLeast(0)
     val won = MaterialTheme.colorScheme.primary
@@ -285,6 +294,13 @@ private fun TournamentHandsCard(statistics: TournamentStatistics, showPenalties:
         StatGrid(Modifier.fillMaxWidth()) {
             BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal())
             BigNumber(stringResource(Res.string.stat_average_winning_hand), statistics.averageHandScore.decimal())
+            if (showHandTime) {
+                BigNumber(
+                    stringResource(Res.string.stat_average_hand_time),
+                    statistics.averageHandTimeMs?.let(::minutesAndSeconds) ?: EMPTY,
+                    info = stringResource(Res.string.stat_average_hand_time_info),
+                )
+            }
             // The penalties show when the tournament has any, also for a round without them, so the card keeps its shape.
             if (showPenalties) {
                 val points = statistics.penaltyPoints
@@ -454,3 +470,9 @@ private fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable Ro
 
 /** The rounds with hands, for the trend of the Hands card. Null with fewer than three of them: two points make no trend. */
 private fun handsTrend(statistics: TournamentStatistics, roundIds: List<Int>): List<TournamentRoundTotals>? = statistics.byRound(roundIds).map { it.round }.filter { it.handsPlayed > 0 }.takeIf { it.size >= 3 }
+
+/** A time as minutes and seconds, like 4:05. */
+private fun minutesAndSeconds(ms: Long): String {
+    val seconds = (ms + 500) / 1000
+    return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+}

@@ -215,6 +215,8 @@
     <string name="hands_won_by_self_draw">Ganadas del muro</string>
     <string name="hands_drawn">Empates</string>
     <string name="stat_average_winning_hand">Media de mano ganadora</string>
+    <string name="stat_average_hand_time">Tiempo medio por mano</string>
+    <string name="stat_average_hand_time_info">El tiempo entre una mano y la anterior, cuando las dos se apuntaron en la mesa durante el juego.\nNo cuentan las manos apuntadas una tras otra, ni las que llegan tras una pausa de más de 30 minutos.</string>
     <string name="actions">Acciones</string>
     <string name="scope_me">Yo</string>
     <string name="scope_my_tournaments">Mis torneos</string>

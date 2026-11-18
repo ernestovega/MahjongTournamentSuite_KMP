@@ -24,6 +24,8 @@ export type TableHand = {
   playerSouthPenalty: string;
   playerWestPenalty: string;
   playerNorthPenalty: string;
+  /** When the hand was marked done, in milliseconds since 1970. Null for a hand not done, or done before this was kept. */
+  doneAtMs: number | null;
 };
 
 export type TableState = {
@@ -96,11 +98,35 @@ export function handsFromData(list: Data[]): TableHand[] {
       playerSouthPenalty: String(d.playerSouthPenalty ?? ""),
       playerWestPenalty: String(d.playerWestPenalty ?? ""),
       playerNorthPenalty: String(d.playerNorthPenalty ?? ""),
+      doneAtMs: typeof d.doneAtMs === "number" ? d.doneAtMs : null,
     }))
     .sort((a, b) => a.handId - b.handId);
 }
 
 export const HANDS_PER_TABLE = 16;
+
+/**
+ * The time stamp of each hand that a save changes: a hand that becomes done gets [nowMs], a hand that stops being done
+ * loses its stamp, and a hand that stays done keeps the one it had. The statistics measure the time per hand with it.
+ */
+export function doneStamps(
+  handsBefore: Map<string, Data>,
+  handsAfter: Map<string, Data>,
+  handIds: number[],
+  nowMs: number,
+): Map<number, number | null> {
+  const stamps = new Map<number, number | null>();
+  handIds.forEach((handId) => {
+    const before = handsBefore.get(String(handId)) ?? {};
+    const after = handsAfter.get(String(handId)) ?? {};
+    const wasDone = Boolean(before.isDone);
+    const isDone = Boolean(after.isDone);
+    if (isDone && !wasDone) stamps.set(handId, nowMs);
+    else if (!isDone && wasDone) stamps.set(handId, null);
+    else if (isDone && typeof before.doneAtMs === "number") stamps.set(handId, before.doneAtMs);
+  });
+  return stamps;
+}
 
 /**
  * The table document also keeps a copy of its 16 hands, so a read of many tables costs one document per table
@@ -140,6 +166,7 @@ export function defaultHand(handId: number): TableHand {
     playerSouthPenalty: "",
     playerWestPenalty: "",
     playerNorthPenalty: "",
+    doneAtMs: null,
   };
 }
 
@@ -324,6 +351,11 @@ export async function saveTableStateInTransaction(
     const key = String(item.handId);
     handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
   });
+  const stamps = doneStamps(handsBefore, handsAfter, params.handPatches.map((item) => item.handId), Date.now());
+  stamps.forEach((doneAtMs, handId) => {
+    const key = String(handId);
+    handsAfter.set(key, { ...(handsAfter.get(key) ?? {}), doneAtMs });
+  });
   // A table with every hand done is completed, whether the hands come from the editor or from a phone. The organizer
   // does not need the Completed switch for it. A totals-only table has no hands to count.
   const everyHandDone = !Boolean(mergedTable.useTotalsOnly) && [...handsAfter.values()].every((hand) => Boolean(hand.isDone));
@@ -379,6 +411,7 @@ export async function saveTableStateInTransaction(
   params.handPatches.forEach((item) => {
     transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
       ...item.patch,
+      ...(stamps.has(item.handId) ? { doneAtMs: stamps.get(item.handId) ?? null } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
