@@ -177,6 +177,7 @@ class PlayerBot {
     for (const entry of latest.values()) {
       const server = data.hands.find((hand) => Number(hand.handId) === Number(entry.handId));
       if (server == null) continue;
+      if (!server.isDone || !sameHand(entry.hand, server)) this.holdTables.delete(key);
       if (!server.isDone) {
         entry.deleted = true;
         deleted = true;
@@ -284,6 +285,18 @@ class PlayerBot {
         await sleep(Math.min(this.pollMs, nextHandAt - Date.now()));
         await this.manifest();
         continue;
+      }
+      const hold = this.holdTables.get(key);
+      if (hold != null && data.hands.filter((hand) => hand.isDone).length >= hold) {
+        if (!this.holdUntil.has(key)) {
+          this.holdUntil.set(key, Date.now() + 4 * 60_000);
+          this.metrics.event("table-waits-for-editor", { table: key, hands: hold });
+        }
+        if (Date.now() < this.holdUntil.get(key)) {
+          await sleep(this.pollMs);
+          continue;
+        }
+        this.holdTables.delete(key);
       }
       if (Math.random() < this.penaltyRate) await this.penalty(roundId, table.tableId, seats, data.table.version);
       const outcome = await this.writeHand(roundId, table, key, seats);
@@ -458,6 +471,10 @@ export async function runBots(options) {
     venuePhones: options.venuePhones ?? 0,
     verbose: options.verbose ?? false,
     lateTables: new Set(options.lateTables ?? []),
+    // The tables where the editor corrects the newest hand: the table stops after [minHands] hands and waits for the
+    // editor, as players who called the organization do. Without the wait the next hand would make it an older one.
+    holdTables: new Map(Object.entries(options.holdTables ?? {})),
+    holdUntil: new Map(),
     // How long the scorer of a late table arrives after the gong.
     lateMs: options.lateMs ?? 120_000,
     raceTables: new Set(options.raceTables ?? []),
@@ -597,6 +614,9 @@ async function main() {
       ...(plan?.cornerCases ?? []).filter((item) => item.kind === "late").map((item) => `${item.round}_${item.table}`),
     ],
     lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
+    holdTables: Object.fromEntries((plan?.cornerCases ?? [])
+      .filter((item) => (item.kind === "delete" || item.kind === "edit") && item.which === "last")
+      .map((item) => [`${item.round}_${item.table}`, item.minHands])),
     raceTables: String(args["race-tables"] ?? "").split(",").filter(Boolean),
     verbose: Boolean(args.verbose),
     stopped: finished ? () => finished.done : undefined,
