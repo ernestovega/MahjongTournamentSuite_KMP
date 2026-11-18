@@ -426,7 +426,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Tournament players", timeoutMs = 60_000)
         c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(slot.emaId)
         c.waitUntil(20_000) { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
-        c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().performClick()
+        // The list filters while the search is typed: a tap on the row being replaced is lost, so the menu is opened again.
+        repeat(3) {
+            if (c.isOnScreen("Substitute")) return@repeat
+            c.waitForIdle()
+            c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().performClick()
+            runCatching { c.waitForText("Substitute", timeoutMs = 10_000) }
+        }
         c.waitForText("Substitute")
         c.clickLastButton("Substitute")
         c.waitForText("A substitute plays for this player from the chosen round.", substring = true)
