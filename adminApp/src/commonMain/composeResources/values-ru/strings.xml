@@ -855,7 +855,8 @@
     <string name="draw_flow_start">Игроки, раунды и команды</string>
     <string name="draw_flow_seed">Перемешать</string>
     <string name="draw_flow_attempt">Новая рассадка</string>
-    <string name="draw_flow_attempt_note">Много сразу</string>
+    <string name="draw_flow_parallel">Несколько рассадок одновременно
+Побеждает первая удачная</string>
     <string name="draw_flow_next_seat">Следующее свободное место</string>
     <string name="draw_flow_next_seat_note">Раунд, стол и место</string>
     <string name="draw_flow_pick">Случайный игрок без стола в этом раунде</string>
@@ -863,7 +864,6 @@
     <string name="draw_flow_seat">Садится</string>
     <string name="draw_flow_more_seats">Остались места?</string>
     <string name="draw_flow_done">Пары готовы</string>
-    <string name="draw_flow_done_note">Первая удачная рассадка</string>
     <string name="draw_flow_discard">Взять другого</string>
     <string name="draw_flow_candidates">Есть другие?</string>
     <string name="draw_flow_failed">Рассадка не удалась</string>

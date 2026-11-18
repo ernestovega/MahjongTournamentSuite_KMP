@@ -847,7 +847,8 @@
     <string name="draw_flow_start">Spieler, Runden und Teams</string>
     <string name="draw_flow_seed">Mischen</string>
     <string name="draw_flow_attempt">Neue Verteilung</string>
-    <string name="draw_flow_attempt_note">Viele gleichzeitig</string>
+    <string name="draw_flow_parallel">Mehrere Verteilungen gleichzeitig
+Die erste, die klappt, gewinnt</string>
     <string name="draw_flow_next_seat">Nächster freier Platz</string>
     <string name="draw_flow_next_seat_note">Runde, Tisch und Platz</string>
     <string name="draw_flow_pick">Zufälliger Spieler ohne Tisch in dieser Runde</string>
@@ -855,7 +856,6 @@
     <string name="draw_flow_seat">Setzt sich</string>
     <string name="draw_flow_more_seats">Noch Sitze frei?</string>
     <string name="draw_flow_done">Paarungen fertig</string>
-    <string name="draw_flow_done_note">Die erste Verteilung, die klappt</string>
     <string name="draw_flow_discard">Anderen probieren</string>
     <string name="draw_flow_candidates">Noch andere?</string>
     <string name="draw_flow_failed">Verteilung gescheitert</string>

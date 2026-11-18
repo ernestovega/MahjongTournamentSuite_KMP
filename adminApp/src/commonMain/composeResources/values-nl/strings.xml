@@ -847,7 +847,8 @@
     <string name="draw_flow_start">Spelers, rondes en teams</string>
     <string name="draw_flow_seed">Schudden</string>
     <string name="draw_flow_attempt">Nieuwe verdeling</string>
-    <string name="draw_flow_attempt_note">Veel tegelijk</string>
+    <string name="draw_flow_parallel">Meerdere verdelingen tegelijk
+De eerste die lukt, wint</string>
     <string name="draw_flow_next_seat">Volgende vrije stoel</string>
     <string name="draw_flow_next_seat_note">Ronde, tafel en stoel</string>
     <string name="draw_flow_pick">Willekeurige speler zonder tafel in deze ronde</string>
@@ -855,7 +856,6 @@
     <string name="draw_flow_seat">Gaat zitten</string>
     <string name="draw_flow_more_seats">Nog stoelen vrij?</string>
     <string name="draw_flow_done">Partijen klaar</string>
-    <string name="draw_flow_done_note">De eerste verdeling die lukt</string>
     <string name="draw_flow_discard">Een ander proberen</string>
     <string name="draw_flow_candidates">Nog anderen?</string>
     <string name="draw_flow_failed">Verdeling mislukt</string>

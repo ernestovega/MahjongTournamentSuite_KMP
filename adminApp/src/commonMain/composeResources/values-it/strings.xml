@@ -847,7 +847,8 @@
     <string name="draw_flow_start">Giocatori, turni e squadre</string>
     <string name="draw_flow_seed">Mescolare</string>
     <string name="draw_flow_attempt">Nuova distribuzione</string>
-    <string name="draw_flow_attempt_note">Molte insieme</string>
+    <string name="draw_flow_parallel">Più distribuzioni insieme
+Vince la prima che riesce</string>
     <string name="draw_flow_next_seat">Prossimo posto libero</string>
     <string name="draw_flow_next_seat_note">Turno, tavolo e posto</string>
     <string name="draw_flow_pick">Estrarre un giocatore senza tavolo in questo turno</string>
@@ -855,7 +856,6 @@
     <string name="draw_flow_seat">Si siede</string>
     <string name="draw_flow_more_seats">Restano posti?</string>
     <string name="draw_flow_done">Incontri pronti</string>
-    <string name="draw_flow_done_note">La prima distribuzione che riesce</string>
     <string name="draw_flow_discard">Provarne un altro</string>
     <string name="draw_flow_candidates">Ne restano altri?</string>
     <string name="draw_flow_failed">Distribuzione fallita</string>

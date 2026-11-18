@@ -847,7 +847,8 @@
     <string name="draw_flow_start">Jugadores, rondas y equipos</string>
     <string name="draw_flow_seed">Barajar</string>
     <string name="draw_flow_attempt">Nuevo reparto</string>
-    <string name="draw_flow_attempt_note">Muchos a la vez</string>
+    <string name="draw_flow_parallel">Varios repartos a la vez
+Gana el primero que sale bien</string>
     <string name="draw_flow_next_seat">Siguiente asiento libre</string>
     <string name="draw_flow_next_seat_note">Ronda, mesa y asiento</string>
     <string name="draw_flow_pick">Sacar al azar un jugador sin mesa en esta ronda</string>
@@ -855,7 +856,6 @@
     <string name="draw_flow_seat">Se sienta</string>
     <string name="draw_flow_more_seats">¿Quedan asientos?</string>
     <string name="draw_flow_done">Enfrentamientos listos</string>
-    <string name="draw_flow_done_note">El primer reparto que sale bien</string>
     <string name="draw_flow_discard">Probar con otro</string>
     <string name="draw_flow_candidates">¿Quedan otros?</string>
     <string name="draw_flow_failed">Reparto fallido</string>
