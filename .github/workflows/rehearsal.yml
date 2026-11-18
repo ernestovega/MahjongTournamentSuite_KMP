@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts. mail-check: the mailbox of the game day scenarios answers."
+        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts. mail-check: the mailbox of the game day scenarios answers. logs: the errors of the staging API in the last 3 hours."
         type: choice
-        options: [calibrate, passwords, bots, check, calibration-cleanup, mail-check]
+        options: [calibrate, passwords, bots, check, calibration-cleanup, mail-check, logs]
         default: calibrate
       tournament:
         description: "bots and check: the name of the rehearsal tournament, as in the public list."
@@ -51,7 +51,7 @@ jobs:
   # The accounts and the password, with the Admin SDK of staging.
   accounts:
     name: Accounts
-    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check'
+    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check' && inputs.action != 'logs'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -104,6 +104,38 @@ jobs:
             calibration-cleanup) mode=--calibration-cleanup ;;
           esac
           node lib/scripts/rehearsalAccounts.js "$mode" --apply --project="$STAGING"
+
+  # The errors of the staging API, to find why a step of a game day failed. The addresses in them are masked.
+  logs:
+    name: Errors of the staging API
+    if: github.ref == 'refs/heads/main' && inputs.action == 'logs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Read the errors
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+        run: |
+          local_part="$(printf '%s' "${STAGING_ADMIN_EMAIL%@*}" | tr '[:upper:]' '[:lower:]')"
+          local_part="${local_part%%+*}"
+          for variant in "$local_part" "${local_part^}" "${local_part^^}"; do echo "::add-mask::$variant"; done
+          echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"
+          since="$(date -u -d '-3 hours' +%Y-%m-%dT%H:%M:%SZ)"
+          gcloud logging read "severity>=WARNING AND timestamp>=\"$since\" AND (resource.type=\"cloud_run_revision\" OR resource.type=\"cloud_function\")" \
+            --project="$STAGING" --limit=60 --order=desc \
+            --format='value(timestamp,severity,textPayload,jsonPayload.message,jsonPayload.error.message)' \
+            | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' | cut -c1-600
 
   # The mailbox of the game day scenarios (docs/scenarios.md), read by IMAP.
   mail:
