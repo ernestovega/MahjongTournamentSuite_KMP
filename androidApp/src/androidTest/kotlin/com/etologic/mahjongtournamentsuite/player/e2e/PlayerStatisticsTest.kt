@@ -56,10 +56,12 @@ class PlayerStatisticsTest : PlayerE2eTest() {
         c.waitForText("Hand values use 33 of 34 tables.")
     }
 
+    /** The own player is chosen, with the Change button to pick another one, and the Overall and By tournaments tabs. */
     @Test
-    fun personalStatisticsShowTheScopes() {
+    fun personalStatisticsShowTheOwnPlayerAndTheViews() {
         openMyStatistics()
-        listOf("Me", "My tournaments", "Others").forEach { c.waitForText(it) }
+        listOf("Change", "Overall", "By tournaments").forEach { c.waitForText(it) }
+        c.assertNoText("Others")
     }
 
     @Test

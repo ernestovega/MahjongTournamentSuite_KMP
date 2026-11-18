@@ -95,8 +95,11 @@ export async function makePlan(args) {
   if (free.length < size.players) throw new Error(`The registry has only ${free.length} free EMA players.`);
 
   const now = new Date();
-  const start = madrid(new Date(now.getTime() + 60 * 60_000));
   const stamp = madrid(now);
+  // The rounds start when the organizer presses Play, so the planned time only has to be later today: the form of a
+  // new tournament keeps its dates on today, and a round on another day is outside them. Near midnight it is 23:59.
+  const later = madrid(new Date(now.getTime() + 60 * 60_000));
+  const start = later.date === stamp.date ? later : { date: stamp.date, time: "23:59" };
   const tag = `gd${stamp.date.slice(5).replace("-", "")}${Math.random().toString(36).slice(2, 6)}`;
   const minutes = size.minutes ?? roundMinutes(phoneEmulators);
   // The cases of the editor play in round 2, so the first round plays as usual. In corners they play in round 1, at
