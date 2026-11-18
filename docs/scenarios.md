@@ -64,6 +64,9 @@ read it, so each one knows its part.
   The checks want the table played to the end, and the substituted slot with no result in the ranking (the
   independent count leaves out the rounds of the substitute, as the server does).
 - Two phones send the same hand at once (race).
+
+  Done (plan.cornerCases, round 1, table 1). The scorer and the second player of the table save the first hand at the
+  same moment. The checks want one answer 200, the other 409 (the table changed), and no extra hand at the table.
 - A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
   and a hand of several hands before.
 - A hand edited by the editor (the last one and an older one), and the phone of the table shows the correction.
@@ -72,7 +75,13 @@ read it, so each one knows its part.
   it in the table editor and turns Done off and clears the hand, or types another score. The bots of the table see the
   change: the scorer writes a deleted hand again at once, and the others note it. The checks want each case seen by
   the scorer and by another phone, at the right hand (the newest or an older one), and no change at any other table.
-- Penalties, a draw, extra time after the gong (finish the hand), a table that stays open and the admin closes it.
+- Penalties and a draw.
+
+  Done (plan.cornerCases, round 1, table 1). After 2 hands the scorer gives -10 to East and then -5 to South, in two
+  calls (the second one adds a row), and writes a draw. The checks want both penalties on the draw, and the totals of
+  the table equal to the independent count. Besides, the bots give a random penalty in about 1 of 20 hands, and about
+  1 hand in 10 is a draw.
+- Extra time after the gong (finish the hand), a table that stays open and the admin closes it.
 - A table with manual totals.
 - A seat change after the seats are saved.
 - A phone without network for a minute, and an app sent to the background.
@@ -91,7 +100,7 @@ discard with 8 to 12 points as chicken hands, so every scenario has some.
 
 ## Corners: the corner cases in minutes
 
-`corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The late
-table and its substitution are at table 3, and the deleted and edited hands at tables 2, 4, 5 and 6. It takes about
+`corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
+the penalties and the draw are at table 1, the late table and its substitution at table 3, and the deleted and edited hands at tables 2, 4, 5 and 6. It takes about
 45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.

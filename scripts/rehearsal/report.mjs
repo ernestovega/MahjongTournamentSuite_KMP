@@ -140,7 +140,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const raceDuplicates = races.filter((event) => event.statuses.filter((status) => status === 200).length > 1);
 
   const sorted = [...ranking.values()].sort((a, b) => b.points - a.points || b.score - a.score);
-  return {
+  const result = {
     tournamentId,
     tables: tables.length,
     openTables,
@@ -157,6 +157,9 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     chickenBySlot: Object.fromEntries(chickenBySlot),
     bestBySlotTable,
   };
+  // The tables as the server has them, for the corner cases. Not in the JSON of the check: it would be too large.
+  Object.defineProperty(result, "tablesByKey", { value: byKey, enumerable: false });
+  return result;
 }
 
 /**
@@ -259,6 +262,30 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       const ranked = found.filter(([slot]) => check.ranking.some((entry) => entry.playerId === slot));
       add(found.length > 0 && ranked.length === 0,
         `A player of table ${key} was substituted (${item.reason.toLowerCase()}, from round ${item.round}) and has no result in the ranking (${found.map(([slot]) => `slot ${slot}`).join(", ") || "none"}).`);
+    } else if (item.kind === "race") {
+      const race = events.find((event) => event.kind === "race" && event.table === key);
+      const statuses = race?.statuses ?? [];
+      const saved = statuses.filter((status) => status === 200).length;
+      const refused = statuses.filter((status) => status === 409).length;
+      const extraHere = (check?.extra ?? []).filter((line) => line.startsWith(`${key}:`));
+      add(saved === 1 && refused === 1 && extraHere.length === 0,
+        `Table ${key}: two phones saved the same hand at the same time, one was saved and the other was told the table changed (answers ${statuses.join(" and ") || "none"}).`);
+      if (!(saved === 1 && refused === 1)) detail(key);
+    } else if (item.kind === "penalty-draw") {
+      const penalties = at("penalty").filter((event) => event.planned);
+      const draw = at("planned-draw")[0];
+      const hand = draw == null ? null : (check?.tablesByKey?.get(key)?.hands ?? []).find((each) => Number(each.handId) === Number(draw.handId));
+      const values = hand == null ? [] : SEATS.map((name) => text(hand[`player${name}Penalty`]));
+      const expected = item.penalties.map((value, seat) => SEATS.map((_, index) => (index === seat ? value : "")));
+      // Each call adds one row: east has "-10;", south ";-5" (the empty parts keep the rows in line).
+      const want = SEATS.map((_, index) => expected.map((row) => row[index]).join(";").replace(/^;+$/, ""));
+      const isDraw = hand != null && hand.isDone && text(hand.playerWinnerId) === "";
+      const sameScores = !(check?.scoreProblems ?? []).some((line) => line.startsWith(`${key} `));
+      const ok = penalties.length === item.penalties.length && penalties.every((event) => event.status === 200)
+        && isDraw && values.every((value, index) => value === want[index]) && sameScores;
+      add(ok,
+        `Table ${key}: the scorer gave ${item.penalties.join(" and ")} as penalties and wrote a draw, and the penalties count in the totals (hand ${draw?.handId ?? "-"}, penalties by seat: ${hand == null ? "not found" : values.map(sumPenalty).join(" / ")}).`);
+      if (!ok) detail(key);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);

@@ -141,7 +141,11 @@ export async function makePlan(args) {
     // one [back] hands before it.
     // Round 1: table 3 starts late. Its scorer arrives [minutes] after the gong, and a player of it did not come: the
     // organizer substitutes the player (reason late, from round 1) [afterMinutes] after the gong, in Players.
+    // Round 1, table 1: two phones save the first hand at the same time, and after [afterHands] hands the scorer
+    // gives two penalties (one each time) and writes a draw: the penalties count in the draw.
     cornerCases: [
+      { kind: "race", round: 1, table: 1 },
+      { kind: "penalty-draw", round: 1, table: 1, afterHands: 2, penalties: ["-10", "-5"] },
       { kind: "late", round: 1, table: 3, minutes: 4 },
       { kind: "substitution", round: 1, table: 3, reason: "LATE", afterMinutes: 1 },
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },

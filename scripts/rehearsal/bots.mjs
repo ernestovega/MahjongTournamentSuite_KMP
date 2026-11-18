@@ -298,8 +298,21 @@ class PlayerBot {
         }
         this.holdTables.delete(key);
       }
-      if (Math.random() < this.penaltyRate) await this.penalty(roundId, table.tableId, seats, data.table.version);
-      const outcome = await this.writeHand(roundId, table, key, seats);
+      let kind = "hand";
+      const forced = this.penaltyDrawTables.get(key);
+      if (forced != null && !this.penaltyDrawDone.has(key) && data.hands.filter((hand) => hand.isDone).length >= forced.afterHands) {
+        // The corner case: the penalties of the plan, one call each (the second one adds a row), then a draw.
+        this.penaltyDrawDone.add(key);
+        let version = data.table.version;
+        for (const [seat, value] of forced.penalties.entries()) {
+          const reply = await this.penalty(roundId, table.tableId, seats, version, seat, value, true);
+          if (reply.status === 200) version = Number(reply.json?.tableVersion ?? version + 1);
+        }
+        kind = "draw";
+      } else if (forced == null && Math.random() < this.penaltyRate) {
+        await this.penalty(roundId, table.tableId, seats, data.table.version);
+      }
+      const outcome = await this.writeHand(roundId, table, key, seats, kind);
       if (outcome === "done") return;
       nextHandAt = Date.now() + (outcome === "wait" ? 10_000 : randomBetween(...this.handSeconds) * 1_000);
     }
@@ -319,24 +332,26 @@ class PlayerBot {
     if (reply.status !== 200) await sleep(10_000);
   }
 
-  async penalty(roundId, tableId, seats, version) {
-    const seat = Math.floor(Math.random() * 4);
+  async penalty(roundId, tableId, seats, version, seat = Math.floor(Math.random() * 4), value = "-10", planned = false) {
     const body = { expectedVersion: version };
     SEATS.forEach((name, index) => {
-      body[`player${name}Penalty`] = index === seat ? "-10" : "";
+      body[`player${name}Penalty`] = index === seat ? value : "";
     });
     const reply = await this.api.call("POST", `/player/tournaments/${this.tournament.id}/tables/${roundId}/${tableId}/penalties`, {
       token: await this.session.bearer(),
       body,
       label: "POST penalty",
     });
-    if (reply.status === 200) this.metrics.event("penalty", { table: `${roundId}_${tableId}`, seat: seats[seat] });
+    if (reply.status === 200 || planned) {
+      this.metrics.event("penalty", { table: `${roundId}_${tableId}`, seat: seats[seat], value, planned, status: reply.status, handId: reply.json?.handId });
+    }
+    return reply;
   }
 
   /** Preview, then save, as the app does. Returns "ok", "wait" or "done". */
   async writeHand(roundId, table, key, seats, kind = "hand") {
     const path = `/player/tournaments/${this.tournament.id}/tables/${roundId}/${table.tableId}/hands`;
-    const hand = randomHand(seats);
+    const hand = kind === "draw" ? { isDraw: true } : randomHand(seats);
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const token = await this.session.bearer();
       const preview = await this.api.call("POST", `${path}/preview`, { token, body: hand, label: "POST hand preview" });
@@ -355,6 +370,7 @@ class PlayerBot {
         this.sentAt.set(id, Date.now());
         this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString(), ...(kind === "reentry" ? { reentry: true } : {}) });
         if (kind === "reentry") this.metrics.event("hand-reentered", { table: key, handId: reply.json.handId, slot: this.slotNumber });
+        if (kind === "draw") this.metrics.event("planned-draw", { table: key, handId: reply.json.handId });
         return "ok";
       }
       if (reply.status !== 409 || !/changed/i.test(reply.json?.message ?? "")) return this.refusal(reply, key);
@@ -478,6 +494,8 @@ export async function runBots(options) {
     // How long the scorer of a late table arrives after the gong.
     lateMs: options.lateMs ?? 120_000,
     raceTables: new Set(options.raceTables ?? []),
+    penaltyDrawTables: new Map(Object.entries(options.penaltyDrawTables ?? {})),
+    penaltyDrawDone: new Set(),
     raceSessions: new Map(),
     raced: new Set(),
     scorerOf: new Map(),
@@ -617,7 +635,12 @@ async function main() {
     holdTables: Object.fromEntries((plan?.cornerCases ?? [])
       .filter((item) => (item.kind === "delete" || item.kind === "edit") && item.which === "last")
       .map((item) => [`${item.round}_${item.table}`, item.minHands])),
-    raceTables: String(args["race-tables"] ?? "").split(",").filter(Boolean),
+    raceTables: [
+      ...String(args["race-tables"] ?? "").split(",").filter(Boolean),
+      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "race").map((item) => `${item.round}_${item.table}`),
+    ],
+    penaltyDrawTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "penalty-draw")
+      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, penalties: item.penalties }])),
     verbose: Boolean(args.verbose),
     stopped: finished ? () => finished.done : undefined,
   });
