@@ -181,7 +181,7 @@ fun ProfileDialog(
                     // The photo is small. The EMA number, a short field, sits beside it.
                     // The preferences come first, under the title: the theme and the language. A line with room above and
                     // below keeps them apart from the profile.
-                    ThemeSelector(Modifier.padding(top = 4.dp))
+                    ThemeSelector(Modifier.padding(bottom = 8.dp))
                     LanguageSelector(Modifier.fillMaxWidth())
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
