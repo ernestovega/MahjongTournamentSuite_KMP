@@ -643,12 +643,27 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             runCatching { c.waitForText("Players & results", timeoutMs = 5_000) }
             if (c.isOnScreen("Players & results")) return
             // The Timer window has no Back of its own: the Back under it would leave the tournament.
-            if (!c.isOnScreen("Pause timer")) {
+            // When its back key is lost, the test closes the Timer as its back key would.
+            if (c.isOnScreen("Pause timer") || c.isOnScreen("Start timer")) {
+                closeTheTimerWindow()
+            } else {
                 runCatching { c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick() }
             }
             runCatching { c.waitForText("Players & results", timeoutMs = 15_000) }
         }
         c.waitForText("Players & results", timeoutMs = 60_000)
+    }
+
+    /** Finishes the Timer activity, which is what its back key does. */
+    private fun closeTheTimerWindow() {
+        val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                .filter { it.javaClass.simpleName == "TimerActivity" }
+                .forEach { it.finish() }
+        }
+        log("the back key did not close the Timer, so the test closed it")
     }
 
     /** Round control warns of open tables in ended rounds. The review closes them all, as the organizer at the end. */
