@@ -1,10 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -67,7 +69,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
- * The centered title has the app version from [LocalAppVersion] under it.
+ * The title is centered. The app version from [LocalAppVersion] sits faint in the top left corner.
  * The account actions (logout, withdraw the analytics consent, delete the account) are red outlined buttons under the form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,8 +159,13 @@ fun ProfileDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) onDismiss() },
-            // The title is centered, like in the other dialogs. The version of the running app goes in a small line under it.
-            title = { MtsDialogTitle(stringResource(Res.string.profile_title), subtitle = appVersionText()) },
+            // The title is centered, like in the other dialogs. The version of the running app sits faint in the top left corner.
+            title = {
+                Box(Modifier.fillMaxWidth()) {
+                    MtsDialogTitle(stringResource(Res.string.profile_title))
+                    AppVersionLabel(Modifier.align(Alignment.TopStart).offset(x = (-16).dp, y = (-16).dp))
+                }
+            },
             text = {
                 // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
