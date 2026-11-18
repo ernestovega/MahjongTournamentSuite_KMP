@@ -537,6 +537,33 @@ export function writeReport(path, title, report) {
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n\n`);
 }
 
+/**
+ * Looks at the last round every 30 s with a plain read that the metrics do not count. [done] turns true a minute after
+ * all its tables are completed, so the phones see the last saves and the corrections first.
+ */
+function watchTheLastRound(base, tournamentId, lastRound) {
+  const state = { done: false, completedAt: null };
+  const look = async () => {
+    try {
+      const response = await fetch(`${base.replace(/\/$/, "")}/public/tournaments/${tournamentId}/rounds/${lastRound}/tables-with-hands`);
+      if (!response.ok) return;
+      const tables = (await response.json()).tables ?? [];
+      const completed = tables.length > 0 && tables.every((item) => item.table?.isCompleted);
+      if (!completed) state.completedAt = null;
+      else state.completedAt ??= Date.now();
+      if (state.completedAt != null && Date.now() - state.completedAt >= 60_000) {
+        if (!state.done) console.log(`Every table of round ${lastRound} is completed: the bots stop.`);
+        state.done = true;
+      }
+    } catch {
+      // The next look tries again.
+    }
+  };
+  const timer = setInterval(look, 30_000);
+  state.stop = () => clearInterval(timer);
+  return state;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const password = process.env.REHEARSAL_PASSWORD ?? "";
@@ -552,6 +579,8 @@ async function main() {
   const tournamentId = await findTournament(api, args.tournament);
   const until = args.until ? Date.parse(args.until) : Date.now() + Number(args.minutes ?? 150) * 60_000;
   const [handMin, handMax] = String(args["hand-seconds"] ?? "60-90").split("-").map(Number);
+  // In a game day the bots stop a minute after every table of the last round is completed, not at the deadline.
+  const finished = plan ? watchTheLastRound(args.api ?? STAGING_API, tournamentId, plan.rounds) : null;
   const report = await runBots({
     api, metrics, tournamentId, baseEmail, password,
     slots: parseRange(args.slots),
@@ -570,7 +599,9 @@ async function main() {
     lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
     raceTables: String(args["race-tables"] ?? "").split(",").filter(Boolean),
     verbose: Boolean(args.verbose),
+    stopped: finished ? () => finished.done : undefined,
   });
+  finished?.stop();
   writeReport(args.report ?? "out/bots.json", args.title ?? "Bots", report);
 }
 
