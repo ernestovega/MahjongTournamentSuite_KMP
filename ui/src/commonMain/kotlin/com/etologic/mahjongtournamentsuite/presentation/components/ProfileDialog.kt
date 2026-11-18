@@ -36,7 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.presentation.language.CompactLanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -162,14 +162,11 @@ fun ProfileDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) onDismiss() },
-            // The title is centered, like in the other dialogs. The version of the running app sits faint in the top left corner
-            // and the language in the top right corner.
+            // The title is centered, like in the other dialogs. The version of the running app sits faint in the top left corner.
             title = {
                 Box(Modifier.fillMaxWidth()) {
                     MtsDialogTitle(stringResource(Res.string.profile_title))
                     AppVersionLabel(Modifier.align(Alignment.TopStart).offset(x = (-16).dp, y = (-16).dp))
-                    // The language takes little room: its flag in the top right corner, the names in the menu.
-                    CompactLanguageSelector(Modifier.align(Alignment.CenterEnd).offset(x = 12.dp))
                 }
             },
             text = {
@@ -180,8 +177,10 @@ fun ProfileDialog(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     // The photo is small. The EMA number, a short field, sits beside it.
-                    // The theme comes first, under the title, apart from the profile by a line with room above and below.
+                    // The preferences come first, under the title: the theme and the language. A line with room above and
+                    // below keeps them apart from the profile.
                     ThemeSelector(Modifier.padding(top = 4.dp))
+                    LanguageSelector(Modifier.fillMaxWidth())
                     HorizontalDivider(Modifier.padding(vertical = 12.dp))
                     // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
                     // window there is room, so it is as tall as both fields.
