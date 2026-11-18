@@ -71,6 +71,7 @@ class CalculateStatisticsUseCase {
                 chickenHands = analysis.chickenHands,
                 penaltyCount = analysis.results.sumOf { it.second.penaltyCount },
                 swing = analysis.swing,
+                bestHandGain = analysis.winningGains.maxOrNull(),
             )
         }
 

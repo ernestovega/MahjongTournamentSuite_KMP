@@ -120,4 +120,45 @@ class RoundStatisticsTest {
         assertEquals(calculate(players, tables.take(1), includeTeams = false), byRound.getValue(1))
         assertEquals(calculate(players, tables, includeTeams = false), byRound.getValue(2))
     }
+
+    @Test
+    fun oneRoundOfATournamentHasOnlyTheTablesAndResultsOfThatRound() {
+        val r1 = result(1, score = 120, won = 7, played = 16, bestHand = 40)
+        val r2 = result(2, score = 200, won = 14, played = 16, bestHand = 24)
+        val open = result(2, table = 2, score = 300, won = 5, played = 5, bestHand = 88)
+        val statistics = TournamentStatistics(
+            tablesTotal = 4,
+            tablesCompleted = 2,
+            tablesWithHands = 2,
+            players = listOf(PlayerStatistics(1, listOf(r1, r2))),
+            handsPlayed = 32,
+            drawnHands = 4,
+            selfDraws = 6,
+            averageHandScore = null,
+            highestHand = 40,
+            highestHandGain = 50,
+            chickenHands = 0,
+            penaltyCount = 2,
+            penaltyPoints = 10,
+            tables = listOf(
+                table(1, 1, true, 16, 2, 4, mapOf(1 to r1)).copy(bestHandGain = 50),
+                table(2, 1, true, 16, 2, 2, mapOf(1 to r2)).copy(bestHandGain = 30),
+                table(2, 2, false, 5, 0, 1, mapOf(4 to open)).copy(bestHandGain = 90),
+                table(3, 1, false, 0, 0, 0, emptyMap()),
+            ),
+        )
+        val round = statistics.forRound(2)
+        assertEquals(2, round.tablesTotal)
+        assertEquals(1, round.tablesCompleted)
+        // The table that is not completed counts in the tables but not in the hands or the records.
+        assertEquals(16, round.handsPlayed)
+        assertEquals(2, round.selfDraws)
+        assertEquals(24, round.highestHand)
+        assertEquals(30, round.highestHandGain)
+        assertEquals(10.0, round.averageHandScore)
+        assertEquals(listOf(2), round.players.single().results.map { it.roundId })
+        assertEquals(listOf(1, 2), statistics.playedRounds(listOf(3, 2, 1)))
+        // A value that the whole tournament does not know stays unknown in the round.
+        assertNull(statistics.copy(highestHandGain = null).forRound(1).highestHandGain)
+    }
 }

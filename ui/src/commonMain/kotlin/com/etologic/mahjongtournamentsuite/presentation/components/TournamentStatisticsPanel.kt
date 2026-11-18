@@ -1,23 +1,22 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.layout.layout
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,17 +27,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
-import com.etologic.mahjongtournamentsuite.domain.model.byRound
+import com.etologic.mahjongtournamentsuite.domain.model.forRound
+import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
+import kotlin.math.roundToInt
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_discard
@@ -57,11 +59,11 @@ import mahjongtournamentsuite.ui.generated.resources.stat_hands_without_dealin
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_on_table
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_hand_score
-import mahjongtournamentsuite.ui.generated.resources.stat_highest_penalty
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
 import mahjongtournamentsuite.ui.generated.resources.stat_players
+import mahjongtournamentsuite.ui.generated.resources.stat_rounds
 import mahjongtournamentsuite.ui.generated.resources.stat_tables
 import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
@@ -72,12 +74,15 @@ import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.roundToInt
 
 /**
  * The statistics of one tournament, or of all tournaments, in the same cards as the player statistics.
  * The cards flow into several columns on a wide screen.
  * [tournamentCount] and [playerCount] are set for the statistics of all tournaments.
+ *
+ * With [roundIds], one row of chips chooses between the whole tournament and one round, and every card shows that round.
+ * The panel shows the chips at its top, unless the screen shows them itself with [TournamentRoundChips]:
+ * then it passes the chosen round in [selectedRound] and [onSelectRound].
  */
 @Composable
 fun TournamentStatisticsPanel(
@@ -88,42 +93,34 @@ fun TournamentStatisticsPanel(
     /** The number of players, when [statistics] holds only some of them. */
     playerCount: Int? = null,
     onOpenPlayer: ((Int) -> Unit)? = null,
-    /** The rounds of the tournament. When set, chips on the Hands and the leaders cards show one round. */
+    /** The rounds of the tournament. When set, every card can show one round. */
     roundIds: List<Int>? = null,
+    /** The round that the screen chose with [TournamentRoundChips], or null for the whole tournament. */
+    selectedRound: Int? = null,
+    /** Set when the screen shows [TournamentRoundChips] itself. */
+    onSelectRound: ((Int?) -> Unit)? = null,
 ) {
     @Suppress("NAME_SHADOWING")
     val names = remember(names, PlaceholderNames.playerTemplate) { PlaceholderNames.localizeAll(names) }
+    var ownRound by remember(statistics) { mutableStateOf<Int?>(null) }
+    val round = (if (onSelectRound != null) selectedRound else ownRound)?.takeIf { roundIds != null }
+    val shown = remember(statistics, round) { round?.let { statistics.forRound(it) } ?: statistics }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        val rounds = roundIds?.let { ids -> remember(statistics, ids) { statistics.byRound(ids).map { it.round } } }
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // The Totals and the Hands cards have a similar height. With two columns the Records card would leave
-            // a gap under one of them, so it takes the whole width below them. With one or three columns the cards flow.
-            val columnWidth = 480.dp
-            val gap = 16.dp
-            val columns = ((maxWidth + gap) / (columnWidth + gap)).toInt().coerceIn(1, 3)
-            if (columns == 2) {
-                Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-                    StaggeredColumns(minColumnWidth = columnWidth, spacing = gap) {
-                        TournamentTotalsCard(statistics, tournamentCount, playerCount)
-                        TournamentHandsCard(statistics, rounds)
-                    }
-                    TournamentRecordsCard(statistics, playersAreSums = playerCount != null)
-                }
-            } else {
-                StaggeredColumns(minColumnWidth = columnWidth, spacing = gap) {
-                    TournamentTotalsCard(statistics, tournamentCount, playerCount)
-                    TournamentHandsCard(statistics, rounds)
-                    TournamentRecordsCard(statistics, playersAreSums = playerCount != null)
-                }
-            }
+        if (roundIds != null && onSelectRound == null) {
+            TournamentRoundChips(statistics, roundIds, ownRound, { ownRound = it }, edge = 0.dp)
         }
-        LeadersCard(statistics, names, roundIds, onOpenPlayer)
-        if (statistics.tablesWithHands < statistics.tablesCompleted) {
+        StaggeredColumns(minColumnWidth = 480.dp) {
+            TournamentTotalsCard(shown, tournamentCount, playerCount, roundIds, oneRound = round != null)
+            TournamentHandsCard(shown, showPenalties = statistics.penaltyCount > 0)
+            TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
+        }
+        LeadersCard(shown, names, onOpenPlayer)
+        if (shown.tablesWithHands < shown.tablesCompleted) {
             Text(
-                if (statistics.tablesWithHands == 0) {
+                if (shown.tablesWithHands == 0) {
                     stringResource(Res.string.stats_hand_stats_missing)
                 } else {
-                    stringResource(Res.string.stats_hand_values_use, statistics.tablesWithHands, statistics.tablesCompleted)
+                    stringResource(Res.string.stats_hand_values_use, shown.tablesWithHands, shown.tablesCompleted)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -132,11 +129,43 @@ fun TournamentStatisticsPanel(
     }
 }
 
+/**
+ * The chips that choose the whole tournament or one round of [roundIds]. A round without a completed table has no chip.
+ * A tap on the chosen round goes back to the whole tournament. The chips are one row that scrolls sideways.
+ * The row reaches [edge] further on each side than its place, to the edge of the screen or of a card.
+ */
 @Composable
-private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCount: Int?, playerCount: Int?) {
-    val counts: List<@Composable () -> Unit> = buildList {
-        if (tournamentCount != null) add { BigNumber(stringResource(Res.string.stat_tournaments), tournamentCount.toString()) }
-        add {
+fun TournamentRoundChips(
+    statistics: TournamentStatistics,
+    roundIds: List<Int>,
+    selected: Int?,
+    onSelect: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+    edge: Dp = 0.dp,
+) {
+    val played = remember(statistics, roundIds) { statistics.playedRounds(roundIds) }
+    if (played.isEmpty()) return
+    RoundChipsRow(modifier, edge) {
+        FilterChip(
+            selected = selected == null,
+            onClick = { onSelect(null) },
+            label = { Text(stringResource(Res.string.stats_totals)) },
+        )
+        played.forEach { roundId ->
+            FilterChip(
+                selected = roundId == selected,
+                onClick = { onSelect(if (roundId == selected) null else roundId) },
+                label = { Text(stringResource(Res.string.round_short, roundId)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCount: Int?, playerCount: Int?, roundIds: List<Int>?, oneRound: Boolean) {
+    StatCard(stringResource(Res.string.stats_totals), Modifier.fillMaxWidth()) {
+        StatGrid(Modifier.fillMaxWidth()) {
+            if (tournamentCount != null) BigNumber(stringResource(Res.string.stat_tournaments), tournamentCount.toString())
             BigNumber(
                 stringResource(Res.string.stat_tables),
                 if (statistics.tablesCompleted == statistics.tablesTotal) {
@@ -145,110 +174,38 @@ private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCou
                     stringResource(Res.string.tables_completed_of, statistics.tablesCompleted, statistics.tablesTotal)
                 },
             )
-        }
-        add { BigNumber(stringResource(Res.string.stat_players), (playerCount ?: statistics.players.count { it.tablesPlayed > 0 }).toString()) }
-        add { BigNumber(stringResource(Res.string.stat_hands), if (statistics.handsPlayed > 0) statistics.handsPlayed.toString() else EMPTY) }
-    }
-    // The averages and the penalties of the whole tournament. The Hands card keeps only its chart,
-    // so the two cards take a similar height.
-    val averages: List<@Composable () -> Unit> = if (statistics.handsPlayed == 0) {
-        emptyList()
-    } else {
-        buildList {
-            add { BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal()) }
-            add { BigNumber(stringResource(Res.string.stat_average_winning_hand), statistics.averageHandScore.decimal()) }
-            if (statistics.penaltyCount > 0) {
-                add {
-                    val points = statistics.penaltyPoints
-                    BigNumber(
-                        stringResource(Res.string.stat_penalties),
-                        if (points != null) "${statistics.penaltyCount} ($points)" else statistics.penaltyCount.toString(),
-                        info = stringResource(Res.string.stat_penalties_info),
-                    )
-                }
+            if (tournamentCount != null) {
+                BigNumber(stringResource(Res.string.stat_players), (playerCount ?: statistics.players.count { it.tablesPlayed > 0 }).toString())
+            } else if (!oneRound) {
+                // The rounds whose tables are all completed, of all the rounds of the tournament. Not for one round.
+                val tablesByRound = statistics.tables.groupBy { it.roundId }
+                val total = roundIds?.size ?: tablesByRound.size
+                val completed = tablesByRound.count { (_, tables) -> tables.all { it.isCompleted } }
+                BigNumber(
+                    stringResource(Res.string.stat_rounds),
+                    if (completed == total) total.toString() else stringResource(Res.string.tables_completed_of, completed, total),
+                )
             }
+            BigNumber(stringResource(Res.string.stat_hands), if (statistics.handsPlayed > 0) statistics.handsPlayed.toString() else EMPTY)
         }
     }
-    StatCard(stringResource(Res.string.stats_totals), Modifier.fillMaxWidth()) {
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // A wide card shows the counts in one row and the averages in a second row below a line.
-            // A narrow card puts all of them in one grid, so its rows of two have no gap.
-            if (maxWidth >= TotalsRowWidth) {
-                Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-                    StatGrid(Modifier.fillMaxWidth()) { counts.forEach { it() } }
-                    if (averages.isNotEmpty()) {
-                        HorizontalDivider()
-                        StatGrid(Modifier.fillMaxWidth()) { averages.forEach { it() } }
-                    }
-                }
-            } else {
-                StatGrid(Modifier.fillMaxWidth()) { (counts + averages).forEach { it() } }
-            }
-        }
-    }
-}
-
-/** The width that three cells of a [StatGrid] take in one row. */
-private val TotalsRowWidth = 140.dp * 3 + 12.dp * 2
-
-/** The numbers of the Hands card: those of the whole tournament or those of one round. */
-private class HandsNumbers(
-    val handsPlayed: Int,
-    val selfDraws: Int,
-    val drawnHands: Int,
-) {
-    val byDiscard: Int get() = (handsPlayed - drawnHands - selfDraws).coerceAtLeast(0)
 }
 
 /**
- * How the hands ended: won by discard, won by self-draw or drawn.
- * With [rounds], chips choose between the totals and one round. The card keeps its shape, only the numbers change.
- * A tap on the chosen round goes back to the totals.
+ * How the hands ended: won by discard, won by self-draw or drawn, and the averages and the penalties.
+ * [showPenalties] is true when the whole tournament has penalties, so the card keeps its shape in a round without them.
  */
 @Composable
-private fun TournamentHandsCard(statistics: TournamentStatistics, rounds: List<TournamentRoundTotals>?) {
+private fun TournamentHandsCard(statistics: TournamentStatistics, showPenalties: Boolean) {
     if (statistics.handsPlayed == 0) return
-    var chosenRound by remember(statistics) { mutableStateOf<Int?>(null) }
-    val round = rounds?.firstOrNull { it.roundId == chosenRound }
-    // The totals of the tournament, not the sums of the players, because the players may be only some of them.
-    val numbers = if (round == null) {
-        HandsNumbers(
-            handsPlayed = statistics.handsPlayed,
-            selfDraws = statistics.selfDraws,
-            drawnHands = statistics.drawnHands,
-        )
-    } else {
-        HandsNumbers(
-            handsPlayed = round.handsPlayed,
-            selfDraws = round.selfDraws,
-            drawnHands = round.drawnHands,
-        )
-    }
+    val byDiscard = (statistics.handsPlayed - statistics.drawnHands - statistics.selfDraws).coerceAtLeast(0)
     val won = MaterialTheme.colorScheme.primary
     val parts = listOf(
-        Triple(stringResource(Res.string.hands_won_by_discard), numbers.byDiscard, won.copy(alpha = 0.75f)),
-        Triple(stringResource(Res.string.hands_won_by_self_draw), numbers.selfDraws, won.copy(alpha = 0.45f)),
-        Triple(stringResource(Res.string.hands_drawn), numbers.drawnHands, MaterialTheme.colorScheme.outline),
+        Triple(stringResource(Res.string.hands_won_by_discard), byDiscard, won.copy(alpha = 0.75f)),
+        Triple(stringResource(Res.string.hands_won_by_self_draw), statistics.selfDraws, won.copy(alpha = 0.45f)),
+        Triple(stringResource(Res.string.hands_drawn), statistics.drawnHands, MaterialTheme.colorScheme.outline),
     )
     StatCard(stringResource(Res.string.stat_hands), Modifier.fillMaxWidth()) {
-        if (!rounds.isNullOrEmpty()) {
-            RoundChipsRow {
-                FilterChip(
-                    selected = round == null,
-                    onClick = { chosenRound = null },
-                    label = { Text(stringResource(Res.string.stats_totals)) },
-                )
-                rounds.forEach { item ->
-                    FilterChip(
-                        selected = item.roundId == round?.roundId,
-                        // A tap on the chosen round goes back to the totals.
-                        onClick = { chosenRound = if (item.roundId == round?.roundId) null else item.roundId },
-                        label = { Text(stringResource(Res.string.round_short, item.roundId)) },
-                        enabled = item.handsPlayed > 0,
-                    )
-                }
-            }
-        }
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(36.dp, Alignment.CenterHorizontally),
@@ -260,14 +217,28 @@ private fun TournamentHandsCard(statistics: TournamentStatistics, rounds: List<T
                 null,
                 200.dp,
                 0.26f,
-                centerValue = numbers.handsPlayed.toString(),
+                centerValue = statistics.handsPlayed.toString(),
                 centerLabel = stringResource(Res.string.outcome_hands_unit),
             )
             Column(Modifier.width(IntrinsicSize.Max), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 parts.forEach { (label, value, color) ->
-                    val share = if (numbers.handsPlayed > 0) (value * 100.0 / numbers.handsPlayed).roundToInt() else 0
+                    val share = if (statistics.handsPlayed > 0) (value * 100.0 / statistics.handsPlayed).roundToInt() else 0
                     LegendRow(color, label, "$value ($share%)")
                 }
+            }
+        }
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        StatGrid(Modifier.fillMaxWidth()) {
+            BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal())
+            BigNumber(stringResource(Res.string.stat_average_winning_hand), statistics.averageHandScore.decimal())
+            // The penalties show when the tournament has any, also for a round without them, so the card keeps its shape.
+            if (showPenalties) {
+                val points = statistics.penaltyPoints
+                BigNumber(
+                    stringResource(Res.string.stat_penalties),
+                    if (points != null) "${statistics.penaltyCount} ($points)" else statistics.penaltyCount.toString(),
+                    info = stringResource(Res.string.stat_penalties_info),
+                )
             }
         }
     }
@@ -275,11 +246,11 @@ private fun TournamentHandsCard(statistics: TournamentStatistics, rounds: List<T
 
 /**
  * The best values of the tournament: the highest hand and table score, the most hands won on a table,
- * the biggest penalty and the longest runs of one player.
+ * and the longest runs of one player. No highest penalty: the organizer asked to leave it out.
  * [playersAreSums] is true when each player holds the sums of all tournaments. Then the values of one table are not known.
  */
 @Composable
-private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSums: Boolean) {
+private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSums: Boolean, oneRound: Boolean) {
     val players = statistics.players
     val streaks = players.map { it.streaks }
     StatCard(stringResource(Res.string.stats_records), Modifier.fillMaxWidth()) {
@@ -291,8 +262,8 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
             if (!playersAreSums) {
                 BigNumber(stringResource(Res.string.stat_highest_table_score), players.mapNotNull { it.bestTableScore }.maxOrNull().text())
                 BigNumber(stringResource(Res.string.stat_hands_won_on_table), players.mapNotNull { it.mostHandsWonAtATable }.maxOrNull().text())
-                BigNumber(stringResource(Res.string.stat_highest_penalty), players.mapNotNull { it.highestPenalty }.maxOrNull().text())
-                BigNumber(stringResource(Res.string.stat_tables_won_row), (streaks.maxOfOrNull { it.tableWins } ?: 0).toString())
+                // In one round each player plays one table, so a run of tables means nothing there.
+                if (!oneRound) BigNumber(stringResource(Res.string.stat_tables_won_row), (streaks.maxOfOrNull { it.tableWins } ?: 0).toString())
                 BigNumber(stringResource(Res.string.stat_hands_won_row), streaks.mapNotNull { it.handsWon }.maxOrNull().text())
                 BigNumber(stringResource(Res.string.stat_hands_without_dealin), streaks.mapNotNull { it.handsWithoutDealIn }.maxOrNull().text())
             }
@@ -319,19 +290,9 @@ private class Leader(
 private fun LeadersCard(
     statistics: TournamentStatistics,
     names: Map<Int, String>,
-    roundIds: List<Int>?,
     onOpenPlayer: ((Int) -> Unit)?,
 ) {
-    var chosenRound by remember(statistics) { mutableStateOf<Int?>(null) }
-    val players = remember(statistics, chosenRound) {
-        val round = chosenRound
-        if (round == null) {
-            statistics.players
-        } else {
-            statistics.players.map { player -> PlayerStatistics(player.playerId, player.results.filter { it.roundId == round }) }
-        }
-    }
-    val playedRounds = remember(statistics) { statistics.players.flatMap { player -> player.results.map { it.roundId } }.toSet() }
+    val players = statistics.players
     val minimum = MIN_HANDS_FOR_LEADERBOARD
     // The same boards as the leaderboards of the tournament statistics: the first of each one.
     val eligible = players.filter { it.handsPlayed >= minimum }
@@ -373,26 +334,8 @@ private fun LeadersCard(
             )
         },
     )
-    if (leaders.isEmpty() && chosenRound == null) return
+    if (leaders.isEmpty()) return
     StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
-        if (!roundIds.isNullOrEmpty()) {
-            RoundChipsRow {
-                FilterChip(
-                    selected = chosenRound == null,
-                    onClick = { chosenRound = null },
-                    label = { Text(stringResource(Res.string.stats_totals)) },
-                )
-                roundIds.forEach { roundId ->
-                    FilterChip(
-                        selected = roundId == chosenRound,
-                        // A tap on the chosen round goes back to the totals.
-                        onClick = { chosenRound = if (roundId == chosenRound) null else roundId },
-                        label = { Text(stringResource(Res.string.round_short, roundId)) },
-                        enabled = roundId in playedRounds,
-                    )
-                }
-            }
-        }
         StaggeredColumns(minColumnWidth = 280.dp) {
             leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
         }
@@ -434,15 +377,13 @@ private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: 
 }
 
 /**
- * The chips of the totals and the rounds, in one row. The row reaches the edges of the card,
+ * The chips of the totals and the rounds, in one row. The row reaches [bleed] further on each side than its place,
  * and scrolls sideways when the chips do not fit. When they fit, they sit in the middle.
  */
 @Composable
-private fun RoundChipsRow(content: @Composable RowScope.() -> Unit) {
-    // The padding of the StatCard, which the row covers on both sides.
-    val bleed = MtsTheme.spacing.lg
+private fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable RowScope.() -> Unit) {
     BoxWithConstraints(
-        Modifier.layout { measurable, constraints ->
+        modifier.layout { measurable, constraints ->
             val extra = (bleed * 2).roundToPx()
             val placeable = measurable.measure(constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra))
             layout(placeable.width - extra, placeable.height) { placeable.place(-extra / 2, 0) }
