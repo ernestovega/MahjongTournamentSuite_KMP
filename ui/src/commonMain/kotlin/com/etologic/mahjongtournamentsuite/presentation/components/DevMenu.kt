@@ -56,7 +56,7 @@ private class DevMenuEntry(val text: String, val icon: ImageVector, val dividerA
 
 /**
  * One "DEV" button of the top bar with the tools for development: the screens Activity, App errors and Design
- * system, and the links to the screenshot gallery, the versions, the API (Swagger), the privacy policy and staging.
+ * system, and the links to the screenshot gallery, the versions, the privacy policy, the API (Swagger) and staging.
  * Only for administrators: the caller passes it only to them. On a phone it is one entry of the three-dots menu
  * that opens its own menu.
  */
@@ -70,8 +70,8 @@ fun DevMenuButton(actions: DevMenuActions) {
         DevMenuEntry(stringResource(Res.string.design_system), Icons.Default.Palette, false, actions.onDesignSystem),
         DevMenuEntry(stringResource(Res.string.top_bar_screenshots), Icons.Default.PhotoLibrary, true, open(SCREENSHOT_GALLERY_URL)),
         DevMenuEntry(stringResource(Res.string.dev_versions), Icons.Default.NewReleases, false, open(VERSIONS_URL)),
-        DevMenuEntry(stringResource(Res.string.dev_api_docs), Icons.Default.Api, false, open(API_DOCS_URL)),
         DevMenuEntry(stringResource(Res.string.dev_privacy_policy), Icons.Default.Policy, false, open(PRIVACY_POLICY_URL)),
+        DevMenuEntry(stringResource(Res.string.dev_api_docs), Icons.Default.Api, false, open(API_DOCS_URL)),
         DevMenuEntry(stringResource(Res.string.dev_staging), Icons.Default.Science, false, open(STAGING_ADMIN_URL)),
     )
     val label = stringResource(Res.string.dev_menu)

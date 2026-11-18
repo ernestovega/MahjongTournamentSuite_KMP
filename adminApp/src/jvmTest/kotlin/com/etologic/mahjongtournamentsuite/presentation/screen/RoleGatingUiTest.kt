@@ -145,7 +145,7 @@ class RoleGatingUiTest {
         onAllNodesWithText("App errors").assertCountEquals(0)
         onNodeWithText("DEV").performClick()
         waitForIdle()
-        listOf("Activity", "App errors", "Design system", "Screenshots", "Versions", "API (Swagger)", "Privacy policy", "Staging (test site)")
+        listOf("Activity", "App errors", "Design system", "Screenshots", "Versions", "Privacy policy", "API (Swagger)", "Staging (test site)")
             .forEach { onNodeWithText(it).assertExists() }
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
     }
