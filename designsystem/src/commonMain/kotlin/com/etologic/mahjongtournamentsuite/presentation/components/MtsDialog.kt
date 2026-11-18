@@ -38,6 +38,10 @@ object MtsButtons {
     @Composable
     fun destructiveOutlinedColors(): ButtonColors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
 
+    /** A rare destructive action that is only text, without a border, like "Delete my account" under a form. */
+    @Composable
+    fun destructiveTextColors(): ButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+
     /** The border of a secondary destructive button. A disabled one keeps the usual soft border. */
     @Composable
     fun destructiveBorder(enabled: Boolean = true): BorderStroke = if (enabled) {

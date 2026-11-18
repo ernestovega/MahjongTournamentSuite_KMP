@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.language.CompactLanguageSelector
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -159,11 +160,14 @@ fun ProfileDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) onDismiss() },
-            // The title is centered, like in the other dialogs. The version of the running app sits faint in the top left corner.
+            // The title is centered, like in the other dialogs. The version of the running app sits faint in the top left corner
+            // and the language in the top right corner.
             title = {
                 Box(Modifier.fillMaxWidth()) {
                     MtsDialogTitle(stringResource(Res.string.profile_title))
                     AppVersionLabel(Modifier.align(Alignment.TopStart).offset(x = (-16).dp, y = (-16).dp))
+                    // The language takes little room: its flag in the top right corner, the names in the menu.
+                    CompactLanguageSelector(Modifier.align(Alignment.CenterEnd).offset(x = 12.dp))
                 }
             },
             text = {
@@ -173,15 +177,22 @@ fun ProfileDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    // The photo is small. The short fields, the EMA number and the language, sit beside it.
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                    // The photo is small. The EMA number, a short field, sits beside it.
+                    // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
+                    // window there is room, so it is as tall as both fields.
+                    val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         PhotoEditor(
                             photoUrl = photoProfile.photoUrl,
                             hasOwnPhoto = photoProfile.hasOwnPhoto,
                             name = profile.alias.ifBlank { profile.email },
                             onUpload = { contentType, bytes -> savePhoto { onSavePhoto(contentType, bytes) } },
                             onRemove = { savePhoto { onRemovePhoto() } },
-                            photoSize = 80.dp,
+                            photoSize = if (compact) 80.dp else 128.dp,
                             editBadge = true,
                         )
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -204,22 +215,21 @@ fun ProfileDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                             }
-                            LanguageSelector(Modifier.fillMaxWidth())
+                            OutlinedTextField(
+                                value = alias,
+                                onValueChange = {
+                                    alias = it.take(MAX_ALIAS_LENGTH)
+                                    error = null
+                                },
+                                label = { Text(stringResource(Res.string.profile_alias)) },
+                                supportingText = error?.let { message -> { Text(message.asString()) } },
+                                isError = error != null,
+                                singleLine = true,
+                                enabled = !saving,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     }
-                    OutlinedTextField(
-                        value = alias,
-                        onValueChange = {
-                            alias = it.take(MAX_ALIAS_LENGTH)
-                            error = null
-                        },
-                        label = { Text(stringResource(Res.string.profile_alias)) },
-                        supportingText = error?.let { message -> { Text(message.asString()) } },
-                        isError = error != null,
-                        singleLine = true,
-                        enabled = !saving,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                     OutlinedTextField(
                         value = profile.email,
                         onValueChange = {},
@@ -228,29 +238,31 @@ fun ProfileDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    // Save first, Close under it on a phone. They belong to the alias, so they come right after the fields.
+                    MtsDialogButtons {
+                        FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
+                        FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                    }
                     ThemeSelector()
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
                     val withdrawConsent = LocalWithdrawConsent.current
                     if (onSignOut != null || withdrawConsent != null || onDeleteAccount != null) {
-                        HorizontalDivider()
+                        // The same room above and below the line, more than between the fields.
+                        HorizontalDivider(Modifier.padding(vertical = 12.dp))
                         AccountActions {
-                            onSignOut?.let { DestructiveOutlinedButton(Res.string.action_logout, !saving, it) }
-                            withdrawConsent?.let { DestructiveOutlinedButton(Res.string.consent_withdraw, !saving, it) }
+                            onSignOut?.let { DestructiveButton(Res.string.action_logout, !saving, outlined = true, onClick = it) }
+                            // Special cases, rarely used: red text without a border.
+                            withdrawConsent?.let { DestructiveButton(Res.string.consent_withdraw, !saving, outlined = false, onClick = it) }
                             if (onDeleteAccount != null) {
-                                DestructiveOutlinedButton(Res.string.profile_delete_account, !saving) { confirmingDelete = true }
+                                DestructiveButton(Res.string.profile_delete_account, !saving, outlined = false) { confirmingDelete = true }
                             }
                         }
                     }
                 }
             },
-            // Save first, Close under it on a phone.
-            confirmButton = {
-                MtsDialogButtons {
-                    FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-                    FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
-                }
-            },
+            // Save and Close sit under the fields they belong to, inside the content.
+            confirmButton = {},
         )
     }
 }
@@ -265,16 +277,27 @@ private fun AccountActions(content: @Composable () -> Unit) {
     ) { content() }
 }
 
+/** A red button of the account: outlined for the usual action (logout), only text for the special ones. */
 @Composable
-private fun DestructiveOutlinedButton(text: StringResource, enabled: Boolean, onClick: () -> Unit) {
-    FocusedOutlinedButton(
-        enabled = enabled,
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        buttonModifier = Modifier.fillMaxWidth(),
-        colors = MtsButtons.destructiveOutlinedColors(),
-        border = MtsButtons.destructiveBorder(enabled),
-    ) { Text(stringResource(text), textAlign = TextAlign.Center) }
+private fun DestructiveButton(text: StringResource, enabled: Boolean, outlined: Boolean, onClick: () -> Unit) {
+    if (outlined) {
+        FocusedOutlinedButton(
+            enabled = enabled,
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            buttonModifier = Modifier.fillMaxWidth(),
+            colors = MtsButtons.destructiveOutlinedColors(),
+            border = MtsButtons.destructiveBorder(enabled),
+        ) { Text(stringResource(text), textAlign = TextAlign.Center) }
+    } else {
+        FocusedTextButton(
+            enabled = enabled,
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            buttonModifier = Modifier.fillMaxWidth(),
+            colors = MtsButtons.destructiveTextColors(),
+        ) { Text(stringResource(text), textAlign = TextAlign.Center) }
+    }
 }
 
 /** Asks before the own account is deleted. Cancel has the focus, so Enter never deletes by mistake. */

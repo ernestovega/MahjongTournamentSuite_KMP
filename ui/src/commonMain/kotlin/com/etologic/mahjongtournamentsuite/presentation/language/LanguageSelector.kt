@@ -1,13 +1,28 @@
 package com.etologic.mahjongtournamentsuite.presentation.language
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.theme.TitleFontFamily
@@ -36,6 +51,41 @@ fun LanguageSelector(modifier: Modifier = Modifier) {
         onSelect = controller.onChange,
         modifier = modifier,
     )
+}
+
+/**
+ * A compact choice of the language for a corner: only the flag of the current language and an arrow. The menu lists
+ * every language with its flag and its own name. The name of the button is read by screen readers and shown as a tooltip.
+ */
+@Composable
+fun CompactLanguageSelector(modifier: Modifier = Modifier) {
+    val controller = LocalLanguageController.current
+    val label = stringResource(Res.string.language_label)
+    var open by remember { mutableStateOf(false) }
+    Box(modifier) {
+        AppTooltipBox(label) {
+            FocusedTextButton(
+                onClick = { open = true },
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                buttonModifier = Modifier.semantics { contentDescription = "$label: ${controller.language.endonym}" },
+            ) {
+                LanguageFlag(controller.language)
+                Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            AppLanguage.entries.forEach { language ->
+                DropdownMenuItem(
+                    text = { Text(language.endonym, fontFamily = TitleFontFamily(language.tag)) },
+                    leadingIcon = { LanguageFlag(language) },
+                    onClick = {
+                        open = false
+                        controller.onChange(language)
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable

@@ -52,14 +52,15 @@ class SpanishScreensUiTest {
         onNodeWithText("Correo electrónico").assertExists()
         onNodeWithText("Guardar").assertExists()
         onNodeWithText("Cerrar").assertExists()
-        onNodeWithText("Idioma").assertExists()
+        // The language is a flag in the corner: its name is the description of the button.
+        onNodeWithContentDescription("Idioma: English").assertExists()
     }
 
     @Test
     fun theProfileDialogFollowsEveryLanguage() {
         val expected = mapOf(
-            "fr" to listOf("Profil", "Langue", "Enregistrer", "English"),
-            "it" to listOf("Profilo", "Lingua", "Salva", "English"),
+            "fr" to listOf("Profil", "Enregistrer", "Langue: English"),
+            "it" to listOf("Profilo", "Salva", "Lingua: English"),
         )
         for ((language, texts) in expected) {
             runComposeUiTest {
@@ -67,7 +68,8 @@ class SpanishScreensUiTest {
                 show(language) {
                     ProfileDialog(profile, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
                 }
-                texts.forEach { awaitText(it, substring = true) }
+                texts.dropLast(1).forEach { awaitText(it, substring = true) }
+                onNodeWithContentDescription(texts.last()).assertExists()
             }
         }
     }
@@ -79,8 +81,7 @@ class SpanishScreensUiTest {
             ProfileDialog(profile, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
         }
         awaitText("Profile")
-        onNodeWithText("Language").assertExists()
-        onNodeWithText("English").assertExists()
+        onNodeWithContentDescription("Language: English").assertExists()
     }
 
     @Test
