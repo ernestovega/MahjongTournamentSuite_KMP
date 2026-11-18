@@ -102,11 +102,16 @@ class RulesTopBarUiTest {
     }
 
     @Test
-    fun onAWideScreenTheInfoButtonsAreInTheBar() = runDesktopComposeUiTest(width = 1200, height = 800) {
+    fun onAWideScreenTheBarShowsRulesAndAThreeDotsMenuWithContactAndPrivacy() = runDesktopComposeUiTest(width = 1200, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
-        listOf("Rules", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
-        button("Green Book").assertDoesNotExist()
+        button("Rules").assertExists()
+        listOf("Green Book", "Contact", "Privacy", "Version").forEach { button(it).assertDoesNotExist() }
         onNodeWithContentDescription("Menu").assertDoesNotExist()
+        button("More").performClick()
+        listOf("Contact", "Privacy").forEach { button(it).assertExists() }
+        button("Version").assertDoesNotExist()
+        button("Contact").performClick()
+        onNodeWithText("Support form").assertExists()
     }
 
     @Test
@@ -122,10 +127,11 @@ class RulesTopBarUiTest {
     @Test
     fun onAPhoneTheRulesOptionsAreInTheMenuUnderAHeadingWithoutASecondMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
-        button("Version").assertDoesNotExist()
+        button("Contact").assertDoesNotExist()
         openMenu()
-        // The heading Rules and its options, one level only, then the other buttons.
-        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Contact", "Privacy", "Version").forEach { button(it).assertExists() }
+        // The heading Rules and its options, one level only, then Contact and Privacy, without a second three-dots menu.
+        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Contact", "Privacy").forEach { button(it).assertExists() }
+        listOf("Version", "More").forEach { button(it).assertDoesNotExist() }
         button("Combinations").performClick()
         onNodeWithText("Combinations screen").assertExists()
     }

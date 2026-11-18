@@ -47,7 +47,6 @@ import mahjongtournamentsuite.ui.generated.resources.action_close
 import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
-import mahjongtournamentsuite.ui.generated.resources.design_system
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
 import mahjongtournamentsuite.ui.generated.resources.profile_delete_account
@@ -81,8 +80,6 @@ fun ProfileDialog(
     onSaved: (UserProfile) -> Unit,
     onDismiss: () -> Unit,
     onSignOut: (() -> Unit)? = null,
-    /** Opens the catalog of the design system. Only administrators get it. */
-    onOpenDesignSystem: (() -> Unit)? = null,
     /** Deletes the own account, after a confirmation. Without it the dialog has no delete button. */
     onDeleteAccount: (suspend () -> AppResult<Unit>)? = null,
     /** Runs after the account was deleted. The session has ended. */
@@ -225,9 +222,6 @@ fun ProfileDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     ThemeSelector()
-                    onOpenDesignSystem?.let { open ->
-                        FocusedTextButton(enabled = !saving, onClick = open) { Text(stringResource(Res.string.design_system)) }
-                    }
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
                     val withdrawConsent = LocalWithdrawConsent.current

@@ -126,9 +126,9 @@ fun TournamentStatisticsPanel(
                 // The trend by round shows only with the whole tournament, when three rounds or more have hands.
                 trend = if (round == null && roundIds != null) remember(statistics, roundIds) { handsTrend(statistics, roundIds) } else null,
             )
-            TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
-            // Top players takes one column, like Hands and Records, and goes under the shorter one.
+            // Top players goes second, right after Hands, and takes one column like the other cards.
             LeadersCard(shown, names, onOpenPlayer)
+            TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
         }
         if (shown.tablesWithHands < shown.tablesCompleted) {
             Text(

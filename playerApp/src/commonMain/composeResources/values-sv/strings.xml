@@ -187,7 +187,7 @@
     <string name="menu_sign_in">Logga in</string>
     <string name="menu_contact">Kontakt</string>
     <string name="menu_privacy">Integritet</string>
-    <string name="menu_version">Version</string>
+    <string name="menu_more">Mer</string>
     <string name="menu_green_book">Green Book</string>
     <string name="green_book_downloading">Laddar ner Green Book…</string>
     <string name="green_book_offline">Green Book på ditt språk kunde inte laddas ner.\nDen engelska versionen öppnas i stället.</string>

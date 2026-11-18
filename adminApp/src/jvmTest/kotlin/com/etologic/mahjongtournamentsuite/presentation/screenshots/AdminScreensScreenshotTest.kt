@@ -27,6 +27,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
+import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
+import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
@@ -43,6 +45,24 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun tournaments() = adminScreenshots("tournaments", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentsScreen(nav) }
+
+    /** The DEV menu of an administrator, open. On a phone it is an entry of a three-dots menu with its own menu. */
+    @Test
+    fun tournamentsDevMenu() = adminScreenshots(
+        "tournaments-dev-menu",
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        ready = {
+            waitForText("Madrid Open 2026")
+            val menus = onAllNodes(hasContentDescription("Menu") and hasClickAction())
+            var index = 0
+            while (onAllNodesWithText("DEV").fetchSemanticsNodes().isEmpty() && index < menus.fetchSemanticsNodes().size) {
+                menus[index++].performClick()
+                waitForIdle()
+            }
+            onAllNodesWithText("DEV").onFirst().performClick()
+            waitForText("Staging (test site)")
+        },
+    ) { nav -> TournamentsScreen(nav) }
 
     @Test
     fun tournament() = adminScreenshots("tournament", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentScreen(nav, ONGOING) }

@@ -95,7 +95,7 @@ Only `server_error` and `unexpected` also create an `app_error` and an error rep
 
 ### Read the error log
 
-- Admin app: administrators open the button "App errors" in the top bar of the Tournaments screen. The screen lists the problems, newest first.
+- Admin app: administrators open **DEV > App errors** in the top bar of the Tournaments screen. The screen lists the problems, newest first.
   - Filters: search text, period, app, platform, type (crash or handled) and production only. The sort is by last time or by count.
   - A click on a row opens the stack trace, the counts for each platform and app, and the newest reports with their `reportId`. A button copies the stack trace.
   - The period filter goes to the server. The screen reads every page of that period (200 problems for each request), so no problem is left out. The other filters work on the loaded problems.

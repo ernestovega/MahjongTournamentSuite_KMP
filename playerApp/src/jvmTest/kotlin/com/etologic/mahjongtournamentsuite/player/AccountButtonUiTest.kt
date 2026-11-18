@@ -34,7 +34,7 @@ private class SessionAuthRepository(
     private val roles: Set<GlobalUserRole> = setOf(GlobalUserRole.PLAYER),
 ) : AuthRepository {
     override suspend fun currentSession(): AuthSession? = session
-    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", roles = roles))
+    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", alias = "Pat", roles = roles))
     override suspend fun signIn(email: String, password: String): AppResult<AuthSession> = AppResult.Failure(AppError.Network)
     override suspend fun requestPasswordReset(email: String): AppResult<Unit> = AppResult.Failure(AppError.Network)
     override suspend fun savedCredentials(): SavedCredentials? = null
@@ -47,7 +47,10 @@ private class SessionAuthRepository(
     override suspend fun deleteAccount(): AppResult<Unit> = AppResult.Failure(AppError.Network)
 }
 
-/** Everything can be read without an account, so the top bar offers the sign-in. With an account it offers the profile. */
+/**
+ * Everything can be read without an account, so the top bar offers the sign-in. With an account it offers the profile:
+ * the photo and the name of the user.
+ */
 @OptIn(ExperimentalTestApi::class)
 class AccountButtonUiTest {
     @AfterTest
@@ -81,7 +84,7 @@ class AccountButtonUiTest {
     fun aGuestSeesSignInAndItOpensTheSignInScreen() = runComposeUiTest {
         show(session = null)
         waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Sign in")).fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText("Profile").assertDoesNotExist()
+        onNodeWithText("Pat").assertDoesNotExist()
         onNodeWithText("Sign in").performClick()
         waitForIdle()
         onNodeWithText("The sign-in screen").assertExists()
@@ -90,14 +93,14 @@ class AccountButtonUiTest {
     @Test
     fun aSignedInPlayerSeesTheProfileInstead() = runComposeUiTest {
         show(session = AuthSession(uid = "u1", idToken = "id", refreshToken = "refresh"))
-        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Profile")).fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
         onNodeWithText("Sign in").assertDoesNotExist()
     }
 
     @Test
     fun aPlayerDoesNotSeeTheManagementButton() = runComposeUiTest {
         show(session = SignedIn)
-        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Profile")).fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
         waitForIdle()
         onNodeWithText("Management").assertDoesNotExist()
     }

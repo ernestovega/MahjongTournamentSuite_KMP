@@ -70,6 +70,7 @@ class GlobalScreensTest : AdminE2eTest() {
     @Test
     fun errorsScreenShowsTheEmptyLog() {
         start(E2eAccounts.ADMIN)
+        c.clickButton("DEV")
         c.clickButton("App errors")
         c.waitForText("No errors are logged yet.")
         c.waitForText("Occurrences")

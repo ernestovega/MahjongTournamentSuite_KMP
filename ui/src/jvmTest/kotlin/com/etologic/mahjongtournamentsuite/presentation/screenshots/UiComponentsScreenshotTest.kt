@@ -312,7 +312,6 @@ class UiComponentsScreenshotTest {
                 onSaved = {},
                 onDismiss = {},
                 onSignOut = {},
-                onOpenDesignSystem = {},
                 onDeleteAccount = { AppResult.Success(Unit) },
             )
         }
