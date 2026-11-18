@@ -1,0 +1,81 @@
+package com.etologic.mahjongtournamentsuite.player
+
+import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
+
+class TableHandChangesTest {
+    private fun hand(id: Int, done: Boolean = true, score: String = "8", eastPenalty: String = "") = TableHand(
+        handId = id,
+        playerWinnerId = if (done) "1" else "",
+        playerLooserId = if (done) "2" else "",
+        handScore = if (done) score else "",
+        isChickenHand = false,
+        isDone = done,
+        playerEastPenalty = eastPenalty,
+        playerSouthPenalty = "",
+        playerWestPenalty = "",
+        playerNorthPenalty = "",
+    )
+
+    private val twoHands = listOf(hand(1), hand(2), hand(3, done = false))
+
+    @Test
+    fun aNewHandIsAdded() {
+        val change = assertNotNull(handListChange(twoHands, listOf(hand(1), hand(2), hand(3)), serial = 1))
+        assertEquals(setOf(3), change.added)
+        assertEquals(emptySet(), change.edited)
+        assertEquals(emptyList(), change.removed)
+    }
+
+    @Test
+    fun aPenaltyOnAHandInPlayAddsIt() {
+        val change = assertNotNull(handListChange(twoHands, listOf(hand(1), hand(2), hand(3, done = false, eastPenalty = "-10")), 1))
+        assertEquals(setOf(3), change.added)
+    }
+
+    @Test
+    fun aCorrectionIsEditedAndADeletionIsRemoved() {
+        val change = assertNotNull(handListChange(twoHands, listOf(hand(1, score = "12"), hand(2, done = false), hand(3, done = false)), 1))
+        assertEquals(setOf(1), change.edited)
+        assertEquals(listOf(hand(2)), change.removed)
+    }
+
+    @Test
+    fun theSameHandsAreNoChange() {
+        assertNull(handListChange(twoHands, twoHands.toList(), 1))
+    }
+
+    @Test
+    fun theFirstLoadAndOwnHandsDoNotAnimate() {
+        val time = TestTimeSource()
+        val tracker = TableChangeTracker(time)
+        assertNull(tracker.update(twoHands, animate = true))
+        tracker.expectOwnChange()
+        val withThird = listOf(hand(1), hand(2), hand(3))
+        assertNull(tracker.update(withThird, animate = true))
+        // A later hand from another device animates.
+        assertEquals(setOf(4), tracker.update(withThird + hand(4), animate = true)?.added)
+    }
+
+    @Test
+    fun anOldOwnSaveDoesNotHideARemoteHand() {
+        val time = TestTimeSource()
+        val tracker = TableChangeTracker(time)
+        tracker.update(twoHands, animate = true)
+        tracker.expectOwnChange()
+        time += 30.seconds
+        assertNotNull(tracker.update(listOf(hand(1), hand(2), hand(3)), animate = true))
+    }
+
+    @Test
+    fun lessMotionAnimatesNothing() {
+        val tracker = TableChangeTracker()
+        tracker.update(twoHands, animate = false)
+        assertNull(tracker.update(listOf(hand(1), hand(2), hand(3)), animate = false))
+    }
+}

@@ -4,6 +4,15 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,6 +81,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -85,6 +95,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -132,6 +143,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnSc
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
@@ -1744,6 +1756,10 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     var reloadKey by remember { mutableStateOf(0) }
     val (view, message) = rememberTournamentView(tournamentId, reloadKey, tableRoundId = roundId, tableId = tableId)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
+    // A hand that another device saves while the screen is open animates in, and the totals count to their new values.
+    val reduceMotion = rememberReduceMotion()
+    val changes = remember { TableChangeTracker() }
+    val change = remember(table?.hands) { table?.let { changes.update(it.hands, animate = !reduceMotion) } }
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
     // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.
     var details by rememberSaveable { mutableStateOf(false) }
@@ -1802,6 +1818,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 diffsAvailable = view.tournament.showTableDiffs,
                 // The time left of the round is at the top left, above the seats.
                 leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
+                animateScoreChanges = change != null,
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
                     if (view.canAddHands(table, now)) {
@@ -1820,6 +1837,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 now = now,
                 preselectWinner = preselectWinner,
                 onPreselectHandled = { preselectWinner = null },
+                onRecorded = { changes.expectOwnChange() },
                 onSaved = { reloadKey++ },
             )
             if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
@@ -1828,13 +1846,19 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                     Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
                 }
             }
-            HandHistory(view, table, details) { details = it }
+            HandHistory(view, table, details, change) { details = it }
         }
     }
 }
 
 @Composable
-private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details: Boolean, onDetailsChange: (Boolean) -> Unit) {
+private fun HandHistory(
+    view: PlayerTournamentView,
+    table: PlayerTable,
+    details: Boolean,
+    change: HandListChange?,
+    onDetailsChange: (Boolean) -> Unit,
+) {
     // A divider and extra space separate the list from the players and the buttons above.
     HorizontalDivider(Modifier.padding(top = MtsTheme.spacing.lg))
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -1857,36 +1881,80 @@ private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details:
     } else if (table.hands.none { it.isDone || it.penaltyRows().isNotEmpty() }) {
         EmptyState(Icons.Default.Edit, stringResource(Res.string.details_no_hands_title), stringResource(Res.string.details_no_hands_message))
     } else {
-        HandList(view, table)
+        HandList(view, table, change)
     }
 }
 
 /**
  * The newest item is at the top. Each hand is one card. The penalties of a hand were given before its result,
  * so they come under the result, with a divider. A hand that is not done shows only its penalties.
+ *
+ * A [change] from another device moves: a new hand slides in from the top with a green glow that fades, a changed
+ * hand glows twice softly, and a hand that is gone folds away.
  */
 @Composable
-private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
-    table.hands.sortedByDescending { it.handId }.forEach { hand ->
-        val penalties = hand.penaltyRows().asReversed()
-        if (!hand.isDone && penalties.isEmpty()) return@forEach
-        Card(
-            Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        ) {
-            // The hand number is in a narrow column at the start, centered on the whole card. The dividers stay in
-            // the content column, so they do not cross the column of the number.
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.padding(start = 8.dp).widthIn(min = 32.dp), contentAlignment = Alignment.Center) {
-                    HandNumber(hand.handId)
-                }
-                Column(Modifier.weight(1f)) {
-                    if (hand.isDone) HandRow(view, hand)
-                    penalties.forEachIndexed { index, values ->
-                        if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(start = 8.dp, end = 12.dp))
-                        PenaltyRow(view, table.seatIds(), values)
-                    }
+private fun HandList(view: PlayerTournamentView, table: PlayerTable, change: HandListChange?) {
+    val shown = table.hands.filter { it.isListed() }.map { it to false }
+    // A gone hand stays in the list as it was until it has folded away.
+    val gone = change?.removed.orEmpty().filter { old -> shown.none { it.first.handId == old.handId } }.map { it to true }
+    (shown + gone).sortedByDescending { it.first.handId }.forEach { (hand, isGone) ->
+        key(hand.handId, isGone) {
+            val isNew = change != null && hand.handId in change.added
+            val visible = remember { MutableTransitionState(!isNew && !isGone) }
+            visible.targetState = !isGone
+            AnimatedVisibility(
+                visibleState = visible,
+                enter = expandVertically(tween(HAND_ENTER_MILLIS), expandFrom = Alignment.Top) +
+                    slideInVertically(tween(HAND_ENTER_MILLIS)) { -it / 2 } +
+                    fadeIn(tween(HAND_ENTER_MILLIS)),
+                exit = shrinkVertically(tween(HAND_EXIT_MILLIS), shrinkTowards = Alignment.Top) + fadeOut(tween(HAND_EXIT_MILLIS)),
+            ) {
+                HandCard(view, table, hand, change)
+            }
+        }
+    }
+}
+
+private const val HAND_ENTER_MILLIS = 450
+private const val HAND_EXIT_MILLIS = 400
+
+@Composable
+private fun HandCard(view: PlayerTournamentView, table: PlayerTable, hand: TableHand, change: HandListChange?) {
+    val penalties = hand.penaltyRows().asReversed()
+    val glow = remember { Animatable(0f) }
+    LaunchedEffect(change?.serial) {
+        when {
+            change == null -> Unit
+            hand.handId in change.added -> {
+                glow.snapTo(1f)
+                delay(HAND_ENTER_MILLIS.toLong())
+                glow.animateTo(0f, tween(1_000))
+            }
+            hand.handId in change.edited -> repeat(2) {
+                glow.animateTo(1f, tween(250))
+                glow.animateTo(0f, tween(350))
+            }
+        }
+    }
+    val base = MaterialTheme.colorScheme.surfaceContainerHigh
+    val accent = if (change != null && hand.handId in change.edited) MaterialTheme.colorScheme.primary else MtsTheme.colors.gain
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = lerp(base, accent.copy(alpha = 0.35f).compositeOver(base), glow.value)),
+        border = if (glow.value > 0f) BorderStroke(2.dp, accent.copy(alpha = glow.value)) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        // The hand number is in a narrow column at the start, centered on the whole card. The dividers stay in
+        // the content column, so they do not cross the column of the number.
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.padding(start = 8.dp).widthIn(min = 32.dp), contentAlignment = Alignment.Center) {
+                HandNumber(hand.handId)
+            }
+            Column(Modifier.weight(1f)) {
+                if (hand.isDone) HandRow(view, hand)
+                penalties.forEachIndexed { index, values ->
+                    if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(start = 8.dp, end = 12.dp))
+                    PenaltyRow(view, table.seatIds(), values)
                 }
             }
         }

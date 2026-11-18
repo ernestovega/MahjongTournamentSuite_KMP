@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,13 +28,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +86,7 @@ import mahjongtournamentsuite.ui.generated.resources.wind_south
 import mahjongtournamentsuite.ui.generated.resources.wind_west
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 enum class SeatWind {
     EAST,
@@ -227,7 +240,40 @@ fun LastPlaceIcon(size: Dp = 28.dp) {
     )
 }
 
-private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWind?)
+private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWind?, val score: AnimatedScore)
+
+/**
+ * The score of a seat on screen. When a hand from another device changes it, the number counts from the old score to
+ * the new one and the difference rises over it, green for a gain and red for a loss.
+ */
+@Stable
+private class AnimatedScore(initial: Int) {
+    val value = Animatable(initial.toFloat())
+    var delta by mutableIntStateOf(0)
+
+    /** Grows with each change, so the rising difference starts again. Zero means no change yet. */
+    var deltaKey by mutableIntStateOf(0)
+}
+
+@Composable
+private fun rememberAnimatedScore(target: Int, animate: Boolean): AnimatedScore {
+    val score = remember { AnimatedScore(target) }
+    // The flag belongs to the same load as the new score, so a load of the player's own hand jumps to the new score.
+    LaunchedEffect(target) {
+        val from = score.value.targetValue.roundToInt()
+        if (!animate || from == target) {
+            score.value.snapTo(target.toFloat())
+            return@LaunchedEffect
+        }
+        score.delta = target - from
+        score.deltaKey++
+        score.value.animateTo(target.toFloat(), tween(SCORE_COUNT_MILLIS, easing = FastOutSlowInEasing))
+    }
+    return score
+}
+
+private const val SCORE_COUNT_MILLIS = 600
+private const val DELTA_RISE_MILLIS = 1_200
 
 /**
  * The four players of a table.
@@ -252,13 +298,20 @@ fun TableSeatsView(
     diffsAvailable: Boolean = true,
     /** At the start of the row of the Diffs switch, above the seats, such as the time left of the round. */
     leading: @Composable (() -> Unit)? = null,
+    /**
+     * When true, a new score counts from the old one and its difference rises over it. The screen sets it for the
+     * hands that come from other devices, and leaves it off for the first load and the player's own hands.
+     */
+    animateScoreChanges: Boolean = false,
     onPlayerClick: (Int) -> Unit = {},
 ) {
     require(seats.size == 4) { "A table has four seats." }
     var showDiffs by rememberSaveable { mutableStateOf(false) }
+    // One score per player in the order of hand 1, so it stays with the player when the chairs change.
+    val scores = seats.map { rememberAnimatedScore(it.score.trim().toIntOrNull() ?: 0, animateScoreChanges) }
     val placed = seats.mapIndexed { index, seat ->
         val chair = chairOf(index, handNumber)
-        PlacedSeat(seat, chair, if (windsKnown) windOfChair(chair, handNumber) else null)
+        PlacedSeat(seat, chair, if (windsKnown) windOfChair(chair, handNumber) else null, scores[index])
     }
     val diffs = calculateTableDiffs(seats.map { it.score.trim().toIntOrNull() ?: 0 })
 
@@ -397,11 +450,7 @@ private fun SeatCard(
                 if (place != null) {
                     if (place <= 3) PositionTrophy(place, size = 24.dp) else LastPlaceIcon(size = 24.dp)
                 }
-                Text(
-                    seat.score.ifBlank { "0" },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                SeatScore(seat.score, item.score)
             }
             if (showPoints && seat.points.isNotBlank()) {
                 // The table points are the result of a finished table, so they are big and have the color of the place.
@@ -434,6 +483,53 @@ private fun SeatCard(
             if (showDiffs) DiffsTable(diffs)
         }
     }
+}
+
+/**
+ * The score of a seat. While it counts to a new score it has the color of the change, and the difference rises over
+ * its end and fades. The difference takes no space, so the score does not move.
+ */
+@Composable
+private fun SeatScore(text: String, score: AnimatedScore) {
+    val counting = score.value.isRunning
+    val accent = if (score.delta >= 0) MtsTheme.colors.gain else MaterialTheme.colorScheme.error
+    val color by animateColorAsState(if (counting) accent else MaterialTheme.colorScheme.onSurface)
+    Box {
+        Text(
+            if (counting) "${score.value.value.roundToInt()}" else text.ifBlank { "0" },
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
+        if (score.deltaKey > 0) RisingDelta(score.delta, score.deltaKey, accent, Modifier.align(Alignment.CenterEnd))
+    }
+}
+
+@Composable
+private fun RisingDelta(delta: Int, key: Int, color: Color, modifier: Modifier) {
+    val progress = remember { Animatable(1f) }
+    LaunchedEffect(key) {
+        progress.snapTo(0f)
+        progress.animateTo(1f, tween(DELTA_RISE_MILLIS, easing = LinearEasing))
+    }
+    if (progress.value >= 1f) return
+    Text(
+        if (delta > 0) "+$delta" else "$delta",
+        modifier
+            // Placed after the end of the score, rising from its middle, with no size of its own.
+            .layout { measurable, _ ->
+                val placeable = measurable.measure(Constraints())
+                val rise = (progress.value * 20.dp.toPx()).roundToInt()
+                layout(0, 0) { placeable.place(4.dp.roundToPx(), -placeable.height / 2 - rise) }
+            }
+            // It appears fast, stays and fades out at the end.
+            .graphicsLayer { alpha = (minOf(progress.value * 6f, 1f) * minOf((1f - progress.value) * 2.5f, 1f)) },
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = color,
+        maxLines = 1,
+        softWrap = false,
+    )
 }
 
 @Composable

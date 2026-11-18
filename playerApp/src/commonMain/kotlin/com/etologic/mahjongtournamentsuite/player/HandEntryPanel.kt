@@ -178,6 +178,8 @@ fun HandEntryPanel(
     /** A player that the table screen chose as the winner. The win dialog opens with this player selected. */
     preselectWinner: Int? = null,
     onPreselectHandled: () -> Unit = {},
+    /** The server took a hand or a penalty of this player. The screen does not animate it when it arrives. */
+    onRecorded: () -> Unit = {},
     onSaved: () -> Unit,
 ) {
     val presenter = koinInject<PlayerTablePresenter>()
@@ -551,6 +553,7 @@ fun HandEntryPanel(
                                     when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
                                         is AppResult.Success -> {
                                             awaitingKey = progressKey
+                                            onRecorded()
                                             onSaved()
                                         }
                                         is AppResult.Failure ->
@@ -644,6 +647,7 @@ fun HandEntryPanel(
                                     when (val result = presenter.addPenalties(tournamentId, roundId, tableId, penaltyEntries, table.table.version)) {
                                         is AppResult.Success -> {
                                             awaitingKey = progressKey
+                                            onRecorded()
                                             onSaved()
                                         }
                                         is AppResult.Failure ->
