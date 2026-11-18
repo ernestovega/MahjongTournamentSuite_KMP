@@ -47,7 +47,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
         c.waitForText("Clear assignment?")
         c.clickButton("Cancel")
         c.waitForNoText("Clear assignment?")
-        c.waitForText("Lucia\nPEREZ")
+        c.waitForText("Lucia PEREZ")
     }
 
     @Test
@@ -56,7 +56,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
         chooseFromPlayerMenu("Clear")
         c.waitForText("Clear assignment?")
         c.clickButton("Clear assignment")
-        c.waitForNoText("Lucia\nPEREZ")
+        c.waitForNoText("Lucia PEREZ")
         c.waitForText("Not assigned")
     }
 
@@ -64,7 +64,9 @@ class PlayerAssignmentTest : AdminE2eTest() {
     fun substituteDialogShowsReasonsAndRounds() {
         openPlayers()
         chooseFromPlayerMenu("Substitute")
-        c.waitForText("Substitute LUCIA PEREZ?")
+        // The title is "Substitution" with the player under it.
+        c.waitForText("Substitution")
+        c.waitForText("LUCIA PEREZ")
         listOf("The player came late.", "The player is ill.", "The player is disqualified.", "First round of the substitute", "Reason")
             .forEach { c.waitForText(it) }
         c.waitForText("The substitute is not recorded and gets no result in the ranking.", substring = true)
@@ -74,9 +76,9 @@ class PlayerAssignmentTest : AdminE2eTest() {
     fun substituteCancelClosesTheDialog() {
         openPlayers()
         chooseFromPlayerMenu("Substitute")
-        c.waitForText("Substitute LUCIA PEREZ?")
+        c.waitForText("Substitution")
         c.clickButton("Cancel")
-        c.waitForNoText("Substitute LUCIA PEREZ?")
+        c.waitForNoText("Substitution")
     }
 
     @Test

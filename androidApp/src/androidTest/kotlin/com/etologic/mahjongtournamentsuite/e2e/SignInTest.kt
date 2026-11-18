@@ -62,6 +62,9 @@ class SignInTest : AdminE2eTest() {
         c.waitForText("Forgot password?")
         c.field("Email").performTextInput(E2eAccounts.ADMIN)
         c.clickButton("Forgot password?")
+        // A dialog shows the email first, so the user sees where the link goes.
+        c.waitForText("Reset your password")
+        c.clickButton("Yes, send it")
         c.waitForText("If an account exists, we sent password reset instructions to your email.")
     }
 
@@ -87,7 +90,8 @@ class SignInTest : AdminE2eTest() {
         // The session is gone: the admin part sends a restart to the sign-in form.
         app.close()
         app.launch()
-        c.waitForText("Need help?")
+        // The sign-in form: "Need help?" is gone since the sign-in redesign, "Forgot password?" stays.
+        c.waitForText("Forgot password?")
     }
 
     @Test

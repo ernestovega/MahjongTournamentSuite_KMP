@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.player.e2e
 
 
 
-import androidx.compose.ui.test.performTextInput
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -87,7 +86,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.pickPlayer(1)
         c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
-        c.field("Hand score").performTextInput("12")
+        c.typeHandScore("12")
         c.clickButton("Review")
         c.waitForText("Check hand")
         c.clickButton("Confirm")
@@ -102,7 +101,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.pickPlayer(1)
         c.waitForText("Who discarded?")
         c.pickPlayer(0)
-        c.field("Hand score").performTextInput("10")
+        c.typeHandScore("10")
         c.clickButton("Review")
         c.waitForText("Check hand")
         c.clickButton("Confirm")

@@ -6,7 +6,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import org.junit.Test
@@ -117,7 +117,8 @@ class GlobalScreensTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Admin")
         c.waitForText("Theme")
-        val light = hasContentDescription("Light") and hasClickAction()
+        // The theme buttons show their name next to the icon.
+        val light = hasText("Light") and hasClickAction()
         c.onAllNodes(light).onLast().assertIsNotSelected()
         c.onAllNodes(light).onLast().performClick()
         c.onAllNodes(light).onLast().assertIsSelected()

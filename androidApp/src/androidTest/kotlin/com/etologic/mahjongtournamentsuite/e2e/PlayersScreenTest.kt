@@ -15,8 +15,10 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun listShowsHeadersAndRows() {
         openPlayers()
-        listOf("ID", "EMA number", "Country", "Photo", "Name", "Team", "Tables", "Account").forEach { c.waitForText(it) }
-        c.waitForText("Lucia\nPEREZ")
+        // Since 2026-11-17 the list has no Account column: the Invitations dialog shows the accounts.
+        listOf("ID", "EMA number", "Country", "Photo", "Name", "Team").forEach { c.waitForText(it) }
+        c.assertNoText("Account")
+        c.waitForText("Lucia PEREZ")
         c.waitForText("10000055")
         c.waitForText("Aces")
     }
@@ -33,51 +35,40 @@ class PlayersScreenTest : AdminE2eTest() {
     fun searchByName() {
         openPlayers()
         c.field("Search").performTextInputText("CARMEN GOMEZ")
-        c.waitForText("Carmen\nGOMEZ")
-        c.waitForNoText("Lucia\nPEREZ")
+        c.waitForText("Carmen GOMEZ")
+        c.waitForNoText("Lucia PEREZ")
     }
 
     @Test
     fun searchByEmaNumber() {
         openPlayers()
         c.field("Search").performTextInputText("10000055")
-        c.waitForText("Lucia\nPEREZ")
-        c.waitForNoText("Jorge\nMARTIN")
+        c.waitForText("Lucia PEREZ")
+        c.waitForNoText("Jorge MARTIN")
     }
 
     @Test
     fun searchByTeam() {
         openPlayers()
         c.field("Search").performTextInputText("Bamboo")
-        c.waitForText("Carmen\nLOPEZ 142")
-        c.waitForNoText("Lucia\nPEREZ")
+        c.waitForText("Carmen LOPEZ 142")
+        c.waitForNoText("Lucia PEREZ")
     }
 
     @Test
     fun searchWithoutMatchesShowsNoRows() {
         openPlayers()
         c.field("Search").performTextInputText("zzzzzz")
-        c.waitForNoText("Lucia\nPEREZ")
-        c.waitForNoText("Carmen\nGOMEZ")
+        c.waitForNoText("Lucia PEREZ")
+        c.waitForNoText("Carmen GOMEZ")
     }
 
     @Test
     fun filterByCountry() {
         openPlayers()
         c.clickButton("Filter by SUI")
-        c.waitForText("Lucia\nPEREZ")
-        c.waitForNoText("Jorge\nMARTIN")
-    }
-
-    @Test
-    fun accountColumnOffersInviteToPlayersWithoutAccountAndShowsLinkedAccounts() {
-        openPlayers()
-        // The invitation moved to the "Player actions" menu and the Invitations dialog. The column shows the account state.
-        c.waitForText("No account")
-        c.waitForText("Player actions")
-        // A linked account shows its email under the state.
-        c.scrollListTo("Has account")
-        c.scrollListTo("@e2e.test", substring = true)
+        c.waitForText("Lucia PEREZ")
+        c.waitForNoText("Jorge MARTIN")
     }
 
     @Test
@@ -90,7 +81,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun editorCanOpenPlayersOfAssignedTournament() {
         openPlayers(account = E2eAccounts.EDITOR)
-        c.waitForText("Lucia\nPEREZ")
+        c.waitForText("Lucia PEREZ")
     }
 
     @Test

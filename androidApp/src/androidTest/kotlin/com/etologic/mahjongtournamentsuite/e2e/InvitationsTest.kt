@@ -81,7 +81,8 @@ class InvitationsTest : AdminE2eTest() {
         openDialogWithOnePlayerSelected()
         c.clickButton("Send (1)")
         // The summary lists the player that got no email, with the reason.
-        c.waitForText("Not sent: 1")
+        // The section "Not sent" has the count in a badge beside its title.
+        c.waitForText("Not sent")
         c.waitForText("The email could not be sent. Try again.", substring = true)
         check(E2eApi.sentEmails().isEmpty()) { "An email left although the mailbox refused it." }
     }

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.ComposeTestRule
@@ -320,4 +321,20 @@ fun ComposeTestRule.pickPlayer(index: Int) {
 /** Presses the last button with this text. A dialog is the last one in the tree, so this reaches its button, not the page's. */
 fun ComposeTestRule.clickLastButton(text: String) {
     onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction()).onLast().performClick()
+}
+
+/**
+ * Types the score of a hand. The phone and tablet apps type it on the numpad of the dialog (the field is read only);
+ * without the numpad, in the field.
+ */
+fun ComposeTestRule.typeHandScore(score: String) {
+    val numpad = hasTestTag(com.etologic.mahjongtournamentsuite.player.SCORE_NUMPAD_TAG)
+    if (onAllNodes(numpad).fetchSemanticsNodes().isEmpty()) {
+        field("Hand score").performTextInput(score)
+        return
+    }
+    score.forEach { key ->
+        onAllNodes(hasText(key.toString()) and hasClickAction() and hasAnyAncestor(numpad))[0].performClick()
+        waitForIdle()
+    }
 }

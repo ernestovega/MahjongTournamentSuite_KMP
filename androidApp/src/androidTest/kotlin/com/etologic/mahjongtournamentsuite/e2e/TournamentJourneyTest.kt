@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
@@ -48,6 +49,9 @@ class TournamentJourneyTest : AdminE2eTest() {
 
     private fun chooseCountry(name: String) {
         c.selectField("Country").performClick()
+        // The menu composes at most 50 options, so a country far down the list shows only after a search.
+        c.waitUntil(5_000) { c.onAllNodes(hasTestTag("select-search")).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(hasTestTag("select-search")).onLast().performTextInput(name)
         val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
         c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
         c.onAllNodes(option).onLast().performClick()

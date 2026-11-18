@@ -109,7 +109,8 @@ class PlayerTournamentTest : PlayerE2eTest() {
         c.clickButton("Back")
         // The list keeps its scroll position, so the filters above the cards can be out of view. The cards show.
         c.waitForText("You play in this tournament", substring = true)
-        c.assertNoText("Ranking")
+        // "Ranking" is also the name of the place line on the cards, so the test looks for the Tables tab.
+        c.assertNoText("Tables")
     }
 
     @Test

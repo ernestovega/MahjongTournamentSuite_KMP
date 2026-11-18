@@ -91,9 +91,11 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     }
 
     @Test
-    fun accountWithoutEmaNumberSeesWhyThereAreNoStatistics() {
+    fun accountWithoutEmaNumberChoosesAPlayer() {
         start(E2eAccounts.STRANGER, ready = "My tournaments")
         c.clickButton("Stats")
-        c.waitForText("Your account is not linked to a player yet. Ask the organizers to link your EMA number.")
+        // Without an own player the tab works like for a guest: the picker asks to choose one.
+        c.waitForText("Choose a player")
+        c.waitForText("Player (name or EMA number)")
     }
 }

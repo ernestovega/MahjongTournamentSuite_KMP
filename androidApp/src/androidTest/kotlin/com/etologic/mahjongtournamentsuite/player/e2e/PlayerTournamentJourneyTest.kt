@@ -95,7 +95,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         c.pickPlayer(0)
         c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
-        c.field("Hand score").performTextInput("8")
+        c.typeHandScore("8")
         c.clickButton("Review")
         c.waitForText("Check hand")
         c.clickButton("Confirm")
