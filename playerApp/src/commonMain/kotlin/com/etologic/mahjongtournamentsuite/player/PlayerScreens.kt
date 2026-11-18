@@ -2215,7 +2215,6 @@ fun InfoTopBarButtons(navController: NavHostController) {
             text = stringResource(Res.string.menu_more),
             icon = Icons.Default.MoreVert,
             onClick = { open = true },
-            showLabel = false,
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             // The options draw as menu items and close this menu when they are chosen.

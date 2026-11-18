@@ -107,7 +107,7 @@ class RulesTopBarUiTest {
         button("Rules").assertExists()
         listOf("Green Book", "Contact", "Privacy", "Version").forEach { button(it).assertDoesNotExist() }
         onNodeWithContentDescription("Menu").assertDoesNotExist()
-        button("More options").performClick()
+        button("More").performClick()
         listOf("Contact", "Privacy").forEach { button(it).assertExists() }
         button("Version").assertDoesNotExist()
         button("Contact").performClick()
@@ -131,7 +131,7 @@ class RulesTopBarUiTest {
         openMenu()
         // The heading Rules and its options, one level only, then Contact and Privacy, without a second three-dots menu.
         listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Contact", "Privacy").forEach { button(it).assertExists() }
-        listOf("Version", "More options").forEach { button(it).assertDoesNotExist() }
+        listOf("Version", "More").forEach { button(it).assertDoesNotExist() }
         button("Combinations").performClick()
         onNodeWithText("Combinations screen").assertExists()
     }
