@@ -307,6 +307,12 @@ class PlayerBot {
           continue;
         }
       }
+      const leaveAfter = this.abandonTables.get(key);
+      if (leaveAfter != null && doneHands >= leaveAfter) {
+        // The corner case: the players leave the table without finishing it, and the organizer closes it.
+        this.metrics.event("table-abandoned", { table: key, hands: doneHands });
+        return;
+      }
       const extra = this.extraTimeTables.get(key);
       if (extra != null && doneHands >= extra.afterHands) {
         // The corner case: the table is slow and plays its last hand in the extra time after the gong.
@@ -549,6 +555,7 @@ export async function runBots(options) {
     seatChangeTables: new Map((options.seatChangeTables ?? []).map((key) => [key, "before"])),
     extraTimeTables: new Map(Object.entries(options.extraTimeTables ?? {})),
     extraWaiting: new Set(),
+    abandonTables: new Map(Object.entries(options.abandonTables ?? {})),
     matchMinutes: options.matchMinutes ?? null,
     raceSessions: new Map(),
     raced: new Set(),
@@ -698,6 +705,8 @@ async function main() {
     seatChangeTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "seat-change").map((item) => `${item.round}_${item.table}`),
     extraTimeTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "extra-time")
       .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands }])),
+    abandonTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "abandoned")
+      .map((item) => [`${item.round}_${item.table}`, item.afterHands])),
     matchMinutes: plan?.matchDurationMinutes ?? null,
     verbose: Boolean(args.verbose),
     stopped: finished ? () => finished.done : undefined,

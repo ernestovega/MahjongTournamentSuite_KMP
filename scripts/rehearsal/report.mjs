@@ -307,6 +307,14 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       add(ok,
         `Table ${key}: a slow table saved a hand ${seconds} s after the gong, in the extra time, and that hand closed the table (hand ${hand?.handId ?? "-"} of ${done.length}, ${data?.table?.isCompleted ? "completed" : "open"}).`);
       if (!ok) detail(key);
+    } else if (item.kind === "abandoned") {
+      const left = at("table-abandoned")[0];
+      const data = check?.tablesByKey?.get(key);
+      const done = (data?.hands ?? []).filter((each) => each.isDone).length;
+      const ok = left != null && data?.table?.isCompleted === true && done === left.hands;
+      add(ok,
+        `Table ${key}: the players left after ${left?.hands ?? "-"} hands and the organizer closed the table (${data?.table?.isCompleted ? "completed" : "open"} with ${done} hands).`);
+      if (!ok) detail(key);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
