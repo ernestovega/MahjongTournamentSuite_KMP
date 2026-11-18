@@ -388,8 +388,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             var reached = false
             for (attempt in 1..3) {
                 dismissTableUpdated()
-                if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before)
-                if (c.isOnScreen("Table updated")) continue
+                // The message can come while the editor types: the change is lost, and the editor does it again.
+                val typed = runCatching { if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before) }
+                if (tableUpdatedShown()) continue
+                typed.getOrThrow()
                 c.clickButton("Save")
                 idle(3_000)
                 dismissTableUpdated()
@@ -527,11 +529,14 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         tapCell(handId, "done")
     }
 
-    /** A save of the player while the editor works shows "Table updated". The organizer reads it and goes on. */
+    /** A save of a player while the editor works shows "Table updated", or "Tables updated" when other tables changed too. */
+    private fun tableUpdatedShown(): Boolean = c.isOnScreen("Table updated") || c.isOnScreen("Tables updated")
+
     private fun dismissTableUpdated() {
-        if (c.isOnScreen("Table updated")) {
+        repeat(3) {
+            if (!tableUpdatedShown()) return
             c.clickLastButton("OK")
-            c.waitForNoText("Table updated")
+            c.waitUntil(10_000) { !tableUpdatedShown() }
         }
     }
 
