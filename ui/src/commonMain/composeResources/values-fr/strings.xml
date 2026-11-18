@@ -210,6 +210,7 @@
     <string name="leader_most_self_draws">Le plus de victoires du mur</string>
     <string name="tables_completed_of">%1$d sur %2$d</string>
     <string name="stat_players">Joueurs</string>
+    <string name="stat_rounds">Manches</string>
     <string name="hands_won_by_discard">Gagnées sur défausse</string>
     <string name="hands_won_by_self_draw">Gagnées du mur</string>
     <string name="hands_drawn">Nulles</string>

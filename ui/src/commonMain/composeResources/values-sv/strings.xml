@@ -209,6 +209,7 @@
     <string name="leader_most_self_draws">Flest självdragna</string>
     <string name="tables_completed_of">%1$d av %2$d</string>
     <string name="stat_players">Spelare</string>
+    <string name="stat_rounds">Omgångar</string>
     <string name="hands_won_by_discard">Vunna på kast</string>
     <string name="hands_won_by_self_draw">Vunna självdragna</string>
     <string name="hands_drawn">Oavgjorda</string>

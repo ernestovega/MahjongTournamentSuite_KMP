@@ -209,6 +209,7 @@
     <string name="leader_most_self_draws">Meiste selbst gezogen</string>
     <string name="tables_completed_of">%1$d von %2$d</string>
     <string name="stat_players">Spieler</string>
+    <string name="stat_rounds">Runden</string>
     <string name="hands_won_by_discard">Durch Abwurf gewonnen</string>
     <string name="hands_won_by_self_draw">Selbst gezogen gewonnen</string>
     <string name="hands_drawn">Remis</string>

@@ -210,6 +210,7 @@
     <string name="leader_most_self_draws">Más victorias del muro</string>
     <string name="tables_completed_of">%1$d de %2$d</string>
     <string name="stat_players">Jugadores</string>
+    <string name="stat_rounds">Rondas</string>
     <string name="hands_won_by_discard">Ganadas por descarte</string>
     <string name="hands_won_by_self_draw">Ganadas del muro</string>
     <string name="hands_drawn">Empates</string>
