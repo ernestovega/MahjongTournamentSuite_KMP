@@ -553,4 +553,9 @@
     <string name="password_reset_message">Wir senden einen Link zum Erstellen eines neuen Passworts an:\n%1$s\n\nIst diese E-Mail-Adresse richtig?</string>
     <string name="password_reset_confirm">Ja, senden</string>
     <string name="password_reset_invalid_email">Diese E-Mail-Adresse sieht nicht richtig aus.\nPrüfe sie und versuche es erneut.</string>
+    <string name="dev_menu">DEV</string>
+    <string name="dev_versions">Versionen</string>
+    <string name="dev_api_docs">API (Swagger)</string>
+    <string name="dev_privacy_policy">Datenschutzerklärung</string>
+    <string name="dev_staging">Staging (Testseite)</string>
 </resources>

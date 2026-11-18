@@ -307,7 +307,6 @@ class UiComponentsScreenshotTest {
             onSaved = {},
             onDismiss = {},
             onSignOut = {},
-            onOpenDesignSystem = {},
         )
     }
 }

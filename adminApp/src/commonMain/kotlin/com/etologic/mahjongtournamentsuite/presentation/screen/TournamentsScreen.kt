@@ -58,7 +58,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -92,6 +91,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.DevMenuActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
@@ -165,9 +165,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
-/** The gallery of the screenshot tests and the game day videos (docs/screenshot-gallery.md). */
-private const val SCREENSHOT_GALLERY_URL = "https://mts-staging-screenshots.web.app"
-
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun TournamentsScreen(
@@ -176,7 +173,6 @@ fun TournamentsScreen(
     val presenter = koinInject<TournamentsPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
-    val uriHandler = LocalUriHandler.current
 
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
@@ -362,7 +358,7 @@ fun TournamentsScreen(
         isLoading = isRefreshing || isLoading,
         showBackgroundLogo = false,
         navigationIcon = {
-            ProfileInfo(profile, roleLabel, navController, isAdmin = adminStatus?.isAdmin == true)
+            ProfileInfo(profile, roleLabel, navController)
         },
         leadingActions = {
             AppTopBarLeadingActions(
@@ -374,18 +370,12 @@ fun TournamentsScreen(
                 } else {
                     null
                 },
-                onErrors = if (adminStatus?.isAdmin == true) {
-                    { navController.navigate(ErrorsRoute) }
-                } else {
-                    null
-                },
-                onScreenshots = if (adminStatus?.isAdmin == true) {
-                    { runCatching { uriHandler.openUri(SCREENSHOT_GALLERY_URL) } }
-                } else {
-                    null
-                },
-                onActivity = if (adminStatus?.isAdmin == true) {
-                    { navController.navigate(ActivityRoute()) }
+                devMenu = if (adminStatus?.isAdmin == true) {
+                    DevMenuActions(
+                        onActivity = { navController.navigate(ActivityRoute()) },
+                        onAppErrors = { navController.navigate(ErrorsRoute) },
+                        onDesignSystem = { navController.navigate(DesignSystemRoute) },
+                    )
                 } else {
                     null
                 },
@@ -609,7 +599,6 @@ fun ProfileInfo(
     profile: UserProfile?,
     roleLabel: String?,
     navController: NavHostController,
-    isAdmin: Boolean = false,
 ) {
     var showProfile by remember { mutableStateOf(false) }
     var confirmingSignOut by remember { mutableStateOf(false) }
@@ -674,14 +663,6 @@ fun ProfileInfo(
                             navController.navigate(SignInRoute) { popUpTo(TournamentsRoute) { inclusive = true } }
                         }
                     }
-                },
-                onOpenDesignSystem = if (isAdmin) {
-                    {
-                        showProfile = false
-                        navController.navigate(DesignSystemRoute)
-                    }
-                } else {
-                    null
                 },
             )
         }

@@ -54,7 +54,7 @@ In `designsystem/.../presentation/components`:
 | `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
 
 `MtsCatalog` (same folder as the tokens) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
-**Profile > Design system** (`DesignSystemRoute`, in no menu).
+**DEV > Design system** in the top bar of the tournament list (`DesignSystemRoute`).
 
 ## Rules
 
