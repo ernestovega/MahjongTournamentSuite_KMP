@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -258,7 +260,11 @@ fun ProfileDialog(
                                 DestructiveButton(Res.string.profile_delete_account, !saving, filled = false) { confirmingDelete = true }
                             }
                             withdrawConsent?.let { DestructiveButton(Res.string.consent_withdraw, !saving, filled = false, onClick = it) }
-                            onSignOut?.let { DestructiveButton(Res.string.action_logout, !saving, filled = true, onClick = it) }
+                            onSignOut?.let {
+                                // A text button looks shorter than its height, so the filled one needs more room to look evenly spaced.
+                                Spacer(Modifier.height(12.dp))
+                                DestructiveButton(Res.string.action_logout, !saving, filled = true, onClick = it)
+                            }
                         }
                     }
                 }
