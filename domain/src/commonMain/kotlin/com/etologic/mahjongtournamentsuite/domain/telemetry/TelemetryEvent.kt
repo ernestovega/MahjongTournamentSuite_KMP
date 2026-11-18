@@ -67,6 +67,21 @@ object TelemetryEvent {
      */
     const val TABLE_REMINDER = "table_reminder"
 
+    /** The user opened a web page or an app outside the app. [TelemetryParam.KIND] is one word of [TelemetryLink]. */
+    const val LINK_OPENED = "link_opened"
+
+    /**
+     * The user changed the own profile (both apps). [TelemetryParam.ACTION] is one word of [TelemetryProfileAction].
+     * Only a change that worked is counted.
+     */
+    const val PROFILE_UPDATED = "profile_updated"
+
+    /**
+     * The user changed a preference of the app. [TelemetryParam.KIND] is one word of [TelemetryPreference] and
+     * [TelemetryParam.ACTION] the new value: `system`, `light` or `dark` for the theme, the language tag for the language.
+     */
+    const val PREFERENCE_CHANGED = "preference_changed"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         LOGIN,
@@ -94,6 +109,9 @@ object TelemetryEvent {
         ROUND_CLOCK,
         SUPPORT_SENT,
         TABLE_REMINDER,
+        LINK_OPENED,
+        PROFILE_UPDATED,
+        PREFERENCE_CHANGED,
     )
 }
 
@@ -181,6 +199,12 @@ object TelemetryAction {
     const val REGISTRY_PLAYERS_DELETED = "registry_players_deleted"
     const val TABLE_RESET = "table_reset"
 
+    /** The manual control of a round (the plan B of the Timer) changed. */
+    const val ROUND_CONTROL_CHANGED = "round_control_changed"
+
+    /** The open tables of the finished rounds were marked as completed (round control). */
+    const val TABLES_COMPLETED = "tables_completed"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         TOURNAMENT_RENAMED,
@@ -207,6 +231,8 @@ object TelemetryAction {
         REGISTRY_PHOTO_UPDATED,
         REGISTRY_PLAYERS_DELETED,
         TABLE_RESET,
+        ROUND_CONTROL_CHANGED,
+        TABLES_COMPLETED,
     )
 }
 
@@ -268,6 +294,62 @@ object TelemetryReminderMoment {
 
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(STARTS_SOON, AWAITING_GONG, PLAYING)
+}
+
+/** The values of [TelemetryParam.KIND] in `link_opened`: which page outside the app opened. */
+object TelemetryLink {
+    const val PRIVACY_POLICY = "privacy_policy"
+    const val VERSIONS = "versions"
+    const val SCREENSHOT_GALLERY = "screenshot_gallery"
+    const val API_DOCS = "api_docs"
+    const val STAGING = "staging"
+    const val GREEN_BOOK = "green_book"
+
+    /** The map of the venue of a tournament. */
+    const val VENUE_MAP = "venue_map"
+
+    /** The directions to the venue of a tournament. */
+    const val VENUE_DIRECTIONS = "venue_directions"
+
+    /** An email to the organizer of a tournament. */
+    const val ORGANIZER_EMAIL = "organizer_email"
+
+    /** The source of the list of combinations (the site of Martin Persson). */
+    const val COMBINATIONS_SOURCE = "combinations_source"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(
+        PRIVACY_POLICY,
+        VERSIONS,
+        SCREENSHOT_GALLERY,
+        API_DOCS,
+        STAGING,
+        GREEN_BOOK,
+        VENUE_MAP,
+        VENUE_DIRECTIONS,
+        ORGANIZER_EMAIL,
+        COMBINATIONS_SOURCE,
+    )
+}
+
+/** The values of [TelemetryParam.ACTION] in `profile_updated`. */
+object TelemetryProfileAction {
+    const val ALIAS = "alias"
+    const val PHOTO_UPDATED = "photo_updated"
+    const val PHOTO_REMOVED = "photo_removed"
+    const val ACCOUNT_DELETED = "account_deleted"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(ALIAS, PHOTO_UPDATED, PHOTO_REMOVED, ACCOUNT_DELETED)
+}
+
+/** The values of [TelemetryParam.KIND] in `preference_changed`. */
+object TelemetryPreference {
+    const val THEME = "theme"
+    const val LANGUAGE = "language"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(THEME, LANGUAGE)
 }
 
 object TelemetryProperty {

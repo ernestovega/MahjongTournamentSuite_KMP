@@ -12,7 +12,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.core.content.FileProvider
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.linkOpened
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -43,6 +46,7 @@ private val greenBookScope = MainScope()
 internal actual fun rememberOpenGreenBook(): () -> Unit {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
+    val telemetry = LocalTelemetry.current
     val edition = greenBookEdition(LocalLanguageController.current.language)
     val downloadingText = stringResource(Res.string.green_book_downloading)
     val offlineText = stringResource(Res.string.green_book_offline)
@@ -50,6 +54,8 @@ internal actual fun rememberOpenGreenBook(): () -> Unit {
     return {
         if (!busy) {
             busy = true
+            // The Green Book opens from the kept copy, so it counts here and not in rememberOpenLink.
+            telemetry.linkOpened(TelemetryLink.GREEN_BOOK)
             greenBookScope.launch {
                 try {
                     val kept = keptEdition(context, edition)

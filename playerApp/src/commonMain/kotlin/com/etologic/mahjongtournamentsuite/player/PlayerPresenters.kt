@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProfileAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import com.etologic.mahjongtournamentsuite.domain.telemetry.telemetryRole
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
@@ -66,14 +67,17 @@ class PlayerSessionPresenter(
         if (result is AppResult.Success) telemetry.userProperty(TelemetryProperty.ROLE, result.value.roles.telemetryRole())
     }
 
-    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
+    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias).profileUpdated(TelemetryProfileAction.ALIAS)
 
     suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = authRepository.updatePhoto(contentType, bytes)
+        .profileUpdated(TelemetryProfileAction.PHOTO_UPDATED)
 
-    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
+    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto().profileUpdated(TelemetryProfileAction.PHOTO_REMOVED)
+
+    private fun <T> AppResult<T>.profileUpdated(action: String) = track(telemetry, TelemetryEvent.PROFILE_UPDATED, mapOf(TelemetryParam.ACTION to action))
 
     /** Deletes the own account. On success the player is signed out. */
-    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount().also { result ->
+    suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount().profileUpdated(TelemetryProfileAction.ACCOUNT_DELETED).also { result ->
         if (result is AppResult.Success) {
             logger.i { "Player deleted the own account." }
             telemetry.event(TelemetryEvent.LOGOUT)

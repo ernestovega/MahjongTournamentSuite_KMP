@@ -1,13 +1,14 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalUriHandler
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 
 // The browser shows the PDF in a new tab.
 @Composable
 internal actual fun rememberOpenGreenBook(): () -> Unit {
-    val uriHandler = LocalUriHandler.current
+    val open = rememberOpenLink(TelemetryLink.GREEN_BOOK)
     val edition = greenBookEdition(LocalLanguageController.current.language)
-    return { runCatching { uriHandler.openUri(greenBookAddress(edition)) } }
+    return { open(greenBookAddress(edition)) }
 }

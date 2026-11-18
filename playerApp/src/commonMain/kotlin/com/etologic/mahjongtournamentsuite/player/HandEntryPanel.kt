@@ -1082,53 +1082,55 @@ private fun TableChangedDialog(
         Triple(SeatWind.NORTH.label(), t.playerNorthId, t.playerNorthScore to points[3]),
     )
     val lastHand = table.hands.filter { it.isDone }.maxByOrNull { it.handId }
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onClose,
-        title = { MtsDialogTitle(stringResource(Res.string.changed_title)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(serverMessage)
-                Text(stringResource(Res.string.changed_not_saved))
-                Text(stringResource(Res.string.changed_table_now), fontWeight = FontWeight.Bold)
-                rows.forEach { (wind, id, result) ->
-                    Text(
-                        stringResource(Res.string.changed_table_row, wind, view.nameOf(id.toIntOrNull()), result.first.ifBlank { "—" }, result.second.ifBlank { "—" }),
-                    )
-                }
-                Text(stringResource(Res.string.changed_saved_hands, table.doneHands, table.hands.size))
-                lastHand?.let { hand ->
-                    val loser = hand.playerLooserId.toIntOrNull()
-                    Text(
-                        if (loser != null) {
-                            stringResource(Res.string.changed_last_hand_from, hand.handId, view.nameOf(hand.playerWinnerId.toIntOrNull()), hand.handScore, view.nameOf(loser))
-                        } else {
-                            stringResource(Res.string.changed_last_hand_self, hand.handId, view.nameOf(hand.playerWinnerId.toIntOrNull()), hand.handScore)
-                        },
-                    )
-                }
-                if (enteredHand != null) {
-                    Text(stringResource(Res.string.changed_your_hand), fontWeight = FontWeight.Bold)
-                    Text(
-                        if (enteredHand.winner == null) {
-                            stringResource(Res.string.hand_draw)
-                        } else {
-                            val won = if (enteredHand.loser != null) {
-                                stringResource(Res.string.changed_entered_from, view.nameOf(enteredHand.winner), enteredHand.score, view.nameOf(enteredHand.loser))
+    TrackedDialog("EntryTableChanged") {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onClose,
+            title = { MtsDialogTitle(stringResource(Res.string.changed_title)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(serverMessage)
+                    Text(stringResource(Res.string.changed_not_saved))
+                    Text(stringResource(Res.string.changed_table_now), fontWeight = FontWeight.Bold)
+                    rows.forEach { (wind, id, result) ->
+                        Text(
+                            stringResource(Res.string.changed_table_row, wind, view.nameOf(id.toIntOrNull()), result.first.ifBlank { "—" }, result.second.ifBlank { "—" }),
+                        )
+                    }
+                    Text(stringResource(Res.string.changed_saved_hands, table.doneHands, table.hands.size))
+                    lastHand?.let { hand ->
+                        val loser = hand.playerLooserId.toIntOrNull()
+                        Text(
+                            if (loser != null) {
+                                stringResource(Res.string.changed_last_hand_from, hand.handId, view.nameOf(hand.playerWinnerId.toIntOrNull()), hand.handScore, view.nameOf(loser))
                             } else {
-                                stringResource(Res.string.changed_entered_self, view.nameOf(enteredHand.winner), enteredHand.score)
-                            }
-                            if (enteredHand.chicken) stringResource(Res.string.changed_entered_chicken, won) else won
-                        },
-                    )
-                    Text(stringResource(Res.string.changed_already))
+                                stringResource(Res.string.changed_last_hand_self, hand.handId, view.nameOf(hand.playerWinnerId.toIntOrNull()), hand.handScore)
+                            },
+                        )
+                    }
+                    if (enteredHand != null) {
+                        Text(stringResource(Res.string.changed_your_hand), fontWeight = FontWeight.Bold)
+                        Text(
+                            if (enteredHand.winner == null) {
+                                stringResource(Res.string.hand_draw)
+                            } else {
+                                val won = if (enteredHand.loser != null) {
+                                    stringResource(Res.string.changed_entered_from, view.nameOf(enteredHand.winner), enteredHand.score, view.nameOf(enteredHand.loser))
+                                } else {
+                                    stringResource(Res.string.changed_entered_self, view.nameOf(enteredHand.winner), enteredHand.score)
+                                }
+                                if (enteredHand.chicken) stringResource(Res.string.changed_entered_chicken, won) else won
+                            },
+                        )
+                        Text(stringResource(Res.string.changed_already))
+                    }
+                    Text(stringResource(Res.string.changed_call_staff))
                 }
-                Text(stringResource(Res.string.changed_call_staff))
-            }
-        },
-        confirmButton = {
-            MtsDialogButtons {
-                Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
-            }
-        },
-    )
+            },
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
+                }
+            },
+        )
+    }
 }

@@ -3,12 +3,15 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -21,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.FakeAdminReposito
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakePlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeSignedInAuthRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeTournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
 import com.etologic.mahjongtournamentsuite.presentation.screen.syncTable
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.RecordingTelemetry
 import kotlinx.coroutines.test.runTest
@@ -38,6 +42,7 @@ class AdminActionTrackingTest {
             writesSucceed = works
             seed(syncTable(version = 0))
             if (!works) resetError = AppError.Network
+            if (!works) clockError = AppError.Network
         }
         val admin = FakeAdminRepository(GlobalUserRole.ADMIN, users = listOf(USER)).apply { failWrites = !works }
         val accounts = FakePlayerAccountRepository().apply { fails = !works }
@@ -50,6 +55,7 @@ class AdminActionTrackingTest {
         val proofPresenter = IdCardProofPresenter(tournaments, telemetry)
         val usersPresenter = UsersPresenter(tournaments, admin, FakeSignedInAuthRepository(), players, telemetry)
         val tablePresenter = TableManagerPresenter(tournaments, Logger.withTag("test"), telemetry)
+        val timer = RoundTimerController(tournaments, "t1", 1, telemetry)
         val rankingPresenter = RankingPresenter(tournaments, players, CalculateTournamentRankingsUseCase(), Logger.withTag("test"), telemetry)
     }
 
@@ -115,6 +121,8 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },
         Case(TelemetryAction.REGISTRY_PLAYERS_DELETED) { it.playerBasePresenter.deleteEmaPlayers(listOf("1234")) },
         Case(TelemetryAction.TABLE_RESET) { it.tablePresenter.resetTable("t1", 1, 1) },
+        Case(TelemetryAction.ROUND_CONTROL_CHANGED) { it.timer.changeControl(RoundControlChange(hands = ControlMode.CLOSED)) },
+        Case(TelemetryAction.TABLES_COMPLETED) { it.timer.completeTables(listOf(TableKey(1, 1))) },
     )
 
     private fun expected(action: String, outcome: String) = TelemetryEvent.ADMIN_ACTION to mapOf<String, Any>(TelemetryParam.ACTION to action, TelemetryParam.OUTCOME to outcome)

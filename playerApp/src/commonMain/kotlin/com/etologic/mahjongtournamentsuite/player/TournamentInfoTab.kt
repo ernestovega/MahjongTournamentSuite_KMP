@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.progress_title
 import mahjongtournamentsuite.playerapp.generated.resources.progress_rounds_label
@@ -48,7 +50,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -120,7 +121,8 @@ private fun ProgressCard(progress: TournamentProgress) {
 @Composable
 private fun VenueCard(tournament: Tournament) {
     val venue = tournament.venue
-    val uriHandler = LocalUriHandler.current
+    val openMap = rememberOpenLink(TelemetryLink.VENUE_MAP)
+    val openDirections = rememberOpenLink(TelemetryLink.VENUE_DIRECTIONS)
     val mapLink = venueMapLink(tournament)
     InfoCard(stringResource(Res.string.info_venue), Icons.Default.Place) {
         if (tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()) {
@@ -144,12 +146,12 @@ private fun VenueCard(tournament: Tournament) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (venue.mapUrl.isNotBlank()) {
                     VenueButton(Icons.Default.Map, stringResource(Res.string.info_google_maps), stringResource(Res.string.info_open_venue)) {
-                        uriHandler.openUri(venue.mapUrl)
+                        openMap(venue.mapUrl)
                     }
                 }
                 if (mapLink != null) {
                     VenueButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
-                        uriHandler.openUri(venueDirectionsLink(tournament) ?: mapLink)
+                        openDirections(venueDirectionsLink(tournament) ?: mapLink)
                     }
                 }
             }
@@ -173,9 +175,9 @@ private fun VenueButton(icon: ImageVector, label: String, description: String, o
 /** The contact email of the organizers. A tap opens the mail app. */
 @Composable
 private fun ContactCard(email: String) {
-    val uriHandler = LocalUriHandler.current
+    val openEmail = rememberOpenLink(TelemetryLink.ORGANIZER_EMAIL)
     InfoCard(stringResource(Res.string.info_contact), Icons.Default.Email) {
-        TextButton(onClick = { uriHandler.openUri("mailto:$email") }) {
+        TextButton(onClick = { openEmail("mailto:$email") }) {
             // The app font has no @ sign, so the email uses the system font.
             Text(email, fontFamily = FontFamily.Default)
         }

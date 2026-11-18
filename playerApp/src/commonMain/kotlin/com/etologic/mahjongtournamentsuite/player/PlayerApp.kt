@@ -35,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureF
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
 import androidx.compose.runtime.produceState
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackPreferenceChanges
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -144,6 +145,7 @@ fun PlayerApp(
             ProvideAppLanguage {
                 // The user cannot enter before accepting the anonymous analytics.
                 ConsentGate {
+                    TrackPreferenceChanges()
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                             PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport)

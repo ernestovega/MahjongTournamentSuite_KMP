@@ -30,6 +30,7 @@ import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackPreferenceChanges
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
@@ -164,6 +165,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
         LocalScrollPositionStore provides scrollPositions,
         LocalBackgroundExports provides backgroundExports,
     ) {
+        TrackPreferenceChanges()
         MtsTheme(useDarkTheme = themeController.isDarkTheme) {
             BackgroundExportsHost(backgroundExports) {
                 NavHost(

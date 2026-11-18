@@ -17,11 +17,13 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryClockAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryTimerKind
 import kotlin.time.Clock
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -209,7 +211,7 @@ class RoundTimerController(
         val tournamentId = tournamentId ?: return AppResult.Failure(AppError.Unexpected("A Timer without a tournament has no control"))
         followRunningRound = false
         val sentAt = deviceNowMs()
-        return when (val result = repository.updateRoundControl(tournamentId, mutableState.value.roundId, change)) {
+        return when (val result = repository.updateRoundControl(tournamentId, mutableState.value.roundId, change).trackAction(telemetry, TelemetryAction.ROUND_CONTROL_CHANGED)) {
             is AppResult.Success -> {
                 apply(result.value, sentAt)
                 AppResult.Success(Unit)
@@ -224,7 +226,7 @@ class RoundTimerController(
      */
     suspend fun completeTables(tables: List<TableKey>): AppResult<Int> {
         val tournamentId = tournamentId ?: return AppResult.Failure(AppError.Unexpected("A Timer without a tournament has no tables"))
-        val result = repository.completeTables(tournamentId, tables)
+        val result = repository.completeTables(tournamentId, tables).trackAction(telemetry, TelemetryAction.TABLES_COMPLETED)
         if (result is AppResult.Success) refresh()
         return result
     }

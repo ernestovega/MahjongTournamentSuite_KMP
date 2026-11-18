@@ -56,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -68,10 +67,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
@@ -333,7 +334,7 @@ fun CombinationsScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreditsDialog(onDismiss: () -> Unit) {
-    val uriHandler = LocalUriHandler.current
+    val openSource = rememberOpenLink(TelemetryLink.COMBINATIONS_SOURCE)
     TrackedDialog("CombinationsCredits") {
         // A basic dialog and not an AlertDialog, whose fixed paddings around the text and the buttons are larger.
         // It keeps the platform width of an AlertDialog; every line, the Close button and the bottom edge are 16 dp apart.
@@ -361,7 +362,7 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
                             textAlign = TextAlign.Center,
                         )
                         TextButton(
-                            onClick = { uriHandler.openUri(MARTIN_PERSSON_URL) },
+                            onClick = { openSource(MARTIN_PERSSON_URL) },
                             modifier = CompactButton,
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
                             contentPadding = CompactButtonPadding,
