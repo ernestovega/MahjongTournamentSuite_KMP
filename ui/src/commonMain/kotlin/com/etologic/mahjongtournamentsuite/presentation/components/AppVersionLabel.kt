@@ -30,3 +30,7 @@ fun AppVersionLabel(
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),
     )
 }
+
+/** The text of [AppVersionLabel], or null when the entry point gave no version. */
+@Composable
+fun appVersionText(): String? = LocalAppVersion.current.takeIf { it.isNotEmpty() }?.let { stringResource(Res.string.app_version_label, it) }

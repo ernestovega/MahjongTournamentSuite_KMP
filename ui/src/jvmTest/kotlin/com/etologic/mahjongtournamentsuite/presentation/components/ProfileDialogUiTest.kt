@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -166,7 +167,8 @@ class ProfileDialogUiTest {
             }
         }
 
-        onNodeWithText("Edit photo").assertExists()
+        // The pencil on the photo opens the image picker directly: there is nothing to remove.
+        onNodeWithContentDescription("Edit photo").assertExists()
         onNodeWithText("Remove photo").assertDoesNotExist()
     }
 
@@ -185,6 +187,8 @@ class ProfileDialogUiTest {
             }
         }
 
+        // The pencil on the photo opens a menu with both options.
+        onNodeWithContentDescription("Edit photo").performClick()
         onNodeWithText("Edit photo").assertExists()
         onNodeWithText("Remove photo").assertExists()
     }

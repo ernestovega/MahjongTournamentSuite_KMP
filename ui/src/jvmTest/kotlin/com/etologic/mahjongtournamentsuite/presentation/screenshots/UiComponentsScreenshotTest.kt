@@ -52,6 +52,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PasswordReset
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.RankTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
@@ -80,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.componentDialogVariants
+import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import kotlin.test.Test
@@ -298,16 +301,20 @@ class UiComponentsScreenshotTest {
     }
 
     @Test
-    fun profileDialog() = component("dialog-profile", variants = componentDialogVariants) {
-        ProfileDialog(
-            profile = UserProfile(uid = "player-1", email = "lucia@example.test", alias = "Lucía", emaId = "04010001"),
-            onSaveAlias = { AppResult.Success(it.let { alias -> UserProfile("player-1", "lucia@example.test", alias) }) },
-            onSavePhoto = { _, _ -> error("unused") },
-            onRemovePhoto = { error("unused") },
-            onSaved = {},
-            onDismiss = {},
-            onSignOut = {},
-            onOpenDesignSystem = {},
-        )
+    fun profileDialog() = component("dialog-profile", variants = dialogVariants) {
+        // With every account action: logout, withdraw the analytics consent and delete the account.
+        CompositionLocalProvider(LocalWithdrawConsent provides {}, LocalAppVersion provides "1.0.300") {
+            ProfileDialog(
+                profile = UserProfile(uid = "player-1", email = "lucia@example.test", alias = "Lucía", emaId = "04010001"),
+                onSaveAlias = { AppResult.Success(it.let { alias -> UserProfile("player-1", "lucia@example.test", alias) }) },
+                onSavePhoto = { _, _ -> error("unused") },
+                onRemovePhoto = { error("unused") },
+                onSaved = {},
+                onDismiss = {},
+                onSignOut = {},
+                onOpenDesignSystem = {},
+                onDeleteAccount = { AppResult.Success(Unit) },
+            )
+        }
     }
 }

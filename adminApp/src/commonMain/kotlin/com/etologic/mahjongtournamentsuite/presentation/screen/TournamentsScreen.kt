@@ -104,6 +104,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamen
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ProfileTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
@@ -617,38 +618,13 @@ fun ProfileInfo(
     val coroutineScope = rememberCoroutineScope()
     profile?.let { user ->
         Spacer(modifier = Modifier.width(16.dp))
-        Row(
-            modifier = Modifier
-                .padding(end = 8.dp)
-                .clip(MaterialTheme.shapes.small)
-                .clickable(role = Role.Button, onClickLabel = stringResource(Res.string.open_profile)) { showProfile = true }
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ProfilePhoto(photoUrl = user.photoUrl, name = user.alias.ifBlank { user.email }, size = 36.dp)
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = user.alias.trim().ifBlank { user.toUiName() },
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
-                roleLabel?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-        }
+        ProfileTopBarButton(
+            profile = user,
+            name = user.alias.trim().ifBlank { user.toUiName() },
+            clickLabel = stringResource(Res.string.open_profile),
+            onClick = { showProfile = true },
+            secondLine = roleLabel,
+        )
         // The presenter and the store load only when the dialog opens.
         if (showProfile) {
             val presenter = koinInject<TournamentsPresenter>()

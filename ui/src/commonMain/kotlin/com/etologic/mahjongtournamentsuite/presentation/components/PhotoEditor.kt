@@ -5,12 +5,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +62,8 @@ private val SUPPORTED_PHOTO_TYPES = setOf("image/jpeg", "image/png", "image/webp
  * Without an own photo, [photoUrl] can be the photo of the EMA player. Then the remove button is hidden.
  * An info icon says if the photo is the photo of the EMA player or the photo that the user uploaded.
  * The remove button restores the photo of the EMA player.
+ * [photoSize] is the diameter of the photo. With [editBadge] the buttons give way to a small pencil on the photo, for a
+ * narrow column: it opens the image picker, or a menu with Edit and Remove when the user has an own photo.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +74,8 @@ fun PhotoEditor(
     onUpload: suspend (contentType: String, bytes: ByteArray) -> UiText?,
     onRemove: suspend () -> UiText?,
     modifier: Modifier = Modifier,
+    photoSize: Dp = 120.dp,
+    editBadge: Boolean = false,
 ) {
     val scope = rememberCoroutineScope()
     var imageToCrop by remember { mutableStateOf<SelectedImage?>(null) }
@@ -98,10 +107,19 @@ fun PhotoEditor(
             usesEmaPhoto -> Res.string.photo_ema_info
             else -> null
         }
+        var menuOpen by remember { mutableStateOf(false) }
+        fun remove() {
+            saving = true
+            error = null
+            scope.launch {
+                error = onRemove()
+                saving = false
+            }
+        }
         Box {
-            ProfilePhoto(photoUrl = photoUrl, name = name)
+            ProfilePhoto(photoUrl = photoUrl, name = name, size = photoSize)
             if (info != null) {
-                AppTooltipBox(stringResource(info), Modifier.align(Alignment.BottomEnd)) {
+                AppTooltipBox(stringResource(info), Modifier.align(if (editBadge) Alignment.BottomStart else Alignment.BottomEnd)) {
                     Icon(
                         Icons.Outlined.Info,
                         contentDescription = stringResource(info),
@@ -110,25 +128,49 @@ fun PhotoEditor(
                     )
                 }
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
-                Text(stringResource(Res.string.photo_edit))
-            }
-            if (hasOwnPhoto) {
-                FocusedTextButton(
-                    enabled = !saving,
-                    onClick = {
-                        saving = true
-                        error = null
-                        scope.launch {
-                            error = onRemove()
-                            saving = false
+            if (editBadge) {
+                Box(Modifier.align(Alignment.BottomEnd).offset(x = 4.dp, y = 4.dp)) {
+                    FocusedIconButton(
+                        enabled = !saving,
+                        onClick = { if (hasOwnPhoto) menuOpen = true else picker.launch() },
+                        buttonModifier = Modifier.size(32.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(),
+                    ) {
+                        if (saving) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Filled.Edit, contentDescription = stringResource(Res.string.photo_edit), Modifier.size(18.dp))
                         }
-                    },
-                ) { Text(stringResource(Res.string.photo_remove)) }
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.photo_edit)) },
+                            onClick = {
+                                menuOpen = false
+                                picker.launch()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.photo_remove)) },
+                            onClick = {
+                                menuOpen = false
+                                remove()
+                            },
+                        )
+                    }
+                }
             }
-            if (saving) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        }
+        if (!editBadge) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
+                    Text(stringResource(Res.string.photo_edit))
+                }
+                if (hasOwnPhoto) {
+                    FocusedTextButton(enabled = !saving, onClick = { remove() }) { Text(stringResource(Res.string.photo_remove)) }
+                }
+                if (saving) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            }
         }
         error?.let {
             Text(it.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)

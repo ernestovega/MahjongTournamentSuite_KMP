@@ -16,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ProfileTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppSwitchButton
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
@@ -41,6 +42,9 @@ class AccountActions(
     private val scope: CoroutineScope,
 ) {
     private var profile by mutableStateOf<UserProfile?>(null)
+
+    /** The own profile shown on the Profile button: the photo and the name. */
+    private var me by mutableStateOf<UserProfile?>(null)
     private var error by mutableStateOf<UiText?>(null)
     private var confirmingSignOut by mutableStateOf(false)
 
@@ -53,7 +57,10 @@ class AccountActions(
     private fun openProfile() {
         scope.launch {
             when (val result = session.loadProfile()) {
-                is AppResult.Success -> profile = result.value
+                is AppResult.Success -> {
+                    profile = result.value
+                    me = result.value
+                }
                 is AppResult.Failure -> error = result.error.toUiText()
             }
         }
@@ -67,6 +74,7 @@ class AccountActions(
     suspend fun loadSession() {
         signedIn = session.hasSession()
         canManage = signedIn == true && session.canManage()
+        me = if (signedIn == true) session.cachedProfile() else null
     }
 
     @Composable
@@ -75,7 +83,18 @@ class AccountActions(
         when (signedIn) {
             null -> Unit
             true -> {
-                AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+                // Like the admin app: the photo and the name, in two lines when it is long. Until the profile loads, the plain button.
+                val user = me
+                if (user == null) {
+                    AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+                } else {
+                    ProfileTopBarButton(
+                        profile = user,
+                        name = user.alias.trim().ifBlank { user.email.substringBefore("@") },
+                        clickLabel = stringResource(Res.string.menu_profile),
+                        onClick = ::openProfile,
+                    )
+                }
                 if (canManage) SuiteAppSwitchButton(SuiteApp.ADMIN)
             }
             false -> AppTopBarButton(
@@ -108,7 +127,10 @@ class AccountActions(
                 onSaveAlias = session::updateAlias,
                 onSavePhoto = session::updatePhoto,
                 onRemovePhoto = session::removePhoto,
-                onSaved = { profile = it },
+                onSaved = {
+                    profile = it
+                    me = it
+                },
                 onDismiss = { profile = null },
                 onSignOut = {
                     profile = null
@@ -117,6 +139,7 @@ class AccountActions(
                 onDeleteAccount = session::deleteAccount,
                 onAccountDeleted = {
                     profile = null
+                    me = null
                     // As after a sign out: the same screens stay open, now without an account.
                     scope.launch { withContext(Dispatchers.Main) { navController.reopen(navController.openRoutes()) } }
                 },

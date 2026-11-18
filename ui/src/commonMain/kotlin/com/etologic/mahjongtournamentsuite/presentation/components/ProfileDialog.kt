@@ -2,14 +2,17 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +34,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsWindowWidth
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
@@ -42,7 +47,6 @@ import mahjongtournamentsuite.ui.generated.resources.action_close
 import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
-import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
 import mahjongtournamentsuite.ui.generated.resources.design_system
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
@@ -53,6 +57,7 @@ import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_titl
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Longest alias that the server accepts. */
@@ -63,8 +68,8 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
- * The top right corner shows the app version from [LocalAppVersion].
- * When [onSignOut] is set, the dialog shows a red Logout button at the left of the button row that calls it.
+ * The centered title has the app version from [LocalAppVersion] under it.
+ * The account actions (logout, withdraw the analytics consent, delete the account) are red outlined buttons under the form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,13 +160,8 @@ fun ProfileDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) onDismiss() },
-            // The version of the running app sits in the top right corner.
-            title = {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(Res.string.profile_title), Modifier.weight(1f))
-                    AppVersionLabel()
-                }
-            },
+            // The title is centered, like in the other dialogs. The version of the running app goes in a small line under it.
+            title = { MtsDialogTitle(stringResource(Res.string.profile_title), subtitle = appVersionText()) },
             text = {
                 // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
@@ -169,13 +169,40 @@ fun ProfileDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    PhotoEditor(
-                        photoUrl = photoProfile.photoUrl,
-                        hasOwnPhoto = photoProfile.hasOwnPhoto,
-                        name = profile.alias.ifBlank { profile.email },
-                        onUpload = { contentType, bytes -> savePhoto { onSavePhoto(contentType, bytes) } },
-                        onRemove = { savePhoto { onRemovePhoto() } },
-                    )
+                    // The photo is small. The short fields, the EMA number and the language, sit beside it.
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                        PhotoEditor(
+                            photoUrl = photoProfile.photoUrl,
+                            hasOwnPhoto = photoProfile.hasOwnPhoto,
+                            name = profile.alias.ifBlank { profile.email },
+                            onUpload = { contentType, bytes -> savePhoto { onSavePhoto(contentType, bytes) } },
+                            onRemove = { savePhoto { onRemovePhoto() } },
+                            photoSize = 80.dp,
+                            editBadge = true,
+                        )
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            profile.emaId?.let { emaId ->
+                                OutlinedTextField(
+                                    value = emaId,
+                                    onValueChange = {},
+                                    label = { Text(stringResource(Res.string.profile_ema_number)) },
+                                    trailingIcon = {
+                                        AppTooltipBox(stringResource(Res.string.profile_ema_number_info)) {
+                                            Icon(
+                                                Icons.Outlined.Info,
+                                                contentDescription = stringResource(Res.string.profile_ema_number_info),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    },
+                                    readOnly = true,
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                            LanguageSelector(Modifier.fillMaxWidth())
+                        }
+                    }
                     OutlinedTextField(
                         value = alias,
                         onValueChange = {
@@ -197,66 +224,56 @@ fun ProfileDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    profile.emaId?.let { emaId ->
-                        OutlinedTextField(
-                            value = emaId,
-                            onValueChange = {},
-                            label = { Text(stringResource(Res.string.profile_ema_number)) },
-                            trailingIcon = {
-                                AppTooltipBox(stringResource(Res.string.profile_ema_number_info)) {
-                                    Icon(
-                                        Icons.Outlined.Info,
-                                        contentDescription = stringResource(Res.string.profile_ema_number_info),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                            readOnly = true,
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    LanguageSelector(Modifier.fillMaxWidth())
                     ThemeSelector()
                     onOpenDesignSystem?.let { open ->
                         FocusedTextButton(enabled = !saving, onClick = open) { Text(stringResource(Res.string.design_system)) }
                     }
+                    // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
-                    LocalWithdrawConsent.current?.let { withdraw ->
-                        Text(
-                            stringResource(Res.string.consent_withdraw_info),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        FocusedTextButton(enabled = !saving, onClick = withdraw) { Text(stringResource(Res.string.consent_withdraw)) }
-                    }
-                    if (onDeleteAccount != null) {
-                        FocusedOutlinedButton(
-                            enabled = !saving,
-                            onClick = { confirmingDelete = true },
-                            colors = MtsButtons.destructiveOutlinedColors(),
-                            border = MtsButtons.destructiveBorder(!saving),
-                        ) { Text(stringResource(Res.string.profile_delete_account)) }
+                    val withdrawConsent = LocalWithdrawConsent.current
+                    if (onSignOut != null || withdrawConsent != null || onDeleteAccount != null) {
+                        HorizontalDivider()
+                        AccountActions {
+                            onSignOut?.let { DestructiveOutlinedButton(Res.string.action_logout, !saving, it) }
+                            withdrawConsent?.let { DestructiveOutlinedButton(Res.string.consent_withdraw, !saving, it) }
+                            if (onDeleteAccount != null) {
+                                DestructiveOutlinedButton(Res.string.profile_delete_account, !saving) { confirmingDelete = true }
+                            }
+                        }
                     }
                 }
             },
-            // Save first. Logout is a secondary destructive action: red and outlined. On a phone they stack, Save on top.
+            // Save first, Close under it on a phone.
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-                    if (onSignOut != null) {
-                        FocusedOutlinedButton(
-                            enabled = !saving,
-                            onClick = onSignOut,
-                            colors = MtsButtons.destructiveOutlinedColors(),
-                            border = MtsButtons.destructiveBorder(!saving),
-                        ) { Text(stringResource(Res.string.action_logout)) }
-                    }
                     FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
                 }
             },
         )
     }
+}
+
+/** The account buttons, one under the other: as wide as the dialog on a phone, all as wide as the longest on a bigger window. */
+@Composable
+private fun AccountActions(content: @Composable () -> Unit) {
+    val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
+    Column(
+        if (compact) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) { content() }
+}
+
+@Composable
+private fun DestructiveOutlinedButton(text: StringResource, enabled: Boolean, onClick: () -> Unit) {
+    FocusedOutlinedButton(
+        enabled = enabled,
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        buttonModifier = Modifier.fillMaxWidth(),
+        colors = MtsButtons.destructiveOutlinedColors(),
+        border = MtsButtons.destructiveBorder(enabled),
+    ) { Text(stringResource(text), textAlign = TextAlign.Center) }
 }
 
 /** Asks before the own account is deleted. Cancel has the focus, so Enter never deletes by mistake. */

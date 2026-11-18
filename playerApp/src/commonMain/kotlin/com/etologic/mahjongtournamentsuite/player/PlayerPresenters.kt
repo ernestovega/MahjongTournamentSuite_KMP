@@ -59,6 +59,9 @@ class PlayerSessionPresenter(
         is AppResult.Failure -> result
     }
 
+    /** The own profile for the top bar button: from the cache when it has not changed. */
+    suspend fun cachedProfile(): UserProfile? = (authRepository.getMe() as? AppResult.Success)?.value
+
     suspend fun loadProfile(): AppResult<UserProfile> = authRepository.getMe(RefreshMode.FORCE).also { result ->
         if (result is AppResult.Success) telemetry.userProperty(TelemetryProperty.ROLE, result.value.roles.telemetryRole())
     }
