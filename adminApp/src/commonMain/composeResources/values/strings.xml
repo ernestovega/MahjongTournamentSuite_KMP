@@ -133,7 +133,7 @@
     <string name="choose_a_player_in_the_list">Choose a player in the list to see the details.</string>
     <string name="only_admins_can_edit_the_player">Only admins can edit the player base.</string>
     <string name="no_player_photo">No player photo</string>
-    <string name="statistics">Statistics</string>
+    <string name="statistics">Stats</string>
     <string name="this_table_has_no_statistics_yet">This table has no statistics yet.</string>
     <string name="choose_a_player">Choose a player</string>
     <string name="use_the_field_above_to_search">Use the field above to search a player by name or EMA number and see his/her skills.</string>

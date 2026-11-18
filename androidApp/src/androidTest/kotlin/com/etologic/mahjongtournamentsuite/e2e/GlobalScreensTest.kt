@@ -104,7 +104,7 @@ class GlobalScreensTest : AdminE2eTest() {
     @Test
     fun globalStatisticsOpensForAdmin() {
         start(E2eAccounts.ADMIN)
-        c.clickButton("Statistics")
+        c.clickButton("Stats")
         c.waitForText("Records")
         c.waitForText("Highest hand value")
         c.waitForText("All tournaments")

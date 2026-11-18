@@ -127,8 +127,9 @@ fun TournamentStatisticsPanel(
                 trend = if (round == null && roundIds != null) remember(statistics, roundIds) { handsTrend(statistics, roundIds) } else null,
             )
             TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
+            // Top players takes one column, like Hands and Records, and goes under the shorter one.
+            LeadersCard(shown, names, onOpenPlayer)
         }
-        LeadersCard(shown, names, onOpenPlayer)
         if (shown.tablesWithHands < shown.tablesCompleted) {
             Text(
                 if (shown.tablesWithHands == 0) {
@@ -396,7 +397,7 @@ private fun LeadersCard(
     )
     if (leaders.isEmpty()) return
     StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
-        // At most two charts side by side, so a wide screen shows them two by two and big enough to read.
+        // At most two charts side by side, so a wide card shows them two by two.
         StaggeredColumns(minColumnWidth = 280.dp, maxColumns = 2) {
             leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
         }

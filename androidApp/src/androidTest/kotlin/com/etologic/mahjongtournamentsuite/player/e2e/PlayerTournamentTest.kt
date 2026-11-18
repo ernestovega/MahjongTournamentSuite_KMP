@@ -17,7 +17,7 @@ class PlayerTournamentTest : PlayerE2eTest() {
     @Test
     fun tabsAreShown() {
         open()
-        listOf("Tables", "Ranking", "Players", "Statistics", "Info").forEach { c.waitForText(it) }
+        listOf("Tables", "Ranking", "Players", "Stats", "Info").forEach { c.waitForText(it) }
     }
 
     /** A line of the player list. It shows the place in the ranking, such as "#3". The card merges its texts. */
@@ -99,7 +99,7 @@ class PlayerTournamentTest : PlayerE2eTest() {
     @Test
     fun statisticsTabOpensWithoutError() {
         open()
-        c.clickButton("Statistics")
+        c.clickButton("Stats")
         c.waitForNoText("Something went wrong. Please try again.")
     }
 

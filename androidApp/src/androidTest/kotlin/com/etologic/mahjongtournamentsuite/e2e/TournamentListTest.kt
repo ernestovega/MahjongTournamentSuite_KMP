@@ -51,7 +51,7 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN)
         // "Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
         // "Timer" opens the independent Timer, which is not tied to a tournament.
-        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Statistics", "EMA players", "New tournament", "Timer")
+        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Stats", "EMA players", "New tournament", "Timer")
             .forEach { c.waitForText(it) }
     }
 

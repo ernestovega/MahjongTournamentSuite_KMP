@@ -32,7 +32,7 @@ class TournamentScreenTest : AdminE2eTest() {
     @Test
     fun adminSeesTournamentActionsInTheTopBar() {
         open("Test - Live ongoing tournament")
-        listOf("Back", "Teams", "Players", "Statistics", "EMA report", "Timer", "Ranking")
+        listOf("Back", "Teams", "Players", "Stats", "EMA report", "Timer", "Ranking")
             .forEach { c.waitForText(it) }
     }
 

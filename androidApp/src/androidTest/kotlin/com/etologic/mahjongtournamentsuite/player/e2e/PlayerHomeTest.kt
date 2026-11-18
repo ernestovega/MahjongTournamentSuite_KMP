@@ -125,7 +125,7 @@ class PlayerHomeTest : PlayerE2eTest() {
     @Test
     fun statisticsShortcutOpensPlayerStatistics() {
         home(E2eAccounts.PLAYER)
-        c.clickButton("Statistics")
-        c.waitForText("Statistics")
+        c.clickButton("Stats")
+        c.waitForText("Stats")
     }
 }

@@ -8,12 +8,12 @@ class PlayerStatisticsTest : PlayerE2eTest() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Me")
-        c.clickButton("Statistics")
+        c.clickButton("Stats")
     }
 
     private fun openMyStatistics() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
-        c.clickButton("Statistics")
+        c.clickButton("Stats")
     }
 
     @Test
@@ -91,7 +91,7 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     @Test
     fun accountWithoutEmaNumberSeesWhyThereAreNoStatistics() {
         start(E2eAccounts.STRANGER, ready = "My tournaments")
-        c.clickButton("Statistics")
+        c.clickButton("Stats")
         c.waitForText("Your account is not linked to a player yet. Ask the organizers to link your EMA number.")
     }
 }
