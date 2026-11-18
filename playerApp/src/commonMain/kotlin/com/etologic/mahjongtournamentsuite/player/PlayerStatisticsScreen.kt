@@ -24,8 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ButtonDefaults
@@ -94,12 +92,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.action_cancel
 import mahjongtournamentsuite.playerapp.generated.resources.action_change
 import mahjongtournamentsuite.playerapp.generated.resources.scope_by_tournaments
-import mahjongtournamentsuite.playerapp.generated.resources.scope_me
-import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
-import mahjongtournamentsuite.playerapp.generated.resources.scope_others
 import mahjongtournamentsuite.playerapp.generated.resources.scope_overall
 import mahjongtournamentsuite.playerapp.generated.resources.scope_player
-import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_message
 import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_title
@@ -442,133 +436,48 @@ fun PlayerSlotStatisticsTab(
     }
 }
 
-/** The tabs inside the statistics tab of the tournaments screen. */
-private enum class MyStatisticsKind(val title: StringResource, val icon: ImageVector) {
-    ME(Res.string.scope_me, Icons.Default.Person),
-    MY_TOURNAMENTS(Res.string.scope_my_tournaments, Icons.Default.EmojiEvents),
-    OTHERS(Res.string.scope_others, Icons.Default.Group),
-}
-
 /**
- * The statistics tab of the tournaments screen. It has three tabs inside:
- * "Me" has the cards of the whole history, "My tournaments" has one card for each tournament,
- * and "Others" shows the same for another player that the player chooses.
+ * The statistics tab of the tournaments screen: the statistics of one player, with the player picker on top.
+ * With an account the own player is chosen at the start. Without one, the screen asks to choose a player.
+ * Anyone can look at the statistics of any player.
  */
 @Composable
 fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     val session = koinInject<PlayerSessionPresenter>()
-    var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
-    var message by remember { mutableStateOf<UiText?>(null) }
-    var finished by remember { mutableStateOf(false) }
-    var othersLoading by remember { mutableStateOf(false) }
-    // Without an account only "Others" is there: anyone can look at the statistics of any player.
-    var signedIn by remember { mutableStateOf(true) }
-    val tabs = if (signedIn) MyStatisticsKind.entries else listOf(MyStatisticsKind.OTHERS)
-    var tabName by rememberPersistentText("my-statistics-tab", MyStatisticsKind.ME.name)
-    val tab = tabs.firstOrNull { it.name == tabName } ?: tabs.first()
-    var otherEma by rememberPersistentText("others-player", null)
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // The player that the user chose. Without a choice, the own player shows.
+    var chosenEma by rememberPersistentText("statistics-player", null)
+    var myEma by remember { mutableStateOf<String?>(null) }
+    var ready by remember { mutableStateOf(false) }
+    var playerLoading by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        signedIn = session.hasSession()
-        if (!signedIn) {
-            finished = true
-            return@LaunchedEffect
-        }
-        // The statistics of a person change slowly, so they are checked again at the slow pace of the lists.
-        var first = true
-        pollForChanges(
-            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
-            forceFirst = false,
-            load = { mode -> presenter.me(mode, track = first).also { first = false } },
-            nextDelay = { PollSchedule.LIST_IDLE },
-        ) { result ->
-            when (result) {
-                is AppResult.Success -> {
-                    person = result.value
-                    message = null
-                }
-                is AppResult.Failure -> if (person == null) message = result.error.toUiText()
-            }
-            finished = true
-        }
+        myEma = session.myEmaId()
+        ready = true
     }
-    ReportLoading(!finished || othersLoading, onLoadingChange)
-    // A rival opens in the "Others" tab.
-    val openRival: (String) -> Unit = { ema ->
-        otherEma = ema
-        tabName = MyStatisticsKind.OTHERS.name
-    }
-    Column(Modifier.fillMaxSize()) {
-        HideOnScrollTabs(tab) {
-            // The tab row touches the top tab row and has the same width. The content under it has its own padding.
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                MtsTabRow(
-                    selectedTabIndex = tabs.indexOf(tab),
-                    modifier = Modifier.widthIn(max = 720.dp),
-                ) {
-                    tabs.forEach { item ->
-                        CompactTab(
-                            selected = item == tab,
-                            onClick = { tabName = item.name },
-                            // Without an account there is no "Me", so the other players are just the players.
-                            title = stringResource(if (item == MyStatisticsKind.OTHERS && !signedIn) Res.string.scope_players else item.title),
-                            trackingName = item.name,
-                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                        )
-                    }
-                }
-            }
-        }
-        if (tab == MyStatisticsKind.OTHERS) {
-            OthersStatistics(
-                presenter = presenter,
-                emaId = otherEma,
-                onEmaIdChange = { otherEma = it },
-                onLoadingChange = { othersLoading = it },
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            )
-            return@Column
-        }
-        Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
-        ) {
-            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-            if (!finished) return@Column
-            val data = person
-            if (data == null) {
-                if (message == null) Text(stringResource(Res.string.stats_unavailable))
-                return@Column
-            }
-            when (tab) {
-                MyStatisticsKind.MY_TOURNAMENTS ->
-                    PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
-                else -> PlayerStatisticsPanel(
-                    data.overall,
-                    tournaments = data.tournaments.map { it.first },
-                    rivalNames = data.rivalNames,
-                    onOpenRival = openRival,
-                )
-            }
-        }
-    }
+    ReportLoading(!ready || playerLoading, onLoadingChange)
+    if (!ready) return
+    ChosenPlayerStatistics(
+        presenter = presenter,
+        emaId = chosenEma ?: myEma,
+        onEmaIdChange = { chosenEma = it },
+        onLoadingChange = { playerLoading = it },
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
-/** The inside tabs of "Others". */
-private enum class OthersView(val title: StringResource, val icon: ImageVector) {
+/** The inside tabs of the chosen player. */
+private enum class PlayerView(val title: StringResource, val icon: ImageVector) {
     OVERALL(Res.string.scope_overall, StatisticsIcon),
     BY_TOURNAMENTS(Res.string.scope_by_tournaments, Icons.Default.EmojiEvents),
 }
 
 /**
- * The statistics of another player. The player chooses from the people that the signed-in player plays with.
+ * The statistics of the chosen player, with a picker of the players on top.
  * The card of the chosen player has a button to choose another one. The server gives only the results
  * of the tournaments that the account can see.
  */
 @Composable
-private fun OthersStatistics(
+private fun ChosenPlayerStatistics(
     presenter: PlayerStatisticsPresenter,
     emaId: String?,
     onEmaIdChange: (String) -> Unit,
@@ -579,8 +488,8 @@ private fun OthersStatistics(
     var data by remember(emaId) { mutableStateOf<PersonStatisticsData?>(null) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var changing by remember { mutableStateOf(false) }
-    var viewName by rememberPersistentText("others-view", OthersView.OVERALL.name)
-    val view = OthersView.entries.firstOrNull { it.name == viewName } ?: OthersView.OVERALL
+    var viewName by rememberPersistentText("others-view", PlayerView.OVERALL.name)
+    val view = PlayerView.entries.firstOrNull { it.name == viewName } ?: PlayerView.OVERALL
     LaunchedEffect(Unit) {
         when (val result = presenter.players()) {
             is AppResult.Success -> players = result.value
@@ -646,11 +555,11 @@ private fun OthersStatistics(
             HideOnScrollTabs(emaId) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (profile != null && !changing) {
-                        OthersPlayerBar(profile) { changing = true }
+                        ChosenPlayerBar(profile) { changing = true }
                         // The same line that a tab row has at its bottom, so the bar and the tabs under it do not merge.
-                        HorizontalDivider(Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth())
+                        HorizontalDivider(Modifier.widthIn(max = PlayerTabsMaxWidth).fillMaxWidth())
                     }
-                    OthersViewTabs(view) { viewName = it.name }
+                    PlayerViewTabs(view) { viewName = it.name }
                 }
             }
         }
@@ -670,11 +579,11 @@ private fun OthersStatistics(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 when (view) {
-                    OthersView.BY_TOURNAMENTS -> PlayerTournamentsSection(
+                    PlayerView.BY_TOURNAMENTS -> PlayerTournamentsSection(
                         loaded.tournaments,
                         loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
                     )
-                    OthersView.OVERALL -> PlayerStatisticsPanel(
+                    PlayerView.OVERALL -> PlayerStatisticsPanel(
                         loaded.overall,
                         tournaments = loaded.tournaments.map { it.first },
                         rivalNames = loaded.rivalNames,
@@ -688,9 +597,9 @@ private fun OthersStatistics(
 
 /** The bar with the flag and the name of the player, and the button to choose another player. The name never hides the button. */
 @Composable
-private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
+private fun ChosenPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
     Row(
-        Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().height(OthersBarHeight).background(mtsTabRowColor()).padding(horizontal = 16.dp),
+        Modifier.widthIn(max = PlayerTabsMaxWidth).fillMaxWidth().height(PlayerBarHeight).background(mtsTabRowColor()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -725,18 +634,18 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
 }
 
 /** The height of the bar with the flag and the name of the player. */
-private val OthersBarHeight = 44.dp
+private val PlayerBarHeight = 44.dp
 
-/** The maximum width of the header and the tab rows of "Others". It is the width of the tab rows above. */
-private val OthersMaxWidth = 720.dp
+/** The maximum width of the header and the tab rows of the chosen player. It is the width of the tab rows above. */
+private val PlayerTabsMaxWidth = 720.dp
 
-/** The inside tabs of "Others". */
+/** The inside tabs of the chosen player. */
 @Composable
-private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
-    val views = OthersView.entries
+private fun PlayerViewTabs(view: PlayerView, onChoose: (PlayerView) -> Unit) {
+    val views = PlayerView.entries
     MtsTabRow(
         selectedTabIndex = views.indexOf(view),
-        modifier = Modifier.widthIn(max = OthersMaxWidth),
+        modifier = Modifier.widthIn(max = PlayerTabsMaxWidth),
     ) {
         views.forEach { item ->
             CompactTab(

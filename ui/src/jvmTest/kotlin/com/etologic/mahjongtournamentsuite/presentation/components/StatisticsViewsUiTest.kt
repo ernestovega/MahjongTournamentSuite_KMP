@@ -33,6 +33,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 
 @OptIn(ExperimentalTestApi::class)
@@ -216,6 +217,33 @@ class StatisticsViewsUiTest {
         waitForIdle()
         // The dropdown shows the name and the unfolded card shows it too.
         assertEquals(2, onAllNodesWithText("Open 1").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun aRoundChipOfATournamentCardShowsOnlyThatRound() = runComposeUiTest {
+        val statistics = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
+        val items = listOf(Tournament(id = "t1", name = "Open 1", isTeams = false, numPlayers = 4, numRounds = 3, eventStartDate = "2026-01-10") to statistics)
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Column(Modifier.width(900.dp).padding(16.dp)) {
+                    PlayerTournamentsSection(items, loadStandings = { ids -> ids.associateWith { Standing(2, 8, 3.5, 66) } })
+                }
+            }
+        }
+        waitForIdle()
+        // Totals shows the place and the score of the whole tournament.
+        listOf("Totals", "R1", "R2", "R3").forEach { onNodeWithText(it).assertExists() }
+        onNodeWithText("2 of 8", substring = true).assertExists()
+        onNodeWithText("66").assertExists()
+        // Round 2 shows only its own table: 22 points of score, and no place in the tournament.
+        onNodeWithText("R2").performClick()
+        waitForIdle()
+        onNodeWithText("2 of 8", substring = true).assertDoesNotExist()
+        assertTrue(onAllNodesWithText("22").fetchSemanticsNodes().isNotEmpty())
+        // A tap on the chosen round goes back to the whole tournament.
+        onNodeWithText("R2").performClick()
+        waitForIdle()
+        onNodeWithText("66").assertExists()
     }
 
     @Test

@@ -1119,6 +1119,8 @@ fun PlayerTournamentsSection(
     }
     var shown by remember(sorted.map { it.first.id }) { mutableStateOf(INITIAL_TOURNAMENTS) }
     val standings = remember(sorted.map { it.first.id }) { mutableStateMapOf<String, Standing>() }
+    // The round that each tournament card shows. A card without a round shows the whole tournament.
+    val rounds = remember(sorted.map { it.first.id }) { mutableStateMapOf<String, Int>() }
     val requested = remember(sorted.map { it.first.id }) { mutableSetOf<String>() }
     // A date range replaces the "show more" paging. An empty date means no limit on that side.
     var from by remember { mutableStateOf("") }
@@ -1226,8 +1228,13 @@ fun PlayerTournamentsSection(
                 Text(stringResource(if (anyVisibleOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
             }
         }
-        visible.forEachIndexed { index, (tournament, stats) ->
+        visible.forEachIndexed { index, (tournament, wholeStats) ->
             val open = expanded[tournament.id] ?: false
+            val round = rounds[tournament.id]
+            // With a round chosen, every number and chart of the card counts only the tables of that round.
+            val stats = remember(wholeStats, round) {
+                round?.let { r -> PlayerStatistics(wholeStats.playerId, wholeStats.results.filter { it.roundId == r }) } ?: wholeStats
+            }
             StatCard(
                 tournament.name,
                 // More room between two tournaments and a line around each card, so the tournaments do not merge.
@@ -1244,11 +1251,25 @@ fun PlayerTournamentsSection(
                 ),
             ) {
                 val hasHands = stats.tablesWithHands > 0
+                // The rounds of the tournament: Totals or one round. The row reaches the sides of the card.
+                PlayerRoundChips(
+                    wholeStats.results,
+                    round,
+                    { chosen -> if (chosen == null) rounds.remove(tournament.id) else rounds[tournament.id] = chosen },
+                    edge = MtsTheme.spacing.lg,
+                )
                 StatGrid(Modifier.fillMaxWidth()) {
                     LevelMedalWithScore(stats)
-                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.stat_rank), it.rank.toString(), suffix = " " + stringResource(Res.string.rank_of, it.of)) }
-                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.column_points), formatPoints(it.points)) }
-                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.column_score), it.score.toString()) }
+                    val standing = standings[tournament.id]
+                    if (round == null) {
+                        standing?.let { BigNumber(stringResource(Res.string.stat_rank), it.rank.toString(), suffix = " " + stringResource(Res.string.rank_of, it.of)) }
+                        standing?.let { BigNumber(stringResource(Res.string.column_points), formatPoints(it.points)) }
+                        standing?.let { BigNumber(stringResource(Res.string.column_score), it.score.toString()) }
+                    } else {
+                        // The rank is that of the whole tournament, so one round shows only its own points and score.
+                        BigNumber(stringResource(Res.string.column_points), formatPoints(stats.results.sumOf { it.points }))
+                        BigNumber(stringResource(Res.string.column_score), stats.results.sumOf { it.score }.toString())
+                    }
                     BigNumber("Tables", stats.tablesPlayed.toString())
                     BigNumber("Hands", if (hasHands) stats.handsPlayed.toString() else EMPTY)
                     BigNumber(stringResource(Res.string.stat_best_table_score), stats.bestTableScore.text())
