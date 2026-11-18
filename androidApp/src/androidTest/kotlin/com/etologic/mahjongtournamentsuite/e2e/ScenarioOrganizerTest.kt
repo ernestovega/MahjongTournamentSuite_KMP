@@ -394,6 +394,17 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 val typed = runCatching { if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before) }
                 if (tableUpdatedShown()) continue
                 typed.getOrThrow()
+                // Save shows only when the table has a change. A change that did not take (a poll drew the table again)
+                // leaves no Save: the editor looks at the hand and does it again.
+                val hasSave = runCatching {
+                    c.waitUntil(10_000) { c.onAllNodes(hasText("Save") and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+                }.isSuccess
+                if (!hasSave) {
+                    val shown = runCatching { scoreField(handId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text }.getOrNull()
+                    log("table $round-$table: no change to save after the ${item.getString("kind")} of hand $handId (score shown: $shown), attempt $attempt")
+                    closeOpenMenu()
+                    continue
+                }
                 // The message can also open just as Save is tapped: the tap goes nowhere, and the editor does it again.
                 val saved = runCatching { c.clickButton("Save") }
                 if (tableUpdatedShown()) continue
