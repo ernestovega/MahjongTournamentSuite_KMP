@@ -68,6 +68,8 @@ internal object PollSchedule {
      * [tableRoundId] is the round of the table on screen, null on the other screens: that table checks every
      * [TABLE_IN_PLAY] during its round for everyone, so the hand buttons appear soon after the Play. The player's own
      * table ([ownTable]) checks every [OWN_TABLE_IN_PLAY] during its round, so a hand reaches the other phones soon.
+     * A completed table ([tableCompleted]: all its hands played, or closed by the organizer) has nothing more to play:
+     * it checks every [ONGOING] also while its round goes on, so a late correction of the editor still shows.
      * A return from the background always checks at once, whatever this says.
      */
     fun nextDelay(
@@ -76,6 +78,7 @@ internal object PollSchedule {
         now: LocalDateTime,
         playsHere: Boolean = false,
         ownTable: Boolean = false,
+        tableCompleted: Boolean = false,
     ): Duration {
         if (tournament == null) return UNKNOWN
         return when (tournament.pollPhase(now)) {
@@ -89,6 +92,7 @@ internal object PollSchedule {
                 }
                 when {
                     !inPlay -> ONGOING
+                    tableCompleted && tableRoundId != null -> ONGOING
                     ownTable && tableRoundId != null -> OWN_TABLE_IN_PLAY
                     else -> TABLE_IN_PLAY
                 }
