@@ -30,6 +30,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcome
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcomeDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
@@ -77,6 +78,9 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun createTournament() = dialog("create-tournament") { CreateTournamentDialog(onDismiss = {}, onCreated = {}) }
+
+    @Test
+    fun drawExplanation() = dialog("draw-explanation") { DrawExplanationDialog(onDismiss = {}) }
 
     @Test
     fun createProgress() = dialog("create-progress") {
