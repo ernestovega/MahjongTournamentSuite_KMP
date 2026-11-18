@@ -616,7 +616,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             shell("input keyevent KEYCODE_BACK")
             runCatching { c.waitForText("Players & results", timeoutMs = 5_000) }
             if (c.isOnScreen("Players & results")) return
-            runCatching { c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick() }
+            // The Timer window has no Back of its own: the Back under it would leave the tournament.
+            if (!c.isOnScreen("Pause timer")) {
+                runCatching { c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick() }
+            }
             runCatching { c.waitForText("Players & results", timeoutMs = 15_000) }
         }
         c.waitForText("Players & results", timeoutMs = 60_000)
