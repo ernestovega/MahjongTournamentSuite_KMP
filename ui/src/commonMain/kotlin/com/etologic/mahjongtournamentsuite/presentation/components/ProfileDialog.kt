@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -173,7 +175,7 @@ fun ProfileDialog(
                 // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
                     modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     // The photo is small. The EMA number, a short field, sits beside it.
@@ -181,7 +183,7 @@ fun ProfileDialog(
                     // below keeps them apart from the profile.
                     ThemeSelector(Modifier.padding(top = 4.dp))
                     LanguageSelector(Modifier.fillMaxWidth())
-                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
                     // window there is room, so it is as tall as both fields.
                     val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
@@ -242,8 +244,9 @@ fun ProfileDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    // Save first, Close under it on a phone. They belong to the alias, so they come right after the fields.
-                    MtsDialogButtons {
+                    // Save and Close share one line, also on a phone, so the dialog stays short. They belong to the alias, so they
+                    // come right after the fields.
+                    MtsDialogButtons(stacked = false) {
                         FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
                         FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
                     }
@@ -252,7 +255,7 @@ fun ProfileDialog(
                     val withdrawConsent = LocalWithdrawConsent.current
                     if (onSignOut != null || withdrawConsent != null || onDeleteAccount != null) {
                         // The same room above and below the line, more than between the fields.
-                        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
                         AccountActions {
                             // The special cases, rarely used, first and as red text without a border. Logout last, red and filled.
                             if (onDeleteAccount != null) {
@@ -261,7 +264,7 @@ fun ProfileDialog(
                             withdrawConsent?.let { DestructiveButton(Res.string.consent_withdraw, !saving, filled = false, onClick = it) }
                             onSignOut?.let {
                                 // A text button looks shorter than its height, so the filled one needs more room to look evenly spaced.
-                                Spacer(Modifier.height(12.dp))
+                                Spacer(Modifier.height(8.dp))
                                 DestructiveButton(Res.string.action_logout, !saving, filled = true, onClick = it)
                             }
                         }
@@ -280,7 +283,7 @@ private fun AccountActions(content: @Composable () -> Unit) {
     val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
     Column(
         if (compact) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) { content() }
 }
 
@@ -296,11 +299,13 @@ private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Bo
             colors = MtsButtons.destructiveColors(),
         ) { Text(stringResource(text), textAlign = TextAlign.Center) }
     } else {
+        // A low text button: these rare actions take little height.
         FocusedTextButton(
             enabled = enabled,
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
-            buttonModifier = Modifier.fillMaxWidth(),
+            buttonModifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp),
             colors = MtsButtons.destructiveTextColors(),
         ) { Text(stringResource(text), textAlign = TextAlign.Center) }
     }
