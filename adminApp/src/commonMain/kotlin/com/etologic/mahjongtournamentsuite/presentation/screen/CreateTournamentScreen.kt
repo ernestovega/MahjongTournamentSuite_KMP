@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -17,6 +18,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.testTag
+import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -245,6 +250,7 @@ fun CreateTournamentDialog(
     var reusedLogoTournament by remember { mutableStateOf<Tournament?>(null) }
     var showLogoLibrary by remember { mutableStateOf(false) }
     var logoImageInfo by remember { mutableStateOf<String?>(null) }
+    var showDrawExplanation by remember { mutableStateOf(false) }
     val today = remember {
         Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -604,6 +610,16 @@ fun CreateTournamentDialog(
                                             isError = CreateField.ROUNDS in fieldErrors,
                                             supportingText = fieldErrors[CreateField.ROUNDS]?.let { message -> { Text(message) } },
                                         )
+                                    }
+
+                                    // How the tables of the rounds are drawn, with a flowchart.
+                                    AppTextButton(
+                                        onClick = { showDrawExplanation = true },
+                                        modifier = Modifier.testTag("drawExplanationButton"),
+                                    ) {
+                                        Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(stringResource(Res.string.draw_help_button))
                                     }
 
                                     MatchTimeFields(
@@ -973,6 +989,10 @@ fun CreateTournamentDialog(
             },
             onError = { message -> errorMessage = UiText.of(Res.string.error_star_prefix, message) },
         )
+    }
+
+    if (showDrawExplanation) {
+        DrawExplanationDialog(onDismiss = { showDrawExplanation = false })
     }
 
     if (showLogoLibrary) {
