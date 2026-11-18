@@ -27,6 +27,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.espresso.intent.Intents
@@ -447,8 +448,17 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val slot = slots.first { it.slot == slotId }
         c.clickButton("Players")
         c.waitForText("Tournament players", timeoutMs = 60_000)
+        // The search finds the slot by its EMA number. The email of the slot is the other key that only it has: it is
+        // tried when the EMA number shows no single row.
+        val oneRow = { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
         c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(slot.emaId)
-        c.waitUntil(20_000) { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
+        if (!runCatching { c.waitUntil(20_000) { oneRow() } }.isSuccess) {
+            val rows = c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size
+            log("the search of EMA ${slot.emaId} (slot $slotId) shows $rows rows, so the test searches the email")
+            c.onAllNodes(hasSetTextAction()).onLast().performTextClearance()
+            c.onAllNodes(hasSetTextAction()).onLast().performTextInput(slot.email)
+            c.waitUntil(20_000) { oneRow() }
+        }
         // The list filters while the search is typed: a tap on the row being replaced is lost, so the menu is opened again.
         repeat(3) {
             if (c.isOnScreen("Substitute")) return@repeat
