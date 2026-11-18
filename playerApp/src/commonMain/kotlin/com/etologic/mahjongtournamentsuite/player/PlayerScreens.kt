@@ -40,7 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ContactSupport
-import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Directions
@@ -70,6 +70,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -131,7 +132,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenPrivacyPolicy
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenVersions
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalTopBarMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.TopBarMenuScope
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -204,7 +206,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
 import mahjongtournamentsuite.playerapp.generated.resources.menu_contact
 import mahjongtournamentsuite.playerapp.generated.resources.menu_privacy
-import mahjongtournamentsuite.playerapp.generated.resources.menu_version
+import mahjongtournamentsuite.playerapp.generated.resources.menu_more
 import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
@@ -2184,26 +2186,42 @@ internal fun formatClock(ms: Long): String {
 }
 
 /**
- * The Rules, Contact, Privacy and Version buttons of the top bar.
+ * The Rules button and the three-dots menu with Contact and Privacy, in the top bar.
  * The list of tournaments and the screen of a tournament show them.
+ *
+ * On a phone the buttons are already inside the three-dots menu of the top bar, and a menu inside a menu is awkward.
+ * There Contact and Privacy show directly in that menu, under the Rules group.
  */
 @Composable
 fun InfoTopBarButtons(navController: NavHostController) {
+    // Out of the menus, so it lives on while a menu closes.
     val openPrivacyPolicy = rememberOpenPrivacyPolicy()
-    val openVersions = rememberOpenVersions()
+    val options: @Composable () -> Unit = {
+        ContactTopBarButton(navController)
+        AppTopBarButton(
+            text = stringResource(Res.string.menu_privacy),
+            icon = Icons.Default.Policy,
+            onClick = openPrivacyPolicy,
+        )
+    }
     RulesTopBarButton(navController, dividerBelow = true)
-    ContactTopBarButton(navController)
-    AppTopBarButton(
-        text = stringResource(Res.string.menu_privacy),
-        icon = Icons.Default.Policy,
-        onClick = openPrivacyPolicy,
-    )
-    // The latest and the published version of each product: https://mts.mahjongmadrid.com/version
-    AppTopBarButton(
-        text = stringResource(Res.string.menu_version),
-        icon = Icons.Default.NewReleases,
-        onClick = openVersions,
-    )
+    if (LocalTopBarMenu.current != null) {
+        options()
+        return
+    }
+    var open by remember { mutableStateOf(false) }
+    Box {
+        AppTopBarButton(
+            text = stringResource(Res.string.menu_more),
+            icon = Icons.Default.MoreVert,
+            onClick = { open = true },
+            showLabel = false,
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            // The options draw as menu items and close this menu when they are chosen.
+            CompositionLocalProvider(LocalTopBarMenu provides TopBarMenuScope { open = false }) { options() }
+        }
+    }
 }
 
 /** Opens the contact form. The landing page has the contact button. The privacy policy also links the form at /support. */
