@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -398,7 +399,7 @@ private fun LeadersCard(
     if (leaders.isEmpty()) return
     StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
         // At most two charts side by side, so a wide card shows them two by two.
-        StaggeredColumns(minColumnWidth = 280.dp, maxColumns = 2) {
+        StaggeredColumns(minColumnWidth = 280.dp, spacing = MtsTheme.spacing.md, maxColumns = 2) {
             leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
         }
     }
@@ -408,33 +409,36 @@ private fun LeadersCard(
 @Composable
 private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
     val playerId = leader.player.playerId
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-        Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Row(
-            Modifier.then(
-                if (onOpenPlayer != null) {
-                    Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(playerId) }
-                } else {
-                    Modifier
-                },
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-        ) {
-            Text(
-                names[playerId] ?: "Player $playerId",
-                Modifier.weight(1f, fill = false),
-                style = MaterialTheme.typography.bodyLarge.inTextFont(),
-                fontWeight = FontWeight.Bold,
-                // A name in the color of the links shows that the player opens.
-                color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(leader.value, style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
-            Text(leader.calculation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    // A subcard, like the small stats of Hands and Records.
+    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
+        Column(Modifier.fillMaxWidth().padding(MtsTheme.spacing.md), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+            Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.then(
+                    if (onOpenPlayer != null) {
+                        Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(playerId) }
+                    } else {
+                        Modifier
+                    },
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+            ) {
+                Text(
+                    names[playerId] ?: "Player $playerId",
+                    Modifier.weight(1f, fill = false),
+                    style = MaterialTheme.typography.bodyLarge.inTextFont(),
+                    fontWeight = FontWeight.Bold,
+                    // A name in the color of the links shows that the player opens.
+                    color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(leader.value, style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                Text(leader.calculation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            RadarChart(skillsOf(leader.player), Modifier.fillMaxWidth().height(240.dp), highlight = leader.skill)
         }
-        RadarChart(skillsOf(leader.player), Modifier.fillMaxWidth().height(240.dp), highlight = leader.skill)
     }
 }
 
