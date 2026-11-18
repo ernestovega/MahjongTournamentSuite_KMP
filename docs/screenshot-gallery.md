@@ -6,7 +6,7 @@ It is a second Hosting site of the staging project, so it never touches the stag
 
 ## What it shows
 
-The admin app opens it with the **Screenshots** button of the tournament list (administrators only).
+The admin app opens it with **DEV > Screenshots** in the top bar of the tournament list (administrators only).
 
 - **Screens**: every image, grouped by module and screen, with filters by device and theme, a search and four sizes
   (S, M, L, Fit). **One screen** shows a single screen at a time, as big as the window (J and K, or the buttons, move

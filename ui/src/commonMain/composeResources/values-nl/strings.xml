@@ -553,4 +553,9 @@
     <string name="password_reset_message">We sturen een link om een nieuw wachtwoord te maken naar:\n%1$s\n\nKlopt dit e-mailadres?</string>
     <string name="password_reset_confirm">Ja, verzenden</string>
     <string name="password_reset_invalid_email">Dit e-mailadres lijkt niet te kloppen.\nControleer het en probeer het opnieuw.</string>
+    <string name="dev_menu">DEV</string>
+    <string name="dev_versions">Versies</string>
+    <string name="dev_api_docs">API (Swagger)</string>
+    <string name="dev_privacy_policy">Privacybeleid</string>
+    <string name="dev_staging">Staging (testsite)</string>
 </resources>

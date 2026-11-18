@@ -141,8 +141,12 @@ class RoleGatingUiTest {
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
-        onNodeWithText("App errors").assertExists()
-        onNodeWithText("Screenshots").assertExists()
+        // The tools for development are in one DEV menu.
+        onAllNodesWithText("App errors").assertCountEquals(0)
+        onNodeWithText("DEV").performClick()
+        waitForIdle()
+        listOf("Activity", "App errors", "Design system", "Screenshots", "Versions", "API (Swagger)", "Privacy policy", "Staging (test site)")
+            .forEach { onNodeWithText(it).assertExists() }
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
     }
 
@@ -154,8 +158,7 @@ class RoleGatingUiTest {
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(0)
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
-        onAllNodesWithText("App errors").assertCountEquals(0)
-        onAllNodesWithText("Screenshots").assertCountEquals(0)
+        onAllNodesWithText("DEV").assertCountEquals(0)
         onAllNodesWithText("Editor", substring = true).assertCountEquals(1)
     }
 
