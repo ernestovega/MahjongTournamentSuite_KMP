@@ -88,6 +88,14 @@ class Tournament {
     return this.clocks.value;
   }
 
+  /** The instant of the end of the match time of a round (as clockEndMs of the server), or null. */
+  async matchEnd(roundId, minutes) {
+    this.clocks.at = 0;
+    const clock = ((await this.roundClocks())?.roundClocks ?? []).find((item) => item.roundId === roundId);
+    if (clock == null || clock.pausedAtMs != null || minutes == null) return null;
+    return clock.startedAtMs + (clock.pausedMs ?? 0) + Math.max(0, minutes * 60_000 + (clock.adjustMs ?? 0));
+  }
+
   /** The highest round with a clock, or 1 before the first Play. */
   async currentRound() {
     const clocks = (await this.roundClocks())?.roundClocks ?? [];
@@ -281,6 +289,42 @@ class PlayerBot {
         await this.setSeats(roundId, table, data.table.version);
         continue;
       }
+      const doneHands = data.hands.filter((hand) => hand.isDone).length;
+      if (this.seatChangeTables.has(key)) {
+        const step = this.seatChangeTables.get(key);
+        // The corner case: the players swap East and South before the first hand (allowed), and try to swap them back
+        // after it (refused).
+        if (step === "before" && doneHands === 0) {
+          const reply = await this.setSeats(roundId, { ...table, playerIds: [seats[1], seats[0], seats[2], seats[3]].map(Number) }, data.table.version);
+          this.metrics.event("seat-change", { table: key, when: "before", status: reply.status, seats: [seats[1], seats[0], seats[2], seats[3]] });
+          this.seatChangeTables.set(key, "after");
+          continue;
+        }
+        if (step === "after" && doneHands >= 1) {
+          const reply = await this.setSeats(roundId, { ...table, playerIds: [seats[1], seats[0], seats[2], seats[3]].map(Number) }, data.table.version);
+          this.metrics.event("seat-change", { table: key, when: "after", status: reply.status, message: reply.json?.message ?? "" });
+          this.seatChangeTables.delete(key);
+          continue;
+        }
+      }
+      const extra = this.extraTimeTables.get(key);
+      if (extra != null && doneHands >= extra.afterHands) {
+        // The corner case: the table is slow and plays its last hand in the extra time after the gong.
+        const end = await this.tournament.matchEnd(roundId, this.matchMinutes);
+        if (end == null || Date.now() < end + 20_000) {
+          if (!this.extraWaiting.has(key)) {
+            this.extraWaiting.add(key);
+            this.metrics.event("table-waits-for-extra-time", { table: key, hands: doneHands });
+          }
+          await sleep(this.pollMs);
+          continue;
+        }
+        this.extraTimeTables.delete(key);
+        const outcome = await this.writeHand(roundId, table, key, seats, "extra");
+        if (outcome === "done") return;
+        nextHandAt = Date.now() + 10_000;
+        continue;
+      }
       if (Date.now() < nextHandAt) {
         await sleep(Math.min(this.pollMs, nextHandAt - Date.now()));
         await this.manifest();
@@ -318,6 +362,7 @@ class PlayerBot {
     }
   }
 
+  /** Saves the seats in the order of table.playerIds. Returns the answer. */
   async setSeats(roundId, table, version) {
     const [east, south, west, north] = table.playerIds.map(String);
     const reply = await this.api.call(
@@ -330,6 +375,7 @@ class PlayerBot {
       },
     );
     if (reply.status !== 200) await sleep(10_000);
+    return reply;
   }
 
   async penalty(roundId, tableId, seats, version, seat = Math.floor(Math.random() * 4), value = "-10", planned = false) {
@@ -371,6 +417,10 @@ class PlayerBot {
         this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString(), ...(kind === "reentry" ? { reentry: true } : {}) });
         if (kind === "reentry") this.metrics.event("hand-reentered", { table: key, handId: reply.json.handId, slot: this.slotNumber });
         if (kind === "draw") this.metrics.event("planned-draw", { table: key, handId: reply.json.handId });
+        if (kind === "extra") {
+          const end = await this.tournament.matchEnd(roundId, this.matchMinutes);
+          this.metrics.event("extra-time-hand", { table: key, handId: reply.json.handId, savedAt: Date.now(), matchEnd: end });
+        }
         return "ok";
       }
       if (reply.status !== 409 || !/changed/i.test(reply.json?.message ?? "")) return this.refusal(reply, key);
@@ -496,6 +546,10 @@ export async function runBots(options) {
     raceTables: new Set(options.raceTables ?? []),
     penaltyDrawTables: new Map(Object.entries(options.penaltyDrawTables ?? {})),
     penaltyDrawDone: new Set(),
+    seatChangeTables: new Map((options.seatChangeTables ?? []).map((key) => [key, "before"])),
+    extraTimeTables: new Map(Object.entries(options.extraTimeTables ?? {})),
+    extraWaiting: new Set(),
+    matchMinutes: options.matchMinutes ?? null,
     raceSessions: new Map(),
     raced: new Set(),
     scorerOf: new Map(),
@@ -641,6 +695,10 @@ async function main() {
     ],
     penaltyDrawTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "penalty-draw")
       .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, penalties: item.penalties }])),
+    seatChangeTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "seat-change").map((item) => `${item.round}_${item.table}`),
+    extraTimeTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "extra-time")
+      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands }])),
+    matchMinutes: plan?.matchDurationMinutes ?? null,
     verbose: Boolean(args.verbose),
     stopped: finished ? () => finished.done : undefined,
   });

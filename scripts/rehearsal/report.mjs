@@ -286,6 +286,27 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       add(ok,
         `Table ${key}: the scorer gave ${item.penalties.join(" and ")} as penalties and wrote a draw, and the penalties count in the totals (hand ${draw?.handId ?? "-"}, penalties by seat: ${hand == null ? "not found" : values.map(sumPenalty).join(" / ")}).`);
       if (!ok) detail(key);
+    } else if (item.kind === "seat-change") {
+      const before = at("seat-change").find((event) => event.when === "before");
+      const after = at("seat-change").find((event) => event.when === "after");
+      const table = check?.tablesByKey?.get(key)?.table;
+      const now = table == null ? [] : SEATS.map((name) => text(table[`player${name}Id`]));
+      const kept = before != null && now.join(",") === (before.seats ?? []).map(String).join(",");
+      const ok = before?.status === 200 && after?.status === 409 && kept;
+      add(ok,
+        `Table ${key}: the players changed seats before the first hand (answer ${before?.status ?? "none"}) and could not after it (answer ${after?.status ?? "none"}), and the table keeps the new seats (${now.join(", ") || "not found"}).`);
+      if (!ok) detail(key);
+    } else if (item.kind === "extra-time") {
+      const hand = at("extra-time-hand")[0];
+      const data = check?.tablesByKey?.get(key);
+      const done = (data?.hands ?? []).filter((each) => each.isDone);
+      const inExtra = hand != null && hand.matchEnd != null && hand.savedAt > hand.matchEnd;
+      const last = hand != null && done.length > 0 && Math.max(...done.map((each) => Number(each.handId))) === Number(hand.handId);
+      const ok = inExtra && last && data?.table?.isCompleted === true;
+      const seconds = hand?.matchEnd == null ? "-" : Math.round((hand.savedAt - hand.matchEnd) / 1000);
+      add(ok,
+        `Table ${key}: a slow table saved a hand ${seconds} s after the gong, in the extra time, and that hand closed the table (hand ${hand?.handId ?? "-"} of ${done.length}, ${data?.table?.isCompleted ? "completed" : "open"}).`);
+      if (!ok) detail(key);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);

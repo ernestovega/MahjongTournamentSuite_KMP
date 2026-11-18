@@ -81,9 +81,17 @@ read it, so each one knows its part.
   calls (the second one adds a row), and writes a draw. The checks want both penalties on the draw, and the totals of
   the table equal to the independent count. Besides, the bots give a random penalty in about 1 of 20 hands, and about
   1 hand in 10 is a draw.
-- Extra time after the gong (finish the hand), a table that stays open and the admin closes it.
+- Extra time after the gong: a slow table finishes its hand.
+
+  Done (plan.cornerCases, last round, table 1). The scorer stops after 3 hands and saves the next one 20 s after the
+  end of the match time. The checks want that hand saved in the extra time, as the last hand of the table, and the
+  table completed by it.
+- A table that stays open and the admin closes it.
 - A table with manual totals.
 - A seat change after the seats are saved.
+
+  Done (plan.cornerCases, round 1, table 4). The players swap East and South before the first hand (answer 200) and
+  try again after it (answer 409). The checks want both answers and the new seats on the table.
 - A phone without network for a minute, and an app sent to the background.
 - Ties in the ranking.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
