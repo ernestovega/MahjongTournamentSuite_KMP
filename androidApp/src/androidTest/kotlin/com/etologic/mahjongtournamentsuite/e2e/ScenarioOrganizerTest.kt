@@ -582,10 +582,25 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         check(c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) { "Hand $handId stays locked after Done off" }
     }
 
+    /**
+     * Opens the hand and writes its score. The poll of the table can draw it again between the look and the typing: the
+     * field is then a new node, so the editor looks for it and types again.
+     */
+    private fun writeScore(handId: Int, score: String) {
+        for (attempt in 1..5) {
+            unlockHand(handId)
+            val typed = runCatching { scoreField(handId).performTextReplacement(score) }
+            if (typed.isSuccess) return
+            log("the score of hand $handId was drawn again while typing, attempt $attempt")
+            c.waitForIdle()
+        }
+        unlockHand(handId)
+        scoreField(handId).performTextReplacement(score)
+    }
+
     /** The hand no longer counts: Done off, no winner, no loser, no score. */
     private fun deleteHand(handId: Int) {
-        unlockHand(handId)
-        scoreField(handId).performTextReplacement("")
+        writeScore(handId, "")
         clearPlayer(handId, "winner")
         clearPlayer(handId, "loser")
     }
@@ -593,8 +608,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     /** Another score that is valid for any hand, also a chicken hand (8 to 12). */
     private fun editHand(handId: Int, before: JSONObject) {
         val score = if (before.optString("handScore") == "11") "10" else "11"
-        unlockHand(handId)
-        scoreField(handId).performTextReplacement(score)
+        writeScore(handId, score)
         tapCell(handId, "done")
     }
 
