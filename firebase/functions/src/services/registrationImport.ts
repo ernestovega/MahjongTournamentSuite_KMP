@@ -95,8 +95,10 @@ export function parseFormTime(value: string): number | null {
 
 export const MAX_IMPORT_ROWS = 500;
 
-export function readFormRows(csv: string): FormRow[] {
-  const rows = parseCsv(csv);
+/** Reads the CSV text of the form, or the cells of the form as an Excel file gives them. */
+export function readFormRows(input: string | string[][]): FormRow[] {
+  const rows = (typeof input === "string" ? parseCsv(input) : input)
+    .filter((cells) => cells.some((cell) => cell.trim() !== ""));
   if (rows.length < 2) throw badRequest("The file has no answers", { code: "EMPTY_FILE" });
   if (rows.length - 1 > MAX_IMPORT_ROWS) throw badRequest(`At most ${MAX_IMPORT_ROWS} rows`, { code: "TOO_MANY_ROWS" });
   const titles = rows[0].map((title) => title.trim());

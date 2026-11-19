@@ -197,6 +197,11 @@ async function readXlsx(buffer: Buffer): Promise<string[][]> {
   return records;
 }
 
+/** The cells of a CSV or Excel file, as text. Other imports read their columns from them. */
+export async function readSpreadsheetRecords(fileName: string, buffer: Buffer): Promise<string[][]> {
+  return isXlsx(fileName, buffer) ? readXlsx(buffer) : parseCsv(buffer.toString("utf8"));
+}
+
 function isXlsx(fileName: string, buffer: Buffer): boolean {
   // An xlsx file is a zip file, which starts with "PK".
   return fileName.toLowerCase().endsWith(".xlsx") || (buffer.length > 1 && buffer[0] === 0x50 && buffer[1] === 0x4b);

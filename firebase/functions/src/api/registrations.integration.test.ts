@@ -4,6 +4,7 @@ import { after, before, beforeEach, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { setMailTransportForTests, type OutgoingEmail } from "../services/mailService";
+import { writePlayerExportXlsx } from "../services/playerImport";
 import { runRegistrationsHour } from "../services/registrationJobs";
 import { createAccount, giveEmaIdToAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 import { validDrawTables } from "../testing/draw";
@@ -404,6 +405,16 @@ describe("registrations", () => {
     assert.equal(sent.length, 0);
     const again = await server.request("POST", `/tournaments/${id}/registrations/import`, { token: admin.token, body: { csv } });
     assert.equal((again.body as { rows: Array<{ problems: string[] }> }).rows[0].problems[0], "ALREADY_REGISTERED");
+    // The same answers as the Excel file that Google Sheets downloads.
+    const excel = await writePlayerExportXlsx(csv.split("\n").map((line) => line.split(",")));
+    const fromExcel = await server.request("POST", `/tournaments/${id}/registrations/import`, {
+      token: admin.token, body: { fileName: "form.xlsx", dataBase64: excel.toString("base64") },
+    });
+    assert.equal(fromExcel.status, 200, JSON.stringify(fromExcel.body));
+    const excelRows = (fromExcel.body as { rows: Array<{ emaId: string; problems: string[] }> }).rows;
+    assert.equal(excelRows.length, 6);
+    assert.equal(excelRows[1].emaId, ids[0]);
+    assert.equal(excelRows[0].problems[0], "ALREADY_REGISTERED");
   });
 
   describe("hourly job", () => {

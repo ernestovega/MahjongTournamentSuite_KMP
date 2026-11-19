@@ -8,6 +8,7 @@ import type { Language } from "./i18n";
 import { LANGUAGES } from "./i18n";
 import { sendEmail } from "./mailService";
 import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer, validateEmaId } from "./playersService";
+import { readSpreadsheetRecords } from "./playerImport";
 import {
   isValidEmail,
   normalizeFoodRestrictions,
@@ -934,6 +935,9 @@ export async function recentChanges(tournament: TournamentForRegistrations, sinc
   };
 }
 
+/** The Excel or CSV file of the form. 500 rows take far less. */
+const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
+
 export type ImportRow = FormRow & {
   /** The name of the EMA registry, which the app uses instead of the name of the file. */
   registryName: string | null;
@@ -948,12 +952,22 @@ export type ImportRow = FormRow & {
  * are full. It sends no email: the people registered long ago.
  */
 export async function importRegistrations(params: {
-  tournamentId: string; csv: unknown; apply: boolean; language: Language;
+  tournamentId: string; csv?: unknown; fileName?: unknown; dataBase64?: unknown; apply: boolean; language: Language;
 }): Promise<{ rows: ImportRow[]; imported: number }> {
   const tournament = await loadTournament(params.tournamentId);
   assertBeforeDraw(tournament);
-  if (typeof params.csv !== "string" || params.csv.trim() === "") throw badRequest("Send the CSV file", { code: "EMPTY_FILE" });
-  const formRows = readFormRows(params.csv);
+  let input: string | string[][];
+  if (typeof params.dataBase64 === "string" && params.dataBase64 !== "") {
+    const buffer = Buffer.from(params.dataBase64, "base64");
+    if (buffer.length === 0) throw badRequest("Send the file", { code: "EMPTY_FILE" });
+    if (buffer.length > MAX_IMPORT_FILE_BYTES) throw badRequest("The file is too large", { code: "TOO_MANY_ROWS" });
+    input = await readSpreadsheetRecords(String(params.fileName ?? ""), buffer);
+  } else if (typeof params.csv === "string" && params.csv.trim() !== "") {
+    input = params.csv;
+  } else {
+    throw badRequest("Send the file", { code: "EMPTY_FILE" });
+  }
+  const formRows = readFormRows(input);
   const validIds = formRows.filter((row) => /^\d{8}$/.test(row.emaId)).map((row) => row.emaId);
   const registry = new Map<string, FirebaseFirestore.DocumentSnapshot>();
   const existing = new Set((await tournament.ref.collection(REGISTRATIONS).select("status").get()).docs

@@ -1284,7 +1284,7 @@ export function tournamentsRouter(): Router {
       const body = (req.body ?? {}) as Record<string, unknown>;
       const tournamentId = pathParam(req, "tournamentId");
       const result = await importRegistrations({
-        tournamentId, csv: body.csv, apply: body.apply === true, language: parseAcceptLanguage(req.header("accept-language")),
+        tournamentId, csv: body.csv, fileName: body.fileName, dataBase64: body.dataBase64, apply: body.apply === true, language: parseAcceptLanguage(req.header("accept-language")),
       });
       if (body.apply === true) await registrationActivity(res, tournamentId, `${result.imported} registrations`, { imported: result.imported });
       res.status(200).json(result);
