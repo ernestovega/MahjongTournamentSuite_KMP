@@ -71,16 +71,17 @@ function seatsOf(table) {
 
 /** Shared by the bots of one process: what the tournament looks like now, read at most every few seconds. */
 class Tournament {
-  constructor(api, id) {
+  constructor(api, id, clockCacheMs = 5_000) {
     this.api = api;
     this.id = id;
+    this.clockCacheMs = clockCacheMs;
     this.tablesByRound = new Map();
     this.clocks = { at: 0, value: null };
     this.info = { at: 0, value: null };
   }
 
   async roundClocks() {
-    if (Date.now() - this.clocks.at > 5_000) {
+    if (Date.now() - this.clocks.at > this.clockCacheMs) {
       this.clocks.at = Date.now();
       const reply = await this.api.call("GET", `/public/tournaments/${this.id}/round-clocks`, { label: "GET round-clocks" });
       if (reply.status === 200) this.clocks.value = reply.json;
@@ -317,7 +318,7 @@ class PlayerBot {
       if (extra != null && doneHands >= extra.afterHands) {
         // The corner case: the table is slow and plays its last hand in the extra time after the gong.
         const end = await this.tournament.matchEnd(roundId, this.matchMinutes);
-        if (end == null || Date.now() < end + 20_000) {
+        if (end == null || Date.now() < end + this.extraTimeAfterMs) {
           if (!this.extraWaiting.has(key)) {
             this.extraWaiting.add(key);
             this.metrics.event("table-waits-for-extra-time", { table: key, hands: doneHands });
@@ -328,7 +329,7 @@ class PlayerBot {
         this.extraTimeTables.delete(key);
         const outcome = await this.writeHand(roundId, table, key, seats, "extra");
         if (outcome === "done") return;
-        nextHandAt = Date.now() + 10_000;
+        nextHandAt = Date.now() + this.waitMs;
         continue;
       }
       if (Date.now() < nextHandAt) {
@@ -339,7 +340,7 @@ class PlayerBot {
       const hold = this.holdTables.get(key);
       if (hold != null && data.hands.filter((hand) => hand.isDone).length >= hold) {
         if (!this.holdUntil.has(key)) {
-          this.holdUntil.set(key, Date.now() + 4 * 60_000);
+          this.holdUntil.set(key, Date.now() + this.holdMs);
           this.metrics.event("table-waits-for-editor", { table: key, hands: hold });
         }
         if (Date.now() < this.holdUntil.get(key)) {
@@ -364,7 +365,7 @@ class PlayerBot {
       }
       const outcome = await this.writeHand(roundId, table, key, seats, kind);
       if (outcome === "done") return;
-      nextHandAt = Date.now() + (outcome === "wait" ? 10_000 : randomBetween(...this.handSeconds) * 1_000);
+      nextHandAt = Date.now() + (outcome === "wait" ? this.waitMs : randomBetween(...this.handSeconds) * 1_000);
     }
   }
 
@@ -380,7 +381,7 @@ class PlayerBot {
         label: "POST seats",
       },
     );
-    if (reply.status !== 200) await sleep(10_000);
+    if (reply.status !== 200) await sleep(this.waitMs);
     return reply;
   }
 
@@ -524,12 +525,13 @@ export async function findTournament(api, nameOrId) {
 /**
  * Runs the bots and the spectators until [until] or until [stopped] says so. Returns the report.
  * options: api, tournamentId, slots, accountSuffix(slot), password, baseEmail, spectators, until, stopped,
- * handSeconds [min, max], penaltyRate, lateTables, raceTables, pollMs, spectatorPollMs, verbose.
+ * handSeconds [min, max], penaltyRate, lateTables, raceTables, pollMs, spectatorPollMs, verbose, the corner cases of
+ * [planOptions], and the waits that the tests make short: signInGapMs, clockCacheMs, holdMs, waitMs, extraTimeAfterMs.
  */
 export async function runBots(options) {
   const metrics = options.metrics ?? new Metrics();
   const api = options.api ?? new Api(options.apiBase ?? STAGING_API, metrics);
-  const tournament = new Tournament(api, options.tournamentId);
+  const tournament = new Tournament(api, options.tournamentId, options.clockCacheMs);
   const ownSlots = new Set(options.slots);
   const context = {
     api, metrics, tournament, ownSlots,
@@ -547,6 +549,12 @@ export async function runBots(options) {
     // editor, as players who called the organization do. Without the wait the next hand would make it an older one.
     holdTables: new Map(Object.entries(options.holdTables ?? {})),
     holdUntil: new Map(),
+    // How long such a table waits for the editor at most.
+    holdMs: options.holdMs ?? 4 * 60_000,
+    // How long the bot waits after an answer that asks it to wait (the seats refused, the hand entry closed).
+    waitMs: options.waitMs ?? 10_000,
+    // The slow table of the extra time saves its last hand this long after the gong.
+    extraTimeAfterMs: options.extraTimeAfterMs ?? 20_000,
     // How long the scorer of a late table arrives after the gong.
     lateMs: options.lateMs ?? 120_000,
     raceTables: new Set(options.raceTables ?? []),
@@ -572,7 +580,7 @@ export async function runBots(options) {
     const session = new Session(api, email, options.password);
     if (await session.signIn()) bots.push(new PlayerBot(context, slot, session));
     else metrics.event("sign-in-failed", { slot });
-    await sleep(2_500);
+    await sleep(options.signInGapMs ?? 2_500);
   }
   console.log(`${bots.length} of ${options.slots.length} bots signed in.`);
   const bySlot = new Map(bots.map((bot) => [bot.slotNumber, bot]));
@@ -660,6 +668,36 @@ function watchTheLastRound(base, tournamentId, lastRound) {
   return state;
 }
 
+/**
+ * The options of [runBots] for the corner cases of the plan of a game day (plan.cornerCases, docs/scenarios.md), and
+ * the late and race tables of --late-tables and --race-tables.
+ */
+export function planOptions(plan, args = {}) {
+  return {
+    // The late tables of the plan of a game day, and those of --late-tables.
+    lateTables: [
+      ...String(args["late-tables"] ?? "").split(",").filter(Boolean),
+      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "late").map((item) => `${item.round}_${item.table}`),
+    ],
+    lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
+    holdTables: Object.fromEntries((plan?.cornerCases ?? [])
+      .filter((item) => (item.kind === "delete" || item.kind === "edit") && item.which === "last")
+      .map((item) => [`${item.round}_${item.table}`, item.minHands])),
+    raceTables: [
+      ...String(args["race-tables"] ?? "").split(",").filter(Boolean),
+      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "race").map((item) => `${item.round}_${item.table}`),
+    ],
+    penaltyDrawTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "penalty-draw")
+      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, penalties: item.penalties }])),
+    seatChangeTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "seat-change").map((item) => `${item.round}_${item.table}`),
+    extraTimeTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "extra-time")
+      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands }])),
+    abandonTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "abandoned")
+      .map((item) => [`${item.round}_${item.table}`, item.afterHands])),
+    matchMinutes: plan?.matchDurationMinutes ?? null,
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const password = process.env.REHEARSAL_PASSWORD ?? "";
@@ -687,27 +725,7 @@ async function main() {
     until,
     handSeconds: [handMin, handMax ?? handMin],
     penaltyRate: Number(args["penalty-rate"] ?? 0.05),
-    // The late tables of the plan of a game day, and those of --late-tables.
-    lateTables: [
-      ...String(args["late-tables"] ?? "").split(",").filter(Boolean),
-      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "late").map((item) => `${item.round}_${item.table}`),
-    ],
-    lateMs: ((plan?.cornerCases ?? []).find((item) => item.kind === "late")?.minutes ?? 2) * 60_000,
-    holdTables: Object.fromEntries((plan?.cornerCases ?? [])
-      .filter((item) => (item.kind === "delete" || item.kind === "edit") && item.which === "last")
-      .map((item) => [`${item.round}_${item.table}`, item.minHands])),
-    raceTables: [
-      ...String(args["race-tables"] ?? "").split(",").filter(Boolean),
-      ...(plan?.cornerCases ?? []).filter((item) => item.kind === "race").map((item) => `${item.round}_${item.table}`),
-    ],
-    penaltyDrawTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "penalty-draw")
-      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, penalties: item.penalties }])),
-    seatChangeTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "seat-change").map((item) => `${item.round}_${item.table}`),
-    extraTimeTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "extra-time")
-      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands }])),
-    abandonTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "abandoned")
-      .map((item) => [`${item.round}_${item.table}`, item.afterHands])),
-    matchMinutes: plan?.matchDurationMinutes ?? null,
+    ...planOptions(plan, args),
     verbose: Boolean(args.verbose),
     stopped: finished ? () => finished.done : undefined,
   });

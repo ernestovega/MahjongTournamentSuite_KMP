@@ -42,6 +42,12 @@ gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts-
   Then the checks.
 - `check`: the checks alone, for example after the bots of the Mac.
 - `calibration-cleanup`: removes the calibration accounts and EMA players.
+- `mail-check`: the mailbox of the scenarios answers, and how many emails it has.
+- `latency`: the saves of a hand of the last 4 hours of the staging API, per 10 minutes (count, p50, p95 and max in
+  ms), the reads that took over 2 s, and the new instances started. It found the wait of the medium game day: every
+  save also wrote the tournament document, and read it in its transaction, so the saves of the 16 tables waited for
+  each other (p95 2.3 s). The save reads the tournament outside the transaction now (playerHandService.ts, covered by
+  playerHand.integration.test.ts: 48 saves at 16 tables take about 3 s in the emulator, about 35 s before).
 
 ## The Mac part
 
@@ -84,6 +90,9 @@ saved. It prints one line per target:
 ```bash
 node scripts/rehearsal/report.mjs --tournament="Ensayo General MTS 2026" build/rehearsal/bots-*.json
 ```
+
+The scripts have their own tests, with no network: `node --test scripts/rehearsal/test/*.test.mjs` (docs/scenarios.md,
+Tests of the scripts).
 
 ## Limits to keep in mind
 

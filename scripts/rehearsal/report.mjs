@@ -247,7 +247,9 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
     const position = (event) => (item.which === "last" ? event.handId === event.newest : event.handId < event.newest);
     if (item.kind === "delete") {
       const scorer = at("hand-deleted-seen").filter((event) => !event.watcher);
-      const watchers = at("hand-deleted-seen").filter((event) => event.watcher);
+      // The scorer writes the hand again at once: a phone whose next look comes after that sees the hand change, not
+      // go. Both are a phone that saw the deletion.
+      const watchers = [...at("hand-deleted-seen"), ...at("hand-corrected-seen")].filter((event) => event.watcher);
       const again = at("hand-reentered");
       const okDelete = scorer.some(position) && watchers.length > 0 && again.length > 0;
       add(okDelete,

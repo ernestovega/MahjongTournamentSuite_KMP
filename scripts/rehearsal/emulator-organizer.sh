@@ -21,6 +21,8 @@ out="out/organizer-$phase"
 mkdir -p "$out"
 
 adb_cmd=(adb)
+# The lines of the log that go to the job log, with every address hidden, whatever its case.
+hide_emails() { sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g'; }
 if [ -n "$serial" ]; then adb_cmd+=(-s "$serial"); fi
 
 base="$(printf '%s' "$STAGING_ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')"
@@ -93,10 +95,10 @@ if ! printf '%s\n' "$result" | grep -q '^OK (1 test)'; then
   # The artifacts cannot always be read: the last steps of the organizer and any crash of the app go to the job log.
   sleep 2
   echo "--- last steps of the organizer ---"
-  grep -E 'SCENARIO|E2E' "$out/logcat.txt" | tail -n 25 || true
+  grep -E 'SCENARIO|E2E' "$out/logcat.txt" | tail -n 25 | hide_emails || true
   echo "--- last lines of the app (addresses hidden) ---"
-  grep 'MahjongTournamentSuite' "$out/logcat.txt" | tail -n 40 | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' || true
+  grep 'MahjongTournamentSuite' "$out/logcat.txt" | tail -n 40 | hide_emails || true
   echo "--- crashes of the app ---"
-  grep -A 40 'FATAL EXCEPTION' "$out/logcat.txt" | head -n 80 || true
+  grep -A 40 'FATAL EXCEPTION' "$out/logcat.txt" | head -n 80 | hide_emails || true
   exit 1
 fi

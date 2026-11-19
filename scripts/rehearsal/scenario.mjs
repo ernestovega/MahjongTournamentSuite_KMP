@@ -33,6 +33,17 @@ function madrid(date) {
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
 }
 
+/**
+ * The planned start of the rounds, in Madrid. The rounds start when the organizer presses Play, so the planned time
+ * only has to be later today: the form of a new tournament keeps its dates on today, and a round on another day is
+ * outside them. It is an hour from now, and 23:59 when that is already tomorrow.
+ */
+export function plannedStart(now) {
+  const today = madrid(now);
+  const later = madrid(new Date(now.getTime() + 60 * 60_000));
+  return later.date === today.date ? later : { date: today.date, time: "23:59" };
+}
+
 function shuffle(list, random = Math.random) {
   const copy = [...list];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -58,8 +69,13 @@ async function freePlayers(api, token) {
   const registry = await api.call("GET", "/ema-player-registry", { token, label: "admin GET EMA registry" });
   const users = await api.call("GET", "/admin/users", { token, label: "admin GET users" });
   if (registry.status !== 200 || users.status !== 200) throw new Error(`Reading the registry: ${registry.status}, the accounts: ${users.status}`);
-  const owned = new Set((users.json.users ?? []).map((user) => user.emaId).filter(Boolean));
-  return (registry.json.players ?? []).filter((player) =>
+  return eligiblePlayers(registry.json.players ?? [], users.json.users ?? []);
+}
+
+/** The players of the registry that a scenario may seat: see [freePlayers]. */
+export function eligiblePlayers(registryPlayers, users) {
+  const owned = new Set(users.map((user) => user.emaId).filter(Boolean));
+  return registryPlayers.filter((player) =>
     !player.disabled && !owned.has(player.emaId) && Number(player.emaId) < 99980000 && player.firstName && player.lastName
     // The test players of the registry are not people of a tournament: the numbers from 00 (the Google Play
     // reviewers have 00000000) and the names with "test", as the seeds leave them out.
@@ -99,10 +115,7 @@ export async function makePlan(args) {
 
   const now = new Date();
   const stamp = madrid(now);
-  // The rounds start when the organizer presses Play, so the planned time only has to be later today: the form of a
-  // new tournament keeps its dates on today, and a round on another day is outside them. Near midnight it is 23:59.
-  const later = madrid(new Date(now.getTime() + 60 * 60_000));
-  const start = later.date === stamp.date ? later : { date: stamp.date, time: "23:59" };
+  const start = plannedStart(now);
   const tag = `gd${stamp.date.slice(5).replace("-", "")}${Math.random().toString(36).slice(2, 6)}`;
   const minutes = size.minutes ?? roundMinutes(phoneEmulators);
   // The cases of the editor play in round 2, so the first round plays as usual. In corners they play in round 1, at

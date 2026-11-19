@@ -9,10 +9,20 @@
 import tls from "node:tls";
 
 const DEFAULT_HOST = "cp7061.webempresa.eu";
+/**
+ * The mail host was once down for more than 3 minutes: a mailbox that does not open is tried for about 12 minutes
+ * (8.5 minutes of waits, and up to 30 s each try).
+ */
+export const OPEN_ATTEMPTS = 12;
+export const openRetryDelayMs = (attempt) => Math.min(attempt * 10_000, 60_000);
 
 /** A small IMAP client: one command at a time, enough to search and read emails. */
 export class Mailbox {
-  constructor({ host = process.env.REHEARSAL_IMAP_HOST || DEFAULT_HOST, port = 993, user, password } = {}) {
+  constructor({
+    host = process.env.REHEARSAL_IMAP_HOST || DEFAULT_HOST, port = 993, user, password,
+    pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  } = {}) {
+    this.pause = pause;
     this.host = host;
     this.port = port;
     this.user = user ?? process.env.REHEARSAL_IMAP_USER ?? "";
@@ -22,8 +32,7 @@ export class Mailbox {
     this.waiting = null;
   }
 
-  /** The mail host sometimes does not answer a connection: it is tried again for about 12 minutes (it was
-   * once down for more than 3 minutes). */
+  /** The mail host sometimes does not answer a connection: it is tried again ([OPEN_ATTEMPTS], [openRetryDelayMs]). */
   async open() {
     if (!this.user || !this.password) throw new Error("Set REHEARSAL_IMAP_USER and REHEARSAL_IMAP_PASSWORD.");
     for (let attempt = 1; ; attempt += 1) {
@@ -31,9 +40,9 @@ export class Mailbox {
         return await this.connect();
       } catch (error) {
         this.socket?.destroy();
-        if (attempt >= 12) throw error;
+        if (attempt >= OPEN_ATTEMPTS) throw error;
         console.log(`The mailbox did not open (${error.message}), attempt ${attempt}. It is tried again.`);
-        await new Promise((resolve) => setTimeout(resolve, Math.min(attempt * 10_000, 60_000)));
+        await this.pause(openRetryDelayMs(attempt));
       }
     }
   }

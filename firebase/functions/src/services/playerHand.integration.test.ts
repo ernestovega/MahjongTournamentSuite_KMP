@@ -301,6 +301,52 @@ describe("hand entry by a player", () => {
     assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
     assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 1);
   });
+
+  // The medium game day (16 tables): every save writes the tournament document, and when the saves also read it in
+  // their transaction they waited for each other (p95 2.3 s). The tournament is read outside the transaction now.
+  it("saves the hands of many tables at once, and the tournament keeps the version of each table", async () => {
+    const tables = Array.from({ length: 16 }, (_, index) => index + 1);
+    const tournamentId = await seedTournament({ tables: tables.map((tableId) => ({ roundId: 1, tableId })) });
+    await startMatch(tournamentId, 10);
+    await Promise.all(tables.map((tableId) => db.doc(`tournaments/${tournamentId}/tables/1_${tableId}`).update({
+      playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
+    })));
+    const uid = `u-${tournamentId}-1`;
+    await giveEmaIdToAccount(uid, "E1");
+    await seatEmaId(tournamentId, 1, "E1");
+
+    const started = Date.now();
+    for (const expectedVersion of [0, 1, 2]) {
+      const results = await Promise.allSettled(tables.map((tableId) => recordHand({
+        tournamentId, roundId: 1, tableId, uid, input: hand("1", "4"), expectedVersion,
+      })));
+      const failed = results.filter((result) => result.status === "rejected");
+      assert.deepEqual(failed.map((result) => String((result as PromiseRejectedResult).reason)), []);
+    }
+    // In the emulator the 48 saves take about 3 s. With the tournament read in the transaction they took about 35 s,
+    // as the transactions of the tables wait for each other.
+    const elapsed = Date.now() - started;
+    assert.ok(elapsed < 15_000, `48 saves at 16 tables took ${elapsed} ms`);
+
+    for (const tableId of tables) {
+      assert.equal((await readTable(tournamentId, 1, tableId)).version, 3);
+      assert.equal((await readHand(tournamentId, 1, tableId, 3)).isDone, true);
+    }
+    const tournament = (await db.doc(`tournaments/${tournamentId}`).get()).data() ?? {};
+    const versions = (tournament.dataVersions as { tableVersions?: Record<string, number> }).tableVersions ?? {};
+    assert.deepEqual(versions, Object.fromEntries(tables.map((tableId) => [`1_${tableId}`, 3])));
+    const manifest = await getTournamentManifest(tournamentId);
+    assert.equal(Object.values(manifest.tableVersions ?? {}).filter((version) => version === 3).length, 16);
+  });
+
+  it("still refuses a hand once the tournament is completed, though it reads the tournament outside the transaction", async () => {
+    const fixture = await seedTable();
+    await recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });
+    await db.doc(`tournaments/${fixture.tournamentId}`).update({ isCompleted: true });
+
+    await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 1 }), 409);
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 1);
+  });
 });
 
 /** Plans round 1 to start [minutesAhead] minutes from now, in UTC. No Timer started it. */

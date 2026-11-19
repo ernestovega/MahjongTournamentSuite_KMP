@@ -75,6 +75,9 @@ read it, so each one knows its part.
   it in the table editor and turns Done off and clears the hand, or types another score. The bots of the table see the
   change: the scorer writes a deleted hand again at once, and the others note it. The checks want each case seen by
   the scorer and by another phone, at the right hand (the newest or an older one), and no change at any other table.
+  A phone whose next look comes after the scorer wrote the hand again sees the hand change instead of go: for a
+  deleted hand, that counts as seen too. When the newest hand is the one to change, the table waits for the editor
+  (up to 4 minutes), as players who called the organization do, so it is still the newest when the editor gets there.
 - Penalties and a draw.
 
   Done (plan.cornerCases, round 1, table 1). After 2 hands the scorer gives -10 to East and then -5 to South, in two
@@ -101,6 +104,37 @@ read it, so each one knows its part.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.
 
+## The plan and the registry
+
+`scenario.mjs plan` takes free EMA players of the staging registry: not disabled, with no account, with a first and a
+last name, no "test" in the name, not from 00 (the Google Play reviewers have 00000000) nor from 99980000 (the
+calibration), and only numbers of 8 digits (the registry keeps a few that lost their leading zero, such as 8010027: the
+import pads the file to 8 digits, does not find them and refuses the file). Two EMA guests play when the registry has
+them.
+
+The rounds are planned an hour later, in Madrid. The form of a new tournament keeps its dates on today, so after 23:00
+the plan keeps them on today at 23:59 (the rounds start when the organizer presses Play anyway). The tablet of the
+organizer runs in the Madrid time zone too (`-timezone Europe/Madrid` in scenario.yml and `cmd alarm set-timezone` in
+emulator-organizer.sh), so the day of the form is the day of the plan.
+
+## The organizer on the emulator
+
+`ScenarioOrganizerTest` works around what a tablet emulator in Actions does, found in the runs of 18 and 19 November:
+
+- The Timer opens in its own task. Its back key is not reliable, so the test closes the Timer window itself, and brings
+  the running app back to the front with `am start -f 0x10020000` (a launcher intent would open a second MainActivity
+  with its own Koin graph).
+- The launcher can keep the window focus, and then a touch is refused. The Timer buttons and the Back of the top bar are
+  pressed with their click action (`performSemanticsAction(OnClick)`), and a refused tap is tried again. The Back is
+  found by its label, as a tablet shows it as text.
+- Substitute appears in the menu of a slot once its table has a hand, so the substitution waits for the first hand of
+  the round and for the Players screen to load. When the EMA search shows no single row, the test searches the email.
+- The poll can draw the table again while the test types a score: the test types it again.
+- On a failure, the job log shows the last steps of the organizer, the last lines of the app (at info level) and the
+  crashes, with every address hidden (`hide_emails`).
+
+The mailbox is tried for about 12 minutes when it does not open (it was once down for more than 3 minutes).
+
 ## The checks
 
 `report.mjs` scores every table again with its own count (teams, chicken hands, best hands, penalties) and compares it
@@ -113,6 +147,27 @@ discard with 8 to 12 points as chicken hands, so every scenario has some.
 ## Corners: the corner cases in minutes
 
 `corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
-the penalties and the draw are at table 1, the late table and its substitution at table 3, and the deleted and edited hands at tables 2, 4, 5 and 6. It takes about
+the penalties and the draw are at table 1, the late table and its substitution at table 3, the seat change at table 4,
+and the deleted and edited hands at tables 2, 4, 5 and 6. The slow table of the extra time and the abandoned table are
+at tables 1 and 2 of round 2, the last one. It takes about
 45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.
+
+## Tests of the scripts
+
+`node --test scripts/rehearsal/test/*.test.mjs` (about 6 s, no network, no account) runs:
+
+- `bots.test.mjs`: the corners plan of `scenario.mjs`, played by `bots.mjs` against a staging in memory
+  (`fakeStaging.mjs`: the routes that the bots and the report call, an organizer that starts the rounds and closes the
+  abandoned table, an editor that deletes and corrects hands), and checked by `report.mjs`. Every corner case and every
+  general verdict must pass.
+- `report.test.mjs`: each verdict of a corner case with a run that passes it and runs that fail it, the details of a
+  failed case, ties at a table, a substituted slot, and the slowest of a long list.
+- `scenario.test.mjs`: the players of the registry, the planned start near midnight, the corner cases of each
+  scenario, the slots and the import files.
+- `api.test.mjs` and `mail.test.mjs`: the metrics of long runs, the retry of a read, and the retries of the mailbox.
+- `scripts.test.mjs`: the shell scripts, the hidden addresses of the job log, the Madrid time zone, and one major
+  version of each action in the workflows.
+
+They run locally, not in CI (no new checks until production). Run them after a change in `scripts/rehearsal/`.
+The backend side of the medium game day (the saves of 16 tables at once) is in `playerHand.integration.test.ts`.
