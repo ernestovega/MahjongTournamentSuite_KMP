@@ -22,7 +22,7 @@ class UsersPresenterPasswordResetsTest {
 
     @Test
     fun aShortListGoesInOneRequest() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN)
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)
 
         val results = assertIs<AppResult.Success<List<com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult>>>(
             presenter(admin).sendPasswordResets(uids(3)),
@@ -34,7 +34,7 @@ class UsersPresenterPasswordResetsTest {
 
     @Test
     fun aLongListGoesInRequestsOfAtMost200AndKeepsTheOrder() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN)
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)
 
         val results = assertIs<AppResult.Success<List<com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult>>>(
             presenter(admin).sendPasswordResets(uids(450)),
@@ -46,7 +46,7 @@ class UsersPresenterPasswordResetsTest {
 
     @Test
     fun aRequestThatFailsAfterOthersWentOutMarksItsAccountsAsFailed() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply { failResetsFromRequest = 2 }
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply { failResetsFromRequest = 2 }
 
         val results = assertIs<AppResult.Success<List<com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult>>>(
             presenter(admin).sendPasswordResets(uids(250)),
@@ -59,7 +59,7 @@ class UsersPresenterPasswordResetsTest {
 
     @Test
     fun aFirstRequestThatFailsIsAFailureOfTheWholeCall() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply { failResetsFromRequest = 1 }
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply { failResetsFromRequest = 1 }
 
         val result = presenter(admin).sendPasswordResets(uids(3))
 
@@ -68,7 +68,7 @@ class UsersPresenterPasswordResetsTest {
 
     @Test
     fun anEmptyListSendsNothing() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN)
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)
 
         assertEquals(AppResult.Success(emptyList()), presenter(admin).sendPasswordResets(emptyList()))
         assertEquals(emptyList(), admin.resetRequests)

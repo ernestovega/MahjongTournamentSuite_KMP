@@ -43,7 +43,7 @@ class UsersDeletesUiTest {
     private val ann = ManagedUser("p1", "ann@example.test", "Ann", GlobalUserRole.PLAYER, false, emptyList(), emaId = "11")
     private val bob = ManagedUser("p2", "bob@example.test", "Bob", GlobalUserRole.PLAYER, false, emptyList(), emaId = "22")
     private val cy = ManagedUser("p3", "cy@example.test", "Cy", GlobalUserRole.PLAYER, true, emptyList(), emaId = "33")
-    private val me = ManagedUser("me", "me@example.test", "Me", GlobalUserRole.ADMIN, false, emptyList())
+    private val me = ManagedUser("me", "me@example.test", "Me", GlobalUserRole.SUPER_ADMIN, false, emptyList())
 
     private fun ComposeUiTest.show(admin: FakeAdminRepository) {
         setContent {
@@ -76,7 +76,7 @@ class UsersDeletesUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("ann@example.test").fetchSemanticsNodes().isNotEmpty() }
     }
 
-    private fun adminWith(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.ADMIN) = FakeAdminRepository(role, users.toList())
+    private fun adminWith(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN) = FakeAdminRepository(role, users.toList())
 
     @Test
     fun anAdminSelectsAccountsConfirmsAndTheyLeaveTheList() = runComposeUiTest {
@@ -134,7 +134,7 @@ class UsersDeletesUiTest {
     @Test
     fun anAccountTheServerKeepsStaysInTheListWithItsReason() = runComposeUiTest {
         val admin = adminWith(ann, bob).apply {
-            deleteResults["p2"] = UserDeleteResult("p2", UserDeleteOutcome.FAILED, UserDeleteFailure.LAST_ADMIN)
+            deleteResults["p2"] = UserDeleteResult("p2", UserDeleteOutcome.FAILED, UserDeleteFailure.LAST_SUPER_ADMIN)
         }
         show(admin)
 

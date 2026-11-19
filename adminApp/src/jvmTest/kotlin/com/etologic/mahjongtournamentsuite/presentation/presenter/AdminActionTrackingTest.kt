@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
@@ -44,7 +45,7 @@ class AdminActionTrackingTest {
             if (!works) resetError = AppError.Network
             if (!works) clockError = AppError.Network
         }
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN, users = listOf(USER)).apply { failWrites = !works }
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN, users = listOf(USER)).apply { failWrites = !works }
         val accounts = FakePlayerAccountRepository().apply { fails = !works }
         val players = SharedPlayers(works)
 
@@ -116,6 +117,9 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.ACCOUNT_DELETED) { it.usersPresenter.deleteUser(USER.uid) },
         Case(TelemetryAction.ACCOUNT_PHOTO_UPDATED) { it.usersPresenter.updateUserPhoto(USER.uid, "image/png", ByteArray(1)) },
         Case(TelemetryAction.ACCOUNT_PHOTO_REMOVED) { it.usersPresenter.removeUserPhoto(USER.uid) },
+        Case(TelemetryAction.ACCOUNT_REMOVED_FROM_COUNTRIES) { it.usersPresenter.removeFromMyCountries(USER.uid, AccountRequestKind.DISABLE, "Left the club") },
+        Case(TelemetryAction.ACCOUNT_REQUEST_APPROVED) { it.usersPresenter.resolveAccountRequest("r1", approve = true) },
+        Case(TelemetryAction.ACCOUNT_REQUEST_REJECTED) { it.usersPresenter.resolveAccountRequest("r1", approve = false) },
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },
         Case(TelemetryAction.REGISTRY_PLAYER_UPDATED) { it.playerBasePresenter.updatePlayer("1234", PLAYER) },
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },

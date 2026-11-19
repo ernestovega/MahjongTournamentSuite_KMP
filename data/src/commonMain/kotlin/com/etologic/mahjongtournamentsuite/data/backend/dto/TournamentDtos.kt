@@ -42,6 +42,8 @@ data class TournamentDto(
     val createdByName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
+    /** What the signed-in account may do in the tournament, by permission name. */
+    val permissions: List<String> = emptyList(),
 )
 
 @Serializable
@@ -147,6 +149,7 @@ data class TournamentMemberDto(
     val uid: String,
     val email: String = "",
     val role: GlobalUserRoleDto,
+    val onlyTournament: Boolean = false,
 )
 
 @Serializable

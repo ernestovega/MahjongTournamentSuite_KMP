@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
@@ -37,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 internal class FakeAdminRepository(
     private val role: GlobalUserRole,
     var users: List<ManagedUser> = emptyList(),
+    private val countries: Set<String> = if (role == GlobalUserRole.COUNTRY_ADMIN) setOf("ES") else emptySet(),
 ) : AdminRepository {
     val calls = mutableListOf<String>()
 
@@ -45,7 +48,7 @@ internal class FakeAdminRepository(
 
     private fun <T> write(value: () -> T): AppResult<T> = if (failWrites) AppResult.Failure(AppError.Network) else AppResult.Success(value())
 
-    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(AdminStatus("me", role))
+    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(AdminStatus("me", role, adminCountries = countries))
     override suspend fun lookupUser(identifier: String, tournamentId: String?): AppResult<UserProfile> = error("unused")
     override suspend fun listUsers(refreshMode: RefreshMode) = AppResult.Success(users)
     override suspend fun createUser(
@@ -54,7 +57,23 @@ internal class FakeAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
-    ): AppResult<ManagedUser> = write { ManagedUser("new", email, alias, role, false, tournamentAssignments, emaId = emaId) }
+        adminCountries: Set<String>,
+    ): AppResult<ManagedUser> = write {
+        calls += "create $role ${adminCountries.sorted().joinToString(",")}"
+        ManagedUser("new", email, alias, role, false, tournamentAssignments, emaId = emaId, adminCountries = adminCountries)
+    }
+
+    override suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> {
+        calls += "removal $uid ${kind ?: "NONE"} $reason"
+        return write { users.first { it.uid == uid } }
+    }
+
+    var accountRequests: List<AccountRequest> = emptyList()
+    override suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = AppResult.Success(accountRequests)
+    override suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> {
+        calls += "resolve $id $approve"
+        return write { }
+    }
 
     override suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> {
         calls += "update ${user.uid}"

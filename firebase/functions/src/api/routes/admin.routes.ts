@@ -307,7 +307,9 @@ export function adminRouter(): Router {
       if (!canSeeAccount(scope, current)) throw forbidden("You cannot change this account");
       const role: GlobalUserRole | null = req.body?.role === "PLAYER" ? "PLAYER" : parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
-      const email = requireEmail(req.body?.email, "email");
+      // A viewer that does not see the email of the account sends none: the account keeps its email.
+      const sentEmail = String(req.body?.email ?? "").trim();
+      const email = sentEmail === "" ? current.email : requireEmail(sentEmail, "email");
       const alias = String(req.body?.alias ?? "").trim();
       const self = access.uid === current.uid;
       const staffChange = role !== "PLAYER" || isStaffAccount(current);

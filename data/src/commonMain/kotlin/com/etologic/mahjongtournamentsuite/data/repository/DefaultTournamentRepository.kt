@@ -365,6 +365,7 @@ class DefaultTournamentRepository(
                 uid = dto.uid,
                 email = dto.email,
                 role = GlobalUserRole.valueOf(dto.role.name),
+                onlyTournament = dto.onlyTournament,
             )
         }
     }

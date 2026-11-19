@@ -41,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsRes
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerWithData
+import com.etologic.mahjongtournamentsuite.presentation.screen.RemoveFromCountriesDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialogContent
@@ -72,7 +73,7 @@ class AdminDialogsScreenshotTest {
     fun editTournament() = dialog("edit-tournament") {
         // The user is an administrator, so the dialog shows the Delete button. The app loads the role on the tournaments screen.
         val store = koinInject<AppMemoryStore>()
-        remember { store.adminStatus.value = AdminStatus("admin-1", GlobalUserRole.ADMIN) }
+        remember { store.adminStatus.value = AdminStatus("admin-1", GlobalUserRole.SUPER_ADMIN) }
         EditTournamentDialog(ScreenshotData.tournament(ONGOING), onDismiss = {})
     }
 
@@ -244,6 +245,11 @@ class AdminDialogsScreenshotTest {
     }
 
     @Test
+    fun removeFromCountries() = dialog("remove-from-countries") {
+        RemoveFromCountriesDialog(user = ScreenshotData.users[1], saving = false, onDismiss = {}, onConfirm = { _, _ -> })
+    }
+
+    @Test
     fun userDeletesConfirm() = dialog("user-deletes-confirm") { UserDeletesConfirmDialog(count = 3, busy = false, onConfirm = {}, onDismiss = {}) }
 
     @Test
@@ -254,7 +260,7 @@ class AdminDialogsScreenshotTest {
                 com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult(
                     "editor-2",
                     com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome.FAILED,
-                    com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure.LAST_ADMIN,
+                    com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure.LAST_SUPER_ADMIN,
                 ),
             ),
             users = ScreenshotData.users,

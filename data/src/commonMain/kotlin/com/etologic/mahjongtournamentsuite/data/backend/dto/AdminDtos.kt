@@ -7,12 +7,16 @@ data class WhoAmIResponseDto(
     val uid: String,
     val role: GlobalUserRoleDto,
     val roles: List<GlobalUserRoleDto> = emptyList(),
+    val adminCountries: List<String> = emptyList(),
+    /** The permissions that some role of the account grants somewhere. Null from an older backend. */
+    val permissions: List<String>? = null,
 )
 
 @Serializable
 enum class GlobalUserRoleDto {
     EDITOR,
-    ADMIN,
+    COUNTRY_ADMIN,
+    SUPER_ADMIN,
     PLAYER,
 }
 
@@ -20,6 +24,7 @@ enum class GlobalUserRoleDto {
 data class TournamentAssignmentDto(
     val tournamentId: String,
     val tournamentName: String = "",
+    val country: String = "",
 )
 
 @Serializable
@@ -34,6 +39,10 @@ data class ManagedUserDto(
     val roles: List<GlobalUserRoleDto> = emptyList(),
     val disabled: Boolean,
     val tournamentAssignments: List<TournamentAssignmentDto> = emptyList(),
+    val adminCountries: List<String> = emptyList(),
+    val canManage: Boolean = false,
+    val hasGrantsOutside: Boolean = false,
+    val emailHidden: Boolean = false,
 )
 
 @Serializable
@@ -49,6 +58,8 @@ data class SaveManagedUserRequestDto(
     val tournamentAssignments: List<TournamentAssignmentDto>,
     /** The EMA ID of the account. An empty text clears it. */
     val emaId: String = "",
+    /** The countries of a country admin, as two-letter codes. */
+    val adminCountries: List<String> = emptyList(),
 )
 
 @Serializable
@@ -267,4 +278,42 @@ data class ErrorGroupDetailDto(
     val apps: Map<String, Int> = emptyMap(),
     val reports: List<ErrorReportDto> = emptyList(),
     val nextReportCursor: ErrorLogCursorDto? = null,
+)
+
+@Serializable
+data class AccountRemovalRequestDto(
+    /** DISABLE or DELETE, or null to only take the account out of the countries of the caller. */
+    val kind: String? = null,
+    val reason: String = "",
+)
+
+@Serializable
+data class AccountRemovalResponseDto(
+    val user: ManagedUserDto,
+)
+
+@Serializable
+data class AccountRequestDto(
+    val id: String,
+    val kind: String,
+    val targetUid: String,
+    val targetEmail: String = "",
+    val reason: String = "",
+    val requestedByEmail: String = "",
+    val createdAtMs: Long = 0,
+)
+
+@Serializable
+data class AccountRequestsResponseDto(
+    val requests: List<AccountRequestDto> = emptyList(),
+)
+
+@Serializable
+data class ResolveAccountRequestDto(
+    val approve: Boolean,
+)
+
+@Serializable
+data class ResolveAccountRequestResponseDto(
+    val outcome: String = "",
 )

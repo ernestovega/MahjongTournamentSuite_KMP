@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -188,7 +189,7 @@ class TournamentScreenUiTest {
 
     @Test
     fun anAdminOpensRoundControlFromTheTopBar() = runComposeUiTest {
-        with(ScreenHarness(role = GlobalUserRole.ADMIN)) {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
             loadScreen()
 
             onNode(hasText("Round control") or hasContentDescription("Round control")).performClick()
@@ -199,11 +200,12 @@ class TournamentScreenUiTest {
     }
 
     @Test
-    fun anEditorHasNoRoundControl() = runComposeUiTest {
+    fun anEditorHasTheRoundControlButNoReset() = runComposeUiTest {
         with(ScreenHarness(role = GlobalUserRole.EDITOR)) {
             loadScreen()
 
-            onNode(hasText("Round control") or hasContentDescription("Round control")).assertDoesNotExist()
+            // The editors of a tournament also open and close its rounds. Resetting a table is for the admins.
+            onAllNodes(hasText("Round control") or hasContentDescription("Round control")).onFirst().assertExists()
         }
     }
 

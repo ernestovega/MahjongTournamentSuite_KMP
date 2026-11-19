@@ -83,7 +83,7 @@ internal fun UserDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: () -
 private fun UserDeleteFailure?.textRes(): StringResource = when (this) {
     UserDeleteFailure.NOT_FOUND -> Res.string.reset_failure_not_found
     UserDeleteFailure.SELF -> Res.string.delete_failure_self
-    UserDeleteFailure.LAST_ADMIN -> Res.string.delete_failure_last_admin
+    UserDeleteFailure.LAST_SUPER_ADMIN -> Res.string.delete_failure_last_admin
     UserDeleteFailure.UNKNOWN, null -> Res.string.delete_failure_unknown
 }
 

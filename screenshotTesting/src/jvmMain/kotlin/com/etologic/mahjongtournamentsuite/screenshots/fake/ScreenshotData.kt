@@ -250,7 +250,7 @@ object ScreenshotData {
 
     fun tournament(id: String): Tournament = tournaments.first { it.id == id }
 
-    val admin = UserProfile(uid = "admin-1", email = "ada@example.test", alias = "Ada", emaId = null, roles = setOf(GlobalUserRole.ADMIN))
+    val admin = UserProfile(uid = "admin-1", email = "ada@example.test", alias = "Ada", emaId = null, roles = setOf(GlobalUserRole.SUPER_ADMIN))
 
     /** The player account of Lucía Martín (player 1 of every tournament). */
     val playerAccount = UserProfile(
@@ -262,7 +262,7 @@ object ScreenshotData {
     )
 
     val users: List<ManagedUser> = listOf(
-        ManagedUser("admin-1", "ada@example.test", "Ada", GlobalUserRole.ADMIN, false, emptyList()),
+        ManagedUser("admin-1", "ada@example.test", "Ada", GlobalUserRole.SUPER_ADMIN, false, emptyList()),
         ManagedUser(
             "editor-1",
             "bruno@example.test",

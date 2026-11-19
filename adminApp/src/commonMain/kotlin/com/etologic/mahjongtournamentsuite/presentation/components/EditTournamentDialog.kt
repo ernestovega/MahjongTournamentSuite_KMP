@@ -42,6 +42,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_FINISH_HAND_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
@@ -73,6 +74,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.date_to
 import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
 import mahjongtournamentsuite.adminapp.generated.resources.delete
 import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament_editors_note
 import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament_message
 import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
@@ -112,6 +114,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
 import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.time_zone_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_country_change_warning
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_country_locked
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_data
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name_is_required
@@ -159,7 +163,9 @@ fun EditTournamentDialog(
 
     val adminStatus by store.adminStatus.collectAsState()
     val tournaments by store.tournaments.collectAsState()
-    val canDeleteTournaments = adminStatus?.canDeleteTournaments == true
+    val canDeleteTournaments = adminStatus?.can(Permission.TOURNAMENT_DELETE, tournament.permissions) == true
+    // A tournament keeps its country. Only a super admin corrects it.
+    val canChangeCountry = adminStatus?.canChangeTournamentCountry == true
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -464,7 +470,21 @@ fun EditTournamentDialog(
                                         },
                                         mapUrlFocusRequester = settingsMapUrlFocusRequester,
                                         contactEmailFocusRequester = settingsContactEmailFocusRequester,
+                                        countryLocked = !canChangeCountry,
                                     )
+                                    if (!canChangeCountry) {
+                                        Text(
+                                            text = stringResource(Res.string.tournament_country_locked),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    } else if (settingsHostCountry.trim().uppercase() != tournament.hostCountry.trim().uppercase()) {
+                                        Text(
+                                            text = stringResource(Res.string.tournament_country_change_warning),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
                                     VenueTimeZoneField(
                                         timeZoneText = settingsTimeZone,
                                         onTimeZoneChange = { settingsTimeZone = it },
@@ -999,7 +1019,13 @@ fun EditTournamentDialog(
                 modifier = Modifier.appFocusGroup(),
                 onDismissRequest = { if (!isLoading) deleteDialogTournament = null },
                 title = { MtsDialogTitle(stringResource(Res.string.delete_tournament)) },
-                text = { MtsDialogText(stringResource(Res.string.delete_tournament_message, deleting.name, deleting.id)) },
+                text = {
+                    // An editor whose only tournament is this one stops being an editor, so the dialog says it.
+                    MtsDialogText(
+                        stringResource(Res.string.delete_tournament_message, deleting.name, deleting.id) + "\n\n" +
+                            stringResource(Res.string.delete_tournament_editors_note),
+                    )
+                },
                 confirmButton = {
                     MtsDialogButtons {
                         Button(

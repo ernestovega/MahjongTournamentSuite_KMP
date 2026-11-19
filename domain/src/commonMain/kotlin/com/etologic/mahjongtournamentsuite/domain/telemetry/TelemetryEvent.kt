@@ -193,6 +193,11 @@ object TelemetryAction {
     const val ACCOUNT_DELETED = "account_deleted"
     const val ACCOUNT_PHOTO_UPDATED = "account_photo_updated"
     const val ACCOUNT_PHOTO_REMOVED = "account_photo_removed"
+
+    /** A country admin took an account out of its countries, maybe with a request to the super admins. */
+    const val ACCOUNT_REMOVED_FROM_COUNTRIES = "account_removed_from_countries"
+    const val ACCOUNT_REQUEST_APPROVED = "account_request_approved"
+    const val ACCOUNT_REQUEST_REJECTED = "account_request_rejected"
     const val REGISTRY_PLAYER_CREATED = "registry_player_created"
     const val REGISTRY_PLAYER_UPDATED = "registry_player_updated"
     const val REGISTRY_PHOTO_UPDATED = "registry_photo_updated"
@@ -226,6 +231,9 @@ object TelemetryAction {
         ACCOUNT_DELETED,
         ACCOUNT_PHOTO_UPDATED,
         ACCOUNT_PHOTO_REMOVED,
+        ACCOUNT_REMOVED_FROM_COUNTRIES,
+        ACCOUNT_REQUEST_APPROVED,
+        ACCOUNT_REQUEST_REJECTED,
         REGISTRY_PLAYER_CREATED,
         REGISTRY_PLAYER_UPDATED,
         REGISTRY_PHOTO_UPDATED,
@@ -391,7 +399,8 @@ fun <T> AppResult<T>.trackAction(telemetry: Telemetry, action: String): AppResul
 
 /** The role that GA4 uses to split the users. An account with several roles counts as the strongest one. */
 fun Collection<GlobalUserRole>.telemetryRole(): String = when {
-    GlobalUserRole.ADMIN in this -> "admin"
+    GlobalUserRole.SUPER_ADMIN in this -> "super_admin"
+    GlobalUserRole.COUNTRY_ADMIN in this -> "country_admin"
     GlobalUserRole.EDITOR in this -> "editor"
     else -> "player"
 }

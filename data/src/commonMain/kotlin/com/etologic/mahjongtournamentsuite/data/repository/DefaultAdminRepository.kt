@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.GlobalUserRoleDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
@@ -30,6 +31,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -47,12 +51,16 @@ class DefaultAdminRepository(
         refreshMode = refreshMode,
     ) { idToken ->
         val status = backendApi.whoAmI(idToken)
+        val roles = status.roles.map { GlobalUserRole.valueOf(it.name) }.toSet().ifEmpty {
+            setOf(GlobalUserRole.valueOf(status.role.name))
+        }
         AdminStatus(
             uid = status.uid,
             role = GlobalUserRole.valueOf(status.role.name),
-            roles = status.roles.map { GlobalUserRole.valueOf(it.name) }.toSet().ifEmpty {
-                setOf(GlobalUserRole.valueOf(status.role.name))
-            },
+            roles = roles,
+            adminCountries = status.adminCountries.toSet(),
+            permissions = status.permissions?.let { Permission.fromKeys(it) }
+                ?: roles.flatMapTo(mutableSetOf()) { Permission.defaultsOf(it) },
         )
     }
 
@@ -135,6 +143,7 @@ class DefaultAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
+        adminCountries: Set<String>,
     ): AppResult<ManagedUser> = managedUserRequest("Creating user") { idToken ->
         backendApi.createUser(
             idToken = idToken,
@@ -144,6 +153,7 @@ class DefaultAdminRepository(
                 role = GlobalUserRoleDto.valueOf(role.name),
                 tournamentAssignments = tournamentAssignments.map(TournamentAssignment::toDto),
                 emaId = emaId.orEmpty(),
+                adminCountries = adminCountries.sorted(),
             ),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
@@ -158,6 +168,7 @@ class DefaultAdminRepository(
                 role = GlobalUserRoleDto.valueOf(user.role.name),
                 tournamentAssignments = user.tournamentAssignments.map(TournamentAssignment::toDto),
                 emaId = user.emaId.orEmpty(),
+                adminCountries = user.adminCountries.sorted(),
             ),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
@@ -203,6 +214,30 @@ class DefaultAdminRepository(
             uid,
             UpdatePlayerPhotoRequestDto(contentType = contentType, dataBase64 = Base64.Default.encode(bytes)),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY) }
+    }
+
+    override suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = managedUserRequest("Removing an account from the countries") { idToken ->
+        backendApi.removeFromMyCountries(idToken, uid, AccountRemovalRequestDto(kind = kind?.name, reason = reason.trim()))
+            .user.toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
+    }
+
+    override suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = managedUserRequest("Listing account requests") { idToken ->
+        backendApi.listAccountRequests(idToken).requests.map { dto ->
+            AccountRequest(
+                id = dto.id,
+                kind = AccountRequestKind.entries.firstOrNull { it.name == dto.kind } ?: AccountRequestKind.DISABLE,
+                targetUid = dto.targetUid,
+                targetEmail = dto.targetEmail,
+                reason = dto.reason,
+                requestedByEmail = dto.requestedByEmail,
+                createdAtMillis = dto.createdAtMs,
+            )
+        }
+    }
+
+    override suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = managedUserRequest("Resolving an account request") { idToken ->
+        backendApi.resolveAccountRequest(idToken, id, approve)
+        cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
     }
 
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = managedUserRequest("Removing the photo of a user") { idToken ->
@@ -267,8 +302,13 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
         TournamentAssignment(
             tournamentId = assignment.tournamentId,
             tournamentName = assignment.tournamentName,
+            country = assignment.country,
         )
     },
+    adminCountries = adminCountries.toSet(),
+    canManage = canManage,
+    hasGrantsOutside = hasGrantsOutside,
+    emailHidden = emailHidden,
 )
 
 private fun TournamentAssignment.toDto(): TournamentAssignmentDto = TournamentAssignmentDto(

@@ -34,13 +34,13 @@ class AuthPresenter(
     }
 
     /**
-     * Success(true) when the signed-in account is an admin or an editor. This app is only for them.
+     * Success(true) when the signed-in account is a super admin, a country admin or an editor. This app is only for them.
      * Failure when the profile cannot load. The caller must not let the account pass then.
      */
     suspend fun isManager(): AppResult<Boolean> = when (val result = authRepository.getMe()) {
         is AppResult.Success -> {
             telemetry.userProperty(TelemetryProperty.ROLE, result.value.roles.telemetryRole())
-            AppResult.Success(result.value.roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR })
+            AppResult.Success(result.value.roles.any { it != GlobalUserRole.PLAYER })
         }
         is AppResult.Failure -> result
     }

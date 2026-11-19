@@ -662,6 +662,12 @@ describe("country admin rules", () => {
       assert.equal(stranger?.email, "");
       assert.equal(users.find((user) => user.uid === local.uid)?.email, local.email);
     }
+    // Saving an account with a hidden email sends no email: the account keeps it.
+    const saved = await server.request("PUT", `/admin/users/${someone.uid}`, {
+      token: spanishEditor.token, body: { email: "", alias: "New alias", role: "PLAYER" },
+    });
+    assert.equal(saved.status, 200);
+    assert.equal((await auth.getUser(someone.uid)).email, someone.email);
   });
 
   it("an editor that loses its last tournament becomes a player, or is disabled without an EMA id", async () => {

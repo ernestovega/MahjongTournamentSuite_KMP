@@ -241,7 +241,10 @@ fun CreateTournamentDialog(
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
     var primaryColor by remember { mutableStateOf("#02B16B") }
-    var hostCountry by remember { mutableStateOf("") }
+    val adminStatus by store.adminStatus.collectAsState()
+    // A country admin creates tournaments only in its countries. A super admin creates them in any country.
+    val allowedCountries = adminStatus?.takeUnless { it.isSuperAdmin }?.adminCountries
+    var hostCountry by remember { mutableStateOf(allowedCountries?.singleOrNull().orEmpty()) }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
     var hostCity by remember { mutableStateOf("") }
     var venue by remember { mutableStateOf(TournamentVenue()) }
@@ -724,6 +727,7 @@ fun CreateTournamentDialog(
                                 }
                                 CreateTab.VENUE -> {
                                     TournamentPlaceFields(
+                                        allowedCountries = allowedCountries,
                                         venue = venue,
                                         onVenueChange = {
                                             venue = it

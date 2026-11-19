@@ -14,11 +14,11 @@ class UserProfileMappingTest {
             uid = "u1",
             email = "a@example.test",
             emaId = "12345678",
-            roles = listOf(GlobalUserRoleDto.ADMIN, GlobalUserRoleDto.PLAYER),
+            roles = listOf(GlobalUserRoleDto.SUPER_ADMIN, GlobalUserRoleDto.PLAYER),
         ).toDomain()
 
         assertEquals("12345678", profile.emaId)
-        assertEquals(setOf(GlobalUserRole.ADMIN, GlobalUserRole.PLAYER), profile.roles)
+        assertEquals(setOf(GlobalUserRole.SUPER_ADMIN, GlobalUserRole.PLAYER), profile.roles)
     }
 
     @Test

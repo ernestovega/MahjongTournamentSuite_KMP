@@ -71,6 +71,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
@@ -89,7 +90,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
-import com.etologic.mahjongtournamentsuite.presentation.components.DevMenuActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
@@ -97,6 +97,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DevMenuActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -107,6 +108,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
+import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusOnOpen
@@ -152,9 +154,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
 import mahjongtournamentsuite.adminapp.generated.resources.open_profile
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.role_admin
-import mahjongtournamentsuite.adminapp.generated.resources.role_editor
-import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_color_value
@@ -273,16 +272,13 @@ fun TournamentsScreen(
         }
     }
 
-    val roleLabel = adminStatus?.let {
-        when (it.role) {
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> stringResource(Res.string.role_admin)
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.EDITOR -> stringResource(Res.string.role_editor)
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.PLAYER -> stringResource(Res.string.role_player)
-        }
-    }
-    val canConfigureTournaments = adminStatus?.canConfigureTournaments == true
-    val canDeleteTournaments = adminStatus?.canDeleteTournaments == true
-    val canEditTournament = canConfigureTournaments || canDeleteTournaments
+    val roleLabel = adminStatus?.role?.label()
+
+    // The edit button of a tournament shows when the account may configure or delete that tournament.
+    fun canEditTournament(tournament: Tournament): Boolean = adminStatus?.let { status ->
+        status.can(Permission.TOURNAMENT_CONFIGURE, tournament.permissions) || status.can(Permission.TOURNAMENT_DELETE, tournament.permissions)
+    } == true
+
     val tournamentFocusRequesters = remember(tournaments.map { it.id }) {
         tournaments.map { FocusRequester() }
     }
@@ -368,7 +364,7 @@ fun TournamentsScreen(
                 } else {
                     null
                 },
-                devMenu = if (adminStatus?.isAdmin == true) {
+                devMenu = if (adminStatus?.canUseDevMenu == true) {
                     DevMenuActions(
                         onActivity = { navController.navigate(ActivityRoute()) },
                         onAppErrors = { navController.navigate(ErrorsRoute) },
@@ -433,7 +429,7 @@ fun TournamentsScreen(
                                     },
                                 tournament = tournament,
                                 enabled = !isLoading,
-                                showEdit = canEditTournament,
+                                showEdit = canEditTournament(tournament),
                                 onClick = {
                                     lastFocusedTournamentId = tournament.id
                                     lastFocusedControl = "tournament"
@@ -507,7 +503,7 @@ fun TournamentsScreen(
                                                         enabled = !isLoading,
                                                         cellMinWidth = cellMinWidth,
                                                         actionCellMinWidth = actionCellMinWidth,
-                                                        showEdit = canEditTournament,
+                                                        showEdit = canEditTournament(tournament),
                                                         onClick = {
                                                             lastFocusedTournamentId = tournament.id
                                                             lastFocusedControl = "tournament"

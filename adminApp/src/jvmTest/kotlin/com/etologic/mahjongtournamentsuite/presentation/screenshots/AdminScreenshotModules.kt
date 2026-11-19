@@ -45,7 +45,7 @@ private class NoPlayerImport : PlayerImportRepository {
 
 /** The real presenters of the admin app over the fake data of the screenshots. */
 internal fun adminModules(
-    role: GlobalUserRole = GlobalUserRole.ADMIN,
+    role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN,
     tournaments: TournamentRepository = ScreenshotTournamentRepository(),
     admin: AdminRepository = ScreenshotAdminRepository(role),
     statistics: StatisticsRepository = ScreenshotStatisticsRepository(),

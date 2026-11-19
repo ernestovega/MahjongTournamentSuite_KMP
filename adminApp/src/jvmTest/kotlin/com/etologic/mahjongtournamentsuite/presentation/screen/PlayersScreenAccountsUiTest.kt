@@ -100,7 +100,7 @@ class PlayersScreenAccountsUiTest {
 
     @Test
     fun theRowsShowNoAccountStateAndTheMenuSendsNoEmails() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount)))
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(withAccount, withoutAccount)))
 
         onAllNodesWithContentDescription("Has account").assertCountEquals(0)
         onAllNodesWithContentDescription("No account").assertCountEquals(0)
@@ -121,7 +121,7 @@ class PlayersScreenAccountsUiTest {
 
     @Test
     fun anAdminSeesTheEditOptionForAPlayerWithAnAccountAndNotTheInviteOption() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount)))
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(withAccount, withoutAccount)))
 
         openMenu(0)
 
@@ -141,7 +141,7 @@ class PlayersScreenAccountsUiTest {
 
     @Test
     fun anEmptySlotHasNoAccountOptionAtAll() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(empty)), waitForMenus = false)
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(empty)), waitForMenus = false)
 
         onAllNodesWithContentDescription("Player actions").assertCountEquals(0)
         onAllNodesWithText("Invite").assertCountEquals(0)
@@ -168,7 +168,7 @@ class PlayersScreenAccountsUiTest {
     @Test
     fun anAdminSeesTheSavedEmailInTheDialogAndCanRemoveIt() = runComposeUiTest {
         val saved = withoutAccount.copy(email = "saved@example.test")
-        val world = World(GlobalUserRole.ADMIN, listOf(saved))
+        val world = World(GlobalUserRole.SUPER_ADMIN, listOf(saved))
         show(world)
 
         openMenu(0)
@@ -183,7 +183,7 @@ class PlayersScreenAccountsUiTest {
 
     @Test
     fun aPlayerWithAnAccountOffersNoEditEmail() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(withAccount)))
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(withAccount)))
 
         openMenu(0)
 

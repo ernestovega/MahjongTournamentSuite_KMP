@@ -30,8 +30,8 @@ class StatisticsPresenter(
     /** One tournament with its hands. It has the table details. */
     suspend fun tournament(tournamentId: String): AppResult<TournamentStatisticsData> = loadStatistics.tournament(tournamentId, RefreshMode.IF_CHANGED).viewed("tournament")
 
-    /** True for an administrator. The statistics of all tournaments are only for administrators. */
-    suspend fun canSeeOverview(): Boolean = (adminRepository.whoAmI() as? AppResult.Success)?.value?.isAdmin == true
+    /** True when the account may see the statistics of all tournaments together. */
+    suspend fun canSeeOverview(): Boolean = (adminRepository.whoAmI() as? AppResult.Success)?.value?.canSeeOverview == true
 
     /** All tournaments together. The server keeps the sums, so no hands load here. */
     suspend fun overview(): AppResult<OverviewStatisticsData> = loadOverview.overview(RefreshMode.IF_CHANGED).viewed("overview")

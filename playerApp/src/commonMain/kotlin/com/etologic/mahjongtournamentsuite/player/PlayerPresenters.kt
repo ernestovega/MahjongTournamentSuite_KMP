@@ -48,11 +48,11 @@ class PlayerSessionPresenter(
         return (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId?.takeIf { it.isNotBlank() }
     }
 
-    /** True when the account is also an admin or an editor, so it can open the admin app. */
+    /** True when the account is also a super admin, a country admin or an editor, so it can open the admin app. */
     suspend fun canManage(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): Boolean {
         if (!hasSession()) return false
         val roles = (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.roles.orEmpty()
-        return roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR }
+        return roles.any { it != GlobalUserRole.PLAYER }
     }
 
     suspend fun signIn(email: String, password: String): AppResult<Unit> = when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {

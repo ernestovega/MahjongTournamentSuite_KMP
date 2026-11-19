@@ -70,6 +70,8 @@ internal fun PasswordResetBar(
     onDelete: () -> Unit,
     /** False on a phone, where the send button floats at the bottom of the screen. */
     showSend: Boolean = true,
+    /** False for a country admin: only super admins delete accounts. */
+    showDelete: Boolean = true,
 ) {
     // The items wrap on a narrow screen. On a wide one the send button stays at the end of the line.
     FlowRow(
@@ -85,13 +87,15 @@ internal fun PasswordResetBar(
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (showSend) Spacer(Modifier.weight(1f))
         // On a phone the delete stays here, and the send button floats at the bottom of the screen.
-        TextButton(
-            enabled = deleteCount > 0 && !busy,
-            onClick = onDelete,
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-        ) {
-            Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.delete_selected_count, deleteCount), Modifier.padding(start = 8.dp))
+        if (showDelete) {
+            TextButton(
+                enabled = deleteCount > 0 && !busy,
+                onClick = onDelete,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
+                Text(stringResource(Res.string.delete_selected_count, deleteCount), Modifier.padding(start = 8.dp))
+            }
         }
         if (showSend) {
             Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {

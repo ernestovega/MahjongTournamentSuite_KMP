@@ -179,7 +179,7 @@ open class ScreenshotAuthRepository(private val profile: UserProfile? = Screensh
 
 /** The administration of an account with [role]. */
 open class ScreenshotAdminRepository(
-    private val role: GlobalUserRole = GlobalUserRole.ADMIN,
+    private val role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN,
     private val users: List<ManagedUser> = ScreenshotData.users,
 ) : AdminRepository {
     override suspend fun whoAmI(refreshMode: RefreshMode) = ok(AdminStatus("admin-1", role))
@@ -191,6 +191,7 @@ open class ScreenshotAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
+        adminCountries: Set<String>,
     ): AppResult<ManagedUser> = noWrite()
 
     override suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = noWrite()
