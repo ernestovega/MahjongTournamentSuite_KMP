@@ -27,6 +27,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -675,7 +676,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             // The tree of a window in the background is still readable, but its back keys go to the window in front.
             bringTheAppToTheFront()
             if (c.isOnScreen("Players & results")) return
-            log("back to the tournament, attempt ${it + 1}: resumed ${resumedActivities()}, ${timerActivities().size} timers")
+            val focus = shell("dumpsys window").lines().firstOrNull { line -> "mCurrentFocus" in line }?.trim()?.take(120)
+            log("back to the tournament, attempt ${it + 1}: resumed ${resumedActivities()}, ${timerActivities().size} timers, focus $focus")
             shell("input keyevent KEYCODE_BACK")
             runCatching { c.waitForText("Players & results", timeoutMs = 5_000) }
             if (c.isOnScreen("Players & results")) return
@@ -684,7 +686,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             if (timerActivities().isNotEmpty()) {
                 closeTheTimerWindow()
             } else {
-                runCatching { c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick() }
+                // The Back of the top bar by its click action: a tap is injected into the window with the focus,
+                // which is not always the app after the Timer window closes.
+                val clicked = runCatching {
+                    c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst()
+                        .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+                }
+                if (clicked.isFailure) log("the Back of the top bar did not answer: ${clicked.exceptionOrNull()?.message?.take(80)}")
             }
             runCatching { c.waitForText("Players & results", timeoutMs = 15_000) }
         }
