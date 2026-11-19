@@ -448,6 +448,7 @@ fun TournamentsScreen(
                     }
                 } else {
                     SectionCard(
+                        container = false,
                         content = {
                             when {
                                 !isRefreshing && tournaments.isEmpty() -> {

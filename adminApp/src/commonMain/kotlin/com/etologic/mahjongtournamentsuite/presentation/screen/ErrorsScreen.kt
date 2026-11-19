@@ -235,6 +235,7 @@ fun ErrorsScreen(navController: NavHostController) {
                 reloadEnabled = !loading,
             )
             SectionCard(
+                container = false,
                 title = stringResource(Res.string.app_errors),
                 subtitle = if (loading) stringResource(Res.string.errors_loading_count, groups.size) else stringResource(Res.string.errors_summary, shown.size, groups.size),
             ) {
