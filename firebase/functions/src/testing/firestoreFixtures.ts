@@ -21,11 +21,16 @@ export async function seedTournament(params: {
   tables: SeedTable[];
   withHands?: boolean;
   isCompleted?: boolean;
+  /** The host country, as a two-letter code. It decides which country admins manage the tournament. */
+  hostCountry?: string;
+  eventEndDate?: string;
 }): Promise<string> {
   const tournamentId = params.tournamentId ?? newTournamentId();
   const tournamentRef = db.collection("tournaments").doc(tournamentId);
   await tournamentRef.set({
     isCompleted: params.isCompleted ?? false,
+    hostCountry: params.hostCountry ?? "ES",
+    ...(params.eventEndDate ? { eventEndDate: params.eventEndDate } : {}),
     tablesWithProgress: 0,
     dataVersions: { tables: { revision: 1, changedAt: null } },
   });

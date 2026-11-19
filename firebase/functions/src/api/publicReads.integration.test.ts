@@ -54,7 +54,7 @@ describe("what anyone can read without an account", () => {
   });
 
   it("never shows emails or accounts, even to a signed-in admin", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
+    const admin = await createAccount({ role: "SUPER_ADMIN" });
     const { body } = await get(`/public/tournaments/${open}/players`, admin.token);
     const slot = body.players.find((p: { id: number }) => p.id === 1);
 

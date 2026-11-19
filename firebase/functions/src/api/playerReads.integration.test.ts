@@ -65,7 +65,7 @@ describe("what an account reads outside /public", () => {
     assert.deepEqual((body as { players: Array<{ emaId: string }> }).players.map((p) => p.emaId).sort(), ["10000001", "10000002", "10000004", "10000005"]);
   });
 
-  it("shows an editor whether a slot has an account and an email, and never the email", async () => {
+  it("shows an editor of the tournament the emails, and whether a slot has an account", async () => {
     const reader = await createAccount({ role: "EDITOR", memberOf: [t1] });
     await db.doc(`tournaments/${t1}/players/2`).update({ email: "pending@example.test" });
 
@@ -73,12 +73,12 @@ describe("what an account reads outside /public", () => {
     const players = (body as { players: Array<{ id: number; email: string | null; hasAccount: boolean; hasEmail: boolean }> }).players;
 
     assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.hasAccount, slot.hasEmail]), [
-      [1, null, true, true], [2, null, false, true], [3, null, true, true], [4, null, true, true],
+      [1, owner.email, true, true], [2, "pending@example.test", false, true], [3, player.email, true, true], [4, both.email, true, true],
     ]);
   });
 
   it("shows an admin the email of the account, or the pending email of a slot with no account", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
+    const admin = await createAccount({ role: "SUPER_ADMIN" });
 
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: admin.token });
     const players = (body as { players: Array<{ id: number; email: string | null; accountUid: string | null }> }).players;

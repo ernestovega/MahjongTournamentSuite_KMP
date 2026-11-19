@@ -42,6 +42,8 @@
     "audit:ema-ids": "npm run build && node lib/scripts/auditEmaIds.js",
     "cleanup:player-claims": "npm run build && node lib/scripts/fixPlayerClaims.js",
     "cleanup:player-claims:apply": "npm run build && node lib/scripts/fixPlayerClaims.js --apply",
+    "migrate:role-claims": "npm run build && node lib/scripts/migrateRoleClaims.js",
+    "migrate:role-claims:apply": "npm run build && node lib/scripts/migrateRoleClaims.js --apply",
     "cleanup:account-links": "npm run build && node lib/scripts/removeStoredAccountLinks.js",
     "cleanup:account-links:apply": "npm run build && node lib/scripts/removeStoredAccountLinks.js --apply",
     "cleanup:emails-and-guests": "npm run build && node lib/scripts/removeNonMembersAndInvitations.js",

@@ -100,7 +100,7 @@ async function setupCalibration(baseEmail: string, password: string) {
       admin = await auth.createUser({ email: adminEmail, emailVerified: true });
       await createUserProfile(admin.uid, adminEmail);
     }
-    if ((admin.customClaims ?? {}).admin !== true) await setGlobalUserRole(admin.uid, "ADMIN");
+    if ((admin.customClaims ?? {}).superAdmin !== true) await setGlobalUserRole(admin.uid, "SUPER_ADMIN");
     await auth.updateUser(admin.uid, { password, emailVerified: true });
     // The apps show the alias instead of a name made from the email, so the videos of a game day show no address.
     await updateOwnAlias(admin.uid, "Bot organizer");

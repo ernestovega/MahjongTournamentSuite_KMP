@@ -4,7 +4,8 @@ import { deleteEmaPlayers, tournamentsOfEmaPlayers } from "../../services/emaPla
 import { actorFromToken } from "../../services/changeLog";
 
 import { badRequest, forbidden } from "../httpError";
-import { requireAdmin } from "../middleware/requireAdmin";
+import { requirePermission } from "../middleware/requirePermission";
+import { isStaff, loadAccess } from "../../services/accessService";
 import { requireAuth } from "../middleware/requireAuth";
 import { listPlayerTournamentIds } from "../../services/playerAccountsService";
 import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
@@ -14,8 +15,8 @@ export function playersRouter(): Router {
 
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
-      if (decoded.admin === true || decoded.editor === true) {
+      const decoded = res.locals.auth as { uid: string; player?: boolean };
+      if (isStaff(await loadAccess(decoded.uid))) {
         res.status(200).json({ players: await listPlayers() });
         return;
       }
@@ -27,7 +28,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
+  router.post("/", requireAuth, requirePermission("ema.create"), async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.body?.emaId);
       const firstName = String(req.body?.firstName ?? "").trim();
@@ -48,7 +49,7 @@ export function playersRouter(): Router {
   });
 
   // Before a delete: the tournaments where each chosen player has data. Those players are deactivated, not deleted.
-  router.post("/delete/preview", requireAuth, requireAdmin, async (req, res, next) => {
+  router.post("/delete/preview", requireAuth, requirePermission("ema.delete"), async (req, res, next) => {
     try {
       const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
       const emaIds = raw.map((value) => validateEmaId(value));
@@ -59,7 +60,7 @@ export function playersRouter(): Router {
   });
 
   // Deletes many EMA players at once, from the Player base. Their accounts stay, without the EMA number.
-  router.post("/delete", requireAuth, requireAdmin, async (req, res, next) => {
+  router.post("/delete", requireAuth, requirePermission("ema.delete"), async (req, res, next) => {
     try {
       const raw = Array.isArray(req.body?.emaIds) ? req.body.emaIds as unknown[] : [];
       const emaIds = raw.map((value) => validateEmaId(value));
@@ -78,7 +79,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:emaId", requireAuth, requirePermission("ema.edit"), async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const newEmaId = validateEmaId(req.body?.emaId ?? emaId);
@@ -101,7 +102,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId/photo", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:emaId/photo", requireAuth, requirePermission("ema.edit"), async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const contentType = String(req.body?.contentType ?? "").trim().toLowerCase();

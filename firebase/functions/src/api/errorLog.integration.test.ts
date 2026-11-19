@@ -33,7 +33,7 @@ describe("error log API", () => {
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
-    admin = await createAccount({ role: "ADMIN" });
+    admin = await createAccount({ role: "SUPER_ADMIN" });
     editor = await createAccount({ role: "EDITOR" });
   });
   after(() => server.close());

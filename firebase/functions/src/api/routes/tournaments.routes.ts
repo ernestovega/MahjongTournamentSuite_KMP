@@ -4,13 +4,13 @@ import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
 import { auth, db } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
-import { requireEditor } from "../middleware/requireEditor";
-import { requireAdmin } from "../middleware/requireAdmin";
-import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
+import { accessOf, requirePermission, requireTournamentPermission } from "../middleware/requirePermission";
 import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
-import { getGlobalUserRole, hasAdminClaim, type GlobalUserRole } from "../../models/globalRole";
-import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
+import { WORLD_COUNTRY_CODES } from "../../services/countryCodes";
+import { canInCountry, canInTournament, forgetTournamentCountry, isStaff, loadAccess, tournamentCountry, tournamentPermissions, type Access } from "../../services/accessService";
+import { listVisibleTournaments, tournamentHasResults, tournamentIsPast, visibleTournamentIdSet } from "../../services/tournamentScope";
+import { applyLostAssignments, listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
   createTournament,
   deleteTournament,
@@ -83,12 +83,15 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
   return options;
 }
 
-/** Only an admin changes the tables of a completed tournament, so late changes to the results are traceable. */
-async function assertTournamentOpenForEditor(tournamentId: string, token: { admin?: boolean } | undefined): Promise<void> {
-  if (hasAdminClaim(token)) return;
+/**
+ * Only a super admin or a country admin of the tournament changes the tables of a completed tournament, so late
+ * changes to the results are traceable.
+ */
+async function assertTournamentOpenForEditor(tournamentId: string, access: Access): Promise<void> {
+  if (await canInTournament(access, "tournament.editCompleted", tournamentId)) return;
   const snapshot = await db.collection("tournaments").doc(tournamentId).get();
   if (snapshot.get("isCompleted") === true) {
-    throw forbidden("The tournament is completed. Only an admin can change its tables");
+    throw forbidden("The tournament is completed. Only an admin of the tournament can change its tables");
   }
 }
 
@@ -107,7 +110,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/sync/manifest",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         res.setHeader("Cache-Control", "no-store");
@@ -119,30 +122,26 @@ export function tournamentsRouter(): Router {
   );
 
   /**
-   * The role that decides which tournaments an account lists. A token keeps the claims of the moment it was issued,
-   * for up to one hour, so an account that just became an editor still has a token without the claim.
-   * Then the account itself is read.
+   * Super admins see every tournament, country admins the tournaments of their countries and editors the ones
+   * assigned to them. Each tournament carries the permissions of the account in it, so the app shows only the actions
+   * that the account may use. The player app reads /public instead.
    */
-  const listingRole = async (decoded: { uid: string; admin?: boolean; editor?: boolean }): Promise<GlobalUserRole> => {
-    if (decoded.admin === true) return "ADMIN";
-    if (decoded.editor === true) return "EDITOR";
-    const user = await auth.getUser(decoded.uid).catch(() => null);
-    return user ? getGlobalUserRole(user) : "PLAYER";
-  };
-
-  // Admins see every tournament. Editors see the ones assigned to them. The player app reads /public instead.
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const role = await listingRole(res.locals.auth as { uid: string; admin?: boolean; editor?: boolean });
-      let tournaments: Awaited<ReturnType<typeof listAllTournaments>>;
-      if (role === "ADMIN") {
-        tournaments = await listAllTournaments();
-      } else if (role === "EDITOR") {
-        tournaments = await listTournamentsForUser((res.locals.auth as { uid: string }).uid);
-      } else {
-        tournaments = [];
+      const access = await loadAccess((res.locals.auth as { uid: string }).uid);
+      if (access.disabled || !isStaff(access)) {
+        res.status(200).json({ tournaments: [] });
+        return;
       }
-      res.status(200).json({ tournaments });
+      const { tournaments, memberIds } = await listVisibleTournaments(access);
+      const withPermissions = await Promise.all(tournaments.map(async (tournament) => ({
+        ...tournament,
+        permissions: await tournamentPermissions(access, tournament.id, {
+          country: tournament.hostCountry,
+          member: memberIds.has(tournament.id),
+        }),
+      })));
+      res.status(200).json({ tournaments: withPermissions });
     } catch (e) {
       next(e);
     }
@@ -152,7 +151,7 @@ export function tournamentsRouter(): Router {
    * The statistics of all tournaments together: sums and the leaderboards.
    * The server keeps them up to date when a table changes. This request reads a fixed number of documents.
    */
-  router.get("/statistics/overview", requireAuth, requireAdmin, async (_req, res, next) => {
+  router.get("/statistics/overview", requireAuth, requirePermission("statistics.overview"), async (_req, res, next) => {
     try {
       res.status(200).json(await loadOverview());
     } catch (e) {
@@ -161,14 +160,13 @@ export function tournamentsRouter(): Router {
   });
 
   /**
-   * The ids of the tournaments that the signed-in account can see, or null for an administrator.
+   * The ids of the tournaments that the signed-in account can see, or null for a super admin.
    * It is the same rule as the tournament list above.
    */
-  const visibleTournamentIds = async (decoded: { uid: string; admin?: boolean; editor?: boolean }) => {
-    const role = await listingRole(decoded);
-    if (role === "ADMIN") return null;
-    if (role !== "EDITOR") return new Set<string>();
-    return new Set((await listTournamentsForUser(decoded.uid)).map((tournament) => tournament.id));
+  const visibleTournamentIds = async (decoded: { uid: string }) => {
+    const access = await loadAccess(decoded.uid);
+    if (access.disabled || !isStaff(access)) return new Set<string>();
+    return visibleTournamentIdSet(access);
   };
 
   const readEmaParam = (value: unknown): string => {
@@ -192,7 +190,7 @@ export function tournamentsRouter(): Router {
    */
   const personHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
+      const decoded = res.locals.auth as { uid: string };
       const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       if (emaId === "") {
         res.status(200).json({ emaId, tournaments: [] });
@@ -207,7 +205,7 @@ export function tournamentsRouter(): Router {
   /** The final places of one player in a few tournaments. The app asks for the tournaments on screen. */
   const standingsHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
+      const decoded = res.locals.auth as { uid: string };
       const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       const allowed = await visibleTournamentIds(decoded);
       const ids = readTournamentIds(req.query.tournaments).filter((id) => allowed == null || allowed.has(id));
@@ -222,7 +220,7 @@ export function tournamentsRouter(): Router {
   router.get("/statistics/persons/:emaId", requireAuth, personHandler(false));
   router.get("/statistics/persons/:emaId/standings", requireAuth, standingsHandler(false));
 
-  router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
+  router.post("/", requireAuth, requirePermission("tournaments.create"), async (req, res, next) => {
     try {
       const decoded = res.locals.auth as { uid: string };
 
@@ -272,8 +270,8 @@ export function tournamentsRouter(): Router {
       }
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
-      if (!/^[A-Z]{2}$/.test(hostCountry)) {
-        issues.push({ field: "hostCountry", message: "Must use a two-letter country code", value: body?.hostCountry });
+      if (!WORLD_COUNTRY_CODES.has(hostCountry)) {
+        issues.push({ field: "hostCountry", message: "Must be the two-letter code of a real country", value: body?.hostCountry });
       }
       if (!hostCity) issues.push({ field: "hostCity", message: "Required", value: body?.hostCity });
       if (!shortName || shortName.length > 10) {
@@ -319,6 +317,10 @@ export function tournamentsRouter(): Router {
           },
           inferred: { name, isTeams, numPlayers, numRounds, numTries, playersCount: players?.length, tablesCount: tables?.length },
         });
+      }
+      // A country admin creates tournaments only in its own countries.
+      if (!canInCountry(accessOf(res), "tournaments.create", hostCountry)) {
+        throw forbidden(`You can create tournaments only in your countries (${hostCountry})`);
       }
 
       const parsedPlayers = (players ?? []).map((p, idx) => {
@@ -442,12 +444,12 @@ export function tournamentsRouter(): Router {
     }
   };
 
-  router.post("/id-card-proof", requireAuth, requireEditor, generateIdCardProof);
+  router.post("/id-card-proof", requireAuth, requirePermission("tools.idCards"), generateIdCardProof);
   // Keep the previous route working for already deployed web bundles.
-  router.post("/id-card-preview", requireAuth, requireEditor, generateIdCardProof);
+  router.post("/id-card-preview", requireAuth, requirePermission("tools.idCards"), generateIdCardProof);
 
   // Reads the whole tournament and reports wrong or odd data. It changes nothing.
-  router.get("/:tournamentId/integrity", requireAuth, requireTournamentEditor, async (req, res, next) => {
+  router.get("/:tournamentId/integrity", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
       res.setHeader("Cache-Control", "no-store");
       res.status(200).json(await runTournamentIntegrityCheck(pathParam(req, "tournamentId")));
@@ -456,7 +458,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.get("/:tournamentId/id-cards", requireAuth, requireTournamentEditor, async (req, res, next) => {
+  router.get("/:tournamentId/id-cards", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
       const pdf = await generateTournamentIdCards(pathParam(req, "tournamentId"), readIdCardSheetOptions(req.query));
       res.setHeader("Content-Type", "application/pdf");
@@ -467,7 +469,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.get("/:tournamentId/id-list", requireAuth, requireTournamentEditor, async (req, res, next) => {
+  router.get("/:tournamentId/id-list", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
       const workbook = await generateTournamentIdList(pathParam(req, "tournamentId"));
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -478,7 +480,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.post("/:tournamentId/ema-report", requireAuth, requireTournamentEditor, async (req, res, next) => {
+  router.post("/:tournamentId/ema-report", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
       const rawRows = Array.isArray(req.body?.rows) ? req.body.rows as unknown[] : null;
       if (rawRows == null || rawRows.length === 0) throw badRequest("Ranking rows are required");
@@ -507,7 +509,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.put("/:tournamentId/settings", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:tournamentId/settings", requireAuth, requireTournamentPermission("tournament.configure"), async (req, res, next) => {
     try {
       const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
       if (body == null) throw badRequest("Request body must be JSON");
@@ -537,8 +539,14 @@ export function tournamentsRouter(): Router {
       if (!isValidIsoDateRange(eventStartDate, eventEndDate)) {
         throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
       }
-      if (!/^[A-Z]{2}$/.test(hostCountry)) {
-        throw badRequest("Host country must use a two-letter country code");
+      if (!WORLD_COUNTRY_CODES.has(hostCountry)) {
+        throw badRequest("Host country must be the two-letter code of a real country");
+      }
+      // The country decides who manages the tournament, so only a super admin changes it, to fix a mistake.
+      const tournamentId = pathParam(req, "tournamentId");
+      const countryChanges = hostCountry !== await tournamentCountry(tournamentId);
+      if (countryChanges && !accessOf(res).superAdmin) {
+        throw forbidden("Only a super admin can change the country of a tournament");
       }
       if (!hostCity) throw badRequest("Host city is required");
       const venue = normalizeVenue(body);
@@ -551,7 +559,7 @@ export function tournamentsRouter(): Router {
         throw badRequest("Supply an uploaded logo or a reusable logo, not both");
       }
       const tournament = await updateTournamentSettings({
-        tournamentId: pathParam(req, "tournamentId"),
+        tournamentId,
         name,
         shortName,
         primaryColor,
@@ -589,16 +597,27 @@ export function tournamentsRouter(): Router {
           roundSchedules: body.roundSchedules, agendaItems: body.agendaItems,
         },
       });
+      if (countryChanges) forgetTournamentCountry(tournamentId);
       res.status(200).json(tournament);
     } catch (e) {
       next(e);
     }
   });
 
-  router.delete("/:tournamentId", requireAuth, requireAdmin, async (req, res, next) => {
+  router.delete("/:tournamentId", requireAuth, requireTournamentPermission("tournament.delete"), async (req, res, next) => {
     try {
-      const removed = await tournamentNameOf(pathParam(req, "tournamentId"));
-      await deleteTournament(pathParam(req, "tournamentId"));
+      const tournamentId = pathParam(req, "tournamentId");
+      // A tournament that ended with results is history. Only a super admin deletes it.
+      const snapshot = await db.doc(`tournaments/${tournamentId}`).get();
+      if (snapshot.exists && tournamentIsPast(snapshot.get("eventEndDate")) && await tournamentHasResults(tournamentId)
+        && !accessOf(res).superAdmin) {
+        throw forbidden("Only a super admin can delete a finished tournament with results");
+      }
+      const memberUids = (await db.collection(`tournaments/${tournamentId}/members`).get()).docs.map((member) => member.id);
+      const removed = await tournamentNameOf(tournamentId);
+      await deleteTournament(tournamentId);
+      forgetTournamentCountry(tournamentId);
+      await applyLostAssignments(memberUids);
       await recordActivity({
         action: "tournament.delete", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
         target: removed,
@@ -609,7 +628,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.put("/:tournamentId", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:tournamentId", requireAuth, requireTournamentPermission("tournament.configure"), async (req, res, next) => {
     try {
       const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
       const name = String(body?.name ?? "").trim();
@@ -629,7 +648,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/users/lookup",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const email = String(req.query.email ?? "").trim();
@@ -645,7 +664,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/members",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const members = await listTournamentMembers(pathParam(req, "tournamentId"));
@@ -659,7 +678,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/players/:playerId",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const playerId = Number(pathParam(req, "playerId"));
@@ -692,7 +711,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/players/:playerId/substitution",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const playerId = Number(pathParam(req, "playerId"));
@@ -719,7 +738,7 @@ export function tournamentsRouter(): Router {
   router.delete(
     "/:tournamentId/players/:playerId/substitution",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const playerId = Number(pathParam(req, "playerId"));
@@ -744,7 +763,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireAdmin,
+    requireTournamentPermission("tournament.members"),
     async (req, res, next) => {
       try {
         await upsertTournamentMember({
@@ -766,10 +785,10 @@ export function tournamentsRouter(): Router {
   router.delete(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireAdmin,
+    requireTournamentPermission("tournament.members"),
     async (req, res, next) => {
       try {
-        await removeTournamentMember({
+        const result = await removeTournamentMember({
           tournamentId: pathParam(req, "tournamentId"),
           uid: pathParam(req, "uid"),
         });
@@ -777,7 +796,7 @@ export function tournamentsRouter(): Router {
           action: "member.remove", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `user ${pathParam(req, "uid")}`,
         });
-        res.status(200).json({ ok: true });
+        res.status(200).json({ ok: true, result });
       } catch (e) {
         next(e);
       }
@@ -787,14 +806,14 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/players",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         // Editors get the names, so the tables do not need the whole EMA registry.
         const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withNames: true });
-        // Only admins read emails. Editors see whether a slot has an account.
-        const isAdmin = hasAdminClaim(res.locals.auth);
-        res.status(200).json({ players: players.map((player) => (isAdmin ? player : { ...player, email: null })) });
+        // Emails go to the accounts that manage the tournament. The others see whether a slot has an account.
+        const withEmails = await canInTournament(accessOf(res), "tournament.playerEmails", pathParam(req, "tournamentId"));
+        res.status(200).json({ players: players.map((player) => (withEmails ? player : { ...player, email: null })) });
       } catch (e) {
         next(e);
       }
@@ -804,7 +823,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/teams",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const teams = await listTournamentTeams(pathParam(req, "tournamentId"));
@@ -818,7 +837,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/teams/:teamId",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const teamId = Number(pathParam(req, "teamId"));
@@ -874,7 +893,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const rounds = await listTournamentRounds(pathParam(req, "tournamentId"));
@@ -888,7 +907,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/round-clocks",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         res.status(200).json(await getRoundClocks(pathParam(req, "tournamentId")));
@@ -902,7 +921,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/rounds/:roundId/clock",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -921,11 +940,11 @@ export function tournamentsRouter(): Router {
     },
   );
 
-  // The plan B of the Timer: an admin opens or closes the hand entry and the seats by hand, and opens closed tables.
+  // The plan B of the Timer: an admin or an editor of the tournament opens or closes the hand entry and the seats by hand, and opens closed tables.
   router.post(
     "/:tournamentId/rounds/:roundId/control",
     requireAuth,
-    requireAdmin,
+    requireTournamentPermission("tournament.roundControl"),
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -947,7 +966,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/complete-open-tables",
     requireAuth,
-    requireAdmin,
+    requireTournamentPermission("tournament.roundControl"),
     async (req, res, next) => {
       try {
         const answer = await completeTables({
@@ -965,7 +984,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const roundIdParam = req.query.roundId;
@@ -985,7 +1004,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables-with-hands",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const tables = await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") });
@@ -999,7 +1018,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds/:roundId/tables-with-hands",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -1018,7 +1037,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables/:roundId/:tableId",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -1042,11 +1061,11 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/tables/:roundId/:tableId/state",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const request = parseSaveTableRequest(req.params, req.body);
-        await assertTournamentOpenForEditor(pathParam(req, "tournamentId"), res.locals.auth);
+        await assertTournamentOpenForEditor(pathParam(req, "tournamentId"), accessOf(res));
         res.status(200).json(await saveTableState({
           tournamentId: pathParam(req, "tournamentId"),
           ...request,
@@ -1061,7 +1080,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/tables/:roundId/:tableId/reset",
     requireAuth,
-    requireAdmin,
+    requireTournamentPermission("tournament.resetTable"),
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -1089,7 +1108,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/player-accounts/send",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
@@ -1116,7 +1135,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/player-emails",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
@@ -1149,10 +1168,12 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/player-import/export",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res, next) => {
       try {
-        const file = await exportPlayers(pathParam(req, "tournamentId"), { includeEmails: hasAdminClaim(res.locals.auth) });
+        const file = await exportPlayers(pathParam(req, "tournamentId"), {
+          includeEmails: await canInTournament(accessOf(res), "tournament.playerEmails", pathParam(req, "tournamentId")),
+        });
         res.status(200).json({ fileName: file.fileName, dataBase64: file.buffer.toString("base64") });
       } catch (e) {
         next(e);
@@ -1163,7 +1184,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/player-import/preview",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const file = readImportFile(req.body);
@@ -1177,7 +1198,7 @@ export function tournamentsRouter(): Router {
   router.post(
     "/:tournamentId/player-import/apply",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.edit"),
     async (req, res, next) => {
       try {
         const file = readImportFile(req.body);
@@ -1198,7 +1219,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentPermission("tournament.view"),
     async (req, res) => {
       res.status(501).json({
         error: "not_implemented",

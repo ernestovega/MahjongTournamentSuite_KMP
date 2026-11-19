@@ -9,7 +9,7 @@ import { getGlobalUserRole, getGlobalUserRoles } from "../../models/globalRole";
 import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
 import { setAccountEmaId } from "../../services/playerAccountsService";
-import { clearUserPhoto, countEnabledAdmins, deleteManagedUser, getOwnProfile, setUserPhoto, updateOwnAlias } from "../../services/usersService";
+import { clearUserPhoto, countEnabledSuperAdmins, deleteManagedUser, getOwnProfile, setUserPhoto, updateOwnAlias } from "../../services/usersService";
 
 /** Turns the error code of the sign-in service into an answer that the apps can show to the user. */
 export function signInError(error: unknown): unknown {
@@ -128,8 +128,8 @@ export function authRouter(): Router {
     try {
       const decoded = res.locals.auth as { uid: string };
       const user = await auth.getUser(decoded.uid);
-      if (!user.disabled && getGlobalUserRole(user) === "ADMIN" && await countEnabledAdmins() <= 1) {
-        throw badRequest("The last enabled admin cannot delete the own account");
+      if (!user.disabled && getGlobalUserRole(user) === "SUPER_ADMIN" && await countEnabledSuperAdmins() <= 1) {
+        throw badRequest("The last enabled super admin cannot delete the own account");
       }
       await setAccountEmaId({ uid: decoded.uid, emaId: null });
       await deleteManagedUser(decoded.uid);
