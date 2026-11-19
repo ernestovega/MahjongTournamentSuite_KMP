@@ -6,10 +6,12 @@ country admin of Spain who is an editor of one tournament in Sweden has `COUNTRY
 
 - An **editor** works in the tournaments assigned to it (a membership document `tournaments/{id}/members/{uid}`). An
   editor always has at least one tournament: one that loses its last tournament becomes a player, or is disabled when it
-  has no EMA ID.
+  has no EMA ID. A country admin enables that account again by giving it a tournament of its countries.
 - A **country admin** manages every tournament of its countries without an assignment. The countries are two-letter
   codes in `users/{uid}.adminCountries`, set by a super admin or by another country admin of the same countries.
 - A **super admin** manages everything.
+
+These roles restrict only the management app. In the player app every role sees every public tournament.
 
 The server keeps the rules in one table of named permissions, `firebase/functions/src/models/permissions.ts`. Each route
 asks for one permission (`requirePermission`) or for one permission inside the tournament (`requireTournamentPermission`).

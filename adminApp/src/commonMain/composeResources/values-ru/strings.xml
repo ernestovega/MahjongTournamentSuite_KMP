@@ -878,6 +878,8 @@
     <string name="admin_countries_not_yours">Страны без ✕ не ваши.\nУбрать их может только суперадминистратор или их администраторы.</string>
     <string name="remove_country_n">Убрать %1$s</string>
     <string name="editor_needs_tournament">Редактору нужен хотя бы один турнир.</string>
+    <string name="account_disabled_without_tournaments">Этот аккаунт был отключён, когда потерял свой последний турнир.
+Назначьте ему турнир как редактору, и при сохранении он снова будет включён.</string>
     <string name="account_grants_outside">У этого аккаунта есть страны или турниры, которыми вы не управляете.\nВы меняете только свои и не можете сделать его игроком.</string>
     <string name="email_hidden">Скрыт</string>
     <string name="email_hidden_info">Вы видите email игрока, только если он играет в одном из ваших турниров.</string>

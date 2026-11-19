@@ -8,16 +8,20 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts. mail-check: the mailbox of the game day scenarios answers. logs: the errors of the staging API in the last 3 hours."
+        description: "calibrate: a short tournament of 16 bots, created by the run and kept in staging. passwords: the password of the accounts j02-j60. bots: the bots and spectators of the rehearsal. check: the checks after the last round. calibration-cleanup: removes the calibration accounts. mail-check: the mailbox of the game day scenarios answers. logs: the errors of the staging API in the last 3 hours. cost: what staging used between since and until, in euros, and what a tournament of 60 players would cost (docs/benchmark.md)."
         type: choice
-        options: [calibrate, passwords, bots, check, calibration-cleanup, mail-check, logs, latency]
+        options: [calibrate, passwords, bots, check, calibration-cleanup, mail-check, logs, latency, cost]
         default: calibrate
       tournament:
         description: "bots and check: the name of the rehearsal tournament, as in the public list."
         type: string
         default: "Ensayo General MTS 2026"
+      since:
+        description: "cost: the start of the window, as 2026-11-19T13:00:00+01:00. Empty: 4 hours ago."
+        type: string
+        default: ""
       until:
-        description: "bots: when the bots stop, as 2026-11-19T19:45:00+01:00. Empty: 150 minutes after the start."
+        description: "cost: the end of the window (empty: now). bots: when the bots stop, as 2026-11-19T19:45:00+01:00. Empty: 150 minutes after the start."
         type: string
         default: ""
       spectators:
@@ -51,7 +55,7 @@ jobs:
   # The accounts and the password, with the Admin SDK of staging.
   accounts:
     name: Accounts
-    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check' && inputs.action != 'logs' && inputs.action != 'latency'
+    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check' && inputs.action != 'logs' && inputs.action != 'latency' && inputs.action != 'cost'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -185,6 +189,41 @@ jobs:
           echo "--- new instances started (the first request of an instance waits for it) ---"
           gcloud logging read "resource.type=\"cloud_run_revision\" AND timestamp>=\"$since\" AND (textPayload:\"STARTUP\" OR textPayload:\"Starting new instance\")" \
             --project="$STAGING" --limit=500 --format="value(timestamp)" | cut -c1-15 | sort | uniq -c
+
+  # What staging used in a window, in euros, projected to a tournament of 60 players (docs/benchmark.md, "Cost").
+  # The tournament input names the game day of the window, for its players and rounds.
+  cost:
+    name: Cost of staging
+    if: github.ref == 'refs/heads/main' && inputs.action == 'cost'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Cost
+        env:
+          SINCE: ${{ inputs.since }}
+          UNTIL: ${{ inputs.until }}
+          TOURNAMENT: ${{ inputs.tournament }}
+        run: |
+          since="$(date -u -d "${SINCE:-4 hours ago}" +%Y-%m-%dT%H:%M:%SZ)"
+          until="$(date -u -d "${UNTIL:-now}" +%Y-%m-%dT%H:%M:%SZ)"
+          node scripts/rehearsal/cost.mjs --project="$STAGING" --since="$since" --until="$until" \
+            --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" --tournament="$TOURNAMENT" --report=out/cost.json
 
   # The mailbox of the game day scenarios (docs/scenarios.md), read by IMAP.
   mail:

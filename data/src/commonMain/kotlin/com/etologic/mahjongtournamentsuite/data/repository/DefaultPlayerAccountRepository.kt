@@ -21,6 +21,12 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountReposi
 /** The server takes up to 200 players in one request (MAX_BULK_PLAYERS of playerAccountsService.ts). */
 internal const val MAX_PLAYERS_PER_REQUEST = 200
 
+/**
+ * A send writes one email per player, a few at a time on the server: 200 players took more than the 45 s of a request,
+ * and the app showed a network error. Requests of 50 players end in a few seconds each.
+ */
+internal const val MAX_PLAYERS_PER_SEND = 50
+
 class DefaultPlayerAccountRepository(
     private val backendApi: FunctionsBackendApi,
     private val authRepository: AuthRepository,
@@ -31,8 +37,8 @@ class DefaultPlayerAccountRepository(
         tournamentId: String,
         playerIds: List<Int>,
     ): AppResult<List<PlayerAccountActionResult>> = runCatching {
-        // The server takes up to 200 players in one request, so a bigger tournament goes in several requests.
-        playerIds.chunked(MAX_PLAYERS_PER_REQUEST).flatMap { chunk -> sendChunk(tournamentId, chunk) }
+        // Every player gets an email, so a tournament goes in several requests of [MAX_PLAYERS_PER_SEND] players.
+        playerIds.chunked(MAX_PLAYERS_PER_SEND).flatMap { chunk -> sendChunk(tournamentId, chunk) }
     }.fold(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->

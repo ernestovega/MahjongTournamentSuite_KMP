@@ -89,3 +89,55 @@ Change a budget only on purpose, for example when a screen starts to load more d
 
 `node scripts/benchmark/compare.mjs --current <results> --history <folder>` writes the report
 (`benchmark-report.md`) and fails on a problem. It runs at the end of the workflow.
+
+## Cost
+
+The benchmark and the game day also say what the app costs, in euros. Only as a report: nothing fails on a cost.
+
+### Firestore reads of each call
+
+The API counts the Firestore operations of each request (`firebase/functions/src/api/middleware/firestoreUsage.ts`):
+a read per document returned (at least one per query), one per 1000 index entries of a count, a write per document
+written, a delete per document deleted, as Firestore bills them. A request with the header `X-MTS-Usage: 1` gets them
+back in `X-MTS-Firestore: reads=12; writes=0; deletes=0`. The apps never ask, so nothing changes for them.
+
+- The **benchmark** asks in `origin` mode, and its table shows the reads of one call of each endpoint next to the
+  previous run (⬆️ when they grew). A screen that starts to read more costs more on every poll of every phone.
+- The **bots of the game day** ask on every call. Their report (`bots.json`) keeps the reads, writes and bytes of
+  each kind of call.
+
+### Cost of a game day and of a real tournament
+
+`scripts/rehearsal/cost.mjs` reads from Cloud Monitoring of staging what the project used while the bots played:
+Firestore reads, writes and deletes, requests, CPU and memory of the API (Cloud Run functions), bytes that the API and
+Storage sent. It prices them with `benchmarks/prices.json` (list prices in USD and the euro rate; update them when
+Google changes them) and projects them to a real tournament:
+
+- the screens (GET calls) grow with the players and the minutes on screen: a real round lasts 2 hours, a round of
+  the game day 12 to 25 minutes, and the bots poll as the app does (2 s the own table, 5 s the player in play, 15 s the
+  rest);
+- the actions (saves of hands, sign-ins) grow with the players and the rounds;
+- the bots tell how much of the reads, calls and bytes are screens and how much actions;
+- the web app download (15 MB, twice a day for each player and spectator) is an estimate.
+
+The defaults are the tournament of February 2027: 60 players and 20 spectators, 7 rounds of 120 minutes with 15
+minutes between rounds, over 2 days, one tournament a month (`--target-players`, `--target-spectators`,
+`--target-rounds`, `--round-minutes`, `--break-minutes`, `--days`, `--tournaments-per-month`, `--web-mb`,
+`--web-loads`). The report gives the cost of the game day, of a tournament day, of the whole tournament and of a month,
+with and without the free tiers (the free tiers count as if the project used nothing else).
+
+It runs:
+
+- at the end of each game day (Actions › Test · Game day · Auto, job **Cost**, artifact `cost`);
+- by hand for any window of staging: Actions › Test · Game day · Participating, action `cost`, with `since`, `until`
+  and the name of the tournament of that window in `tournament` (for its players and rounds).
+
+The service account of the workflows needs to read Cloud Monitoring of staging, once:
+
+```bash
+gcloud projects add-iam-policy-binding mts---staging \
+  --member="serviceAccount:github-deployer@mts---staging.iam.gserviceaccount.com" --role="roles/monitoring.viewer"
+```
+
+The real bill is in the Cloud Console, Billing › Reports. The report is an estimate to compare runs and to see what a
+change costs.

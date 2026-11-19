@@ -113,6 +113,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
+import mahjongtournamentsuite.adminapp.generated.resources.account_disabled_without_tournaments
 import mahjongtournamentsuite.adminapp.generated.resources.account_grants_outside
 import mahjongtournamentsuite.adminapp.generated.resources.account_request_rejected
 import mahjongtournamentsuite.adminapp.generated.resources.accounts
@@ -1122,6 +1123,13 @@ private fun ManageUserDialog(
                         enabled = options.size > 1 && !isSelf && !saving && (original == null || original.canManage || access.isSuperAdmin),
                         onSelect = { role = it },
                     )
+                    if (original?.disabledWithoutRole == true) {
+                        Text(
+                            stringResource(Res.string.account_disabled_without_tournaments),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     if (original?.hasGrantsOutside == true && !isSelf) {
                         Text(
                             stringResource(Res.string.account_grants_outside),

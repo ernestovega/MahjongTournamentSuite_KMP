@@ -298,6 +298,7 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
     photoUrl = photoUrl?.ifBlank { null },
     hasOwnPhoto = hasOwnPhoto,
     disabled = disabled,
+    disabledWithoutRole = disabledWithoutRole,
     tournamentAssignments = tournamentAssignments.map { assignment ->
         TournamentAssignment(
             tournamentId = assignment.tournamentId,

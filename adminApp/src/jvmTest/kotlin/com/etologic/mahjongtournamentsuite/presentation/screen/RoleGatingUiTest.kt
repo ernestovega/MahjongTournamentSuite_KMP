@@ -542,6 +542,27 @@ class RoleGatingUiTest {
     }
 
     @Test
+    fun countryAdminOpensAnEditorDisabledWithoutTournamentsToGiveItOneAgain() = runComposeUiTest {
+        val former = ed.copy(
+            uid = "e2",
+            email = "former@example.test",
+            role = GlobalUserRole.PLAYER,
+            roles = emptySet(),
+            disabled = true,
+            tournamentAssignments = emptyList(),
+            canManage = true,
+            disabledWithoutRole = true,
+        )
+        show(World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, former))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("former@example.test")
+        onNodeWithText("former@example.test").performClick()
+        waitForIdle()
+        onNodeWithText("This account was disabled when it lost its last tournament.", substring = true).assertExists()
+        onNodeWithText("Global role").assertIsEnabled()
+    }
+
+    @Test
     fun adminCanStartCreatingAnAccount() = runComposeUiTest {
         show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 

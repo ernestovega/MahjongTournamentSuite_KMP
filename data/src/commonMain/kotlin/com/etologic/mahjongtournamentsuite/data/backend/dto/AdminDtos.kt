@@ -38,6 +38,7 @@ data class ManagedUserDto(
     val role: GlobalUserRoleDto,
     val roles: List<GlobalUserRoleDto> = emptyList(),
     val disabled: Boolean,
+    val disabledWithoutRole: Boolean = false,
     val tournamentAssignments: List<TournamentAssignmentDto> = emptyList(),
     val adminCountries: List<String> = emptyList(),
     val canManage: Boolean = false,
