@@ -174,6 +174,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     // game day creates in Organizations and the next ones reuse.
 
     private fun ensureTheOrganization() {
+        // Organizations opens from the list of tournaments, not from Users.
+        if (c.isOnScreen("New user")) c.clickButton("Back")
+        c.waitForText("New tournament", timeoutMs = 60_000)
         repeat(3) {
             if (!c.isOnScreen("New organization")) runCatching { c.settle(); c.clickButton("Organizations") }
             runCatching { c.waitForText("New organization", timeoutMs = 20_000) }
