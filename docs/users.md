@@ -108,7 +108,15 @@ GET /admin/account-requests            accounts.reviewRequests (super admins)
 POST /admin/account-requests/{id}      accounts.reviewRequests
 PUT /admin/users/{uid}/disabled        accounts.disable (super admins)
 DELETE /admin/users/{uid}              accounts.delete (super admins)
+PUT /admin/users/{uid}/permissions     accounts.manageStaff (single permissions need permissions.manage)
+GET /admin/roles                       accounts.view
+POST /admin/roles                      permissions.manage (super admins)
+PUT /admin/roles/{roleId}              permissions.manage
+DELETE /admin/roles/{roleId}           permissions.manage
 ```
+
+Custom roles and the permissions of one person are described in
+[user-roles-matrix.md](user-roles-matrix.md#custom-roles-and-the-permissions-of-one-person).
 
 A viewer receives only the assignments of the tournaments that it manages. The backend keeps the hidden assignments and
 the organizations that the viewer does not manage.

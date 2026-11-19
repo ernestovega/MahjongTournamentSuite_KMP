@@ -7,8 +7,9 @@ Solo la función `api` (y los scripts de mantenimiento de `firebase/functions/sr
 ```mermaid
 flowchart TB
   subgraph raiz["Colecciones raíz"]
-    users["users/{uid}<br/>alias, emaId, photoUrl,<br/>adminOrganizations"]
+    users["users/{uid}<br/>alias, emaId, photoUrl,<br/>adminOrganizations, customRoles,<br/>permissionChanges"]
     organizations["organizations/{id}<br/>name, type (CLUB/FEDERATION),<br/>country, primaryColor, logoUrl"]
+    roles["roles/{id}<br/>name, base, permissions<br/>(roles a medida)"]
     emaIdIndex["emaIdIndex/{emaId}<br/>uid (quién es dueño del EMA id)"]
     registry["emaPlayerRegistry/{emaId}<br/>firstName, lastName, country,<br/>photoUrl, hiddenFromPublic"]
     countries["countries/{code}<br/>code, name"]
@@ -40,6 +41,7 @@ flowchart TB
   members -. uid .-> users
   tournaments -. organizerIds .-> organizations
   users -. adminOrganizations .-> organizations
+  users -. customRoles .-> roles
 ```
 
 ## Relaciones (modelo entidad-relación)
@@ -56,6 +58,7 @@ erDiagram
   TEAM ||--|{ SLOT : "slot.team"
   TOURNAMENT ||--o{ MEMBER : "members/{uid}"
   USER ||--o{ MEMBER : "editor asignado"
+  CUSTOM_ROLE ||--o{ USER : "customRoles.EDITOR / .CLUB_ADMIN"
   TOURNAMENT ||--|{ TABLE : "tables/{round}_{table}"
   TABLE }|--|{ SLOT : "playerIds (4)"
   TABLE ||--|{ HAND : "hands/1..16"
@@ -128,8 +131,9 @@ erDiagram
 ## Lo importante en pocas líneas
 
 - **Cuenta ≠ jugador EMA.** Una cuenta de Firebase Auth (`users/{uid}`) puede tener un EMA id. El jugador EMA vive en `emaPlayerRegistry/{emaId}`, compartido por todos los torneos. `emaIdIndex/{emaId}` garantiza que un EMA id tiene como mucho una cuenta.
-- **Los roles no están en Firestore**: son *custom claims* de la cuenta en Firebase Auth (`superAdmin`, `clubAdmin`, `editor`, `player`).
+- **Los roles estándar no están en Firestore**: son *custom claims* de la cuenta en Firebase Auth (`superAdmin`, `clubAdmin`, `editor`, `player`).
 - **Las organizaciones (clubs y federaciones) son las dueñas de los torneos.** Un torneo tiene uno o varios organizadores (`organizerIds`); el primero es el principal y el torneo usa su logo y su color. Los Club Admin de cada organizador gestionan el torneo.
+- **Roles a medida y permisos de una persona** (ver [user-roles-matrix.md](../user-roles-matrix.md)): `roles/{id}` guarda un rol que crea un super admin, con `base` EDITOR o CLUB_ADMIN (de ahí sale su ámbito y lo máximo que puede tener) y su lista de `permissions`. `users/{uid}.customRoles.{EDITOR|CLUB_ADMIN}` dice qué rol a medida usa la cuenta en ese nivel y `users/{uid}.permissionChanges.{nivel}` guarda solo la diferencia con el rol (`added`, `removed`). El backend calcula lo que puede hacer: rol + añadidos − quitados, recortado a lo que permite la base y siempre con `tournament.view`. Borrar un rol borra `customRoles.{base}` de sus cuentas.
 - **Un torneo tiene huecos (slots)** numerados del 1 al N (`players/{slotId}`). Cada hueco tiene un EMA id o está vacío. Una cuenta «juega» un torneo si su EMA id está en algún hueco: no se guarda ningún enlace cuenta↔torneo, se calcula.
 - **Rondas y mesas las genera la app** (sorteo) al crear el torneo; el backend solo valida y guarda.
 - **Cada mesa tiene 16 manos** (`hands/1..16`) y una copia de las 16 en el propio documento (`handsCopy`) para leer una mesa con una sola lectura.

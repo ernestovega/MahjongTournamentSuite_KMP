@@ -75,12 +75,14 @@ Módulos compartidos: `domain` (modelos y reglas), `data` (cliente Ktor de la AP
 
 ## Roles en una línea
 
-- **Admin**: todo. Crea torneos, gestiona cuentas, registro EMA, errores y actividad.
+- **Super admin**: todo. Crea torneos, gestiona cuentas, registro EMA, roles a medida, errores y actividad.
+- **Club Admin**: gestiona los torneos y las cuentas de staff de sus organizaciones (clubs o federaciones); crea jugadores EMA.
 - **Editor**: gestiona los torneos que tiene asignados (jugadores, mesas, manos, reloj).
 - **Jugador**: cuenta con un EMA id. Ve todo lo público y apunta manos en su mesa cuando la ronda está abierta.
 - **Sin cuenta**: ve todos los torneos públicos (`/public/...`).
+- **Roles a medida**: un super admin crea roles que parten de Editor o de Club Admin con los permisos que elija, y puede añadir o quitar permisos sueltos a una persona (`roles/{id}`, `users/{uid}.customRoles` y `.permissionChanges`).
 
-Los roles son *custom claims* de Firebase Auth. La matriz completa está en [user-roles-matrix.md](../user-roles-matrix.md) y [users.md](../users.md).
+Los roles estándar son *custom claims* de Firebase Auth; los permisos con nombre están en `firebase/functions/src/models/permissions.ts`. La matriz completa está en [user-roles-matrix.md](../user-roles-matrix.md) y [users.md](../users.md).
 
 ## Dónde corre cada cosa («máquinas»)
 

@@ -114,6 +114,32 @@ describe("custom roles and the permissions of one person", () => {
     assert.ok(!(await whoami(otherClubAdmin.token)).includes("tournaments.create"));
   });
 
+  it("a role keeps its base, needs a free name and counts the accounts that use it", async () => {
+    const role = (await createRole({ name: "Scorer", base: "EDITOR", permissions: ["tournament.view", "tournament.edit"] })).body as Body;
+    await createRole({ name: "Timekeeper", base: "EDITOR", permissions: [] });
+    const update = (body: Body, token = superAdmin.token) => server.request("PUT", `/admin/roles/${role.id}`, { token, body });
+    assert.equal((await update({ name: "Scorer", base: "CLUB_ADMIN", permissions: [] })).status, 400);
+    assert.equal((await update({ name: "timekeeper", permissions: [] })).status, 400);
+    assert.equal((await update({ name: "", permissions: [] })).status, 400);
+    assert.equal((await update({ name: "x".repeat(41), permissions: [] })).status, 400);
+    assert.equal((await update({ name: "Scorer", permissions: [] }, clubAdmin.token)).status, 403);
+    const renamed = await update({ name: "  Main   scorer ", permissions: ["tournament.view"] });
+    assert.deepEqual([renamed.status, (renamed.body as Body).name], [200, "Main scorer"]);
+    assert.equal((await server.request("PUT", "/admin/roles/unknown-role", { token: superAdmin.token, body: { name: "Any" } })).status, 404);
+    assert.equal((await server.request("DELETE", "/admin/roles/unknown-role", { token: superAdmin.token })).status, 404);
+
+    const first = await createAccount({ role: "EDITOR", memberOf: [es] });
+    const second = await createAccount({ role: "EDITOR", memberOf: [es] });
+    await setPermissions(superAdmin.token, first.uid, { EDITOR: { roleId: role.id } });
+    await setPermissions(superAdmin.token, second.uid, { EDITOR: { roleId: role.id } });
+    const listed = ((await server.request("GET", "/admin/roles", { token: superAdmin.token })).body as Body).custom as Body[];
+    assert.equal(listed.find((item) => item.id === role.id)?.accounts, 2);
+    // A role of another base is never used at this level.
+    const adminRole = (await createRole({ name: "Tiny admin", base: "CLUB_ADMIN", permissions: [] })).body as Body;
+    assert.equal((await setPermissions(superAdmin.token, first.uid, { EDITOR: { roleId: adminRole.id } })).status, 400);
+    assert.equal((await setPermissions(superAdmin.token, first.uid, { EDITOR: { roleId: "unknown-role" } })).status, 400);
+  });
+
   it("refuses the own account, super admins and editors", async () => {
     assert.equal((await setPermissions(clubAdmin.token, clubAdmin.uid, { EDITOR: { roleId: null } })).status, 400);
     assert.equal((await setPermissions(superAdmin.token, superAdmin.uid, { EDITOR: { roleId: null } })).status, 400);

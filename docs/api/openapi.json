@@ -5284,6 +5284,285 @@
     }
    }
   },
+  "/admin/users/{uid}/permissions": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Rol a medida y permisos de una cuenta",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nPermiso `accounts.manageStaff`. `levels.EDITOR` y `levels.CLUB_ADMIN` llevan `roleId` (null: rol estándar) y `permissions` (lista entera; null vuelve al rol; sin ella se mantienen los cambios). Solo con `permissions.manage` se mandan permisos sueltos; un Club Admin solo elige roles sin más permisos que los suyos, para cuentas de sus organizaciones. Nunca la propia cuenta ni un Super Admin.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SetUserPermissionsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/roles": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Roles estándar y a medida",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nPermiso `accounts.view`. Incluye lo que puede tener cada base (`grantable`), lo que todo rol conserva (`required`) y cuántas cuentas usan cada rol a medida.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RolesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Crear un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. Base EDITOR o CLUB_ADMIN; nombre de 1 a 40 caracteres, único. Responde 201.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CustomRole"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveRoleRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/roles/{roleId}": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Cambiar un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. La base no cambia. El cambio llega a las cuentas que lo usan.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CustomRole"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "roleId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del rol a medida."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveRoleRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Borrar un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. Sus cuentas vuelven al rol estándar; `accounts` dice cuántas.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DeleteRoleResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "roleId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del rol a medida."
+     }
+    ]
+   }
+  },
   "/admin/users/lookup": {
    "get": {
     "tags": [
@@ -5551,285 +5830,6 @@
       "description": "Id de la organización."
      }
     ]
-   }
-  },
-  "/admin/roles": {
-   "get": {
-    "tags": [
-     "Admin"
-    ],
-    "summary": "Roles",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nRoles estándar y a medida, con lo que puede tener cada base.",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/RolesResponse"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    }
-   },
-   "post": {
-    "tags": [
-     "Admin"
-    ],
-    "summary": "Crear un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador.",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/CustomRole"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    },
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/SaveRoleRequest"
-       }
-      }
-     }
-    }
-   }
-  },
-  "/admin/roles/{roleId}": {
-   "put": {
-    "tags": [
-     "Admin"
-    ],
-    "summary": "Editar un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador.",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/CustomRole"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    },
-    "parameters": [
-     {
-      "name": "roleId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Id del rol a medida."
-     }
-    ],
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/SaveRoleRequest"
-       }
-      }
-     }
-    }
-   },
-   "delete": {
-    "tags": [
-     "Admin"
-    ],
-    "summary": "Borrar un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSus cuentas vuelven al rol estándar.",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/DeleteRoleResponse"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    },
-    "parameters": [
-     {
-      "name": "roleId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Id del rol a medida."
-     }
-    ]
-   }
-  },
-  "/admin/users/{uid}/permissions": {
-   "put": {
-    "tags": [
-     "Admin"
-    ],
-    "summary": "Rol y permisos de una persona",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSuperadministrador, o administrador de club para el personal de sus organizaciones (solo roles).",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ManagedUser"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    },
-    "parameters": [
-     {
-      "name": "uid",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Uid de Firebase Auth de la cuenta."
-     }
-    ],
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/SetUserPermissionsRequest"
-       }
-      }
-     }
-    }
    }
   },
   "/admin/activity": {
