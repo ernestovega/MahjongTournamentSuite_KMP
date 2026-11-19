@@ -35,7 +35,8 @@ Deploy · Staging). The app of the test and the backend it talks to are always t
 ## Who does what
 
 - **Organizer (tablet emulator, admin app, `ScenarioOrganizerTest`).** Signs in as the bot admin, creates the tournament
-  in the form (so the app computes the draw), creates some accounts by hand in Users, imports the players from an Excel
+  in the form (so the app computes the draw; its main organizer is the federation "Game day club", which the first
+  game day creates in Organizations and the next ones reuse), creates some accounts by hand in Users, imports the players from an Excel
   file (first a file with errors, then the right one), assigns a few slots by hand, and sends the invitations to every
   player. Then it presses Play of each round at its time, and does the corner cases of the plan (below). Its screen is
   recorded.

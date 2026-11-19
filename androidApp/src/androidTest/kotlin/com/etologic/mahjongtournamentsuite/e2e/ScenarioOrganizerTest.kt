@@ -137,6 +137,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
         // The players of earlier game days have their account already.
         slots.filter { it.accountBefore && !it.returning }.forEach { createAccountInUsers(it) }
+        ensureTheOrganization()
         createTheTournamentWithTheForm()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }
@@ -167,6 +168,33 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Account created", substring = true, timeoutMs = 60_000)
         c.clickButton("OK")
         log("account of slot ${slot.slot} created")
+    }
+
+    // Organizations: every tournament has a main organizer. The game days are organized by one club, which the first
+    // game day creates in Organizations and the next ones reuse.
+
+    private fun ensureTheOrganization() {
+        repeat(3) {
+            if (!c.isOnScreen("New organization")) runCatching { c.settle(); c.clickButton("Organizations") }
+            runCatching { c.waitForText("New organization", timeoutMs = 20_000) }
+        }
+        c.waitForText("New organization", timeoutMs = 30_000)
+        runCatching { c.waitForAnyText(ORGANIZATION, "There are no organizations yet.", timeoutMs = 30_000) }
+        if (!c.isOnScreen(ORGANIZATION)) {
+            c.clickButton("New organization")
+            c.waitForText("Club premises")
+            c.field("Name").performTextInput(ORGANIZATION)
+            // A federation has no premises, so the dialog asks for less.
+            c.onAllNodes(hasText("Federation") and hasClickAction()).onLast().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            c.waitForNoText("Club premises")
+            chooseCountry("Spain")
+            c.clickLastButton("Save")
+            c.waitUntil(60_000) { c.onAllNodes(hasText("Save") and hasClickAction()).fetchSemanticsNodes().isEmpty() }
+            c.waitForText(ORGANIZATION, timeoutMs = 30_000)
+            log("organization created")
+        }
+        c.clickButton("Back")
+        c.waitForText("New tournament", timeoutMs = 60_000)
     }
 
     private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
@@ -211,6 +239,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         setSwitch("Finish the hand in play", true)
         c.waitForText("Extra time (minutes)", timeoutMs = 10_000)
         c.field("Extra time (minutes)").performTextReplacement(plan.getInt("matchExtraMinutes").toString())
+        c.clickLastButton("Organizers")
+        chooseInSelect("Main organizer", ORGANIZATION)
         c.clickLastButton("Venue")
         chooseCountry("Spain")
         c.field("City").performTextInput("Madrid")
@@ -851,5 +881,6 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private companion object {
         const val TAG = "SCENARIO"
+        const val ORGANIZATION = "Game day club"
     }
 }
