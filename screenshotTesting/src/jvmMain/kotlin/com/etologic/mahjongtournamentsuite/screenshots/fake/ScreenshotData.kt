@@ -10,6 +10,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PermissionChange
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
@@ -283,6 +285,20 @@ object ScreenshotData {
     )
 
     fun tournament(id: String): Tournament = tournaments.first { it.id == id }
+
+    /** The registrations of [registrationTournament]: open, 16 places, the last day in March. */
+    val registrationSettings = RegistrationSettings(
+        status = RegistrationPhase.OPEN,
+        maxPlayers = 16,
+        closesOn = "2099-03-31",
+        slug = "bs99",
+        confirmed = 14,
+        waiting = 2,
+    )
+
+    /** [UPCOMING] before its draw, with teams, taking registrations. Its screens show [ScreenshotRegistrationRepository]. */
+    val registrationTournament: Tournament
+        get() = tournament(UPCOMING).copy(isTeams = true, numPlayers = 0, drawPending = true, registration = registrationSettings)
 
     val admin = UserProfile(uid = "admin-1", email = "ada@example.test", alias = "Ada", emaId = null, roles = setOf(GlobalUserRole.SUPER_ADMIN))
 

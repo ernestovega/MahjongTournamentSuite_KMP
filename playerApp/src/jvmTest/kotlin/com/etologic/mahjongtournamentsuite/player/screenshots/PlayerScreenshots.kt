@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -46,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthReposi
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotFeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotPlayerRepository
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotRegistrationRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotStatisticsRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotSupportRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
@@ -72,6 +74,7 @@ private class NoHands : PlayerHandRepository {
 internal fun playerModules(
     account: UserProfile? = ScreenshotData.playerAccount,
     tournaments: TournamentRepository = ScreenshotTournamentRepository(),
+    registrations: RegistrationRepository = ScreenshotRegistrationRepository(),
 ): List<Module> = listOf(
     module {
         single { Logger.withTag("screenshot") }
@@ -82,6 +85,7 @@ internal fun playerModules(
         single<FeatureFlagsRepository> { ScreenshotFeatureFlagsRepository() }
         single<SupportRepository> { ScreenshotSupportRepository() }
         single<PlayerHandRepository> { NoHands() }
+        single<RegistrationRepository> { registrations }
     },
     useCasesModule,
     playerModule,

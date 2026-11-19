@@ -17,6 +17,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsReposit
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -25,6 +26,7 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAdminRepos
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotFeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotPlayerRepository
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotRegistrationRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotStatisticsRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotSupportRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
@@ -66,5 +68,6 @@ internal fun adminModules(
         single<SupportRepository> { ScreenshotSupportRepository() }
         single<PlayerAccountRepository> { NoPlayerAccounts() }
         single<PlayerImportRepository> { NoPlayerImport() }
+        single<RegistrationRepository> { ScreenshotRegistrationRepository() }
     },
 )

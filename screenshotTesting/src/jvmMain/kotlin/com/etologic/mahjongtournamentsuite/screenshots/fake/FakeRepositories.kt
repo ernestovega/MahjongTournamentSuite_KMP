@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.screenshots.fake
 
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
+import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -9,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.DigestResult
+import com.etologic.mahjongtournamentsuite.domain.model.DrawAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
@@ -20,12 +23,24 @@ import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
+import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.NoEmaNumberRequest
+import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.PublicRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.RegisterRequest
+import com.etologic.mahjongtournamentsuite.domain.model.RegisterResult
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationImport
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSource
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationTeam
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationUpdate
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
@@ -42,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
@@ -49,12 +65,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.groupPersonOf
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -287,4 +305,92 @@ class ScreenshotFeatureFlagsRepository(private val flags: FeatureFlags = Feature
 
 class ScreenshotSupportRepository : SupportRepository {
     override suspend fun send(message: SupportMessage): AppResult<Unit> = noWrite()
+}
+
+/**
+ * The registrations of [ScreenshotData.UPCOMING] when it takes registrations ([ScreenshotData.registrationTournament]):
+ * 14 people with a place of 16 in a tournament with teams, 2 on the waiting list and 1 that must confirm its email.
+ */
+open class ScreenshotRegistrationRepository(private val own: OwnRegistration? = null) : RegistrationRepository {
+    private val people = ScreenshotData.players.take(17)
+    private val teams = listOf(
+        RegistrationTeam("t-red", ScreenshotData.teamNames[0], people[0].emaId, people.take(4).map { it.emaId }),
+        RegistrationTeam("t-east", ScreenshotData.teamNames[1], people[4].emaId, people.subList(4, 6).map { it.emaId }),
+    )
+
+    private fun teamOf(emaId: String) = teams.firstOrNull { emaId in it.members }?.id
+
+    private fun status(index: Int) = when {
+        index < 14 -> RegistrationStatus.CONFIRMED
+        index < 16 -> RegistrationStatus.WAITING
+        else -> RegistrationStatus.PENDING
+    }
+
+    private fun position(index: Int) = if (index < 14) index + 1 else index - 13
+
+    private val settings = ScreenshotData.registrationSettings
+
+    override suspend fun loadPublicList(tournamentId: String) = ok(
+        TournamentRegistrations(
+            settings = settings,
+            isTeams = true,
+            registrations = people.take(16).mapIndexed { index, player ->
+                PublicRegistration(player.emaId, player.displayName, player.country, status(index), position(index), teamOf(player.emaId))
+            },
+            teams = teams,
+        ),
+    )
+
+    override suspend fun resolveLink(slug: String) = ok(ScreenshotData.UPCOMING)
+    override suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult> = noWrite()
+    override suspend fun confirm(tournamentId: String, token: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun loadOwn(tournamentId: String): AppResult<OwnRegistration?> = ok(own)
+    override suspend fun updateOwn(tournamentId: String, foodRestrictions: String, consent: Boolean): AppResult<OwnRegistration> = noWrite()
+    override suspend fun cancelOwn(tournamentId: String): AppResult<Unit> = noWrite()
+    override suspend fun createTeam(tournamentId: String, name: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun renameTeam(tournamentId: String, name: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun leaveTeam(tournamentId: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun addTeamMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun removeTeamMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> = noWrite()
+    override suspend fun requestWithoutEmaNumber(tournamentId: String, request: NoEmaNumberRequest): AppResult<Unit> = noWrite()
+
+    override suspend fun loadAdminList(tournamentId: String) = ok(
+        AdminRegistrations(
+            settings = settings,
+            isTeams = true,
+            drawPending = true,
+            publicLink = "https://mts.example.test/inscripcion/${settings.slug}",
+            registrations = people.mapIndexed { index, player ->
+                AdminRegistration(
+                    emaId = player.emaId,
+                    name = player.displayName,
+                    country = player.country,
+                    status = status(index),
+                    position = position(index),
+                    teamId = teamOf(player.emaId),
+                    email = "${player.firstName.lowercase()}@example.test",
+                    paid = index % 3 == 0,
+                    foodRestrictions = if (index == 2) "Vegetarian" else "",
+                    source = if (index < 8) RegistrationSource.IMPORT else RegistrationSource.SELF,
+                    registeredAt = "2099-01-%02dT10:00:00Z".format(index + 1),
+                    hasAccount = index == 0,
+                )
+            },
+            teams = teams,
+        ),
+    )
+
+    override suspend fun adminAdd(tournamentId: String, registration: NewRegistration): AppResult<AdminRegistration> = noWrite()
+    override suspend fun adminUpdate(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> = noWrite()
+    override suspend fun adminRemove(tournamentId: String, emaId: String, notify: Boolean): AppResult<Unit> = noWrite()
+    override suspend fun updateSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> = noWrite()
+    override suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = noWrite()
+    override suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = noWrite()
+    override suspend fun makeDraw(
+        tournamentId: String,
+        numTries: Long,
+        players: List<TournamentPlayer>,
+        tables: List<TournamentTable>,
+        assignments: List<DrawAssignment>,
+    ): AppResult<Tournament> = noWrite()
 }

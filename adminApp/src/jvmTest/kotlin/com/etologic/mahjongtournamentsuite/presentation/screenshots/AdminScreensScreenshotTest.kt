@@ -22,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
@@ -155,6 +156,12 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun activity() = adminScreenshots("activity") { nav -> ActivityScreen(nav) }
+
+    /** The registrations of a tournament before its draw: places, waiting list, a person to confirm, paid and food. */
+    @Test
+    fun registrations() = adminScreenshots("registrations", ready = { waitForText("04010001", substring = true) }) { nav ->
+        RegistrationsScreen(nav, ScreenshotData.UPCOMING)
+    }
 
     @Test
     fun roles() = adminScreenshots("roles", ready = { waitForText("Head referee") }) { nav -> RolesScreen(nav) }

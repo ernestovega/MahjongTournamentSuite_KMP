@@ -23,6 +23,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
 import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
@@ -53,6 +55,9 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.COMPLETED
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.INDIVIDUAL
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.UPCOMING
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotRegistrationRepository
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
 import com.etologic.mahjongtournamentsuite.screenshots.phoneInEveryLanguage
 import kotlinx.coroutines.runBlocking
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -282,6 +287,29 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournamentInfo() = playerScreenshots("tournament-info", ready = { openTab(MainTab.INFO) }) { nav -> TournamentScreen(nav, ONGOING) }
 
+    /** A tournament before its draw: its Players tab is the list of the registrations, and Players and Info are its only tabs. */
+    @Test
+    fun tournamentRegistrations() = playerScreenshots(
+        "tournament-registrations",
+        modules = {
+            playerModules(
+                tournaments = RegistrationTournamentRepository(),
+                registrations = ScreenshotRegistrationRepository(
+                    own = OwnRegistration("04010001", "LUCÍA MARTÍN", "ES", RegistrationStatus.CONFIRMED, 1, teamId = "t-red"),
+                ),
+            )
+        },
+        ready = { waitForText("04010002", substring = true) },
+    ) { nav -> TournamentScreen(nav, UPCOMING) }
+
+    /** The card of a tournament that takes registrations, with its button to register, for a guest. */
+    @Test
+    fun tournamentsRegistrationGuest() = playerScreenshots(
+        "tournaments-registration-guest",
+        modules = { playerModules(account = null, tournaments = RegistrationTournamentRepository()) },
+        ready = { waitForText("Berlin Spring 2099", substring = true) },
+    ) { nav -> TournamentsScreen(nav) }
+
     @Test
     fun tableCompleted() = playerScreenshots("table-completed", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav ->
         TableScreen(nav, ONGOING, roundId = 1, tableId = 1)
@@ -349,3 +377,8 @@ class PlayerScreensScreenshotTest {
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name))
     }
 }
+
+/** The tournaments of the screenshots, with [UPCOMING] before its draw and taking registrations. */
+private class RegistrationTournamentRepository : ScreenshotTournamentRepository(
+    tournaments = ScreenshotData.tournaments.map { if (it.id == UPCOMING) ScreenshotData.registrationTournament else it },
+)
