@@ -6,6 +6,11 @@ import { buildApp } from "./api/app";
 import { closeRoundTables } from "./services/matchTimeCloseService";
 import { runRegistrationsHour } from "./services/registrationJobs";
 import { CLOSE_ROUND_TASK_REGION } from "./services/matchTimeTaskService";
+import {
+  callRegistrationsHour,
+  REGISTRATIONS_HOUR_REGION,
+  registrationsHourHandler,
+} from "./services/registrationHourRelay";
 import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
 
 const app = buildApp();
@@ -55,19 +60,33 @@ export const closeRoundTablesTask = onTaskDispatched(
  * The hourly work of the registrations of tournaments without a draw: it removes the pending registrations whose
  * link is too old, closes the registrations after their last day, sends the team reminders one week before the close
  * and the weekly report to the organization on Sunday evening. See docs/registrations.md.
- * It runs in Madrid, like the API, because the SMTP server of the mailbox accepts connections only from some countries.
+ * Cloud Scheduler does not exist in europe-southwest1, so the schedule runs in Belgium and only calls
+ * registrationsHourRun, which does the work in Madrid, like the API, because the SMTP server of the mailbox accepts
+ * connections only from some countries.
  */
 export const registrationsHourly = onSchedule(
   {
     schedule: "5 * * * *",
     timeZone: "Etc/UTC",
-    region: "europe-southwest1",
-    memory: "512MiB",
+    region: "europe-west1",
+    memory: "256MiB",
     timeoutSeconds: 540,
-    secrets: [MAIL_SMTP_URI],
+    retryCount: 0,
   },
   async () => {
-    const results = await runRegistrationsHour(new Date());
-    if (results.length > 0) console.log("Registrations hour", JSON.stringify(results));
+    const answer = (await callRegistrationsHour()) as { results?: unknown[] } | undefined;
+    if ((answer?.results?.length ?? 0) > 0) console.log("Registrations hour", JSON.stringify(answer?.results));
   },
+);
+
+/** The work of registrationsHourly in Madrid. Only the service account of the functions can call it. */
+export const registrationsHourRun = onRequest(
+  {
+    region: REGISTRATIONS_HOUR_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 540,
+    maxInstances: 1,
+    secrets: [MAIL_SMTP_URI],
+  },
+  registrationsHourHandler(() => runRegistrationsHour(new Date())),
 );

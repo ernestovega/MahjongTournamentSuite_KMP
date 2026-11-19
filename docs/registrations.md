@@ -84,7 +84,10 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
 | `personPrivate/{emaId}` | the food restrictions and their consent |
 
 The scheduled function `registrationsHourly` deletes the expired pending registrations, closes on the last day, sends
-the team reminders and the weekly report.
+the team reminders and the weekly report. Cloud Scheduler does not exist in Madrid, so the schedule runs in Belgium
+(`europe-west1`) and only calls the function `registrationsHourRun` in Madrid, which does the work there because the
+SMTP server accepts only some countries. That function checks the Google ID token of the call: only the service
+account of the functions can run it (`registrationHourRelay.ts`).
 
 ## Code
 

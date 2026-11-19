@@ -92,6 +92,7 @@ No hay servidores propios: todo es *serverless* en Google Cloud.
 |---|---|---|
 | Función `api` | Cloud Functions 2ª gen (Cloud Run), `europe-southwest1` (Madrid) | 512 MiB, máx. 20 instancias, timeout 180 s. Madrid porque el SMTP solo acepta algunos países. |
 | Función `closeRoundTablesTask` | `europe-west1` (Bélgica) | Cloud Tasks no existe en Madrid. Cierra las mesas cuando acaba el tiempo de una ronda. |
+| Función `registrationsHourly` | `europe-west1` (Bélgica) | Cloud Scheduler no existe en Madrid. Cada hora llama a `registrationsHourRun` (Madrid), que hace el trabajo de las inscripciones y envía los emails. |
 | Firestore | `eur3` (multirregión Europa) | Base `(default)`. |
 | Storage | bucket por defecto del proyecto | `playerPhotos/`, `userPhotos/`, `tournamentLogos/`. |
 | Hosting | CDN de Firebase | Sirve las dos webs, `/api-docs/` y reenvía `/api/**` y `/version` a la función. |
