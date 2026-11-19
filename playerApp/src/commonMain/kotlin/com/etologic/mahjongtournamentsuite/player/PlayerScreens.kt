@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -1438,6 +1439,8 @@ private data class RankingRow(
     val subtitle: String?,
     /** The country code of the player. The line shows its flag next to the name. */
     val country: String? = null,
+    /** The photo of the player. A team line has none and shows no photo. */
+    val photoUrl: String? = null,
     val chip: String,
     val chipChicken: Boolean = false,
     /** A row of the best hands: the first three show a gold, silver or bronze hand instead of a trophy. */
@@ -1473,6 +1476,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = row.substitution?.label(),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = formatPoints(row.points),
                 score = "${row.score}",
                 mine = row.playerId == view.mySlotId,
@@ -1491,6 +1495,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                         title = view.nameOf(member.playerId),
                         subtitle = member.substitution?.label(),
                         country = view.players[member.playerId]?.country?.takeIf { it.isNotBlank() },
+                        photoUrl = view.players[member.playerId]?.photoUrl,
                         chip = formatPoints(member.points),
                         score = "${member.score}",
                         mine = member.playerId == view.mySlotId,
@@ -1516,6 +1521,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = "${row.chickenHands}",
                 chipChicken = true,
                 mine = row.playerId == view.mySlotId,
@@ -1529,6 +1535,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = "${row.handScore}",
                 bestHand = true,
                 mine = row.playerId == view.mySlotId,
@@ -1679,6 +1686,9 @@ private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit) {
     }
 }
 
+/** The photo of a player in a ranking line: as tall as the name and the score chip. */
+private val RankingPhotoSize = 36.dp
+
 /** The content of a ranking line. [trailing] is null for a line that cannot be folded, else it is the folded state. */
 @Composable
 private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boolean? = null) {
@@ -1703,8 +1713,12 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
                 }
             }
         }
-        // The flag comes first and has a fixed width, so the names are aligned. A team has no flag.
-        if (row.playerId != null) PlayerFlag(row.country)
+        // The photo comes after the position, then the flag with a fixed width, so the names are aligned.
+        // A team has no photo and no flag.
+        if (row.playerId != null) {
+            PlayerPhoto(row.photoUrl, row.title, size = RankingPhotoSize)
+            PlayerFlag(row.country)
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 row.title,

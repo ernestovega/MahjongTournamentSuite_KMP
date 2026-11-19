@@ -27,6 +27,8 @@ data class PlayerEntry(
     /** The first name only. The hand entry dialogs show it, so they stay short. */
     val firstName: String = name,
     val country: String,
+    /** The photo of the EMA player, null when it has none. */
+    val photoUrl: String? = null,
     /** Set when a substitute plays for this person from a round on. Statistics ignore those rounds. */
     val substitution: PlayerSubstitution? = null,
     /** Team id of the person. Zero for a tournament without teams. */
@@ -221,6 +223,7 @@ fun buildPlayerTournamentView(
             name = name,
             firstName = registered?.firstName?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
             country = registered?.country.orEmpty(),
+            photoUrl = registered?.photoUrl?.takeIf { it.isNotBlank() },
             substitution = slot.substitution,
             team = slot.team,
         )

@@ -23,15 +23,15 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerTournamentView.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="57" column="29" source="standard:argument-list-wrapping" />
-        <error line="57" column="50" source="standard:argument-list-wrapping" />
-        <error line="57" column="70" source="standard:argument-list-wrapping" />
-        <error line="108" column="64" source="standard:function-signature" />
-        <error line="177" column="70" source="standard:function-signature" />
-        <error line="184" column="69" source="standard:function-signature" />
-        <error line="190" column="49" source="standard:condition-wrapping" />
-        <error line="191" column="36" source="standard:condition-wrapping" />
-        <error line="195" column="46" source="standard:function-signature" />
+        <error line="59" column="29" source="standard:argument-list-wrapping" />
+        <error line="59" column="50" source="standard:argument-list-wrapping" />
+        <error line="59" column="70" source="standard:argument-list-wrapping" />
+        <error line="110" column="64" source="standard:function-signature" />
+        <error line="179" column="70" source="standard:function-signature" />
+        <error line="186" column="69" source="standard:function-signature" />
+        <error line="192" column="49" source="standard:condition-wrapping" />
+        <error line="193" column="36" source="standard:condition-wrapping" />
+        <error line="197" column="46" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/RoutePersistence.kt">
         <error line="3" column="1" source="standard:import-ordering" />
