@@ -147,6 +147,7 @@ class DefaultTournamentRepository(
                 matchEndMode = request.matchEndMode.name,
                 matchExtraMinutes = request.matchExtraMinutes,
                 timeZone = request.timeZone,
+                registration = request.registration?.toRequestDto(),
             )
 
             val dto = backendApi.createTournament(
@@ -1161,6 +1162,7 @@ private fun Throwable.toPlayerChangeError(): AppError {
 }
 
 private fun Throwable.toAppError(): AppError {
+    registrationAppErrorOrNull()?.let { return it }
     if (this is BackendHttpException) {
         val body = responseBody.limitForUi()
         if (status == HttpStatusCode.Conflict) {

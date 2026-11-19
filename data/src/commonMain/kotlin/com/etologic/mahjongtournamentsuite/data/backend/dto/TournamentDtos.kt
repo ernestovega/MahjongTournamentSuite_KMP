@@ -57,6 +57,9 @@ data class TournamentDto(
     val updatedAt: String? = null,
     /** What the signed-in account may do in the tournament, by permission name. */
     val permissions: List<String> = emptyList(),
+    /** True before the draw of a tournament with registrations. */
+    val drawPending: Boolean = false,
+    val registration: RegistrationSettingsDto? = null,
 )
 
 @Serializable
@@ -91,6 +94,8 @@ data class CreateTournamentRequestDto(
     val matchEndMode: String = "STOP",
     val matchExtraMinutes: Int = 15,
     val timeZone: String? = null,
+    /** Opens registrations: the tournament has no players and no draw yet. */
+    val registration: RegistrationSettingsRequestDto? = null,
 )
 
 @Serializable

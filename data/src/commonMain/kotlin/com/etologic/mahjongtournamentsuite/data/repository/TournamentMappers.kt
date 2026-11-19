@@ -86,6 +86,8 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     createdByName = createdByName.normalizedOrNull(),
     createdAt = createdAt.normalizedOrNull(),
     updatedAt = updatedAt.normalizedOrNull(),
+    drawPending = drawPending,
+    registration = registration?.toDomain(),
 )
 
 private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)

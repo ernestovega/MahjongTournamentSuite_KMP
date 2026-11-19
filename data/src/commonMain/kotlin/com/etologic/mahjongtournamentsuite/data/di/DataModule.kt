@@ -20,8 +20,10 @@ import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerAccountR
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerImportRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultRegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAuthRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
@@ -110,6 +112,7 @@ val dataModule get() = module {
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get(), get()) }
     single<PlayerAccountRepository> { DefaultPlayerAccountRepository(get(), get(), get(), get()) }
     single<PlayerImportRepository> { DefaultPlayerImportRepository(get(), get(), get(), get()) }
+    single<RegistrationRepository> { DefaultRegistrationRepository(get(), get(), get(), createPlatformPersistentCacheStore()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }
 }
 

@@ -1,9 +1,14 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AdminAddRegistrationRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AdminRegistrationDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AdminRegistrationsDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AdminUpdateRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ConfirmRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
@@ -18,11 +23,14 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.MakeDrawRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MyTournamentsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.NoEmaNumberRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.OwnRegistrationDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsResponseDto
@@ -39,8 +47,18 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportResultDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PublicRegistrationsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegisterRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegisterResultDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationImportDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationImportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationLinkDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationSettingsDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationTeamMemberRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationTeamNameRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
@@ -67,6 +85,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResp
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
@@ -87,10 +106,12 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.encodeURLPath
 import io.ktor.http.isSuccess
@@ -836,6 +857,103 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    // Registrations. See docs/registrations.md. The calls of a person send the account (bearer), the token of the
+    // links of the emails (x-registration-token), or both.
+
+    suspend fun publicRegistrations(tournamentId: String): PublicRegistrationsDto =
+        get(path = "/public/tournaments/${tournamentId.encodeURLPath()}/registrations")
+
+    suspend fun registrationLink(slug: String): RegistrationLinkDto =
+        get(path = "/public/registration-links/${slug.encodeURLPath()}")
+
+    suspend fun register(idToken: String?, tournamentId: String, request: RegisterRequestDto): RegisterResultDto =
+        registrationCall(HttpMethod.Post, "/registrations/${tournamentId.encodeURLPath()}", idToken, null, request)
+
+    suspend fun confirmRegistration(tournamentId: String, token: String): OwnRegistrationDto =
+        registrationCall(HttpMethod.Post, "/registrations/${tournamentId.encodeURLPath()}/confirm", null, null, ConfirmRegistrationRequestDto(token))
+
+    suspend fun ownRegistration(idToken: String?, token: String?, tournamentId: String): OwnRegistrationDto =
+        registrationCall<OwnRegistrationDto, Unit>(HttpMethod.Get, "/registrations/${tournamentId.encodeURLPath()}/me", idToken, token, null)
+
+    suspend fun updateOwnRegistration(idToken: String?, token: String?, tournamentId: String, request: UpdateOwnRegistrationRequestDto): OwnRegistrationDto =
+        registrationCall(HttpMethod.Put, "/registrations/${tournamentId.encodeURLPath()}/me", idToken, token, request)
+
+    suspend fun cancelOwnRegistration(idToken: String?, token: String?, tournamentId: String): OkResponseDto =
+        registrationCall<OkResponseDto, Unit>(HttpMethod.Delete, "/registrations/${tournamentId.encodeURLPath()}/me", idToken, token, null)
+
+    suspend fun createOwnTeam(idToken: String?, token: String?, tournamentId: String, name: String): OwnRegistrationDto =
+        registrationCall(HttpMethod.Post, "/registrations/${tournamentId.encodeURLPath()}/me/team", idToken, token, RegistrationTeamNameRequestDto(name))
+
+    suspend fun renameOwnTeam(idToken: String?, token: String?, tournamentId: String, name: String): OwnRegistrationDto =
+        registrationCall(HttpMethod.Put, "/registrations/${tournamentId.encodeURLPath()}/me/team", idToken, token, RegistrationTeamNameRequestDto(name))
+
+    suspend fun leaveOwnTeam(idToken: String?, token: String?, tournamentId: String): OwnRegistrationDto =
+        registrationCall<OwnRegistrationDto, Unit>(HttpMethod.Delete, "/registrations/${tournamentId.encodeURLPath()}/me/team", idToken, token, null)
+
+    suspend fun addOwnTeamMember(idToken: String?, token: String?, tournamentId: String, emaId: String): OwnRegistrationDto =
+        registrationCall(HttpMethod.Post, "/registrations/${tournamentId.encodeURLPath()}/me/team/members", idToken, token, RegistrationTeamMemberRequestDto(emaId))
+
+    suspend fun removeOwnTeamMember(idToken: String?, token: String?, tournamentId: String, emaId: String): OwnRegistrationDto =
+        registrationCall<OwnRegistrationDto, Unit>(
+            HttpMethod.Delete,
+            "/registrations/${tournamentId.encodeURLPath()}/me/team/members/${emaId.encodeURLPath()}",
+            idToken,
+            token,
+            null,
+        )
+
+    suspend fun requestWithoutEmaNumber(tournamentId: String, request: NoEmaNumberRequestDto): OkResponseDto =
+        registrationCall(HttpMethod.Post, "/registrations/${tournamentId.encodeURLPath()}/no-ema", null, null, request)
+
+    suspend fun adminRegistrations(idToken: String, tournamentId: String): AdminRegistrationsDto =
+        get(path = "/tournaments/$tournamentId/registrations", idToken = idToken)
+
+    suspend fun adminAddRegistration(idToken: String, tournamentId: String, request: AdminAddRegistrationRequestDto): AdminRegistrationDto =
+        post(path = "/tournaments/$tournamentId/registrations", requestBody = request, idToken = idToken)
+
+    suspend fun adminUpdateRegistration(idToken: String, tournamentId: String, emaId: String, request: AdminUpdateRegistrationRequestDto): AdminRegistrationDto =
+        put(path = "/tournaments/$tournamentId/registrations/${emaId.encodeURLPath()}", requestBody = request, idToken = idToken)
+
+    suspend fun adminRemoveRegistration(idToken: String, tournamentId: String, emaId: String, notify: Boolean): OkResponseDto =
+        delete(path = "/tournaments/$tournamentId/registrations/${emaId.encodeURLPath()}?notify=$notify", idToken = idToken)
+
+    suspend fun updateRegistrationSettings(idToken: String, tournamentId: String, request: RegistrationSettingsRequestDto): RegistrationSettingsDto =
+        put(path = "/tournaments/$tournamentId/registration-settings", requestBody = request, idToken = idToken)
+
+    suspend fun importRegistrations(idToken: String, tournamentId: String, request: RegistrationImportRequestDto): RegistrationImportDto {
+        val response = httpClient.post(url("/tournaments/$tournamentId/registrations/import")) {
+            bearer(idToken)
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
+        }
+        return response.requireSuccessBody()
+    }
+
+    suspend fun makeDraw(idToken: String, tournamentId: String, request: MakeDrawRequestDto): TournamentDto {
+        val response = httpClient.post(url("/tournaments/$tournamentId/draw")) {
+            bearer(idToken)
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
+        }
+        return response.requireSuccessBody()
+    }
+
+    private suspend inline fun <reified TResponse, reified TBody> registrationCall(
+        method: HttpMethod,
+        path: String,
+        idToken: String?,
+        token: String?,
+        requestBody: TBody?,
+    ): TResponse {
+        val response = httpClient.request(url(path)) {
+            this.method = method
+            bearer(idToken)
+            if (!token.isNullOrBlank()) header(REGISTRATION_TOKEN_HEADER, token)
+            if (requestBody != null) setBody(requestBody)
+        }
+        return response.requireSuccessBody()
+    }
+
     private suspend inline fun <reified TResponse> get(
         path: String,
         idToken: String? = null,
@@ -884,6 +1002,9 @@ class FunctionsBackendApi(
 }
 
 /** The server accepts at most 200 entries in one page. The app reads the next page until none is left. */
+/** The header with the token of the links of the registration emails. */
+const val REGISTRATION_TOKEN_HEADER = "x-registration-token"
+
 /** The token of a read without an account. Such a read goes to the public routes. */
 const val PUBLIC_TOKEN = ""
 

@@ -12,5 +12,7 @@ sealed interface AppError {
     ) : AppError
     /** The server refused the file of a player import. The screen writes the reason in the language of the user. */
     data class ImportFile(val code: ImportFileErrorCode, val args: List<String> = emptyList()) : AppError
+    /** The server refused an action of the registrations of a tournament. [args] holds details, such as EMA numbers. */
+    data class Registration(val code: RegistrationErrorCode, val args: List<String> = emptyList()) : AppError
     data class Unexpected(val message: String?) : AppError
 }

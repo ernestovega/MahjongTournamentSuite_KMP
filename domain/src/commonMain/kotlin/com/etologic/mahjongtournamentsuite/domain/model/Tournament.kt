@@ -56,7 +56,17 @@ data class Tournament(
     val createdByName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-)
+    /**
+     * True for a tournament with registrations whose draw is not made yet. It has no players and no tables: the
+     * organizer makes the draw when the registrations close. See [RegistrationSettings].
+     */
+    val drawPending: Boolean = false,
+    /** The registrations of the tournament, or null when it never had them. */
+    val registration: RegistrationSettings? = null,
+) {
+    /** The registrations are part of the tournament now: before its draw. */
+    val inRegistration: Boolean get() = drawPending && registration != null
+}
 
 data class CreateTournamentRequest(
     val name: String,
@@ -82,6 +92,11 @@ data class CreateTournamentRequest(
     val matchEndMode: MatchEndMode = MatchEndMode.STOP,
     val matchExtraMinutes: Int = DEFAULT_MATCH_EXTRA_MINUTES,
     val timeZone: String? = null,
+    /**
+     * Not null: the tournament opens registrations and has no players or draw yet ([players] and [tables] are empty,
+     * [numPlayers] is ignored). Only status, maxPlayers, closesOn and slug count.
+     */
+    val registration: RegistrationSettings? = null,
 )
 
 /** One organizer of a tournament: a club or a federation, see [Organization]. */
