@@ -141,7 +141,7 @@ fun hasClickLabel(label: String): SemanticsMatcher =
     SemanticsMatcher("OnClick label = '$label'") { it.config.getOrNull(SemanticsActions.OnClick)?.label == label }
 
 /** A node that shows the text, or describes itself with it, or has it as the label of its click action. */
-private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher =
+internal fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher =
     hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
 
 @OptIn(ExperimentalTestApi::class)

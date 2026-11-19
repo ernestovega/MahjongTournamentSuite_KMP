@@ -638,11 +638,22 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         }
     }
 
+    /**
+     * A button of the Timer by its click action. A tap is injected into the window with the focus, and on the emulator
+     * the focus can stay on another window (the launcher) while the Timer shows: the taps are then refused.
+     */
+    private fun timerAction(text: String) {
+        c.waitUntil(10_000) { c.onAllNodes(hasLabel(text) and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(hasLabel(text) and hasClickAction() and isEnabled()).onFirst()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        c.waitForIdle()
+    }
+
     /** Play on the Timer of the tournament, as in TournamentJourneyTest. The Timer opens in its own window. */
     private fun startRoundOnTheTimer(tournamentId: String, round: Int) {
         c.clickButton("Timer")
         c.waitForAnyText("Start timer", "Pause timer", timeoutMs = 60_000)
-        val deadline = System.currentTimeMillis() + 60_000
+        val deadline = System.currentTimeMillis() + 180_000
         while (true) {
             c.settle()
             if (c.isOnScreen("Round $round") && c.isOnScreen("Start timer")) break
@@ -652,10 +663,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             val tapped = runCatching {
                 when {
                     c.isOnScreen("Pause timer") -> {
-                        c.clickButton("Pause timer")
-                        c.waitForText("Start timer")
+                        timerAction("Pause timer")
+                        c.waitForText("Start timer", timeoutMs = 10_000)
                     }
-                    c.isOnScreen("Increase round") -> c.clickButton("Increase round")
+                    c.isOnScreen("Increase round") -> timerAction("Increase round")
                 }
             }
             if (tapped.isFailure) {
@@ -664,7 +675,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             }
         }
         for (attempt in 1..5) {
-            if (runCatching { c.clickButton("Start timer") }.isSuccess) break
+            if (runCatching { timerAction("Start timer") }.isSuccess) break
             log("the tap on Start timer was refused, attempt $attempt")
             Thread.sleep(1_000)
         }
