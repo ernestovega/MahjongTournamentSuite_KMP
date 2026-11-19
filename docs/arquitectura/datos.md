@@ -18,6 +18,8 @@ flowchart TB
     activity["activity/{id}<br/>acciones de gestión"]
     errors["errorGroups/{id}<br/>└ reports/{id}"]
     meta["_meta/dataVersions<br/>revisiones globales"]
+    personPrivate["personPrivate/{emaId}<br/>restricciones alimentarias<br/>(privado, con consentimiento)"]
+    slugs["registrationSlugs/{slug}<br/>tournamentId del enlace /inscripcion"]
     sync["emaPlayerRegistrySyncReports · …SyncState ·<br/>emaRankingTournamentResultIndex"]
   end
 
@@ -31,9 +33,14 @@ flowchart TB
     changes["changes/{id}<br/>registro de cada guardado de mesa"]
     playerLog["playerLog/{id}<br/>cambios de persona en un hueco"]
     assignments["emaPlayerAssignments/{emaId}<br/>EMA id → hueco"]
+    registrations["registrations/{emaId}<br/>inscripción antes del sorteo:<br/>estado, puesto, email, equipo, pagado"]
+    regTeams["registrationTeams/{id}<br/>name, capitán"]
+    regLog["registrationLog/{id}<br/>cambios para el informe semanal"]
   end
 
-  tournaments --> members & players & teams & rounds & tables & changes & playerLog & assignments
+  tournaments --> members & players & teams & rounds & tables & changes & playerLog & assignments & registrations & regTeams & regLog
+  registrations -. emaId .-> personPrivate
+  slugs -. tournamentId .-> tournaments
   tables --> hands
   users -. emaId .-> registry
   emaIdIndex -. uid .-> users

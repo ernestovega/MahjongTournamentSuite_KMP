@@ -173,6 +173,24 @@ at tables 1 and 2 of round 2, the last one. It takes about
 45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.
 
+## The registrations
+
+The job **Registrations before the tournament** (`scripts/rehearsal/registrations.mjs`) runs beside the tournament of
+the scenario, in a second tournament that opens registrations (docs/registrations.md). With the people of the plan:
+
+- The bot admin creates it with 16 places and a public link, checks the link, previews and imports a Google Form of 4
+  people, and adds by hand those who do not fit in the 20 registrations that one address can send in 15 minutes.
+- Players of earlier game days register with their account. New players register with their email and open the link
+  of the registration email in the mailbox of the tests. One person never opens it: it stays pending and out of the
+  public list. One person writes "I have no EMA number".
+- The public list has 16 places, the waiting list and no email. A person with a place cancels (the organization gets the
+  email), and the bot admin gives the place to the first of the waiting list.
+- With teams, four captains create their teams and add three people each.
+- The bot admin closes the registrations and makes the draw (3 rounds, nobody meets twice, four teams at each table),
+  and every person with a place gets a slot.
+
+Each step prints ✓ or ✗ in the summary of the job, and `registrations.json` keeps them. A ✗ fails the job.
+
 ## Tests of the scripts
 
 `node --test scripts/rehearsal/test/*.test.mjs` (about 6 s, no network, no account) runs:
@@ -185,6 +203,9 @@ organizer fails, the whole run stops, so the bots do not play on for nothing. Th
   failed case, ties at a table, a substituted slot, and the slowest of a long list.
 - `scenario.test.mjs`: the players of the registry, the planned start near midnight, the corner cases of each
   scenario, the slots and the import files.
+- `registrations.test.mjs`: who registers how within the calls of one address, the draw (every seed seats everybody,
+  nobody meets twice, four teams at a table), the token of the email link, and the whole registration with and without
+  teams against a server in memory.
 - `api.test.mjs` and `mail.test.mjs`: the metrics of long runs, the retry of a read, and the retries of the mailbox.
 - `scripts.test.mjs`: the shell scripts, the hidden addresses of the job log, the Madrid time zone, and one major
   version of each action in the workflows.

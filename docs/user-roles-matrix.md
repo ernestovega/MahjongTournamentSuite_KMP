@@ -25,6 +25,7 @@ enum `Permission` of `:domain` mirrors the names.
 | View tournaments | Assigned | Of its organizations + assigned | All |
 | Assign EMA players, edit tables, hands, scores and results | Edit, until completed | Edit | Edit |
 | Round control and the Timer | Use | Use | Use |
+| Registrations before the draw (list with emails and food, add, change, import, settings, make the draw) | Its tournaments | Use | Use |
 | Edit a completed tournament, reset a table | — | Use | Use |
 | Tournament activity | — | View | View |
 | Create a tournament | — | With one of its organizations as organizer | Any organizer |

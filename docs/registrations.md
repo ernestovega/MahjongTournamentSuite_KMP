@@ -1,0 +1,106 @@
+# Registrations
+
+The registrations of a tournament replace the Google Form and its spreadsheet. A tournament with registrations is
+created without players and without a draw. People register from the player app or from the public link. When the
+registrations close, the organizer makes the draw with the confirmed people, with the same algorithm as the creation of
+a tournament.
+
+Decisions of the owner (19-nov-2026): the creation without players, the waiting list with promotions by hand, no
+accounts from the registrations, private food restrictions with consent, optional teams that must be complete before
+the draw, a public list without hidden people, a button to cancel, the link `/inscripcion/<slug>`, the Players tab of
+the player app, and the import of the old Google Form.
+
+## Life of a tournament with registrations
+
+1. **Creation** (admin, Create tournament > "Open registrations"). The organizer can set the number of places and the
+   last day to register. The tournament has `drawPending: true` and `registration` (its settings), and no players,
+   tables or rounds. The public link uses the short name of the tournament, for example `/inscripcion/mmc-2027`.
+2. **Open.** People register. Each one gets a place (`CONFIRMED`) while there are places, and then goes to the
+   numbered waiting list (`WAITING`). Without a limit of places everyone gets a place.
+3. **Closed.** The organizer closes the registrations (Registration settings), or the hourly job closes them the day
+   after the last day, in the time zone of the tournament. They can open again: nothing is lost.
+4. **Draw** (admin, Registrations > Make the draw, only when closed). The app checks the people with a place: a
+   multiple of 4, at least 16, and in a tournament with teams every team with 4 people. Then it computes the rounds
+   and the tables on the device, puts the people in the slots in a random order (a registration team takes one team of
+   the draw), and the server writes everything (`POST /tournaments/{id}/draw`). The tournament then works as any other.
+
+## The person who registers
+
+- **With an account that has an EMA number:** Register, and the place or the waiting list comes at once.
+- **Without an account:** the person finds itself in the EMA registry, writes an email, and gets a link to confirm.
+  Until it opens the link the registration is `PENDING`: nobody else sees it, and it is deleted after 48 hours.
+  The link of the emails (`/inscripcion/gestionar?t=<tournament>&k=<token>`) confirms the email and keeps a token in
+  the app (the web leaves it out of the address at once). With that token the person manages its registration without
+  an account.
+- **No EMA number:** "I have no EMA number" sends a message to the organization, which creates the EMA player in the
+  admin app and registers the person. The registrations never create accounts or EMA players.
+- **Food restrictions** (allergies, intolerances, diets) are private: only the organizers and the person see them.
+  They can be health data, so the app asks for an explicit consent. They are stored in `personPrivate/{emaId}`, so they
+  belong to the person and its account, and not to one tournament.
+- **Cancel:** "Cancel my registration", with a confirmation. The organization gets an email.
+
+## Teams
+
+Only in a tournament with teams. A team has 4 people and a name. The team is optional when a person registers, but it
+must be complete before the draw.
+
+- A captain creates the team and adds up to 3 registered people without a team, by their EMA number. One person can
+  thus register the whole team: the others only register.
+- The captain renames the team or removes a member. Anyone can leave its team.
+- One week before the last day (at 10:00 of the tournament), the people without a complete team get a reminder. If
+  they do nothing, the organization chooses their team (admin, Change > Team).
+
+## Public list
+
+`GET /public/tournaments/{id}/registrations`: order, name, flag, EMA number, status, position and team. No emails, no
+food restrictions and no registration date. There are no hidden people in this list.
+
+## Organizers
+
+Admins, club admins of the organizers, and editors assigned to the tournament (permission `tournament.playerEmails`).
+
+Admin app, Registrations (opens from the tournament while `drawPending`):
+
+- Summary: state, places, last day, the public link with a copy button, Add a person and Make the draw.
+- The lists of places, waiting list and pending people, with search, paid, food restrictions, and a warning when two
+  people share an email (one account cannot share an email).
+- Each person: Change (email, team, food, paid), Give a place, Move to the waiting list, Remove (with or without an
+  email to the person). The waiting list moves only by hand.
+- Import of the Google Form (CSV or Excel, up to 500 rows): first a preview with the problems of each row, then the
+  import. The name and the country come from the EMA registry, not from the file. A row with problems is not imported.
+  The import never sends emails.
+- Emails to the organization (the contact email of the tournament): each cancellation, and a weekly report on Sunday at
+  21:00 of the tournament, until the draw.
+
+## Data
+
+| Where | What |
+| --- | --- |
+| `tournaments/{id}` | `drawPending`, `registration` (status, maxPlayers, closesOn, slug, counters) |
+| `tournaments/{id}/registrations/{emaId}` | status, position, email, team, paid, source, the token of its links, dates |
+| `tournaments/{id}/registrationTeams/{teamId}` | name, captain |
+| `tournaments/{id}/registrationLog` | the changes for the weekly report |
+| `registrationSlugs/{slug}` | the tournament of a public link |
+| `personPrivate/{emaId}` | the food restrictions and their consent |
+
+The scheduled function `registrationsHourly` deletes the expired pending registrations, closes on the last day, sends
+the team reminders and the weekly report.
+
+## Code
+
+- Backend: `firebase/functions/src/services/registration*.ts`, `api/routes/registrations.routes.ts` (the person),
+  `tournaments.routes.ts` (organizers and draw), `public.routes.ts` (public list and links).
+- Domain: `model/Registration.kt`, `RegistrationRepository`, `assignRegistrationsToDraw`.
+- Admin: `RegistrationsScreen`, `RegistrationsPresenter`, the switch in `CreateTournamentScreen`.
+- Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/inscripcion/...`).
+- Analytics: the `registration` event with its actions, and the admin actions (docs/telemetry.md).
+
+## Tests
+
+- Backend: `registrationSettings.test.ts`, `registrationImport.test.ts`, `registrationEmails.test.ts`,
+  `registrations.integration.test.ts`
+  (emulators), and the routes in `rolePermissions.integration.test.ts`.
+- Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), and the screenshots
+  `registrations` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
+- Game day: the job "Registrations before the tournament" of every scenario runs the whole process in staging
+  (`scripts/rehearsal/registrations.mjs`, docs/scenarios.md).

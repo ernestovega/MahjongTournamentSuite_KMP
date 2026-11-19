@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.28",
+  "version": "1.0.30",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -58,6 +58,9 @@
   },
   {
    "name": "Organizaciones"
+  },
+  {
+   "name": "Inscripciones"
   }
  ],
  "paths": {
@@ -6121,6 +6124,1041 @@
      }
     ]
    }
+  },
+  "/public/tournaments/{tournamentId}/registrations": {
+   "get": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Lista pública de inscritos",
+    "description": "🌐 Público: sin cuenta.\n\nPlazas y lista de espera, sin emails, sin restricciones alimentarias y sin fecha de inscripción.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PublicRegistrations"
+        }
+       }
+      }
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/public/registration-links/{slug}": {
+   "get": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Torneo de un enlace público",
+    "description": "🌐 Público: sin cuenta.\n\nEl enlace `/inscripcion/<slug>` abre este torneo.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegistrationLink"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/registrations/{tournamentId}": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Inscribirse",
+    "description": "🌐 Público: sin cuenta.\n\nSin cuenta: llega un email con el enlace para confirmar (estado PENDING). Con cuenta y EMA id: plaza o lista de espera al momento.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegisterResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/registrations/{tournamentId}/confirm": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Confirmar el email",
+    "description": "🌐 Público: sin cuenta.\n\nEl enlace de los emails. Da plaza o lista de espera.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ConfirmRegistrationRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/registrations/{tournamentId}/me": {
+   "get": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Mi inscripción",
+    "description": "🌐 Público: sin cuenta.\n\n404 si no hay.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   },
+   "put": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Cambiar mis restricciones alimentarias",
+    "description": "🌐 Público: sin cuenta.\n\nNecesitan el consentimiento.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdateOwnRegistrationRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Darse de baja",
+    "description": "🌐 Público: sin cuenta.\n\nLa organización recibe un email.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/registrations/{tournamentId}/me/team": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Crear un equipo (capitán)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegistrationTeamNameRequest"
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Renombrar el equipo (capitán)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegistrationTeamNameRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Salir del equipo",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/registrations/{tournamentId}/me/team/members": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Añadir un miembro (capitán)",
+    "description": "🌐 Público: sin cuenta.\n\nUna persona inscrita y sin equipo.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegistrationTeamMemberRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/registrations/{tournamentId}/me/team/members/{emaId}": {
+   "delete": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Quitar un miembro (capitán)",
+    "description": "🌐 Público: sin cuenta.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OwnRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ]
+   }
+  },
+  "/registrations/{tournamentId}/no-ema": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "«No tengo número EMA»",
+    "description": "🌐 Público: sin cuenta.\n\nEnvía un mensaje a la organización. Límite por dirección.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/NoEmaNumberRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/registrations": {
+   "get": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Inscripciones (organización)",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCon emails, pagos y restricciones alimentarias. Permiso `tournament.playerEmails`.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminRegistrations"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Añadir una persona",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AdminAddRegistrationRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/registrations/import": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Importar el Google Form",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCSV o Excel de las respuestas. `apply: false` solo comprueba las filas.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegistrationImport"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegistrationImportRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/registrations/{emaId}": {
+   "put": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Cambiar una inscripción",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEmail, estado (dar plaza o pasar a espera), pagado, equipo y restricciones.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminRegistration"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AdminUpdateRegistrationRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Quitar una inscripción",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`notify=false` no envía el email.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     },
+     {
+      "name": "emaId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA id (8 cifras)."
+     },
+     {
+      "name": "notify",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true o false."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/registration-settings": {
+   "put": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Ajustes de las inscripciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAbrir o cerrar, plazas, último día y enlace.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegistrationSettings"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegistrationSettingsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/draw": {
+   "post": {
+    "tags": [
+     "Inscripciones"
+    ],
+    "summary": "Hacer el sorteo",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCon las inscripciones cerradas: la app calcula rondas y mesas y reparte las personas confirmadas en los huecos.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tournament"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MakeDrawRequest"
+       }
+      }
+     }
+    }
+   }
   }
  },
  "components": {
@@ -6411,6 +7449,154 @@
      }
     }
    },
+   "AdminAddRegistrationRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "status": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "paid": {
+      "type": "boolean"
+     },
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "teamName": {
+      "type": "string"
+     },
+     "notify": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "emaId",
+     "email"
+    ]
+   },
+   "AdminRegistration": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     },
+     "position": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "teamId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "email": {
+      "type": "string"
+     },
+     "paid": {
+      "type": "boolean"
+     },
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "source": {
+      "type": "string"
+     },
+     "registeredAt": {
+      "type": "string"
+     },
+     "hasAccount": {
+      "type": "boolean"
+     },
+     "sharedEmail": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "emaId"
+    ]
+   },
+   "AdminRegistrations": {
+    "type": "object",
+    "properties": {
+     "settings": {
+      "$ref": "#/components/schemas/RegistrationSettings"
+     },
+     "isTeams": {
+      "type": "boolean"
+     },
+     "drawPending": {
+      "type": "boolean"
+     },
+     "publicLink": {
+      "type": "string"
+     },
+     "registrations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AdminRegistration"
+      }
+     },
+     "teams": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RegistrationTeam"
+      }
+     }
+    }
+   },
+   "AdminUpdateRegistrationRequest": {
+    "type": "object",
+    "properties": {
+     "email": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "status": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "paid": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "teamName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "foodRestrictions": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
    "AssignTournamentPlayerRequest": {
     "type": "object",
     "properties": {
@@ -6444,6 +7630,17 @@
       "format": "int32"
      }
     }
+   },
+   "ConfirmRegistrationRequest": {
+    "type": "object",
+    "properties": {
+     "token": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "token"
+    ]
    },
    "CountriesResponse": {
     "type": "object",
@@ -6603,6 +7800,17 @@
        "string",
        "null"
       ]
+     },
+     "registration": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RegistrationSettingsRequest"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Opens registrations: the tournament has no players and no draw yet."
      }
     },
     "required": [
@@ -6833,6 +8041,64 @@
       "format": "int32"
      }
     }
+   },
+   "DrawAssignment": {
+    "type": "object",
+    "properties": {
+     "playerId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "emaId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "playerId",
+     "emaId"
+    ]
+   },
+   "DrawPlayer": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "team": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "id",
+     "team"
+    ]
+   },
+   "DrawTable": {
+    "type": "object",
+    "properties": {
+     "roundId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "playerIds": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     }
+    },
+    "required": [
+     "roundId",
+     "tableId",
+     "playerIds"
+    ]
    },
    "EmaPlayerDeleteResult": {
     "type": "object",
@@ -7725,6 +8991,39 @@
      }
     }
    },
+   "MakeDrawRequest": {
+    "type": "object",
+    "properties": {
+     "numTries": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DrawPlayer"
+      }
+     },
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DrawTable"
+      }
+     },
+     "assignments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DrawAssignment"
+      }
+     }
+    },
+    "required": [
+     "numTries",
+     "players",
+     "tables",
+     "assignments"
+    ]
+   },
    "ManagedUser": {
     "type": "object",
     "properties": {
@@ -7881,6 +9180,29 @@
      }
     }
    },
+   "NoEmaNumberRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "country",
+     "email",
+     "message"
+    ]
+   },
    "OkResponse": {
     "type": "object",
     "properties": {
@@ -7957,6 +9279,45 @@
       }
      }
     }
+   },
+   "OwnRegistration": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     },
+     "position": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "teamId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "email": {
+      "type": "string"
+     },
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "manageToken": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "emaId"
+    ]
    },
    "PasswordResetRequest": {
     "type": "object",
@@ -8454,6 +9815,59 @@
      "players"
     ]
    },
+   "PublicRegistration": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     },
+     "position": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "teamId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "emaId"
+    ]
+   },
+   "PublicRegistrations": {
+    "type": "object",
+    "properties": {
+     "settings": {
+      "$ref": "#/components/schemas/RegistrationSettings"
+     },
+     "isTeams": {
+      "type": "boolean"
+     },
+     "registrations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/PublicRegistration"
+      }
+     },
+     "teams": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RegistrationTeam"
+      }
+     }
+    }
+   },
    "RefreshRequest": {
     "type": "object",
     "properties": {
@@ -8478,6 +9892,263 @@
     "required": [
      "idToken",
      "refreshToken"
+    ]
+   },
+   "RegisterRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "consent": {
+      "type": "boolean"
+     },
+     "language": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "emaId",
+     "email",
+     "foodRestrictions",
+     "consent"
+    ]
+   },
+   "RegisterResult": {
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string"
+     },
+     "position": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "emailHint": {
+      "type": "string"
+     },
+     "manageToken": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "RegistrationImport": {
+    "type": "object",
+    "properties": {
+     "rows": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RegistrationImportRow"
+      }
+     },
+     "imported": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "RegistrationImportRequest": {
+    "type": "object",
+    "properties": {
+     "fileName": {
+      "type": "string"
+     },
+     "dataBase64": {
+      "type": "string"
+     },
+     "apply": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "fileName",
+     "dataBase64",
+     "apply"
+    ]
+   },
+   "RegistrationImportRow": {
+    "type": "object",
+    "properties": {
+     "line": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "emaId": {
+      "type": "string"
+     },
+     "firstName": {
+      "type": "string"
+     },
+     "lastName": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "team": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "registryName": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "registryCountry": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "sharedEmail": {
+      "type": "boolean"
+     },
+     "problems": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "RegistrationLink": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "tournamentId"
+    ]
+   },
+   "RegistrationSettings": {
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string"
+     },
+     "maxPlayers": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "closesOn": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "slug": {
+      "type": "string"
+     },
+     "confirmed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "waiting": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
+   },
+   "RegistrationSettingsRequest": {
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string"
+     },
+     "maxPlayers": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "closesOn": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "slug": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "status",
+     "slug"
+    ]
+   },
+   "RegistrationTeam": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "captainEmaId": {
+      "type": "string"
+     },
+     "members": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "id"
+    ]
+   },
+   "RegistrationTeamMemberRequest": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "emaId"
+    ]
+   },
+   "RegistrationTeamNameRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
     ]
    },
    "RenameTournamentRequest": {
@@ -9645,6 +11316,20 @@
        "type": "string"
       },
       "description": "What the signed-in account may do in the tournament, by permission name."
+     },
+     "drawPending": {
+      "type": "boolean",
+      "description": "True before the draw of a tournament with registrations."
+     },
+     "registration": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RegistrationSettings"
+       },
+       {
+        "type": "null"
+       }
+      ]
      }
     },
     "required": [
@@ -10020,6 +11705,21 @@
      "alias"
     ]
    },
+   "UpdateOwnRegistrationRequest": {
+    "type": "object",
+    "properties": {
+     "foodRestrictions": {
+      "type": "string"
+     },
+     "consent": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "foodRestrictions",
+     "consent"
+    ]
+   },
    "UpdatePlayerPhotoRequest": {
     "type": "object",
     "properties": {
@@ -10081,7 +11781,7 @@
       "items": {
        "type": "string"
       },
-      "description": "Null keeps the organizers. Only a super admin changes them."
+      "description": "Null keeps the organizers. A super admin or a club admin of the main organizer changes them."
      },
      "eventStartDate": {
       "type": "string"

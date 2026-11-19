@@ -17,6 +17,8 @@ in its CDN and every viewer of a tournament shares one call to the function.
 | `GET /public/tournaments/:id` | One tournament | 15 s in play, 300 s completed |
 | `GET /public/tournaments/:id/sync/manifest` | The revisions of the tournament | 15 s in play, 300 s completed |
 | `GET /public/tournaments/:id/players`, `teams`, `rounds`, `tables`, `tables-with-hands`, `rounds/:r/tables-with-hands`, `tables/:r/:t` | The content of the tournament. Players never carry an email or an account | 15 s in play, 300 s completed |
+| `GET /public/tournaments/:id/registrations` | The registrations before the draw: name, flag, EMA number, status, position, team. No email, no food restrictions, no date (docs/registrations.md) | 15 s |
+| `GET /public/registration-links/:slug` | The tournament of the public link `/inscripcion/<slug>` | 60 s |
 | `GET /public/statistics/overview` | Sums and leaderboards of all tournaments | 60 s |
 | `GET /public/statistics/persons/:emaId` and `.../standings` | The results of one person in the public tournaments | 60 s |
 | `GET /public/players` | The EMA registry: number, name and country. No photos | 1 h |

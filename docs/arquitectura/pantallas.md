@@ -25,6 +25,7 @@ Empieza siempre en la lista de torneos. No hace falta cuenta para ver nada; la c
 flowchart TD
   S([Arranque]) --> T["Torneos<br/>🌐 todos"]
   T -- "abrir torneo / enlace /t/id" --> TT
+  T -- "torneo con inscripciones /<br/>enlace /inscripcion/slug" --> TP
   subgraph Torneo["Torneo (pestañas)"]
     TT["Mesas<br/>Yo · Equipo · Todas"]
     TR["Clasificación"]
@@ -52,6 +53,7 @@ flowchart TD
 | **Torneo › Mesas** | Todos | Pestañas Yo / Equipo / Todas. Mesas por ronda con resultados en vivo. | <img src="../../playerApp/screenshots/tournament-tables/phone-light.png" width="140" alt="Torneo › Mesas"> |
 | **Torneo › Clasificación** | Todos | Jugadores, equipos, manos pollo y mejor mano. | <img src="../../playerApp/screenshots/tournament-ranking/phone-light.png" width="140" alt="Torneo › Clasificación"> |
 | **Torneo › Jugadores** | Todos | Buscador; abre la ficha del jugador. | <img src="../../playerApp/screenshots/tournament-players/phone-light.png" width="140" alt="Torneo › Jugadores"> |
+| **Torneo › Jugadores (inscripciones)** | Todos ver · cualquiera se inscribe | Antes del sorteo solo hay Jugadores e Info. Plazas, lista de espera, Inscribirme, Mi inscripción (comida, equipo, baja) y «No tengo número EMA». Enlace `/inscripcion/<slug>` (docs/registrations.md). | <img src="../../playerApp/screenshots/tournament-registrations/phone-light.png" width="140" alt="Torneo › Jugadores (inscripciones)"> |
 | **Torneo › Equipos** | Todos | Solo en torneos por equipos. | <img src="../../playerApp/screenshots/tournament-teams/phone-light.png" width="140" alt="Torneo › Equipos"> |
 | **Torneo › Estadísticas** | Todos | Totales y reparto de manos, por ronda. | <img src="../../playerApp/screenshots/tournament-statistics/phone-light.png" width="140" alt="Torneo › Estadísticas"> |
 | **Torneo › Info** | Todos | Progreso, horario de rondas, sede, agenda y contacto. | <img src="../../playerApp/screenshots/tournament-info/phone-light.png" width="140" alt="Torneo › Info"> |
@@ -65,6 +67,7 @@ flowchart TD
 | **Iniciar sesión** | Staff (super admin, admin de país, editor) | Web: si la cuenta es de staff elige «Vista jugador» o «Gestión». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Iniciar sesión"> |
 | **Torneos** | Super admin: todos · Admin de país: los de sus países · Editor: asignados | Crear (super admin y admin de país en sus países), editar, abrir. Barra superior: cuentas, registro EMA, reloj; menú DEV (super admin). | <img src="../../adminApp/screenshots/tournaments/phone-light.png" width="140" alt="Torneos"> |
 | **Torneo (editor de rondas)** | Staff del torneo | Ronda › mesa: jugadores, asientos, puntos y las 16 manos. Menú: reloj, clasificación, estadísticas, exportar, control de ronda (también editores), actividad (admins). | <img src="../../adminApp/screenshots/tournament/phone-light.png" width="140" alt="Torneo (editor de rondas)"> |
+| **Inscripciones** | Staff del torneo | Antes del sorteo: enlace público, plazas, lista de espera, pagado, comida, importar el Google Form, ajustes y Hacer el sorteo. | <img src="../../adminApp/screenshots/registrations/phone-light.png" width="140" alt="Inscripciones"> |
 | **Mesas** | Staff del torneo | Todas las mesas con su estado y filtros. | <img src="../../adminApp/screenshots/tables/phone-light.png" width="140" alt="Mesas"> |
 | **Jugadores del torneo** | Staff del torneo | Huecos, EMA ids, invitaciones, importación, sustituciones, tira de mesas por ronda. | <img src="../../adminApp/screenshots/players/phone-light.png" width="140" alt="Jugadores del torneo"> |
 | **Equipos** | Staff del torneo | Nombre y miembros de cada equipo. | <img src="../../adminApp/screenshots/teams/phone-light.png" width="140" alt="Equipos"> |
