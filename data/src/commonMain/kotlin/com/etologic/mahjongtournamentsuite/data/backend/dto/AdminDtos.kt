@@ -214,6 +214,60 @@ data class StatisticsOverviewDto(
 )
 
 @Serializable
+data class GroupTablesDto(
+    val tablesCompleted: Int = 0,
+    val tablesWithHands: Int = 0,
+    val handsPlayed: Int = 0,
+    val drawnHands: Int = 0,
+    val winningHands: Int = 0,
+    val selfDraws: Int = 0,
+    val winningScoreSum: Int = 0,
+    val chickenHands: Int = 0,
+    val penaltyCount: Int = 0,
+    val highestHand: Int = 0,
+)
+
+@Serializable
+data class GroupPersonDto(
+    val emaId: String = "",
+    val tournaments: Int = 0,
+    val tables: Int = 0,
+    val points: Double = 0.0,
+    val score: Int = 0,
+    val place1: Int = 0,
+    val place2: Int = 0,
+    val place3: Int = 0,
+    val place4: Int = 0,
+    val tablesWithHands: Int = 0,
+    val handsPlayed: Int = 0,
+    val handsWon: Int = 0,
+    val selfDraws: Int = 0,
+    val dealIns: Int = 0,
+    val drawnHands: Int = 0,
+    val winningScoreSum: Int = 0,
+    val chickenHands: Int = 0,
+    val dealInScoreSum: Int = 0,
+    val lostToSelfDraws: Int = 0,
+    val otherWins: Int = 0,
+    val penaltyCount: Int = 0,
+    val penaltyPoints: Int = 0,
+    val bestHand: Int = 0,
+    val bestTableScore: Int? = null,
+    val mostHandsWonAtATable: Int? = null,
+    val maxPenalty: Int = 0,
+    val tableWinRun: Int = 0,
+    val handWinRun: Int? = null,
+    val noDealInRun: Int? = null,
+)
+
+@Serializable
+data class StatisticsGroupDto(
+    val tournamentIds: List<String> = emptyList(),
+    val tables: GroupTablesDto = GroupTablesDto(),
+    val persons: List<GroupPersonDto> = emptyList(),
+)
+
+@Serializable
 data class ErrorGroupDto(
     val id: String = "",
     val errorType: String = "",

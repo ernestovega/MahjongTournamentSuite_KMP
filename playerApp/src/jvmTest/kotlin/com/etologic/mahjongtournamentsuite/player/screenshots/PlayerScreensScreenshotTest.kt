@@ -185,7 +185,6 @@ class PlayerScreensScreenshotTest {
         ready = {
             openStatsTab()
             waitForText(uiText("stats_skills"), substring = true)
-            onAllNodesWithText(playerText("scope_by_tournaments")).onFirst().performClick()
             val round = uiText("round_short", 2)
             waitForText(round)
             onAllNodesWithText(round).onFirst().performClick()
@@ -193,14 +192,15 @@ class PlayerScreensScreenshotTest {
         },
     ) { nav -> TournamentsScreen(nav) }
 
-    /** Without an account the Stats tab asks to choose a player. */
+    /** Without an account the Stats tab shows all tournaments and players. */
     @Test
     fun statisticsTabGuest() = playerScreenshots(
         "statistics-tab-guest",
         modules = { playerModules(account = null) },
         ready = {
             openStatsTab()
-            waitForText(playerText("stats_choose_player_title"), substring = true)
+            waitForText(uiText("stats_filter_everything"), substring = true)
+            waitForText(uiText("stats_totals"), substring = true)
         },
     ) { nav -> TournamentsScreen(nav) }
 
@@ -251,7 +251,7 @@ class PlayerScreensScreenshotTest {
     fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab(MainTab.PLAYERS) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("EMA 04010001", substring = true) }) { nav ->
+    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText(uiText("stats_skills"), substring = true) }) { nav ->
         TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1))
     }
 
@@ -325,7 +325,7 @@ class PlayerScreensScreenshotTest {
     }
 
     @Test
-    fun statisticsPlayer() = playerScreenshots("statistics-player", ready = { waitForText("EMA 04010001", substring = true) }) { nav ->
+    fun statisticsPlayer() = playerScreenshots("statistics-player", ready = { waitForText(uiText("stats_skills"), substring = true) }) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PLAYER.name, tournamentId = ONGOING, slotId = 1))
     }
 

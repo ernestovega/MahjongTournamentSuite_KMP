@@ -255,7 +255,8 @@ export type GroupFilter = {
 export type GroupStatistics = {
   /** The tournaments that the filter keeps and that have a completed table. */
   tournamentIds: string[];
-  /** The sums of all tables of those tournaments, whoever played them. */
+  /** The sums of all tables of those tournaments, whoever played them. With a country of the players, only the
+   * tournaments where one of those players played count. */
   tables: GroupTables;
   /** The people that the filter keeps, with their numbers in those tournaments. */
   persons: GroupPerson[];
@@ -299,12 +300,13 @@ export async function loadGroupStatistics(
   const withData: string[] = [];
   summaries.forEach((summary) => {
     if (summary.tables.tablesCompleted === 0) return;
+    const people = summary.persons.filter((person) => countryPeople == null || countryPeople.has(person.emaId));
+    // With a country of the players, a tournament counts only when one of those players played it.
+    if (countryPeople != null && people.length === 0) return;
     withData.push(summary.tournamentId);
     TABLE_FIELDS.forEach((field) => { tables[field] += summary.tables[field]; });
     tables.highestHand = Math.max(tables.highestHand, summary.tables.highestHand);
-    summary.persons.forEach((person) => {
-      if (hidden.has(person.emaId)) return;
-      if (countryPeople != null && !countryPeople.has(person.emaId)) return;
+    people.filter((person) => !hidden.has(person.emaId)).forEach((person) => {
       const sum = persons.get(person.emaId) ?? emptyPerson(person.emaId);
       addPerson(sum, person);
       persons.set(person.emaId, sum);

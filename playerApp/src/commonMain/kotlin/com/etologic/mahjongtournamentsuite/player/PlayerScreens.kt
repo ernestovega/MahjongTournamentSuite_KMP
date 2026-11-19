@@ -1099,10 +1099,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                             onOpenTable = open,
                             onStatisticsLoading = { statisticsLoading = it },
                         )
-                        MainTab.STATISTICS -> TournamentStatisticsTab(
-                            tournamentId,
-                            onOpenPlayer = { openPlayer(it, statistics = true) },
-                        ) { statisticsLoading = it }
+                        MainTab.STATISTICS -> TournamentStatisticsTab(tournamentId) { statisticsLoading = it }
                         else -> TournamentInfoTab(view)
                     }
                 }

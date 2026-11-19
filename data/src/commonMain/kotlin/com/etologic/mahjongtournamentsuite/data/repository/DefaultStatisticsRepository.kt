@@ -5,13 +5,18 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DigestResultDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsGroupDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.DigestResult
+import com.etologic.mahjongtournamentsuite.domain.model.GroupPerson
+import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.HandRun
 import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerTotals
 import com.etologic.mahjongtournamentsuite.domain.model.RivalTally
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -58,6 +63,10 @@ class DefaultStatisticsRepository(
                 )
             },
         )
+    }
+
+    override suspend fun loadGroup(filter: StatisticsGroupFilter): AppResult<StatisticsGroup> = request("Loading the statistics of a group") { idToken ->
+        backendApi.statisticsGroup(idToken, filter.toQuery()).toDomain()
     }
 
     override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> = request("Loading the person statistics") { idToken ->
@@ -147,4 +156,32 @@ internal fun StandingDto.toStanding() = Standing(
     chickenOf = chickenOf,
     bestHand = bestHand,
     bestHandOf = bestHandOf,
+)
+
+/** The query of a group filter, with the names of the server route. */
+internal fun StatisticsGroupFilter.toQuery(): Map<String, String> = buildMap {
+    tournamentIds?.let { put("tournaments", it.sorted().joinToString(",")) }
+    tournamentCountry?.let { put("tournamentCountry", it) }
+    playerCountry?.let { put("playerCountry", it.ifEmpty { "none" }) }
+    fromYear?.let { put("from", "$it-01-01") }
+    toYear?.let { put("to", "$it-12-31") }
+}
+
+private fun StatisticsGroupDto.toDomain() = StatisticsGroup(
+    tournamentIds = tournamentIds,
+    tables = with(tables) {
+        GroupTables(tablesCompleted, tablesWithHands, handsPlayed, drawnHands, winningHands, selfDraws, winningScoreSum, chickenHands, penaltyCount, highestHand)
+    },
+    persons = persons.map {
+        GroupPerson(
+            emaId = it.emaId, tournaments = it.tournaments, tables = it.tables, points = it.points, score = it.score,
+            places = listOf(it.place1, it.place2, it.place3, it.place4),
+            tablesWithHands = it.tablesWithHands, handsPlayed = it.handsPlayed, handsWon = it.handsWon, selfDraws = it.selfDraws,
+            dealIns = it.dealIns, drawnHands = it.drawnHands, winningScoreSum = it.winningScoreSum, chickenHands = it.chickenHands,
+            dealInScoreSum = it.dealInScoreSum, lostToSelfDraws = it.lostToSelfDraws, otherWins = it.otherWins,
+            penaltyCount = it.penaltyCount, penaltyPoints = it.penaltyPoints, bestHand = it.bestHand,
+            bestTableScore = it.bestTableScore, mostHandsWonAtATable = it.mostHandsWonAtATable, maxPenalty = it.maxPenalty,
+            tableWinRun = it.tableWinRun, handWinRun = it.handWinRun, noDealInRun = it.noDealInRun,
+        )
+    },
 )

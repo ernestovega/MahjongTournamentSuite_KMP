@@ -14,6 +14,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
@@ -27,10 +28,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.SupportMessage
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -45,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.model.groupPersonOf
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -235,6 +240,47 @@ open class ScreenshotStatisticsRepository : StatisticsRepository {
         )
     }
     override suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>> = ok(emptyMap())
+
+    /** The same group that the server builds, from the tables of the screenshot tournaments. */
+    override suspend fun loadGroup(filter: StatisticsGroupFilter): AppResult<StatisticsGroup> {
+        val countryOf = ScreenshotData.players.associate { it.emaId to it.country }
+        val kept = ScreenshotData.tournaments.filter { it.id != ScreenshotData.UPCOMING }.filter { tournament ->
+            val year = tournament.eventStartDate?.take(4)?.toIntOrNull()
+            (filter.tournamentIds == null || tournament.id in filter.tournamentIds!!) &&
+                (filter.tournamentCountry == null || tournament.hostCountry.equals(filter.tournamentCountry, ignoreCase = true)) &&
+                (filter.fromYear == null || (year != null && year >= filter.fromYear!!)) &&
+                (filter.toYear == null || (year != null && year <= filter.toYear!!))
+        }
+        val resultsByPerson = mutableMapOf<String, MutableList<List<TableResult>>>()
+        val ids = mutableListOf<String>()
+        var tables = GroupTables()
+        kept.forEach { tournament ->
+            val players = ScreenshotData.tournamentPlayers(tournament.isTeams)
+            val rankingTables = (1..4).flatMap { round ->
+                (1..4).map { table -> ScreenshotData.table(tournament.id, round, table).let { (state, hands) -> RankingTable(state, hands) } }
+            }
+            val statistics = CalculateStatisticsUseCase()(players, rankingTables, tournament.id)
+            val people = players.filter { !it.assignedEmaId.isNullOrBlank() }
+                .filter { filter.playerCountry == null || countryOf[it.assignedEmaId] == filter.playerCountry }
+            if (statistics.tablesCompleted == 0 || (filter.playerCountry != null && people.isEmpty())) return@forEach
+            ids += tournament.id
+            tables = tables.copy(
+                tablesCompleted = tables.tablesCompleted + statistics.tablesCompleted,
+                tablesWithHands = tables.tablesWithHands + statistics.tablesWithHands,
+                handsPlayed = tables.handsPlayed + statistics.handsPlayed,
+                drawnHands = tables.drawnHands + statistics.drawnHands,
+                selfDraws = tables.selfDraws + statistics.selfDraws,
+                chickenHands = tables.chickenHands + statistics.chickenHands,
+                penaltyCount = tables.penaltyCount + statistics.penaltyCount,
+                highestHand = maxOf(tables.highestHand, statistics.highestHand ?: 0),
+            )
+            people.forEach { slot ->
+                val results = statistics.players.firstOrNull { it.playerId == slot.id }?.results.orEmpty()
+                resultsByPerson.getOrPut(slot.assignedEmaId!!) { mutableListOf() } += results
+            }
+        }
+        return ok(StatisticsGroup(ids, tables, resultsByPerson.map { (ema, results) -> groupPersonOf(ema, results) }))
+    }
 }
 
 class ScreenshotFeatureFlagsRepository(private val flags: FeatureFlags = FeatureFlags()) : FeatureFlagsRepository {

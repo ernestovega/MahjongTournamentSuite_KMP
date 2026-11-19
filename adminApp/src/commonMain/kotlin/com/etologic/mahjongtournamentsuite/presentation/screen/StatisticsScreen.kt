@@ -1,515 +1,151 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonSearch
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.domain.usecase.OverviewStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
-import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.domain.model.byRound
-import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
-import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
-import com.etologic.mahjongtournamentsuite.presentation.components.ChosenTournamentBar
-import com.etologic.mahjongtournamentsuite.presentation.components.ChosenStatisticsBar
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
-import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabContentColor
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import androidx.compose.material3.HorizontalDivider
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilterBar
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilters
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
-import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsView
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
-import mahjongtournamentsuite.adminapp.generated.resources.cancel
-import mahjongtournamentsuite.adminapp.generated.resources.change
-import mahjongtournamentsuite.adminapp.generated.resources.choose_a_player
-import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.scope_by_tournaments
-import mahjongtournamentsuite.adminapp.generated.resources.scope_overall
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
-import mahjongtournamentsuite.adminapp.generated.resources.stats_player_field
-import mahjongtournamentsuite.adminapp.generated.resources.table
-import mahjongtournamentsuite.adminapp.generated.resources.this_table_has_no_statistics_yet
-import mahjongtournamentsuite.adminapp.generated.resources.tournament
-import mahjongtournamentsuite.adminapp.generated.resources.tournaments
-import mahjongtournamentsuite.adminapp.generated.resources.use_the_field_above_to_search
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
-/** The width of one tab on a wide screen. */
-private val StatisticsTabWidth = 260.dp
-
-private fun StatisticsScope.adminIcon(): ImageVector = when (this) {
-    StatisticsScope.TOURNAMENT -> Icons.Default.EmojiEvents
-    StatisticsScope.TABLE -> Icons.Default.GridView
-    else -> Icons.Default.Person
-}
-
-/** The names of the scopes on this screen. The player app uses other words for some of them. */
-@Composable
-private fun StatisticsScope.adminTitle(): String = stringResource(
-    when (this) {
-        StatisticsScope.TOURNAMENT -> Res.string.tournaments
-        StatisticsScope.TABLE -> Res.string.table
-        StatisticsScope.PLAYER, StatisticsScope.PERSON -> Res.string.players
-        StatisticsScope.PERSON_TOURNAMENTS -> Res.string.scope_by_tournaments
-    },
+/** The filters that a route opens with. A table of a tournament opens with that table. */
+internal fun StatisticsRoute.initialFilters(): StatisticsFilters = StatisticsFilters(
+    emaId = emaId?.takeIf { it.isNotBlank() },
+    tournamentId = tournamentId,
+    slotId = slotId?.takeIf { tournamentId != null },
+    roundId = roundId?.takeIf { scope == StatisticsScope.TABLE.name && tournamentId != null },
+    tableId = tableId?.takeIf { scope == StatisticsScope.TABLE.name && tournamentId != null },
 )
 
 /**
- * Statistics for editors. The route gives the first scope and its context.
- * The tournaments scope shows all tournaments together until the editor picks one.
+ * The statistics screen: the same as in the player app, one screen with a row of filters and no tabs.
+ * The route gives the filters at the start. Statistics are public data, so every role sees all of them.
  */
 @Composable
 fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val presenter = koinInject<StatisticsPresenter>()
-    var tournamentId by rememberPersistentText("tournament", route.tournamentId)
-    val hasTable = tournamentId != null &&
-        tournamentId == route.tournamentId &&
-        route.roundId != null &&
-        route.tableId != null
-    // The main tabs. The player tab opens the overall scope of one player.
-    val mainTabs = buildList {
-        add(StatisticsScope.TOURNAMENT)
-        if (hasTable) add(StatisticsScope.TABLE)
-        add(StatisticsScope.PERSON)
-    }
-    // The scopes that the screen can show. The tournament player scope has no tab. A player of a tournament without EMA number opens it.
-    val scopes = buildList {
-        addAll(mainTabs)
-        if (tournamentId != null) add(StatisticsScope.PLAYER)
-        add(StatisticsScope.PERSON_TOURNAMENTS)
-    }
-    // A page refresh restores the scope that the editor chose.
-    var scopeName by rememberPersistentText("scope", route.scope)
-    var scope by remember {
-        mutableStateOf(
-            StatisticsScope.entries.firstOrNull { it.name == scopeName }
-                ?.takeIf { it in scopes } ?: StatisticsScope.TOURNAMENT,
-        )
-    }
-    LaunchedEffect(scope) { scopeName = scope.name }
+    // A page refresh restores the filters that the editor chose.
+    var stored by rememberPersistentText("filters", null)
+    val filters = StatisticsFilters.decode(stored) ?: route.initialFilters()
+    val setFilters: (StatisticsFilters) -> Unit = { stored = it.encode() }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var registry by remember { mutableStateOf<List<Player>>(emptyList()) }
-    var tournamentData by remember { mutableStateOf<TournamentStatisticsData?>(null) }
-    var overview by remember { mutableStateOf<OverviewStatisticsData?>(null) }
+    var tournament by remember { mutableStateOf<TournamentStatisticsData?>(null) }
     var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
-    var emaId by rememberPersistentText("person", route.emaId)
-    var chosenSlotText by rememberPersistentText("slot", route.slotId?.toString())
-    val chosenSlotId = chosenSlotText?.toIntOrNull()
+    var group by remember { mutableStateOf<GroupStatisticsData?>(null) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(tournamentId) {
-        isLoading = true
-        message = null
+    LaunchedEffect(Unit) {
         (presenter.tournaments() as? AppResult.Success)?.let { tournaments = it.value }
         (presenter.registry() as? AppResult.Success)?.let { registry = it.value }
-        val id = tournamentId
-        if (id != null) {
-            overview = null
-            when (val result = presenter.tournament(id)) {
-                is AppResult.Success -> tournamentData = result.value
-                is AppResult.Failure -> message = result.error.toUiText()
+    }
+    LaunchedEffect(filters) {
+        isLoading = true
+        message = null
+        when (filters.view) {
+            StatisticsView.PERSON -> {
+                val emaId = filters.emaId.orEmpty()
+                if (person?.emaId != emaId) {
+                    person = null
+                    when (val result = presenter.person(emaId)) {
+                        is AppResult.Success -> person = result.value
+                        is AppResult.Failure -> message = result.error.toUiText()
+                    }
+                }
             }
-        } else {
-            tournamentData = null
-            when (val result = presenter.overview()) {
-                is AppResult.Success -> overview = result.value
-                is AppResult.Failure -> message = result.error.toUiText()
+            StatisticsView.TABLE, StatisticsView.SLOT, StatisticsView.TOURNAMENT -> {
+                val id = filters.tournamentId.orEmpty()
+                if (tournament?.tournament?.id != id) {
+                    tournament = null
+                    when (val result = presenter.tournament(id)) {
+                        is AppResult.Success -> tournament = result.value
+                        is AppResult.Failure -> message = result.error.toUiText()
+                    }
+                }
+            }
+            StatisticsView.GROUP -> {
+                group = null
+                when (val result = presenter.group(filters.groupFilter())) {
+                    is AppResult.Success -> group = result.value
+                    is AppResult.Failure -> message = result.error.toUiText()
+                }
             }
         }
         isLoading = false
     }
-    // The EMA number of a chosen slot gives the player of the person scope.
-    val effectiveSlot = chosenSlotId
-    val slotEma = tournamentData?.slots?.firstOrNull { it.id == effectiveSlot }?.assignedEmaId
-    val personEma = emaId ?: slotEma
-    LaunchedEffect(personEma) {
-        person = null
-        val id = personEma ?: return@LaunchedEffect
-        when (val result = presenter.person(id)) {
-            is AppResult.Success -> person = result.value
-            is AppResult.Failure -> message = result.error.toUiText()
-        }
-    }
-    // A scope that is not available any more gives way to the first one.
-    if (scope !in scopes) scope = mainTabs.first()
-    val isPlayerScope = scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS || scope == StatisticsScope.PLAYER
-    val selectedMainTab = if (isPlayerScope) StatisticsScope.PERSON else scope
-
-    val names = registry.associate { it.emaId to it.displayName }
-    val chosenTournament = tournaments.firstOrNull { it.id == tournamentId }
-    // The name of the tournament or of the player moves to the top bar while the card with the name is scrolled out of view.
-    val playerName = when (scope) {
-        StatisticsScope.TOURNAMENT -> chosenTournament?.name
-        StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> personEma?.let { names[it] }
-        StatisticsScope.PLAYER -> tournamentData?.names?.get(effectiveSlot)
-        else -> null
-    }
-    var nameScrolledOut by remember { mutableStateOf(false) }
-    // The player card sits between the tab rows. The button on it opens the search field to choose another player.
-    var changingPlayer by remember { mutableStateOf(false) }
-    var changingTournament by remember { mutableStateOf(false) }
-    // The tournament chosen in By tournaments. Null shows all of them. Another player starts again with all of them.
-    var personTournamentId by remember(personEma) { mutableStateOf<String?>(null) }
-    val personProfile = person?.profile ?: registry.firstOrNull { it.emaId == personEma }?.let {
-        PlayerProfile(it.displayName, it.emaId, it.country, it.photoUrl)
-    }
 
     AppScaffold(
         title = stringResource(Res.string.statistics),
-        subtitle = playerName.takeIf { nameScrolledOut },
         isLoading = isLoading,
-        showBackgroundLogo = isLoading && tournamentData == null && overview == null,
+        showBackgroundLogo = isLoading && tournament == null && person == null && group == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
         ScreenColumn(
             // The statistics sections use the full width and flow into columns.
             maxWidth = Dp.Infinity,
-            // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
             contentPadding = PaddingValues(0.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
             scrollable = true,
         ) {
-            // Another view or another player starts at the top.
-            ResetScrollOnChange(LocalScreenScroll.current?.state, Triple(scope, emaId, chosenSlotText))
-            // The tab row is as wide as its tabs, like in the player app, and sits in the middle.
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                MtsTabRow(
-                    selectedTabIndex = mainTabs.indexOf(selectedMainTab),
-                    modifier = Modifier.widthIn(max = StatisticsTabWidth * mainTabs.size),
-                ) {
-                    mainTabs.forEach { item ->
-                        CompactTab(
-                            selected = item == selectedMainTab,
-                            onClick = { if (item != selectedMainTab) scope = item },
-                            title = item.adminTitle(),
-                            trackingName = item.name,
-                            icon = { Icon(item.adminIcon(), contentDescription = null, Modifier.size(20.dp)) },
-                        )
-                    }
-                }
-            }
-            // The chosen tournament or player sits between the tab rows, in a bar like the one of the player app.
-            // Without a choice, or while the editor changes it, a field takes its place.
-            val pickerData = tournamentData
-            val barWidth = StatisticsTabWidth * mainTabs.size
-            val slotProfile = pickerData?.profiles?.get(effectiveSlot ?: pickerData.slots.firstOrNull()?.id)
-            val barShown = when (scope) {
-                StatisticsScope.TOURNAMENT -> chosenTournament != null && !changingTournament
-                StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> personProfile != null && !changingPlayer
-                StatisticsScope.PLAYER -> slotProfile != null && !changingPlayer
-                StatisticsScope.TABLE -> false
-            }
-            if (scope != StatisticsScope.TABLE && barShown) {
-                // The name moves to the top bar when this bar scrolls out of view.
-                TrackScrollOut(
-                    enabled = true,
-                    onChange = { nameScrolledOut = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        val changeLabel = stringResource(Res.string.change)
-                        when (scope) {
-                            StatisticsScope.TOURNAMENT -> ChosenStatisticsBar(
-                                title = chosenTournament!!.name,
-                                changeLabel = changeLabel,
-                                onChange = { changingTournament = true },
-                                maxWidth = barWidth,
-                                leading = { Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = mtsTabContentColor()) },
-                            )
-                            StatisticsScope.PLAYER -> ChosenPlayerBar(slotProfile!!, changeLabel, { changingPlayer = true }, barWidth)
-                            else -> ChosenPlayerBar(personProfile!!, changeLabel, { changingPlayer = true }, barWidth)
-                        }
-                        // The same line that a tab row has at its bottom, so the bar and the tabs under it do not merge.
-                        if (scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS) HorizontalDivider(Modifier.widthIn(max = barWidth).fillMaxWidth())
-                    }
-                }
-            } else if (scope != StatisticsScope.TABLE && (scope != StatisticsScope.PLAYER || pickerData != null)) {
-                Box(
-                    Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = MtsTheme.spacing.md),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        Modifier.widthIn(max = 520.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        when (scope) {
-                            StatisticsScope.TOURNAMENT -> {
-                                val allTournamentsLabel = stringResource(Res.string.all_tournaments)
-                                val options = remember(tournaments, allTournamentsLabel) {
-                                    listOf<Pair<String?, String>>(null to allTournamentsLabel) + tournaments.map { it.id to it.name }
-                                }
-                                SelectField(
-                                    stringResource(Res.string.tournament),
-                                    options,
-                                    tournamentId,
-                                    {
-                                        tournamentId = it
-                                        changingTournament = false
-                                    },
-                                    Modifier.weight(1f),
-                                )
-                                if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text(stringResource(Res.string.cancel)) }
-                            }
-                            StatisticsScope.PLAYER -> {
-                                PlayerDropdownField(
-                                    names = pickerData!!.names,
-                                    selectedId = effectiveSlot ?: pickerData.slots.firstOrNull()?.id,
-                                    onChoose = {
-                                        chosenSlotText = it.toString()
-                                        changingPlayer = false
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                )
-                                if (slotProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
-                            }
-                            else -> {
-                                val options = remember(registry) {
-                                    registry.sortedBy { it.displayName }.map { it.emaId to "${it.displayName} (${it.emaId})" }
-                                }
-                                SelectField(
-                                    stringResource(Res.string.stats_player_field),
-                                    options,
-                                    personEma,
-                                    {
-                                        emaId = it
-                                        changingPlayer = false
-                                    },
-                                    Modifier.weight(1f),
-                                )
-                                if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
-                            }
-                        }
-                    }
-                }
-            }
-            if (scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS) {
-                val subTabs = listOf(
-                    Triple(StatisticsScope.PERSON, stringResource(Res.string.scope_overall), StatisticsIcon),
-                    Triple(StatisticsScope.PERSON_TOURNAMENTS, stringResource(Res.string.scope_by_tournaments), Icons.Default.EmojiEvents),
-                )
-                // Both tab rows have the same width, so the second one lines up under the first.
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    MtsTabRow(
-                        selectedTabIndex = subTabs.indexOfFirst { it.first == scope },
-                        modifier = Modifier.widthIn(max = StatisticsTabWidth * mainTabs.size),
-                    ) {
-                        subTabs.forEach { (item, title, icon) ->
-                            CompactTab(
-                                selected = item == scope,
-                                onClick = { scope = item },
-                                title = title,
-                                trackingName = item.name,
-                                icon = { Icon(icon, contentDescription = null, Modifier.size(20.dp)) },
-                            )
-                        }
-                    }
-                }
-                val personTournaments = person?.tournaments
-                if (scope == StatisticsScope.PERSON_TOURNAMENTS && personTournaments != null && personTournaments.size > 1) {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        ChosenTournamentBar(
-                            personTournaments.map { it.first },
-                            personTournamentId,
-                            { personTournamentId = it },
-                            stringResource(Res.string.change),
-                            StatisticsTabWidth * mainTabs.size,
-                        )
-                    }
-                }
-            }
+            // Other filters start at the top.
+            ResetScrollOnChange(LocalScreenScroll.current?.state, filters)
+            StatisticsFilterBar(
+                filters = filters,
+                onChange = setFilters,
+                players = registry,
+                tournaments = tournaments,
+                slotName = filters.slotId?.let { tournament?.names?.get(it) },
+            )
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
                 verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
             ) {
                 message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                when (scope) {
-                    StatisticsScope.TOURNAMENT -> {
-                        val specific = tournamentData
-                        val all = overview
-                        if (tournamentId != null && specific != null && specific.tournament.id == tournamentId) {
-                            TournamentStatisticsPanel(
-                                statistics = specific.statistics,
-                                names = specific.names,
-                                roundIds = (1..specific.tournament.numRounds).toList(),
-                                // Like in the player app, a player opens with the statistics of this tournament.
-                                onOpenPlayer = { slot ->
-                                    chosenSlotText = slot.toString()
-                                    changingPlayer = false
-                                    scope = StatisticsScope.PLAYER
-                                },
-                            )
-                        } else if (tournamentId == null && all != null) {
-                            TournamentStatisticsPanel(
-                                statistics = all.statistics,
-                                names = all.names,
-                                tournamentCount = all.tournamentCount,
-                                playerCount = all.playerCount,
-                                onOpenPlayer = { playerId ->
-                                    emaId = all.profiles[playerId]?.emaId?.takeIf { it.isNotBlank() }
-                                    scope = StatisticsScope.PERSON
-                                },
-                            )
-                        }
-                    }
-
-                    StatisticsScope.TABLE ->
-                        tournamentData?.statistics?.tables
-                            ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
-                            ?.let { TableStatisticsPanel(it, tournamentData!!.names) }
-                            ?: Text(stringResource(Res.string.this_table_has_no_statistics_yet))
-
-                    StatisticsScope.PLAYER -> tournamentData?.let { data ->
-                        val slotId = effectiveSlot ?: data.slots.firstOrNull()?.id
-                        // The place, points and score in the tournament, and the place at the end of each round, like in the player app.
-                        val rankings = remember(data) {
-                            val calculate = CalculateTournamentRankingsUseCase()
-                            val rounds = data.statistics.playedRounds((1..data.tournament.numRounds).toList())
-                            calculate(data.slots, data.tables, data.tournament.isTeams) to
-                                calculate.afterEachRound(data.slots, data.tables, data.tournament.isTeams, rounds)
-                        }
-                        val ranking = rankings.first.players.firstOrNull { it.playerId == slotId }
-                        val places = rankings.second.mapNotNull { (round, byRound) ->
-                            byRound.players.firstOrNull { it.playerId == slotId }?.let { round to it.position }
-                        }.toMap()
-                        ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth()) }
-                        data.statistics.players.firstOrNull { it.playerId == slotId }?.let { stats ->
-                            PlayerStatisticsPanel(
-                                stats,
-                                afterPlaces = { modifier ->
-                                    PlayerRoundsCard(stats.byRound((1..data.tournament.numRounds).toList()), places, data.slots.size, modifier)
-                                },
-                                tournaments = listOf(data.tournament),
-                                rivalNames = data.rivalNames,
-                                onOpenRival = { ema ->
-                                    emaId = ema
-                                    changingPlayer = false
-                                    scope = StatisticsScope.PERSON
-                                },
-                            )
-                        }
-                    }
-
-                    StatisticsScope.PERSON -> {
-                        person?.let { data ->
-                            PlayerStatisticsPanel(
-                                data.overall,
-                                tournaments = data.tournaments.map { it.first },
-                                rivalNames = data.rivalNames,
-                                onOpenRival = { ema -> emaId = ema },
-                            )
-                        } ?: if (personEma == null) PickPlayerHint() else Unit
-                    }
-
-                    StatisticsScope.PERSON_TOURNAMENTS -> {
-                        person?.let { data ->
-                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) }, tournamentId = personTournamentId)
-                        } ?: if (personEma == null) PickPlayerHint() else Unit
-                    }
-                }
+                FilteredStatistics(
+                    filters = filters,
+                    onFiltersChange = setFilters,
+                    person = person.takeIf { filters.view == StatisticsView.PERSON },
+                    tournament = tournament,
+                    group = group,
+                    loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
+                )
             }
         }
     }
-}
-
-/**
- * Reports to [onChange] whether the content has scrolled above the top of the screen.
- * The report goes back to false when the content leaves the composition or when [enabled] is false.
- */
-@Composable
-private fun TrackScrollOut(
-    enabled: Boolean,
-    onChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    contentAlignment: Alignment = Alignment.TopStart,
-    content: @Composable () -> Unit,
-) {
-    val screen = LocalScreenScroll.current
-    var bottom by remember { mutableStateOf(Float.MAX_VALUE) }
-    val currentOnChange by rememberUpdatedState(onChange)
-    if (screen != null) {
-        LaunchedEffect(screen, enabled) {
-            snapshotFlow { enabled && screen.state.value > bottom }.collect { currentOnChange(it) }
-        }
-        DisposableEffect(Unit) { onDispose { currentOnChange(false) } }
-    }
-    Box(
-        modifier.onGloballyPositioned { coordinates ->
-            if (screen != null) {
-                bottom = coordinates.positionInRoot().y - screen.viewportTop + screen.state.value + coordinates.size.height
-            }
-        },
-        contentAlignment = contentAlignment,
-    ) { content() }
-}
-
-@Composable
-private fun PickPlayerHint() {
-    AppEmptyState(
-        icon = Icons.Default.PersonSearch,
-        title = stringResource(Res.string.choose_a_player),
-        message = stringResource(Res.string.use_the_field_above_to_search),
-    )
 }

@@ -5,6 +5,8 @@ import co.touchlab.kermit.StaticConfig
 import com.etologic.mahjongtournamentsuite.data.backend.jsonResponse
 import com.etologic.mahjongtournamentsuite.data.backend.mockBackendApi
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
@@ -46,6 +48,30 @@ class DefaultStatisticsRepositoryTest {
         assertEquals(9, overview.players.single().handsWon)
         assertTrue(requests.single().url.encodedPath.endsWith("/public/statistics/overview"))
         assertNull(requests.single().headers[HttpHeaders.Authorization])
+    }
+
+    @Test
+    fun aPublicGroupSendsItsFiltersAndMapsThePersons() = runTest {
+        val result = repository(
+            publicReads = true,
+            body = """{"tournamentIds":["t-1"],"tables":{"tablesCompleted":3,"handsPlayed":40,"highestHand":64},
+                "persons":[{"emaId":"04000001","tournaments":1,"tables":3,"place1":2,"place4":1,"handsWon":7,"bestTableScore":55,"handWinRun":4}]}""",
+        ).loadGroup(StatisticsGroupFilter(tournamentCountry = "ES", playerCountry = "", fromYear = 2025, toYear = 2026))
+
+        val group = assertIs<AppResult.Success<StatisticsGroup>>(result).value
+        assertEquals(listOf("t-1"), group.tournamentIds)
+        assertEquals(64, group.tables.highestHand)
+        val person = group.persons.single()
+        assertEquals(listOf(2, 0, 0, 1), person.places)
+        assertEquals(55, person.bestTableScore)
+        assertEquals(4, person.handWinRun)
+        val url = requests.single().url
+        assertTrue(url.encodedPath.endsWith("/public/statistics/groups"))
+        assertEquals("ES", url.parameters["tournamentCountry"])
+        assertEquals("none", url.parameters["playerCountry"])
+        assertEquals("2025-01-01", url.parameters["from"])
+        assertEquals("2026-12-31", url.parameters["to"])
+        assertNull(url.parameters["tournaments"])
     }
 
     @Test

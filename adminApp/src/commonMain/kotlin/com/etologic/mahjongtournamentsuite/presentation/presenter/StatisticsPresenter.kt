@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
@@ -12,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
+import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.OverviewStatisticsData
@@ -43,6 +45,9 @@ class StatisticsPresenter(
 
     /** All tournaments together. The server keeps the sums, so no hands load here. */
     suspend fun overview(): AppResult<OverviewStatisticsData> = loadOverview.overview(RefreshMode.IF_CHANGED).viewed("overview")
+
+    /** The statistics of a group of tournaments and players. */
+    suspend fun group(filter: StatisticsGroupFilter): AppResult<GroupStatisticsData> = storedStatistics().group(filter).viewed("group")
 
     /** Statistics of one EMA player over every tournament where the player has a result. */
     suspend fun person(emaId: String): AppResult<PersonStatisticsData> = storedStatistics().person(emaId, refreshMode = RefreshMode.IF_CHANGED).viewed("person")

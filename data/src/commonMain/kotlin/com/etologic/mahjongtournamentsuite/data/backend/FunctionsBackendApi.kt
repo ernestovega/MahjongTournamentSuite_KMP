@@ -56,6 +56,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsGroupDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsOverviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SupportMessageRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
@@ -177,6 +178,15 @@ class FunctionsBackendApi(
         val response = httpClient.get(readUrl("/tournaments/statistics/${statisticsOwner(emaId)}/standings", idToken)) {
             bearer(idToken)
             parameter("tournaments", tournamentIds.joinToString(","))
+        }
+        return response.requireSuccessBody()
+    }
+
+    /** The statistics of a group. Each map entry is one filter of the query: see the server route for the names. */
+    suspend fun statisticsGroup(idToken: String, filters: Map<String, String>): StatisticsGroupDto {
+        val response = httpClient.get(readUrl("/tournaments/statistics/groups", idToken)) {
+            bearer(idToken)
+            filters.forEach { (name, value) -> parameter(name, value) }
         }
         return response.requireSuccessBody()
     }

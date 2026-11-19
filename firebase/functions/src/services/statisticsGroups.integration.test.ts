@@ -62,6 +62,9 @@ describe("statistics groups", () => {
     assert.deepEqual(mine(spaniards.persons).map((person) => person.emaId).sort(), [ema(1), ema(2)]);
     const spaniardsInSweden = await loadGroupStatistics(tournaments, { playerCountry: "ESP", tournamentCountry: "SE" });
     assert.equal(spaniardsInSweden.persons.find((person) => person.emaId === ema(1))!.score, -30);
+    assert.deepEqual(spaniardsInSweden.tournamentIds, [sweden]);
+    const nobody = await loadGroupStatistics(tournaments, { playerCountry: "ITA" });
+    assert.deepEqual(nobody.tournamentIds.filter((id) => id === spain || id === sweden), []);
     const noCountry = await loadGroupStatistics(tournaments, { playerCountry: "" });
     assert.deepEqual(mine(noCountry.persons).map((person) => person.emaId), [ema(3)]);
     const hidden = await loadGroupStatistics(tournaments, {}, new Set([ema(4)]));

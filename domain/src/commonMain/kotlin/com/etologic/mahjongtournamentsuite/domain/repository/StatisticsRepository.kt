@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 
@@ -10,7 +12,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
  * or the tables of one player, and never the hands of a tournament.
  */
 interface StatisticsRepository {
-    /** The statistics of all tournaments together. Only an administrator can load it. */
+    /** The statistics of all tournaments together. */
     suspend fun loadOverview(): AppResult<StatisticsOverview>
 
     /**
@@ -18,6 +20,9 @@ interface StatisticsRepository {
      * A null [emaId] means the player of the signed-in account.
      */
     suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>>
+
+    /** The statistics of a group of tournaments and players, in the tournaments that the account can see. */
+    suspend fun loadGroup(filter: StatisticsGroupFilter): AppResult<StatisticsGroup>
 
     /** The final place of one player in each of the given tournaments. At most 25 tournaments for each call. */
     suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>>

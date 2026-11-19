@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -25,6 +26,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import com.etologic.mahjongtournamentsuite.domain.telemetry.telemetryRole
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
@@ -226,8 +228,15 @@ class PlayerStatisticsPresenter(
     private val loadStored: LoadStoredStatisticsUseCase,
     private val authRepository: AuthRepository,
     private val playerRepository: PlayerRepository,
+    private val tournamentRepository: TournamentRepository,
     private val telemetry: Telemetry = NoTelemetry,
 ) {
+    /** The public tournaments, for the filters of the statistics. */
+    suspend fun tournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
+
+    /** The statistics of a group of tournaments and players. */
+    suspend fun group(filter: StatisticsGroupFilter, track: Boolean = true): AppResult<GroupStatisticsData> = loadStored.group(filter).viewed("group", track)
+
     /** [track] is false for the later checks of a screen, so a screen that stays open counts as one view. */
     suspend fun tournament(
         tournamentId: String,
