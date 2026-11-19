@@ -92,7 +92,7 @@ export class Api {
     return this.once(method, path, options, false);
   }
 
-  async once(method, path, { token, body, label } = {}, mayRetry = false) {
+  async once(method, path, { token, body, label, headers } = {}, mayRetry = false) {
     const started = performance.now();
     let status = 0;
     let json = null;
@@ -106,6 +106,7 @@ export class Api {
           "user-agent": "MTS rehearsal bot",
           // The API answers with the Firestore operations of the call, for the cost report (docs/benchmark.md).
           "x-mts-usage": "1",
+          ...(headers ?? {}),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(30_000),

@@ -120,6 +120,58 @@ jobs:
           path: out/scenario/
           retention-days: 7
 
+  # The registrations before a tournament (docs/registrations.md): a second tournament opens registrations, the people
+  # of the plan register (with their account, or with the link of their email), cancel, form teams, and the organizer
+  # imports the old form, gives places, closes and makes the draw. It runs beside the tournament of the scenario.
+  registrations:
+    name: Registrations before the tournament
+    needs: plan
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Register, cancel, form teams, close and draw
+        env:
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          REHEARSAL_IMAP_USER: ${{ secrets.REHEARSAL_IMAP_USER }}
+          REHEARSAL_IMAP_PASSWORD: ${{ secrets.REHEARSAL_IMAP_PASSWORD }}
+        run: |
+          echo "::add-mask::${REHEARSAL_IMAP_USER%@*}"
+          REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
+          echo "::add-mask::$REHEARSAL_PASSWORD"
+          export REHEARSAL_PASSWORD
+          node scripts/rehearsal/registrations.mjs --plan=out/scenario/plan.json --minutes=20 \
+            --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" --report=out/registrations.json \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: registrations
+          path: out/registrations.json
+          retention-days: 14
+
   # The staging app with the automatic organizer and player, built once.
   app:
     name: Staging app
