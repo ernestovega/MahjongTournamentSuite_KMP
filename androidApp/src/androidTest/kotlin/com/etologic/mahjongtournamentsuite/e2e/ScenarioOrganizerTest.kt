@@ -689,13 +689,15 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     /**
      * The Timer and the rankings open in tasks of their own. When one of them closes, the task of the app is not
-     * always the one in front: the launcher intent brings it back, as a tap on the icon of the app.
+     * always the one in front. FLAG_ACTIVITY_REORDER_TO_FRONT (with NEW_TASK, 0x10020000) brings the running
+     * MainActivity back as it is. A launcher intent would not: the test started the app with another intent, so the
+     * launcher intent makes a second MainActivity, with its own graph of the admin part.
      */
     private fun bringTheAppToTheFront() {
         if (mainActivityResumed()) return
         val packageName = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.packageName
         log("the app is not in front (resumed: ${resumedActivities()}), so the test brings it back")
-        shell("am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $packageName/com.etologic.mahjongtournamentsuite.MainActivity")
+        shell("am start -f 0x10020000 -n $packageName/com.etologic.mahjongtournamentsuite.MainActivity")
         val until = System.currentTimeMillis() + 10_000
         while (System.currentTimeMillis() < until && !mainActivityResumed()) Thread.sleep(500)
         runCatching { c.waitForIdle() }
