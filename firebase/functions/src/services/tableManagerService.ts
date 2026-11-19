@@ -321,6 +321,63 @@ export type SaveTableStateParams = {
  * Runs a save inside a transaction that the caller owns. The caller must finish its own reads before it calls this,
  * because this function writes. It throws [StaleTableVersion] when the expected version is old.
  */
+/**
+ * The writes of a table save to documents that every table shares: the tournament (the versions that polling clients
+ * compare, the counters, the end of the tournament) and the global versions. In the transaction, the saves of all the
+ * tables of a tournament waited for each other on the tournament document, and with 60 tables Firestore aborted some
+ * of them ("cross-transaction contention": 509 errors 500 in the large game day). [runTableTransaction] writes them
+ * right after the transaction instead.
+ *
+ * The writes are blind (increments and fields of one table), so their order between tables does not matter. When one
+ * still fails after its retries, the next save of that table writes its version again.
+ */
+const sharedWrites = new WeakMap<FirebaseFirestore.Transaction, Array<() => Promise<unknown>>>();
+
+/** A transaction that saves tables, with the writes to the shared documents after it. See [sharedWrites]. */
+export async function runTableTransaction<T>(work: (transaction: FirebaseFirestore.Transaction) => Promise<T>): Promise<T> {
+  let writes: Array<() => Promise<unknown>> = [];
+  const result = await db.runTransaction(async (transaction) => {
+    // A transaction that Firestore runs again starts with no writes: only the attempt that commits counts.
+    writes = [];
+    sharedWrites.set(transaction, writes);
+    return work(transaction);
+  });
+  await Promise.all(writes.map((write) => writeWithRetries(write)));
+  return result;
+}
+
+async function writeWithRetries(write: () => Promise<unknown>, attempts = 5): Promise<void> {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await write();
+      return;
+    } catch (error) {
+      if (attempt === attempts) {
+        console.error("A shared write after a table save failed", { error });
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt + Math.random() * 100));
+    }
+  }
+}
+
+/** Writes to a shared document after the transaction when [runTableTransaction] runs it, or in it otherwise. */
+function writeShared(
+  transaction: FirebaseFirestore.Transaction,
+  ref: FirebaseFirestore.DocumentReference,
+  data: Record<string, unknown>,
+  kind: "update" | "merge",
+  inTransaction = false,
+): void {
+  const later = sharedWrites.get(transaction);
+  if (later == null || inTransaction) {
+    if (kind === "update") transaction.update(ref, data);
+    else transaction.set(ref, data, { merge: true });
+    return;
+  }
+  later.push(() => (kind === "update" ? ref.update(data) : ref.set(data, { merge: true })));
+}
+
 export async function saveTableStateInTransaction(
   transaction: FirebaseFirestore.Transaction,
   params: SaveTableStateParams,
@@ -417,15 +474,19 @@ export async function saveTableStateInTransaction(
   });
   statsPlan?.commit(transaction);
   const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
-  transaction.update(tournamentRef, {
-    isCompleted: tournamentIsComplete,
+  // The end of the tournament can change only when the last table completes or a completed table opens again. Then the
+  // tournament is written in the transaction, with the query of the open tables above, so two such saves cannot cross.
+  // Every other save leaves the end of the tournament as it is and writes the rest after the transaction.
+  const completionChanges = tournamentIsComplete || (wasComplete && !isComplete);
+  writeShared(transaction, tournamentRef, {
+    ...(completionChanges ? { isCompleted: tournamentIsComplete } : {}),
     updatedAt: FieldValue.serverTimestamp(),
     ...(startedChange === 0 ? {} : { tablesWithProgress: FieldValue.increment(startedChange) }),
     ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
-  });
+  }, "update", completionChanges);
   // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
   if (wasComplete !== isComplete) {
-    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+    writeShared(transaction, db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), "merge");
   }
   transaction.set(tournamentRef.collection("changes").doc(), {
     ...buildSaveChangeEntry({
@@ -473,7 +534,7 @@ export async function logTableConflict(params: {
 
 export async function saveTableState(params: SaveTableStateParams): Promise<{ table: TableState; hands: TableHand[] }> {
   try {
-    return await db.runTransaction((transaction) => saveTableStateInTransaction(transaction, params));
+    return await runTableTransaction((transaction) => saveTableStateInTransaction(transaction, params));
   } catch (error) {
     if (error instanceof StaleTableVersion) {
       await logTableConflict({ ...params, expectedVersion: error.expectedVersion, actor: params.actor ?? null });

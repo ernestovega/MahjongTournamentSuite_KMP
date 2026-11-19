@@ -2,7 +2,7 @@ import { db } from "../firebase";
 import { matchPhaseAt, matchTimeOfTournament } from "./matchTime";
 import { manualHands } from "./roundControl";
 import { tableVersionKey } from "./dataVersionsService";
-import { HANDS_PER_TABLE, saveTableStateInTransaction, type TableState } from "./tableManagerService";
+import { HANDS_PER_TABLE, runTableTransaction, saveTableStateInTransaction, type TableState } from "./tableManagerService";
 
 type Data = Record<string, unknown>;
 
@@ -28,7 +28,7 @@ function overRounds(tournament: Data, nowMs: number): number[] {
  */
 async function closeTable(tournamentId: string, roundId: number, tableId: number): Promise<boolean> {
   const tableRef = db.doc(`tournaments/${tournamentId}/tables/${tableVersionKey(roundId, tableId)}`);
-  return db.runTransaction(async (transaction) => {
+  return runTableTransaction(async (transaction) => {
     const tableSnap = await transaction.get(tableRef);
     if (!tableSnap.exists || tableSnap.get("isCompleted") === true || tableSnap.get("matchTimeChecked") === true) return false;
     const handSnaps = await transaction.getAll(

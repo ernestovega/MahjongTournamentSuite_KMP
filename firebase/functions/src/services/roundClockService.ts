@@ -17,7 +17,7 @@ import {
   type RoundClockView,
 } from "./roundClock";
 import { roundControlViews, type RoundControlChange, type RoundControlView, type RoundTableRef } from "./roundControl";
-import { HANDS_PER_TABLE, saveTableStateInTransaction, type TableState } from "./tableManagerService";
+import { HANDS_PER_TABLE, runTableTransaction, saveTableStateInTransaction, type TableState } from "./tableManagerService";
 import { tableVersionKey } from "./dataVersionsService";
 
 type Data = Record<string, unknown>;
@@ -219,7 +219,7 @@ async function setTableCompleted(
   actor: ChangeActor | null,
 ): Promise<boolean> {
   const tableRef = db.doc(`tournaments/${tournamentId}/tables/${tableVersionKey(roundId, tableId)}`);
-  return db.runTransaction(async (transaction) => {
+  return runTableTransaction(async (transaction) => {
     const table = await transaction.get(tableRef);
     if (!table.exists) throw notFound(`Table ${tableId} not found`);
     if ((table.get("isCompleted") === true) === completed) return false;

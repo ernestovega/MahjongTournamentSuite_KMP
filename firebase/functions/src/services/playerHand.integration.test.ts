@@ -339,6 +339,30 @@ describe("hand entry by a player", () => {
     assert.equal(Object.values(manifest.tableVersions ?? {}).filter((version) => version === 3).length, 16);
   });
 
+  it("saves the first hand of 60 tables at once without an error, and writes the versions after it", async () => {
+    // The large game day (60 tables): with the tournament written in the transaction, Firestore aborted some saves for
+    // contention. The tournament is now written after the transaction.
+    const tables = Array.from({ length: 60 }, (_, index) => index + 1);
+    const tournamentId = await seedTournament({ tables: tables.map((tableId) => ({ roundId: 1, tableId })) });
+    await startMatch(tournamentId, 10);
+    await Promise.all(tables.map((tableId) => db.doc(`tournaments/${tournamentId}/tables/1_${tableId}`).update({
+      playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
+    })));
+    const uid = `u-${tournamentId}-1`;
+    await giveEmaIdToAccount(uid, "E1");
+    await seatEmaId(tournamentId, 1, "E1");
+
+    const results = await Promise.allSettled(tables.map((tableId) => recordHand({
+      tournamentId, roundId: 1, tableId, uid, input: hand("1", "4"), expectedVersion: 0,
+    })));
+    assert.deepEqual(results.filter((result) => result.status === "rejected").map((result) => String((result as PromiseRejectedResult).reason)), []);
+
+    const tournament = (await db.doc(`tournaments/${tournamentId}`).get()).data() ?? {};
+    const versions = (tournament.dataVersions as { tableVersions?: Record<string, number> }).tableVersions ?? {};
+    assert.deepEqual(versions, Object.fromEntries(tables.map((tableId) => [`1_${tableId}`, 1])));
+    assert.notEqual(tournament.isCompleted, true);
+  });
+
   it("still refuses a hand once the tournament is completed, though it reads the tournament outside the transaction", async () => {
     const fixture = await seedTable();
     await recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });

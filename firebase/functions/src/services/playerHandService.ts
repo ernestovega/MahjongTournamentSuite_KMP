@@ -8,6 +8,7 @@ import { getPlayerRegistration } from "./playerAccountsService";
 import {
   HANDS_PER_TABLE,
   handsFromData,
+  runTableTransaction,
   saveTableStateInTransaction,
   StaleTableVersion,
   logTableConflict,
@@ -221,7 +222,7 @@ export async function recordHand(
   params: TableKey & { uid: string; input: HandInput; expectedVersion: number },
 ): Promise<HandPreview> {
   try {
-    return await db.runTransaction(async (transaction) => {
+    return await runTableTransaction(async (transaction) => {
       const { registration, table, seats, hands, phase } = await loadFor(
         params,
         params.uid,
@@ -295,7 +296,7 @@ export async function addPenalties(
   params: TableKey & { uid: string; penalties: PenaltyTexts; expectedVersion: number },
 ): Promise<{ handId: number; tableVersion: number }> {
   try {
-    return await db.runTransaction(async (transaction) => {
+    return await runTableTransaction(async (transaction) => {
       const { registration, table, hands } = await loadFor(
         params,
         params.uid,
@@ -357,7 +358,7 @@ export async function assignSeats(
   params: TableKey & { uid: string; seats: [string, string, string, string]; expectedVersion: number },
 ): Promise<{ tableVersion: number }> {
   try {
-    return await db.runTransaction(async (transaction) => {
+    return await runTableTransaction(async (transaction) => {
       const { registration, tournament, table, hands } = await loadTableOf(
         params,
         params.uid,
