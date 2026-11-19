@@ -82,7 +82,7 @@ class Ga4RulesTest {
         (TelemetryAction.all + TelemetryOutcome.all).forEach { assertTrue(it.length <= 100, it) }
         TelemetryAction.all.forEach { assertTrue(name.matches(it), "action '$it' must be a lowercase word with underscores") }
         val values = TelemetryClockAction.all + TelemetryTimerKind.all + TelemetryReminderAction.all + TelemetryReminderMoment.all +
-            TelemetryLink.all + TelemetryProfileAction.all + TelemetryPreference.all
+            TelemetryLink.all + TelemetryProfileAction.all + TelemetryPreference.all + TelemetryRegistrationAction.all
         values.forEach {
             assertTrue(name.matches(it), "value '$it' must be a lowercase word with underscores")
         }

@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.RegistrationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.OrganizationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
@@ -39,6 +40,7 @@ val presentationModule get() = module {
     factory { PlayersPresenter(get(), get(), get(), get(), telemetry()) }
     factory { PlayerImportPresenter(get(), get(), telemetry()) }
     factory { TeamsPresenter(get(), get(), get(), telemetry()) }
+    factory { RegistrationsPresenter(get(), get(), get(), get(), telemetry()) }
     factory { PlayerBasePresenter(get(), get(), telemetry()) }
     factory { OrganizationsPresenter(get(), telemetry(), get()) }
     factory { TablesPresenter(get(), get(), get()) }

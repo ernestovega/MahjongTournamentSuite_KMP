@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -79,7 +80,43 @@ class CreateTournamentPresenter(
         timeZone: String,
         computeMode: ComputeMode,
         onProgress: (Progress) -> Unit,
+        registration: RegistrationSettings? = null,
     ): AppResult<Tournament> {
+        if (registration != null) {
+            // A tournament with registrations has no players and no draw yet: the draw comes when they close.
+            onProgress(Progress(phase = Phase.CREATING, runningTries = 0, tried = 0, maxConcurrency = 1))
+            return tournamentRepository.createTournament(
+                CreateTournamentRequest(
+                    name = name,
+                    eventStartDate = eventStartDate,
+                    eventEndDate = eventEndDate,
+                    isTeams = isTeams,
+                    countBestHands = countBestHands,
+                    countChickenHands = countChickenHands,
+                    numPlayers = 0,
+                    numRounds = numRounds,
+                    numTries = 0,
+                    players = emptyList(),
+                    tables = emptyList(),
+                    shortName = shortName,
+                    organizerIds = organizerIds,
+                    hostCountry = hostCountry,
+                    hostCity = hostCity,
+                    venue = venue,
+                    roundSchedules = roundSchedules,
+                    agendaItems = agendaItems,
+                    matchDurationMinutes = matchDurationMinutes,
+                    matchEndMode = matchEndMode,
+                    matchExtraMinutes = matchExtraMinutes,
+                    timeZone = timeZone,
+                    registration = registration,
+                ),
+            ).track(
+                telemetry,
+                TelemetryEvent.TOURNAMENT_CREATED,
+                mapOf(TelemetryParam.PLAYERS to 0, TelemetryParam.ROUNDS to numRounds, TelemetryParam.IS_TEAMS to isTeams),
+            )
+        }
         logger.i { "Calculating tournament schedule." }
 
         val cpuCount = platformCpuCount().coerceAtLeast(1)

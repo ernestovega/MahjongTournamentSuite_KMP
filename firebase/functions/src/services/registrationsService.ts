@@ -270,6 +270,8 @@ export async function adminRegistrations(tournamentId: string): Promise<{
   settings: RegistrationSettingsView;
   isTeams: boolean;
   drawPending: boolean;
+  /** The public link of the registrations, for the organizers to share. */
+  publicLink: string;
   registrations: AdminRegistration[];
   teams: RegistrationTeamView[];
 }> {
@@ -291,6 +293,7 @@ export async function adminRegistrations(tournamentId: string): Promise<{
     settings: tournament.settings,
     isTeams: tournament.isTeams,
     drawPending: tournament.drawPending,
+    publicLink: publicRegistrationLink(tournament.settings.slug),
     registrations: withPositions(stored).map((registration) => {
       const created = createdAt.get(registration.emaId);
       return {

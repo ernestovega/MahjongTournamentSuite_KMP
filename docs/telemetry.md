@@ -58,6 +58,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `support_sent` | The support form sent a message (sign-in of both apps) | none |
 | `link_opened` | A page, a map or an email outside the app opens (both apps) | `kind`: `privacy_policy`, `versions`, `screenshot_gallery`, `api_docs`, `architecture_docs`, `staging` (DEV menu), `green_book`, `venue_map`, `venue_directions`, `organizer_email`, `combinations_source`. The address is never sent |
 | `profile_updated` | The user changed the own profile (both apps). Only a change that worked | `action`: `alias`, `photo_updated`, `photo_removed`, `account_deleted` |
+| `registration` | A person registered in a tournament or changed the own registration (player app). Only a change that worked | `action`: `registered`, `confirmed` (the link of the email), `cancelled`, `food_updated`, `team_created`, `team_renamed`, `team_left`, `team_member_added`, `team_member_removed`, `no_ema_message` (a person without an EMA number wrote to the organization) |
 | `preference_changed` | The user changed the theme or the language (profile dialog or top bar) | `kind`: `theme` or `language`. `action`: the new value, `system`, `light` or `dark`, or the language tag such as `es` |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
@@ -76,6 +77,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_organizations`, `account_request_approved`, `account_request_rejected`, `account_permissions_updated` |
 | Roles | `role_created`, `role_updated`, `role_deleted` |
 | Organizations | `organization_created`, `organization_updated`, `organization_deleted` |
+| Registrations | `registration_added`, `registration_updated`, `registration_removed`, `registration_settings_updated`, `registrations_imported`, `draw_made` (the draw with the confirmed people) |
 | EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated`, `registry_players_deleted` |
 
 Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.

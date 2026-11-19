@@ -83,6 +83,7 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
@@ -234,6 +235,11 @@ fun TournamentsScreen(
     }
 
     fun openTournament(tournament: Tournament) {
+        // Before its draw a tournament with registrations has no players: it opens on its registrations.
+        if (tournament.drawPending) {
+            navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
+            return
+        }
         coroutineScope.launch {
             isLoading = true
             errorMessage = null
@@ -332,6 +338,10 @@ fun TournamentsScreen(
             },
             onCreated = { tournament ->
                 showCreateTournamentDialog = false
+                if (tournament.drawPending) {
+                    navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
+                    return@CreateTournamentDialog
+                }
                 navController.navigate(
                     TournamentRoute(
                         tournamentId = tournament.id,
@@ -756,7 +766,7 @@ private fun TournamentTableRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BodyCell(
-            text = tournament.numPlayers.toString(),
+            text = tournament.playersLabel(),
             minWidth = PlayersColumnMinWidth,
             weight = .5f,
             textAlign = TextAlign.Center,
@@ -895,7 +905,7 @@ private fun CompactTournamentCard(
                     // Only the number of players. The team, best hand and chicken icons said nothing useful (Ernesto, 17-nov).
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.People, contentDescription = stringResource(Res.string.players), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${tournament.numPlayers}", style = MaterialTheme.typography.labelLarge)
+                        Text(tournament.playersLabel(), style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 if (showEdit) {
@@ -906,6 +916,13 @@ private fun CompactTournamentCard(
             }
         }
     }
+}
+
+/** The players, or before the draw of a tournament with registrations the people with a place and the places. */
+private fun Tournament.playersLabel(): String {
+    val settings = registration
+    if (!drawPending || settings == null) return numPlayers.toString()
+    return settings.confirmed.toString() + (settings.maxPlayers?.let { " / $it" } ?: "") + (if (settings.waiting > 0) " (+${settings.waiting})" else "")
 }
 
 private fun tournamentDateRange(tournament: Tournament): String = formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate) ?: "—"

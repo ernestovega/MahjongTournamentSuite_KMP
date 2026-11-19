@@ -60,6 +60,7 @@ data class AdminRegistrationsDto(
     val settings: RegistrationSettingsDto = RegistrationSettingsDto(),
     val isTeams: Boolean = false,
     val drawPending: Boolean = true,
+    val publicLink: String = "",
     val registrations: List<AdminRegistrationDto> = emptyList(),
     val teams: List<RegistrationTeamDto> = emptyList(),
 )

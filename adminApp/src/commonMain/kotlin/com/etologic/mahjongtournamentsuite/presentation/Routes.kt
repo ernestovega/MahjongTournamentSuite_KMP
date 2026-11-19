@@ -28,6 +28,12 @@ data class TournamentRoute(
 )
 
 /** [editUid] opens the edit dialog of that account at once. The players screen uses it. */
+/** The registrations of a tournament before its draw. See docs/registrations.md. */
+@Serializable
+data class RegistrationsRoute(
+    val tournamentId: String,
+)
+
 @Serializable
 data class UsersRoute(
     val editUid: String? = null,

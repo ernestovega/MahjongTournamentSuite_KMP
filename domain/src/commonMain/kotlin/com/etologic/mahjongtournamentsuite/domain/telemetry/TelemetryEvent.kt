@@ -82,8 +82,15 @@ object TelemetryEvent {
      */
     const val PREFERENCE_CHANGED = "preference_changed"
 
+    /**
+     * A person registered in a tournament, or changed the own registration (player app). [TelemetryParam.ACTION] is
+     * one word of [TelemetryRegistrationAction]. Only a change that worked is counted.
+     */
+    const val REGISTRATION = "registration"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
+        REGISTRATION,
         LOGIN,
         LOGOUT,
         PASSWORD_RESET_REQUESTED,
@@ -219,6 +226,16 @@ object TelemetryAction {
     /** The open tables of the finished rounds were marked as completed (round control). */
     const val TABLES_COMPLETED = "tables_completed"
 
+    /** The registrations of a tournament, before its draw. */
+    const val REGISTRATION_ADDED = "registration_added"
+    const val REGISTRATION_UPDATED = "registration_updated"
+    const val REGISTRATION_REMOVED = "registration_removed"
+    const val REGISTRATION_SETTINGS_UPDATED = "registration_settings_updated"
+    const val REGISTRATIONS_IMPORTED = "registrations_imported"
+
+    /** The draw of a tournament with registrations, with the confirmed people. */
+    const val DRAW_MADE = "draw_made"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         TOURNAMENT_RENAMED,
@@ -257,6 +274,45 @@ object TelemetryAction {
         TABLE_RESET,
         ROUND_CONTROL_CHANGED,
         TABLES_COMPLETED,
+        REGISTRATION_ADDED,
+        REGISTRATION_UPDATED,
+        REGISTRATION_REMOVED,
+        REGISTRATION_SETTINGS_UPDATED,
+        REGISTRATIONS_IMPORTED,
+        DRAW_MADE,
+    )
+}
+
+/** The values of [TelemetryParam.ACTION] in `registration`. */
+object TelemetryRegistrationAction {
+    /** The person registered. With an account the place is confirmed; without one, the email link comes next. */
+    const val REGISTERED = "registered"
+
+    /** The link of the email confirmed the registration. */
+    const val CONFIRMED = "confirmed"
+    const val CANCELLED = "cancelled"
+    const val FOOD_UPDATED = "food_updated"
+    const val TEAM_CREATED = "team_created"
+    const val TEAM_RENAMED = "team_renamed"
+    const val TEAM_LEFT = "team_left"
+    const val TEAM_MEMBER_ADDED = "team_member_added"
+    const val TEAM_MEMBER_REMOVED = "team_member_removed"
+
+    /** A person without an EMA number wrote to the organization. */
+    const val NO_EMA_MESSAGE = "no_ema_message"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(
+        REGISTERED,
+        CONFIRMED,
+        CANCELLED,
+        FOOD_UPDATED,
+        TEAM_CREATED,
+        TEAM_RENAMED,
+        TEAM_LEFT,
+        TEAM_MEMBER_ADDED,
+        TEAM_MEMBER_REMOVED,
+        NO_EMA_MESSAGE,
     )
 }
 

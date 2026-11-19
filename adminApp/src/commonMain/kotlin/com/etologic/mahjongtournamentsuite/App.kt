@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
@@ -60,6 +61,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
@@ -197,6 +199,9 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                             navController = navController,
                             tournamentId = args.tournamentId,
                         )
+                    }
+                    screen<RegistrationsRoute> { backStackEntry ->
+                        RegistrationsScreen(navController = navController, tournamentId = backStackEntry.toRoute<RegistrationsRoute>().tournamentId)
                     }
                     screen<UsersRoute> { backStackEntry ->
                         GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)

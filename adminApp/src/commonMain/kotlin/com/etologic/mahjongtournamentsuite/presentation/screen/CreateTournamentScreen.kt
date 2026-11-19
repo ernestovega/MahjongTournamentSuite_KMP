@@ -56,6 +56,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINU
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COLOR
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOrganizersField
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
@@ -75,6 +76,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DateField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
@@ -111,6 +113,12 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.registration_closes_on_optional
+import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch
+import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch_info
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_error
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_optional
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_placeholder
 import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_need_yours
@@ -260,6 +268,10 @@ fun CreateTournamentDialog(
     var matchExtraText by remember { mutableStateOf(DEFAULT_MATCH_EXTRA_MINUTES.toString()) }
     var timeZoneText by remember { mutableStateOf(deviceTimeZoneId()) }
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
+    // A tournament with registrations has no players yet: the draw comes when the registrations close.
+    var withRegistration by remember { mutableStateOf(false) }
+    var maxPlayersText by remember { mutableStateOf("") }
+    var closesOn by remember { mutableStateOf("") }
 
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
@@ -360,7 +372,12 @@ fun CreateTournamentDialog(
         if (trimmedShortName.isBlank() || trimmedShortName.length > 10) {
             errors[CreateField.SHORT_NAME] = UiText.of(Res.string.field_error_short_name)
         }
-        if (numPlayers == null || !TournamentPlayerCountValidator.isValid(numPlayers)) {
+        val maxPlayers = maxPlayersText.trim().toIntOrNull()
+        if (withRegistration) {
+            if (maxPlayersText.isNotBlank() && (maxPlayers == null || maxPlayers !in 4..1000)) {
+                errors[CreateField.PLAYERS] = UiText.of(Res.string.registration_places_error)
+            }
+        } else if (numPlayers == null || !TournamentPlayerCountValidator.isValid(numPlayers)) {
             errors[CreateField.PLAYERS] =
                 UiText.of(Res.string.field_error_players, TournamentPlayerCountValidator.MIN_PLAYERS)
         }
@@ -398,7 +415,7 @@ fun CreateTournamentDialog(
         }
         if (trimmedStartDate == null ||
             trimmedEndDate == null ||
-            numPlayers == null ||
+            (numPlayers == null && !withRegistration) ||
             numRounds == null ||
             matchDurationMinutes == null
         ) {
@@ -441,7 +458,7 @@ fun CreateTournamentDialog(
                         isTeams = isTeams,
                         countBestHands = countBestHands,
                         countChickenHands = countChickenHands,
-                        numPlayers = numPlayers,
+                        numPlayers = numPlayers ?: 0,
                         numRounds = numRounds,
                         roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
                         agendaItems = agendaRows.toTournamentAgendaItems(),
@@ -451,6 +468,11 @@ fun CreateTournamentDialog(
                         timeZone = timeZoneText.trim(),
                         computeMode = computeMode,
                         onProgress = progressSink,
+                        registration = if (withRegistration) {
+                            RegistrationSettings(maxPlayers = maxPlayers, closesOn = closesOn.ifBlank { null })
+                        } else {
+                            null
+                        },
                     )
                 ) {
                     is AppResult.Success -> {
@@ -554,24 +576,51 @@ fun CreateTournamentDialog(
                                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                                         keyboardActions = KeyboardActions(onNext = { playersFocusRequester.requestFocus() }),
                                     )
+                                    TournamentOptionSwitch(
+                                        label = stringResource(Res.string.registration_open_switch),
+                                        description = stringResource(Res.string.registration_open_switch_info),
+                                        checked = withRegistration,
+                                        enabled = !isLoading,
+                                        onCheckedChange = {
+                                            withRegistration = it
+                                            clearError(CreateField.PLAYERS)
+                                        },
+                                    )
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
-                                        OutlinedTextField(
-                                            value = numPlayersText,
-                                            onValueChange = {
-                                                numPlayersText = it.toDigitsInput()
-                                                clearError(CreateField.PLAYERS)
-                                            },
-                                            label = { RequiredLabel(stringResource(Res.string.players)) },
-                                            placeholder = { Text(stringResource(Res.string.create_players_placeholder, TournamentPlayerCountValidator.MIN_PLAYERS)) },
-                                            modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
-                                            singleLine = true,
-                                            enabled = !isLoading,
-                                            isError = CreateField.PLAYERS in fieldErrors,
-                                            supportingText = fieldErrors[CreateField.PLAYERS]?.let { message -> { Text(message) } },
-                                        )
+                                        if (withRegistration) {
+                                            OutlinedTextField(
+                                                value = maxPlayersText,
+                                                onValueChange = {
+                                                    maxPlayersText = it.toDigitsInput()
+                                                    clearError(CreateField.PLAYERS)
+                                                },
+                                                label = { Text(stringResource(Res.string.registration_places_optional)) },
+                                                placeholder = { Text(stringResource(Res.string.registration_places_placeholder)) },
+                                                modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
+                                                singleLine = true,
+                                                enabled = !isLoading,
+                                                isError = CreateField.PLAYERS in fieldErrors,
+                                                supportingText = fieldErrors[CreateField.PLAYERS]?.let { message -> { Text(message) } },
+                                            )
+                                        } else {
+                                            OutlinedTextField(
+                                                value = numPlayersText,
+                                                onValueChange = {
+                                                    numPlayersText = it.toDigitsInput()
+                                                    clearError(CreateField.PLAYERS)
+                                                },
+                                                label = { RequiredLabel(stringResource(Res.string.players)) },
+                                                placeholder = { Text(stringResource(Res.string.create_players_placeholder, TournamentPlayerCountValidator.MIN_PLAYERS)) },
+                                                modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
+                                                singleLine = true,
+                                                enabled = !isLoading,
+                                                isError = CreateField.PLAYERS in fieldErrors,
+                                                supportingText = fieldErrors[CreateField.PLAYERS]?.let { message -> { Text(message) } },
+                                            )
+                                        }
                                         OutlinedTextField(
                                             value = numRoundsText,
                                             onValueChange = { typed ->
@@ -589,6 +638,15 @@ fun CreateTournamentDialog(
                                             enabled = !isLoading,
                                             isError = CreateField.ROUNDS in fieldErrors,
                                             supportingText = fieldErrors[CreateField.ROUNDS]?.let { message -> { Text(message) } },
+                                        )
+                                    }
+
+                                    if (withRegistration) {
+                                        DateField(
+                                            label = stringResource(Res.string.registration_closes_on_optional),
+                                            value = closesOn,
+                                            onChange = { closesOn = it },
+                                            modifier = Modifier.fillMaxWidth(),
                                         )
                                     }
 
@@ -661,7 +719,7 @@ fun CreateTournamentDialog(
                                         onCheckedChange = { countChickenHands = it },
                                     )
 
-                                    FocusHighlightContainer(
+                                    if (!withRegistration) FocusHighlightContainer(
                                         modifier = Modifier.fillMaxWidth(),
                                         interactionSource = computeToggleInteractionSource,
                                     ) {

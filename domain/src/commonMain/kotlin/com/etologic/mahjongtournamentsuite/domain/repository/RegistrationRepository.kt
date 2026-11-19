@@ -24,10 +24,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
  */
 interface RegistrationRepository {
     /** The public list: places, waiting list and teams, without emails. */
-    suspend fun publicList(tournamentId: String): AppResult<TournamentRegistrations>
+    suspend fun loadPublicList(tournamentId: String): AppResult<TournamentRegistrations>
 
     /** The tournament of a public link, `/inscripcion/<slug>`. */
-    suspend fun tournamentOfLink(slug: String): AppResult<String>
+    suspend fun resolveLink(slug: String): AppResult<String>
 
     suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult>
 
@@ -35,7 +35,7 @@ interface RegistrationRepository {
     suspend fun confirm(tournamentId: String, token: String): AppResult<OwnRegistration>
 
     /** The registration of the person, or null when the person is not registered (or it has no account and no link). */
-    suspend fun own(tournamentId: String): AppResult<OwnRegistration?>
+    suspend fun loadOwn(tournamentId: String): AppResult<OwnRegistration?>
 
     suspend fun updateOwn(tournamentId: String, foodRestrictions: String, consent: Boolean): AppResult<OwnRegistration>
 
@@ -55,7 +55,7 @@ interface RegistrationRepository {
 
     // The organizers.
 
-    suspend fun adminList(tournamentId: String): AppResult<AdminRegistrations>
+    suspend fun loadAdminList(tournamentId: String): AppResult<AdminRegistrations>
 
     suspend fun adminAdd(tournamentId: String, registration: NewRegistration): AppResult<AdminRegistration>
 
@@ -65,8 +65,11 @@ interface RegistrationRepository {
 
     suspend fun updateSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings>
 
-    /** Reads the answers of the old Google Form (CSV or Excel). Without [apply] it only checks them. */
-    suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport>
+    /** Reads the answers of the old Google Form (CSV or Excel) and checks them. It changes nothing. */
+    suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport>
+
+    /** Registers every answer without problems, in the order of the form. It sends no email. */
+    suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport>
 
     /** Makes the draw with the confirmed people. The tournament is a normal one after it. */
     suspend fun makeDraw(

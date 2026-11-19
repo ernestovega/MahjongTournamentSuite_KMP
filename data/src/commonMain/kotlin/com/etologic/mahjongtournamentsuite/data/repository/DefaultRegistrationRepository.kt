@@ -62,7 +62,7 @@ class DefaultRegistrationRepository(
     /** Keeps the token of the links of the emails, so a person without an account can manage the registration. */
     private val tokens: PersistentCacheStore,
 ) : RegistrationRepository {
-    override suspend fun publicList(tournamentId: String): AppResult<TournamentRegistrations> = call("Reading the registrations") {
+    override suspend fun loadPublicList(tournamentId: String): AppResult<TournamentRegistrations> = call("Reading the registrations") {
         backendApi.publicRegistrations(tournamentId).let { dto ->
             TournamentRegistrations(
                 settings = dto.settings.toDomain(),
@@ -73,7 +73,7 @@ class DefaultRegistrationRepository(
         }
     }
 
-    override suspend fun tournamentOfLink(slug: String): AppResult<String> = call("Opening a registration link") {
+    override suspend fun resolveLink(slug: String): AppResult<String> = call("Opening a registration link") {
         backendApi.registrationLink(slug.trim().lowercase()).tournamentId
     }
 
@@ -101,7 +101,7 @@ class DefaultRegistrationRepository(
         backendApi.confirmRegistration(tournamentId, token.trim()).toDomain().also { saveToken(tournamentId, it.manageToken.ifBlank { token.trim() }) }
     }
 
-    override suspend fun own(tournamentId: String): AppResult<OwnRegistration?> = personCall(tournamentId, "Reading the own registration") { idToken, token ->
+    override suspend fun loadOwn(tournamentId: String): AppResult<OwnRegistration?> = personCall(tournamentId, "Reading the own registration") { idToken, token ->
         if (idToken == null && token == null) return@personCall null
         try {
             backendApi.ownRegistration(idToken, token, tournamentId).toDomain()
@@ -151,12 +151,13 @@ class DefaultRegistrationRepository(
         Unit
     }
 
-    override suspend fun adminList(tournamentId: String): AppResult<AdminRegistrations> = adminCall("Reading the registrations") { idToken ->
+    override suspend fun loadAdminList(tournamentId: String): AppResult<AdminRegistrations> = adminCall("Reading the registrations") { idToken ->
         backendApi.adminRegistrations(idToken, tournamentId).let { dto ->
             AdminRegistrations(
                 settings = dto.settings.toDomain(),
                 isTeams = dto.isTeams,
                 drawPending = dto.drawPending,
+                publicLink = dto.publicLink,
                 registrations = dto.registrations.map { it.toDomain() },
                 teams = dto.teams.map { it.toDomain() },
             )
@@ -205,7 +206,13 @@ class DefaultRegistrationRepository(
             backendApi.updateRegistrationSettings(idToken, tournamentId, settings.toRequestDto()).toDomain()
         }
 
-    override suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport> =
+    override suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
+        import(tournamentId, fileName, bytes, apply = false)
+
+    override suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
+        import(tournamentId, fileName, bytes, apply = true)
+
+    private suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport> =
         adminCall("Importing registrations") { idToken ->
             val dto = backendApi.importRegistrations(idToken, tournamentId, RegistrationImportRequestDto(fileName, Base64.Default.encode(bytes), apply))
             RegistrationImport(

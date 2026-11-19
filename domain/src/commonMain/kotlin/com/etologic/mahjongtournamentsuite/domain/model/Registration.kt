@@ -91,6 +91,8 @@ data class AdminRegistrations(
     val settings: RegistrationSettings,
     val isTeams: Boolean,
     val drawPending: Boolean,
+    /** The public link of the registrations, for the organizers to share. */
+    val publicLink: String = "",
     val registrations: List<AdminRegistration>,
     val teams: List<RegistrationTeam>,
 ) {
