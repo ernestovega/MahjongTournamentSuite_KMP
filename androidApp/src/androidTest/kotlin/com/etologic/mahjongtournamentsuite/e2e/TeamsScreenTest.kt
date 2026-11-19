@@ -25,6 +25,8 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun searchByTeamName() {
         openTeams()
+        // The search field shows once the teams and their players have loaded.
+        c.scrollListTo("LUCIA PEREZ")
         c.field("Search").performTextInputText("Bamboo")
         c.waitForText("CARMEN LOPEZ 142")
         c.waitForNoText("LUCIA PEREZ")
@@ -33,6 +35,8 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun searchByPlayerName() {
         openTeams()
+        // The search field shows once the teams and their players have loaded.
+        c.scrollListTo("LUCIA PEREZ")
         c.field("Search").performTextInputText("CARMEN GOMEZ")
         c.waitForText("Bamboo")
         c.waitForNoText("Aces")
