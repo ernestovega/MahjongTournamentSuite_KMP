@@ -96,7 +96,7 @@ private fun PersonContent(
     onFiltersChange: (StatisticsFilters) -> Unit,
     loadStandings: suspend (String, List<String>) -> Map<String, Standing>,
 ) {
-    val kept = remember(data, filters) { data.only(filters::keeps) }
+    val kept = remember(data, filters) { data.only(filters::keeps, filters.rivalEmaId) }
     if (kept.tournaments.isEmpty()) {
         if (data.tournaments.isEmpty()) {
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_empty_message))

@@ -198,9 +198,17 @@ internal fun personFrom(
     return PersonStatisticsData(emaId, profile, overall, parts, rivalNames)
 }
 
-/** The person in the tournaments that [keep] keeps. The overall statistics are those of these tournaments only. */
-fun PersonStatisticsData.only(keep: (Tournament) -> Boolean): PersonStatisticsData {
-    val kept = tournaments.filter { keep(it.first) }
-    if (kept.size == tournaments.size) return this
+/**
+ * The person in the tournaments that [keep] keeps. With [rival], only the tables against that rival count. The overall
+ * statistics are those of what is kept.
+ */
+fun PersonStatisticsData.only(keep: (Tournament) -> Boolean, rival: String? = null): PersonStatisticsData {
+    val kept = tournaments.filter { keep(it.first) }.mapNotNull { (tournament, statistics) ->
+        if (rival == null) return@mapNotNull tournament to statistics
+        // Only the tables where the person played against the rival.
+        val tables = statistics.results.filter { result -> result.rivals.any { it.opponent == rival } }
+        tables.takeIf { it.isNotEmpty() }?.let { tournament to statistics.copy(results = it) }
+    }
+    if (rival == null && kept.size == tournaments.size) return this
     return copy(overall = PlayerStatistics(0, kept.flatMap { it.second.results }), tournaments = kept)
 }

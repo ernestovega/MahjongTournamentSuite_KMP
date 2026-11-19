@@ -559,6 +559,9 @@
     <string name="stats_filter_any_player">Alla spelare</string>
     <string name="stats_filter_tournament">Turnering</string>
     <string name="stats_filter_tournament_country">Turneringarnas land</string>
+    <string name="stats_filter_rival">Motståndare</string>
+    <string name="stats_filter_any_rival">Alla motståndare</string>
+    <string name="stats_chip_rival">mot %1$s</string>
     <string name="stats_filter_player_country">Spelarnas land</string>
     <string name="stats_filter_any_country">Alla länder</string>
     <string name="stats_filter_from_year">Från</string>

@@ -26,6 +26,7 @@ class StatisticsFiltersTest {
     fun theFiltersGoToATextAndBack() {
         val filters = StatisticsFilters(
             emaId = "04000001",
+            rivalEmaId = "04000002",
             tournamentId = "t-1",
             tournamentCountry = "ES",
             playerCountry = "",
@@ -37,6 +38,16 @@ class StatisticsFiltersTest {
         assertEquals(filters, StatisticsFilters.decode(filters.encode()))
         assertEquals(StatisticsFilters(), StatisticsFilters.decode(""))
         assertNull(StatisticsFilters.decode(null))
+        // A rival without a player means nothing.
+        assertEquals(StatisticsFilters(), StatisticsFilters.decode("rival=04000002"))
+    }
+
+    @Test
+    fun theRivalStaysWithTheSamePersonOnly() {
+        val filters = StatisticsFilters(emaId = "1", rivalEmaId = "2")
+        assertEquals(filters, filters.withPerson("1"))
+        assertEquals(StatisticsFilters(emaId = "3"), filters.withPerson("3"))
+        assertEquals(StatisticsFilters(emaId = "2"), filters.withPerson("2"))
     }
 
     @Test

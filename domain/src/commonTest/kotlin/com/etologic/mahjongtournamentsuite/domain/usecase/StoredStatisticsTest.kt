@@ -79,6 +79,21 @@ class StoredStatisticsTest {
     }
 
     @Test
+    fun aRivalKeepsOnlyTheTablesAgainstThatRival() {
+        val digests = listOf(
+            PersonTournamentDigest("b", listOf(result("1", position = 3, points = 1.0))),
+            PersonTournamentDigest("a", listOf(result("1", position = 1, points = 4.0, opponent = "2"))),
+        )
+        val person = personFrom("1", listOf(second, first), digests, registry)
+
+        val against = person.only({ true }, rival = "2")
+
+        assertEquals(listOf("a"), against.tournaments.map { it.first.id })
+        assertEquals(4.0, against.overall.totalPoints)
+        assertEquals(emptyList(), person.only({ true }, rival = "3").tournaments)
+    }
+
+    @Test
     fun groupGivesEachPersonAllTheSumsAndKeepsTheBestValuesApart() {
         val group = StatisticsGroup(
             tournamentIds = listOf("t-1", "t-2"),

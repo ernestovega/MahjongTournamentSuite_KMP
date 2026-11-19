@@ -51,12 +51,14 @@ import mahjongtournamentsuite.ui.generated.resources.stats_all_tournaments
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_from_year
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_players_from
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_remove
+import mahjongtournamentsuite.ui.generated.resources.stats_chip_rival
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_table
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_to_year
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_tournaments_in
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_years
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_any_country
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_any_player
+import mahjongtournamentsuite.ui.generated.resources.stats_filter_any_rival
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_any_year
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_apply
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_clear
@@ -64,6 +66,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_filter_everything
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_from_year
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_player
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_player_country
+import mahjongtournamentsuite.ui.generated.resources.stats_filter_rival
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_to_year
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_tournament
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_tournament_country
@@ -76,6 +79,7 @@ import org.jetbrains.compose.resources.stringResource
  * The filters of the statistics screen, the same in both apps. They combine. A null field keeps everything.
  *
  * - [emaId]: one person, over the tournaments that the other filters keep.
+ * - [rivalEmaId]: with [emaId], only the tables of the person against this rival.
  * - [slotId]: one seat of [tournamentId] without an EMA number, such as a guest.
  * - [tournamentId]: one tournament.
  * - [tournamentCountry]: the two-letter code of the country where the tournaments were played.
@@ -86,6 +90,7 @@ import org.jetbrains.compose.resources.stringResource
  */
 data class StatisticsFilters(
     val emaId: String? = null,
+    val rivalEmaId: String? = null,
     val slotId: Int? = null,
     val tournamentId: String? = null,
     val tournamentCountry: String? = null,
@@ -123,11 +128,19 @@ data class StatisticsFilters(
     )
 
     /** One person, with the filters of the tournaments kept. */
-    fun withPerson(emaId: String): StatisticsFilters = copy(emaId = emaId, slotId = null, playerCountry = null, roundId = null, tableId = null)
+    fun withPerson(emaId: String): StatisticsFilters = copy(
+        emaId = emaId,
+        rivalEmaId = rivalEmaId?.takeIf { it != emaId && emaId == this.emaId },
+        slotId = null,
+        playerCountry = null,
+        roundId = null,
+        tableId = null,
+    )
 
     /** A text that [decode] reads back, to keep the filters across a page refresh. */
     fun encode(): String = listOfNotNull(
         emaId?.let { "player=$it" },
+        rivalEmaId?.let { "rival=$it" },
         slotId?.let { "slot=$it" },
         tournamentId?.let { "tournament=$it" },
         tournamentCountry?.let { "tournamentCountry=$it" },
@@ -144,6 +157,7 @@ data class StatisticsFilters(
             val values = text.split("&").filter { "=" in it }.associate { it.substringBefore("=") to it.substringAfter("=") }
             return StatisticsFilters(
                 emaId = values["player"]?.takeIf { it.isNotBlank() },
+                rivalEmaId = values["rival"]?.takeIf { it.isNotBlank() && values["player"]?.isNotBlank() == true },
                 slotId = values["slot"]?.toIntOrNull(),
                 tournamentId = values["tournament"]?.takeIf { it.isNotBlank() },
                 tournamentCountry = values["tournamentCountry"]?.takeIf { it.isNotBlank() },
@@ -248,7 +262,12 @@ private fun filterChips(filters: StatisticsFilters, players: List<Player>, tourn
     return buildList {
         filters.emaId?.let { ema ->
             val player = players.firstOrNull { it.emaId == ema }
-            add(Chip(player?.displayName ?: "EMA $ema", { CountryFlag(player?.country.orEmpty(), width = 20.dp) }) { it.copy(emaId = null) })
+            add(Chip(player?.displayName ?: "EMA $ema", { CountryFlag(player?.country.orEmpty(), width = 20.dp) }) { it.copy(emaId = null, rivalEmaId = null) })
+        }
+        filters.rivalEmaId?.takeIf { filters.emaId != null }?.let { ema ->
+            val rival = players.firstOrNull { it.emaId == ema }
+            val name = rival?.displayName ?: "EMA $ema"
+            add(Chip(stringResource(Res.string.stats_chip_rival, name), { CountryFlag(rival?.country.orEmpty(), width = 20.dp) }) { it.copy(rivalEmaId = null) })
         }
         if (filters.emaId == null && filters.slotId != null) {
             add(Chip(slotName ?: "#${filters.slotId}", { CountryFlag("", width = 20.dp) }) { it.copy(slotId = null) })
@@ -310,15 +329,24 @@ internal fun StatisticsFiltersDialog(
     val anyYear = stringResource(Res.string.stats_filter_any_year)
     val allTournaments = stringResource(Res.string.stats_all_tournaments)
     val noCountry = stringResource(Res.string.no_country)
-    val playerOptions = remember(players, anyPlayer) {
-        listOf(SelectOption(ANY, anyPlayer)) + players.sortedBy { it.displayName.lowercase() }.map { player ->
-            SelectOption(player.emaId, "${player.displayName} (${player.emaId})", searchText = player.emaId, leadingIcon = { CountryFlag(player.country, width = 20.dp) })
-        }
-    }
-    val tournamentOptions = remember(tournaments, allTournaments) {
-        listOf(SelectOption(ANY, allTournaments)) +
-            tournaments.sortedByDescending { it.eventStartDate.orEmpty() }.map { SelectOption(it.id, it.name, leadingIcon = { CountryFlag(it.hostCountry, width = 20.dp) }) }
-    }
+    val anyRival = stringResource(Res.string.stats_filter_any_rival)
+    val sortedPlayers = remember(players) { players.sortedBy { it.displayName.lowercase() } }
+    fun playerOption(player: Player) = SelectOption(
+        player.emaId,
+        "${player.displayName} (${player.emaId})",
+        searchText = player.emaId,
+        leadingIcon = { CountryFlag(player.country, width = 20.dp) },
+    )
+    // A chosen country of the players narrows the list of the players. The chosen ones always stay in their lists.
+    val countryOfPlayers = draft.playerCountry
+    val playerOptions = listOf(SelectOption(ANY, anyPlayer)) +
+        sortedPlayers.filter { countryOfPlayers == null || it.country.equals(countryOfPlayers, ignoreCase = true) || it.emaId == draft.emaId }.map(::playerOption)
+    val rivalOptions = listOf(SelectOption(ANY, anyRival)) + sortedPlayers.filter { it.emaId != draft.emaId }.map(::playerOption)
+    // The country and the years of the tournaments narrow the list of the tournaments.
+    val tournamentOptions = listOf(SelectOption(ANY, allTournaments)) +
+        tournaments.filter { it.id == draft.tournamentId || draft.copy(tournamentId = null).keeps(it) }
+            .sortedByDescending { it.eventStartDate.orEmpty() }
+            .map { SelectOption(it.id, it.name, leadingIcon = { CountryFlag(it.hostCountry, width = 20.dp) }) }
     val tournamentCountries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct()
     val tournamentCountryOptions = listOf(SelectOption(ANY, anyCountry)) +
         tournamentCountries.map { code -> SelectOption(code, countryDisplayName(code), searchText = code, leadingIcon = { CountryFlag(code, width = 20.dp) }) }
@@ -344,8 +372,17 @@ internal fun StatisticsFiltersDialog(
                         stringResource(Res.string.stats_filter_player),
                         playerOptions,
                         draft.emaId ?: ANY,
-                        { ema -> draft = if (ema == ANY) draft.copy(emaId = null) else draft.withPerson(ema) },
+                        { ema -> draft = if (ema == ANY) draft.copy(emaId = null, rivalEmaId = null) else draft.withPerson(ema) },
                         Modifier.fillMaxWidth(),
+                    )
+                    SelectField(
+                        stringResource(Res.string.stats_filter_rival),
+                        rivalOptions,
+                        draft.rivalEmaId ?: ANY,
+                        { ema -> draft = draft.copy(rivalEmaId = ema.takeIf { it != ANY }) },
+                        Modifier.fillMaxWidth(),
+                        // A rival is a rival of the chosen player.
+                        enabled = draft.emaId != null,
                     )
                     SelectField(
                         stringResource(Res.string.stats_filter_tournament),

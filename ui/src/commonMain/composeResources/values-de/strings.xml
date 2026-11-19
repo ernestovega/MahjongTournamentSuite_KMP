@@ -559,6 +559,9 @@
     <string name="stats_filter_any_player">Alle Spieler</string>
     <string name="stats_filter_tournament">Turnier</string>
     <string name="stats_filter_tournament_country">Land der Turniere</string>
+    <string name="stats_filter_rival">Gegner</string>
+    <string name="stats_filter_any_rival">Jeder Gegner</string>
+    <string name="stats_chip_rival">gegen %1$s</string>
     <string name="stats_filter_player_country">Land der Spieler</string>
     <string name="stats_filter_any_country">Alle Länder</string>
     <string name="stats_filter_from_year">Von</string>

@@ -283,7 +283,13 @@ class UiComponentsScreenshotTest {
     @Test
     fun statisticsFilterBar() = component("statistics-filter-bar") {
         StatisticsFilterBar(
-            filters = StatisticsFilters(emaId = ScreenshotData.players.first().emaId, tournamentCountry = "ES", fromYear = 2025, toYear = 2026),
+            filters = StatisticsFilters(
+                emaId = ScreenshotData.players.first().emaId,
+                rivalEmaId = ScreenshotData.players[1].emaId,
+                tournamentCountry = "ES",
+                fromYear = 2025,
+                toYear = 2026,
+            ),
             onChange = {},
             players = ScreenshotData.players,
             tournaments = ScreenshotData.tournaments,
@@ -300,7 +306,12 @@ class UiComponentsScreenshotTest {
     @Test
     fun statisticsFiltersDialog() = component("dialog-statistics-filters", variants = componentDialogVariants) {
         StatisticsFiltersDialog(
-            filters = StatisticsFilters(tournamentCountry = "ES", playerCountry = "ESP", fromYear = 2025),
+            filters = StatisticsFilters(
+                emaId = ScreenshotData.players.first().emaId,
+                rivalEmaId = ScreenshotData.players[1].emaId,
+                tournamentCountry = "ES",
+                fromYear = 2025,
+            ),
             players = ScreenshotData.players,
             tournaments = ScreenshotData.tournaments,
             onApply = {},
