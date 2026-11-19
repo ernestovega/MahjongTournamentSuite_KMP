@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
@@ -120,6 +121,12 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.ACCOUNT_REMOVED_FROM_COUNTRIES) { it.usersPresenter.removeFromMyCountries(USER.uid, AccountRequestKind.DISABLE, "Left the club") },
         Case(TelemetryAction.ACCOUNT_REQUEST_APPROVED) { it.usersPresenter.resolveAccountRequest("r1", approve = true) },
         Case(TelemetryAction.ACCOUNT_REQUEST_REJECTED) { it.usersPresenter.resolveAccountRequest("r1", approve = false) },
+        Case(TelemetryAction.ACCOUNT_PERMISSIONS_UPDATED) {
+            it.usersPresenter.setUserPermissions(USER.uid, mapOf(GlobalUserRole.EDITOR to LevelPermissions(customRoleId = null)))
+        },
+        Case(TelemetryAction.ROLE_CREATED) { it.usersPresenter.createRole("Referee", GlobalUserRole.EDITOR, emptySet()) },
+        Case(TelemetryAction.ROLE_UPDATED) { it.usersPresenter.updateRole("r1", "Referee", emptySet()) },
+        Case(TelemetryAction.ROLE_DELETED) { it.usersPresenter.deleteRole("r1") },
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },
         Case(TelemetryAction.REGISTRY_PLAYER_UPDATED) { it.playerBasePresenter.updatePlayer("1234", PLAYER) },
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },

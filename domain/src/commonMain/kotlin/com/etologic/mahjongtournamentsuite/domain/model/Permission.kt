@@ -37,6 +37,7 @@ enum class Permission(val key: String) {
     TOOLS_ID_CARDS("tools.idCards"),
     DEV_ACTIVITY("dev.activity"),
     DEV_ERRORS("dev.errors"),
+    PERMISSIONS_MANAGE("permissions.manage"),
     ;
 
     val inTournament: Boolean get() = key.startsWith("tournament.")
@@ -48,8 +49,14 @@ enum class Permission(val key: String) {
         fun fromKeys(keys: Collection<String>): Set<Permission> = keys.mapNotNullTo(mutableSetOf()) { byKey[it] }
 
         private val editor = setOf(
-            TOURNAMENT_VIEW, TOURNAMENT_EDIT, TOURNAMENT_ROUND_CONTROL, TOURNAMENT_PLAYER_EMAILS,
-            ACCOUNTS_VIEW, ACCOUNTS_CREATE_PLAYER, TOOLS_VENUES, TOOLS_ID_CARDS,
+            TOURNAMENT_VIEW,
+            TOURNAMENT_EDIT,
+            TOURNAMENT_ROUND_CONTROL,
+            TOURNAMENT_PLAYER_EMAILS,
+            ACCOUNTS_VIEW,
+            ACCOUNTS_CREATE_PLAYER,
+            TOOLS_VENUES,
+            TOOLS_ID_CARDS,
         )
         private val countryAdmin = editor + setOf(
             TOURNAMENT_EDIT_COMPLETED, TOURNAMENT_CONFIGURE, TOURNAMENT_DELETE, TOURNAMENT_RESET_TABLE,

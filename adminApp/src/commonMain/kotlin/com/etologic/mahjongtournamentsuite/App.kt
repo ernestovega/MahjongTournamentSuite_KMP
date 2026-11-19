@@ -19,33 +19,35 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
-import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackPreferenceChanges
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.BackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.BackgroundExportsHost
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
+import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
+import com.etologic.mahjongtournamentsuite.presentation.di.adminAppModules
 import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
+import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
 import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
@@ -57,6 +59,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
@@ -66,6 +69,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackPreferenceChanges
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -75,8 +79,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.app_logo
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
-import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
-import com.etologic.mahjongtournamentsuite.presentation.di.adminAppModules
 import org.koin.compose.koinInject
 
 /** [appVersion] is the version shown to the user. The web entry point passes the web version. */
@@ -196,6 +198,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<UsersRoute> { backStackEntry ->
                         GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)
                     }
+                    screen<RolesRoute> { RolesScreen(navController) }
                     screen<PlayersRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<PlayersRoute>()
                         PlayersScreen(

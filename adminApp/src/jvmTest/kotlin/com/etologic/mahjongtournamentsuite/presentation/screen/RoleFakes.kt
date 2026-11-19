@@ -10,14 +10,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroup
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
@@ -65,6 +68,26 @@ internal class FakeAdminRepository(
 
     override suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> {
         calls += "removal $uid ${kind ?: "NONE"} $reason"
+        return write { users.first { it.uid == uid } }
+    }
+
+    override suspend fun createRole(name: String, base: GlobalUserRole, permissions: Set<Permission>): AppResult<CustomRole> {
+        calls += "createRole $name $base"
+        return write { CustomRole("new-role", name, base, permissions) }
+    }
+
+    override suspend fun updateRole(id: String, name: String, permissions: Set<Permission>): AppResult<CustomRole> {
+        calls += "updateRole $id"
+        return write { CustomRole(id, name, GlobalUserRole.EDITOR, permissions) }
+    }
+
+    override suspend fun deleteRole(id: String): AppResult<Int> {
+        calls += "deleteRole $id"
+        return write { 0 }
+    }
+
+    override suspend fun setUserPermissions(uid: String, levels: Map<GlobalUserRole, LevelPermissions>): AppResult<ManagedUser> {
+        calls += "permissions $uid"
         return write { users.first { it.uid == uid } }
     }
 

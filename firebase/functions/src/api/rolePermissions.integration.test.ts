@@ -72,6 +72,11 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/admin/users/password-resets", "accounts.passwordReset"],
   ["POST", "/admin/users/delete", "accounts.delete"],
   ["PUT", "/admin/users/:uid/photo", "accounts.photo"],
+  ["PUT", "/admin/users/:uid/permissions", "accounts.manageStaff"],
+  ["GET", "/admin/roles", "accounts.view"],
+  ["POST", "/admin/roles", "permissions.manage"],
+  ["PUT", "/admin/roles/:roleId", "permissions.manage"],
+  ["DELETE", "/admin/roles/:roleId", "permissions.manage"],
   ["POST", "/admin/users/:uid/removal", "accounts.requestRemoval"],
   ["GET", "/admin/account-requests", "accounts.reviewRequests"],
   ["POST", "/admin/account-requests/:requestId", "accounts.reviewRequests"],
@@ -180,7 +185,7 @@ describe("who may call which route", () => {
       .replace(":tournamentId", tournamentId)
       .replace(":roundId", "1").replace(":tableId", "1").replace(":playerId", "1").replace(":teamId", "1")
       .replace(":uid", "unknown-user").replace(":invitationId", "unknown-invitation").replace(":submissionId", "unknown-submission")
-      .replace(":emaId", "unknown-ema").replace(":requestId", "unknown-request");
+      .replace(":emaId", "unknown-ema").replace(":requestId", "unknown-request").replace(":roleId", "unknown-role");
     // A country admin reads the activity of one tournament of its countries.
     return filled === "/admin/activity" ? `${filled}?tournamentId=${tournamentId}` : filled;
   };

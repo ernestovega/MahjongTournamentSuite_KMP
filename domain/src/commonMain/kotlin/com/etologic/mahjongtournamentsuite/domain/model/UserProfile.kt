@@ -50,4 +50,10 @@ data class ManagedUser(
     val hasGrantsOutside: Boolean = false,
     /** True when the email is hidden from the signed-in account: a player of tournaments that it does not manage. */
     val emailHidden: Boolean = false,
+    /** The custom role that the account uses as an editor or as a country admin, by level. */
+    val customRoleIds: Map<GlobalUserRole, String> = emptyMap(),
+    /** The single permissions that the account has more or less than its role, by level. */
+    val permissionChanges: Map<GlobalUserRole, PermissionChange> = emptyMap(),
+    /** What the account may do as an editor and as a country admin, with its custom roles and its changes. */
+    val rolePermissions: Map<GlobalUserRole, Set<Permission>> = emptyMap(),
 )

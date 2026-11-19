@@ -205,6 +205,7 @@ open class ScreenshotAdminRepository(
 
     override suspend fun loadErrorGroup(id: String, reportCursor: ErrorLogCursor?): AppResult<ErrorGroupDetail> = noWrite()
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = ok(ActivityPage(entries = emptyList(), nextCursor = null))
+    override suspend fun listRoles() = ok(ScreenshotData.rolesCatalog)
 }
 
 /**

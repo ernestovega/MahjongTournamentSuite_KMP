@@ -1,9 +1,13 @@
 package com.etologic.mahjongtournamentsuite.screenshots.fake
 
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.PermissionChange
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -260,6 +264,46 @@ object ScreenshotData {
         emaId = players[0].emaId,
         roles = setOf(GlobalUserRole.PLAYER),
     )
+
+    /** Two custom roles next to the standard ones, as a super admin sees them in Accounts → Roles. */
+    val rolesCatalog: RolesCatalog by lazy {
+        val editor = Permission.defaultsOf(GlobalUserRole.EDITOR)
+        val countryAdmin = Permission.defaultsOf(GlobalUserRole.COUNTRY_ADMIN)
+        val grantableCountryAdmin = Permission.entries.toSet() - setOf(
+            Permission.TOURNAMENTS_CHANGE_COUNTRY, Permission.TOURNAMENTS_DELETE_FINISHED, Permission.ACCOUNTS_MANAGE_SUPER_ADMINS,
+            Permission.ACCOUNTS_CHANGE_EMAIL, Permission.ACCOUNTS_CHANGE_EMA_ID, Permission.ACCOUNTS_PHOTO, Permission.ACCOUNTS_DISABLE,
+            Permission.ACCOUNTS_DELETE, Permission.ACCOUNTS_REVIEW_REQUESTS, Permission.DEV_ACTIVITY, Permission.DEV_ERRORS,
+            Permission.PERMISSIONS_MANAGE,
+        )
+        RolesCatalog(
+            standard = listOf(GlobalUserRole.EDITOR, GlobalUserRole.COUNTRY_ADMIN, GlobalUserRole.SUPER_ADMIN).associateWith { Permission.defaultsOf(it) },
+            custom = listOf(
+                CustomRole("role-referee", "Head referee", GlobalUserRole.EDITOR, editor + setOf(Permission.TOURNAMENT_RESET_TABLE, Permission.TOURNAMENT_EDIT_COMPLETED), accounts = 2),
+                CustomRole("role-registry", "Registry keeper", GlobalUserRole.COUNTRY_ADMIN, countryAdmin + setOf(Permission.EMA_EDIT), accounts = 0),
+            ),
+            grantable = mapOf(
+                GlobalUserRole.EDITOR to grantableCountryAdmin - setOf(
+                    Permission.TOURNAMENT_MEMBERS,
+                    Permission.TOURNAMENTS_CREATE,
+                    Permission.ACCOUNTS_MANAGE_STAFF,
+                    Permission.ACCOUNTS_REQUEST_REMOVAL,
+                ),
+                GlobalUserRole.COUNTRY_ADMIN to grantableCountryAdmin,
+            ),
+            required = setOf(Permission.TOURNAMENT_VIEW),
+        )
+    }
+
+    /** An editor with the custom role of a head referee, and one permission less for this person. */
+    val customizedEditor: ManagedUser by lazy {
+        val role = rolesCatalog.custom.first()
+        users[1].copy(
+            canManage = true,
+            customRoleIds = mapOf(GlobalUserRole.EDITOR to role.id),
+            permissionChanges = mapOf(GlobalUserRole.EDITOR to PermissionChange(removed = setOf(Permission.TOOLS_ID_CARDS))),
+            rolePermissions = mapOf(GlobalUserRole.EDITOR to role.permissions - Permission.TOOLS_ID_CARDS),
+        )
+    }
 
     val users: List<ManagedUser> = listOf(
         ManagedUser("admin-1", "ada@example.test", "Ada", GlobalUserRole.SUPER_ADMIN, false, emptyList()),

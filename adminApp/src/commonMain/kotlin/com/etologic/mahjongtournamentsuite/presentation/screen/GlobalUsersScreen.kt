@@ -77,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
@@ -114,6 +115,8 @@ import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
 import mahjongtournamentsuite.adminapp.generated.resources.account_grants_outside
+import mahjongtournamentsuite.adminapp.generated.resources.account_permissions
+import mahjongtournamentsuite.adminapp.generated.resources.account_permissions_saved
 import mahjongtournamentsuite.adminapp.generated.resources.account_request_rejected
 import mahjongtournamentsuite.adminapp.generated.resources.accounts
 import mahjongtournamentsuite.adminapp.generated.resources.accounts_count_summary
@@ -207,6 +210,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var pendingDeletedUser by remember { mutableStateOf<ManagedUser?>(null) }
     // A country admin takes an account out of its countries, and may ask the super admins for the rest.
     var pendingRemovalUser by remember { mutableStateOf<ManagedUser?>(null) }
+    // The custom role and the single permissions of an editor or a country admin.
+    var permissionsUser by remember { mutableStateOf<ManagedUser?>(null) }
     // The super admins approve or reject the requests of the country admins. An approval asks first.
     var accountRequests by remember { mutableStateOf<List<AccountRequest>>(emptyList()) }
     var approvingRequest by remember { mutableStateOf<AccountRequest?>(null) }
@@ -449,6 +454,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         actions = if (access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true) {
             {
                 AppTopBarActions(
+                    onRoles = if (access?.has(Permission.PERMISSIONS_MANAGE) == true) ({ navController.navigate(RolesRoute) }) else null,
                     onNewUser = { showCreateDialog = true },
                     newUserFocusRequester = addFocusRequester,
                 )
@@ -579,6 +585,24 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             onRemoveFromMyCountries = { user ->
                 editingUser = null
                 pendingRemovalUser = user
+            },
+            onEditPermissions = { user ->
+                editingUser = null
+                permissionsUser = user
+            },
+        )
+    }
+
+    permissionsUser?.let { user ->
+        AccountPermissionsFlow(
+            user = user,
+            access = access ?: AdminStatus(uid = "", role = GlobalUserRole.PLAYER),
+            presenter = presenter,
+            onDismiss = { permissionsUser = null },
+            onSaved = { saved ->
+                users = users.map { if (it.uid == saved.uid) saved else it }
+                permissionsUser = null
+                notice = UiText.of(Res.string.account_permissions_saved, saved.alias.ifBlank { saved.email })
             },
         )
     }
@@ -930,6 +954,8 @@ private fun ManageUserDialog(
     onDelete: (ManagedUser) -> Unit,
     /** A country admin takes the account out of its countries, after a dialog. */
     onRemoveFromMyCountries: (ManagedUser) -> Unit,
+    /** The custom role and the single permissions of an editor or a country admin. */
+    onEditPermissions: (ManagedUser) -> Unit = {},
 ) {
     val canEditPhoto = access.canEditUserPhotos && original != null
     val canDisable = access.canDisableUsers
@@ -1219,6 +1245,16 @@ private fun ManageUserDialog(
                             onClick = { onResetPassword(original.email) },
                             enabled = !saving,
                         ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                    }
+                    // The role of an editor or a country admin can be a custom one, with single permissions changed.
+                    val customizable = original != null &&
+                        GlobalUserRole.SUPER_ADMIN !in original.roles &&
+                        (GlobalUserRole.EDITOR in original.roles || GlobalUserRole.COUNTRY_ADMIN in original.roles)
+                    if (original != null && !isSelf && customizable && access.canManageStaff && (original.canManage || access.isSuperAdmin)) {
+                        FocusedOutlinedButton(
+                            onClick = { onEditPermissions(original) },
+                            enabled = !saving,
+                        ) { Text(stringResource(Res.string.account_permissions)) }
                     }
                     // A country admin takes the account out of its countries. A super admin disables or deletes it.
                     if (original != null && !isSelf && access.canRequestRemoval && GlobalUserRole.SUPER_ADMIN !in original.roles) {

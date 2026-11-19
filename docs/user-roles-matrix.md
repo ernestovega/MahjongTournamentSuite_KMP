@@ -46,6 +46,28 @@ A country admin that takes an account out of its countries removes its countries
 request, the super admins get an email and see the request in Accounts, where they approve (the account is disabled or
 deleted at once) or reject it. See `services/accountRequests.ts`.
 
+## Custom roles and the permissions of one person
+
+The four roles above are the standard ones and never change. On top of them (`services/customPermissions.ts`):
+
+- A super admin creates **custom roles** in Accounts → Roles (`roles/{id}` in Firestore). A custom role builds on
+  Editor or Country Admin. The base gives the scope (assigned tournaments or countries) and never changes. A standard
+  role can be duplicated as the start of a custom one.
+- An editor or a country admin can use a custom role instead of the standard one (`users/{uid}.customRoles`, one per
+  level). A country admin chooses the role of the staff of its countries, only among roles that do not hold more than
+  it holds, and only for accounts with nothing outside its countries.
+- A super admin can also tick or untick **single permissions** for one person (`users/{uid}.permissionChanges`). Only
+  the difference with the role is saved, so a later change of the role still reaches the person. "Save as a new role"
+  turns those changes into a reusable role.
+- Deleting a custom role puts its accounts back on the standard role.
+- Some permissions never leave the super admins (`SUPER_ADMIN_ONLY`): changing the country of a tournament, deleting a
+  finished tournament with results, super admin accounts, emails, EMA IDs, photos, disabling and deleting accounts,
+  approving requests, the DEV menu and the roles themselves. An editor-based role never gets permissions that need a
+  country, nor assigning editors (`GRANTABLE`). Every role keeps `tournament.view` (`REQUIRED`).
+- What reaches the server is always cut to `GRANTABLE` and the API reads it at each request (30 s cache per server
+  instance), so a change works without signing in again. Every change goes to the activity log.
+- Tests: `firebase/functions/src/api/customPermissions.integration.test.ts`.
+
 ## Everyone, without an account
 
 Anyone can read the public tournaments: players, teams, rounds, tables, hands, rankings and statistics, and the statistics of every person. Emails, accounts and photos stay private. See [public-data.md](public-data.md).

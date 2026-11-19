@@ -7,6 +7,8 @@ import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { EMA_PLAYER_REGISTRY_COLLECTION, storePhotoFile, toPlayer } from "./playersService";
 import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
 import { forgetAccess, readCountryList } from "./accessService";
+import { PERMISSIONS, type CustomizableRole, type Permission } from "../models/permissions";
+import { effectivePermissions, loadCustomRoles, readPermissionSettings, type CustomRole, type PermissionSettings } from "./customPermissions";
 
 export type { GlobalUserRole } from "../models/globalRole";
 
@@ -44,6 +46,10 @@ export type ManagedUser = UserProfile & {
   tournamentAssignments: TournamentAssignment[];
   /** The countries of a country admin. Empty for the other roles. */
   adminCountries: string[];
+  /** The custom roles and the changes of single permissions of the account. See customPermissions.ts. */
+  permissionSettings: PermissionSettings;
+  /** What the account may do as an editor and as a country admin, with its custom roles and its changes. */
+  rolePermissions: Record<CustomizableRole, Permission[]>;
 };
 
 export type AdminAccount = {
@@ -119,10 +125,21 @@ export async function createUserProfile(uid: string, email: string, alias = ""):
   );
 }
 
+function permissionFieldsOf(
+  profile: Record<string, unknown> | undefined,
+  customRoles: ReadonlyMap<string, CustomRole>,
+): Pick<ManagedUser, "permissionSettings" | "rolePermissions"> {
+  const permissionSettings = readPermissionSettings(profile);
+  const list = (level: CustomizableRole) => PERMISSIONS.filter((permission) =>
+    effectivePermissions(level, permissionSettings, customRoles).has(permission));
+  return { permissionSettings, rolePermissions: { EDITOR: list("EDITOR"), COUNTRY_ADMIN: list("COUNTRY_ADMIN") } };
+}
+
 export async function listManagedUsers(
   visibleTournamentIds?: ReadonlySet<string>,
 ): Promise<ManagedUser[]> {
   const profiles = await db.collection("users").get();
+  const customRoles = await loadCustomRoles();
   const profilesByUid = new Map(profiles.docs.map((doc) => [doc.id, doc.data()]));
   const assignmentsByUid = await listTournamentAssignmentsByUid(visibleTournamentIds);
   const emaPhotos = await loadEmaPhotos(profiles.docs.map((doc) => readEmaId(doc.get("emaId"))));
@@ -144,6 +161,7 @@ export async function listManagedUsers(
         disabled: user.disabled,
         tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
         adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile?.adminCountries) : [],
+        ...permissionFieldsOf(profile, customRoles),
       });
     });
     pageToken = page.pageToken;
@@ -188,6 +206,7 @@ export async function getManagedUser(
     disabled: user.disabled,
     tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
     adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile.get("adminCountries")) : [],
+    ...permissionFieldsOf(profile.data(), await loadCustomRoles()),
   };
 }
 

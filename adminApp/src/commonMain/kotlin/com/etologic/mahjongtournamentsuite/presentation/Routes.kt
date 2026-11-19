@@ -29,6 +29,10 @@ data class UsersRoute(
     val editUid: String? = null,
 )
 
+/** The standard roles and the custom ones. Only super admins open it, from the accounts screen. */
+@Serializable
+data object RolesRoute
+
 @Serializable
 data class PlayersRoute(
     val tournamentId: String,

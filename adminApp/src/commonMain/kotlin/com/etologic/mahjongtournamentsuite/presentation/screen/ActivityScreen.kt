@@ -100,6 +100,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_regis
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_delete
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_photo
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_role_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_role_delete
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_role_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_round_clock
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_round_control
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_script_run
@@ -116,6 +119,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_disable
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_enable
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_password_reset
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_permissions
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_photo
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_photo_remove
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_update
@@ -814,6 +818,10 @@ private val ACTION_LABELS: Map<String, StringResource> = mapOf(
     "user.enable" to Res.string.activity_action_user_enable,
     "user.photo" to Res.string.activity_action_user_photo,
     "user.photo.remove" to Res.string.activity_action_user_photo_remove,
+    "user.permissions" to Res.string.activity_action_user_permissions,
+    "role.create" to Res.string.activity_action_role_create,
+    "role.update" to Res.string.activity_action_role_update,
+    "role.delete" to Res.string.activity_action_role_delete,
     "registry.create" to Res.string.activity_action_registry_create,
     "registry.update" to Res.string.activity_action_registry_update,
     "registry.photo" to Res.string.activity_action_registry_photo,

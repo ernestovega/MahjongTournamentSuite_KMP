@@ -236,6 +236,45 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    suspend fun listRoles(idToken: String): com.etologic.mahjongtournamentsuite.data.backend.dto.RolesResponseDto = get(
+        path = "/admin/roles",
+        idToken = idToken,
+    )
+
+    suspend fun createRole(
+        idToken: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.SaveRoleRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.CustomRoleDto = post(
+        path = "/admin/roles",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updateRole(
+        idToken: String,
+        id: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.SaveRoleRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.CustomRoleDto = put(
+        path = "/admin/roles/${id.encodeURLParameter()}",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun deleteRole(idToken: String, id: String): com.etologic.mahjongtournamentsuite.data.backend.dto.DeleteRoleResponseDto = delete(
+        path = "/admin/roles/${id.encodeURLParameter()}",
+        idToken = idToken,
+    )
+
+    suspend fun setUserPermissions(
+        idToken: String,
+        uid: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserPermissionsRequestDto,
+    ): ManagedUserDto = put(
+        path = "/admin/users/$uid/permissions",
+        requestBody = request,
+        idToken = idToken,
+    )
+
     suspend fun listAccountRequests(idToken: String): com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRequestsResponseDto = get(
         path = "/admin/account-requests",
         idToken = idToken,

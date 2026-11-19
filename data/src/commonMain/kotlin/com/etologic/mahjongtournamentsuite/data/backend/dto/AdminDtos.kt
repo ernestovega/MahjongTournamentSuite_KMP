@@ -43,6 +43,9 @@ data class ManagedUserDto(
     val canManage: Boolean = false,
     val hasGrantsOutside: Boolean = false,
     val emailHidden: Boolean = false,
+    val permissionSettings: PermissionSettingsDto? = null,
+    /** What the account may do as EDITOR and as COUNTRY_ADMIN. Null from an older backend. */
+    val rolePermissions: Map<String, List<String>>? = null,
 )
 
 @Serializable
@@ -316,4 +319,67 @@ data class ResolveAccountRequestDto(
 @Serializable
 data class ResolveAccountRequestResponseDto(
     val outcome: String = "",
+)
+
+@Serializable
+data class PermissionChangeDto(
+    val added: List<String> = emptyList(),
+    val removed: List<String> = emptyList(),
+)
+
+@Serializable
+data class PermissionSettingsDto(
+    val customRoles: Map<String, String> = emptyMap(),
+    val permissionChanges: Map<String, PermissionChangeDto> = emptyMap(),
+)
+
+@Serializable
+data class StandardRoleDto(
+    val id: String,
+    val base: String,
+    val permissions: List<String> = emptyList(),
+)
+
+@Serializable
+data class CustomRoleDto(
+    val id: String,
+    val name: String,
+    val base: String,
+    val permissions: List<String> = emptyList(),
+    val accounts: Int = 0,
+)
+
+@Serializable
+data class RolesResponseDto(
+    val standard: List<StandardRoleDto> = emptyList(),
+    val custom: List<CustomRoleDto> = emptyList(),
+    val grantable: Map<String, List<String>> = emptyMap(),
+    val required: List<String> = emptyList(),
+)
+
+@Serializable
+data class SaveRoleRequestDto(
+    val name: String,
+    /** Only when the role is created. The base of a role never changes. */
+    val base: String? = null,
+    val permissions: List<String>,
+)
+
+@Serializable
+data class DeleteRoleResponseDto(
+    val ok: Boolean = true,
+    val accounts: Int = 0,
+)
+
+@Serializable
+data class LevelPermissionsDto(
+    /** Null for the standard role. */
+    val roleId: String? = null,
+    /** The whole list that the account gets. Null keeps the changes that it has. */
+    val permissions: List<String>? = null,
+)
+
+@Serializable
+data class SetUserPermissionsRequestDto(
+    val levels: Map<String, LevelPermissionsDto>,
 )

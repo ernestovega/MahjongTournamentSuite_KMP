@@ -7,12 +7,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -88,4 +92,21 @@ interface AdminRepository {
 
     /** A super admin approves a request, which disables or deletes the account at once, or rejects it. */
     suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** The standard roles and the custom ones. Every editor and admin loads them, to show the role of an account. */
+    suspend fun listRoles(): AppResult<RolesCatalog> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** Only super admins create, change and delete custom roles. */
+    suspend fun createRole(name: String, base: GlobalUserRole, permissions: Set<Permission>): AppResult<CustomRole> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    suspend fun updateRole(id: String, name: String, permissions: Set<Permission>): AppResult<CustomRole> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** Deletes a custom role. Its accounts get the standard role again. Answers how many accounts used it. */
+    suspend fun deleteRole(id: String): AppResult<Int> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /**
+     * The custom roles and the single permissions of an editor or a country admin, by level. A country admin only
+     * chooses roles; a super admin also sends the whole list of permissions.
+     */
+    suspend fun setUserPermissions(uid: String, levels: Map<GlobalUserRole, LevelPermissions>): AppResult<ManagedUser> = AppResult.Failure(AppError.Unexpected("Not supported"))
 }

@@ -73,7 +73,8 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
-| Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_countries`, `account_request_approved`, `account_request_rejected` |
+| Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_countries`, `account_request_approved`, `account_request_rejected`, `account_permissions_updated` |
+| Roles | `role_created`, `role_updated`, `role_deleted` |
 | EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated`, `registry_players_deleted` |
 
 Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.
