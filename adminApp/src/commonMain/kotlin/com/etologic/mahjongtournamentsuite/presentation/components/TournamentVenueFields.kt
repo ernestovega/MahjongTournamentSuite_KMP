@@ -92,7 +92,13 @@ fun TournamentPlaceFields(
     contactEmailError: String? = null,
     mapUrlFocusRequester: FocusRequester? = null,
     contactEmailFocusRequester: FocusRequester? = null,
+    /** True when the country cannot change: a tournament keeps its country, only a super admin corrects it. */
+    countryLocked: Boolean = false,
+    /** The countries that the account may choose, or null for every country. */
+    allowedCountries: Set<String>? = null,
 ) {
+    val currentCountryLocked by rememberUpdatedState(countryLocked)
+    val currentAllowedCountries by rememberUpdatedState(allowedCountries)
     // The form reads a link only after the user changes it. A saved link is not read again when the form opens.
     var handledLink by remember { mutableStateOf(venue.mapUrl.trim()) }
     var locked by remember { mutableStateOf<Set<PlaceField>>(emptySet()) }
@@ -115,7 +121,7 @@ fun TournamentPlaceFields(
         // Values from an older link go away before the new link fills the fields.
         var name = currentVenue.name.takeUnless { PlaceField.NAME in currentLocked }.orEmpty()
         var address = currentVenue.address.takeUnless { PlaceField.ADDRESS in currentLocked }.orEmpty()
-        if (PlaceField.COUNTRY in currentLocked) currentOnCountryChange("")
+        if (PlaceField.COUNTRY in currentLocked && !currentCountryLocked) currentOnCountryChange("")
         if (PlaceField.CITY in currentLocked) currentOnCityChange("")
         locked = emptySet()
         currentOnVenueChange(currentVenue.copy(name = name, address = address))
@@ -158,12 +164,19 @@ fun TournamentPlaceFields(
         val found = mutableSetOf<PlaceField>()
         place.name?.let { name = it.take(VENUE_NAME_MAX_LENGTH); found += PlaceField.NAME }
         place.address?.let { address = it.take(VENUE_ADDRESS_MAX_LENGTH); found += PlaceField.ADDRESS }
-        place.countryCode?.let { currentOnCountryChange(it); found += PlaceField.COUNTRY }
+        place.countryCode
+            ?.takeUnless { currentCountryLocked }
+            ?.takeIf { code -> currentAllowedCountries?.contains(code.uppercase()) ?: true }
+            ?.let {
+                currentOnCountryChange(it)
+                found += PlaceField.COUNTRY
+            }
         place.city?.let { currentOnCityChange(it); found += PlaceField.CITY }
         currentOnVenueChange(currentVenue.copy(name = name, address = address))
         resolved.place?.timeZone?.takeIf { it in SelectableTimeZoneIds }?.let(currentOnTimeZoneFound)
         locked = found
-        val missing = PlaceField.entries.filter { it !in found }
+        // A locked country is not looked for in the link, so it is never missing.
+        val missing = PlaceField.entries.filter { it !in found && !(it == PlaceField.COUNTRY && currentCountryLocked) }
         status = LinkStatus.Read(
             if (missing.isEmpty()) {
                 UiText.of(Res.string.link_all_found)
@@ -221,7 +234,7 @@ fun TournamentPlaceFields(
             EmaCountryDropdown(
                 selectedCode = hostCountry,
                 onCountrySelected = onHostCountryChange,
-                enabled = enabled && PlaceField.COUNTRY !in locked,
+                enabled = enabled && PlaceField.COUNTRY !in locked && !countryLocked,
                 modifier = Modifier.weight(1f),
                 focusRequester = countryFocusRequester,
                 isError = countryError != null,
@@ -230,6 +243,7 @@ fun TournamentPlaceFields(
                 required = true,
                 // The server stores the host country of a tournament with a two-letter code.
                 twoLetterCodes = true,
+                allowedCountries = allowedCountries,
             )
             OutlinedTextField(
                 value = hostCity,

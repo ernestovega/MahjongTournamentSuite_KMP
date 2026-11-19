@@ -131,7 +131,7 @@
     <string name="player_details">Spelersgegevens</string>
     <string name="no_player_selected">Geen speler gekozen</string>
     <string name="choose_a_player_in_the_list">Kies een speler in de lijst om de gegevens te zien.</string>
-    <string name="only_admins_can_edit_the_player">Alleen beheerders kunnen het spelersbestand bewerken.</string>
+    <string name="only_admins_can_edit_the_player">Alleen een superbeheerder kan de EMA-spelers bewerken.</string>
     <string name="no_player_photo">Geen spelersfoto</string>
     <string name="statistics">Statistieken</string>
     <string name="this_table_has_no_statistics_yet">Deze tafel heeft nog geen statistieken.</string>
@@ -308,7 +308,6 @@
     <string name="disable_user_message">%1$s kan zich niet meer aanmelden. Het profiel en de geschiedenis blijven bewaard.</string>
     <string name="delete_user_message">%1$s wordt definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto. De EMA-speler en de toernooiresultaten blijven. Dit kan niet ongedaan gemaakt worden.</string>
     <string name="role_editor">Redacteur</string>
-    <string name="role_admin">Beheerder</string>
     <string name="role_player">Speler</string>
     <string name="insight_saves_fell">Het aantal opgeslagen tafels is met %1$s gedaald ten opzichte van de vorige %2$d dagen.</string>
     <string name="insight_no_saves">Niemand heeft de afgelopen %1$d dagen een tafel opgeslagen.</string>
@@ -478,7 +477,6 @@
     <string name="scope_by_tournaments">Per toernooi</string>
     <string name="scope_overall">Totaal</string>
     <string name="stats_player_field">Speler (naam of EMA-nummer)</string>
-    <string name="stats_admin_only">De statistieken van alle toernooien zijn voor beheerders. Zoek een toernooi om de statistieken ervan te zien.</string>
     <string name="id_cards_proportion_info">De breedte en de hoogte zijn gekoppeld, zodat de kaart haar verhouding behoudt.\n• De verhouding is de relatie tussen de breedte en de hoogte van de kaart. De breedte is altijd %1$s keer de hoogte.\n• Als je één kant wijzigt, verandert de andere kant vanzelf. De kaart wordt nooit uitgerekt.\n• Het oorspronkelijke formaat is %2$s x %3$s mm. Met dit formaat passen 10 kaarten op één staand A4-vel, in 2 kolommen en 5 rijen.</string>
     <string name="use_range">Gebruik %1$s tot %2$s.</string>
     <string name="substitution_explanation">Een vervanger speelt vanaf de gekozen ronde voor deze speler. De vervanger wordt niet geregistreerd en krijgt geen resultaat in het klassement. De speler krijgt 0 tafelpunten voor de ronden die de vervanger speelt.</string>
@@ -861,4 +859,38 @@ De eerste die lukt, wint</string>
     <string name="draw_flow_failed">Verdeling mislukt</string>
     <string name="draw_flow_yes">Ja</string>
     <string name="draw_flow_no">Nee</string>
+    <string name="role_super_admin">Superbeheerder</string>
+    <string name="role_country_admin">Landbeheerder</string>
+    <string name="tournament_country_locked">Het land van een toernooi verandert niet.\nAlleen een superbeheerder kan het corrigeren.</string>
+    <string name="tournament_country_change_warning">Als je het land wijzigt:\n• De landbeheerders van het oude land beheren dit toernooi niet meer, en die van het nieuwe land wel.\n• De toegewezen redacteuren houden het.</string>
+    <string name="delete_tournament_editors_note">Een redacteur voor wie dit het enige toernooi is, is geen redacteur meer: het account wordt speler, of wordt uitgeschakeld als het geen EMA-ID heeft.</string>
+    <string name="admin_countries">Landen</string>
+    <string name="admin_countries_add">Een land toevoegen</string>
+    <string name="admin_countries_needed">Een landbeheerder heeft minstens één land nodig.</string>
+    <string name="admin_countries_not_yours">De landen zonder ✕ zijn niet van jou.\nAlleen een superbeheerder of hun landbeheerders kunnen ze verwijderen.</string>
+    <string name="remove_country_n">%1$s verwijderen</string>
+    <string name="editor_needs_tournament">Een redacteur heeft minstens één toernooi nodig.</string>
+    <string name="account_disabled_without_tournaments">Dit account is uitgeschakeld toen het zijn laatste toernooi verloor.
+Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.</string>
+    <string name="account_grants_outside">Dit account heeft ook landen of toernooien die jij niet beheert.\nJe wijzigt alleen de jouwe, en je kunt er geen speler van maken.</string>
+    <string name="email_hidden">Verborgen</string>
+    <string name="email_hidden_info">Je ziet het e-mailadres van een speler alleen als die in een van jouw toernooien speelt.</string>
+    <string name="tournament_assignments_other_countries">Redacteur in toernooien van andere landen</string>
+    <string name="remove_from_my_countries">Uit mijn landen verwijderen</string>
+    <string name="remove_from_countries_message">%1$s verliest de landen en toernooien die van jou zijn.\n\nWat het account in andere landen heeft, blijft.\n\nVraag een superbeheerder om het hele account uit te schakelen of te verwijderen.</string>
+    <string name="remove_from_countries_request_none">Alleen uit mijn landen verwijderen</string>
+    <string name="remove_from_countries_request_disable">En een superbeheerder vragen het account uit te schakelen</string>
+    <string name="remove_from_countries_request_delete">En een superbeheerder vragen het account te verwijderen</string>
+    <string name="remove_from_countries_reason">Reden voor de superbeheerders</string>
+    <string name="remove_from_countries_action">Verwijderen</string>
+    <string name="removed_from_countries">%1$s is uit je landen verwijderd.</string>
+    <string name="removed_and_requested">%1$s is uit je landen verwijderd.\n\nDe superbeheerders hebben je verzoek per e-mail ontvangen.</string>
+    <string name="account_requests">Verzoeken</string>
+    <string name="account_requests_count">Open verzoeken van de landbeheerders: %1$d</string>
+    <string name="account_request_disable">%1$s vraagt om %2$s uit te schakelen.</string>
+    <string name="account_request_delete">%1$s vraagt om %2$s te verwijderen.</string>
+    <string name="account_request_reason">Reden: %1$s</string>
+    <string name="account_request_approve">Goedkeuren</string>
+    <string name="account_request_reject">Afwijzen</string>
+    <string name="account_request_rejected">Het verzoek is afgewezen.</string>
 </resources>

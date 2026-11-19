@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { requireAuth } from "../middleware/requireAuth";
-import { requireEditor } from "../middleware/requireEditor";
+import { requirePermission } from "../middleware/requirePermission";
 import { PLACES_API_KEY } from "../../config";
 import { resolveMapLink } from "../../services/mapLinkResolver";
 import { lookupPlace } from "../../services/placesLookup";
@@ -18,7 +18,7 @@ function readPlacesKey(): string {
 export function venuesRouter(): Router {
   const router = Router();
 
-  router.post("/resolve-link", requireAuth, requireEditor, async (req, res, next) => {
+  router.post("/resolve-link", requireAuth, requirePermission("tools.venues"), async (req, res, next) => {
     try {
       const url = await resolveMapLink(req.body?.url);
       // The place is null when Places is off or finds nothing. The form then reads the place from the link text.

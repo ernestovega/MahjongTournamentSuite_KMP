@@ -78,7 +78,7 @@ class UsersPasswordResetsUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("ann@example.test").fetchSemanticsNodes().isNotEmpty() }
     }
 
-    private fun adminWith(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.ADMIN) =
+    private fun adminWith(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN) =
         FakeAdminRepository(role, users.toList())
 
     @Test

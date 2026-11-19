@@ -68,7 +68,7 @@ class DefaultPlayerAccountRepositoryTest {
     }
 
     @Test
-    fun sendSplitsMoreThanTwoHundredPlayersInSeveralRequestsAndJoinsTheResults() = runTest {
+    fun sendSplitsATournamentInRequestsOfFiftyPlayersAndJoinsTheResults() = runTest {
         val bodies = mutableListOf<List<Int>>()
         val repository = repository {
             val ids = Regex("\"playerId\":(\\d+)").findAll((it.body as TextContent).text).map { match -> match.groupValues[1].toInt() }.toList()
@@ -78,7 +78,7 @@ class DefaultPlayerAccountRepositoryTest {
 
         val results = assertIs<AppResult.Success<List<PlayerAccountActionResult>>>(repository.send("t1", (1..240).toList())).value
 
-        assertEquals(listOf(200, 40), bodies.map { it.size })
+        assertEquals(listOf(50, 50, 50, 50, 40), bodies.map { it.size })
         assertEquals((1..240).toList(), results.map { it.playerId })
     }
 

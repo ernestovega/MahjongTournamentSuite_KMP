@@ -181,7 +181,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val backgroundExports = rememberBackgroundExports()
     val slots by store.tournamentPlayers.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
-    val isAdmin = adminStatus?.isAdmin == true
+    val canEditAccounts = adminStatus?.canManageStaff == true
     val basePlayers by store.players.collectAsState()
     LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
@@ -1369,9 +1369,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         },
                                                     )
                                                 }
-                                                // Only admins edit an account. The edit dialog has the button to reset the password.
+                                                // Super admins and country admins edit an account. The edit dialog has the button to reset the password.
                                                 val accountUid = slot.accountUid
-                                                if (isAdmin && slot.hasAccount && accountUid != null) {
+                                                if (canEditAccounts && slot.hasAccount && accountUid != null) {
                                                     DropdownMenuItem(
                                                         enabled = accountActionsEnabled,
                                                         text = { Text(stringResource(Res.string.edit_account)) },

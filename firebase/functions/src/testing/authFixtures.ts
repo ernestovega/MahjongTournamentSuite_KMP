@@ -43,7 +43,9 @@ export async function linkedAccountUid(tournamentId: string, playerId: number): 
 
 /** Creates an account with the real profile, claim and membership documents, and signs it in. */
 export async function createAccount(params: {
-  role: "ADMIN" | "EDITOR" | "PLAYER";
+  role: "SUPER_ADMIN" | "COUNTRY_ADMIN" | "EDITOR" | "PLAYER";
+  /** The countries of a country admin, as two-letter codes. */
+  countries?: string[];
   memberOf?: string[];
   /** Tournaments where a slot holds the EMA id of the player account, so the account plays there. */
   playerOf?: string[];
@@ -53,7 +55,7 @@ export async function createAccount(params: {
   const user = await auth.createUser({ email, password: PASSWORD, emailVerified: true });
   await createUserProfile(user.uid, email, "Test");
   if (params.role === "PLAYER") await auth.setCustomUserClaims(user.uid, { player: true });
-  else await setGlobalUserRole(user.uid, params.role);
+  else await setGlobalUserRole(user.uid, params.role, params.countries ?? []);
   for (const tournamentId of params.memberOf ?? []) await upsertTournamentMember({ tournamentId, uid: user.uid });
   if ((params.playerOf ?? []).length > 0) {
     const emaId = randomEmaId();

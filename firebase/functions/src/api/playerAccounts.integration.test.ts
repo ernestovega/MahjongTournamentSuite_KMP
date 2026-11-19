@@ -500,8 +500,8 @@ describe("player accounts", () => {
   });
 
   describe("who reads the emails", () => {
-    it("shows the email to an admin only, and whether a slot has an account to editors", async () => {
-      const admin = await createAccount({ role: "ADMIN" });
+    it("shows the email to the admins and the editors of the tournament, with whether a slot has an account", async () => {
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       const email = uniqueEmail();
       await seedSlot(80, newEma(), { email });
       const read = async (token: string) => {
@@ -510,7 +510,7 @@ describe("player accounts", () => {
       };
 
       assert.deepEqual(await read(admin.token), { ...(await read(admin.token)), email, hasAccount: false });
-      assert.equal((await read(editor.token)).email, null);
+      assert.equal((await read(editor.token)).email, email);
       assert.equal((await read(editor.token)).hasAccount, false);
       assert.equal((await read(editor.token)).hasEmail, true);
     });
@@ -609,7 +609,7 @@ describe("player accounts", () => {
 
   describe("accounts created with an EMA number", () => {
     const createAccountWith = (token: string, email: string, emaId?: string) =>
-      server.request("POST", "/admin/users", { token, body: { email, role: "EDITOR", alias: "x", emaId, tournamentAssignments: [] } });
+      server.request("POST", "/admin/users", { token, body: { email, role: "EDITOR", alias: "x", emaId, tournamentAssignments: [{ tournamentId }] } });
 
     it("needs an EMA number for a player account, and lets only an admin set the EMA number of an editor", async () => {
       const body = { email: uniqueEmail(), role: "PLAYER", alias: "x", emaId: newEma() };
@@ -620,7 +620,7 @@ describe("player accounts", () => {
     });
 
     it("refuses an EMA number and an email that belong to another account", async () => {
-      const admin = await createAccount({ role: "ADMIN" });
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       const owner = await createAccount({ role: "EDITOR" });
       const ema = newEma();
       await db.doc(`emaPlayerRegistry/${ema}`).set({ country: "ES" });
@@ -632,12 +632,12 @@ describe("player accounts", () => {
       assert.equal((await createAccountWith(admin.token, owner.email)).status, 409);
       assert.equal((await server.request("PUT", `/admin/users/${admin.uid}`, {
         token: admin.token,
-        body: { email: admin.email, role: "ADMIN", alias: "x", tournamentAssignments: [], emaId: ema },
+        body: { email: admin.email, role: "SUPER_ADMIN", alias: "x", tournamentAssignments: [], emaId: ema },
       })).status, 409);
     });
 
     it("refuses an unknown EMA number and an editor who sets one", async () => {
-      const admin = await createAccount({ role: "ADMIN" });
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       const unknown = await createAccountWith(admin.token, uniqueEmail(), newEma());
       assert.equal(unknown.status, 404);
 
@@ -646,30 +646,32 @@ describe("player accounts", () => {
       assert.equal((await createAccountWith(editor.token, uniqueEmail(), ema)).status, 403);
     });
 
-    it("lets an editor change the EMA number of a player account, but not of an editor account", async () => {
+    it("lets only a super admin change the EMA number of an existing account", async () => {
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       const player = await createAccount({ role: "PLAYER" });
-      const other = await createAccount({ role: "EDITOR" });
+      const other = await createAccount({ role: "EDITOR", memberOf: [tournamentId] });
       const ema = newEma();
       await seedSlot(22, ema);
-      const put = (account: TestAccount, role: string) => server.request("PUT", `/admin/users/${account.uid}`, {
-        token: editor.token,
-        body: { email: account.email, role, alias: "x", tournamentAssignments: [], emaId: ema },
+      const put = (token: string, account: TestAccount, role: string) => server.request("PUT", `/admin/users/${account.uid}`, {
+        token,
+        body: { email: account.email, role, alias: "x", tournamentAssignments: [{ tournamentId }], emaId: ema },
       });
 
-      assert.equal((await put(other, "EDITOR")).status, 403);
-      assert.equal((await put(player, "PLAYER")).status, 200);
+      assert.equal((await put(editor.token, other, "EDITOR")).status, 403);
+      assert.equal((await put(editor.token, player, "PLAYER")).status, 403);
+      assert.equal((await put(admin.token, player, "PLAYER")).status, 200);
 
       assert.equal((await db.doc(`users/${player.uid}`).get()).get("emaId"), ema);
       assert.equal(await accountOf(22), player.uid);
     });
 
     it("lets an admin promote a player-only account to editor and keeps its player access", async () => {
-      const admin = await createAccount({ role: "ADMIN" });
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       const player = await createAccount({ role: "PLAYER" });
 
       const response = await server.request("PUT", `/admin/users/${player.uid}`, {
         token: admin.token,
-        body: { email: player.email, role: "EDITOR", alias: "x", tournamentAssignments: [] },
+        body: { email: player.email, role: "EDITOR", alias: "x", tournamentAssignments: [{ tournamentId }] },
       });
 
       assert.equal(response.status, 200);
@@ -679,7 +681,7 @@ describe("player accounts", () => {
 
   describe("the retired routes are gone", () => {
     it("has no route to resend, revoke or save emails, and none for the old invitation model", async () => {
-      const admin = await createAccount({ role: "ADMIN" });
+      const admin = await createAccount({ role: "SUPER_ADMIN" });
       for (const route of ["resend", "revoke"]) {
         assert.equal((await server.request("POST", `/tournaments/${tournamentId}/player-accounts/${route}`, { token: editor.token, body: { players: [{ playerId: 1 }] } })).status, 404);
       }

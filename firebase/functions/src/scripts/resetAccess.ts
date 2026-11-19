@@ -194,7 +194,7 @@ async function main(): Promise<void> {
     disabled: false,
     displayName: options.adminName || admin.displayName || undefined,
   });
-  await auth.setCustomUserClaims(admin.uid, { admin: true });
+  await auth.setCustomUserClaims(admin.uid, { superAdmin: true });
   await auth.revokeRefreshTokens(admin.uid);
   await db.doc(`users/${admin.uid}`).set({
     uid: admin.uid,
@@ -217,7 +217,7 @@ async function main(): Promise<void> {
     verifiedUsers.length !== 1
     || !verifiedAdmin
     || verifiedAdmin.disabled
-    || verifiedAdmin.customClaims?.admin !== true
+    || verifiedAdmin.customClaims?.superAdmin !== true
     || verifiedProfiles.size !== 1
     || verifiedMemberships.length !== 0
   ) {

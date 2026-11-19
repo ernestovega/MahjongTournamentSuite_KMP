@@ -23,7 +23,7 @@ class AuthPresenterManagerTest {
 
     @Test
     fun anAdminIsAManager() = runTest {
-        assertEquals(AppResult.Success(true), presenter(profileWith(GlobalUserRole.ADMIN)).isManager())
+        assertEquals(AppResult.Success(true), presenter(profileWith(GlobalUserRole.SUPER_ADMIN)).isManager())
     }
 
     @Test

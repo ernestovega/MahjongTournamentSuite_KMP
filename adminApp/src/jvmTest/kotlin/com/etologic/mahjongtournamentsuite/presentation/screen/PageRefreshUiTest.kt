@@ -57,7 +57,7 @@ class PageRefreshUiTest {
                         module {
                             single { Logger.withTag("ui-test") }
                             single<TournamentRepository> { server }
-                            single<AdminRepository> { FakeAdminRepository(GlobalUserRole.ADMIN) }
+                            single<AdminRepository> { FakeAdminRepository(GlobalUserRole.SUPER_ADMIN) }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
                             single<PlayerRepository> { FakePlayerRepository() }
                             single<PlayerAccountRepository> { FakePlayerAccountRepository() }
@@ -105,7 +105,7 @@ class PageRefreshUiTest {
     fun theStoreGetsTheRoleAndTheProfileToo() = runComposeUiTest {
         show { PlayersScreen(rememberNavController(), "t1") }
         assertNameShows()
-        assertEquals(GlobalUserRole.ADMIN, store.adminStatus.value?.role)
+        assertEquals(GlobalUserRole.SUPER_ADMIN, store.adminStatus.value?.role)
         assertEquals("me", store.profile.value?.uid)
     }
 }

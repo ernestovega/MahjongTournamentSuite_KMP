@@ -1,30 +1,52 @@
 # Permissions matrix
 
-The management application has two global roles: `EDITOR` and `ADMIN`. The player application uses `PLAYER`.
-An account can have several roles. For example, an editor who also plays has `EDITOR` and `PLAYER`.
+The management application has three staff roles: `EDITOR`, `COUNTRY_ADMIN` and `SUPER_ADMIN`. The player application
+uses `PLAYER`. An account can have several roles. For example, an editor who also plays has `EDITOR` and `PLAYER`, and a
+country admin of Spain who is an editor of one tournament in Sweden has `COUNTRY_ADMIN` and `EDITOR`.
 
-An editor needs a membership document for each tournament. An admin has implicit access to every tournament.
+- An **editor** works in the tournaments assigned to it (a membership document `tournaments/{id}/members/{uid}`). An
+  editor always has at least one tournament: one that loses its last tournament becomes a player, or is disabled when it
+  has no EMA ID. A country admin enables that account again by giving it a tournament of its countries.
+- A **country admin** manages every tournament of its countries without an assignment. The countries are two-letter
+  codes in `users/{uid}.adminCountries`, set by a super admin or by another country admin of the same countries.
+- A **super admin** manages everything.
 
-| Feature or action | Assigned editor | Admin |
-| --- | ---: | ---: |
-| Sign in and reset password | Use | Use |
-| View assigned tournaments | View | View all |
-| View tournament content | View | View |
-| Assign EMA players to tournament slots | Edit | Edit |
-| Edit tables, hands, scores, and results | Edit, until the tournament is completed | Edit |
-| Start, pause, reset or set the time of a round with the Timer | Use, until the tournament is completed | Use |
-| View and export EMA reports | Use | Use |
-| List tournament accounts | Manage | Manage |
-| Assign or remove tournament editors | — | Manage |
-| Create an editor account | — | Manage |
-| Edit an editor account (an editor edits only the own account, without the email) | Own account | Manage |
-| Assign an editor to tournaments | — | Manage |
-| Create or edit an admin account | — | Manage |
-| Disable or enable an account | — | Manage |
-| Create a tournament | — | Manage |
-| Rename or configure a tournament | — | Manage |
-| Delete a tournament | — | Manage |
-| Edit the shared EMA player registry | — | Manage |
+These roles restrict only the management app. In the player app every role sees every public tournament.
+
+The server keeps the rules in one table of named permissions, `firebase/functions/src/models/permissions.ts`. Each route
+asks for one permission (`requirePermission`) or for one permission inside the tournament (`requireTournamentPermission`).
+The apps read the permissions from `GET /admin/whoami` and from the `permissions` of each tournament of the list, and the
+enum `Permission` of `:domain` mirrors the names.
+
+| Feature or action | Editor (its tournaments) | Country Admin (its countries) | Super Admin |
+| --- | ---: | ---: | ---: |
+| Sign in and reset password | Use | Use | Use |
+| View tournaments | Assigned | Its countries + assigned | All |
+| Assign EMA players, edit tables, hands, scores and results | Edit, until completed | Edit | Edit |
+| Round control and the Timer | Use | Use | Use |
+| Edit a completed tournament, reset a table | — | Use | Use |
+| Tournament activity | — | View | View |
+| Create a tournament | — | In its countries | Any country |
+| Rename, configure or delete a tournament | — | Use (a past one with results: only a super admin) | Use |
+| Change the country of a tournament | — | — | Use |
+| See all player accounts (name, EMA ID) | View | View | View |
+| See the email of a player | Plays in its tournaments | Plays in its tournaments | All |
+| See editor and admin accounts | Of its countries | Of its countries | All |
+| Create a player account | Use | Use | Use |
+| Create or change editors and country admins | — | Of its countries, never below what they have elsewhere | Use |
+| Create or change super admins | — | — | Use |
+| Change the email or the EMA ID of an account | — | — | Use |
+| Send password resets, change photos | — | Resets | Use |
+| Remove an account from its countries, ask to disable or delete it | — | Use | — |
+| Disable or delete an account, approve the requests | — | — | Use |
+| Create EMA players (any country) | — | Use | Use |
+| Edit, disable or delete EMA players | — | — | Use |
+| Statistics of all tournaments, venues, ID cards | Use | Use | Use |
+| DEV menu: activity of the app, errors, design system | — | — | Use |
+
+A country admin that takes an account out of its countries removes its countries and its tournaments there. With a
+request, the super admins get an email and see the request in Accounts, where they approve (the account is disabled or
+deleted at once) or reject it. See `services/accountRequests.ts`.
 
 ## Everyone, without an account
 
@@ -47,8 +69,8 @@ A player account has no access to the management routes. It can do the following
 
 ## Tests
 
-- `firebase/functions/src/api/rolePermissions.integration.test.ts` runs the real API against the Auth and Firestore emulators. It checks every route for these callers: no token, an editor who is not assigned, an editor who is assigned, an admin, a player who is registered in the tournament and a player who is not. It also checks the account rules (editors cannot create or change admins, nobody changes their own role, the last admin stays, disabled accounts are refused).
-- The table `MATRIX` in that file is written by hand. A test compares it with the guards of the real routes, so a new route fails until its access is listed.
+- `firebase/functions/src/api/rolePermissions.integration.test.ts` runs the real API against the Auth and Firestore emulators. It checks every route for these callers: no token, an editor who is not assigned, an editor who is assigned, a country admin of the country of the tournament, a country admin of another country, a super admin, a player who is registered in the tournament and a player who is not. It also checks the account rules (only country admins of the same country change editors and country admins, nobody changes their own role, the last super admin stays, disabled accounts are refused) and the country rules.
+- The table `MATRIX` in that file is written by hand with the permission of each route. A test compares it with the guards of the real routes, so a new route fails until its permission is listed.
 - `adminApp/src/jvmTest/.../RoleGatingUiTest.kt` checks what each role sees on the tournament list, the EMA players screen and the accounts screen. `TournamentScreenUiTest` checks the reset button.
 - Run them with `npm run test:integration` (needs JDK 21) and `./gradlew :adminApp:jvmTest`.
 

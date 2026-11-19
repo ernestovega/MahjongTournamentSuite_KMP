@@ -131,7 +131,7 @@
     <string name="player_details">Spielerdetails</string>
     <string name="no_player_selected">Kein Spieler ausgewählt</string>
     <string name="choose_a_player_in_the_list">Wähle einen Spieler in der Liste, um die Details zu sehen.</string>
-    <string name="only_admins_can_edit_the_player">Nur Administratoren können die Spielerbasis bearbeiten.</string>
+    <string name="only_admins_can_edit_the_player">Nur ein Superadministrator kann die EMA-Spieler bearbeiten.</string>
     <string name="no_player_photo">Kein Spielerfoto</string>
     <string name="statistics">Statistiken</string>
     <string name="this_table_has_no_statistics_yet">Dieser Tisch hat noch keine Statistiken.</string>
@@ -308,7 +308,6 @@
     <string name="disable_user_message">%1$s kann sich nicht mehr anmelden. Profil und Verlauf bleiben erhalten.</string>
     <string name="delete_user_message">%1$s wird endgültig gelöscht: die Anmeldung, die E-Mail-Adresse, der Alias und das Foto. Der EMA-Spieler und die Turnierergebnisse bleiben erhalten. Das kann nicht rückgängig gemacht werden.</string>
     <string name="role_editor">Editor</string>
-    <string name="role_admin">Administrator</string>
     <string name="role_player">Spieler</string>
     <string name="insight_saves_fell">Die Tischspeicherungen sind um %1$s gegenüber den vorherigen %2$d Tagen gesunken.</string>
     <string name="insight_no_saves">In den letzten %1$d Tagen hat niemand einen Tisch gespeichert.</string>
@@ -478,7 +477,6 @@
     <string name="scope_by_tournaments">Nach Turnieren</string>
     <string name="scope_overall">Gesamt</string>
     <string name="stats_player_field">Spieler (Name oder EMA-Nummer)</string>
-    <string name="stats_admin_only">Die Statistiken aller Turniere sind für Administratoren. Suche ein Turnier, um seine Statistiken zu sehen.</string>
     <string name="id_cards_proportion_info">Breite und Höhe sind verknüpft, damit der Ausweis sein Seitenverhältnis behält.\n• Das Seitenverhältnis ist die Beziehung zwischen Breite und Höhe des Ausweises. Die Breite ist immer %1$s-mal die Höhe.\n• Wenn du eine Seite änderst, ändert sich die andere von selbst. Der Ausweis wird nie verzerrt.\n• Die Originalgröße ist %2$s x %3$s mm. Mit dieser Größe passen 10 Ausweise auf ein A4-Blatt im Hochformat, in 2 Spalten und 5 Zeilen.</string>
     <string name="use_range">Verwende %1$s bis %2$s.</string>
     <string name="substitution_explanation">Ein Ersatzspieler spielt ab der gewählten Runde für diesen Spieler. Der Ersatzspieler wird nicht erfasst und erhält kein Ergebnis in der Rangliste. Der Spieler erhält 0 Tischpunkte für die Runden, die der Ersatzspieler spielt.</string>
@@ -861,4 +859,38 @@ Die erste, die klappt, gewinnt</string>
     <string name="draw_flow_failed">Verteilung gescheitert</string>
     <string name="draw_flow_yes">Ja</string>
     <string name="draw_flow_no">Nein</string>
+    <string name="role_super_admin">Superadministrator</string>
+    <string name="role_country_admin">Länderadministrator</string>
+    <string name="tournament_country_locked">Das Land eines Turniers ändert sich nicht.\nNur ein Superadministrator kann es korrigieren.</string>
+    <string name="tournament_country_change_warning">Wenn du das Land änderst:\n• Die Länderadministratoren des alten Landes verwalten dieses Turnier nicht mehr, und die des neuen Landes beginnen.\n• Die zugewiesenen Editoren behalten es.</string>
+    <string name="delete_tournament_editors_note">Ein Editor, dessen einziges Turnier dieses ist, ist kein Editor mehr: Das Konto wird Spieler oder wird deaktiviert, wenn es keine EMA-ID hat.</string>
+    <string name="admin_countries">Länder</string>
+    <string name="admin_countries_add">Land hinzufügen</string>
+    <string name="admin_countries_needed">Ein Länderadministrator braucht mindestens ein Land.</string>
+    <string name="admin_countries_not_yours">Die Länder ohne ✕ gehören nicht dir.\nNur ein Superadministrator oder ihre Länderadministratoren entfernen sie.</string>
+    <string name="remove_country_n">%1$s entfernen</string>
+    <string name="editor_needs_tournament">Ein Editor braucht mindestens ein Turnier.</string>
+    <string name="account_disabled_without_tournaments">Dieses Konto wurde deaktiviert, als es sein letztes Turnier verlor.
+Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktiviert.</string>
+    <string name="account_grants_outside">Dieses Konto hat auch Länder oder Turniere, die du nicht verwaltest.\nDu änderst nur deine und kannst es nicht zum Spieler machen.</string>
+    <string name="email_hidden">Verborgen</string>
+    <string name="email_hidden_info">Du siehst die E-Mail eines Spielers nur, wenn er in einem deiner Turniere spielt.</string>
+    <string name="tournament_assignments_other_countries">Editor in Turnieren anderer Länder</string>
+    <string name="remove_from_my_countries">Aus meinen Ländern entfernen</string>
+    <string name="remove_from_countries_message">%1$s verliert die Länder und Turniere, die deine sind.\n\nWas das Konto in anderen Ländern hat, bleibt.\n\nUm das ganze Konto zu deaktivieren oder zu löschen, frag einen Superadministrator.</string>
+    <string name="remove_from_countries_request_none">Nur aus meinen Ländern entfernen</string>
+    <string name="remove_from_countries_request_disable">Und einen Superadministrator bitten, das Konto zu deaktivieren</string>
+    <string name="remove_from_countries_request_delete">Und einen Superadministrator bitten, das Konto zu löschen</string>
+    <string name="remove_from_countries_reason">Grund für die Superadministratoren</string>
+    <string name="remove_from_countries_action">Entfernen</string>
+    <string name="removed_from_countries">%1$s wurde aus deinen Ländern entfernt.</string>
+    <string name="removed_and_requested">%1$s wurde aus deinen Ländern entfernt.\n\nDie Superadministratoren haben deine Anfrage per E-Mail erhalten.</string>
+    <string name="account_requests">Anfragen</string>
+    <string name="account_requests_count">Offene Anfragen der Länderadministratoren: %1$d</string>
+    <string name="account_request_disable">%1$s bittet, %2$s zu deaktivieren.</string>
+    <string name="account_request_delete">%1$s bittet, %2$s zu löschen.</string>
+    <string name="account_request_reason">Grund: %1$s</string>
+    <string name="account_request_approve">Genehmigen</string>
+    <string name="account_request_reject">Ablehnen</string>
+    <string name="account_request_rejected">Die Anfrage wurde abgelehnt.</string>
 </resources>

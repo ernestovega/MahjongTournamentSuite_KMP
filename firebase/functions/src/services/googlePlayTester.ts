@@ -14,7 +14,7 @@ import { createUserProfile, setGlobalUserRole, setUserPhoto } from "./usersServi
 export const GOOGLE_PLAY_TESTER = {
   email: "mtsgoogleplaytester@mahjongmadrid.com",
   alias: "Google Play Testers",
-  role: "ADMIN" as const,
+  role: "SUPER_ADMIN" as const,
 };
 
 /** The photo of the account (the Play Console icon). The path works from lib/services and from src/services. */
@@ -47,7 +47,7 @@ export async function ensureGooglePlayTester(params: { apply: boolean; password?
 
   const profile = await db.doc(`users/${existing.uid}`).get();
   const accountOk = profile.get("alias") === GOOGLE_PLAY_TESTER.alias &&
-    (existing.customClaims ?? {}).admin === true &&
+    (existing.customClaims ?? {}).superAdmin === true &&
     !(typeof profile.get("emaId") === "string" && profile.get("emaId") !== "") &&
     hasPhoto(profile);
   if (!accountOk && params.apply) await configureAccount(existing.uid);

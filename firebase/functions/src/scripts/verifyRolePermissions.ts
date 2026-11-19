@@ -103,7 +103,7 @@ async function main(): Promise<void> {
   const auth = getAuth(app);
   const db = getFirestore(app);
   const admin = await auth.getUserByEmail(options.adminEmail);
-  assertCondition(admin.customClaims?.admin === true, "Selected account does not have the admin claim");
+  assertCondition(admin.customClaims?.superAdmin === true, "Selected account does not have the super admin claim");
 
   const timestamp = Date.now();
   const temporaryUsers: UserRecord[] = [];
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
       displayName: "Role Test Admin",
       emailVerified: true,
     });
-    await auth.setCustomUserClaims(testAdmin.uid, { admin: true });
+    await auth.setCustomUserClaims(testAdmin.uid, { superAdmin: true });
     temporaryUsers.push(testAdmin);
     editorOne = await auth.createUser({
       email: `role-test-editor-one-${timestamp}@example.invalid`,
@@ -172,7 +172,7 @@ async function main(): Promise<void> {
     const adminWhoAmI = await apiRequest(options, adminToken, "/admin/whoami");
     expectStatus(adminWhoAmI, 200, "ADMIN whoami");
     assertCondition(
-      (adminWhoAmI.body as { role?: string }).role === "ADMIN",
+      (adminWhoAmI.body as { role?: string }).role === "SUPER_ADMIN",
       "ADMIN whoami returned the wrong role",
     );
 
@@ -265,7 +265,7 @@ async function main(): Promise<void> {
       await apiRequest(options, editorOneToken, "/admin/users", "POST", {
         email: `forbidden-admin-${timestamp}@example.invalid`,
         alias: "Forbidden Admin",
-        role: "ADMIN",
+        role: "SUPER_ADMIN",
         tournamentAssignments: [],
       }),
       403,

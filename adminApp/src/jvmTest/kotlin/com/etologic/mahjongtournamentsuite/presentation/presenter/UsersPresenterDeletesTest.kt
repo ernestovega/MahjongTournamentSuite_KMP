@@ -22,7 +22,7 @@ class UsersPresenterDeletesTest {
 
     @Test
     fun aLongListGoesInRequestsOfAtMost50AndKeepsTheOrder() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN)
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)
 
         val results = assertIs<AppResult.Success<List<UserDeleteResult>>>(presenter(admin).deleteUsers(uids(120))).value
 
@@ -32,7 +32,7 @@ class UsersPresenterDeletesTest {
 
     @Test
     fun aRequestThatFailsAfterOthersWentThroughMarksItsAccountsAsFailed() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply { failDeletesFromRequest = 2 }
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply { failDeletesFromRequest = 2 }
 
         val results = assertIs<AppResult.Success<List<UserDeleteResult>>>(presenter(admin).deleteUsers(uids(70))).value
 
@@ -42,7 +42,7 @@ class UsersPresenterDeletesTest {
 
     @Test
     fun aFirstRequestThatFailsIsAFailureOfTheWholeCall() = runTest {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply { failDeletesFromRequest = 1 }
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply { failDeletesFromRequest = 1 }
 
         assertEquals(AppResult.Failure(AppError.Network), presenter(admin).deleteUsers(uids(3)))
     }

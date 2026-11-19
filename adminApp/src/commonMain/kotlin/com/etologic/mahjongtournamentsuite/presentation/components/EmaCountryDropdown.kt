@@ -43,11 +43,14 @@ fun EmaCountryDropdown(
     /** True when the field gives two-letter codes, as the host country of a tournament. */
     twoLetterCodes: Boolean = false,
     allowNoCountry: Boolean = false,
+    /** The two-letter codes of the countries that the list offers, or null for every country of the world. */
+    allowedCountries: Set<String>? = null,
 ) {
     val countryNameOf = rememberCountryNames()
     val noCountryName = stringResource(Res.string.no_country)
-    val options = remember(countryNameOf, twoLetterCodes) {
+    val options = remember(countryNameOf, twoLetterCodes, allowedCountries) {
         WorldCountries
+            .filter { country -> allowedCountries == null || country.code in allowedCountries }
             .map { country ->
                 EmaCountryOption(
                     code = if (twoLetterCodes) country.code else country.emaCode,

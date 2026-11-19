@@ -134,7 +134,7 @@ This prevents client code from bypassing backend role checks. Keep these rules c
 
 The API now has the `PLAYER` capability next to `EDITOR` and `ADMIN`. See `player-client-plan.md` and `backend.md`.
 
-- Management routes need the `admin` or `editor` claim. An account with no claim is refused.
+- Management routes need the `superAdmin`, `countryAdmin` or `editor` claim. An account with no claim is refused. Since the Country Admin role, the old `admin` claim is `superAdmin` (`npm run migrate:role-claims:apply`).
 - Accounts saved before this change have no `editor` claim. Save each of them once in the accounts screen, or recreate them.
 - `npm run verify:roles` now also creates a player-only account and expects `403` on the editor routes.
 - Create the SMTP secret `MTS_SMTP_URI` and the player hosting site before the first reminder.

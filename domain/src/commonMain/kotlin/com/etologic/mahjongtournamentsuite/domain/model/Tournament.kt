@@ -40,6 +40,8 @@ data class Tournament(
     val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
+    /** What the signed-in account may do in this tournament. Only the tournament list of the management app has it. */
+    val permissions: Set<Permission> = emptySet(),
     /** False hides a test tournament from the public list. Only its staff see it. */
     val isPublic: Boolean = true,
     /** False hides the differences button on the table screen of the player app. */
@@ -127,6 +129,8 @@ data class TournamentMember(
     val uid: String,
     val email: String,
     val role: GlobalUserRole,
+    /** True for an editor whose only tournament is this one: removing it makes the account a player. */
+    val onlyTournament: Boolean = false,
 )
 
 /** The slot and the team of the signed-in player in one tournament. */

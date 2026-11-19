@@ -17,7 +17,7 @@ describe("EMA player registry routes", () => {
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
-    admin = await createAccount({ role: "ADMIN" });
+    admin = await createAccount({ role: "SUPER_ADMIN" });
     editor = await createAccount({ role: "EDITOR" });
     tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     player = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });

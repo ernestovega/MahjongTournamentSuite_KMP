@@ -48,12 +48,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LevelChangeTa
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedal
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedalTag
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelRibbonBadge
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.RankTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
@@ -67,6 +66,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatCard
 import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilterBar
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilters
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFiltersDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChooserDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
@@ -75,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNo
 import com.etologic.mahjongtournamentsuite.presentation.language.AppLanguage
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageController
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -82,8 +85,9 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.componentDialogVariants
-import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
+import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import kotlin.test.Test
 
@@ -274,6 +278,45 @@ class UiComponentsScreenshotTest {
     @Test
     fun supportForm() = component("support-form", scroll = false) {
         SupportForm(app = "player", initialEmail = "lucia@example.test", onSend = { AppResult.Success(Unit) }, onBack = {})
+    }
+
+    @Test
+    fun statisticsFilterBar() = component("statistics-filter-bar") {
+        StatisticsFilterBar(
+            filters = StatisticsFilters(
+                emaId = ScreenshotData.players.first().emaId,
+                rivalEmaId = ScreenshotData.players[1].emaId,
+                tournamentCountry = "ES",
+                fromYear = 2025,
+                toYear = 2026,
+            ),
+            onChange = {},
+            players = ScreenshotData.players,
+            tournaments = ScreenshotData.tournaments,
+        )
+        StatisticsFilterBar(filters = StatisticsFilters(), onChange = {}, players = ScreenshotData.players, tournaments = ScreenshotData.tournaments)
+        StatisticsFilterBar(
+            filters = StatisticsFilters(tournamentId = ScreenshotData.tournaments.first().id, playerCountry = ""),
+            onChange = {},
+            players = ScreenshotData.players,
+            tournaments = ScreenshotData.tournaments,
+        )
+    }
+
+    @Test
+    fun statisticsFiltersDialog() = component("dialog-statistics-filters", variants = componentDialogVariants) {
+        StatisticsFiltersDialog(
+            filters = StatisticsFilters(
+                emaId = ScreenshotData.players.first().emaId,
+                rivalEmaId = ScreenshotData.players[1].emaId,
+                tournamentCountry = "ES",
+                fromYear = 2025,
+            ),
+            players = ScreenshotData.players,
+            tournaments = ScreenshotData.tournaments,
+            onApply = {},
+            onDismiss = {},
+        )
     }
 
     @Test

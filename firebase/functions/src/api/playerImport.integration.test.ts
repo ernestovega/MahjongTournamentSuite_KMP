@@ -112,8 +112,8 @@ describe("player import routes", () => {
     assert.ok(parsed.hasEmailColumn);
   });
 
-  it("gives the emails to an admin and an empty email column to an editor", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
+  it("gives the emails to an admin and to an editor of the tournament", async () => {
+    const admin = await createAccount({ role: "SUPER_ADMIN" });
     const read = async (token: string) => {
       const { body } = await exportPlayersFile(token);
       const { fileName, dataBase64 } = body as { fileName: string; dataBase64: string };
@@ -121,7 +121,7 @@ describe("player import routes", () => {
     };
 
     assert.equal(await read(admin.token), "ana@example.test");
-    assert.equal(await read(editor.token), "");
+    assert.equal(await read(editor.token), "ana@example.test");
   });
 
   it("refuses the download to no token, a player and an editor of another tournament", async () => {

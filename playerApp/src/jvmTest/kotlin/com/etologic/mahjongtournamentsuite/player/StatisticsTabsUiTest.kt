@@ -3,13 +3,17 @@ package com.etologic.mahjongtournamentsuite.player
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -65,7 +69,9 @@ class StatisticsTabsUiTest {
         }
     }
     private val players = fake<PlayerRepository> { name -> if (name == "listPlayers") AppResult.Success(registry) else NotUsed }
-    private val statistics = fake<StatisticsRepository> { NotUsed }
+    private val statistics = fake<StatisticsRepository> { name ->
+        if (name == "loadGroup") AppResult.Success(StatisticsGroup(emptyList(), GroupTables(), emptyList())) else NotUsed
+    }
 
     private fun auth(session: AuthSession?) = fake<AuthRepository> { name ->
         when (name) {
@@ -86,6 +92,7 @@ class StatisticsTabsUiTest {
                                 loadStored = LoadStoredStatisticsUseCase(statistics, tournaments, players),
                                 authRepository = auth(session),
                                 playerRepository = players,
+                                tournamentRepository = tournaments,
                             )
                         }
                         single { PlayerSessionPresenter(auth(session), Logger.withTag("ui-test")) }
@@ -98,31 +105,52 @@ class StatisticsTabsUiTest {
     private fun ComposeUiTest.waitForText(text: String) = waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
-    fun theTournamentStatisticsHaveNoInnerTabs() = runComposeUiTest {
+    fun theTournamentStatisticsOpenWithTheFilterOfTheTournamentAndNoTabs() = runComposeUiTest {
         show(session = null) { TournamentStatisticsTab(tournamentId = "t-1") }
-        // The players have their own tab in the tournament now, so the statistics show only the tournament.
-        waitForIdle()
+        waitForText("Madrid Open")
+        onNodeWithText("Filters").assertExists()
         onNodeWithText("Tournament").assertDoesNotExist()
         onNodeWithText("Change").assertDoesNotExist()
     }
 
     @Test
-    fun aGuestSeesThePlayerPickerWithoutTabs() = runComposeUiTest {
+    fun removingTheChipOfTheTournamentShowsAllTournamentsAndPlayers() = runComposeUiTest {
+        show(session = null) { TournamentStatisticsTab(tournamentId = "t-1") }
+        waitForText("Madrid Open")
+        onNodeWithContentDescription("Remove the filter Madrid Open").performClick()
+        waitForText("All tournaments and players")
+        waitForText("No stats with these filters")
+    }
+
+    @Test
+    fun theFiltersDialogChoosesACountryOfTheTournamentsAndTheChipRemovesIt() = runComposeUiTest {
         show(session = null) { MyStatisticsTab() }
-        waitForText("Choose a player")
+        waitForText("All tournaments and players")
+        onNodeWithText("Filters").performClick()
+        waitForText("Filter the stats")
+        onNodeWithText("Clear").assertExists()
+        onNodeWithText("Cancel").assertDoesNotExist()
+        onNodeWithText("Apply").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Filter the stats")).fetchSemanticsNodes().isEmpty() }
+        waitForText("All tournaments and players")
+    }
+
+    @Test
+    fun aGuestSeesAllTournamentsAndPlayersWithoutTabs() = runComposeUiTest {
+        show(session = null) { MyStatisticsTab() }
+        waitForText("All tournaments and players")
+        onNodeWithText("Filters").assertExists()
         onNodeWithText("Players").assertDoesNotExist()
         onNodeWithText("Me").assertDoesNotExist()
-        onNodeWithText("My tournaments").assertDoesNotExist()
         onNodeWithText("Others").assertDoesNotExist()
     }
 
     @Test
-    fun aSignedInPlayerSeesThePlayerPickerWithoutTabs() = runComposeUiTest {
-        // The account has no linked player here, so the screen asks to choose one.
+    fun aSignedInAccountWithoutAPlayerSeesAllTournamentsAndPlayers() = runComposeUiTest {
+        // The account has no linked player here, so no player is chosen at the start.
         show(session = AuthSession(uid = "u1", idToken = "id", refreshToken = "refresh")) { MyStatisticsTab() }
-        waitForText("Choose a player")
+        waitForText("All tournaments and players")
         onNodeWithText("Me").assertDoesNotExist()
         onNodeWithText("My tournaments").assertDoesNotExist()
-        onNodeWithText("Others").assertDoesNotExist()
     }
 }

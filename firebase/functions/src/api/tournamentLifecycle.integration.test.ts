@@ -32,7 +32,7 @@ describe("a tournament from its creation to the final ranking", () => {
     // A Play plans the close of the round with Cloud Tasks. Nothing runs here.
     setRoundCloseEnqueuer(async () => undefined);
     server = await startServer();
-    admin = await createAccount({ role: "ADMIN" });
+    admin = await createAccount({ role: "SUPER_ADMIN" });
   });
   after(async () => {
     setRoundCloseEnqueuer();

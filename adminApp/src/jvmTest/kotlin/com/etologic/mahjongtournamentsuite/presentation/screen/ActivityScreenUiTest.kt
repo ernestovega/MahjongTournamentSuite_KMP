@@ -93,7 +93,7 @@ class ActivityScreenUiTest {
         tournaments: List<Tournament> = emptyList(),
         initialTournamentId: String? = null,
     ): FakeAdminRepository {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply {
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply {
             activity = entries
             activityPageSize = pageSize
         }

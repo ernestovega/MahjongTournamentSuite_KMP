@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.GroupRecords
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
@@ -108,6 +109,8 @@ fun TournamentStatisticsPanel(
     selectedRound: Int? = null,
     /** Set when the screen shows [TournamentRoundChips] itself. */
     onSelectRound: ((Int?) -> Unit)? = null,
+    /** The best values of a group, whose players hold sums. Without it, the values of one table are not shown for sums. */
+    records: GroupRecords? = null,
 ) {
     @Suppress("NAME_SHADOWING")
     val names = remember(names, PlaceholderNames.playerTemplate) { PlaceholderNames.localizeAll(names) }
@@ -130,7 +133,7 @@ fun TournamentStatisticsPanel(
             )
             // Top players goes second, right after Hands, and takes one column like the other cards.
             LeadersCard(shown, names, onOpenPlayer)
-            TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null)
+            TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null, groupRecords = records)
         }
         if (shown.tablesWithHands < shown.tablesCompleted) {
             Text(
@@ -343,7 +346,7 @@ private fun TournamentHandsCard(
  * [playersAreSums] is true when each player holds the sums of all tournaments. Then the values of one table are not known.
  */
 @Composable
-private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSums: Boolean, oneRound: Boolean) {
+private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSums: Boolean, oneRound: Boolean, groupRecords: GroupRecords? = null) {
     val players = statistics.players
     val streaks = players.map { it.streaks }
     StatCard(stringResource(Res.string.stats_records), Modifier.fillMaxWidth()) {
@@ -352,7 +355,14 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
             statistics.highestHandGain?.let { gain ->
                 BigNumber(stringResource(Res.string.stat_best_hand_points), gain.toString())
             }
-            if (!playersAreSums) {
+            if (groupRecords != null) {
+                // The players of a group hold sums. The server keeps their best values apart. A run counts inside one tournament.
+                BigNumber(stringResource(Res.string.stat_highest_table_score), groupRecords.highestTableScore.text())
+                BigNumber(stringResource(Res.string.stat_hands_won_on_table), groupRecords.mostHandsWonAtATable.text())
+                BigNumber(stringResource(Res.string.stat_tables_won_row), groupRecords.tableWinRun.toString())
+                BigNumber(stringResource(Res.string.stat_hands_won_row), groupRecords.handWinRun.text())
+                BigNumber(stringResource(Res.string.stat_hands_without_dealin), groupRecords.noDealInRun.text())
+            } else if (!playersAreSums) {
                 BigNumber(stringResource(Res.string.stat_highest_table_score), players.mapNotNull { it.bestTableScore }.maxOrNull().text())
                 BigNumber(stringResource(Res.string.stat_hands_won_on_table), players.mapNotNull { it.mostHandsWonAtATable }.maxOrNull().text())
                 // In one round each player plays one table, so a run of tables means nothing there.

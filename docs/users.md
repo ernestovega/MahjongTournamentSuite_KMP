@@ -4,48 +4,50 @@
 
 This application is for tournament management. The public viewer application is outside this repository.
 
-The management application has two global roles:
+The management application has three staff roles, and the player application one:
 
-- `EDITOR`
-- `ADMIN`
+- `EDITOR`: the tournaments assigned to it.
+- `COUNTRY_ADMIN`: every tournament of its countries.
+- `SUPER_ADMIN`: everything.
+- `PLAYER`: the player app.
 
-There are no reader accounts and no tournament-specific roles.
+An account can have several roles. What each role may do is in [the permissions matrix](user-roles-matrix.md).
+
+The roles restrict only the management app. The player app (and the player part of the Android app) reads the public
+list of tournaments without the account (`/public/tournaments`), so every role sees every tournament there.
 
 ## Editor
 
-An editor can use only assigned tournaments.
+An editor works in the tournaments assigned to it: players, tables, hands, results, the Timer and the round control. It
+creates player accounts and sees every player account, but the email of a player only when the player plays in one of
+its tournaments. It sees the editors and admins of its countries (the countries of its tournaments).
 
-An assigned editor can:
+An editor always has at least one tournament. When it loses the last one (a country admin takes it away, or the
+tournament is deleted), the account becomes a player, or it is disabled when it has no EMA ID (`syncRoleClaims`).
+That account keeps `users/{uid}.disabledReason: "NO_ROLE"`, and the account dialog says so. A country admin sees it
+like a player account and brings it back: it gives it the editor role with a tournament of its countries, and saving
+enables the account again. An account that a super admin disabled stays disabled: only a super admin enables it (any
+enable or disable of a super admin clears `disabledReason`).
 
-- view tournament data;
-- assign EMA players to tournament slots;
-- edit tables, hands, scores, and results;
-- view EMA reports;
-- list the tournament's assigned accounts;
-- assign or remove other editors;
-- create and edit `EDITOR` accounts;
-- assign editor accounts only to tournaments that the editor can manage.
+## Country Admin
 
-An editor cannot:
+A country admin manages every tournament of its countries without an assignment: it creates them (only in its
+countries), configures, deletes (a past tournament with results only a super admin deletes) and assigns their editors.
+It creates and changes editors and country admins of its countries, and it never takes away what an account has in other
+countries: a country admin that is also a country admin elsewhere cannot be demoted by it, only its own countries change.
+It creates EMA players of any country.
 
-- create, delete, rename, or configure tournaments;
-- create or modify an `ADMIN` account;
-- disable or delete an account;
-- edit the shared EMA player registry.
+A country admin does not disable or delete accounts. It removes an account from its countries ("Remove from my
+countries"), and it can ask the super admins to disable or delete the whole account with a reason
+(`POST /admin/users/{uid}/removal`). The super admins get an email and see the request in Accounts.
 
-## Admin
+## Super Admin
 
-An admin has implicit access to every tournament.
+A super admin has every permission: every tournament and account, the country of a tournament, the email and the EMA ID
+of an account, the photos, the EMA players, the requests of the country admins and the DEV menu.
 
-An admin can:
-
-- perform every editor operation;
-- create, delete, rename, and configure tournaments;
-- create and modify admins;
-- disable, enable and delete accounts;
-- edit the shared EMA player registry.
-
-The last enabled admin cannot be demoted, disabled or deleted. An admin cannot disable or delete their own account in App users.
+The last enabled super admin cannot be demoted, disabled or deleted. A super admin cannot disable or delete their own
+account in App users.
 
 ## Deleting an account
 
@@ -55,17 +57,19 @@ photo, the editor assignments and the link to the EMA id. The EMA player and the
 show "No account" again. It cannot be undone.
 
 - Any account deletes itself with "Delete my account" in the profile dialog: `DELETE /auth/me`.
-- An admin deletes another account with "Delete account" in the account dialog of App users: `DELETE /admin/users/{uid}`.
+- A super admin deletes another account with "Delete account" in the account dialog of App users: `DELETE /admin/users/{uid}`.
 
 ## Firebase Authentication
 
 Firebase Authentication stores the sign-in email and disabled state.
 
-The `admin: true` custom claim identifies an admin. An account without this claim is an editor.
+The custom claims `superAdmin`, `countryAdmin`, `editor` and `player` hold the roles. The API reads the roles and the
+countries from the account itself on each request (cached 30 seconds), not from the token, so a change works at once.
+The countries of a country admin are in `users/{uid}.adminCountries`.
 
-The application has no public sign-up endpoint. An admin creates each editor account. Editors cannot create or edit other editors.
-
-The API has no route to create the first admin. Set the `admin: true` custom claim with the Firebase Admin SDK.
+The application has no public sign-up endpoint. The API has no route to create the first super admin: set the
+`superAdmin: true` custom claim with the Firebase Admin SDK. `npm run migrate:role-claims` turns the old `admin` claim
+into `superAdmin` (dry run; `migrate:role-claims:apply` writes).
 
 ## Firestore assignments
 
@@ -77,46 +81,34 @@ tournaments/{tournamentId}/members/{uid}
 
 The document contains `uid`, `createdAt`, and `updatedAt`. It does not contain a role or permission.
 
-Admin access is implicit. Admins do not need membership documents.
+Country admins and super admins do not need membership documents.
 
 ## User management API
 
-Signed-in editors and admins can use these routes:
-
 ```text
-GET /admin/users
-POST /admin/users
-PUT /admin/users/{uid}
-GET /admin/users/lookup?identifier={email}
+GET /admin/users                       accounts.view
+POST /admin/users                      accounts.createPlayer (staff roles need accounts.manageStaff)
+PUT /admin/users/{uid}                 accounts.view (then the account rules)
+POST /admin/users/{uid}/removal        accounts.requestRemoval (country admins)
+GET /admin/account-requests            accounts.reviewRequests (super admins)
+POST /admin/account-requests/{id}      accounts.reviewRequests
+PUT /admin/users/{uid}/disabled        accounts.disable (super admins)
+DELETE /admin/users/{uid}              accounts.delete (super admins)
 ```
 
-Only admins can disable or enable accounts:
-
-```text
-PUT /admin/users/{uid}/disabled
-DELETE /admin/users/{uid}
-```
-
-An editor receives only assignments for tournaments that the editor can manage. The backend preserves hidden assignments.
+A viewer receives only the assignments of the tournaments that it manages. The backend keeps the hidden assignments and
+the countries that the viewer does not manage.
 
 ## Tournament member API
 
-An assigned editor or any admin can use these routes:
-
 ```text
 GET /tournaments/{tournamentId}/members
-GET /tournaments/{tournamentId}/users/lookup?email={email}
-PUT /tournaments/{tournamentId}/members/{uid}
-DELETE /tournaments/{tournamentId}/members/{uid}
+PUT /tournaments/{tournamentId}/members/{uid}      tournament.members
+DELETE /tournaments/{tournamentId}/members/{uid}   tournament.members
 ```
 
-The member list includes assigned editors and all enabled admins. Admin rows are implicit and cannot be removed.
-
-## Account removal policy
-
-The application does not delete managed accounts. An admin disables an account and revokes its refresh tokens.
-
-The profile, tournament history, and audit data remain available.
+The member list includes the assigned editors, the country admins of the country of the tournament and all enabled super
+admins. The last two are implicit and cannot be removed.
 
 ## Full access reset
 
@@ -131,12 +123,12 @@ The reset performs these actions:
 - keeps or creates one selected Firebase Authentication account;
 - deletes every other Firebase Authentication account;
 - deletes all user profiles and tournament membership documents;
-- creates one clean profile with the global `ADMIN` role;
+- creates one clean profile with the global `SUPER_ADMIN` role;
 - leaves all tournament content and EMA registry data unchanged;
-- verifies that one enabled admin and no tournament assignments remain.
+- verifies that one enabled super admin and no tournament assignments remain.
 
 Use [Firebase access reset](firebase-access-reset.md) for the commands, credential requirements, and inventory location.
 
-Use [Firebase role rollout](firebase-role-rollout.md) for the deployment order and the `EDITOR` and `ADMIN` checks.
+Use [Firebase role rollout](firebase-role-rollout.md) for the deployment order and the role checks.
 
 This reset is an exceptional maintenance task. Normal account removal still uses account disabling.

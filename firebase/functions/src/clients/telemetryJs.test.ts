@@ -193,7 +193,7 @@ for (const app of APPS) {
 
     it("builds a body that the server accepts", async () => {
       const page = loadPage(app, { storedConsent: "1" });
-      page.send("context", "", { appVersion: "1.2.3", role: "admin" });
+      page.send("context", "", { appVersion: "1.2.3", role: "country_admin" });
       page.fire("error", { error: crash(), message: "boom" });
       await settle();
 
@@ -202,7 +202,7 @@ for (const app of APPS) {
       assert.equal(report.platform, "web");
       assert.equal(report.kind, "crash");
       assert.equal(report.env, "prod");
-      assert.equal(report.role, "admin");
+      assert.equal(report.role, "country_admin");
       assert.equal(report.appVersion, "1.2.3");
       assert.equal(report.stackTrace, "Error: boom\n    at run (app.js:1:1)");
     });

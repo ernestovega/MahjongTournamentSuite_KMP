@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -25,6 +26,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import com.etologic.mahjongtournamentsuite.domain.telemetry.telemetryRole
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
@@ -48,11 +50,11 @@ class PlayerSessionPresenter(
         return (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId?.takeIf { it.isNotBlank() }
     }
 
-    /** True when the account is also an admin or an editor, so it can open the admin app. */
+    /** True when the account is also a super admin, a country admin or an editor, so it can open the admin app. */
     suspend fun canManage(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): Boolean {
         if (!hasSession()) return false
         val roles = (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.roles.orEmpty()
-        return roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR }
+        return roles.any { it != GlobalUserRole.PLAYER }
     }
 
     suspend fun signIn(email: String, password: String): AppResult<Unit> = when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {
@@ -226,8 +228,15 @@ class PlayerStatisticsPresenter(
     private val loadStored: LoadStoredStatisticsUseCase,
     private val authRepository: AuthRepository,
     private val playerRepository: PlayerRepository,
+    private val tournamentRepository: TournamentRepository,
     private val telemetry: Telemetry = NoTelemetry,
 ) {
+    /** The public tournaments, for the filters of the statistics. */
+    suspend fun tournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
+
+    /** The statistics of a group of tournaments and players. */
+    suspend fun group(filter: StatisticsGroupFilter, track: Boolean = true): AppResult<GroupStatisticsData> = loadStored.group(filter).viewed("group", track)
+
     /** [track] is false for the later checks of a screen, so a screen that stays open counts as one view. */
     suspend fun tournament(
         tournamentId: String,

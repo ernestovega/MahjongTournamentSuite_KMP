@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
-import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
+import type { PermissionGuard } from "../middleware/requirePermission";
+import { ROLE_PERMISSIONS, type Permission } from "../../models/permissions";
 import { tournamentsRouter } from "./tournaments.routes";
 
 type Route = { method: string; path: string; handlers: unknown[] };
@@ -23,6 +23,11 @@ function routes(): Route[] {
   });
 }
 
+/** The permission guard of a route, or null. */
+function guardOf(route: Route): PermissionGuard | null {
+  return (route.handlers.find((handler) => typeof (handler as Partial<PermissionGuard>).permission === "string") as PermissionGuard | undefined) ?? null;
+}
+
 function find(method: string, path: string): Route {
   const route = routes().find((item) => item.method === method && item.path === path);
   assert.ok(route, `route ${method} ${path} exists`);
@@ -35,10 +40,13 @@ test("every tournament route needs a signed-in user", () => {
   }
 });
 
-test("resetting a table is for admins only", () => {
-  const reset = find("POST", "/:tournamentId/tables/:roundId/:tableId/reset");
+test("resetting a table is for the admins of the tournament, not for its editors", () => {
+  const guard = guardOf(find("POST", "/:tournamentId/tables/:roundId/:tableId/reset"));
 
-  assert.ok(reset.handlers.includes(requireAdmin));
+  assert.equal(guard?.permission, "tournament.resetTable");
+  assert.equal(guard?.scope, "tournament");
+  assert.ok(!ROLE_PERMISSIONS.EDITOR.includes("tournament.resetTable"));
+  assert.ok(ROLE_PERMISSIONS.COUNTRY_ADMIN.includes("tournament.resetTable"));
 });
 
 test("editors can read and save tables of their tournament but cannot reset them", () => {
@@ -50,24 +58,15 @@ test("editors can read and save tables of their tournament but cannot reset them
     ["GET", "/:tournamentId/sync/manifest"],
   ];
   for (const [method, path] of editorRoutes) {
-    const route = find(method, path);
-    assert.ok(
-      route.handlers.includes(requireTournamentEditor),
-      `${method} ${path} checks membership`,
-    );
-    assert.ok(!route.handlers.includes(requireAdmin), `${method} ${path} stays open to editors`);
+    const guard = guardOf(find(method, path));
+    assert.equal(guard?.scope, "tournament", `${method} ${path} checks the tournament`);
+    assert.ok(ROLE_PERMISSIONS.EDITOR.includes(guard?.permission as Permission), `${method} ${path} stays open to editors`);
   }
 });
 
 test("every route with a tournament id checks that the user may work in that tournament", () => {
-  const adminOnlyOrGlobal = (route: Route) =>
-    route.handlers.includes(requireAdmin) || !route.path.startsWith("/:tournamentId");
   for (const route of routes().filter((item) => item.path.startsWith("/:tournamentId"))) {
-    if (adminOnlyOrGlobal(route)) continue;
-    assert.ok(
-      route.handlers.includes(requireTournamentEditor),
-      `${route.method} ${route.path} needs requireTournamentEditor or requireAdmin`,
-    );
+    assert.equal(guardOf(route)?.scope, "tournament", `${route.method} ${route.path} needs requireTournamentPermission`);
   }
 });
 

@@ -20,7 +20,7 @@ type Detail = {
 const BASE = 4_000_000_000_000;
 
 const report = (overrides: Partial<ErrorReport> = {}): ErrorReport => ({
-  app: "admin", platform: "android", kind: "handled", env: "prod", role: "admin", appVersion: "1.0.0",
+  app: "admin", platform: "android", kind: "handled", env: "prod", role: "super_admin", appVersion: "1.0.0",
   errorType: "TestFailure", area: "Area", message: "boom", stackTrace: "at A.run(A.kt:1)", reason: "server_error",
   httpStatus: 500, language: "en", reportId: "r", sessionId: "s", ...overrides,
 });
@@ -33,7 +33,7 @@ describe("error log API", () => {
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
-    admin = await createAccount({ role: "ADMIN" });
+    admin = await createAccount({ role: "SUPER_ADMIN" });
     editor = await createAccount({ role: "EDITOR" });
   });
   after(() => server.close());

@@ -1,32 +1,33 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
 
 import { auth, db } from "../../firebase";
 import { assertSafeDocumentId, badRequest, forbidden, notFound } from "../httpError";
 import { readContentType, readPhotoData } from "./auth.routes";
-import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
-import { requireEditor } from "../middleware/requireEditor";
-import { getGlobalUserRole, getGlobalUserRoles, hasAdminClaim, parseGlobalUserRole } from "../../models/globalRole";
+import { accessOf, requirePermission } from "../middleware/requirePermission";
+import { getGlobalUserRole, getGlobalUserRoles, parseGlobalUserRole, type GlobalUserRole } from "../../models/globalRole";
 import { sendPasswordResetEmail } from "../../services/firebaseAuthRest";
 import {
   assertEmailAvailable,
   clearUserPhoto,
-  countEnabledAdmins,
+  countEnabledSuperAdmins,
   createUserProfile,
   deleteManagedUser,
   getManagedUser,
   getUserProfile,
-  listAssignedTournamentIds,
   listManagedUsers,
   sendPasswordResets,
+  setAdminCountries,
   setGlobalUserRole,
   setManagedUserDisabled,
   setUserPhoto,
+  syncRoleClaims,
   syncUserTournamentAssignments,
   updateManagedUser,
-  type GlobalUserRole,
+  type ManagedUser,
+  type PasswordResetResult,
   type TournamentAssignment,
 } from "../../services/usersService";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
@@ -36,12 +37,19 @@ import { deleteAccountChecked } from "../../services/accountDeletes";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
 import { FEED_ORIGINS, FEED_SOURCES, listActivityFeed, type FeedOrigin, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
-
-type Actor = { uid: string; admin?: boolean };
+import { canInTournament, hasPermissionSomewhere, loadAccess, permissionsSomewhere, readCountryList } from "../../services/accessService";
+import { WORLD_COUNTRY_CODES } from "../../services/countryCodes";
+import { canSeeAccount, isStaffAccount, loadAccountScope, viewOfAccount, type AccountScope } from "../../services/accountScope";
+import {
+  createAccountRequest,
+  listPendingAccountRequests,
+  parseAccountRequestKind,
+  resolveAccountRequest,
+} from "../../services/accountRequests";
 
 /** The server deletes up to 50 accounts in one request. Each one takes several calls, so a longer list would be slow. */
 const MAX_USER_DELETES = 50;
-type UserDeleteFailure = "NOT_FOUND" | "SELF" | "LAST_ADMIN" | "UNKNOWN";
+type UserDeleteFailure = "NOT_FOUND" | "SELF" | "LAST_SUPER_ADMIN" | "UNKNOWN";
 type UserDeleteResult = { uid: string; outcome: "DELETED" | "FAILED"; reason?: UserDeleteFailure };
 
 function requireEmail(value: unknown, fieldName: string): string {
@@ -51,6 +59,7 @@ function requireEmail(value: unknown, fieldName: string): string {
 }
 
 function parseTournamentAssignments(value: unknown): TournamentAssignment[] {
+  if (value == null) return [];
   if (!Array.isArray(value)) throw badRequest("tournamentAssignments must be an array");
   return value.map((item) => {
     const record = item != null && typeof item === "object" ? item as Record<string, unknown> : null;
@@ -60,30 +69,102 @@ function parseTournamentAssignments(value: unknown): TournamentAssignment[] {
   });
 }
 
-async function assignmentScopeFor(actor: Actor): Promise<Set<string> | undefined> {
-  return hasAdminClaim(actor) ? undefined : listAssignedTournamentIds(actor.uid);
+function parseAdminCountries(value: unknown): string[] {
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw badRequest("adminCountries must be an array");
+  const countries = readCountryList(value);
+  if (countries.length !== new Set(value.map((item) => String(item ?? "").trim().toUpperCase())).size
+    || countries.some((country) => !WORLD_COUNTRY_CODES.has(country))) {
+    throw badRequest("adminCountries must hold two-letter codes of real countries");
+  }
+  return countries;
 }
 
-async function assertAdminRemainsEnabled(
-  currentRole: GlobalUserRole,
-  currentDisabled: boolean,
+async function assertSuperAdminRemainsEnabled(
+  current: Pick<ManagedUser, "role" | "disabled">,
   nextRole: GlobalUserRole,
   nextDisabled: boolean,
 ): Promise<void> {
-  if (currentRole !== "ADMIN" || currentDisabled || (nextRole === "ADMIN" && !nextDisabled)) return;
-  if (await countEnabledAdmins() <= 1) {
-    throw badRequest("The last enabled admin cannot be demoted or disabled");
+  if (current.role !== "SUPER_ADMIN" || current.disabled || (nextRole === "SUPER_ADMIN" && !nextDisabled)) return;
+  if (await countEnabledSuperAdmins() <= 1) {
+    throw badRequest("The last enabled super admin cannot be demoted or disabled");
   }
+}
+
+/**
+ * The countries and the tournaments that an account keeps after a change by a viewer who manages only some of them.
+ * What lies outside the scope of the viewer stays as it is. Asking for something outside it that the account does not
+ * have yet is refused.
+ */
+function mergeInScope(
+  scope: AccountScope,
+  current: ManagedUser | null,
+  requestedCountries: string[],
+  requestedAssignments: TournamentAssignment[],
+): { countries: string[]; assignments: TournamentAssignment[] } {
+  if (scope.superAdmin) return { countries: requestedCountries, assignments: requestedAssignments };
+  const currentCountries = current?.adminCountries ?? [];
+  const currentAssignments = current?.tournamentAssignments ?? [];
+  const outsideCountries = currentCountries.filter((country) => !scope.manageCountries.has(country));
+  const strayCountry = requestedCountries.find((country) => !scope.manageCountries.has(country) && !outsideCountries.includes(country));
+  if (strayCountry) throw forbidden(`You can give only your own countries (${strayCountry})`);
+  const outsideAssignments = currentAssignments.filter((assignment) => !scope.manageTournamentIds.has(assignment.tournamentId));
+  const outsideIds = new Set(outsideAssignments.map((assignment) => assignment.tournamentId));
+  const strayTournament = requestedAssignments.find((assignment) =>
+    !scope.manageTournamentIds.has(assignment.tournamentId) && !outsideIds.has(assignment.tournamentId));
+  if (strayTournament) {
+    throw forbidden(`You can assign accounts only to the tournaments of your countries (${strayTournament.tournamentId})`);
+  }
+  const insideCountries = requestedCountries.filter((country) => scope.manageCountries.has(country));
+  const insideAssignments = requestedAssignments.filter((assignment) => scope.manageTournamentIds.has(assignment.tournamentId));
+  return {
+    countries: [...new Set([...outsideCountries, ...insideCountries])].sort(),
+    assignments: [...new Map([...outsideAssignments, ...insideAssignments].map((assignment) => [assignment.tournamentId, assignment])).values()],
+  };
+}
+
+/** Checks the role that an account gets against the countries and the tournaments that it keeps. */
+function assertRoleFits(role: GlobalUserRole, countries: string[], assignments: TournamentAssignment[]): void {
+  if (role === "COUNTRY_ADMIN" && countries.length === 0) throw badRequest("A country admin needs at least one country");
+  if (role === "EDITOR" && countries.length > 0) {
+    throw forbidden("The account is a country admin of countries that you do not manage, so you cannot make it an editor");
+  }
+  if (role === "EDITOR" && assignments.length === 0) throw badRequest("An editor needs at least one tournament");
+  if (role === "PLAYER" && (countries.length > 0 || assignments.length > 0)) {
+    throw forbidden("The account has countries or tournaments that you do not manage, so you cannot make it a player");
+  }
+}
+
+async function viewFor(res: Response, uid: string) {
+  const scope = await loadAccountScope(accessOf(res));
+  return viewOfAccount(scope, await getManagedUser(uid));
+}
+
+/** Removes what an account has in the countries of the viewer: its countries there and its tournaments there. */
+async function removeInScope(scope: AccountScope, current: ManagedUser): Promise<void> {
+  if (current.adminCountries.some((country) => scope.manageCountries.has(country))) {
+    await setAdminCountries(current.uid, current.adminCountries.filter((country) => !scope.manageCountries.has(country)));
+  }
+  await syncUserTournamentAssignments(current.uid, [], scope.manageTournamentIds);
+  await syncRoleClaims(current.uid);
 }
 
 export function adminRouter(): Router {
   const router = Router();
 
+  /** The roles of the signed-in account, its countries and the permissions that it has somewhere. */
   router.get("/whoami", requireAuth, async (_req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
-      const user = await auth.getUser(actor.uid);
-      res.status(200).json({ uid: actor.uid, role: getGlobalUserRole(user), roles: getGlobalUserRoles(user) });
+      const uid = (res.locals.auth as { uid: string }).uid;
+      const user = await auth.getUser(uid);
+      const access = await loadAccess(uid);
+      res.status(200).json({
+        uid,
+        role: getGlobalUserRole(user),
+        roles: getGlobalUserRoles(user),
+        adminCountries: [...access.adminCountries],
+        permissions: permissionsSomewhere(access),
+      });
     } catch (error) {
       next(error);
     }
@@ -94,7 +175,7 @@ export function adminRouter(): Router {
    * `since` (milliseconds) keeps the problems seen at that time or later. A `nextCursor` in the answer means that
    * more pages exist. Send its two fields back as `cursorAt` and `cursorId` to read the next page.
    */
-  router.get("/error-groups", requireAuth, requireAdmin, async (req, res, next) => {
+  router.get("/error-groups", requireAuth, requirePermission("dev.errors"), async (req, res, next) => {
     try {
       const limit = limitQuery(req.query.limit, 200);
       const since = req.query.since === undefined ? undefined : numberQuery(req.query.since, "since");
@@ -105,7 +186,7 @@ export function adminRouter(): Router {
   });
 
   /** One problem with its stack trace and one page of its newest reports. Pages work as in the list. */
-  router.get("/error-groups/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  router.get("/error-groups/:id", requireAuth, requirePermission("dev.errors"), async (req, res, next) => {
     try {
       const limit = limitQuery(req.query.limit, 50);
       const group = await loadErrorGroup(pathParam(req, "id"), limit, cursorQuery(req.query));
@@ -121,14 +202,19 @@ export function adminRouter(): Router {
    * Filters: `tournamentId`, `uid`, `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`)
    * the period `from` (inclusive) and `to` (exclusive) in milliseconds, and `q`, a free text that the entry must hold
    * (case and accents do not count). Send `nextCursor` back as `cursor`.
+   * A super admin reads all of it. A country admin reads the activity of one tournament of its countries.
    */
-  router.get("/activity", requireAuth, requireAdmin, async (req, res, next) => {
+  router.get("/activity", requireAuth, requirePermission("tournament.activity"), async (req, res, next) => {
     try {
       const limit = limitQuery(req.query.limit, 50);
       const source = (req.query.source ?? "all") as FeedSource;
       if (!FEED_SOURCES.includes(source)) throw badRequest("source must be all, tables or other");
       const tournamentId = typeof req.query.tournamentId === "string" && req.query.tournamentId ? req.query.tournamentId : undefined;
       if (tournamentId) assertSafeDocumentId(tournamentId, "tournament id");
+      const access = accessOf(res);
+      if (!access.superAdmin && (tournamentId == null || !(await canInTournament(access, "tournament.activity", tournamentId)))) {
+        throw forbidden("You can read the activity of the tournaments of your countries only");
+      }
       const uid = typeof req.query.uid === "string" && req.query.uid ? req.query.uid : undefined;
       const origin = req.query.origin === undefined || req.query.origin === "" ? undefined : req.query.origin as FeedOrigin;
       if (origin !== undefined && !FEED_ORIGINS.includes(origin)) throw badRequest("origin must be admin, player or system");
@@ -144,91 +230,112 @@ export function adminRouter(): Router {
     }
   });
 
-  router.get("/users", requireAuth, requireEditor, async (_req, res, next) => {
+  /** The accounts that the signed-in account may see. See accountScope.ts. */
+  router.get("/users", requireAuth, requirePermission("accounts.view"), async (_req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
-      res.status(200).json({ users: await listManagedUsers(await assignmentScopeFor(actor)) });
+      const scope = await loadAccountScope(accessOf(res));
+      const users = (await listManagedUsers()).filter((user) => canSeeAccount(scope, user)).map((user) => viewOfAccount(scope, user));
+      res.status(200).json({ users });
     } catch (error) {
       next(error);
     }
   });
 
-  router.post("/users", requireAuth, requireEditor, async (req, res, next) => {
+  /**
+   * Creates an account. Every editor and admin creates player accounts. A country admin creates editors and country
+   * admins of its countries, and a super admin creates any account.
+   */
+  router.post("/users", requireAuth, requirePermission("accounts.createPlayer"), async (req, res, next) => {
     let createdUid: string | null = null;
     try {
-      const actor = res.locals.auth as Actor;
+      const access = accessOf(res);
       const email = requireEmail(req.body?.email, "email");
       const alias = String(req.body?.alias ?? "").trim();
-      // A player account always has an EMA id. An editor may set it for a player account only.
-      const role = req.body?.role === "PLAYER" ? "PLAYER" as const : parseGlobalUserRole(req.body?.role);
+      const role: GlobalUserRole | null = req.body?.role === "PLAYER" ? "PLAYER" : parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
-      if (role === "ADMIN" && !hasAdminClaim(actor)) throw forbidden("Only admins can create admins");
-      if (role === "EDITOR" && !hasAdminClaim(actor)) throw forbidden("Only admins can create editor accounts");
-      const assignmentScope = await assignmentScopeFor(actor);
-      const tournamentAssignments = role === "EDITOR" ? parseTournamentAssignments(req.body?.tournamentAssignments) : [];
-      // The EMA id links the account to a player. Only an admin sets it. Check it before the account exists.
+      if (role === "SUPER_ADMIN" && !hasPermissionSomewhere(access, "accounts.manageSuperAdmins")) {
+        throw forbidden("Only super admins can create super admins");
+      }
+      if ((role === "EDITOR" || role === "COUNTRY_ADMIN") && !hasPermissionSomewhere(access, "accounts.manageStaff")) {
+        throw forbidden("Only admins can create editor and admin accounts");
+      }
+      const scope = await loadAccountScope(access);
+      const merged = role === "PLAYER" || role === "SUPER_ADMIN"
+        ? { countries: [], assignments: [] }
+        : mergeInScope(scope, null, role === "COUNTRY_ADMIN" ? parseAdminCountries(req.body?.adminCountries) : [],
+          parseTournamentAssignments(req.body?.tournamentAssignments));
+      assertRoleFits(role, merged.countries, merged.assignments);
+      // The EMA id links the account to a player. Check it before the account exists.
       const emaId = String(req.body?.emaId ?? "").trim() || null;
       if (role === "PLAYER" && emaId == null) throw badRequest("A player account needs an EMA id");
-      if (emaId != null) {
-        if (!hasAdminClaim(actor)) throw forbidden("Only an admin can set the EMA id of an account");
-        await assertEmaIdAvailable(emaId);
-      }
+      if (emaId != null) await assertEmaIdAvailable(emaId);
       await assertEmailAvailable(email);
 
       const user = await auth.createUser({ email, disabled: false });
       createdUid = user.uid;
       await createUserProfile(user.uid, email, alias);
-      await setGlobalUserRole(user.uid, role);
-      await syncUserTournamentAssignments(user.uid, tournamentAssignments, assignmentScope);
+      await setGlobalUserRole(user.uid, role, merged.countries);
+      await syncUserTournamentAssignments(user.uid, merged.assignments);
       if (emaId != null) await setAccountEmaId({ uid: user.uid, emaId });
+      await syncRoleClaims(user.uid);
       await sendPasswordResetEmail(email);
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: "user.create", actor: actorFromToken(res.locals.auth), target: `user ${user.uid}`,
-        details: { role, emaId, tournamentAssignments },
+        details: { role, emaId, adminCountries: merged.countries, tournamentAssignments: merged.assignments },
       });
 
-      res.status(201).json(await getManagedUser(user.uid, assignmentScope));
+      res.status(201).json(await viewFor(res, user.uid));
     } catch (error) {
       if (createdUid) {
         await setAccountEmaId({ uid: createdUid, emaId: null }).catch(() => undefined);
         await Promise.allSettled([
           auth.deleteUser(createdUid),
-          db.doc(`users/${createdUid}`).delete(),
           syncUserTournamentAssignments(createdUid, []),
         ]);
+        await db.doc(`users/${createdUid}`).delete().catch(() => undefined);
       }
       next(error);
     }
   });
 
-  router.put("/users/:uid", requireAuth, requireEditor, async (req, res, next) => {
+  router.put("/users/:uid", requireAuth, requirePermission("accounts.view"), async (req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
+      const access = accessOf(res);
       const current = await getManagedUser(pathParam(req, "uid"));
-      // A player-only account may keep its role. Only an admin demotes an editor or an admin to a player.
-      const role = parseGlobalUserRole(req.body?.role)
-        ?? (req.body?.role === "PLAYER" && (current.role === "PLAYER" || hasAdminClaim(actor)) ? "PLAYER" as const : null);
+      const scope = await loadAccountScope(access);
+      if (!canSeeAccount(scope, current)) throw forbidden("You cannot change this account");
+      const role: GlobalUserRole | null = req.body?.role === "PLAYER" ? "PLAYER" : parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
-      if (!hasAdminClaim(actor) && (current.role === "ADMIN" || role === "ADMIN")) {
-        throw forbidden("Editors cannot modify admin accounts");
+      // A viewer that does not see the email of the account sends none: the account keeps its email.
+      const sentEmail = String(req.body?.email ?? "").trim();
+      const email = sentEmail === "" ? current.email : requireEmail(sentEmail, "email");
+      const alias = String(req.body?.alias ?? "").trim();
+      const self = access.uid === current.uid;
+      const staffChange = role !== "PLAYER" || isStaffAccount(current);
+
+      // A new email plus a password reset takes over the account. Only a super admin changes the email.
+      if (email.toLowerCase() !== current.email.toLowerCase() && !access.superAdmin) {
+        throw forbidden("Only a super admin can change the email of an account");
       }
-      if (!hasAdminClaim(actor) && current.role !== "PLAYER" && current.uid !== actor.uid) {
-        throw forbidden("Editors can only edit their own account");
+      if ((current.role === "SUPER_ADMIN" || role === "SUPER_ADMIN") && !access.superAdmin && !self) {
+        throw forbidden("Only super admins can change super admin accounts");
       }
-      if (actor.uid === current.uid && role !== current.role) {
-        throw badRequest("You cannot change your own role");
+      if (staffChange && !self && !(access.superAdmin || (scope.manageCountries.size > 0 && viewOfAccount(scope, current).canManage))) {
+        throw forbidden("You cannot change the role, the countries or the tournaments of this account");
       }
 
-      const email = requireEmail(req.body?.email, "email");
-      // A new email plus a password reset takes over the account. Only admins may change the email of an account.
-      if (!hasAdminClaim(actor) && email.toLowerCase() !== current.email.toLowerCase()) {
-        throw forbidden("Only an admin can change the email of an account");
+      let merged = { countries: current.adminCountries, assignments: current.tournamentAssignments };
+      if (self) {
+        if (role !== current.role) throw badRequest("You cannot change your own role");
+      } else if (staffChange) {
+        merged = role === "SUPER_ADMIN" || (role === "PLAYER" && access.superAdmin)
+          ? { countries: [], assignments: [] }
+          : mergeInScope(scope, current, role === "COUNTRY_ADMIN" || role === "EDITOR" ? parseAdminCountries(req.body?.adminCountries) : [],
+            role === "PLAYER" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments));
+        assertRoleFits(role, merged.countries, merged.assignments);
       }
-      const alias = String(req.body?.alias ?? "").trim();
-      const assignmentScope = await assignmentScopeFor(actor);
-      const tournamentAssignments = role === "EDITOR" ? parseTournamentAssignments(req.body?.tournamentAssignments) : [];
-      await assertAdminRemainsEnabled(current.role, current.disabled, role, current.disabled);
+      await assertSuperAdminRemainsEnabled(current, role, current.disabled);
       await assertEmailAvailable(email, current.uid);
       // Check the EMA id before any change, so a refusal leaves the account as it was.
       const nextEmaId = typeof req.body?.emaId === "string" ? req.body.emaId.trim() || null : undefined;
@@ -237,65 +344,79 @@ export function adminRouter(): Router {
         throw badRequest("A player account needs an EMA id");
       }
       if (emaIdChanges) {
-        if (role !== "PLAYER" && !hasAdminClaim(actor)) throw forbidden("Only an admin can change the EMA id of an editor account");
+        if (!access.superAdmin) throw forbidden("Only a super admin can change the EMA id of an account");
         if (nextEmaId != null) await assertEmaIdAvailable(nextEmaId, current.uid);
       }
 
-      await updateManagedUser({
+      if (emaIdChanges) await setAccountEmaId({ uid: current.uid, emaId: nextEmaId ?? null });
+      const result = await updateManagedUser({
         uid: current.uid,
         email,
         alias,
-        role,
-        tournamentAssignments,
-        assignmentScope,
+        role: self ? current.role : role,
+        adminCountries: merged.countries,
+        tournamentAssignments: merged.assignments,
       });
-      if (emaIdChanges) await setAccountEmaId({ uid: current.uid, emaId: nextEmaId ?? null });
+      // An account disabled because it lost its last tournament comes back with its new role.
+      const enabled = current.disabledWithoutRole && !self && role !== "PLAYER" && result !== "DISABLED";
+      if (enabled) await setManagedUserDisabled(current.uid, false);
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: "user.update", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
         details: {
-          roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined, tournamentAssignments,
+          roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined,
+          adminCountries: merged.countries, tournamentAssignments: merged.assignments, enabled: enabled || undefined,
         },
       });
-      res.status(200).json(await getManagedUser(current.uid, assignmentScope));
+      res.status(200).json({ ...(await viewFor(res, current.uid)), roleChange: result });
     } catch (error) {
       next(error);
     }
   });
 
-  // Only admins set the photo of another user. A user sets the own photo with /auth/me/photo.
-  router.put("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
+  // Only super admins set the photo of another user. A user sets the own photo with /auth/me/photo.
+  router.put("/users/:uid/photo", requireAuth, requirePermission("accounts.photo"), async (req, res, next) => {
     try {
       const contentType = readContentType(req.body);
       await setUserPhoto(pathParam(req, "uid"), contentType, readPhotoData(req.body));
       await recordActivity({
         action: "user.photo", actor: actorFromToken(res.locals.auth), target: pathParam(req, "uid"), details: { contentType },
       });
-      res.status(200).json(await getManagedUser(pathParam(req, "uid")));
+      res.status(200).json(await viewFor(res, pathParam(req, "uid")));
     } catch (error) {
       next(error);
     }
   });
 
-  router.delete("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
+  router.delete("/users/:uid/photo", requireAuth, requirePermission("accounts.photo"), async (req, res, next) => {
     try {
       await clearUserPhoto(pathParam(req, "uid"));
       await recordActivity({
         action: "user.photo.remove", actor: actorFromToken(res.locals.auth), target: pathParam(req, "uid"), details: {},
       });
-      res.status(200).json(await getManagedUser(pathParam(req, "uid")));
+      res.status(200).json(await viewFor(res, pathParam(req, "uid")));
     } catch (error) {
       next(error);
     }
   });
 
-  // Sends the password reset email to many accounts at once. Only admins do this.
-  router.post("/users/password-resets", requireAuth, requireAdmin, async (req, res, next) => {
+  // Sends the password reset email to many accounts at once. A country admin sends it to the accounts that it sees.
+  router.post("/users/password-resets", requireAuth, requirePermission("accounts.passwordReset"), async (req, res, next) => {
     try {
       const raw = Array.isArray(req.body?.uids) ? req.body.uids as unknown[] : [];
       const uids = raw.map((value) => String(value ?? "").trim());
       if (uids.some((uid) => uid === "")) throw badRequest("uids must be non-empty texts");
-      const results = await sendPasswordResets(uids);
+      const access = accessOf(res);
+      let allowed = uids;
+      const refused: PasswordResetResult[] = [];
+      if (!access.superAdmin) {
+        const scope = await loadAccountScope(access);
+        const visible = new Set((await listManagedUsers()).filter((user) => canSeeAccount(scope, user)).map((user) => user.uid));
+        allowed = uids.filter((uid) => visible.has(uid));
+        uids.filter((uid) => !visible.has(uid)).forEach((uid) => refused.push({ uid, outcome: "FAILED", reason: "NOT_FOUND" }));
+      }
+      const results = [...(allowed.length > 0 ? await sendPasswordResets(allowed) : []), ...refused];
+      if (results.length === 0) throw badRequest("Choose at least one account");
       await recordActivity({
         action: "user.passwordReset", actor: actorFromToken(res.locals.auth), target: `${results.length} users`,
         details: { uids: results.map((result) => result.uid), sent: results.filter((result) => result.outcome === "SENT").length },
@@ -306,34 +427,34 @@ export function adminRouter(): Router {
     }
   });
 
-  router.put("/users/:uid/disabled", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/users/:uid/disabled", requireAuth, requirePermission("accounts.disable"), async (req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
+      const access = accessOf(res);
       const disabled = req.body?.disabled;
       if (typeof disabled !== "boolean") throw badRequest("disabled must be a boolean");
       const current = await getManagedUser(pathParam(req, "uid"));
-      if (actor.uid === current.uid && disabled) throw badRequest("You cannot disable your own account");
-      await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
+      if (access.uid === current.uid && disabled) throw badRequest("You cannot disable your own account");
+      await assertSuperAdminRemainsEnabled(current, current.role, disabled);
 
       await setManagedUserDisabled(current.uid, disabled);
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: disabled ? "user.disable" : "user.enable", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
       });
-      res.status(200).json(await getManagedUser(current.uid));
+      res.status(200).json(await viewFor(res, current.uid));
     } catch (error) {
       next(error);
     }
   });
 
-  // Deletes an account for good, for example when the person asks for it (privacy policy). Only admins do this.
+  // Deletes an account for good, for example when the person asks for it (privacy policy). Only super admins do this.
   // The EMA player and the tournament results stay; the slots show "No account" again.
-  router.delete("/users/:uid", requireAuth, requireAdmin, async (req, res, next) => {
+  router.delete("/users/:uid", requireAuth, requirePermission("accounts.delete"), async (req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
+      const access = accessOf(res);
       const current = await getManagedUser(pathParam(req, "uid"));
-      if (actor.uid === current.uid) throw badRequest("You cannot delete your own account");
-      await assertAdminRemainsEnabled(current.role, current.disabled, current.role, true);
+      if (access.uid === current.uid) throw badRequest("You cannot delete your own account");
+      await assertSuperAdminRemainsEnabled(current, current.role, true);
       await setAccountEmaId({ uid: current.uid, emaId: null });
       await deleteManagedUser(current.uid);
       await recordActivity({
@@ -346,11 +467,11 @@ export function adminRouter(): Router {
   });
 
   // Deletes many accounts at once, like the single delete above. Every account has its own result: the own account,
-  // the last enabled admin or an unknown account fails alone, and the others are still deleted. The accounts go one
-  // after another, so the check of the last admin sees the admins that this request already deleted.
-  router.post("/users/delete", requireAuth, requireAdmin, async (req, res, next) => {
+  // the last enabled super admin or an unknown account fails alone, and the others are still deleted. The accounts
+  // go one after another, so the check of the last super admin sees the ones that this request already deleted.
+  router.post("/users/delete", requireAuth, requirePermission("accounts.delete"), async (req, res, next) => {
     try {
-      const actor = res.locals.auth as Actor;
+      const access = accessOf(res);
       const raw = Array.isArray(req.body?.uids) ? req.body.uids as unknown[] : [];
       const uids = [...new Set(raw.map((value) => String(value ?? "").trim()))];
       if (uids.some((uid) => uid === "")) throw badRequest("uids must be non-empty texts");
@@ -360,7 +481,7 @@ export function adminRouter(): Router {
       for (const uid of uids) {
         const fail = (reason: UserDeleteFailure): UserDeleteResult => ({ uid, outcome: "FAILED", reason });
         try {
-          const failure = await deleteAccountChecked(actor.uid, uid);
+          const failure = await deleteAccountChecked(access.uid, uid);
           results.push(failure == null ? { uid, outcome: "DELETED" } : fail(failure));
         } catch (error) {
           console.error("Account delete failed", { uid, error });
@@ -379,7 +500,73 @@ export function adminRouter(): Router {
     }
   });
 
-  router.get("/users/lookup", requireAuth, requireEditor, async (req, res, next) => {
+  /**
+   * A country admin takes an account out of its countries: the account loses its countries and its tournaments
+   * there. With `kind` DISABLE or DELETE it also asks the super admins to disable or delete the whole account.
+   * An editor that keeps no tournament becomes a player, or is disabled without an EMA id.
+   */
+  router.post("/users/:uid/removal", requireAuth, requirePermission("accounts.requestRemoval"), async (req, res, next) => {
+    try {
+      const access = accessOf(res);
+      const current = await getManagedUser(pathParam(req, "uid"));
+      if (access.uid === current.uid) throw badRequest("You cannot remove your own account");
+      if (current.roles.includes("SUPER_ADMIN")) throw forbidden("Only super admins can change super admin accounts");
+      const scope = await loadAccountScope(access);
+      if (!canSeeAccount(scope, current)) throw forbidden("You cannot change this account");
+      const kind = req.body?.kind == null ? null : parseAccountRequestKind(req.body.kind);
+      if (req.body?.kind != null && kind == null) throw badRequest("kind must be DISABLE or DELETE");
+      const reason = String(req.body?.reason ?? "");
+      if (viewOfAccount(scope, current).canManage) await removeInScope(scope, current);
+      const request = kind == null ? null : await createAccountRequest({ kind, targetUid: current.uid, reason, requestedByUid: access.uid });
+      await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "user.removal", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
+        details: { countries: [...scope.manageCountries], request: kind ?? undefined, reason: reason || undefined },
+      });
+      res.status(200).json({ user: await viewFor(res, current.uid), request });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** The open requests of the country admins to disable or delete accounts. */
+  router.get("/account-requests", requireAuth, requirePermission("accounts.reviewRequests"), async (_req, res, next) => {
+    try {
+      res.status(200).json({ requests: await listPendingAccountRequests() });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** A super admin approves a request, which disables or deletes the account at once, or rejects it. */
+  router.post("/account-requests/:requestId", requireAuth, requirePermission("accounts.reviewRequests"), async (req, res, next) => {
+    try {
+      const access = accessOf(res);
+      const approve = req.body?.approve;
+      if (typeof approve !== "boolean") throw badRequest("approve must be a boolean");
+      const request = await resolveAccountRequest(pathParam(req, "requestId"), approve, access.uid);
+      let outcome: string = approve ? "DONE" : "REJECTED";
+      if (approve) {
+        if (request.kind === "DELETE") {
+          outcome = (await deleteAccountChecked(access.uid, request.targetUid)) ?? "DONE";
+        } else {
+          const current = await getManagedUser(request.targetUid);
+          await assertSuperAdminRemainsEnabled(current, current.role, true);
+          await setManagedUserDisabled(current.uid, true);
+        }
+        await bumpGlobalDataVersion("users");
+      }
+      await recordActivity({
+        action: approve ? "user.request.approve" : "user.request.reject", actor: actorFromToken(res.locals.auth),
+        target: `user ${request.targetUid}`, details: { kind: request.kind, outcome },
+      });
+      res.status(200).json({ request, outcome });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get("/users/lookup", requireAuth, requirePermission("accounts.view"), async (req, res, next) => {
     try {
       const identifier = String(req.query.identifier ?? "").trim();
       if (!identifier) throw badRequest("Missing identifier");

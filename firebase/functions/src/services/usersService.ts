@@ -6,12 +6,15 @@ import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsSe
 import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { EMA_PLAYER_REGISTRY_COLLECTION, storePhotoFile, toPlayer } from "./playersService";
 import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
+import { forgetAccess, readCountryList } from "./accessService";
 
 export type { GlobalUserRole } from "../models/globalRole";
 
 export type TournamentAssignment = {
   tournamentId: string;
   tournamentName: string;
+  /** The host country of the tournament. The countries of an editor are the countries of its tournaments. */
+  country?: string;
 };
 
 export type UserProfile = {
@@ -38,7 +41,11 @@ export type ManagedUser = UserProfile & {
   role: GlobalUserRole;
   roles: GlobalUserRole[];
   disabled: boolean;
+  /** True when the account was disabled because it lost its last role (syncRoleClaims), not by a super admin. */
+  disabledWithoutRole: boolean;
   tournamentAssignments: TournamentAssignment[];
+  /** The countries of a country admin. Empty for the other roles. */
+  adminCountries: string[];
 };
 
 export type AdminAccount = {
@@ -137,7 +144,9 @@ export async function listManagedUsers(
         role: getGlobalUserRole(user),
         roles: getGlobalUserRoles(user),
         disabled: user.disabled,
+        disabledWithoutRole: user.disabled && profile?.disabledReason === DISABLED_WITHOUT_ROLE,
         tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
+        adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile?.adminCountries) : [],
       });
     });
     pageToken = page.pageToken;
@@ -180,33 +189,107 @@ export async function getManagedUser(
     role: getGlobalUserRole(user),
     roles: getGlobalUserRoles(user),
     disabled: user.disabled,
+    disabledWithoutRole: user.disabled && profile.get("disabledReason") === DISABLED_WITHOUT_ROLE,
     tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
+    adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile.get("adminCountries")) : [],
   };
 }
 
-export async function setGlobalUserRole(uid: string, role: GlobalUserRole): Promise<void> {
+/**
+ * Sets the main role of an account and keeps its player capability. A country admin gets its countries. Scripts and
+ * tests use it directly. The routes check the rules first and then call it with the result.
+ */
+export async function setGlobalUserRole(uid: string, role: GlobalUserRole, adminCountries: string[] = []): Promise<void> {
   const user = await auth.getUser(uid);
   const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
-  delete claims.admin;
+  delete claims.superAdmin;
+  delete claims.countryAdmin;
   delete claims.editor;
-  if (role === "ADMIN") claims.admin = true;
+  const countries = role === "COUNTRY_ADMIN" ? readCountryList(adminCountries) : [];
+  if (role === "COUNTRY_ADMIN" && countries.length === 0) throw badRequest("A country admin needs at least one country");
+  if (role === "SUPER_ADMIN") claims.superAdmin = true;
+  else if (role === "COUNTRY_ADMIN") claims.countryAdmin = true;
   else if (role === "EDITOR") claims.editor = true;
   else claims.player = true;
+  await db.doc(`users/${uid}`).set(
+    { adminCountries: countries.length > 0 ? countries : FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
   await auth.setCustomUserClaims(uid, claims);
+  forgetAccess(uid);
   // The role decides which tournaments the account lists, so the cached lists are old.
   await bumpGlobalDataVersion("tournaments");
 }
 
+/** The `disabledReason` of an account that syncRoleClaims disabled. A super admin that enables or disables clears it. */
+const DISABLED_WITHOUT_ROLE = "NO_ROLE";
+
+/** What happened to an account after it lost a country or a tournament. */
+export type RoleSyncResult = "UNCHANGED" | "BECAME_PLAYER" | "DISABLED";
+
+/**
+ * Brings the role claims of an account in line with its data: the editor role holds while the account has an
+ * assigned tournament, the country admin role while it has a country. An account that keeps no role becomes a
+ * player when it has an EMA id. Without one it cannot sign in to anything, so it is disabled, and a super admin can
+ * enable it again with a new role or delete it.
+ */
+export async function syncRoleClaims(uid: string): Promise<RoleSyncResult> {
+  const user = await auth.getUser(uid).catch(() => null);
+  if (!user) return "UNCHANGED";
+  const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
+  if (claims.superAdmin === true) return "UNCHANGED";
+  const [profile, memberships] = await Promise.all([
+    db.doc(`users/${uid}`).get(),
+    db.collectionGroup("members").where("uid", "==", uid).limit(1).get(),
+  ]);
+  const hadStaffRole = claims.countryAdmin === true || claims.editor === true;
+  const countryAdmin = readCountryList(profile.get("adminCountries")).length > 0;
+  const editor = !memberships.empty;
+  delete claims.countryAdmin;
+  delete claims.editor;
+  if (countryAdmin) claims.countryAdmin = true;
+  if (editor) claims.editor = true;
+  const before = JSON.stringify(user.customClaims ?? {});
+  let result: RoleSyncResult = "UNCHANGED";
+  if (hadStaffRole && !countryAdmin && !editor) {
+    if (readEmaId(profile.get("emaId")) != null) {
+      claims.player = true;
+      result = "BECAME_PLAYER";
+    } else {
+      result = "DISABLED";
+    }
+  }
+  if (JSON.stringify(claims) !== before) await auth.setCustomUserClaims(uid, claims);
+  if (result === "DISABLED" && !user.disabled) {
+    await setManagedUserDisabled(uid, true);
+    // A country admin may enable it again by giving it a tournament of its countries (PUT /admin/users/:uid).
+    await db.doc(`users/${uid}`).set({ disabledReason: DISABLED_WITHOUT_ROLE }, { merge: true });
+  }
+  forgetAccess(uid);
+  if (result !== "UNCHANGED") await bumpGlobalDataVersion("users");
+  return result;
+}
+
+/** Saves the countries of a country admin and brings its role claims in line. */
+export async function setAdminCountries(uid: string, countries: string[]): Promise<void> {
+  const list = readCountryList(countries);
+  await db.doc(`users/${uid}`).set(
+    { adminCountries: list.length > 0 ? list : FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+  forgetAccess(uid);
+}
+
+/** Saves the email, the alias, the role, the countries and the tournaments of an account that a route checked. */
 export async function updateManagedUser(params: {
   uid: string;
   email: string;
   alias: string;
   role: GlobalUserRole;
+  adminCountries: string[];
   tournamentAssignments: TournamentAssignment[];
-  assignmentScope?: ReadonlySet<string>;
-}): Promise<void> {
+}): Promise<RoleSyncResult> {
   await auth.updateUser(params.uid, { email: params.email });
-  await setGlobalUserRole(params.uid, params.role);
   await db.doc(`users/${params.uid}`).set(
     {
       uid: params.uid,
@@ -217,11 +300,9 @@ export async function updateManagedUser(params: {
     },
     { merge: true },
   );
-  await syncUserTournamentAssignments(
-    params.uid,
-    params.role === "EDITOR" ? params.tournamentAssignments : [],
-    params.role === "EDITOR" ? params.assignmentScope : undefined,
-  );
+  await setGlobalUserRole(params.uid, params.role, params.adminCountries);
+  await syncUserTournamentAssignments(params.uid, params.role === "SUPER_ADMIN" || params.role === "PLAYER" ? [] : params.tournamentAssignments);
+  return syncRoleClaims(params.uid);
 }
 
 async function listTournamentAssignmentsByUid(
@@ -236,15 +317,20 @@ async function listTournamentAssignmentsByUid(
     return [{ uid: member.id, tournamentRef }];
   });
   const tournamentRefs = [...new Map(memberships.map(({ tournamentRef }) => [tournamentRef.id, tournamentRef])).values()];
-  const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name"] });
+  const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name", "hostCountry"] });
   const namesById = new Map(
     tournaments.filter((tournament) => tournament.exists).map((tournament) => [tournament.id, String(tournament.get("name") ?? "")]),
+  );
+  const countriesById = new Map(
+    tournaments.filter((tournament) => tournament.exists)
+      .map((tournament) => [tournament.id, String(tournament.get("hostCountry") ?? "").toUpperCase()]),
   );
   memberships.forEach(({ uid, tournamentRef }) => {
     if (!namesById.has(tournamentRef.id)) return;
     const assignment: TournamentAssignment = {
       tournamentId: tournamentRef.id,
       tournamentName: namesById.get(tournamentRef.id) ?? "",
+      country: countriesById.get(tournamentRef.id) ?? "",
     };
     result.set(uid, [...(result.get(uid) ?? []), assignment]);
   });
@@ -264,10 +350,12 @@ export async function listUserTournamentAssignments(
     if (!tournamentRef || (visibleTournamentIds && !visibleTournamentIds.has(tournamentRef.id))) return null;
     const tournament = await tournamentRef.get();
     if (!tournament.exists) return null;
-    return {
+    const assignment: TournamentAssignment = {
       tournamentId: tournament.id,
       tournamentName: String(tournament.get("name") ?? ""),
-    } satisfies TournamentAssignment;
+      country: String(tournament.get("hostCountry") ?? "").toUpperCase(),
+    };
+    return assignment;
   }));
   return assignments
     .filter((assignment): assignment is TournamentAssignment => assignment !== null)
@@ -287,7 +375,7 @@ export async function syncUserTournamentAssignments(
   const tournamentIds = [...desired.keys()];
   if (tournamentIds.length !== assignments.length) throw conflict("Duplicate tournament assignment");
   if (scopeTournamentIds && tournamentIds.some((id) => !scopeTournamentIds.has(id))) {
-    throw forbidden("Editors can assign accounts only to their own tournaments");
+    throw forbidden("You can assign accounts only to the tournaments that you manage");
   }
 
   const tournamentRefs = tournamentIds.map((id) => db.doc(`tournaments/${id}`));
@@ -322,6 +410,7 @@ export async function syncUserTournamentAssignments(
   });
   if (operationCount > 0) {
     await batch.commit();
+    forgetAccess(uid);
     // An editor lists only the tournaments assigned to it, so the cached lists are old.
     await bumpGlobalDataVersion("tournaments");
   }
@@ -330,8 +419,9 @@ export async function syncUserTournamentAssignments(
 export async function setManagedUserDisabled(uid: string, disabled: boolean): Promise<void> {
   await auth.updateUser(uid, { disabled });
   if (disabled) await auth.revokeRefreshTokens(uid);
+  forgetAccess(uid);
   await db.doc(`users/${uid}`).set(
-    { disabled, updatedAt: FieldValue.serverTimestamp() },
+    { disabled, disabledReason: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }
@@ -350,24 +440,24 @@ export async function deleteManagedUser(uid: string): Promise<void> {
   await bumpGlobalDataVersion("users");
 }
 
-export async function countEnabledAdmins(): Promise<number> {
+export async function countEnabledSuperAdmins(): Promise<number> {
   let count = 0;
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1_000, pageToken);
-    count += page.users.filter((user) => !user.disabled && getGlobalUserRole(user) === "ADMIN").length;
+    count += page.users.filter((user) => !user.disabled && getGlobalUserRole(user) === "SUPER_ADMIN").length;
     pageToken = page.pageToken;
   } while (pageToken);
   return count;
 }
 
-export async function listEnabledAdmins(): Promise<AdminAccount[]> {
+export async function listEnabledSuperAdmins(): Promise<AdminAccount[]> {
   const admins: AdminAccount[] = [];
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1_000, pageToken);
     page.users.forEach((user) => {
-      if (!user.disabled && getGlobalUserRole(user) === "ADMIN") {
+      if (!user.disabled && getGlobalUserRole(user) === "SUPER_ADMIN") {
         admins.push({ uid: user.uid, email: user.email ?? "" });
       }
     });

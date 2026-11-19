@@ -168,11 +168,13 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val players by store.players.collectAsState()
     LoadMissingSession()
     val admin by store.adminStatus.collectAsState()
-    val canEdit = admin?.canEditPlayers == true
-    val canEditEmaNumber = admin?.isAdmin == true
-    // Admins select EMA players in the list and delete them in one go. Their accounts are never deleted.
+    // Super admins and country admins add EMA players of any country. Only super admins change or delete them.
+    val canCreate = admin?.canCreateEmaPlayers == true
+    val canEdit = admin?.canEditEmaPlayers == true
+    val canEditEmaNumber = admin?.canEditEmaPlayers == true
+    // Super admins select EMA players in the list and delete them in one go. Their accounts are never deleted.
     // A player with data in tournaments is deactivated instead, and the list shows it crossed out.
-    val canDelete = admin?.isAdmin == true
+    val canDelete = admin?.canDeleteEmaPlayers == true
     var checkedEmaIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var confirmDeleteOpen by remember { mutableStateOf(false) }
     var deleteWithData by remember { mutableStateOf<List<EmaPlayerTournaments>>(emptyList()) }
@@ -706,8 +708,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        // Only admins add players. An editor has no button here, so there is no empty three-dots menu on a phone.
-        actions = if (canEdit) {
+        // Only super admins and country admins add players. An editor has no button here, so there is no empty
+        // three-dots menu on a phone.
+        actions = if (canCreate) {
             { AppTopBarActions(onNewPlayer = ::openNewPlayerDialog) }
         } else {
             null

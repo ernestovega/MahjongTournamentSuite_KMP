@@ -56,6 +56,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsGroupDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsOverviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SupportMessageRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
@@ -181,6 +182,15 @@ class FunctionsBackendApi(
         return response.requireSuccessBody()
     }
 
+    /** The statistics of a group. Each map entry is one filter of the query: see the server route for the names. */
+    suspend fun statisticsGroup(idToken: String, filters: Map<String, String>): StatisticsGroupDto {
+        val response = httpClient.get(readUrl("/tournaments/statistics/groups", idToken)) {
+            bearer(idToken)
+            filters.forEach { (name, value) -> parameter(name, value) }
+        }
+        return response.requireSuccessBody()
+    }
+
     private fun statisticsOwner(emaId: String?): String = if (emaId == null) "me" else "persons/${emaId.encodeURLPath()}"
 
     suspend fun globalDataVersions(idToken: String): DataVersionsManifestDto = get(path = "/sync/manifest", idToken = idToken)
@@ -225,6 +235,31 @@ class FunctionsBackendApi(
     )
 
     suspend fun deleteUser(idToken: String, uid: String): OkResponseDto = delete(path = "/admin/users/$uid", idToken = idToken)
+
+    suspend fun removeFromMyCountries(
+        idToken: String,
+        uid: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalResponseDto = post(
+        path = "/admin/users/$uid/removal",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun listAccountRequests(idToken: String): com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRequestsResponseDto = get(
+        path = "/admin/account-requests",
+        idToken = idToken,
+    )
+
+    suspend fun resolveAccountRequest(
+        idToken: String,
+        id: String,
+        approve: Boolean,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveAccountRequestResponseDto = post(
+        path = "/admin/account-requests/$id",
+        requestBody = com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveAccountRequestDto(approve),
+        idToken = idToken,
+    )
 
     suspend fun deleteUsers(
         idToken: String,
@@ -616,11 +651,15 @@ class FunctionsBackendApi(
         idToken: String,
         tournamentId: String,
         request: PlayerAccountActionRequestDto,
-    ): PlayerAccountActionResponseDto = post(
-        path = "/tournaments/$tournamentId/player-accounts/send",
-        requestBody = request,
-        idToken = idToken,
-    )
+    ): PlayerAccountActionResponseDto {
+        // Each player of the request gets an email: the request can take longer than a usual one.
+        val response = httpClient.post(url("/tournaments/$tournamentId/player-accounts/send")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
+        }
+        return response.requireSuccessBody()
+    }
 
     suspend fun savePlayerEmails(
         idToken: String,

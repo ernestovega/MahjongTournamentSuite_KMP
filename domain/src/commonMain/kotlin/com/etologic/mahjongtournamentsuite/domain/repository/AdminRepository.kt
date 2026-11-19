@@ -1,8 +1,11 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
@@ -26,8 +29,10 @@ interface AdminRepository {
         alias: String,
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
-        /** The EMA ID of the new account. Only an admin can set it. */
+        /** The EMA ID of the new account. */
         emaId: String? = null,
+        /** The countries of a new country admin, as two-letter codes. */
+        adminCountries: Set<String> = emptySet(),
     ): AppResult<ManagedUser>
 
     suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser>
@@ -71,4 +76,16 @@ interface AdminRepository {
      * can load it. Never cached.
      */
     suspend fun loadActivity(filter: ActivityFilter, cursor: String? = null): AppResult<ActivityPage>
+
+    /**
+     * A country admin takes an account out of its countries: its countries and its tournaments there. With a [kind]
+     * it also asks the super admins to disable or delete the whole account. Answers the account as it is now.
+     */
+    suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** The open requests of the country admins. Only super admins load them. */
+    suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = AppResult.Success(emptyList())
+
+    /** A super admin approves a request, which disables or deletes the account at once, or rejects it. */
+    suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = AppResult.Failure(AppError.Unexpected("Not supported"))
 }

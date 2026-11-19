@@ -61,7 +61,7 @@ import kotlin.test.assertTrue
 /** What each role sees and can do on the screens. The server enforces the same rules, see `rolePermissions.integration.test.ts`. */
 @OptIn(ExperimentalTestApi::class)
 class RoleGatingUiTest {
-    private val boss = ManagedUser("a1", "boss@example.test", "Boss", GlobalUserRole.ADMIN, false, emptyList())
+    private val boss = ManagedUser("a1", "boss@example.test", "Boss", GlobalUserRole.SUPER_ADMIN, false, emptyList())
     private val ed = ManagedUser("e1", "ed@example.test", "Ed", GlobalUserRole.EDITOR, false, emptyList())
 
     /** The account of the signed-in editor. The fake repository signs in as uid "me". */
@@ -120,7 +120,7 @@ class RoleGatingUiTest {
 
     @Test
     fun enteringTheTournamentListFocusesTheFirstTournament() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).apply {
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).apply {
             server.tournaments = listOf(
                 Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1),
                 Tournament(id = "t2", name = "Cup", isTeams = false, numPlayers = 8, numRounds = 1),
@@ -135,7 +135,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminSeesCreateEditAndUserManagementOnTheTournamentList() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, emptyList())) { TournamentsScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, emptyList())) { TournamentsScreen(rememberNavController()) }
 
         onNodeWithText("New tournament").assertExists()
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
@@ -148,6 +148,16 @@ class RoleGatingUiTest {
         listOf("Activity", "App errors", "Design system", "Screenshots", "Versions", "Privacy policy", "API (Swagger)", "Staging (test site)")
             .forEach { onNodeWithText(it).assertExists() }
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun countryAdminCreatesAndEditsTournamentsButHasNoDevMenu() = runComposeUiTest {
+        show(World(GlobalUserRole.COUNTRY_ADMIN, emptyList())) { TournamentsScreen(rememberNavController()) }
+
+        onNodeWithText("New tournament").assertExists()
+        onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
+        onNodeWithText("Users").assertExists()
+        onAllNodesWithText("DEV").assertCountEquals(0)
     }
 
     @Test
@@ -164,7 +174,7 @@ class RoleGatingUiTest {
 
     @Test
     fun theProfileOpensFromTheAliasAndSavesANewAlias() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList())
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList())
         show(world) { TournamentsScreen(rememberNavController()) }
         awaitText("Me")
 
@@ -196,7 +206,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminCanAddEmaPlayers() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) }
         show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }
 
         onNodeWithText("New player").assertExists()
@@ -204,7 +214,7 @@ class RoleGatingUiTest {
 
     @Test
     fun aNewEmaPlayerWithoutCountryShowsInTheListAfterTheDialogCloses() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) }
         val many = (1..80).map { Player(emaId = "${20000 + it}", firstName = "First$it", lastName = "Aaa${it.toString().padStart(2, '0')}", country = "ESP") }
         val registry = FakePlayerRepository(many)
         show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
@@ -231,7 +241,7 @@ class RoleGatingUiTest {
 
     @Test
     fun aSearchThatHidesTheSelectedEmaPlayerSelectsTheFirstVisibleOne() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) }
         val babbage = Player(emaId = "10002", firstName = "Charles", lastName = "Babbage", country = "GBR")
         show(world, listOf(player.copy(country = "GBR"), babbage)) { PlayerBaseScreen(rememberNavController()) }
 
@@ -246,7 +256,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminDeletesEmaPlayersAndThoseWithTournamentDataAreDeactivatedInstead() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) }
         val babbage = Player(emaId = "10002", firstName = "Charles", lastName = "Babbage", country = "GBR")
         val turing = Player(emaId = "10003", firstName = "Alan", lastName = "Turing", country = "GBR")
         val registry = FakePlayerRepository(listOf(player, babbage, turing)).apply {
@@ -317,7 +327,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminHidesAnEmaPlayerFromThePublic() = runComposeUiTest {
-        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val world = World(GlobalUserRole.SUPER_ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) }
         // The save checks the three-letter EMA country code.
         val registry = FakePlayerRepository(listOf(player.copy(country = "GBR")))
         show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
@@ -353,7 +363,7 @@ class RoleGatingUiTest {
 
     @Test
     fun theUsersScreenOpensTheEditDialogOfTheAccountThatTheCallerNames() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "e1") }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "e1") }
 
         awaitText("Edit account")
 
@@ -363,7 +373,7 @@ class RoleGatingUiTest {
 
     @Test
     fun theUsersScreenOpensNoDialogForAnUnknownAccount() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "nobody") }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "nobody") }
 
         awaitText("boss@example.test")
 
@@ -372,7 +382,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminCanOpenAdminAndEditorAccounts() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         onNodeWithText("New user").assertExists()
         awaitText("boss@example.test")
@@ -392,7 +402,7 @@ class RoleGatingUiTest {
             emptyList(),
             emaId = "10001",
         )
-        show(World(GlobalUserRole.ADMIN, listOf(boss, playerAccount)), listOf(player)) {
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, playerAccount)), listOf(player)) {
             GlobalUsersScreen(rememberNavController())
         }
 
@@ -405,7 +415,7 @@ class RoleGatingUiTest {
 
     @Test
     fun adminCanDisableAnAccountFromItsDialog() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
@@ -416,7 +426,7 @@ class RoleGatingUiTest {
 
     @Test
     fun theButtonsGoFromSaveToCancel() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
@@ -432,7 +442,7 @@ class RoleGatingUiTest {
 
     @Test
     fun anAdminCanChooseThePlayerRoleForAnEditorAccount() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
@@ -478,17 +488,83 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun editorDoesNotSeeTheNewUserButton() = runComposeUiTest {
+    fun editorCreatesOnlyPlayerAccounts() = runComposeUiTest {
         show(World(GlobalUserRole.EDITOR, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
+        onNodeWithText("New user").performClick()
+        waitForIdle()
 
-        onAllNodesWithText("New user").assertCountEquals(0)
+        // The role is Player and cannot change: the field opens no menu, so only the role filter and the row of Ed say Editor.
+        onNodeWithText("Confirm email").assertExists()
+        onNodeWithText("Global role").performClick()
+        waitForIdle()
+        onAllNodesWithText("Editor").assertCountEquals(2)
+    }
+
+    @Test
+    fun countryAdminGivesTheCountryAdminRoleWithItsCountries() = runComposeUiTest {
+        show(World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
+        onNodeWithText("New user").performClick()
+        waitForIdle()
+        onNodeWithText("Global role").performClick()
+        waitForIdle()
+
+        // A country admin never creates a super admin: only the role filter and the row of Boss say Super Admin.
+        onAllNodesWithText("Super Admin").assertCountEquals(2)
+        onAllNodesWithText("Country Admin").onLast().performClick()
+        waitForIdle()
+        onNodeWithText("Add a country").assertExists()
+        onNodeWithText("A Country Admin needs at least one country.").assertExists()
+    }
+
+    @Test
+    fun countryAdminRemovesAnAccountFromItsCountriesAndAsksTheSuperAdmins() = runComposeUiTest {
+        val world = World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, ed.copy(canManage = true)))
+        show(world) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
+        onNodeWithText("ed@example.test").performClick()
+        waitForIdle()
+        onAllNodesWithText("Disable account").assertCountEquals(0)
+        onAllNodesWithText("Delete account").assertCountEquals(0)
+        onNodeWithText("Remove from my countries").performClick()
+        waitForIdle()
+        onNodeWithText("And ask a Super Admin to disable the account").performClick()
+        waitForIdle()
+        onNodeWithText("Reason for the Super Admins").performTextInput("Left the club")
+        onNodeWithText("Remove").performClick()
+        waitForIdle()
+
+        assertEquals(listOf("removal e1 DISABLE Left the club"), world.admin.calls)
+    }
+
+    @Test
+    fun countryAdminOpensAnEditorDisabledWithoutTournamentsToGiveItOneAgain() = runComposeUiTest {
+        val former = ed.copy(
+            uid = "e2",
+            email = "former@example.test",
+            role = GlobalUserRole.PLAYER,
+            roles = emptySet(),
+            disabled = true,
+            tournamentAssignments = emptyList(),
+            canManage = true,
+            disabledWithoutRole = true,
+        )
+        show(World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, former))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("former@example.test")
+        onNodeWithText("former@example.test").performClick()
+        waitForIdle()
+        onNodeWithText("This account was disabled when it lost its last tournament.", substring = true).assertExists()
+        onNodeWithText("Global role").assertIsEnabled()
     }
 
     @Test
     fun adminCanStartCreatingAnAccount() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("New user").performClick()
@@ -499,7 +575,7 @@ class RoleGatingUiTest {
 
     @Test
     fun theRoleChoiceOfAnEditorIsLockedWhileAdminsCanChangeIt() = runComposeUiTest {
-        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
         waitForIdle()

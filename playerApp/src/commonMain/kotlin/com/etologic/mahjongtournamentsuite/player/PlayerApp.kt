@@ -102,7 +102,7 @@ internal val playerModule get() = module {
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get(), telemetry()) }
     factory { MyTableReminderPresenter(get()) }
-    factory { PlayerStatisticsPresenter(get(), get(), get(), get(), telemetry()) }
+    factory { PlayerStatisticsPresenter(get(), get(), get(), get(), get(), telemetry()) }
 }
 
 /**

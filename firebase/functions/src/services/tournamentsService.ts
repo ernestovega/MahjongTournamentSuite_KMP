@@ -117,7 +117,7 @@ async function resolveCreatedByName(uid: string | null): Promise<string | null> 
   }
 }
 
-async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<Tournament> {
+export async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<Tournament> {
   const createdByUid = (d.get("createdByUid") as string) ?? null;
   const createdByName = (d.get("createdByName") as string) ?? await resolveCreatedByName(createdByUid);
   const numRounds = Number(d.get("numRounds") ?? 0);

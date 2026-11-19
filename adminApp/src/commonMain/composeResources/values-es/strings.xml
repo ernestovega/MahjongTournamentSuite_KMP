@@ -131,7 +131,7 @@
     <string name="player_details">Datos del jugador</string>
     <string name="no_player_selected">Ningún jugador seleccionado</string>
     <string name="choose_a_player_in_the_list">Elige un jugador de la lista para ver sus datos.</string>
-    <string name="only_admins_can_edit_the_player">Solo los administradores pueden editar la base de jugadores.</string>
+    <string name="only_admins_can_edit_the_player">Solo un superadministrador puede editar los jugadores EMA.</string>
     <string name="no_player_photo">Jugador sin foto</string>
     <string name="statistics">Estadísticas</string>
     <string name="this_table_has_no_statistics_yet">Esta mesa aún no tiene estadísticas.</string>
@@ -308,7 +308,6 @@
     <string name="disable_user_message">%1$s no podrá iniciar sesión. Su perfil y su historial se conservarán.</string>
     <string name="delete_user_message">%1$s se eliminará para siempre: el acceso, el correo, el alias y la foto. El jugador EMA y los resultados de los torneos se conservan. No se puede deshacer.</string>
     <string name="role_editor">Editor</string>
-    <string name="role_admin">Administrador</string>
     <string name="role_player">Jugador</string>
     <string name="insight_saves_fell">Los guardados de mesa bajaron un %1$s respecto a los %2$d días anteriores.</string>
     <string name="insight_no_saves">Nadie guardó una mesa en los últimos %1$d días.</string>
@@ -478,7 +477,6 @@
     <string name="scope_by_tournaments">Por torneos</string>
     <string name="scope_overall">General</string>
     <string name="stats_player_field">Jugador (nombre o número EMA)</string>
-    <string name="stats_admin_only">Las estadísticas de todos los torneos son solo para administradores. Busca un torneo para ver sus estadísticas.</string>
     <string name="id_cards_proportion_info">El ancho y el alto están vinculados, así que la tarjeta mantiene su proporción.\n• La proporción es la relación entre el ancho y el alto de la tarjeta. El ancho es siempre %1$s veces el alto.\n• Cuando cambias un lado, el otro cambia solo. La tarjeta nunca se estira.\n• El tamaño original es %2$s x %3$s mm. Es el tamaño que permite colocar 10 tarjetas en una hoja A4 vertical, en 2 columnas y 5 filas.</string>
     <string name="use_range">Usa de %1$s a %2$s.</string>
     <string name="substitution_explanation">Un suplente juega por este jugador desde la ronda elegida. El suplente no se registra y no tiene resultado en la clasificación. El jugador recibe 0 puntos de mesa en las rondas que juega el suplente.</string>
@@ -861,4 +859,38 @@ Gana el primero que sale bien</string>
     <string name="draw_flow_failed">Reparto fallido</string>
     <string name="draw_flow_yes">Sí</string>
     <string name="draw_flow_no">No</string>
+    <string name="role_super_admin">Superadministrador</string>
+    <string name="role_country_admin">Administrador de país</string>
+    <string name="tournament_country_locked">El país de un torneo no cambia.\nSolo un superadministrador puede corregirlo.</string>
+    <string name="tournament_country_change_warning">Si cambias el país:\n• Los administradores del país anterior dejan de gestionar este torneo, y empiezan los del nuevo país.\n• Los editores asignados lo conservan.</string>
+    <string name="delete_tournament_editors_note">Un editor cuyo único torneo es este deja de ser editor: la cuenta pasa a jugador, o se desactiva si no tiene EMA ID.</string>
+    <string name="admin_countries">Países</string>
+    <string name="admin_countries_add">Añadir un país</string>
+    <string name="admin_countries_needed">Un administrador de país necesita al menos un país.</string>
+    <string name="admin_countries_not_yours">Los países sin ✕ no son tuyos.\nSolo un superadministrador o sus administradores pueden quitarlos.</string>
+    <string name="remove_country_n">Quitar %1$s</string>
+    <string name="editor_needs_tournament">Un editor necesita al menos un torneo.</string>
+    <string name="account_disabled_without_tournaments">Esta cuenta se desactivó al quedarse sin torneos.
+Asígnale un torneo como editor y se reactivará al guardar.</string>
+    <string name="account_grants_outside">Esta cuenta también tiene países o torneos que no gestionas.\nSolo cambias los tuyos, y no puedes hacerla jugador.</string>
+    <string name="email_hidden">Oculto</string>
+    <string name="email_hidden_info">Ves el email de un jugador solo cuando juega en uno de tus torneos.</string>
+    <string name="tournament_assignments_other_countries">Editor en torneos de otros países</string>
+    <string name="remove_from_my_countries">Quitar de mis países</string>
+    <string name="remove_from_countries_message">%1$s pierde los países y los torneos que son tuyos.\n\nLo que la cuenta tiene en otros países se queda.\n\nPara desactivar o borrar la cuenta entera, pídeselo a un superadministrador.</string>
+    <string name="remove_from_countries_request_none">Solo quitarla de mis países</string>
+    <string name="remove_from_countries_request_disable">Y pedir a un superadministrador que desactive la cuenta</string>
+    <string name="remove_from_countries_request_delete">Y pedir a un superadministrador que borre la cuenta</string>
+    <string name="remove_from_countries_reason">Motivo para los superadministradores</string>
+    <string name="remove_from_countries_action">Quitar</string>
+    <string name="removed_from_countries">%1$s ya no está en tus países.</string>
+    <string name="removed_and_requested">%1$s ya no está en tus países.\n\nLos superadministradores han recibido tu solicitud por email.</string>
+    <string name="account_requests">Solicitudes</string>
+    <string name="account_requests_count">Solicitudes abiertas de los administradores de país: %1$d</string>
+    <string name="account_request_disable">%1$s pide desactivar %2$s.</string>
+    <string name="account_request_delete">%1$s pide borrar %2$s.</string>
+    <string name="account_request_reason">Motivo: %1$s</string>
+    <string name="account_request_approve">Aprobar</string>
+    <string name="account_request_reject">Rechazar</string>
+    <string name="account_request_rejected">La solicitud se ha rechazado.</string>
 </resources>

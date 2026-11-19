@@ -48,7 +48,7 @@ class EditTournamentDialogMatchDurationUiTest {
                         module {
                             single { Logger.withTag("ui-test") }
                             single<TournamentRepository> { server }
-                            single<AdminRepository> { FakeAdminRepository(GlobalUserRole.ADMIN) }
+                            single<AdminRepository> { FakeAdminRepository(GlobalUserRole.SUPER_ADMIN) }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
                             single { store }
                             factory { TournamentsPresenter(get(), get(), get()) }

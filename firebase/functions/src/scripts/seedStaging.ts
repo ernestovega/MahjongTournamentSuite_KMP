@@ -40,14 +40,14 @@ runScript("seedStaging", async () => {
     if (applyChanges) {
       const created = await auth.createUser({ email: adminEmail, emailVerified: true });
       await createUserProfile(created.uid, adminEmail);
-      await setGlobalUserRole(created.uid, "ADMIN");
+      await setGlobalUserRole(created.uid, "SUPER_ADMIN");
       await sendPasswordResetEmail(adminEmail);
       await bumpGlobalDataVersion("users");
     }
-  } else if ((existing.customClaims ?? {}).admin !== true) {
+  } else if ((existing.customClaims ?? {}).superAdmin !== true) {
     adminAccount = "MAKE_ADMIN";
     if (applyChanges) {
-      await setGlobalUserRole(existing.uid, "ADMIN");
+      await setGlobalUserRole(existing.uid, "SUPER_ADMIN");
       await bumpGlobalDataVersion("users");
     }
   }

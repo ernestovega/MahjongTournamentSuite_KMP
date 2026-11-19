@@ -16,7 +16,7 @@ describe("bulk delete of EMA players", () => {
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
-    admin = await createAccount({ role: "ADMIN" });
+    admin = await createAccount({ role: "SUPER_ADMIN" });
   });
   after(async () => {
     await server.close();

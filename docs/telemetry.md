@@ -49,7 +49,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `table_saved` | An editor saves a table | `hands` |
 | `players_imported`, `players_exported` | Import or export of players | `format`: `csv` or `xlsx` |
 | `accounts_sent` | Invite or reminder to players | `players` |
-| `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
+| `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `group`, `person`, `me` |
 | `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
@@ -73,11 +73,11 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
-| Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed` |
+| Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_countries`, `account_request_approved`, `account_request_rejected` |
 | EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated`, `registry_players_deleted` |
 
 Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.
-The events carry no name and no account id. Split them with the user property `role` to compare administrators and editors.
+The events carry no name and no account id. Split them with the user property `role` (`super_admin`, `country_admin`, `editor` or `player`, the strongest role of the account) to compare administrators and editors.
 
 `reason` of `action_failed` is `network`, `timeout`, `auth`, `conflict`, `client_error`, `server_error` or `unexpected`.
 Only `server_error` and `unexpected` also create an `app_error` and an error report. The others are normal events, such as a user with no network.

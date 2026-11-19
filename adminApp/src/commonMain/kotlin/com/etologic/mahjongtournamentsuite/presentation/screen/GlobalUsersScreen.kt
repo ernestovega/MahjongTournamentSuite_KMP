@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -61,11 +62,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
@@ -98,6 +102,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
@@ -108,6 +113,9 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
+import mahjongtournamentsuite.adminapp.generated.resources.account_disabled_without_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.account_grants_outside
+import mahjongtournamentsuite.adminapp.generated.resources.account_request_rejected
 import mahjongtournamentsuite.adminapp.generated.resources.accounts
 import mahjongtournamentsuite.adminapp.generated.resources.accounts_count_summary
 import mahjongtournamentsuite.adminapp.generated.resources.add_account
@@ -132,11 +140,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.disable_account
 import mahjongtournamentsuite.adminapp.generated.resources.disable_account_action
 import mahjongtournamentsuite.adminapp.generated.resources.disable_user_message
 import mahjongtournamentsuite.adminapp.generated.resources.edit_account
+import mahjongtournamentsuite.adminapp.generated.resources.editor_needs_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.ema_id
 import mahjongtournamentsuite.adminapp.generated.resources.ema_needed_for_player
 import mahjongtournamentsuite.adminapp.generated.resources.ema_owner_other
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_n
 import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.email_hidden
+import mahjongtournamentsuite.adminapp.generated.resources.email_hidden_info
 import mahjongtournamentsuite.adminapp.generated.resources.enable_account
 import mahjongtournamentsuite.adminapp.generated.resources.global_role
 import mahjongtournamentsuite.adminapp.generated.resources.loading
@@ -149,10 +160,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_t
 import mahjongtournamentsuite.adminapp.generated.resources.photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
+import mahjongtournamentsuite.adminapp.generated.resources.remove_from_my_countries
+import mahjongtournamentsuite.adminapp.generated.resources.removed_and_requested
+import mahjongtournamentsuite.adminapp.generated.resources.removed_from_countries
 import mahjongtournamentsuite.adminapp.generated.resources.role
-import mahjongtournamentsuite.adminapp.generated.resources.role_admin
-import mahjongtournamentsuite.adminapp.generated.resources.role_editor
-import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_and_send_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.search
@@ -166,6 +177,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.status
 import mahjongtournamentsuite.adminapp.generated.resources.the_email_addresses_do_not_match
 import mahjongtournamentsuite.adminapp.generated.resources.tournament
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_assignments
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_assignments_other_countries
 import mahjongtournamentsuite.adminapp.generated.resources.tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.user_deleted
 import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
@@ -194,6 +206,11 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
     var pendingDeletedUser by remember { mutableStateOf<ManagedUser?>(null) }
+    // A country admin takes an account out of its countries, and may ask the super admins for the rest.
+    var pendingRemovalUser by remember { mutableStateOf<ManagedUser?>(null) }
+    // The super admins approve or reject the requests of the country admins. An approval asks first.
+    var accountRequests by remember { mutableStateOf<List<AccountRequest>>(emptyList()) }
+    var approvingRequest by remember { mutableStateOf<AccountRequest?>(null) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -224,10 +241,11 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             user.emaId.orEmpty(),
             if (user.disabled) disabledLabel else activeLabel,
         ).any { it.matchesSearch(searchQuery) } &&
-            (selectedRoles.isEmpty() || user.role in selectedRoles) &&
+            (selectedRoles.isEmpty() || user.roles.ifEmpty { setOf(user.role) }.any { it in selectedRoles }) &&
             (
                 selectedTournamentId == null ||
-                    user.role == GlobalUserRole.ADMIN ||
+                    GlobalUserRole.SUPER_ADMIN in user.roles ||
+                    tournaments.firstOrNull { it.id == selectedTournamentId }?.hostCountry?.uppercase() in user.adminCountries ||
                     user.tournamentAssignments.any {
                         it.tournamentId == selectedTournamentId
                     }
@@ -267,32 +285,32 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 is AppResult.Success -> emaPlayers = result.value
                 is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
+            if (access?.canReviewRequests == true) {
+                when (val result = presenter.loadAccountRequests()) {
+                    is AppResult.Success -> accountRequests = result.value
+                    is AppResult.Failure -> if (error == null) error = result.error.toUiText()
+                }
+            }
             loading = false
         }
     }
 
-    fun saveUser(
-        original: ManagedUser?,
-        email: String,
-        alias: String,
-        role: GlobalUserRole,
-        assignments: List<TournamentAssignment>,
-        emaId: String?,
-    ) {
+    fun saveUser(original: ManagedUser?, edit: AccountEdit) {
         scope.launch {
             saving = true
             error = null
             notice = null
             val result = if (original == null) {
-                presenter.createUser(email, alias, role, assignments, emaId)
+                presenter.createUser(edit.email, edit.alias, edit.role, edit.assignments, edit.emaId, edit.adminCountries)
             } else {
                 presenter.updateUser(
                     original.copy(
-                        email = email,
-                        alias = alias,
-                        role = role,
-                        tournamentAssignments = assignments,
-                        emaId = emaId,
+                        email = edit.email,
+                        alias = edit.alias,
+                        role = edit.role,
+                        tournamentAssignments = edit.assignments,
+                        emaId = edit.emaId,
+                        adminCountries = edit.adminCountries,
                     ),
                 )
             }
@@ -323,6 +341,52 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                     notice = UiText.of(if (disabled) Res.string.user_disabled else Res.string.user_enabled, user.email)
                     pendingDisabledUser = null
                     editingUser = null
+                }
+                is AppResult.Failure -> error = result.error.toUiText()
+            }
+            saving = false
+        }
+    }
+
+    fun removeFromMyCountries(user: ManagedUser, kind: AccountRequestKind?, reason: String) {
+        scope.launch {
+            saving = true
+            error = null
+            notice = null
+            when (val result = presenter.removeFromMyCountries(user.uid, kind, reason)) {
+                is AppResult.Success -> {
+                    users = users.map { if (it.uid == user.uid) result.value else it }
+                    val name = user.alias.ifBlank { user.email }
+                    notice = UiText.of(if (kind == null) Res.string.removed_from_countries else Res.string.removed_and_requested, name)
+                    pendingRemovalUser = null
+                }
+                is AppResult.Failure -> error = result.error.toUiText()
+            }
+            saving = false
+        }
+    }
+
+    fun resolveRequest(request: AccountRequest, approve: Boolean) {
+        scope.launch {
+            saving = true
+            error = null
+            notice = null
+            when (val result = presenter.resolveAccountRequest(request.id, approve)) {
+                is AppResult.Success -> {
+                    accountRequests = accountRequests.filterNot { it.id == request.id }
+                    notice = when {
+                        !approve -> UiText.of(Res.string.account_request_rejected)
+                        request.kind == AccountRequestKind.DELETE -> UiText.of(Res.string.user_deleted, request.targetEmail)
+                        else -> UiText.of(Res.string.user_disabled, request.targetEmail)
+                    }
+                    approvingRequest = null
+                    // The account changed or is gone, so the list loads again.
+                    if (approve) {
+                        when (val users2 = presenter.loadUsers(force = true)) {
+                            is AppResult.Success -> users = users2.value
+                            is AppResult.Failure -> Unit
+                        }
+                    }
                 }
                 is AppResult.Failure -> error = result.error.toUiText()
             }
@@ -367,7 +431,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
 
     // On a phone the send button is a floating button. It shows only while accounts are selected.
     val compact = LocalCompactLayout.current
-    val showResetFab = compact && access?.isAdmin == true && chosenUids.isNotEmpty() && !saving && !loading
+    val showResetFab = compact && access?.canSendPasswordResets == true && chosenUids.isNotEmpty() && !saving && !loading
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
@@ -381,9 +445,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
             }
         },
-        // Only admins create accounts. A new account is an editor or an admin. An editor has no button here,
-        // so the screen has no three-dots menu on a phone instead of an empty one.
-        actions = if (access?.isAdmin == true) {
+        // Every editor and admin creates player accounts. A country admin also creates editors and country admins of
+        // its countries, and a super admin any account.
+        actions = if (access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true) {
             {
                 AppTopBarActions(
                     onNewUser = { showCreateDialog = true },
@@ -418,7 +482,15 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 selectedTournamentId = selectedTournamentId,
                 onTournamentSelected = { selectedTournamentId = it },
             )
-            val canReset = access?.isAdmin == true
+            if (accountRequests.isNotEmpty()) {
+                AccountRequestsCard(
+                    requests = accountRequests,
+                    enabled = !loading && !saving,
+                    onApprove = { approvingRequest = it },
+                    onReject = { resolveRequest(it, approve = false) },
+                )
+            }
+            val canReset = access?.canSendPasswordResets == true
             SectionCard(
                 title = stringResource(Res.string.accounts),
                 subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
@@ -431,7 +503,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                         onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
                         onClear = { selectedUids = emptySet() },
                         onSend = { confirmResetOpen = true },
-                        deleteCount = deletableUids.size,
+                        deleteCount = if (access?.canDeleteUsers == true) deletableUids.size else 0,
+                        showDelete = access?.canDeleteUsers == true,
                         onDelete = { confirmDeleteOpen = true },
                         showSend = !compact,
                     )
@@ -443,7 +516,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                     onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
                     countryByEmaId = emaPlayers.associate { it.emaId to it.country },
                     enabled = !loading && !saving,
-                    canEditAdmins = access?.isAdmin == true,
+                    isSuperAdmin = access?.isSuperAdmin == true,
                     selfUid = access?.uid,
                     rowFocusRequesters = rowFocusRequesters,
                     onEdit = { user ->
@@ -463,9 +536,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             accounts = users,
             emaPlayers = emaPlayers,
             isSelf = original?.uid == access?.uid,
-            canManageRoles = access?.isAdmin == true,
-            canDisable = access?.canDisableUsers == true,
-            canEditPhoto = access?.isAdmin == true && original != null,
+            access = access ?: AdminStatus(uid = "", role = GlobalUserRole.PLAYER),
             saving = saving,
             onDismiss = {
                 showCreateDialog = false
@@ -481,7 +552,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                     if (result is AppResult.Success) users = users.map { if (it.uid == target.uid) result.value else it }
                 }
             },
-            onSave = { email, alias, role, assignments, emaId -> saveUser(original, email, alias, role, assignments, emaId) },
+            onSave = { edit -> saveUser(original, edit) },
             onResetPassword = { email ->
                 scope.launch {
                     saving = true
@@ -506,7 +577,37 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 editingUser = null
                 pendingDeletedUser = user
             },
+            onRemoveFromMyCountries = { user ->
+                editingUser = null
+                pendingRemovalUser = user
+            },
         )
+    }
+
+    pendingRemovalUser?.let { user ->
+        RemoveFromCountriesDialog(
+            user = user,
+            saving = saving,
+            onDismiss = { pendingRemovalUser = null },
+            onConfirm = { kind, reason -> removeFromMyCountries(user, kind, reason) },
+        )
+    }
+
+    // Approving a request disables or deletes the account at once, so it asks first with the usual dialog.
+    approvingRequest?.let { request ->
+        val target = users.firstOrNull { it.uid == request.targetUid } ?: ManagedUser(
+            uid = request.targetUid,
+            email = request.targetEmail,
+            alias = "",
+            role = GlobalUserRole.PLAYER,
+            disabled = false,
+            tournamentAssignments = emptyList(),
+        )
+        if (request.kind == AccountRequestKind.DELETE) {
+            DeleteUserDialog(user = target, saving = saving, onDismiss = { approvingRequest = null }, onConfirm = { resolveRequest(request, approve = true) })
+        } else {
+            DisableUserDialog(user = target, saving = saving, onDismiss = { approvingRequest = null }, onConfirm = { resolveRequest(request, approve = true) })
+        }
     }
 
     if (confirmResetOpen) {
@@ -591,7 +692,7 @@ private fun UsersTable(
     users: List<ManagedUser>,
     countryByEmaId: Map<String, String>,
     enabled: Boolean,
-    canEditAdmins: Boolean,
+    isSuperAdmin: Boolean,
     selfUid: String?,
     rowFocusRequesters: Map<String, FocusRequester>,
     selectable: Boolean,
@@ -630,8 +731,10 @@ private fun UsersTable(
             }
         }
         itemsIndexed(users, key = { _, user -> user.uid }) { _, user ->
-            // An editor edits player accounts and the own account. Admins edit every account.
-            val canEdit = enabled && (canEditAdmins || user.role == GlobalUserRole.PLAYER || user.uid == selfUid)
+            // Everyone opens player accounts and the own account. A country admin opens the staff of its countries,
+            // and a super admin every account.
+            val canEdit = enabled && (isSuperAdmin || user.canManage || user.role == GlobalUserRole.PLAYER || user.uid == selfUid)
+            val emailText = if (user.emailHidden) stringResource(Res.string.email_hidden) else user.email
             DataTableRow(
                 modifier = Modifier.focusRequester(rowFocusRequesters.getValue(user.uid)),
                 onClick = { if (canEdit) onEdit(user) },
@@ -669,14 +772,14 @@ private fun UsersTable(
                     // A phone shows the alias over the email, and the other columns as one small line.
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            user.alias.ifBlank { user.email },
+                            user.alias.ifBlank { emailText },
                             style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         if (user.alias.isNotBlank()) {
                             Text(
-                                user.email,
+                                emailText,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -703,7 +806,13 @@ private fun UsersTable(
                         }
                     }
                     Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
-                    Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        emailText,
+                        modifier = Modifier.weight(0.3f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (user.emailHidden) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
+                    )
                     Text(
                         user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
                         modifier = Modifier.weight(0.2f),
@@ -719,7 +828,7 @@ private fun UsersTable(
 }
 
 /** The order of the role filter buttons. */
-internal val RoleFilterOrder = listOf(GlobalUserRole.ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
+internal val RoleFilterOrder = listOf(GlobalUserRole.SUPER_ADMIN, GlobalUserRole.COUNTRY_ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -765,7 +874,7 @@ internal fun UserFilters(
                 modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RoleFilterOrder.forEach { role ->
                 FilterChip(
                     selected = role in selectedRoles,
@@ -777,6 +886,32 @@ internal fun UserFilters(
     }
 }
 
+/** What the account dialog saves. */
+internal data class AccountEdit(
+    val email: String,
+    val alias: String,
+    val role: GlobalUserRole,
+    val assignments: List<TournamentAssignment>,
+    val emaId: String?,
+    val adminCountries: Set<String>,
+)
+
+/**
+ * The roles that the viewer may give in the account dialog. A super admin gives every role. A country admin gives
+ * player, editor and country admin, but never demotes an account below what it has in countries that are not its own.
+ * An editor creates only player accounts.
+ */
+internal fun roleOptions(access: AdminStatus, original: ManagedUser?): List<GlobalUserRole> {
+    if (access.isSuperAdmin) return listOf(GlobalUserRole.EDITOR, GlobalUserRole.COUNTRY_ADMIN, GlobalUserRole.SUPER_ADMIN, GlobalUserRole.PLAYER)
+    if (!access.canManageStaff) return listOf(GlobalUserRole.PLAYER)
+    val countriesOutside = original?.adminCountries.orEmpty() - access.adminCountries
+    return buildList {
+        if (countriesOutside.isEmpty()) add(GlobalUserRole.EDITOR)
+        add(GlobalUserRole.COUNTRY_ADMIN)
+        if (original?.hasGrantsOutside != true) add(GlobalUserRole.PLAYER)
+    }
+}
+
 @Composable
 private fun ManageUserDialog(
     original: ManagedUser?,
@@ -784,30 +919,48 @@ private fun ManageUserDialog(
     accounts: List<ManagedUser>,
     emaPlayers: List<Player>,
     isSelf: Boolean,
-    canManageRoles: Boolean,
-    canDisable: Boolean,
-    canEditPhoto: Boolean,
+    access: AdminStatus,
     saving: Boolean,
     onDismiss: () -> Unit,
     onUploadPhoto: suspend (ManagedUser, String, ByteArray) -> AppResult<ManagedUser>,
     onRemovePhoto: suspend (ManagedUser) -> AppResult<ManagedUser>,
-    onSave: (String, String, GlobalUserRole, List<TournamentAssignment>, String?) -> Unit,
+    onSave: (AccountEdit) -> Unit,
     onResetPassword: (String) -> Unit,
     onChangeDisabled: (ManagedUser) -> Unit,
-    /** Deletes the account for good, after a confirmation. Shown with [canDisable], which only admins have. */
+    /** Deletes the account for good, after a confirmation. Only super admins have it. */
     onDelete: (ManagedUser) -> Unit,
+    /** A country admin takes the account out of its countries, after a dialog. */
+    onRemoveFromMyCountries: (ManagedUser) -> Unit,
 ) {
+    val canEditPhoto = access.canEditUserPhotos && original != null
+    val canDisable = access.canDisableUsers
+    val canDelete = access.canDeleteUsers
+    val emailHidden = original?.emailHidden == true
+    // A new email plus a password reset takes over the account, so only a super admin changes it.
+    val canChangeEmail = original == null || access.canChangeEmails
+    // The EMA ID links the account to a player. It is set when the account is created; later only a super admin changes it.
+    val canChangeEmaId = original == null || access.canChangeEmaIds
+    val options = remember(access, original) { roleOptions(access, original) }
+    // The tournaments where the viewer assigns editors: the ones of its countries, or every one for a super admin.
+    val assignableTournaments = tournaments.filter { access.can(Permission.TOURNAMENT_MEMBERS, it.permissions) }
     var email by remember(original) { mutableStateOf(original?.email.orEmpty()) }
     var alias by remember(original) { mutableStateOf(original?.alias.orEmpty()) }
     var confirmEmail by remember(original) { mutableStateOf(original?.email.orEmpty()) }
     var emaId by remember(original) { mutableStateOf(original?.emaId.orEmpty()) }
-    var role by remember(original) { mutableStateOf(original?.role ?: GlobalUserRole.EDITOR) }
+    var role by remember(original) { mutableStateOf(original?.role ?: options.first()) }
+    var adminCountries by remember(original) { mutableStateOf(original?.adminCountries.orEmpty()) }
     val assignments = remember(original) {
         mutableStateMapOf<String, Boolean>().apply {
             tournaments.forEach { tournament ->
                 put(tournament.id, original?.tournamentAssignments?.any { it.tournamentId == tournament.id } == true)
             }
         }
+    }
+    // A country admin manages the tournaments of its countries without an assignment. It is an editor elsewhere only.
+    val editorTournaments = when (role) {
+        GlobalUserRole.EDITOR -> assignableTournaments
+        GlobalUserRole.COUNTRY_ADMIN -> assignableTournaments.filter { it.hostCountry.uppercase() !in adminCountries }
+        else -> emptyList()
     }
     // The photo saves at once, apart from the other fields. This state shows the saved photo.
     var photoUser by remember(original) { mutableStateOf(original) }
@@ -820,15 +973,21 @@ private fun ManageUserDialog(
     val normalizedEmail = email.trim()
     val emailsMatch = original != null || normalizedEmail.equals(confirmEmail.trim(), ignoreCase = true)
     // One account per email and one account per EMA ID. The server checks again when it saves.
-    val emailOwner = accounts.firstOrNull { it.uid != original?.uid && it.email.equals(normalizedEmail, ignoreCase = true) }
+    val emailOwner = accounts.firstOrNull { it.uid != original?.uid && it.email.equals(normalizedEmail, ignoreCase = true) && normalizedEmail.isNotEmpty() }
     val emaOwner = emaId.trim().takeIf { it.isNotEmpty() }
         ?.let { id -> accounts.firstOrNull { it.uid != original?.uid && it.emaId == id } }
     val isPlayerRole = role == GlobalUserRole.PLAYER
-    val valid = normalizedEmail.contains("@") &&
+    val selectedEditorTournaments = editorTournaments.filter { assignments[it.id] == true }
+    // An editor needs a tournament. Tournaments that the viewer does not see count too, and they stay as they are.
+    val editorWithoutTournament = role == GlobalUserRole.EDITOR && selectedEditorTournaments.isEmpty() && original?.hasGrantsOutside != true
+    val countryAdminWithoutCountry = role == GlobalUserRole.COUNTRY_ADMIN && adminCountries.isEmpty()
+    val valid = (emailHidden || normalizedEmail.contains("@")) &&
         emailsMatch &&
         emailOwner == null &&
         emaOwner == null &&
-        (!isPlayerRole || emaId.isNotBlank())
+        (!isPlayerRole || emaId.isNotBlank()) &&
+        !editorWithoutTournament &&
+        !countryAdminWithoutCountry
     var showEmaPicker by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { emailFocus.requestFocus() }
     LaunchedEffect(showTournamentSelector, restoreTournamentSelectorFocus) {
@@ -840,7 +999,7 @@ private fun ManageUserDialog(
 
     if (showTournamentSelector) {
         TournamentAssignmentsDialog(
-            tournaments = tournaments,
+            tournaments = editorTournaments,
             assignments = assignments,
             enabled = !saving,
             onAssignmentChange = { tournamentId, assigned -> assignments[tournamentId] = assigned },
@@ -859,7 +1018,7 @@ private fun ManageUserDialog(
                     modifier = Modifier.heightIn(max = 560.dp).verticalScrollWithIndicators(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    // Only admins set the photo of another account. Editors do not see this part.
+                    // Only super admins set the photo of another account. The others do not see this part.
                     photoUser?.takeIf { canEditPhoto }?.let { target ->
                         PhotoEditor(
                             photoUrl = target.photoUrl,
@@ -887,13 +1046,18 @@ private fun ManageUserDialog(
                         )
                     }
                     OutlinedTextField(
-                        value = email,
+                        value = if (emailHidden) stringResource(Res.string.email_hidden) else email,
                         onValueChange = { email = it },
                         label = { Text(stringResource(Res.string.email)) },
-                        supportingText = { if (emailOwner != null) Text(stringResource(Res.string.another_account_already_uses_this_email)) },
+                        supportingText = {
+                            when {
+                                emailOwner != null -> Text(stringResource(Res.string.another_account_already_uses_this_email))
+                                emailHidden -> Text(stringResource(Res.string.email_hidden_info))
+                            }
+                        },
                         isError = emailOwner != null,
                         singleLine = true,
-                        enabled = !saving,
+                        enabled = !saving && canChangeEmail && !emailHidden,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
                     )
@@ -906,8 +1070,8 @@ private fun ManageUserDialog(
                         enabled = !saving,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    // An admin sets the EMA ID of any account. An editor sets it only for player accounts.
-                    if (canManageRoles || isPlayerRole) {
+                    // A new account gets its EMA ID here. Later only a super admin changes it, so the others see it only.
+                    if (canChangeEmaId || emaId.isNotBlank()) {
                         val emaPlayer = emaPlayers.firstOrNull { it.emaId == emaId.trim() }
                         OutlinedTextField(
                             value = emaId,
@@ -923,13 +1087,17 @@ private fun ManageUserDialog(
                                 if (message != null) Text(message)
                             },
                             isError = emaOwner != null,
-                            trailingIcon = {
-                                IconButton(onClick = { showEmaPicker = true }, enabled = !saving) {
-                                    Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search_ema_players))
+                            trailingIcon = if (canChangeEmaId) {
+                                {
+                                    IconButton(onClick = { showEmaPicker = true }, enabled = !saving) {
+                                        Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search_ema_players))
+                                    }
                                 }
+                            } else {
+                                null
                             },
                             singleLine = true,
-                            enabled = !saving,
+                            enabled = !saving && canChangeEmaId,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -950,35 +1118,54 @@ private fun ManageUserDialog(
                     }
                     GlobalRoleDropdown(
                         role = role,
-                        // A player account may be promoted. An account with no role claim also reads as a player.
-                        // An editor can only choose the role of a new account, and cannot create admins.
-                        // An admin can also make an editor or an admin a player. The account loses the other role.
-                        options = when {
-                            original?.role == GlobalUserRole.PLAYER -> listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
-                            original == null && !canManageRoles -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
-                            original == null -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
-                            else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
-                        },
-                        enabled = (canManageRoles || original == null) && !isSelf && !saving,
+                        // The own role never changes here. A country admin changes the staff of its countries only.
+                        options = if (role in options) options else listOf(role) + options,
+                        enabled = options.size > 1 && !isSelf && !saving && (original == null || original.canManage || access.isSuperAdmin),
                         onSelect = { role = it },
                     )
-                    if (role == GlobalUserRole.EDITOR) {
-                        Text(stringResource(Res.string.tournament_assignments), style = MaterialTheme.typography.titleSmall)
-                        if (tournaments.isEmpty()) {
+                    if (original?.disabledWithoutRole == true) {
+                        Text(
+                            stringResource(Res.string.account_disabled_without_tournaments),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (original?.hasGrantsOutside == true && !isSelf) {
+                        Text(
+                            stringResource(Res.string.account_grants_outside),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (role == GlobalUserRole.COUNTRY_ADMIN) {
+                        AdminCountriesField(
+                            selected = adminCountries,
+                            editable = if (access.isSuperAdmin) null else access.adminCountries,
+                            enabled = !saving && !isSelf,
+                            onChange = { adminCountries = it },
+                        )
+                    }
+                    if (role == GlobalUserRole.EDITOR || (role == GlobalUserRole.COUNTRY_ADMIN && editorTournaments.isNotEmpty())) {
+                        Text(
+                            stringResource(
+                                if (role == GlobalUserRole.COUNTRY_ADMIN) Res.string.tournament_assignments_other_countries else Res.string.tournament_assignments,
+                            ),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        if (editorTournaments.isEmpty()) {
                             Text(stringResource(Res.string.no_tournaments_are_available), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else {
-                            val selectedTournaments = tournaments.filter { assignments[it.id] == true }
-                            val assignmentSummary = when (selectedTournaments.size) {
+                            val assignmentSummary = when (selectedEditorTournaments.size) {
                                 0 -> stringResource(Res.string.no_tournaments_assigned)
-                                1 -> selectedTournaments.single().name
-                                else -> stringResource(Res.string.tournaments_selected, selectedTournaments.size)
+                                1 -> selectedEditorTournaments.single().name
+                                else -> stringResource(Res.string.tournaments_selected, selectedEditorTournaments.size)
                             }
                             FocusedOutlinedButton(
                                 onClick = {
                                     restoreTournamentSelectorFocus = true
                                     showTournamentSelector = true
                                 },
-                                enabled = !saving,
+                                enabled = !saving && !isSelf,
                                 modifier = Modifier.fillMaxWidth(),
                                 buttonModifier = Modifier.fillMaxWidth(),
                                 focusRequester = tournamentSelectorFocus,
@@ -992,15 +1179,22 @@ private fun ManageUserDialog(
                                 )
                                 Text(stringResource(Res.string.change))
                             }
-                            if (selectedTournaments.size > 1) {
+                            if (selectedEditorTournaments.size > 1) {
                                 Text(
-                                    text = selectedTournaments.take(2).joinToString { it.name } +
-                                        if (selectedTournaments.size > 2) " · " + stringResource(Res.string.plus_more, selectedTournaments.size - 2) else "",
+                                    text = selectedEditorTournaments.take(2).joinToString { it.name } +
+                                        if (selectedEditorTournaments.size > 2) " · " + stringResource(Res.string.plus_more, selectedEditorTournaments.size - 2) else "",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
+                        }
+                        if (editorWithoutTournament) {
+                            Text(
+                                stringResource(Res.string.editor_needs_tournament),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
                         }
                     }
                 }
@@ -1010,23 +1204,38 @@ private fun ManageUserDialog(
                 MtsDialogButtons {
                     FocusedButton(
                         onClick = {
-                            val selectedAssignments = if (role != GlobalUserRole.EDITOR) {
-                                emptyList()
-                            } else {
-                                tournaments.filter { assignments[it.id] == true }
-                                    .map { TournamentAssignment(it.id, it.name) }
-                            }
-                            onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                            val selectedAssignments = selectedEditorTournaments
+                                .map { TournamentAssignment(it.id, it.name, it.hostCountry.uppercase()) }
+                            onSave(
+                                AccountEdit(
+                                    // A hidden email goes as empty: the account keeps it.
+                                    email = if (emailHidden) "" else normalizedEmail,
+                                    alias = alias.trim(),
+                                    role = role,
+                                    assignments = selectedAssignments,
+                                    emaId = emaId.trim().ifBlank { null },
+                                    adminCountries = if (role == GlobalUserRole.COUNTRY_ADMIN) adminCountries else emptySet(),
+                                ),
+                            )
                         },
                         enabled = valid && !saving,
                         focusRequester = saveFocus,
                         buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
                     ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
-                    if (original != null && !isSelf) {
+                    if (original != null && !isSelf && access.canSendPasswordResets && !emailHidden) {
                         FocusedOutlinedButton(
                             onClick = { onResetPassword(original.email) },
                             enabled = !saving,
                         ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                    }
+                    // A country admin takes the account out of its countries. A super admin disables or deletes it.
+                    if (original != null && !isSelf && access.canRequestRemoval && GlobalUserRole.SUPER_ADMIN !in original.roles) {
+                        FocusedOutlinedButton(
+                            onClick = { onRemoveFromMyCountries(original) },
+                            enabled = !saving,
+                            colors = MtsButtons.destructiveOutlinedColors(),
+                            border = MtsButtons.destructiveBorder(!saving),
+                        ) { Text(stringResource(Res.string.remove_from_my_countries)) }
                     }
                     if (original != null && !isSelf && canDisable) {
                         // Enabling an account again is not destructive: only Disable is red.
@@ -1036,6 +1245,8 @@ private fun ManageUserDialog(
                             colors = if (original.disabled) ButtonDefaults.outlinedButtonColors() else MtsButtons.destructiveOutlinedColors(),
                             border = if (original.disabled) ButtonDefaults.outlinedButtonBorder(!saving) else MtsButtons.destructiveBorder(!saving),
                         ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
+                    }
+                    if (original != null && !isSelf && canDelete) {
                         FocusedOutlinedButton(
                             onClick = { onDelete(original) },
                             enabled = !saving,
@@ -1319,12 +1530,3 @@ private fun DisableUserDialog(
         )
     }
 }
-
-@Composable
-private fun GlobalUserRole.label(): String = stringResource(
-    when (this) {
-        GlobalUserRole.EDITOR -> Res.string.role_editor
-        GlobalUserRole.ADMIN -> Res.string.role_admin
-        GlobalUserRole.PLAYER -> Res.string.role_player
-    },
-)

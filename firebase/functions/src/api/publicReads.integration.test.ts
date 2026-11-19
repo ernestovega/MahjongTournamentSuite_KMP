@@ -3,6 +3,7 @@ import { after, before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
+import { saveTableState } from "../services/tableManagerService";
 import { createAccount, giveEmaIdToAccount, requireAuthEmulator, seatEmaId, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
 describe("what anyone can read without an account", () => {
@@ -54,7 +55,7 @@ describe("what anyone can read without an account", () => {
   });
 
   it("never shows emails or accounts, even to a signed-in admin", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
+    const admin = await createAccount({ role: "SUPER_ADMIN" });
     const { body } = await get(`/public/tournaments/${open}/players`, admin.token);
     const slot = body.players.find((p: { id: number }) => p.id === 1);
 
@@ -87,6 +88,37 @@ describe("what anyone can read without an account", () => {
     assert.equal((await get("/public/statistics/persons/20000001")).status, 200);
     assert.equal((await get(`/public/statistics/persons/20000001/standings?tournaments=${open},${hidden}`)).status, 200);
     assert.equal((await get("/public/statistics/overview")).status, 200);
+  });
+
+  it("lets an editor read the statistics of every public tournament, not only the own ones", async () => {
+    // Another person, so the tests of the own slot keep only one tournament.
+    await db.doc("emaPlayerRegistry/20000002").set({ firstName: "Bea", lastName: "Stats", country: "ESP" });
+    await seatEmaId(open, 2, "20000002");
+    await seatEmaId(hidden, 2, "20000002");
+    for (const tournamentId of [open, hidden]) {
+      await saveTableState({
+        tournamentId, roundId: 1, tableId: 1, expectedVersion: 0, handPatches: [], actor: { uid: "editor", name: "Editor" },
+        tablePatch: {
+          playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4", useTotalsOnly: true,
+          playerEastScore: "30", playerSouthScore: "10", playerWestScore: "-10", playerNorthScore: "-30", isCompleted: true,
+        },
+      });
+    }
+    const editor = await createAccount({ role: "EDITOR" });
+
+    assert.equal((await get("/tournaments/statistics/overview", editor.token)).status, 200);
+    const group = await get("/tournaments/statistics/groups?playerCountry=ESP", editor.token);
+    assert.equal(group.status, 200);
+    assert.deepEqual(group.body.tournamentIds, [open]);
+    const publicGroup = await get("/public/statistics/groups?playerCountry=ESP");
+    assert.deepEqual(publicGroup.body.tournamentIds, [open]);
+    assert.ok(publicGroup.body.persons.some((p: { emaId: string }) => p.emaId === "20000002"));
+    assert.equal((await get("/public/statistics/groups?tournamentCountry=ESP")).status, 400);
+    const person = await get("/tournaments/statistics/persons/20000002", editor.token);
+    assert.equal(person.status, 200);
+    assert.deepEqual(person.body.tournaments.map((t: { tournamentId: string }) => t.tournamentId), [open]);
+    const standings = await get(`/tournaments/statistics/persons/20000002/standings?tournaments=${open},${hidden}`, editor.token);
+    assert.deepEqual(standings.body.standings.map((s: { tournamentId: string }) => s.tournamentId), [open]);
   });
 
   it("tells a signed-in account its slot and team, and never caches it", async () => {

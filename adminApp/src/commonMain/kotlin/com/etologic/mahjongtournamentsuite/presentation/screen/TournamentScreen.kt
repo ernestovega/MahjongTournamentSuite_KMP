@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,8 +27,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
@@ -39,20 +40,21 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
-import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
+import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
@@ -72,26 +74,24 @@ import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_export
 import mahjongtournamentsuite.adminapp.generated.resources.ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.role_admin
-import mahjongtournamentsuite.adminapp.generated.resources.role_editor
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
 import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
 
 private sealed class RoundEditorAction {
     data object Back : RoundEditorAction()
@@ -168,7 +168,9 @@ fun TournamentScreen(
     val selectedRoundTables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
     val hasUnsavedChanges = tableEditors.values.any { it.hasUnsavedChanges }
     val saveEmaReportTitle = stringResource(Res.string.save_ema_report)
-    val roleLabel = adminStatus?.let { stringResource(if (it.isAdmin) Res.string.role_admin else Res.string.role_editor) }
+    val roleLabel = adminStatus?.role?.label()
+    val tournamentPermissions = tournament?.permissions.orEmpty()
+    fun canHere(permission: Permission): Boolean = adminStatus?.can(permission, tournamentPermissions) == true
 
     /**
      * Loads the table summaries of the round, then selects a table.
@@ -482,7 +484,7 @@ fun TournamentScreen(
             AppTopBarLeadingActions(
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
-                onActivity = if (adminStatus?.isAdmin == true) {
+                onActivity = if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
                     { requestAction(RoundEditorAction.Activity) }
                 } else {
                     null
@@ -490,7 +492,7 @@ fun TournamentScreen(
             )
         },
         actions = {
-            if (adminStatus?.isAdmin == true) {
+            if (canHere(Permission.TOURNAMENT_ROUND_CONTROL)) {
                 AppTopBarButton(
                     text = stringResource(Res.string.round_control_title),
                     icon = Icons.Default.Tune,
@@ -549,7 +551,7 @@ fun TournamentScreen(
             onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
             onSave = { requestSave(tableIds = listOf(it)) },
             onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
-            canResetTable = adminStatus?.isAdmin == true,
+            canResetTable = canHere(Permission.TOURNAMENT_RESET_TABLE),
             onResetTable = { if (!isLoading) tableToReset = it },
         )
         }

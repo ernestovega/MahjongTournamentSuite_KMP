@@ -131,7 +131,7 @@
     <string name="player_details">Данные игрока</string>
     <string name="no_player_selected">Игрок не выбран</string>
     <string name="choose_a_player_in_the_list">Выберите игрока в списке, чтобы увидеть данные.</string>
-    <string name="only_admins_can_edit_the_player">Только администраторы могут редактировать базу игроков.</string>
+    <string name="only_admins_can_edit_the_player">Только суперадминистратор может редактировать игроков EMA.</string>
     <string name="no_player_photo">Нет фото игрока</string>
     <string name="statistics">Статистика</string>
     <string name="this_table_has_no_statistics_yet">У этого стола пока нет статистики.</string>
@@ -308,7 +308,6 @@
     <string name="disable_user_message">%1$s не сможет войти. Профиль и история сохранятся.</string>
     <string name="delete_user_message">%1$s будет удалён навсегда: вход, адрес эл. почты, псевдоним и фото. Игрок EMA и результаты турниров останутся. Это нельзя отменить.</string>
     <string name="role_editor">Редактор</string>
-    <string name="role_admin">Администратор</string>
     <string name="role_player">Игрок</string>
     <string name="insight_saves_fell">Количество сохранений столов упало на %1$s по сравнению с предыдущими %2$d днями.</string>
     <string name="insight_no_saves">За последние %1$d дней никто не сохранил стол.</string>
@@ -478,7 +477,6 @@
     <string name="scope_by_tournaments">По турнирам</string>
     <string name="scope_overall">Всего</string>
     <string name="stats_player_field">Игрок (имя или номер EMA)</string>
-    <string name="stats_admin_only">Статистика всех турниров доступна администраторам. Найдите турнир, чтобы увидеть его статистику.</string>
     <string name="id_cards_proportion_info">Ширина и высота связаны, поэтому бейдж сохраняет пропорции.\n• Пропорция — это соотношение ширины и высоты бейджа. Ширина всегда в %1$s раза больше высоты.\n• Когда вы меняете одну сторону, другая меняется сама. Бейдж никогда не растягивается.\n• Исходный размер — %2$s x %3$s мм. При этом размере на один лист A4 в книжной ориентации помещается 10 бейджей: 2 столбца и 5 строк.</string>
     <string name="use_range">Используйте от %1$s до %2$s.</string>
     <string name="substitution_explanation">С выбранного раунда за этого игрока играет замена. Замена не регистрируется и не получает результата в рейтинге. Игрок получает 0 очков стола за раунды, которые играет замена.</string>
@@ -869,4 +867,38 @@
     <string name="draw_flow_failed">Рассадка не удалась</string>
     <string name="draw_flow_yes">Да</string>
     <string name="draw_flow_no">Нет</string>
+    <string name="role_super_admin">Суперадминистратор</string>
+    <string name="role_country_admin">Администратор страны</string>
+    <string name="tournament_country_locked">Страна турнира не меняется.\nИсправить её может только суперадминистратор.</string>
+    <string name="tournament_country_change_warning">Если вы смените страну:\n• Администраторы прежней страны перестанут управлять этим турниром, а начнут администраторы новой страны.\n• Назначенные редакторы сохранят его.</string>
+    <string name="delete_tournament_editors_note">Редактор, у которого это единственный турнир, перестаёт быть редактором: аккаунт становится игроком или отключается, если у него нет EMA ID.</string>
+    <string name="admin_countries">Страны</string>
+    <string name="admin_countries_add">Добавить страну</string>
+    <string name="admin_countries_needed">Администратору страны нужна хотя бы одна страна.</string>
+    <string name="admin_countries_not_yours">Страны без ✕ не ваши.\nУбрать их может только суперадминистратор или их администраторы.</string>
+    <string name="remove_country_n">Убрать %1$s</string>
+    <string name="editor_needs_tournament">Редактору нужен хотя бы один турнир.</string>
+    <string name="account_disabled_without_tournaments">Этот аккаунт был отключён, когда потерял свой последний турнир.
+Назначьте ему турнир как редактору, и при сохранении он снова будет включён.</string>
+    <string name="account_grants_outside">У этого аккаунта есть страны или турниры, которыми вы не управляете.\nВы меняете только свои и не можете сделать его игроком.</string>
+    <string name="email_hidden">Скрыт</string>
+    <string name="email_hidden_info">Вы видите email игрока, только если он играет в одном из ваших турниров.</string>
+    <string name="tournament_assignments_other_countries">Редактор в турнирах других стран</string>
+    <string name="remove_from_my_countries">Убрать из моих стран</string>
+    <string name="remove_from_countries_message">%1$s теряет ваши страны и турниры.\n\nТо, что у аккаунта есть в других странах, остаётся.\n\nЧтобы отключить или удалить весь аккаунт, попросите суперадминистратора.</string>
+    <string name="remove_from_countries_request_none">Только убрать из моих стран</string>
+    <string name="remove_from_countries_request_disable">И попросить суперадминистратора отключить аккаунт</string>
+    <string name="remove_from_countries_request_delete">И попросить суперадминистратора удалить аккаунт</string>
+    <string name="remove_from_countries_reason">Причина для суперадминистраторов</string>
+    <string name="remove_from_countries_action">Убрать</string>
+    <string name="removed_from_countries">%1$s убран из ваших стран.</string>
+    <string name="removed_and_requested">%1$s убран из ваших стран.\n\nСуперадминистраторы получили ваш запрос по email.</string>
+    <string name="account_requests">Запросы</string>
+    <string name="account_requests_count">Открытые запросы администраторов стран: %1$d</string>
+    <string name="account_request_disable">%1$s просит отключить %2$s.</string>
+    <string name="account_request_delete">%1$s просит удалить %2$s.</string>
+    <string name="account_request_reason">Причина: %1$s</string>
+    <string name="account_request_approve">Одобрить</string>
+    <string name="account_request_reject">Отклонить</string>
+    <string name="account_request_rejected">Запрос отклонён.</string>
 </resources>

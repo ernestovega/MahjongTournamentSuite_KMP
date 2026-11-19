@@ -40,6 +40,7 @@ describe("the limits of the public routes", () => {
       ["/public/tournaments", PUBLIC_CACHE_SECONDS.lists],
       [`/public/tournaments/${open}`, PUBLIC_CACHE_SECONDS.live],
       ["/public/statistics/overview", PUBLIC_CACHE_SECONDS.lists],
+      ["/public/statistics/groups", PUBLIC_CACHE_SECONDS.lists],
       ["/public/players", PUBLIC_CACHE_SECONDS.registry],
       ["/public/countries", PUBLIC_CACHE_SECONDS.registry],
     ];
@@ -98,7 +99,7 @@ describe("the limits of the public routes", () => {
   });
 
   it("gives the same answer with and without a token", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
+    const admin = await createAccount({ role: "SUPER_ADMIN" });
     // A cached public answer must never depend on who asks, so an admin does not see a private tournament here.
     assert.equal((await get(`/public/tournaments/${hidden}`)).status, 404);
     assert.equal((await get(`/public/tournaments/${hidden}`, admin.token)).status, 404);

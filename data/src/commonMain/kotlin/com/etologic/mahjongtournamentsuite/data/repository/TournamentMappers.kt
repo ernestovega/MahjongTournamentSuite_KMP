@@ -17,6 +17,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_M
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
@@ -65,6 +66,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     timeZone = timeZone.normalizedOrNull(),
     numTries = numTries,
     isCompleted = isCompleted,
+    permissions = Permission.fromKeys(permissions),
     isPublic = isPublic,
     showTableDiffs = showTableDiffs,
     createdByUid = createdByUid.normalizedOrNull(),

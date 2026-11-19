@@ -113,12 +113,23 @@ val dataModule get() = module {
     single<PlatformNameProvider> { providePlatformNameProvider() }
 }
 
+/**
+ * The public reads of the admin app. Statistics are public data, so every role reads the statistics of every public
+ * tournament through the public routes, like the player app, and not only those of the own tournaments.
+ */
+val AdminPublicReads = named("adminPublicReads")
+
 /** The admin app reads the tournaments with the account of the user and its own cache. */
 val adminRepositoriesModule get() = module {
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), persisted = get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get()) }
     single<StatisticsRepository> { DefaultStatisticsRepository(get(), get(), get()) }
     single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get()) }
+    single<RepositoryCache>(AdminPublicReads) { SessionRepositoryCache(logger = get(), persisted = get()) } withOptions { onClose { it?.close() } }
+    single<TournamentRepository>(AdminPublicReads) {
+        DefaultTournamentRepository(get(), get(), get(), get(AdminPublicReads), get(), persisted = get(), publicReads = true)
+    }
+    single<StatisticsRepository>(AdminPublicReads) { DefaultStatisticsRepository(get(), get(), get(), publicReads = true) }
 }
 
 /**

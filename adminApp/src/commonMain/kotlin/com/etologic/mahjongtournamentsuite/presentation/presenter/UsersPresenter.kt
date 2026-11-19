@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -43,8 +45,21 @@ class UsersPresenter(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String? = null,
-    ): AppResult<ManagedUser> = adminRepository.createUser(email, alias, role, tournamentAssignments, emaId)
+        adminCountries: Set<String> = emptySet(),
+    ): AppResult<ManagedUser> = adminRepository.createUser(email, alias, role, tournamentAssignments, emaId, adminCountries)
         .trackAction(telemetry, TelemetryAction.ACCOUNT_CREATED)
+
+    /**
+     * A country admin takes the account out of its countries. With a [kind] it also asks the super admins to disable
+     * or delete the whole account, with the [reason].
+     */
+    suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = adminRepository.removeFromMyCountries(uid, kind, reason).trackAction(telemetry, TelemetryAction.ACCOUNT_REMOVED_FROM_COUNTRIES)
+
+    /** The open requests of the country admins. Only super admins load them. */
+    suspend fun loadAccountRequests(): AppResult<List<AccountRequest>> = adminRepository.listAccountRequests()
+
+    suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = adminRepository.resolveAccountRequest(id, approve)
+        .trackAction(telemetry, if (approve) TelemetryAction.ACCOUNT_REQUEST_APPROVED else TelemetryAction.ACCOUNT_REQUEST_REJECTED)
 
     /** The shared EMA player list. The account dialog uses it to pick an EMA ID. */
     suspend fun loadEmaPlayers(force: Boolean = false): AppResult<List<Player>> = playerRepository.listPlayers(force.mode())

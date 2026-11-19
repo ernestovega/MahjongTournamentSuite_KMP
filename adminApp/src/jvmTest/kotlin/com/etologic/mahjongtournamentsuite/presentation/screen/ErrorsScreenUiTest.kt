@@ -78,7 +78,7 @@ class ErrorsScreenUiTest {
         configure: FakeAdminRepository.() -> Unit = {},
         ready: String? = "WebFailure",
     ): FakeAdminRepository {
-        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply {
+        val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply {
             errorPageSize = pageSize
             errorGroupsFailure = failure
             errorGroups = base + extra
