@@ -6,6 +6,7 @@ import { DEFAULT_PRIMARY_COLOR, organizersOf, readOrganizerIds, type OrganizerVi
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { drawProblem } from "./tournamentDraw";
+import { readRegistrationSettings, type RegistrationSettingsView } from "./registrationSettings";
 import { getUserProfile } from "./usersService";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 import {
@@ -82,6 +83,10 @@ export type Tournament = {
   isPublic: boolean;
   /** The player app shows the differences button on the table screen. Old documents show it. */
   showTableDiffs: boolean;
+  /** True while a tournament with registrations has no draw yet: no players, no tables. */
+  drawPending: boolean;
+  /** The registrations of the tournament, or null for a tournament that never had them. */
+  registration: RegistrationSettingsView | null;
   createdByUid: string | null;
   createdByName: string | null;
   createdAt: string | null;
@@ -168,6 +173,8 @@ export async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): P
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     isPublic: d.get("isPublic") !== false,
     showTableDiffs: d.get("showTableDiffs") !== false,
+    drawPending: d.get("drawPending") === true,
+    registration: readRegistrationSettings(d.get("registration")),
     createdByUid,
     createdByName,
     createdAt: toIsoString(d.get("createdAt")),
@@ -206,18 +213,26 @@ export async function createTournament(params: {
   matchExtraMinutes?: unknown;
   timeZone?: unknown;
   createdByUid: string;
+  /**
+   * The registrations of a tournament that opens them before the draw. The tournament then has no players, no tables
+   * and no draw: the organizer makes the draw when the registrations close (registrationsService).
+   */
+  registration?: Record<string, unknown>;
 }): Promise<Tournament> {
+  const withRegistration = params.registration != null;
   const numTablesPerRound = params.numPlayers / 4;
   const expectedTables = params.numRounds * numTablesPerRound;
-  if (params.players.length !== params.numPlayers) {
+  if (withRegistration) {
+    if (params.players.length > 0 || params.tables.length > 0) throw badRequest("A tournament with registrations has no draw yet");
+  } else if (params.players.length !== params.numPlayers) {
     throw badRequest("Invalid players payload", { expected: params.numPlayers, received: params.players.length });
   }
-  if (params.tables.length !== expectedTables) {
+  if (!withRegistration && params.tables.length !== expectedTables) {
     throw badRequest("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
   }
   // A tournament without teams has no team data. Every slot gets team 0.
   const players = params.isTeams ? params.players : params.players.map((player) => ({ ...player, team: 0 }));
-  const problem = drawProblem(players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
+  const problem = withRegistration ? null : drawProblem(players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
   if (problem) throw badRequest("Invalid draw", { problem });
   const roundSchedules = normalizeRoundSchedules(
     params.roundSchedules,
@@ -249,8 +264,9 @@ export async function createTournament(params: {
     isTeams: params.isTeams,
     countBestHands: params.countBestHands ?? true,
     countChickenHands: params.countChickenHands ?? true,
-    numPlayers: params.numPlayers,
+    numPlayers: withRegistration ? 0 : params.numPlayers,
     numRounds: params.numRounds,
+    ...(withRegistration ? { drawPending: true, registration: params.registration } : {}),
     roundSchedules,
     agendaItems,
     matchDurationMinutes,
@@ -276,16 +292,44 @@ export async function createTournament(params: {
   // The children are written first and the tournament document last. A tournament that is missing its
   // document is invisible, so a failure in the middle never shows a half-built tournament.
   // If anything fails, everything written so far is deleted.
-  const writes: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> }> = [];
+  const writes = tournamentContentWrites(ref, { players, tables: params.tables, numRounds: params.numRounds, isTeams: params.isTeams });
+  try {
+    await commitContentWrites(writes);
+    await ref.set(tournamentDoc);
+  } catch (error) {
+    await db.recursiveDelete(ref).catch(() => undefined);
+    throw error;
+  }
+
+  const snap = await ref.get();
+  await bumpGlobalDataVersion("tournaments");
+  return mapTournamentDoc(snap);
+}
+
+export type ContentWrite = { ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> };
+
+/**
+ * The documents under a tournament that the draw makes: the player slots, the teams, the rounds, the tables and
+ * their empty hands. A tournament with registrations gets them when the organizer makes the draw at the close.
+ */
+export function tournamentContentWrites(
+  ref: FirebaseFirestore.DocumentReference,
+  params: {
+    players: Array<{ id: number; team: number; name?: string; country?: string }>;
+    tables: Array<{ roundId: number; tableId: number; playerIds: number[]; isCompleted?: boolean; useTotalsOnly?: boolean }>;
+    numRounds: number;
+    isTeams: boolean;
+  },
+): ContentWrite[] {
+  const players = params.players;
+  const writes: ContentWrite[] = [];
   const addSet = (docRef: FirebaseFirestore.DocumentReference, data: Record<string, unknown>) => {
     writes.push({ ref: docRef, data });
-    return Promise.resolve();
   };
 
   for (const player of players) {
     const playerRef = ref.collection("players").doc(String(player.id));
-    // eslint-disable-next-line no-await-in-loop
-    await addSet(playerRef, {
+    addSet(playerRef, {
       id: player.id,
       name: player.name ?? `Player ${player.id}`,
       team: player.team,
@@ -301,8 +345,7 @@ export async function createTournament(params: {
       .sort((a, b) => a - b);
     for (const teamId of teamIds) {
       const teamRef = ref.collection("teams").doc(String(teamId));
-      // eslint-disable-next-line no-await-in-loop
-      await addSet(teamRef, {
+      addSet(teamRef, {
         id: teamId,
         name: `Team ${teamId}`,
         createdAt: FieldValue.serverTimestamp(),
@@ -313,8 +356,7 @@ export async function createTournament(params: {
 
   for (let roundId = 1; roundId <= params.numRounds; roundId++) {
     const roundRef = ref.collection("rounds").doc(String(roundId));
-    // eslint-disable-next-line no-await-in-loop
-    await addSet(roundRef, {
+    addSet(roundRef, {
       roundId,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -323,8 +365,7 @@ export async function createTournament(params: {
 
   for (const table of params.tables) {
     const tableRef = ref.collection("tables").doc(`${table.roundId}_${table.tableId}`);
-    // eslint-disable-next-line no-await-in-loop
-    await addSet(tableRef, {
+    addSet(tableRef, {
       roundId: table.roundId,
       tableId: table.tableId,
       playerIds: table.playerIds,
@@ -357,8 +398,7 @@ export async function createTournament(params: {
       updatedAt: FieldValue.serverTimestamp(),
     });
     for (let handId = 1; handId <= HANDS_PER_TABLE; handId++) {
-      // eslint-disable-next-line no-await-in-loop
-      await addSet(tableRef.collection("hands").doc(String(handId)), {
+      addSet(tableRef.collection("hands").doc(String(handId)), {
         ...defaultHand(handId),
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -366,27 +406,22 @@ export async function createTournament(params: {
     }
   }
 
-  try {
-    const chunks: typeof writes[] = [];
-    for (let index = 0; index < writes.length; index += MAX_WRITES_PER_BATCH) {
-      chunks.push(writes.slice(index, index + MAX_WRITES_PER_BATCH));
-    }
-    const results = await Promise.allSettled(chunks.map((chunk) => {
-      const batch = db.batch();
-      chunk.forEach(({ ref: docRef, data }) => batch.set(docRef, data));
-      return batch.commit();
-    }));
-    const failed = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
-    if (failed) throw failed.reason;
-    await ref.set(tournamentDoc);
-  } catch (error) {
-    await db.recursiveDelete(ref).catch(() => undefined);
-    throw error;
-  }
+  return writes;
+}
 
-  const snap = await ref.get();
-  await bumpGlobalDataVersion("tournaments");
-  return mapTournamentDoc(snap);
+/** Writes the documents in parallel batches. Firestore allows 500 writes in a batch. */
+export async function commitContentWrites(writes: ContentWrite[]): Promise<void> {
+  const chunks: ContentWrite[][] = [];
+  for (let index = 0; index < writes.length; index += MAX_WRITES_PER_BATCH) {
+    chunks.push(writes.slice(index, index + MAX_WRITES_PER_BATCH));
+  }
+  const results = await Promise.allSettled(chunks.map((chunk) => {
+    const batch = db.batch();
+    chunk.forEach(({ ref: docRef, data }) => batch.set(docRef, data));
+    return batch.commit();
+  }));
+  const failed = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
+  if (failed) throw failed.reason;
 }
 
 /** One tournament, or null when it does not exist. */
@@ -556,6 +591,12 @@ export async function deleteTournament(tournamentId: string): Promise<void> {
       await storage.file(logoPath).delete({ ignoreNotFound: true });
     },
     deleteTournamentTree: async () => {
+      // The public link of its registrations goes away with it.
+      const slug = String((snap.get("registration") as Record<string, unknown> | undefined)?.slug ?? "");
+      if (slug !== "") {
+        const link = db.collection("registrationSlugs").doc(slug);
+        if ((await link.get()).get("tournamentId") === tournamentId) await link.delete();
+      }
       // The numbers of the tournament leave the sums before its tables are deleted.
       await removeTournamentStats(tournamentId);
       await db.recursiveDelete(ref);

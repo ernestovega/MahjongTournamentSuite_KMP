@@ -1,8 +1,10 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 import { buildApp } from "./api/app";
 import { closeRoundTables } from "./services/matchTimeCloseService";
+import { runRegistrationsHour } from "./services/registrationJobs";
 import { CLOSE_ROUND_TASK_REGION } from "./services/matchTimeTaskService";
 import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
 
@@ -46,5 +48,26 @@ export const closeRoundTablesTask = onTaskDispatched(
     const { tournamentId, roundId } = request.data as { tournamentId?: string; roundId?: number };
     if (typeof tournamentId !== "string" || !Number.isInteger(roundId)) return;
     await closeRoundTables(tournamentId, Number(roundId));
+  },
+);
+
+/**
+ * The hourly work of the registrations of tournaments without a draw: it removes the pending registrations whose
+ * link is too old, closes the registrations after their last day, sends the team reminders one week before the close
+ * and the weekly report to the organization on Sunday evening. See docs/registrations.md.
+ * It runs in Madrid, like the API, because the SMTP server of the mailbox accepts connections only from some countries.
+ */
+export const registrationsHourly = onSchedule(
+  {
+    schedule: "5 * * * *",
+    timeZone: "Etc/UTC",
+    region: "europe-southwest1",
+    memory: "512MiB",
+    timeoutSeconds: 540,
+    secrets: [MAIL_SMTP_URI],
+  },
+  async () => {
+    const results = await runRegistrationsHour(new Date());
+    if (results.length > 0) console.log("Registrations hour", JSON.stringify(results));
   },
 );

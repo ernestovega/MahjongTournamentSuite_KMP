@@ -21,6 +21,7 @@ import {
 import { listAllTournaments, tournamentFromSnapshot, type Tournament } from "../../services/tournamentsService";
 import { getUserProfile } from "../../services/usersService";
 import { getRoundClocks } from "../../services/roundClockService";
+import { publicRegistrations, tournamentOfSlug } from "../../services/registrationsService";
 import { assertSafeDocumentId, badRequest, notFound } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { rateLimit } from "../middleware/rateLimit";
@@ -127,6 +128,20 @@ export function publicRouter(): Router {
     if (tournament == null) throw notFound("Tournament not found");
     tournamentCache(res);
     res.status(200).json(publicTournament(tournament));
+  }));
+
+  // The registrations of a tournament before its draw: the places and the waiting list, without emails.
+  router.get("/tournaments/:tournamentId/registrations", handle(async (req, res) => {
+    cacheFor(res, PUBLIC_CACHE_SECONDS.live);
+    res.status(200).json(await publicRegistrations(pathParam(req, "tournamentId")));
+  }));
+
+  // The public link of the registrations, /inscripcion/<slug>, opens this tournament.
+  router.get("/registration-links/:slug", handle(async (req, res) => {
+    const slug = pathParam(req, "slug").trim().toLowerCase();
+    if (!/^[a-z0-9-]{1,40}$/.test(slug)) throw notFound("Registration link not found");
+    cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
+    res.status(200).json({ tournamentId: await tournamentOfSlug(slug) });
   }));
 
   router.get("/tournaments/:tournamentId/sync/manifest", handle(async (req, res) => {

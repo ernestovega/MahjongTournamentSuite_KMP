@@ -19,7 +19,8 @@ export type ActivityAction =
   | "user.removal" | "user.request.approve" | "user.request.reject" | "user.permissions"
   | "role.create" | "role.update" | "role.delete"
   | "registry.create" | "registry.update" | "registry.photo" | "registry.delete"
-  | "organization.create" | "organization.update" | "organization.delete";
+  | "organization.create" | "organization.update" | "organization.delete"
+  | "registration.update" | "registration.draw";
 
 export type ActivityEntry = {
   action: ActivityAction;

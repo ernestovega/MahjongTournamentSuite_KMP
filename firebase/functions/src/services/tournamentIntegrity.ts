@@ -119,7 +119,8 @@ function checkTournamentInfo(c: Collector, input: IntegrityInput, numPlayers: nu
   const t = input.tournament;
   if (text(t.name) === "") c.add("error", "info.name", "The tournament has no name.");
   if (text(t.shortName) === "") c.add("warning", "info.shortName", "The tournament has no short name.");
-  if (!isValidPlayerCount(numPlayers)) {
+  // A tournament with open registrations has no players before its draw.
+  if (!isValidPlayerCount(numPlayers) && t.drawPending !== true) {
     c.add("error", "info.numPlayers", `The number of players (${text(t.numPlayers)}) must be a multiple of 4 and at least ${MIN_TOURNAMENT_PLAYERS}.`);
   }
   if (!Number.isInteger(numRounds) || numRounds <= 0) {

@@ -13,6 +13,7 @@ import { authRouter } from "./routes/auth.routes";
 import { configRouter } from "./routes/config.routes";
 import { countriesRouter } from "./routes/countries.routes";
 import { playerRouter } from "./routes/player.routes";
+import { registrationsRouter } from "./routes/registrations.routes";
 import { playersRouter } from "./routes/players.routes";
 import { meRouter, publicRouter } from "./routes/public.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
@@ -30,7 +31,7 @@ const WRITES_PER_MINUTE = 120;
 export const WRITES_PER_ADDRESS_PER_MINUTE = 600;
 
 /** Writes that need no account. Their bodies are small: a sign-in, a support message, an error report. */
-export const OPEN_WRITE_ROUTES = /^(\/api)?\/(auth\/(signIn|passwordReset|refresh)|support\/message|telemetry\/errors)\/?$/;
+export const OPEN_WRITE_ROUTES = /^(\/api)?\/(auth\/(signIn|passwordReset|refresh)|support\/message|telemetry\/errors|registrations\/[^/]+(\/.*)?)\/?$/;
 export const OPEN_ROUTE_BODY_LIMIT = "256kb";
 
 /** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
@@ -48,6 +49,7 @@ export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
   ["/telemetry", telemetryRouter],
   ["/public", publicRouter],
   ["/me", meRouter],
+  ["/registrations", registrationsRouter],
 ];
 
 export function buildApp(): express.Express {

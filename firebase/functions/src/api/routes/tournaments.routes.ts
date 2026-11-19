@@ -61,6 +61,17 @@ import { groupTournament, loadGroupStatistics } from "../../services/statisticsG
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
 import { applyPlayerImport, exportPlayers, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
+import {
+  adminAddRegistration,
+  adminRegistrations,
+  adminRemoveRegistration,
+  adminUpdateRegistration,
+  claimSlug,
+  importRegistrations,
+  updateRegistrationSettings,
+} from "../../services/registrationsService";
+import { makeDrawFromRegistrations } from "../../services/registrationDraw";
+import { defaultSlug, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
 function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | undefined {
@@ -300,17 +311,37 @@ export function tournamentsRouter(): Router {
         issues.push({ field: "eventEndDate", message: "Must not be before eventStartDate", value: body?.eventEndDate });
       }
 
-      if (!isValidPlayerCount(numPlayers)) {
+      // A tournament with registrations has no players and no draw yet: the draw comes when they close.
+      const registrationBody = body?.registration != null && typeof body.registration === "object"
+        ? body.registration as Record<string, unknown>
+        : null;
+      if (!registrationBody && !isValidPlayerCount(numPlayers)) {
         issues.push({ field: "numPlayers", message: `Must be a multiple of 4 and at least ${MIN_TOURNAMENT_PLAYERS}`, value: numPlayersValue });
       }
       if (!Number.isFinite(numRounds) || !Number.isInteger(numRounds) || numRounds <= 0) {
         issues.push({ field: "numRounds", message: "Must be a positive integer", value: numRoundsValue });
       }
-      if (!Number.isFinite(numTries) || !Number.isInteger(numTries) || numTries <= 0) {
+      if (!registrationBody && (!Number.isFinite(numTries) || !Number.isInteger(numTries) || numTries <= 0)) {
         issues.push({ field: "numTries", message: "Must be a positive integer", value: numTriesValue });
       }
-      if (!players) issues.push({ field: "players", message: "Required (array)", value: body?.players });
-      if (!tables) issues.push({ field: "tables", message: "Required (array)", value: body?.tables });
+      if (!registrationBody && !players) issues.push({ field: "players", message: "Required (array)", value: body?.players });
+      if (!registrationBody && !tables) issues.push({ field: "tables", message: "Required (array)", value: body?.tables });
+      let registration: Record<string, unknown> | undefined;
+      if (registrationBody) {
+        try {
+          const slug = parseSlug(registrationBody.slug ?? defaultSlug(shortName, eventStartDate));
+          registration = {
+            status: registrationBody.status === "CLOSED" ? "CLOSED" : "OPEN",
+            maxPlayers: parseMaxPlayers(registrationBody.maxPlayers),
+            closesOn: parseClosesOn(registrationBody.closesOn),
+            slug,
+            confirmed: 0,
+            waiting: 0,
+          };
+        } catch (error) {
+          issues.push({ field: "registration", message: error instanceof Error ? error.message : "Invalid registration" });
+        }
+      }
 
       if (issues.length > 0) {
         throw badRequest("Missing or invalid tournament fields", {
@@ -375,11 +406,12 @@ export function tournamentsRouter(): Router {
         isTeams,
         countBestHands,
         countChickenHands,
-        numPlayers,
+        numPlayers: registration ? 0 : numPlayers,
         numRounds,
-        numTries,
+        numTries: registration ? 0 : numTries,
         players: parsedPlayers,
         tables: parsedTables,
+        registration,
         roundSchedules: body?.roundSchedules,
         agendaItems: body?.agendaItems,
         matchDurationMinutes: body?.matchDurationMinutes,
@@ -389,10 +421,18 @@ export function tournamentsRouter(): Router {
         createdByUid: decoded.uid,
       });
 
+      if (registration) {
+        try {
+          await claimSlug(String(registration.slug), tournament.id, null);
+        } catch (error) {
+          await deleteTournament(tournament.id).catch(() => undefined);
+          throw error;
+        }
+      }
       await recordActivity({
         action: "tournament.create", actor: actorFromToken(res.locals.auth), tournamentId: tournament.id,
         target: tournament.name,
-        details: { shortName, organizerIds, eventStartDate, eventEndDate, hostCountry, hostCity, isTeams, numPlayers, numRounds },
+        details: { shortName, organizerIds, eventStartDate, eventEndDate, hostCountry, hostCity, isTeams, numPlayers, numRounds, withRegistration: registration != null },
       });
       res.status(200).json(tournament);
     } catch (e) {
@@ -1189,6 +1229,159 @@ export function tournamentsRouter(): Router {
         next(e);
       }
     },
+  );
+
+  // Registrations, before the draw. See docs/registrations.md.
+  const registrationRoute = (handler: (req: Request, res: Response) => Promise<void>) =>
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        await handler(req, res);
+      } catch (e) {
+        next(e);
+      }
+    };
+  const registrationActivity = async (res: Response, tournamentId: string, target: string, details: Record<string, unknown>) => {
+    await recordActivity({ action: "registration.update", actor: actorFromToken(res.locals.auth), tournamentId, target, details });
+  };
+
+  router.get(
+    "/:tournamentId/registrations",
+    requireAuth,
+    requireTournamentPermission("tournament.playerEmails"),
+    registrationRoute(async (req, res) => {
+      res.status(200).json(await adminRegistrations(pathParam(req, "tournamentId")));
+    }),
+  );
+
+  router.post(
+    "/:tournamentId/registrations",
+    requireAuth,
+    requireTournamentPermission("tournament.playerEmails"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const result = await adminAddRegistration({
+        tournamentId,
+        emaId: body.emaId,
+        email: body.email,
+        status: body.status,
+        paid: body.paid,
+        foodRestrictions: body.foodRestrictions,
+        teamName: body.teamName,
+        notify: body.notify !== false,
+        language: parseAcceptLanguage(req.header("accept-language")),
+      });
+      await registrationActivity(res, tournamentId, `registration ${result.emaId}`, { added: true, status: result.status });
+      res.status(200).json(result);
+    }),
+  );
+
+  router.post(
+    "/:tournamentId/registrations/import",
+    requireAuth,
+    requireTournamentPermission("tournament.playerEmails"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const result = await importRegistrations({
+        tournamentId, csv: body.csv, apply: body.apply === true, language: parseAcceptLanguage(req.header("accept-language")),
+      });
+      if (body.apply === true) await registrationActivity(res, tournamentId, `${result.imported} registrations`, { imported: result.imported });
+      res.status(200).json(result);
+    }),
+  );
+
+  router.put(
+    "/:tournamentId/registrations/:emaId",
+    requireAuth,
+    requireTournamentPermission("tournament.playerEmails"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const result = await adminUpdateRegistration({
+        tournamentId,
+        emaId: pathParam(req, "emaId"),
+        email: body.email,
+        status: body.status,
+        paid: body.paid,
+        teamName: body.teamName,
+        foodRestrictions: body.foodRestrictions,
+      });
+      await registrationActivity(res, tournamentId, `registration ${result.emaId}`, {
+        status: body.status, paid: body.paid, teamName: body.teamName, emailChanged: body.email !== undefined,
+      });
+      res.status(200).json(result);
+    }),
+  );
+
+  router.delete(
+    "/:tournamentId/registrations/:emaId",
+    requireAuth,
+    requireTournamentPermission("tournament.playerEmails"),
+    registrationRoute(async (req, res) => {
+      const tournamentId = pathParam(req, "tournamentId");
+      const emaId = pathParam(req, "emaId");
+      await adminRemoveRegistration({ tournamentId, emaId, notify: req.query.notify !== "false" });
+      await registrationActivity(res, tournamentId, `registration ${emaId}`, { removed: true });
+      res.status(200).json({ ok: true });
+    }),
+  );
+
+  router.put(
+    "/:tournamentId/registration-settings",
+    requireAuth,
+    requireTournamentPermission("tournament.configure"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const settings = await updateRegistrationSettings({
+        tournamentId,
+        status: parsePhase(body.status),
+        maxPlayers: parseMaxPlayers(body.maxPlayers),
+        closesOn: parseClosesOn(body.closesOn),
+        slug: parseSlug(body.slug),
+      });
+      await registrationActivity(res, tournamentId, "registration settings", { ...settings });
+      res.status(200).json(settings);
+    }),
+  );
+
+  router.post(
+    "/:tournamentId/draw",
+    requireAuth,
+    requireTournamentPermission("tournament.configure"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const list = (value: unknown, name: string) => {
+        if (!Array.isArray(value)) throw badRequest(`${name} must be an array`);
+        return value.map((item) => (item != null && typeof item === "object" ? item as Record<string, unknown> : {}));
+      };
+      const integer = (value: unknown, name: string) => {
+        const number = Number(value);
+        if (!Number.isInteger(number)) throw badRequest(`Invalid ${name}`);
+        return number;
+      };
+      const tournament = await makeDrawFromRegistrations({
+        tournamentId,
+        numTries: integer(body.numTries ?? 1, "numTries"),
+        players: list(body.players, "players").map((row) => ({ id: integer(row.id, "player id"), team: integer(row.team ?? 0, "player team") })),
+        tables: list(body.tables, "tables").map((row) => {
+          const ids = Array.isArray(row.playerIds) ? row.playerIds.map((id) => integer(id, "table playerIds")) : [];
+          if (ids.length !== 4) throw badRequest("Invalid table playerIds");
+          return { roundId: integer(row.roundId, "table roundId"), tableId: integer(row.tableId, "table tableId"), playerIds: ids };
+        }),
+        assignments: list(body.assignments, "assignments").map((row) => ({
+          playerId: integer(row.playerId, "assignment playerId"), emaId: validateEmaId(row.emaId),
+        })),
+        uid: (res.locals.auth as { uid?: string } | undefined)?.uid ?? null,
+      });
+      await recordActivity({
+        action: "registration.draw", actor: actorFromToken(res.locals.auth), tournamentId, target: tournament.name,
+        details: { numPlayers: tournament.numPlayers, numRounds: tournament.numRounds },
+      });
+      res.status(200).json(tournament);
+    }),
   );
 
   // Placeholder: future endpoints for players/teams/tables/hands will live here.
