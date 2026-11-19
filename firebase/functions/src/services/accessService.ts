@@ -1,18 +1,19 @@
 import { auth, db } from "../firebase";
 import { getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
+import { readOrganizerIds } from "./organizationsService";
 import { PERMISSIONS, ROLE_PERMISSIONS, TOURNAMENT_PERMISSIONS, type Permission } from "../models/permissions";
 
 /**
  * What one account may do, read from the account itself and not from the token. A token keeps the claims of the
- * moment it was issued for up to one hour, so a role or a country that changed reaches the API at the next request.
+ * moment it was issued for up to one hour, so a role or an organization that changed reaches the API at the next request.
  * Each result is reused for a short time per server instance, like the membership check.
  */
 export type Access = {
   uid: string;
   disabled: boolean;
   superAdmin: boolean;
-  /** The countries of a country admin, as two-letter codes. Empty for every other account. */
-  adminCountries: ReadonlySet<string>;
+  /** The organizations of a club admin, as organization ids. Empty for every other account. */
+  adminOrganizations: ReadonlySet<string>;
   editor: boolean;
   player: boolean;
 };
@@ -20,7 +21,7 @@ export type Access = {
 const ACCESS_TTL_MS = 30_000;
 const MAX_CACHED = 2000;
 const accessCache = new Map<string, { until: number; access: Access }>();
-const countryCache = new Map<string, { until: number; country: string | null }>();
+const organizersCache = new Map<string, { until: number; organizerIds: string[] | null }>();
 const memberCache = new Map<string, number>();
 
 function remember<T>(cache: Map<string, T>, key: string, value: T): void {
@@ -34,14 +35,15 @@ export function forgetAccess(uid: string): void {
   for (const key of [...memberCache.keys()]) if (key.endsWith(`/${uid}`)) memberCache.delete(key);
 }
 
-/** Forgets the country of a tournament after it changed or the tournament was deleted. */
-export function forgetTournamentCountry(tournamentId: string): void {
-  countryCache.delete(tournamentId);
+/** Forgets the organizers of a tournament after they changed or the tournament was deleted. */
+export function forgetTournamentOrganizers(tournamentId: string): void {
+  organizersCache.delete(tournamentId);
 }
 
-export function readCountryList(value: unknown): string[] {
+/** A stored list of organization ids, sorted and without repeats. */
+export function readOrganizationList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return [...new Set(value.map((item) => String(item ?? "").trim().toUpperCase()).filter((code) => /^[A-Z]{2}$/.test(code)))].sort();
+  return [...new Set(value.map((item) => String(item ?? "").trim()).filter((id) => id !== ""))].sort();
 }
 
 export async function loadAccess(uid: string): Promise<Access> {
@@ -52,12 +54,12 @@ export async function loadAccess(uid: string): Promise<Access> {
     db.doc(`users/${uid}`).get(),
   ]);
   const roles = user ? getGlobalUserRoles(user) : [];
-  const countries = roles.includes("COUNTRY_ADMIN") ? readCountryList(profile.get("adminCountries")) : [];
+  const organizations = roles.includes("CLUB_ADMIN") ? readOrganizationList(profile.get("adminOrganizations")) : [];
   const access: Access = {
     uid,
     disabled: user?.disabled ?? true,
     superAdmin: roles.includes("SUPER_ADMIN"),
-    adminCountries: new Set(countries),
+    adminOrganizations: new Set(organizations),
     editor: roles.includes("EDITOR"),
     player: roles.includes("PLAYER"),
   };
@@ -69,14 +71,14 @@ export async function loadAccess(uid: string): Promise<Access> {
 export function heldRoles(access: Access): GlobalUserRole[] {
   const roles: GlobalUserRole[] = [];
   if (access.superAdmin) roles.push("SUPER_ADMIN");
-  if (access.adminCountries.size > 0) roles.push("COUNTRY_ADMIN");
+  if (access.adminOrganizations.size > 0) roles.push("CLUB_ADMIN");
   if (access.editor) roles.push("EDITOR");
   if (access.player) roles.push("PLAYER");
   return roles;
 }
 
 export function isStaff(access: Access): boolean {
-  return access.superAdmin || access.adminCountries.size > 0 || access.editor;
+  return access.superAdmin || access.adminOrganizations.size > 0 || access.editor;
 }
 
 /** True when some role of the account grants the permission somewhere. A route then checks the scope. */
@@ -89,14 +91,19 @@ export function permissionsSomewhere(access: Access): Permission[] {
   return PERMISSIONS.filter((permission) => hasPermissionSomewhere(access, permission));
 }
 
-/** The host country of a tournament, or null when the tournament does not exist. */
-export async function tournamentCountry(tournamentId: string): Promise<string | null> {
-  const cached = countryCache.get(tournamentId);
-  if (cached && cached.until > Date.now()) return cached.country;
+/** The organizers of a tournament (the first one is the main one), or null when the tournament does not exist. */
+export async function tournamentOrganizers(tournamentId: string): Promise<string[] | null> {
+  const cached = organizersCache.get(tournamentId);
+  if (cached && cached.until > Date.now()) return cached.organizerIds;
   const snapshot = await db.doc(`tournaments/${tournamentId}`).get();
-  const country = snapshot.exists ? String(snapshot.get("hostCountry") ?? "").trim().toUpperCase() : null;
-  remember(countryCache, tournamentId, { until: Date.now() + ACCESS_TTL_MS, country });
-  return country;
+  const organizerIds = snapshot.exists ? readOrganizerIds(snapshot.get("organizerIds")) : null;
+  remember(organizersCache, tournamentId, { until: Date.now() + ACCESS_TTL_MS, organizerIds });
+  return organizerIds;
+}
+
+/** True when the club admin manages one of the organizations. */
+export function managesSomeOrganization(access: Access, organizerIds: readonly string[] | null): boolean {
+  return organizerIds != null && organizerIds.some((id) => access.adminOrganizations.has(id));
 }
 
 export async function isTournamentMember(uid: string, tournamentId: string): Promise<boolean> {
@@ -118,13 +125,13 @@ export async function isTournamentMember(uid: string, tournamentId: string): Pro
 export async function rolesInTournament(
   access: Access,
   tournamentId: string,
-  known?: { country?: string | null; member?: boolean },
+  known?: { organizerIds?: string[] | null; member?: boolean },
 ): Promise<GlobalUserRole[]> {
   const roles: GlobalUserRole[] = [];
   if (access.superAdmin) roles.push("SUPER_ADMIN");
-  if (access.adminCountries.size > 0) {
-    const country = known?.country !== undefined ? known.country : await tournamentCountry(tournamentId);
-    if (country != null && access.adminCountries.has(country)) roles.push("COUNTRY_ADMIN");
+  if (access.adminOrganizations.size > 0) {
+    const organizerIds = known?.organizerIds !== undefined ? known.organizerIds : await tournamentOrganizers(tournamentId);
+    if (managesSomeOrganization(access, organizerIds)) roles.push("CLUB_ADMIN");
   }
   if (access.editor) {
     const member = known?.member !== undefined ? known.member : await isTournamentMember(access.uid, tournamentId);
@@ -141,7 +148,7 @@ export function permissionsOf(roles: GlobalUserRole[]): Set<Permission> {
 export async function tournamentPermissions(
   access: Access,
   tournamentId: string,
-  known?: { country?: string | null; member?: boolean },
+  known?: { organizerIds?: string[] | null; member?: boolean },
 ): Promise<Permission[]> {
   const granted = permissionsOf(await rolesInTournament(access, tournamentId, known));
   return PERMISSIONS.filter((permission) => TOURNAMENT_PERMISSIONS.has(permission) && granted.has(permission));
@@ -151,8 +158,8 @@ export async function canInTournament(access: Access, permission: Permission, to
   return permissionsOf(await rolesInTournament(access, tournamentId)).has(permission);
 }
 
-/** True when the account may use the permission for this country: a super admin, or a country admin of it. */
-export function canInCountry(access: Access, permission: Permission, country: string): boolean {
+/** True when the account may use the permission for this organization: a super admin, or a club admin of it. */
+export function canInOrganization(access: Access, permission: Permission, organizationId: string): boolean {
   if (access.superAdmin && ROLE_PERMISSIONS.SUPER_ADMIN.includes(permission)) return true;
-  return access.adminCountries.has(country) && ROLE_PERMISSIONS.COUNTRY_ADMIN.includes(permission);
+  return access.adminOrganizations.has(organizationId) && ROLE_PERMISSIONS.CLUB_ADMIN.includes(permission);
 }

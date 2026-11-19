@@ -3,7 +3,7 @@ import type { GlobalUserRole } from "./globalRole";
 /**
  * Every action that a role may or may not do, with its name. The routes check a permission, never a role, so this
  * table is the one place that says what each role can do. Each role holds its permissions only in its own scope:
- * a super admin everywhere, a country admin in the tournaments and the accounts of its countries, an editor in the
+ * a super admin everywhere, a club admin in the tournaments and the accounts of its organizations, an editor in the
  * tournaments assigned to it. `docs/user-roles-matrix.md` explains the same table in words.
  */
 export const PERMISSIONS = [
@@ -20,8 +20,12 @@ export const PERMISSIONS = [
   "tournament.playerEmails",
   // Tournaments, outside one tournament.
   "tournaments.create",
-  "tournaments.changeCountry",
+  "tournaments.changeOrganizers",
   "tournaments.deleteFinished",
+  // Organizations (clubs and federations).
+  "organizations.create",
+  "organizations.edit",
+  "organizations.delete",
   // Accounts.
   "accounts.view",
   "accounts.createPlayer",
@@ -65,7 +69,7 @@ const EDITOR: readonly Permission[] = [
   "tools.idCards",
 ];
 
-const COUNTRY_ADMIN: readonly Permission[] = [
+const CLUB_ADMIN: readonly Permission[] = [
   ...EDITOR,
   "tournament.editCompleted",
   "tournament.configure",
@@ -77,13 +81,14 @@ const COUNTRY_ADMIN: readonly Permission[] = [
   "accounts.manageStaff",
   "accounts.passwordReset",
   "accounts.requestRemoval",
+  "organizations.edit",
   "ema.create",
 ];
 
 export const ROLE_PERMISSIONS: Readonly<Record<GlobalUserRole, readonly Permission[]>> = {
   PLAYER: [],
   EDITOR,
-  COUNTRY_ADMIN,
+  CLUB_ADMIN,
   SUPER_ADMIN: PERMISSIONS.filter((permission) => permission !== "accounts.requestRemoval"),
 };
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { db } from "../firebase";
+import { forgetOrganizations } from "../services/organizationsService";
 
 /** Integration tests need the Firestore emulator. `npm run test:integration` starts it. */
 export function requireEmulator(): void {
@@ -21,15 +22,22 @@ export async function seedTournament(params: {
   tables: SeedTable[];
   withHands?: boolean;
   isCompleted?: boolean;
-  /** The host country, as a two-letter code. It decides which country admins manage the tournament. */
+  /** The host country, as a two-letter code. */
   hostCountry?: string;
+  /**
+   * The organizations that own the tournament. They decide which club admins manage it. Without them the tournament
+   * belongs to `org-<country>`, for example `org-es`, see seedOrganization.
+   */
+  organizerIds?: string[];
   eventEndDate?: string;
 }): Promise<string> {
   const tournamentId = params.tournamentId ?? newTournamentId();
   const tournamentRef = db.collection("tournaments").doc(tournamentId);
+  const hostCountry = params.hostCountry ?? "ES";
   await tournamentRef.set({
     isCompleted: params.isCompleted ?? false,
-    hostCountry: params.hostCountry ?? "ES",
+    hostCountry,
+    organizerIds: params.organizerIds ?? [`org-${hostCountry.toLowerCase()}`],
     ...(params.eventEndDate ? { eventEndDate: params.eventEndDate } : {}),
     tablesWithProgress: 0,
     dataVersions: { tables: { revision: 1, changedAt: null } },
@@ -63,6 +71,21 @@ export async function seedTournament(params: {
     await batch.commit();
   }
   return tournamentId;
+}
+
+/** Writes an organization (a club or a federation) as the API stores it, and returns its id. */
+export async function seedOrganization(params: { id: string; name?: string; country?: string; primaryColor?: string }): Promise<string> {
+  await db.doc(`organizations/${params.id}`).set({
+    name: params.name ?? params.id,
+    type: "CLUB",
+    country: params.country ?? "ES",
+    primaryColor: params.primaryColor ?? "#02B16B",
+    logoUrl: null,
+    logoPath: null,
+    logoHash: null,
+  });
+  forgetOrganizations();
+  return params.id;
 }
 
 export async function readTournament(tournamentId: string): Promise<Record<string, unknown>> {

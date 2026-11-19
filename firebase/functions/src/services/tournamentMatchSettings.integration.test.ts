@@ -11,7 +11,6 @@ function createRequest(extra: Record<string, unknown> = {}) {
   return {
     name: "Match settings open",
     shortName: "MS",
-    primaryColor: "#02B16B",
     eventStartDate: "2026-10-01",
     eventEndDate: "2026-10-02",
     hostCountry: "ES",
@@ -33,7 +32,6 @@ function updateRequest(tournamentId: string, extra: Record<string, unknown> = {}
     tournamentId,
     name: "Match settings open",
     shortName: "MS",
-    primaryColor: "#02B16B",
     eventStartDate: "2026-10-01",
     eventEndDate: "2026-10-02",
     hostCountry: "ES",

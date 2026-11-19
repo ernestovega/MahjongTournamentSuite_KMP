@@ -17,7 +17,8 @@ export type ActivityAction =
   | "account.send" | "player.email"
   | "user.create" | "user.passwordReset" | "user.update" | "user.disable" | "user.enable" | "user.delete" | "user.photo" | "user.photo.remove"
   | "user.removal" | "user.request.approve" | "user.request.reject"
-  | "registry.create" | "registry.update" | "registry.photo" | "registry.delete";
+  | "registry.create" | "registry.update" | "registry.photo" | "registry.delete"
+  | "organization.create" | "organization.update" | "organization.delete";
 
 export type ActivityEntry = {
   action: ActivityAction;

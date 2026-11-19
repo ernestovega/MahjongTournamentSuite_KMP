@@ -42,12 +42,24 @@ async function adminTournaments(api, token) {
   return reply.json.tournaments ?? [];
 }
 
+const BOTS_CLUB = "Bots Mahjong Club";
+
+/** The organization that owns the calibration tournament. Every tournament needs one. */
+async function botsOrganizationId(api, token) {
+  const reply = await must(api.call("GET", "/admin/organizations", { token, label: "admin GET organizations" }), "Listing the organizations");
+  const existing = (reply.json.organizations ?? []).find((item) => item.name === BOTS_CLUB);
+  if (existing != null) return existing.id;
+  const body = { name: BOTS_CLUB, type: "CLUB", country: "ES", primaryColor: "#02B16B" };
+  const created = await must(api.call("POST", "/admin/organizations", { token, body, label: "admin POST organization" }), "Creating the organization");
+  return created.json.id;
+}
+
 async function createTournament(api, token, minutes, extraMinutes) {
   const start = madridNow(2);
   const body = {
     name: NAME,
     shortName: "CALIB",
-    primaryColor: "#02B16B",
+    organizerIds: [await botsOrganizationId(api, token)],
     eventStartDate: start.date,
     eventEndDate: start.date,
     hostCountry: "ES",

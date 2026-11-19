@@ -27,7 +27,7 @@ export const APPS = ["admin", "player"] as const;
 export const PLATFORMS = ["android", "web", "desktop"] as const;
 export const KINDS = ["crash", "handled"] as const;
 const ENVIRONMENTS = ["prod", "dev", "debug"] as const;
-const ROLES = ["super_admin", "country_admin", "editor", "player"] as const;
+const ROLES = ["super_admin", "club_admin", "editor", "player"] as const;
 
 export type ErrorReport = {
   app: (typeof APPS)[number];

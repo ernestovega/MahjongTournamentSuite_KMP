@@ -1,5 +1,6 @@
 /// <reference types="pdfkit" />
 import { readFileSync } from "node:fs";
+import { mainOrganizerLogoPath, organizersOf, readOrganizerIds } from "./organizationsService";
 import { dirname, join, resolve } from "node:path";
 
 import { conflict, notFound } from "../api/httpError";
@@ -713,7 +714,10 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     };
   });
 
-  const logoPath = String(tournament.get("associationLogoPath") ?? "").trim();
+  // The logo and the color of the cards are the ones of the main organizer of the tournament.
+  const organizerIds = readOrganizerIds(tournament.get("organizerIds"));
+  const mainOrganizer = (await organizersOf(organizerIds))[0];
+  const logoPath = await mainOrganizerLogoPath(organizerIds);
   const associationLogo = logoPath.length > 0
     ? await storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null)
     : null;
@@ -725,7 +729,7 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
   return {
     tournamentShortName: (storedShortName || fallbackName).slice(0, 10),
     year: /^\d{4}-/.test(eventStartDate) ? eventStartDate.slice(0, 4) : String(new Date().getUTCFullYear()),
-    primaryColor: normalizeHexColor(String(tournament.get("primaryColor") ?? DEFAULT_PRIMARY_COLOR)),
+    primaryColor: normalizeHexColor(mainOrganizer?.primaryColor ?? DEFAULT_PRIMARY_COLOR),
     associationLogo,
     numberOfRounds: numRounds,
     roundSchedules: readStoredRoundSchedules(

@@ -20,7 +20,6 @@ function request(overrides: { numPlayers?: number; numRounds?: number; lastPlaye
   return {
     name: "Test open",
     shortName: "TO",
-    primaryColor: "#02B16B",
     eventStartDate: "2026-10-01",
     eventEndDate: "2026-10-02",
     hostCountry: "ES",

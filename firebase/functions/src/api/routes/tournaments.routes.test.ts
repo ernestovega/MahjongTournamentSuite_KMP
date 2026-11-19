@@ -46,7 +46,7 @@ test("resetting a table is for the admins of the tournament, not for its editors
   assert.equal(guard?.permission, "tournament.resetTable");
   assert.equal(guard?.scope, "tournament");
   assert.ok(!ROLE_PERMISSIONS.EDITOR.includes("tournament.resetTable"));
-  assert.ok(ROLE_PERMISSIONS.COUNTRY_ADMIN.includes("tournament.resetTable"));
+  assert.ok(ROLE_PERMISSIONS.CLUB_ADMIN.includes("tournament.resetTable"));
 });
 
 test("editors can read and save tables of their tournament but cannot reset them", () => {

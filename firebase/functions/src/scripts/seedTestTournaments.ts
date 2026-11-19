@@ -11,7 +11,8 @@ import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { planOngoingRound } from "../services/ongoingRound";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
-import { deleteTournament, saveAssociationLogo } from "../services/tournamentsService";
+import { deleteTournament } from "../services/tournamentsService";
+import { forgetOrganizations, saveOrganizationLogo } from "../services/organizationsService";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
 import {
   randomTable,
@@ -75,17 +76,14 @@ type TournamentSpec = {
   id: string;
   name: string;
   shortName: string;
-  primaryColor: string;
+  /** The organizations that own the tournament, see SEED_ORGANIZATIONS. Without it, the test club. */
+  organizerIds?: string[];
   startDate: string;
   endDate: string;
   hostCountry: string;
   hostCity: string;
   venue: Venue | null;
   contactEmail: string;
-  /** An address that does not load, to check how the screens look without the logo. */
-  logoUrl?: string;
-  /** A PNG in firebase/functions/assets that the seed uploads as the logo of the tournament. */
-  logoAsset?: string;
   isTeams: boolean;
   teamNames?: string[];
   numRounds: number;
@@ -194,12 +192,55 @@ function cycle<T>(items: T[], index: number): T {
   return items[index % items.length];
 }
 
+/** The test club owns every test tournament that names no organizer. */
+const TEST_CLUB_ID = "seed-org-test-club";
+
+/**
+ * The organizations (clubs and federations) that own the seeded tournaments. Their ids are fixed, so a new run updates
+ * them. The color and the logo of a tournament are the ones of its main organizer.
+ */
+const SEED_ORGANIZATIONS: Array<{
+  id: string; name: string; type: "CLUB" | "FEDERATION"; country: string; primaryColor: string;
+  /** A PNG in firebase/functions/assets that the seed uploads as the logo. */
+  logoAsset?: string;
+  /** An address that does not load, to check how the screens look without the logo. */
+  logoUrl?: string;
+}> = [
+  { id: TEST_CLUB_ID, name: "Test Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#02B16B" },
+  { id: "seed-org-broken-logo", name: "Test Club With A Broken Logo", type: "CLUB", country: "ES", primaryColor: "#33691E", logoUrl: "https://invalid.example.test/logo.png" },
+  { id: "seed-org-madrid", name: "Madrid Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#B71C1C" },
+  { id: "seed-org-federacion-es", name: "Federación Española de Mahjong", type: "FEDERATION", country: "ES", primaryColor: "#C62828" },
+  { id: "seed-org-uppsala", name: "Uppsala Mahjong Club", type: "CLUB", country: "SE", primaryColor: "#0067A5", logoAsset: "uppsala-mahjong.png" },
+];
+
+/** Writes the organizations that the chosen tournaments use. */
+async function seedOrganizations(ids: Set<string>): Promise<void> {
+  for (const organization of SEED_ORGANIZATIONS.filter((item) => ids.has(item.id))) {
+    console.log(`  organization ${organization.id} (${organization.name})`);
+    if (!applyChanges) continue;
+    const logo = organization.logoAsset != null
+      ? await saveOrganizationLogo(organization.id, "image/png", readFileSync(`assets/${organization.logoAsset}`).toString("base64"))
+      : null;
+    await db.doc(`organizations/${organization.id}`).set({
+      name: organization.name,
+      type: organization.type,
+      country: organization.country,
+      primaryColor: organization.primaryColor,
+      logoUrl: logo?.url ?? organization.logoUrl ?? null,
+      logoPath: logo?.path ?? null,
+      logoHash: logo?.hash ?? null,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+  forgetOrganizations();
+}
+
 const TOURNAMENTS: TournamentSpec[] = [
   {
     id: "test-min-16",
     name: "Test - Minimum 16 players",
     shortName: "TEST MIN16",
-    primaryColor: "#02B16B",
     startDate: "2026-06-13", endDate: "2026-06-13",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-min@example.com",
@@ -214,7 +255,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-draws-penalties",
     name: "Test - Draws and penalties",
     shortName: "DRAWS-PEN",
-    primaryColor: "#E53935",
     startDate: "2026-07-04", endDate: "2026-07-04",
     hostCountry: "ES", hostCity: "Barcelona",
     venue: { venueName: "Casal de Gràcia", venueAddress: "Plaça del Raspall 1, Barcelona", venueMapUrl: "" },
@@ -230,7 +270,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-ties",
     name: "Test - Ties in tables and ranking",
     shortName: "TEST TIES",
-    primaryColor: "#8E24AA",
     startDate: "2026-07-18", endDate: "2026-07-19",
     hostCountry: "ES", hostCity: "Sevilla",
     venue: ESKALERRIA, contactEmail: "test-ties@example.com",
@@ -248,7 +287,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-special-names",
     name: "Test - Players with special names",
     shortName: "SPECIAL",
-    primaryColor: "#00897B",
     startDate: "2026-08-01", endDate: "2026-08-02",
     hostCountry: "ES", hostCity: "Valencia",
     venue: ESKALERRIA, contactEmail: "test-special@example.com",
@@ -264,7 +302,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-teams-partial",
     name: "Test - Teams with missing players",
     shortName: "TEAMS-GAP",
-    primaryColor: "#F57C00",
     startDate: "2026-08-22", endDate: "2026-08-23",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-teams@example.com",
@@ -297,7 +334,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-totals-only",
     name: "Test - Tables with only totals",
     shortName: "TOTALS",
-    primaryColor: "#5D4037",
     startDate: "2026-09-05", endDate: "2026-09-06",
     hostCountry: "ES", hostCity: "Bilbao",
     venue: ESKALERRIA, contactEmail: "test-totals@example.com",
@@ -320,7 +356,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-no-extras",
     name: "Test - Without best hands or chicken hands",
     shortName: "BARE",
-    primaryColor: "#455A64",
     startDate: "2026-09-12", endDate: "2026-09-13",
     hostCountry: "ES", hostCity: "Valencia",
     venue: ESKALERRIA, contactEmail: "test-bare@example.com",
@@ -335,7 +370,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-incomplete-states",
     name: "Test - Every incomplete table state",
     shortName: "INCOMPL",
-    primaryColor: "#C2185B",
     startDate: "2026-09-26", endDate: "2026-09-27",
     hostCountry: "ES", hostCity: "Zaragoza",
     venue: ESKALERRIA, contactEmail: "test-incomplete@example.com",
@@ -364,7 +398,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-registration-open",
     name: "Test - Registered, not started",
     shortName: "UPCOMING",
-    primaryColor: "#1565C0",
     startDate: "2027-03-06", endDate: "2027-03-07",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-upcoming@example.com",
@@ -379,7 +412,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-extremes",
     name: "Test - Extreme scores, penalties and a very long tournament name to check wrapping everywhere",
     shortName: "EXTREMES10",
-    primaryColor: "#FF00AA",
     startDate: "2026-05-29", endDate: "2026-05-31",
     hostCountry: "ES", hostCity: "Santiago de Compostela",
     venue: {
@@ -414,7 +446,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-large",
     name: "Test - Large team tournament",
     shortName: "LARGE",
-    primaryColor: "#006064",
     startDate: "2026-10-03", endDate: "2026-10-04",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-large@example.com",
@@ -433,7 +464,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-match-extra-time",
     name: "Test - Match time over, extra time running",
     shortName: "EXTRA-TIME",
-    primaryColor: "#6A1B9A",
     startDate: MATCH_OVER_START.date, endDate: MATCH_OVER_START.date,
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-extra@example.com",
@@ -450,7 +480,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-match-over",
     name: "Test - Match time over, tables stopped",
     shortName: "TIME-OVER",
-    primaryColor: "#B71C1C",
     startDate: MATCH_OVER_START.date, endDate: MATCH_OVER_START.date,
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-over@example.com",
@@ -466,11 +495,10 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-last-table",
     name: "Test - One table left, broken logo, chicken hands off",
     shortName: "LASTTABLE",
-    primaryColor: "#33691E",
     startDate: "2026-10-10", endDate: "2026-10-10",
     hostCountry: "ES", hostCity: "Granada",
     venue: ESKALERRIA, contactEmail: "test-last@example.com",
-    logoUrl: "https://invalid.example.test/logo.png",
+    organizerIds: ["seed-org-broken-logo"],
     isTeams: false, numRounds: 3,
     players: emaPlayers(24, 6),
     countBestHands: true, countChickenHands: false,
@@ -483,7 +511,6 @@ const TOURNAMENTS: TournamentSpec[] = [
     id: "test-live-ongoing",
     name: "Test - Live ongoing tournament",
     shortName: "LIVE",
-    primaryColor: "#D81B60",
     startDate: TODAY, endDate: addDays(LIVE_PAST_ROUNDS[3].date, 2),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-live@example.com",
@@ -572,7 +599,6 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     id: "test-ongoing-individual-in",
     name: "Test - Ongoing individual, testers play",
     shortName: "IND-IN",
-    primaryColor: "#2E7D32",
     contactEmail: "test-ind-in@example.com",
     isTeams: false,
     // Slots 1 to 4 have accounts. Slots 5, 6 and 12 have no account yet.
@@ -584,7 +610,6 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     id: "test-ongoing-teams-in",
     name: "Test - Ongoing teams, testers play",
     shortName: "TEAMS-IN",
-    primaryColor: "#1565C0",
     contactEmail: "test-teams-in@example.com",
     isTeams: true,
     // Edgar and Edu share team 1. Héctor, Raúl, Ernesto, Marcos and Cintia sit in teams 2 to 4.
@@ -596,7 +621,6 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     id: "test-ongoing-individual-out",
     name: "Test - Ongoing individual, testers not in it",
     shortName: "IND-OUT",
-    primaryColor: "#EF6C00",
     contactEmail: "test-ind-out@example.com",
     isTeams: false,
     players: emaPlayers(24, 6),
@@ -607,7 +631,6 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     id: "test-ongoing-teams-out",
     name: "Test - Ongoing teams, testers not in it",
     shortName: "TEAMS-OUT",
-    primaryColor: "#AD1457",
     contactEmail: "test-teams-out@example.com",
     isTeams: true,
     players: emaPlayers(28, 6),
@@ -636,15 +659,14 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
 
   // Upcoming tournaments: no round started, no hands. Some have the testers and some do not.
   ...[
-    { slug: "individual-in", name: "Test - Upcoming individual, testers play", short: "UP-IND-IN", color: "#00838F", start: "2026-11-14", teams: false, rounds: 5, testers: true },
-    { slug: "teams-in", name: "Test - Upcoming teams, testers play", short: "UP-TEAMS-IN", color: "#6A1B9A", start: "2026-11-28", teams: true, rounds: 5, testers: true },
-    { slug: "individual-out", name: "Test - Upcoming individual, testers not in it", short: "UP-IND-OUT", color: "#827717", start: "2026-12-12", teams: false, rounds: 4, testers: false },
-    { slug: "teams-out", name: "Test - Upcoming teams, testers not in it", short: "UP-TEAMS-OUT", color: "#BF360C", start: "2027-01-16", teams: true, rounds: 5, testers: false },
+    { slug: "individual-in", name: "Test - Upcoming individual, testers play", short: "UP-IND-IN", start: "2026-11-14", teams: false, rounds: 5, testers: true },
+    { slug: "teams-in", name: "Test - Upcoming teams, testers play", short: "UP-TEAMS-IN", start: "2026-11-28", teams: true, rounds: 5, testers: true },
+    { slug: "individual-out", name: "Test - Upcoming individual, testers not in it", short: "UP-IND-OUT", start: "2026-12-12", teams: false, rounds: 4, testers: false },
+    { slug: "teams-out", name: "Test - Upcoming teams, testers not in it", short: "UP-TEAMS-OUT", start: "2027-01-16", teams: true, rounds: 5, testers: false },
   ].map((item): TournamentSpec => ({
     id: `test-upcoming-${item.slug}`,
     name: item.name,
     shortName: item.short,
-    primaryColor: item.color,
     startDate: item.start, endDate: addDays(item.start, 1),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: `test-upcoming-${item.slug}@example.com`,
@@ -742,7 +764,7 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     id: "madrid-open-2026",
     name: "Madrid Mahjong Open 2026",
     shortName: "MMO 2026",
-    primaryColor: "#B71C1C",
+    organizerIds: ["seed-org-madrid", "seed-org-federacion-es"],
     startDate: ONGOING_START, endDate: addDays(ONGOING_START, ONGOING_DAYS - 1),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "organizacion@madridmahjongopen.example",
@@ -771,7 +793,7 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     id: "madrid-spring-open-2027",
     name: "Madrid Spring Open 2027",
     shortName: "MSO 2027",
-    primaryColor: "#2E7D32",
+    organizerIds: ["seed-org-madrid"],
     startDate: "2027-03-06", endDate: "2027-03-07",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "organizacion@madridspringopen.example",
@@ -794,11 +816,10 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     id: "uppsala-mcr-open-2026",
     name: "Uppsala MCR Open 2026",
     shortName: "UMO 2026",
-    primaryColor: "#0067A5",
     startDate: UPPSALA_START, endDate: addDays(UPPSALA_START, UPPSALA_ROUNDS - 1),
     hostCountry: "SE", hostCity: "Uppsala",
     venue: NORRLANDS_NATION, contactEmail: "info@uppsalamcropen.example",
-    logoAsset: "uppsala-mahjong.png",
+    organizerIds: ["seed-org-uppsala"],
     isTeams: false, numRounds: UPPSALA_ROUNDS,
     // 64 players: Nordic first, then other countries.
     players: playersFrom([["SWE", 32], ["DEN", 8], ["FIN", 8], ["NOR", 4], ["GER", 4], ["NED", 4], ["POL", 4]]),
@@ -1249,9 +1270,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry, avoidStored: 
   const tournament: Data = {
     name: spec.name,
     shortName: spec.shortName,
-    primaryColor: spec.primaryColor,
-    associationLogoUrl: spec.logoUrl ?? null,
-    associationLogoPath: null,
+    organizerIds: spec.organizerIds ?? [TEST_CLUB_ID],
     eventStartDate: spec.startDate,
     eventEndDate: spec.endDate,
     hostCountry: spec.hostCountry,
@@ -1397,6 +1416,8 @@ async function main(): Promise<void> {
   if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);
   let created = 0;
 
+  console.log("\nOrganizations");
+  await seedOrganizations(new Set(specs.flatMap((spec) => spec.organizerIds ?? [TEST_CLUB_ID])));
   if (specs.some((spec) => spec.testers === true)) {
     console.log("\nTester accounts");
     await linkTesterAccounts();
@@ -1421,11 +1442,6 @@ async function main(): Promise<void> {
     const writer = db.bulkWriter();
     built.writes.forEach((write) => { void writer.set(db.doc(write.path), write.data); });
     await writer.close();
-    if (spec.logoAsset != null) {
-      const bytes = readFileSync(`assets/${spec.logoAsset}`);
-      const logo = await saveAssociationLogo(spec.id, "image/png", bytes.toString("base64"));
-      Object.assign(built.tournament, { associationLogoUrl: logo.url, associationLogoPath: logo.path, associationLogoHash: logo.hash });
-    }
     // The tournament document comes last. A tournament without its document is invisible.
     await ref.set(built.tournament);
     // The close of a round in play is planned at its Play. These rounds had no Play, so the seed plans it.

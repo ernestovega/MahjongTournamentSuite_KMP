@@ -64,7 +64,6 @@ describe("a tournament from its creation to the final ranking", () => {
     const tournament = await createTournament({
       name: "Lifecycle open",
       shortName: "LIFE",
-      primaryColor: "#02B16B",
       eventStartDate: "2026-10-01",
       eventEndDate: "2026-10-01",
       hostCountry: "ES",

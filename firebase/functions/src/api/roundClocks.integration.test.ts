@@ -244,7 +244,7 @@ describe("a change that ends the round at once", () => {
     await playOneHand(tournamentId, 2);
 
     await updateTournamentSettings({
-      tournamentId, name: "Clock", shortName: "CL", primaryColor: "#02B16B",
+      tournamentId, name: "Clock", shortName: "CL",
       eventStartDate: "2026-11-12", eventEndDate: "2026-11-12", hostCountry: "ES", hostCity: "Madrid",
       matchDurationMinutes: 45,
     });

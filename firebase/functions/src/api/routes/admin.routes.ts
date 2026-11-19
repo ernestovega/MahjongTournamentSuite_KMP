@@ -19,7 +19,7 @@ import {
   getUserProfile,
   listManagedUsers,
   sendPasswordResets,
-  setAdminCountries,
+  setAdminOrganizations,
   setGlobalUserRole,
   setManagedUserDisabled,
   setUserPhoto,
@@ -37,8 +37,15 @@ import { deleteAccountChecked } from "../../services/accountDeletes";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
 import { FEED_ORIGINS, FEED_SOURCES, listActivityFeed, type FeedOrigin, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
-import { canInTournament, hasPermissionSomewhere, loadAccess, permissionsSomewhere, readCountryList } from "../../services/accessService";
-import { WORLD_COUNTRY_CODES } from "../../services/countryCodes";
+import { canInOrganization, canInTournament, forgetAccess, hasPermissionSomewhere, loadAccess, permissionsSomewhere, readOrganizationList } from "../../services/accessService";
+import {
+  assertOrganizationsExist,
+  createOrganization,
+  deleteOrganization,
+  listOrganizations,
+  parseOrganizationInput,
+  updateOrganization,
+} from "../../services/organizationsService";
 import { canSeeAccount, isStaffAccount, loadAccountScope, viewOfAccount, type AccountScope } from "../../services/accountScope";
 import {
   createAccountRequest,
@@ -69,15 +76,15 @@ function parseTournamentAssignments(value: unknown): TournamentAssignment[] {
   });
 }
 
-function parseAdminCountries(value: unknown): string[] {
+async function parseAdminOrganizations(value: unknown): Promise<string[]> {
   if (value == null) return [];
-  if (!Array.isArray(value)) throw badRequest("adminCountries must be an array");
-  const countries = readCountryList(value);
-  if (countries.length !== new Set(value.map((item) => String(item ?? "").trim().toUpperCase())).size
-    || countries.some((country) => !WORLD_COUNTRY_CODES.has(country))) {
-    throw badRequest("adminCountries must hold two-letter codes of real countries");
+  if (!Array.isArray(value)) throw badRequest("adminOrganizations must be an array");
+  const organizations = readOrganizationList(value);
+  if (organizations.length !== new Set(value.map((item) => String(item ?? "").trim())).size) {
+    throw badRequest("adminOrganizations must hold organization ids without repeats");
   }
-  return countries;
+  await assertOrganizationsExist(organizations);
+  return organizations;
 }
 
 async function assertSuperAdminRemainsEnabled(
@@ -92,46 +99,46 @@ async function assertSuperAdminRemainsEnabled(
 }
 
 /**
- * The countries and the tournaments that an account keeps after a change by a viewer who manages only some of them.
+ * The organizations and the tournaments that an account keeps after a change by a viewer who manages only some of them.
  * What lies outside the scope of the viewer stays as it is. Asking for something outside it that the account does not
  * have yet is refused.
  */
 function mergeInScope(
   scope: AccountScope,
   current: ManagedUser | null,
-  requestedCountries: string[],
+  requestedOrganizations: string[],
   requestedAssignments: TournamentAssignment[],
-): { countries: string[]; assignments: TournamentAssignment[] } {
-  if (scope.superAdmin) return { countries: requestedCountries, assignments: requestedAssignments };
-  const currentCountries = current?.adminCountries ?? [];
+): { organizations: string[]; assignments: TournamentAssignment[] } {
+  if (scope.superAdmin) return { organizations: requestedOrganizations, assignments: requestedAssignments };
+  const currentOrganizations = current?.adminOrganizations ?? [];
   const currentAssignments = current?.tournamentAssignments ?? [];
-  const outsideCountries = currentCountries.filter((country) => !scope.manageCountries.has(country));
-  const strayCountry = requestedCountries.find((country) => !scope.manageCountries.has(country) && !outsideCountries.includes(country));
-  if (strayCountry) throw forbidden(`You can give only your own countries (${strayCountry})`);
+  const outsideOrganizations = currentOrganizations.filter((id) => !scope.manageOrganizations.has(id));
+  const strayOrganization = requestedOrganizations.find((id) => !scope.manageOrganizations.has(id) && !outsideOrganizations.includes(id));
+  if (strayOrganization) throw forbidden(`You can give only your own organizations (${strayOrganization})`);
   const outsideAssignments = currentAssignments.filter((assignment) => !scope.manageTournamentIds.has(assignment.tournamentId));
   const outsideIds = new Set(outsideAssignments.map((assignment) => assignment.tournamentId));
   const strayTournament = requestedAssignments.find((assignment) =>
     !scope.manageTournamentIds.has(assignment.tournamentId) && !outsideIds.has(assignment.tournamentId));
   if (strayTournament) {
-    throw forbidden(`You can assign accounts only to the tournaments of your countries (${strayTournament.tournamentId})`);
+    throw forbidden(`You can assign accounts only to the tournaments of your organizations (${strayTournament.tournamentId})`);
   }
-  const insideCountries = requestedCountries.filter((country) => scope.manageCountries.has(country));
+  const insideOrganizations = requestedOrganizations.filter((id) => scope.manageOrganizations.has(id));
   const insideAssignments = requestedAssignments.filter((assignment) => scope.manageTournamentIds.has(assignment.tournamentId));
   return {
-    countries: [...new Set([...outsideCountries, ...insideCountries])].sort(),
+    organizations: [...new Set([...outsideOrganizations, ...insideOrganizations])].sort(),
     assignments: [...new Map([...outsideAssignments, ...insideAssignments].map((assignment) => [assignment.tournamentId, assignment])).values()],
   };
 }
 
-/** Checks the role that an account gets against the countries and the tournaments that it keeps. */
-function assertRoleFits(role: GlobalUserRole, countries: string[], assignments: TournamentAssignment[]): void {
-  if (role === "COUNTRY_ADMIN" && countries.length === 0) throw badRequest("A country admin needs at least one country");
-  if (role === "EDITOR" && countries.length > 0) {
-    throw forbidden("The account is a country admin of countries that you do not manage, so you cannot make it an editor");
+/** Checks the role that an account gets against the organizations and the tournaments that it keeps. */
+function assertRoleFits(role: GlobalUserRole, organizations: string[], assignments: TournamentAssignment[]): void {
+  if (role === "CLUB_ADMIN" && organizations.length === 0) throw badRequest("A club admin needs at least one organization");
+  if (role === "EDITOR" && organizations.length > 0) {
+    throw forbidden("The account is a club admin of organizations that you do not manage, so you cannot make it an editor");
   }
   if (role === "EDITOR" && assignments.length === 0) throw badRequest("An editor needs at least one tournament");
-  if (role === "PLAYER" && (countries.length > 0 || assignments.length > 0)) {
-    throw forbidden("The account has countries or tournaments that you do not manage, so you cannot make it a player");
+  if (role === "PLAYER" && (organizations.length > 0 || assignments.length > 0)) {
+    throw forbidden("The account has organizations or tournaments that you do not manage, so you cannot make it a player");
   }
 }
 
@@ -140,10 +147,10 @@ async function viewFor(res: Response, uid: string) {
   return viewOfAccount(scope, await getManagedUser(uid));
 }
 
-/** Removes what an account has in the countries of the viewer: its countries there and its tournaments there. */
+/** Removes what an account has in the organizations of the viewer: those organizations and their tournaments. */
 async function removeInScope(scope: AccountScope, current: ManagedUser): Promise<void> {
-  if (current.adminCountries.some((country) => scope.manageCountries.has(country))) {
-    await setAdminCountries(current.uid, current.adminCountries.filter((country) => !scope.manageCountries.has(country)));
+  if (current.adminOrganizations.some((id) => scope.manageOrganizations.has(id))) {
+    await setAdminOrganizations(current.uid, current.adminOrganizations.filter((id) => !scope.manageOrganizations.has(id)));
   }
   await syncUserTournamentAssignments(current.uid, [], scope.manageTournamentIds);
   await syncRoleClaims(current.uid);
@@ -152,7 +159,7 @@ async function removeInScope(scope: AccountScope, current: ManagedUser): Promise
 export function adminRouter(): Router {
   const router = Router();
 
-  /** The roles of the signed-in account, its countries and the permissions that it has somewhere. */
+  /** The roles of the signed-in account, its organizations and the permissions that it has somewhere. */
   router.get("/whoami", requireAuth, async (_req, res, next) => {
     try {
       const uid = (res.locals.auth as { uid: string }).uid;
@@ -162,7 +169,7 @@ export function adminRouter(): Router {
         uid,
         role: getGlobalUserRole(user),
         roles: getGlobalUserRoles(user),
-        adminCountries: [...access.adminCountries],
+        adminOrganizations: [...access.adminOrganizations],
         permissions: permissionsSomewhere(access),
       });
     } catch (error) {
@@ -202,7 +209,7 @@ export function adminRouter(): Router {
    * Filters: `tournamentId`, `uid`, `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`)
    * the period `from` (inclusive) and `to` (exclusive) in milliseconds, and `q`, a free text that the entry must hold
    * (case and accents do not count). Send `nextCursor` back as `cursor`.
-   * A super admin reads all of it. A country admin reads the activity of one tournament of its countries.
+   * A super admin reads all of it. A club admin reads the activity of one tournament of its organizations.
    */
   router.get("/activity", requireAuth, requirePermission("tournament.activity"), async (req, res, next) => {
     try {
@@ -213,7 +220,7 @@ export function adminRouter(): Router {
       if (tournamentId) assertSafeDocumentId(tournamentId, "tournament id");
       const access = accessOf(res);
       if (!access.superAdmin && (tournamentId == null || !(await canInTournament(access, "tournament.activity", tournamentId)))) {
-        throw forbidden("You can read the activity of the tournaments of your countries only");
+        throw forbidden("You can read the activity of the tournaments of your organizations only");
       }
       const uid = typeof req.query.uid === "string" && req.query.uid ? req.query.uid : undefined;
       const origin = req.query.origin === undefined || req.query.origin === "" ? undefined : req.query.origin as FeedOrigin;
@@ -242,8 +249,8 @@ export function adminRouter(): Router {
   });
 
   /**
-   * Creates an account. Every editor and admin creates player accounts. A country admin creates editors and country
-   * admins of its countries, and a super admin creates any account.
+   * Creates an account. Every editor and admin creates player accounts. A club admin creates editors and club
+   * admins of its organizations, and a super admin creates any account.
    */
   router.post("/users", requireAuth, requirePermission("accounts.createPlayer"), async (req, res, next) => {
     let createdUid: string | null = null;
@@ -256,15 +263,15 @@ export function adminRouter(): Router {
       if (role === "SUPER_ADMIN" && !hasPermissionSomewhere(access, "accounts.manageSuperAdmins")) {
         throw forbidden("Only super admins can create super admins");
       }
-      if ((role === "EDITOR" || role === "COUNTRY_ADMIN") && !hasPermissionSomewhere(access, "accounts.manageStaff")) {
+      if ((role === "EDITOR" || role === "CLUB_ADMIN") && !hasPermissionSomewhere(access, "accounts.manageStaff")) {
         throw forbidden("Only admins can create editor and admin accounts");
       }
       const scope = await loadAccountScope(access);
       const merged = role === "PLAYER" || role === "SUPER_ADMIN"
-        ? { countries: [], assignments: [] }
-        : mergeInScope(scope, null, role === "COUNTRY_ADMIN" ? parseAdminCountries(req.body?.adminCountries) : [],
+        ? { organizations: [], assignments: [] }
+        : mergeInScope(scope, null, role === "CLUB_ADMIN" ? await parseAdminOrganizations(req.body?.adminOrganizations) : [],
           parseTournamentAssignments(req.body?.tournamentAssignments));
-      assertRoleFits(role, merged.countries, merged.assignments);
+      assertRoleFits(role, merged.organizations, merged.assignments);
       // The EMA id links the account to a player. Check it before the account exists.
       const emaId = String(req.body?.emaId ?? "").trim() || null;
       if (role === "PLAYER" && emaId == null) throw badRequest("A player account needs an EMA id");
@@ -274,7 +281,7 @@ export function adminRouter(): Router {
       const user = await auth.createUser({ email, disabled: false });
       createdUid = user.uid;
       await createUserProfile(user.uid, email, alias);
-      await setGlobalUserRole(user.uid, role, merged.countries);
+      await setGlobalUserRole(user.uid, role, merged.organizations);
       await syncUserTournamentAssignments(user.uid, merged.assignments);
       if (emaId != null) await setAccountEmaId({ uid: user.uid, emaId });
       await syncRoleClaims(user.uid);
@@ -282,7 +289,7 @@ export function adminRouter(): Router {
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: "user.create", actor: actorFromToken(res.locals.auth), target: `user ${user.uid}`,
-        details: { role, emaId, adminCountries: merged.countries, tournamentAssignments: merged.assignments },
+        details: { role, emaId, adminOrganizations: merged.organizations, tournamentAssignments: merged.assignments },
       });
 
       res.status(201).json(await viewFor(res, user.uid));
@@ -321,19 +328,19 @@ export function adminRouter(): Router {
       if ((current.role === "SUPER_ADMIN" || role === "SUPER_ADMIN") && !access.superAdmin && !self) {
         throw forbidden("Only super admins can change super admin accounts");
       }
-      if (staffChange && !self && !(access.superAdmin || (scope.manageCountries.size > 0 && viewOfAccount(scope, current).canManage))) {
-        throw forbidden("You cannot change the role, the countries or the tournaments of this account");
+      if (staffChange && !self && !(access.superAdmin || (scope.manageOrganizations.size > 0 && viewOfAccount(scope, current).canManage))) {
+        throw forbidden("You cannot change the role, the organizations or the tournaments of this account");
       }
 
-      let merged = { countries: current.adminCountries, assignments: current.tournamentAssignments };
+      let merged = { organizations: current.adminOrganizations, assignments: current.tournamentAssignments };
       if (self) {
         if (role !== current.role) throw badRequest("You cannot change your own role");
       } else if (staffChange) {
         merged = role === "SUPER_ADMIN" || (role === "PLAYER" && access.superAdmin)
-          ? { countries: [], assignments: [] }
-          : mergeInScope(scope, current, role === "COUNTRY_ADMIN" || role === "EDITOR" ? parseAdminCountries(req.body?.adminCountries) : [],
+          ? { organizations: [], assignments: [] }
+          : mergeInScope(scope, current, role === "CLUB_ADMIN" || role === "EDITOR" ? await parseAdminOrganizations(req.body?.adminOrganizations) : [],
             role === "PLAYER" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments));
-        assertRoleFits(role, merged.countries, merged.assignments);
+        assertRoleFits(role, merged.organizations, merged.assignments);
       }
       await assertSuperAdminRemainsEnabled(current, role, current.disabled);
       await assertEmailAvailable(email, current.uid);
@@ -354,7 +361,7 @@ export function adminRouter(): Router {
         email,
         alias,
         role: self ? current.role : role,
-        adminCountries: merged.countries,
+        adminOrganizations: merged.organizations,
         tournamentAssignments: merged.assignments,
       });
       await bumpGlobalDataVersion("users");
@@ -362,7 +369,7 @@ export function adminRouter(): Router {
         action: "user.update", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
         details: {
           roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined,
-          adminCountries: merged.countries, tournamentAssignments: merged.assignments,
+          adminOrganizations: merged.organizations, tournamentAssignments: merged.assignments,
         },
       });
       res.status(200).json({ ...(await viewFor(res, current.uid)), roleChange: result });
@@ -397,7 +404,7 @@ export function adminRouter(): Router {
     }
   });
 
-  // Sends the password reset email to many accounts at once. A country admin sends it to the accounts that it sees.
+  // Sends the password reset email to many accounts at once. A club admin sends it to the accounts that it sees.
   router.post("/users/password-resets", requireAuth, requirePermission("accounts.passwordReset"), async (req, res, next) => {
     try {
       const raw = Array.isArray(req.body?.uids) ? req.body.uids as unknown[] : [];
@@ -498,8 +505,8 @@ export function adminRouter(): Router {
   });
 
   /**
-   * A country admin takes an account out of its countries: the account loses its countries and its tournaments
-   * there. With `kind` DISABLE or DELETE it also asks the super admins to disable or delete the whole account.
+   * A club admin takes an account out of its organizations: the account loses those organizations and their
+   * tournaments. With `kind` DISABLE or DELETE it also asks the super admins to disable or delete the whole account.
    * An editor that keeps no tournament becomes a player, or is disabled without an EMA id.
    */
   router.post("/users/:uid/removal", requireAuth, requirePermission("accounts.requestRemoval"), async (req, res, next) => {
@@ -518,7 +525,7 @@ export function adminRouter(): Router {
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: "user.removal", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
-        details: { countries: [...scope.manageCountries], request: kind ?? undefined, reason: reason || undefined },
+        details: { organizations: [...scope.manageOrganizations], request: kind ?? undefined, reason: reason || undefined },
       });
       res.status(200).json({ user: await viewFor(res, current.uid), request });
     } catch (error) {
@@ -526,7 +533,7 @@ export function adminRouter(): Router {
     }
   });
 
-  /** The open requests of the country admins to disable or delete accounts. */
+  /** The open requests of the club admins to disable or delete accounts. */
   router.get("/account-requests", requireAuth, requirePermission("accounts.reviewRequests"), async (_req, res, next) => {
     try {
       res.status(200).json({ requests: await listPendingAccountRequests() });
@@ -558,6 +565,82 @@ export function adminRouter(): Router {
         target: `user ${request.targetUid}`, details: { kind: request.kind, outcome },
       });
       res.status(200).json({ request, outcome });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Every organization (club or federation), by name. Every staff account reads them to pick organizers. */
+  router.get("/organizations", requireAuth, requirePermission("tournament.view"), async (_req, res, next) => {
+    try {
+      const access = accessOf(res);
+      const organizations = await listOrganizations();
+      res.status(200).json({
+        organizations: organizations.map((organization) => ({
+          ...organization,
+          canEdit: canInOrganization(access, "organizations.edit", organization.id),
+          canDelete: access.superAdmin,
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Only a super admin creates organizations, so there are no repeated clubs. */
+  router.post("/organizations", requireAuth, requirePermission("organizations.create"), async (req, res, next) => {
+    try {
+      const input = parseOrganizationInput(req.body);
+      const organization = await createOrganization(input, accessOf(res).uid);
+      await recordActivity({
+        action: "organization.create", actor: actorFromToken(res.locals.auth), target: `organization ${organization.id}`,
+        details: { name: input.name, type: input.type, country: input.country, logo: input.logo != null },
+      });
+      res.status(201).json(organization);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** A super admin edits any organization. A club admin edits its own ones. */
+  router.put("/organizations/:organizationId", requireAuth, requirePermission("organizations.edit"), async (req, res, next) => {
+    try {
+      const organizationId = pathParam(req, "organizationId");
+      assertSafeDocumentId(organizationId, "organization id");
+      const input = parseOrganizationInput(req.body);
+      if (!canInOrganization(accessOf(res), "organizations.edit", organizationId)) {
+        throw forbidden("You can edit only your own organizations");
+      }
+      const organization = await updateOrganization(organizationId, input);
+      await recordActivity({
+        action: "organization.update", actor: actorFromToken(res.locals.auth), target: `organization ${organizationId}`,
+        details: {
+          name: input.name, type: input.type, country: input.country, primaryColor: input.primaryColor,
+          logo: input.removeLogo ? "removed" : input.logo != null ? "changed" : undefined,
+        },
+      });
+      res.status(200).json(organization);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Only a super admin deletes an organization, and only one that organizes no tournament. */
+  router.delete("/organizations/:organizationId", requireAuth, requirePermission("organizations.delete"), async (req, res, next) => {
+    try {
+      const organizationId = pathParam(req, "organizationId");
+      assertSafeDocumentId(organizationId, "organization id");
+      const { affectedUids } = await deleteOrganization(organizationId);
+      for (const uid of affectedUids) {
+        forgetAccess(uid);
+        await syncRoleClaims(uid);
+      }
+      if (affectedUids.length > 0) await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "organization.delete", actor: actorFromToken(res.locals.auth), target: `organization ${organizationId}`,
+        details: { clubAdmins: affectedUids.length },
+      });
+      res.status(200).json({ ok: true });
     } catch (error) {
       next(error);
     }

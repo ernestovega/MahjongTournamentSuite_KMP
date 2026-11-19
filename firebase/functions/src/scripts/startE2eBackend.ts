@@ -89,7 +89,7 @@ async function main(): Promise<void> {
   seedTournaments();
 
   console.log("Creating the accounts.");
-  async function account(entry: { uid: string; email: string }, role: "SUPER_ADMIN" | "COUNTRY_ADMIN" | "EDITOR" | "PLAYER", disabled = false): Promise<void> {
+  async function account(entry: { uid: string; email: string }, role: "SUPER_ADMIN" | "CLUB_ADMIN" | "EDITOR" | "PLAYER", disabled = false): Promise<void> {
     await auth.createUser({ uid: entry.uid, email: entry.email, password: PASSWORD, emailVerified: true });
     await createUserProfile(entry.uid, entry.email, entry.email.split("@")[0]);
     if (role === "PLAYER") await auth.setCustomUserClaims(entry.uid, { player: true });

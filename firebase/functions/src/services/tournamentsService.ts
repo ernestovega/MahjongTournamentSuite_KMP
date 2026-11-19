@@ -1,8 +1,8 @@
 import { removeTournamentStats } from "./statisticsStore";
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
-import { createHash, randomUUID } from "node:crypto";
 
 import { db, storage } from "../firebase";
+import { DEFAULT_PRIMARY_COLOR, organizersOf, readOrganizerIds, type OrganizerView } from "./organizationsService";
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { drawProblem } from "./tournamentDraw";
@@ -38,9 +38,14 @@ export type Tournament = {
   id: string;
   name: string;
   shortName: string;
+  /** The organizations that own the tournament. The first one is the main organizer. */
+  organizerIds: string[];
+  organizers: OrganizerView[];
+  /** The color of the main organizer. A tournament has no color of its own. */
   primaryColor: string;
+  /** The logo of the main organizer. A tournament has no logo of its own. */
   associationLogoUrl: string | null;
-  /** SHA-256 of the logo file. Tournaments with the same logo share it. */
+  /** SHA-256 of the logo file. */
   associationLogoHash: string | null;
   hostCountry: string;
   hostCity: string;
@@ -125,16 +130,19 @@ export async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): P
   const eventEndDate = (d.get("eventEndDate") as string) ?? null;
   const safeStartDate = eventStartDate ?? "0000-01-01";
   const safeEndDate = eventEndDate ?? "9999-12-31";
+  const organizerIds = readOrganizerIds(d.get("organizerIds"));
+  const organizers = await organizersOf(organizerIds);
+  const mainOrganizer = organizers[0];
 
   return {
     id: d.id,
     name: (d.get("name") as string) ?? "",
     shortName: String(d.get("shortName") ?? d.get("name") ?? "").trim().slice(0, 10),
-    primaryColor: /^#[0-9A-F]{6}$/i.test(String(d.get("primaryColor") ?? ""))
-      ? String(d.get("primaryColor")).toUpperCase()
-      : "#02B16B",
-    associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
-    associationLogoHash: typeof d.get("associationLogoHash") === "string" ? d.get("associationLogoHash") : null,
+    organizerIds,
+    organizers,
+    primaryColor: mainOrganizer?.primaryColor ?? DEFAULT_PRIMARY_COLOR,
+    associationLogoUrl: mainOrganizer?.logoUrl ?? null,
+    associationLogoHash: mainOrganizer?.logoHash ?? null,
     hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
     hostCity: String(d.get("hostCity") ?? "").trim(),
     venueName: String(d.get("venueName") ?? ""),
@@ -173,10 +181,8 @@ const MAX_WRITES_PER_BATCH = 450;
 export async function createTournament(params: {
   name: string;
   shortName: string;
-  primaryColor: string;
-  associationLogoContentType?: string | null;
-  associationLogoDataBase64?: string | null;
-  associationLogoSourceTournamentId?: string | null;
+  /** Checked ids of existing organizations. The first one is the main organizer. The route requires one. */
+  organizerIds?: string[];
   eventStartDate: string;
   eventEndDate: string;
   hostCountry: string;
@@ -228,19 +234,10 @@ export async function createTournament(params: {
 
   const ref = db.collection("tournaments").doc();
 
-  const logo = params.associationLogoContentType && params.associationLogoDataBase64
-    ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
-    : params.associationLogoSourceTournamentId
-      ? await copyAssociationLogo(params.associationLogoSourceTournamentId, ref.id)
-      : null;
-
   const tournamentDoc = {
     name: params.name,
     shortName: normalizeShortName(params.shortName),
-    primaryColor: normalizePrimaryColor(params.primaryColor),
-    associationLogoUrl: logo?.url ?? null,
-    associationLogoPath: logo?.path ?? null,
-    associationLogoHash: logo?.hash ?? null,
+    organizerIds: params.organizerIds ?? [],
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
@@ -383,10 +380,7 @@ export async function createTournament(params: {
     if (failed) throw failed.reason;
     await ref.set(tournamentDoc);
   } catch (error) {
-    await Promise.allSettled([
-      db.recursiveDelete(ref),
-      logo?.path ? storage.file(logo.path).delete({ ignoreNotFound: true }) : Promise.resolve(),
-    ]);
+    await db.recursiveDelete(ref).catch(() => undefined);
     throw error;
   }
 
@@ -426,11 +420,6 @@ export async function renameTournament(tournamentId: string, name: string): Prom
   await bumpGlobalDataVersion("tournaments");
 }
 
-const logoExtensions: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-};
-
 function normalizeShortName(value: string): string {
   const shortName = value.trim();
   if (shortName.length === 0) throw badRequest("Tournament short name is required");
@@ -438,75 +427,12 @@ function normalizeShortName(value: string): string {
   return shortName;
 }
 
-function normalizePrimaryColor(value: string): string {
-  const color = value.trim().toUpperCase();
-  if (!/^#[0-9A-F]{6}$/.test(color)) throw badRequest("Primary color must use #RRGGBB format");
-  return color;
-}
-
-function hasValidLogoSignature(bytes: Buffer, contentType: string): boolean {
-  if (contentType === "image/jpeg") {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  }
-  return bytes.length >= 8
-    && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-}
-
-export async function saveAssociationLogo(
-  tournamentId: string,
-  contentType: string,
-  dataBase64: string,
-): Promise<{ path: string; url: string; hash: string }> {
-  const extension = logoExtensions[contentType];
-  if (!extension) throw badRequest("Association logo must be a JPEG or PNG image");
-  const bytes = Buffer.from(dataBase64, "base64");
-  if (bytes.length === 0) throw badRequest("Association logo is empty");
-  if (bytes.length > 2 * 1024 * 1024) throw badRequest("Association logo must be 2 MB or smaller");
-  if (!hasValidLogoSignature(bytes, contentType)) {
-    throw badRequest("Association logo data does not match its image type");
-  }
-  const path = `tournamentLogos/${tournamentId}.${extension}`;
-  const file = storage.file(path);
-  const token = randomUUID();
-  await file.save(bytes, {
-    contentType,
-    metadata: {
-      cacheControl: "public, max-age=604800",
-      metadata: { firebaseStorageDownloadTokens: token },
-    },
-  });
-  const objectName = encodeURIComponent(path);
-  return {
-    path,
-    url: `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`,
-    hash: createHash("sha256").update(bytes).digest("hex"),
-  };
-}
-
-async function copyAssociationLogo(
-  sourceTournamentId: string,
-  targetTournamentId: string,
-): Promise<{ path: string; url: string; hash: string }> {
-  const source = await db.collection("tournaments").doc(sourceTournamentId).get();
-  if (!source.exists) throw notFound("Source tournament not found");
-  const sourcePath = String(source.get("associationLogoPath") ?? "").trim();
-  if (sourcePath.length === 0) throw badRequest("The selected tournament has no reusable logo");
-
-  const sourceFile = storage.file(sourcePath);
-  const [metadata] = await sourceFile.getMetadata();
-  const contentType = String(metadata.contentType ?? "").trim();
-  if (!(contentType in logoExtensions)) {
-    throw badRequest("The selected tournament logo has an unsupported image type");
-  }
-  const [bytes] = await sourceFile.download();
-  return saveAssociationLogo(targetTournamentId, contentType, bytes.toString("base64"));
-}
-
 export async function updateTournamentSettings(params: {
   tournamentId: string;
   name: string;
   shortName: string;
-  primaryColor: string;
+  /** Checked ids of existing organizations, only when they change. */
+  organizerIds?: string[];
   eventStartDate: string;
   eventEndDate: string;
   hostCountry: string;
@@ -519,10 +445,6 @@ export async function updateTournamentSettings(params: {
   countChickenHands?: boolean;
   isPublic?: boolean;
   showTableDiffs?: boolean;
-  associationLogoContentType?: string | null;
-  associationLogoDataBase64?: string | null;
-  associationLogoSourceTournamentId?: string | null;
-  removeAssociationLogo?: boolean;
   roundSchedules?: unknown;
   agendaItems?: unknown;
   matchDurationMinutes?: unknown;
@@ -533,7 +455,6 @@ export async function updateTournamentSettings(params: {
   const normalizedName = params.name.trim();
   if (normalizedName.length === 0) throw badRequest("Tournament name is required");
   const shortName = normalizeShortName(params.shortName);
-  const primaryColor = normalizePrimaryColor(params.primaryColor);
   if (!isValidIsoDateRange(params.eventStartDate, params.eventEndDate)) {
     throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
   }
@@ -550,27 +471,9 @@ export async function updateTournamentSettings(params: {
     ? readStoredAgendaItems(before.get("agendaItems"))
     : normalizeAgendaItems(params.agendaItems);
 
-  const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
-  let logo: { path: string; url: string; hash: string } | null | undefined;
-  if (params.removeAssociationLogo === true) {
-    logo = null;
-  } else if (params.associationLogoContentType && params.associationLogoDataBase64) {
-    logo = await saveAssociationLogo(
-      params.tournamentId,
-      params.associationLogoContentType,
-      params.associationLogoDataBase64,
-    );
-  } else if (params.associationLogoSourceTournamentId) {
-    if (params.associationLogoSourceTournamentId === params.tournamentId) {
-      throw badRequest("Select a different tournament logo to reuse");
-    }
-    logo = await copyAssociationLogo(params.associationLogoSourceTournamentId, params.tournamentId);
-  }
-
   const update: Record<string, unknown> = {
     name: normalizedName,
     shortName,
-    primaryColor,
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
@@ -591,10 +494,9 @@ export async function updateTournamentSettings(params: {
   if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
   if (params.isPublic !== undefined) update.isPublic = params.isPublic;
   if (params.showTableDiffs !== undefined) update.showTableDiffs = params.showTableDiffs;
-  if (logo !== undefined) {
-    update.associationLogoPath = logo?.path ?? null;
-    update.associationLogoUrl = logo?.url ?? null;
-    update.associationLogoHash = logo?.hash ?? null;
+  if (params.organizerIds !== undefined) {
+    if (params.organizerIds.length === 0) throw badRequest("A tournament needs at least one organizer");
+    update.organizerIds = params.organizerIds;
   }
   await ref.update(update);
   await Promise.all([
@@ -602,9 +504,6 @@ export async function updateTournamentSettings(params: {
     bumpTournamentDataVersion(params.tournamentId, "rounds"),
   ]);
 
-  if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
-    await storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
-  }
   const after = await ref.get();
   // A new match duration moves the end of a running round.
   const nowMs = Date.now();

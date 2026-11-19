@@ -8,7 +8,8 @@ import { accessOf, requirePermission, requireTournamentPermission } from "../mid
 import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
 import { WORLD_COUNTRY_CODES } from "../../services/countryCodes";
-import { canInCountry, canInTournament, forgetTournamentCountry, isStaff, loadAccess, tournamentCountry, tournamentPermissions, type Access } from "../../services/accessService";
+import { canInOrganization, canInTournament, forgetTournamentOrganizers, isStaff, loadAccess, tournamentOrganizers, tournamentPermissions, type Access } from "../../services/accessService";
+import { parseOrganizerIds } from "../../services/organizationsService";
 import { listVisibleTournaments, tournamentHasResults, tournamentIsPast, visibleTournamentIdSet } from "../../services/tournamentScope";
 import { applyLostAssignments, listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
@@ -85,7 +86,7 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
 }
 
 /**
- * Only a super admin or a country admin of the tournament changes the tables of a completed tournament, so late
+ * Only a super admin or a club admin of the tournament changes the tables of a completed tournament, so late
  * changes to the results are traceable.
  */
 async function assertTournamentOpenForEditor(tournamentId: string, access: Access): Promise<void> {
@@ -123,7 +124,7 @@ export function tournamentsRouter(): Router {
   );
 
   /**
-   * Super admins see every tournament, country admins the tournaments of their countries and editors the ones
+   * Super admins see every tournament, club admins the tournaments of their organizations and editors the ones
    * assigned to them. Each tournament carries the permissions of the account in it, so the app shows only the actions
    * that the account may use. The player app reads /public instead.
    */
@@ -138,7 +139,7 @@ export function tournamentsRouter(): Router {
       const withPermissions = await Promise.all(tournaments.map(async (tournament) => ({
         ...tournament,
         permissions: await tournamentPermissions(access, tournament.id, {
-          country: tournament.hostCountry,
+          organizerIds: tournament.organizerIds,
           member: memberIds.has(tournament.id),
         }),
       })));
@@ -247,16 +248,6 @@ export function tournamentsRouter(): Router {
 
       const name = String(body?.name ?? "").trim();
       const shortName = String(body?.shortName ?? name.slice(0, 10)).trim();
-      const primaryColor = String(body?.primaryColor ?? "#02B16B").trim().toUpperCase();
-      const associationLogoContentType = body?.associationLogoContentType == null
-        ? null
-        : String(body.associationLogoContentType).trim();
-      const associationLogoDataBase64 = body?.associationLogoDataBase64 == null
-        ? null
-        : String(body.associationLogoDataBase64).trim();
-      const associationLogoSourceTournamentId = body?.associationLogoSourceTournamentId == null
-        ? null
-        : String(body.associationLogoSourceTournamentId).trim();
       const eventStartDate = String(body?.eventStartDate ?? "").trim();
       const eventEndDate = String(body?.eventEndDate ?? "").trim();
       const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
@@ -296,14 +287,8 @@ export function tournamentsRouter(): Router {
       if (!shortName || shortName.length > 10) {
         issues.push({ field: "shortName", message: "Required, with at most 10 characters", value: body?.shortName });
       }
-      if (!/^#[0-9A-F]{6}$/.test(primaryColor)) {
-        issues.push({ field: "primaryColor", message: "Must use #RRGGBB format", value: body?.primaryColor });
-      }
-      if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
-        issues.push({ field: "associationLogo", message: "Content type and image data must be supplied together" });
-      }
-      if (associationLogoSourceTournamentId && associationLogoDataBase64) {
-        issues.push({ field: "associationLogo", message: "Supply an uploaded logo or a reusable logo, not both" });
+      if (!Array.isArray(body?.organizerIds) || body.organizerIds.length === 0) {
+        issues.push({ field: "organizerIds", message: "Required: at least one organization", value: body?.organizerIds });
       }
       if (!isValidIsoDate(eventStartDate)) {
         issues.push({ field: "eventStartDate", message: "Must use yyyy-MM-dd", value: body?.eventStartDate });
@@ -330,16 +315,14 @@ export function tournamentsRouter(): Router {
       if (issues.length > 0) {
         throw badRequest("Missing or invalid tournament fields", {
           issues,
-          received: body == null ? null : {
-            ...body,
-            associationLogoDataBase64: associationLogoDataBase64 == null ? null : "[image data]",
-          },
+          received: body,
           inferred: { name, isTeams, numPlayers, numRounds, numTries, playersCount: players?.length, tablesCount: tables?.length },
         });
       }
-      // A country admin creates tournaments only in its own countries.
-      if (!canInCountry(accessOf(res), "tournaments.create", hostCountry)) {
-        throw forbidden(`You can create tournaments only in your countries (${hostCountry})`);
+      // The first organizer is the main one. A club admin creates tournaments that one of its organizations organizes.
+      const organizerIds = await parseOrganizerIds(body?.organizerIds);
+      if (!organizerIds.some((id) => canInOrganization(accessOf(res), "tournaments.create", id))) {
+        throw forbidden("You can create tournaments only for your organizations");
       }
 
       const parsedPlayers = (players ?? []).map((p, idx) => {
@@ -383,10 +366,7 @@ export function tournamentsRouter(): Router {
       const tournament = await createTournament({
         name,
         shortName,
-        primaryColor,
-        associationLogoContentType,
-        associationLogoDataBase64,
-        associationLogoSourceTournamentId,
+        organizerIds,
         eventStartDate,
         eventEndDate,
         hostCountry,
@@ -412,7 +392,7 @@ export function tournamentsRouter(): Router {
       await recordActivity({
         action: "tournament.create", actor: actorFromToken(res.locals.auth), tournamentId: tournament.id,
         target: tournament.name,
-        details: { shortName, eventStartDate, eventEndDate, hostCountry, hostCity, isTeams, numPlayers, numRounds },
+        details: { shortName, organizerIds, eventStartDate, eventEndDate, hostCountry, hostCity, isTeams, numPlayers, numRounds },
       });
       res.status(200).json(tournament);
     } catch (e) {
@@ -534,26 +514,13 @@ export function tournamentsRouter(): Router {
       if (body == null) throw badRequest("Request body must be JSON");
       const name = String(body.name ?? "").trim();
       const shortName = String(body.shortName ?? "").trim();
-      const primaryColor = String(body.primaryColor ?? "").trim().toUpperCase();
       const eventStartDate = String(body.eventStartDate ?? "").trim();
       const eventEndDate = String(body.eventEndDate ?? "").trim();
       const hostCountry = String(body.hostCountry ?? "").trim().toUpperCase();
       const hostCity = String(body.hostCity ?? "").trim();
-      const associationLogoContentType = body.associationLogoContentType == null
-        ? null
-        : String(body.associationLogoContentType).trim();
-      const associationLogoDataBase64 = body.associationLogoDataBase64 == null
-        ? null
-        : String(body.associationLogoDataBase64).trim();
-      const associationLogoSourceTournamentId = body.associationLogoSourceTournamentId == null
-        ? null
-        : String(body.associationLogoSourceTournamentId).trim();
       if (!name) throw badRequest("Tournament name is required");
       if (!shortName || shortName.length > 10) {
         throw badRequest("Tournament short name must contain 1 to 10 characters");
-      }
-      if (!/^#[0-9A-F]{6}$/.test(primaryColor)) {
-        throw badRequest("Primary color must use #RRGGBB format");
       }
       if (!isValidIsoDateRange(eventStartDate, eventEndDate)) {
         throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
@@ -561,40 +528,32 @@ export function tournamentsRouter(): Router {
       if (!WORLD_COUNTRY_CODES.has(hostCountry)) {
         throw badRequest("Host country must be the two-letter code of a real country");
       }
-      // The country decides who manages the tournament, so only a super admin changes it, to fix a mistake.
+      // The organizers decide who manages the tournament, so only a super admin changes them.
       const tournamentId = pathParam(req, "tournamentId");
-      const countryChanges = hostCountry !== await tournamentCountry(tournamentId);
-      if (countryChanges && !accessOf(res).superAdmin) {
-        throw forbidden("Only a super admin can change the country of a tournament");
+      const currentOrganizerIds = (await tournamentOrganizers(tournamentId)) ?? [];
+      const organizerIds = body.organizerIds === undefined ? undefined : await parseOrganizerIds(body.organizerIds);
+      const organizersChange = organizerIds !== undefined && organizerIds.join(",") !== currentOrganizerIds.join(",");
+      if (organizersChange && !(await canInTournament(accessOf(res), "tournaments.changeOrganizers", tournamentId))) {
+        throw forbidden("Only a super admin can change the organizers of a tournament");
       }
       if (!hostCity) throw badRequest("Host city is required");
       const venue = normalizeVenue(body);
       const venueProblems = venueRequiredProblems(venue);
       if (venueProblems.length > 0) throw badRequest(venueProblems.join(". "));
-      if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
-        throw badRequest("Association logo content type and image data must be supplied together");
-      }
-      if (associationLogoSourceTournamentId && associationLogoDataBase64) {
-        throw badRequest("Supply an uploaded logo or a reusable logo, not both");
-      }
       const tournament = await updateTournamentSettings({
         tournamentId,
         name,
         shortName,
-        primaryColor,
+        organizerIds: organizersChange ? organizerIds : undefined,
         eventStartDate,
         eventEndDate,
         hostCountry,
         hostCity,
         ...venue,
-        associationLogoContentType,
-        associationLogoDataBase64,
-        associationLogoSourceTournamentId,
         countBestHands: typeof body.countBestHands === "boolean" ? body.countBestHands : undefined,
         countChickenHands: typeof body.countChickenHands === "boolean" ? body.countChickenHands : undefined,
         isPublic: typeof body.isPublic === "boolean" ? body.isPublic : undefined,
         showTableDiffs: typeof body.showTableDiffs === "boolean" ? body.showTableDiffs : undefined,
-        removeAssociationLogo: body.removeAssociationLogo === true,
         roundSchedules: body.roundSchedules,
         agendaItems: body.agendaItems,
         matchDurationMinutes: body.matchDurationMinutes,
@@ -606,17 +565,15 @@ export function tournamentsRouter(): Router {
         action: "tournament.update", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
         target: name,
         details: {
-          shortName, primaryColor, eventStartDate, eventEndDate, hostCountry, hostCity,
+          shortName, organizerIds: organizersChange ? organizerIds : undefined, eventStartDate, eventEndDate, hostCountry, hostCity,
           countBestHands: body.countBestHands, countChickenHands: body.countChickenHands, isPublic: body.isPublic,
           showTableDiffs: body.showTableDiffs,
           matchDurationMinutes: body.matchDurationMinutes, matchEndMode: body.matchEndMode,
           matchExtraMinutes: body.matchExtraMinutes, timeZone: body.timeZone,
-          logo: body.removeAssociationLogo === true ? "removed"
-            : associationLogoDataBase64 != null || associationLogoSourceTournamentId ? "changed" : undefined,
           roundSchedules: body.roundSchedules, agendaItems: body.agendaItems,
         },
       });
-      if (countryChanges) forgetTournamentCountry(tournamentId);
+      if (organizersChange) forgetTournamentOrganizers(tournamentId);
       res.status(200).json(tournament);
     } catch (e) {
       next(e);
@@ -635,7 +592,7 @@ export function tournamentsRouter(): Router {
       const memberUids = (await db.collection(`tournaments/${tournamentId}/members`).get()).docs.map((member) => member.id);
       const removed = await tournamentNameOf(tournamentId);
       await deleteTournament(tournamentId);
-      forgetTournamentCountry(tournamentId);
+      forgetTournamentOrganizers(tournamentId);
       await applyLostAssignments(memberUids);
       await recordActivity({
         action: "tournament.delete", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),

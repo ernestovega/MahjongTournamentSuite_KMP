@@ -7,8 +7,9 @@ import { listEnabledSuperAdmins } from "./usersService";
 import { bumpGlobalDataVersion } from "./dataVersionsService";
 
 /**
- * A country admin cannot disable or delete an account for everyone, because the account may work in other countries
- * or play anywhere. It removes what the account has in its own countries and asks the super admins for the rest.
+ * A club admin cannot disable or delete an account for everyone, because the account may work for other
+ * organizations or play anywhere. It removes what the account has in its own organizations and asks the super admins
+ * for the rest.
  * The super admins get an email and a list of the open requests in the Accounts screen, where they approve or
  * reject each one.
  */

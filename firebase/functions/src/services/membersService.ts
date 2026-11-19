@@ -3,38 +3,39 @@ import { FieldValue } from "firebase-admin/firestore";
 import { auth, db } from "../firebase";
 import { badRequest } from "../api/httpError";
 import { getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
-import { forgetAccess, readCountryList, tournamentCountry } from "./accessService";
+import { forgetAccess, readOrganizationList, tournamentOrganizers } from "./accessService";
 import { listEnabledSuperAdmins, syncRoleClaims, type RoleSyncResult } from "./usersService";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 
 export type TournamentMember = {
   uid: string;
   email: string;
-  /** SUPER_ADMIN and COUNTRY_ADMIN manage the tournament without an assignment. EDITOR is assigned to it. */
+  /** SUPER_ADMIN and CLUB_ADMIN manage the tournament without an assignment. EDITOR is assigned to it. */
   role: GlobalUserRole;
   /** True for an editor whose only tournament is this one: removing it makes the account a player. */
   onlyTournament: boolean;
 };
 
-/** The enabled country admins of a country. */
-async function listCountryAdmins(country: string): Promise<Array<{ uid: string; email: string }>> {
-  if (country === "") return [];
-  const profiles = await db.collection("users").where("adminCountries", "array-contains", country).get();
+/** The enabled club admins of some organizations. */
+async function listClubAdmins(organizerIds: string[]): Promise<Array<{ uid: string; email: string }>> {
+  if (organizerIds.length === 0) return [];
+  // A tournament has a few organizers, far below the 30 values that one filter takes.
+  const profiles = await db.collection("users").where("adminOrganizations", "array-contains-any", organizerIds.slice(0, 30)).get();
   const users = await Promise.all(profiles.docs.map((profile) => auth.getUser(profile.id).catch(() => null)));
   return users
-    .filter((user): user is NonNullable<typeof user> => user != null && !user.disabled && getGlobalUserRoles(user).includes("COUNTRY_ADMIN"))
+    .filter((user): user is NonNullable<typeof user> => user != null && !user.disabled && getGlobalUserRoles(user).includes("CLUB_ADMIN"))
     .map((user) => ({ uid: user.uid, email: user.email ?? "" }));
 }
 
-/** Everyone who manages the tournament: the super admins, the country admins of its country and its editors. */
+/** Everyone who manages the tournament: the super admins, the club admins of its organizers and its editors. */
 export async function listTournamentMembers(tournamentId: string): Promise<TournamentMember[]> {
-  const country = (await tournamentCountry(tournamentId)) ?? "";
-  const [membersSnapshot, superAdmins, countryAdmins] = await Promise.all([
+  const organizerIds = (await tournamentOrganizers(tournamentId)) ?? [];
+  const [membersSnapshot, superAdmins, clubAdmins] = await Promise.all([
     db.collection(`tournaments/${tournamentId}/members`).get(),
     listEnabledSuperAdmins(),
-    listCountryAdmins(country),
+    listClubAdmins(organizerIds),
   ]);
-  const implicit = new Set([...superAdmins, ...countryAdmins].map((account) => account.uid));
+  const implicit = new Set([...superAdmins, ...clubAdmins].map((account) => account.uid));
   const editors = await Promise.all(membersSnapshot.docs.map(async (document) => {
     if (implicit.has(document.id)) return null;
     const user = await auth.getUser(document.id).catch(() => null);
@@ -51,16 +52,16 @@ export async function listTournamentMembers(tournamentId: string): Promise<Tourn
   const assignedEditors = editors.filter((member): member is NonNullable<typeof member> => member !== null);
   const result: TournamentMember[] = [
     ...superAdmins.map((account) => ({ ...account, role: "SUPER_ADMIN" as const, onlyTournament: false })),
-    ...countryAdmins.filter((account) => !superAdmins.some((admin) => admin.uid === account.uid))
-      .map((account) => ({ ...account, role: "COUNTRY_ADMIN" as const, onlyTournament: false })),
+    ...clubAdmins.filter((account) => !superAdmins.some((admin) => admin.uid === account.uid))
+      .map((account) => ({ ...account, role: "CLUB_ADMIN" as const, onlyTournament: false })),
     ...assignedEditors,
   ];
   return result.sort((left, right) => left.email.localeCompare(right.email));
 }
 
 /**
- * Assigns an account to a tournament as its editor. A player becomes an editor with it. A country admin of another
- * country can be an editor here. A super admin and a country admin of this country already manage the tournament.
+ * Assigns an account to a tournament as its editor. A player becomes an editor with it. A club admin of another
+ * organization can be an editor here. A super admin and a club admin of an organizer already manage the tournament.
  */
 export async function upsertTournamentMember(params: {
   tournamentId: string;
@@ -72,14 +73,14 @@ export async function upsertTournamentMember(params: {
   if (roles.includes("SUPER_ADMIN")) {
     throw badRequest("Super admins already have access to every tournament");
   }
-  if (roles.includes("COUNTRY_ADMIN")) {
-    const country = await tournamentCountry(params.tournamentId);
+  if (roles.includes("CLUB_ADMIN")) {
+    const organizerIds = (await tournamentOrganizers(params.tournamentId)) ?? [];
     const profile = await db.doc(`users/${params.uid}`).get();
-    if (country != null && readCountryList(profile.get("adminCountries")).includes(country)) {
-      throw badRequest("Country admins already have access to the tournaments of their countries");
+    if (readOrganizationList(profile.get("adminOrganizations")).some((id) => organizerIds.includes(id))) {
+      throw badRequest("Club admins already have access to the tournaments of their organizations");
     }
   }
-  if (!roles.includes("EDITOR") && !roles.includes("COUNTRY_ADMIN")) {
+  if (!roles.includes("EDITOR") && !roles.includes("CLUB_ADMIN")) {
     throw badRequest("A player account cannot be assigned as an editor. Make it an editor in Accounts");
   }
 

@@ -1,37 +1,38 @@
 import { db } from "../firebase";
+import { readOrganizerIds } from "./organizationsService";
 import type { Access } from "./accessService";
-import { countryTournamentIds, memberTournamentIds } from "./tournamentScope";
+import { memberTournamentIds, organizationTournamentIds } from "./tournamentScope";
 import type { ManagedUser, TournamentAssignment } from "./usersService";
 
 /**
  * Which accounts an account of the management app sees and changes.
  * - A super admin sees and changes every account.
- * - Everyone else sees every player account, the own account, the super admins, and the editors and country admins
- *   that share a country with it. The countries of an editor are the countries of its tournaments.
+ * - Everyone else sees every player account, the own account, the super admins, and the editors and club admins
+ *   that share an organization with it. The organizations of an editor are the organizers of its tournaments.
  * - An email of a player shows only when the player plays in a tournament that the viewer manages.
- * - A country admin changes, inside its countries only, the countries and the tournaments of editors and country
- *   admins. The tournaments and the countries outside them stay as they are.
+ * - A club admin changes, inside its organizations only, the organizations and the tournaments of editors and club
+ *   admins. The tournaments and the organizations outside them stay as they are.
  */
 export type AccountScope = {
   superAdmin: boolean;
   uid: string;
-  /** The tournaments that the viewer manages: assigned ones and the ones of its countries. */
+  /** The tournaments that the viewer manages: assigned ones and the ones of its organizations. */
   tournamentIds: ReadonlySet<string>;
-  /** The countries of the viewer: its own as a country admin and the ones of its assigned tournaments. */
-  countries: ReadonlySet<string>;
-  /** The countries where the viewer manages accounts: its countries as a country admin. */
-  manageCountries: ReadonlySet<string>;
-  /** The tournaments of the countries where the viewer manages accounts. */
+  /** The organizations of the viewer: its own as a club admin and the organizers of its assigned tournaments. */
+  organizations: ReadonlySet<string>;
+  /** The organizations where the viewer manages accounts: its organizations as a club admin. */
+  manageOrganizations: ReadonlySet<string>;
+  /** The tournaments of the organizations where the viewer manages accounts. */
   manageTournamentIds: ReadonlySet<string>;
   /** The EMA ids that play in the tournaments of the viewer, or null for a super admin, who sees every email. */
   emaIdsWithEmail: ReadonlySet<string> | null;
 };
 
-async function countriesOf(tournamentIds: ReadonlySet<string>): Promise<Set<string>> {
+async function organizersOfTournaments(tournamentIds: ReadonlySet<string>): Promise<Set<string>> {
   const ids = [...tournamentIds];
   if (ids.length === 0) return new Set();
-  const snapshots = await db.getAll(...ids.map((id) => db.doc(`tournaments/${id}`)), { fieldMask: ["hostCountry"] });
-  return new Set(snapshots.filter((snapshot) => snapshot.exists).map((snapshot) => String(snapshot.get("hostCountry") ?? "").toUpperCase()));
+  const snapshots = await db.getAll(...ids.map((id) => db.doc(`tournaments/${id}`)), { fieldMask: ["organizerIds"] });
+  return new Set(snapshots.filter((snapshot) => snapshot.exists).flatMap((snapshot) => readOrganizerIds(snapshot.get("organizerIds"))));
 }
 
 async function seatedEmaIds(tournamentIds: ReadonlySet<string>): Promise<Set<string>> {
@@ -49,30 +50,30 @@ async function seatedEmaIds(tournamentIds: ReadonlySet<string>): Promise<Set<str
 export async function loadAccountScope(access: Access): Promise<AccountScope> {
   if (access.superAdmin) {
     return {
-      superAdmin: true, uid: access.uid, tournamentIds: new Set(), countries: new Set(), manageCountries: new Set(),
+      superAdmin: true, uid: access.uid, tournamentIds: new Set(), organizations: new Set(), manageOrganizations: new Set(),
       manageTournamentIds: new Set(), emaIdsWithEmail: null,
     };
   }
   const memberIds = access.editor ? await memberTournamentIds(access.uid) : new Set<string>();
-  const manageTournamentIds = await countryTournamentIds(access.adminCountries);
+  const manageTournamentIds = await organizationTournamentIds(access.adminOrganizations);
   const tournamentIds = new Set([...memberIds, ...manageTournamentIds]);
-  const countries = new Set([...access.adminCountries, ...(await countriesOf(memberIds))]);
+  const organizations = new Set([...access.adminOrganizations, ...(await organizersOfTournaments(memberIds))]);
   return {
     superAdmin: false,
     uid: access.uid,
     tournamentIds,
-    countries,
-    manageCountries: access.adminCountries,
+    organizations,
+    manageOrganizations: access.adminOrganizations,
     manageTournamentIds,
     emaIdsWithEmail: await seatedEmaIds(tournamentIds),
   };
 }
 
-/** The countries of an account: its own as a country admin and the ones of its assigned tournaments. */
-export function accountCountries(user: Pick<ManagedUser, "adminCountries" | "tournamentAssignments">): Set<string> {
+/** The organizations of an account: its own as a club admin and the organizers of its assigned tournaments. */
+export function accountOrganizations(user: Pick<ManagedUser, "adminOrganizations" | "tournamentAssignments">): Set<string> {
   return new Set([
-    ...user.adminCountries,
-    ...user.tournamentAssignments.map((assignment) => assignment.country ?? "").filter((country) => country !== ""),
+    ...user.adminOrganizations,
+    ...user.tournamentAssignments.flatMap((assignment) => assignment.organizerIds ?? []),
   ]);
 }
 
@@ -83,28 +84,28 @@ export function isStaffAccount(user: Pick<ManagedUser, "roles">): boolean {
 export function canSeeAccount(scope: AccountScope, user: ManagedUser): boolean {
   if (scope.superAdmin || user.uid === scope.uid) return true;
   if (!isStaffAccount(user) || user.roles.includes("SUPER_ADMIN")) return true;
-  return [...accountCountries(user)].some((country) => scope.countries.has(country));
+  return [...accountOrganizations(user)].some((id) => scope.organizations.has(id));
 }
 
-/** True when the viewer may change the countries and the tournaments of this staff account inside its scope. */
+/** True when the viewer may change the organizations and the tournaments of this staff account inside its scope. */
 export function canManageStaffAccount(scope: AccountScope, user: ManagedUser): boolean {
   if (scope.superAdmin) return true;
-  if (user.uid === scope.uid || user.roles.includes("SUPER_ADMIN") || scope.manageCountries.size === 0) return false;
+  if (user.uid === scope.uid || user.roles.includes("SUPER_ADMIN") || scope.manageOrganizations.size === 0) return false;
   if (!isStaffAccount(user)) return true;
-  return [...accountCountries(user)].some((country) => scope.manageCountries.has(country));
+  return [...accountOrganizations(user)].some((id) => scope.manageOrganizations.has(id));
 }
 
-/** True when the account has a country or a tournament outside the countries where the viewer manages accounts. */
+/** True when the account has an organization or a tournament outside the organizations where the viewer manages accounts. */
 export function hasGrantsOutside(scope: AccountScope, user: ManagedUser): boolean {
   if (scope.superAdmin) return false;
-  return user.adminCountries.some((country) => !scope.manageCountries.has(country))
+  return user.adminOrganizations.some((id) => !scope.manageOrganizations.has(id))
     || user.tournamentAssignments.some((assignment) => !scope.manageTournamentIds.has(assignment.tournamentId));
 }
 
 export type AccountView = ManagedUser & {
-  /** True when the viewer may change the role, the countries or the tournaments of the account. */
+  /** True when the viewer may change the role, the organizations or the tournaments of the account. */
   canManage: boolean;
-  /** True when the account has countries or tournaments that the viewer does not manage, so it cannot demote it. */
+  /** True when the account has organizations or tournaments that the viewer does not manage, so it cannot demote it. */
   hasGrantsOutside: boolean;
   /** True when the email is hidden from the viewer. */
   emailHidden: boolean;

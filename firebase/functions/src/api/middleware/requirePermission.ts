@@ -24,7 +24,7 @@ async function loadCaller(res: Response): Promise<Access | null> {
 
 /**
  * Lets an account through when one of its roles has the permission in some scope. The route itself checks the
- * scope of what it changes, for example that a country admin creates a tournament in one of its countries.
+ * scope of what it changes, for example that a club admin creates a tournament for one of its organizations.
  * Run it after requireAuth.
  */
 export function requirePermission(permission: Permission): PermissionGuard {
@@ -45,7 +45,7 @@ export function requirePermission(permission: Permission): PermissionGuard {
 
 /**
  * Lets an account through when it has the permission in the tournament of the route: a super admin always, a
- * country admin in the tournaments of its countries and an editor in the tournaments assigned to it.
+ * club admin in the tournaments of its organizations and an editor in the tournaments assigned to it.
  * Run it after requireAuth.
  */
 export function requireTournamentPermission(permission: Permission): PermissionGuard {

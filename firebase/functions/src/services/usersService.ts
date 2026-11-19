@@ -6,15 +6,16 @@ import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsSe
 import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { EMA_PLAYER_REGISTRY_COLLECTION, storePhotoFile, toPlayer } from "./playersService";
 import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
-import { forgetAccess, readCountryList } from "./accessService";
+import { forgetAccess, readOrganizationList } from "./accessService";
+import { readOrganizerIds } from "./organizationsService";
 
 export type { GlobalUserRole } from "../models/globalRole";
 
 export type TournamentAssignment = {
   tournamentId: string;
   tournamentName: string;
-  /** The host country of the tournament. The countries of an editor are the countries of its tournaments. */
-  country?: string;
+  /** The organizers of the tournament. The organizations of an editor are the organizers of its tournaments. */
+  organizerIds?: string[];
 };
 
 export type UserProfile = {
@@ -42,8 +43,8 @@ export type ManagedUser = UserProfile & {
   roles: GlobalUserRole[];
   disabled: boolean;
   tournamentAssignments: TournamentAssignment[];
-  /** The countries of a country admin. Empty for the other roles. */
-  adminCountries: string[];
+  /** The organizations of a club admin. Empty for the other roles. */
+  adminOrganizations: string[];
 };
 
 export type AdminAccount = {
@@ -143,7 +144,7 @@ export async function listManagedUsers(
         roles: getGlobalUserRoles(user),
         disabled: user.disabled,
         tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
-        adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile?.adminCountries) : [],
+        adminOrganizations: getGlobalUserRoles(user).includes("CLUB_ADMIN") ? readOrganizationList(profile?.adminOrganizations) : [],
       });
     });
     pageToken = page.pageToken;
@@ -187,28 +188,33 @@ export async function getManagedUser(
     roles: getGlobalUserRoles(user),
     disabled: user.disabled,
     tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
-    adminCountries: getGlobalUserRoles(user).includes("COUNTRY_ADMIN") ? readCountryList(profile.get("adminCountries")) : [],
+    adminOrganizations: getGlobalUserRoles(user).includes("CLUB_ADMIN") ? readOrganizationList(profile.get("adminOrganizations")) : [],
   };
 }
 
 /**
- * Sets the main role of an account and keeps its player capability. A country admin gets its countries. Scripts and
+ * Sets the main role of an account and keeps its player capability. A club admin gets its organizations. Scripts and
  * tests use it directly. The routes check the rules first and then call it with the result.
  */
-export async function setGlobalUserRole(uid: string, role: GlobalUserRole, adminCountries: string[] = []): Promise<void> {
+export async function setGlobalUserRole(uid: string, role: GlobalUserRole, adminOrganizations: string[] = []): Promise<void> {
   const user = await auth.getUser(uid);
   const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
   delete claims.superAdmin;
+  delete claims.clubAdmin;
   delete claims.countryAdmin;
   delete claims.editor;
-  const countries = role === "COUNTRY_ADMIN" ? readCountryList(adminCountries) : [];
-  if (role === "COUNTRY_ADMIN" && countries.length === 0) throw badRequest("A country admin needs at least one country");
+  const organizations = role === "CLUB_ADMIN" ? readOrganizationList(adminOrganizations) : [];
+  if (role === "CLUB_ADMIN" && organizations.length === 0) throw badRequest("A club admin needs at least one organization");
   if (role === "SUPER_ADMIN") claims.superAdmin = true;
-  else if (role === "COUNTRY_ADMIN") claims.countryAdmin = true;
+  else if (role === "CLUB_ADMIN") claims.clubAdmin = true;
   else if (role === "EDITOR") claims.editor = true;
   else claims.player = true;
   await db.doc(`users/${uid}`).set(
-    { adminCountries: countries.length > 0 ? countries : FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
+    {
+      adminOrganizations: organizations.length > 0 ? organizations : FieldValue.delete(),
+      adminCountries: FieldValue.delete(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
     { merge: true },
   );
   await auth.setCustomUserClaims(uid, claims);
@@ -217,12 +223,12 @@ export async function setGlobalUserRole(uid: string, role: GlobalUserRole, admin
   await bumpGlobalDataVersion("tournaments");
 }
 
-/** What happened to an account after it lost a country or a tournament. */
+/** What happened to an account after it lost an organization or a tournament. */
 export type RoleSyncResult = "UNCHANGED" | "BECAME_PLAYER" | "DISABLED";
 
 /**
  * Brings the role claims of an account in line with its data: the editor role holds while the account has an
- * assigned tournament, the country admin role while it has a country. An account that keeps no role becomes a
+ * assigned tournament, the club admin role while it has an organization. An account that keeps no role becomes a
  * player when it has an EMA id. Without one it cannot sign in to anything, so it is disabled, and a super admin can
  * enable it again with a new role or delete it.
  */
@@ -235,16 +241,17 @@ export async function syncRoleClaims(uid: string): Promise<RoleSyncResult> {
     db.doc(`users/${uid}`).get(),
     db.collectionGroup("members").where("uid", "==", uid).limit(1).get(),
   ]);
-  const hadStaffRole = claims.countryAdmin === true || claims.editor === true;
-  const countryAdmin = readCountryList(profile.get("adminCountries")).length > 0;
+  const hadStaffRole = claims.clubAdmin === true || claims.countryAdmin === true || claims.editor === true;
+  const clubAdmin = readOrganizationList(profile.get("adminOrganizations")).length > 0;
   const editor = !memberships.empty;
+  delete claims.clubAdmin;
   delete claims.countryAdmin;
   delete claims.editor;
-  if (countryAdmin) claims.countryAdmin = true;
+  if (clubAdmin) claims.clubAdmin = true;
   if (editor) claims.editor = true;
   const before = JSON.stringify(user.customClaims ?? {});
   let result: RoleSyncResult = "UNCHANGED";
-  if (hadStaffRole && !countryAdmin && !editor) {
+  if (hadStaffRole && !clubAdmin && !editor) {
     if (readEmaId(profile.get("emaId")) != null) {
       claims.player = true;
       result = "BECAME_PLAYER";
@@ -259,23 +266,23 @@ export async function syncRoleClaims(uid: string): Promise<RoleSyncResult> {
   return result;
 }
 
-/** Saves the countries of a country admin and brings its role claims in line. */
-export async function setAdminCountries(uid: string, countries: string[]): Promise<void> {
-  const list = readCountryList(countries);
+/** Saves the organizations of a club admin. Call syncRoleClaims after it to bring its role claims in line. */
+export async function setAdminOrganizations(uid: string, organizations: string[]): Promise<void> {
+  const list = readOrganizationList(organizations);
   await db.doc(`users/${uid}`).set(
-    { adminCountries: list.length > 0 ? list : FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
+    { adminOrganizations: list.length > 0 ? list : FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
   forgetAccess(uid);
 }
 
-/** Saves the email, the alias, the role, the countries and the tournaments of an account that a route checked. */
+/** Saves the email, the alias, the role, the organizations and the tournaments of an account that a route checked. */
 export async function updateManagedUser(params: {
   uid: string;
   email: string;
   alias: string;
   role: GlobalUserRole;
-  adminCountries: string[];
+  adminOrganizations: string[];
   tournamentAssignments: TournamentAssignment[];
 }): Promise<RoleSyncResult> {
   await auth.updateUser(params.uid, { email: params.email });
@@ -289,7 +296,7 @@ export async function updateManagedUser(params: {
     },
     { merge: true },
   );
-  await setGlobalUserRole(params.uid, params.role, params.adminCountries);
+  await setGlobalUserRole(params.uid, params.role, params.adminOrganizations);
   await syncUserTournamentAssignments(params.uid, params.role === "SUPER_ADMIN" || params.role === "PLAYER" ? [] : params.tournamentAssignments);
   return syncRoleClaims(params.uid);
 }
@@ -306,20 +313,20 @@ async function listTournamentAssignmentsByUid(
     return [{ uid: member.id, tournamentRef }];
   });
   const tournamentRefs = [...new Map(memberships.map(({ tournamentRef }) => [tournamentRef.id, tournamentRef])).values()];
-  const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name", "hostCountry"] });
+  const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name", "organizerIds"] });
   const namesById = new Map(
     tournaments.filter((tournament) => tournament.exists).map((tournament) => [tournament.id, String(tournament.get("name") ?? "")]),
   );
-  const countriesById = new Map(
+  const organizersById = new Map(
     tournaments.filter((tournament) => tournament.exists)
-      .map((tournament) => [tournament.id, String(tournament.get("hostCountry") ?? "").toUpperCase()]),
+      .map((tournament) => [tournament.id, readOrganizerIds(tournament.get("organizerIds"))]),
   );
   memberships.forEach(({ uid, tournamentRef }) => {
     if (!namesById.has(tournamentRef.id)) return;
     const assignment: TournamentAssignment = {
       tournamentId: tournamentRef.id,
       tournamentName: namesById.get(tournamentRef.id) ?? "",
-      country: countriesById.get(tournamentRef.id) ?? "",
+      organizerIds: organizersById.get(tournamentRef.id) ?? [],
     };
     result.set(uid, [...(result.get(uid) ?? []), assignment]);
   });
@@ -342,7 +349,7 @@ export async function listUserTournamentAssignments(
     const assignment: TournamentAssignment = {
       tournamentId: tournament.id,
       tournamentName: String(tournament.get("name") ?? ""),
-      country: String(tournament.get("hostCountry") ?? "").toUpperCase(),
+      organizerIds: readOrganizerIds(tournament.get("organizerIds")),
     };
     return assignment;
   }));

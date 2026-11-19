@@ -6,7 +6,7 @@ import { requireRegisteredPlayer } from "./middleware/requireRegisteredPlayer";
 import { requireAuth } from "./middleware/requireAuth";
 import type { PermissionGuard } from "./middleware/requirePermission";
 import { buildApp, MOUNTED_ROUTERS } from "./app";
-import { seedTournament } from "../testing/firestoreFixtures";
+import { seedOrganization, seedTournament } from "../testing/firestoreFixtures";
 import { getGlobalDataVersions } from "../services/dataVersionsService";
 import { setGlobalUserRole } from "../services/usersService";
 import { upsertTournamentMember } from "../services/membersService";
@@ -75,6 +75,10 @@ const MATRIX: Array<[string, string, Access]> = [
   ["PUT", "/admin/users/:uid/photo", "accounts.photo"],
   ["POST", "/admin/users/:uid/removal", "accounts.requestRemoval"],
   ["GET", "/admin/account-requests", "accounts.reviewRequests"],
+  ["GET", "/admin/organizations", "tournament.view"],
+  ["POST", "/admin/organizations", "organizations.create"],
+  ["PUT", "/admin/organizations/:organizationId", "organizations.edit"],
+  ["DELETE", "/admin/organizations/:organizationId", "organizations.delete"],
   ["POST", "/admin/account-requests/:requestId", "accounts.reviewRequests"],
   ["DELETE", "/admin/users/:uid/photo", "accounts.photo"],
   ["POST", "/tournaments/", "tournaments.create"],
@@ -170,8 +174,8 @@ describe("who may call which route", () => {
   let t1 = "";
   let t2 = "";
   let superAdmin: TestAccount;
-  let countryAdmin: TestAccount;
-  let foreignCountryAdmin: TestAccount;
+  let clubAdmin: TestAccount;
+  let foreignClubAdmin: TestAccount;
   let member: TestAccount;
   let outsider: TestAccount;
   let player: TestAccount;
@@ -182,19 +186,20 @@ describe("who may call which route", () => {
       .replace(":tournamentId", tournamentId)
       .replace(":roundId", "1").replace(":tableId", "1").replace(":playerId", "1").replace(":teamId", "1")
       .replace(":uid", "unknown-user").replace(":invitationId", "unknown-invitation").replace(":submissionId", "unknown-submission")
-      .replace(":emaId", "unknown-ema").replace(":requestId", "unknown-request");
-    // A country admin reads the activity of one tournament of its countries.
+      .replace(":emaId", "unknown-ema").replace(":requestId", "unknown-request").replace(":organizationId", "unknown-organization");
+    // A club admin reads the activity of one tournament of its organizations.
     return filled === "/admin/activity" ? `${filled}?tournamentId=${tournamentId}` : filled;
   };
 
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
-    t1 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
-    t2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "FR" });
+    for (const id of ["org-es", "org-fr", "org-se"]) await seedOrganization({ id });
+    t1 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-es"] });
+    t2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-fr"] });
     superAdmin = await createAccount({ role: "SUPER_ADMIN" });
-    countryAdmin = await createAccount({ role: "COUNTRY_ADMIN", countries: ["ES"] });
-    foreignCountryAdmin = await createAccount({ role: "COUNTRY_ADMIN", countries: ["SE"] });
+    clubAdmin = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-es"] });
+    foreignClubAdmin = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-se"] });
     member = await createAccount({ role: "EDITOR", memberOf: [t1] });
     outsider = await createAccount({ role: "EDITOR", memberOf: [t2] });
     player = await createAccount({ role: "PLAYER" });
@@ -225,7 +230,7 @@ describe("who may call which route", () => {
           const ownDeletion = method === "DELETE" && path === "/auth/me";
           const accounts = ownDeletion
             ? [await createAccount({ role: "PLAYER" }), await createAccount({ role: "EDITOR" }), await createAccount({ role: "SUPER_ADMIN" })]
-            : [player, outsider, member, countryAdmin, superAdmin];
+            : [player, outsider, member, clubAdmin, superAdmin];
           for (const account of accounts) {
             const { status } = await server.request(method, concrete(path, t1), { token: account.token });
             assert.ok(!denied(status), `${status} for ${account.email}`);
@@ -241,7 +246,7 @@ describe("who may call which route", () => {
         });
 
         it("refuses editors, admins and players who are not registered here", async () => {
-          for (const account of [member, countryAdmin, superAdmin, player, outsider]) {
+          for (const account of [member, clubAdmin, superAdmin, player, outsider]) {
             assert.equal((await server.request(method, concrete(path, t1), { token: account.token, body: {} })).status, 403);
           }
           assert.equal((await server.request(method, concrete(path, t2), { token: registeredPlayer.token, body: {} })).status, 403);
@@ -251,21 +256,21 @@ describe("who may call which route", () => {
 
       const inTournament = access.startsWith("@");
       const permission = (inTournament ? access.slice(1) : access) as Permission;
-      // Who passes the guard in t1, a Spanish tournament: [account, role, whether the role holds t1 in its scope].
+      // Who passes the guard in t1, a tournament of org-es: [account, role, whether the role holds t1 in its scope].
       // The super admin goes last, because a call that passes may delete the tournament.
       const callers = (): Array<[string, TestAccount, GlobalUserRole, boolean]> => [
-        ["country admin of another country", foreignCountryAdmin, "COUNTRY_ADMIN", false],
+        ["club admin of another organization", foreignClubAdmin, "CLUB_ADMIN", false],
         ["editor of another tournament", outsider, "EDITOR", false],
         ["assigned editor", member, "EDITOR", true],
-        ["country admin of the country", countryAdmin, "COUNTRY_ADMIN", true],
+        ["club admin of the organizer", clubAdmin, "CLUB_ADMIN", true],
         ["super admin", superAdmin, "SUPER_ADMIN", true],
       ];
       // The activity route checks its tournament inside the route.
       const scoped = inTournament || permission === "tournament.activity";
 
       it("lets through exactly the roles that hold the permission, in their scope", async () => {
-        // A fresh Spanish tournament, because a call that passes can change or delete it.
-        const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
+        // A fresh tournament of org-es, because a call that passes can change or delete it.
+        const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-es"] });
         await upsertTournamentMember({ tournamentId, uid: member.uid });
         for (const [label, account, role, inScope] of callers()) {
           const allowed = has(role, permission) && (!scoped || inScope);
@@ -304,7 +309,8 @@ describe("account rules", () => {
     // A new account gets the password email through the Auth emulator.
     process.env.MTS_ID_TOOLKIT_API_KEY ??= "test-key";
     server = await startServer();
-    t = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
+    await seedOrganization({ id: "org-es" });
+    t = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-es"] });
     superAdmin = await createAccount({ role: "SUPER_ADMIN" });
     editor = await createAccount({ role: "EDITOR", memberOf: [t] });
     otherEditor = await createAccount({ role: "EDITOR", memberOf: [t] });
@@ -315,9 +321,9 @@ describe("account rules", () => {
   const update = (token: string, uid: string, email: string, role: string, extra: Record<string, unknown> = {}) =>
     server.request("PUT", `/admin/users/${uid}`, { token, body: { email, alias: "x", role, tournamentAssignments: [{ tournamentId: t }], ...extra } });
 
-  it("whoami tells the roles, the countries and the permissions of the account", async () => {
+  it("whoami tells the roles, the organizations and the permissions of the account", async () => {
     const sa = (await server.request("GET", "/admin/whoami", { token: superAdmin.token })).body as Record<string, unknown>;
-    assert.deepEqual([sa.role, sa.roles, sa.adminCountries], ["SUPER_ADMIN", ["SUPER_ADMIN"], []]);
+    assert.deepEqual([sa.role, sa.roles, sa.adminOrganizations], ["SUPER_ADMIN", ["SUPER_ADMIN"], []]);
     assert.ok((sa.permissions as string[]).includes("dev.errors"));
     const ed = (await server.request("GET", "/admin/whoami", { token: editor.token })).body as Record<string, unknown>;
     assert.deepEqual([ed.role, ed.roles], ["EDITOR", ["EDITOR"]]);
@@ -327,8 +333,8 @@ describe("account rules", () => {
     assert.deepEqual([pl.role, pl.roles, pl.permissions], ["PLAYER", ["PLAYER"], []]);
   });
 
-  it("an editor cannot create a super admin, a country admin or an editor", async () => {
-    for (const [role, extra] of [["SUPER_ADMIN", {}], ["COUNTRY_ADMIN", { adminCountries: ["ES"] }], ["EDITOR", { tournamentAssignments: [{ tournamentId: t }] }]] as const) {
+  it("an editor cannot create a super admin, a club admin or an editor", async () => {
+    for (const [role, extra] of [["SUPER_ADMIN", {}], ["CLUB_ADMIN", { adminOrganizations: ["org-es"] }], ["EDITOR", { tournamentAssignments: [{ tournamentId: t }] }]] as const) {
       const { status } = await server.request("POST", "/admin/users", {
         token: editor.token, body: { email: `new-${role.toLowerCase()}@example.test`, role, alias: "x", ...extra },
       });
@@ -354,7 +360,7 @@ describe("account rules", () => {
 
   it("an editor can edit the own alias, not the own role", async () => {
     assert.equal((await update(editor.token, editor.uid, editor.email, "EDITOR")).status, 200);
-    assert.equal((await update(editor.token, editor.uid, editor.email, "COUNTRY_ADMIN", { adminCountries: ["ES"] })).status, 400);
+    assert.equal((await update(editor.token, editor.uid, editor.email, "CLUB_ADMIN", { adminOrganizations: ["org-es"] })).status, 400);
   });
 
   it("only a super admin changes the email of an account", async () => {
@@ -537,18 +543,18 @@ describe("account rules", () => {
 });
 
 /** A tournament that the API accepts, for the create and settings routes. */
-function tournamentBody(hostCountry: string): Record<string, unknown> {
+function tournamentBody(organizerIds: string[], hostCountry = "ES"): Record<string, unknown> {
   const numPlayers = 16;
   const players = Array.from({ length: numPlayers }, (_, index) => ({ id: index + 1, team: 0, name: `Player ${index + 1}`, country: "ES" }));
   return {
-    name: "Country open", shortName: "CO", primaryColor: "#02B16B", eventStartDate: "2030-10-01", eventEndDate: "2030-10-02",
+    name: "Club open", shortName: "CO", organizerIds, eventStartDate: "2030-10-01", eventEndDate: "2030-10-02",
     hostCountry, hostCity: "City", venueName: "Hall", venueAddress: "Street 1", contactEmail: "contact@example.test",
     isTeams: false, numPlayers, numRounds: 2, numTries: 1, players, tables: validDrawTables(numPlayers, 2),
     roundSchedules: fullRoundSchedules(2, "2030-10-01"),
   };
 }
 
-describe("country admin rules", () => {
+describe("club admin rules", () => {
   let server: TestServer;
   let spain = "";
   let spain2 = "";
@@ -561,11 +567,12 @@ describe("country admin rules", () => {
     requireAuthEmulator();
     process.env.MTS_ID_TOOLKIT_API_KEY ??= "test-key";
     server = await startServer();
-    spain = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
-    spain2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
-    sweden = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "SE" });
+    for (const id of ["org-es", "org-se"]) await seedOrganization({ id });
+    spain = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-es"] });
+    spain2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], organizerIds: ["org-es"] });
+    sweden = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "SE", organizerIds: ["org-se"] });
     superAdmin = await createAccount({ role: "SUPER_ADMIN" });
-    spanishAdmin = await createAccount({ role: "COUNTRY_ADMIN", countries: ["ES"] });
+    spanishAdmin = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-es"] });
     spanishEditor = await createAccount({ role: "EDITOR", memberOf: [spain] });
   });
   after(async () => { await server.close(); });
@@ -575,7 +582,7 @@ describe("country admin rules", () => {
   const updateUser = (token: string, account: TestAccount, body: Record<string, unknown>) =>
     server.request("PUT", `/admin/users/${account.uid}`, { token, body: { email: account.email, alias: "x", ...body } });
 
-  it("lists the tournaments of its countries with its permissions in each", async () => {
+  it("lists the tournaments of its organizations with its permissions in each", async () => {
     const { body } = await server.request("GET", "/tournaments", { token: spanishAdmin.token });
     const tournaments = (body as { tournaments: Array<{ id: string; permissions: string[] }> }).tournaments;
     const ids = tournaments.map((tournament) => tournament.id);
@@ -585,22 +592,45 @@ describe("country admin rules", () => {
     assert.ok(tournaments.find((tournament) => tournament.id === spain)?.permissions.includes("tournament.delete"));
   });
 
-  it("creates tournaments only in its countries, and every tournament needs a real country", async () => {
-    assert.equal((await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody("SE") })).status, 403);
-    assert.equal((await server.request("POST", "/tournaments", { token: superAdmin.token, body: tournamentBody("XX") })).status, 400);
-    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody("ES") });
+  it("creates tournaments only for its organizations, and every tournament needs an organizer and a real country", async () => {
+    assert.equal((await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody(["org-se"]) })).status, 403);
+    assert.equal((await server.request("POST", "/tournaments", { token: superAdmin.token, body: tournamentBody(["org-es"], "XX") })).status, 400);
+    assert.equal((await server.request("POST", "/tournaments", { token: superAdmin.token, body: tournamentBody([]) })).status, 400);
+    assert.equal((await server.request("POST", "/tournaments", { token: superAdmin.token, body: tournamentBody(["org-unknown"]) })).status, 400);
+    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody(["org-es", "org-se"]) });
     assert.equal(created.status, 200, JSON.stringify(created.body));
+    const tournament = created.body as { organizerIds: string[]; organizers: Array<{ id: string }>; primaryColor: string };
+    assert.deepEqual(tournament.organizerIds, ["org-es", "org-se"]);
+    assert.deepEqual(tournament.organizers.map((organizer) => organizer.id), ["org-es", "org-se"]);
   });
 
-  it("cannot change the country of a tournament, a super admin can", async () => {
-    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody("ES") });
+  it("changes the country of its tournament, but only a super admin changes the organizers", async () => {
+    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody(["org-es"]) });
     const id = (created.body as { id: string }).id;
 
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody("SE") })).status, 403);
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody("ES") })).status, 200);
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: superAdmin.token, body: tournamentBody("SE") })).status, 200);
-    // The tournament is Swedish now, so the Spanish admin no longer manages it.
+    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody(["org-se"]) })).status, 403);
+    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody(["org-es"], "SE") })).status, 200);
+    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: superAdmin.token, body: tournamentBody(["org-se"]) })).status, 200);
+    // The tournament belongs to the Swedish club now, so the Spanish admin no longer manages it.
     assert.equal((await server.request("GET", `/tournaments/${id}`, { token: spanishAdmin.token })).status, 403);
+  });
+
+  it("edits its own organization only, and only a super admin creates and deletes organizations", async () => {
+    const body = { name: `Club ${randomTag()}`, type: "CLUB", country: "ES", primaryColor: "#123456" };
+    assert.equal((await server.request("POST", "/admin/organizations", { token: spanishAdmin.token, body })).status, 403);
+    const created = await server.request("POST", "/admin/organizations", { token: superAdmin.token, body });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+    const newId = (created.body as { id: string }).id;
+    assert.equal((await server.request("POST", "/admin/organizations", { token: superAdmin.token, body })).status, 400, "names do not repeat");
+
+    assert.equal((await server.request("PUT", "/admin/organizations/org-es", { token: spanishAdmin.token, body: { ...body, name: "Spanish club", primaryColor: "#AA0000" } })).status, 200);
+    assert.equal((await server.request("PUT", `/admin/organizations/${newId}`, { token: spanishAdmin.token, body })).status, 403);
+    const list = (await server.request("GET", "/tournaments", { token: spanishAdmin.token })).body as { tournaments: Array<{ id: string; primaryColor: string }> };
+    assert.equal(list.tournaments.find((tournament) => tournament.id === spain)?.primaryColor, "#AA0000", "the tournament takes the color of its main organizer");
+
+    assert.equal((await server.request("DELETE", "/admin/organizations/org-es", { token: superAdmin.token })).status, 400, "it still organizes tournaments");
+    assert.equal((await server.request("DELETE", `/admin/organizations/${newId}`, { token: spanishAdmin.token })).status, 403);
+    assert.equal((await server.request("DELETE", `/admin/organizations/${newId}`, { token: superAdmin.token })).status, 200);
   });
 
   it("deletes its tournaments, but a finished one with results only a super admin", async () => {
@@ -613,18 +643,18 @@ describe("country admin rules", () => {
     assert.equal((await server.request("DELETE", `/tournaments/${finished}`, { token: superAdmin.token })).status, 200);
   });
 
-  it("creates editors of its tournaments and country admins of its countries, never super admins", async () => {
+  it("creates editors of its tournaments and club admins of its organizations, never super admins", async () => {
     assert.equal((await createUser(spanishAdmin.token, { role: "EDITOR", tournamentAssignments: [{ tournamentId: spain }] })).status, 201);
     assert.equal((await createUser(spanishAdmin.token, { role: "EDITOR", tournamentAssignments: [{ tournamentId: sweden }] })).status, 403);
-    assert.equal((await createUser(spanishAdmin.token, { role: "COUNTRY_ADMIN", adminCountries: ["ES"] })).status, 201);
-    assert.equal((await createUser(spanishAdmin.token, { role: "COUNTRY_ADMIN", adminCountries: ["SE"] })).status, 403);
-    assert.equal((await createUser(spanishAdmin.token, { role: "COUNTRY_ADMIN", adminCountries: ["ZZ"] })).status, 400);
+    assert.equal((await createUser(spanishAdmin.token, { role: "CLUB_ADMIN", adminOrganizations: ["org-es"] })).status, 201);
+    assert.equal((await createUser(spanishAdmin.token, { role: "CLUB_ADMIN", adminOrganizations: ["org-se"] })).status, 403);
+    assert.equal((await createUser(spanishAdmin.token, { role: "CLUB_ADMIN", adminOrganizations: ["org-unknown"] })).status, 400);
     assert.equal((await createUser(spanishAdmin.token, { role: "SUPER_ADMIN" })).status, 403);
   });
 
-  it("changes only the Spanish part of a Swedish country admin who also edits a Spanish tournament", async () => {
-    const swede = await createAccount({ role: "COUNTRY_ADMIN", countries: ["SE"], memberOf: [spain] });
-    assert.deepEqual((await auth.getUser(swede.uid)).customClaims, { countryAdmin: true, editor: true });
+  it("changes only the Spanish part of a Swedish club admin who also edits a Spanish tournament", async () => {
+    const swede = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-se"], memberOf: [spain] });
+    assert.deepEqual((await auth.getUser(swede.uid)).customClaims, { clubAdmin: true, editor: true });
 
     // The Spanish admin sees the Spanish assignment only, and cannot make the account an editor or a player.
     const list = (await server.request("GET", "/admin/users", { token: spanishAdmin.token })).body as { users: Array<{ uid: string; tournamentAssignments: Array<{ tournamentId: string }>; hasGrantsOutside: boolean; canManage: boolean }> };
@@ -633,23 +663,23 @@ describe("country admin rules", () => {
     assert.equal(seen?.hasGrantsOutside, true);
     assert.equal(seen?.canManage, true);
     assert.equal((await updateUser(spanishAdmin.token, swede, { role: "EDITOR", tournamentAssignments: [{ tournamentId: spain }] })).status, 403);
-    assert.equal((await updateUser(spanishAdmin.token, swede, { role: "COUNTRY_ADMIN", adminCountries: [], tournamentAssignments: [{ tournamentId: spain }, { tournamentId: spain2 }] })).status, 200);
+    assert.equal((await updateUser(spanishAdmin.token, swede, { role: "CLUB_ADMIN", adminOrganizations: [], tournamentAssignments: [{ tournamentId: spain }, { tournamentId: spain2 }] })).status, 200);
     assert.equal((await db.doc(`tournaments/${spain2}/members/${swede.uid}`).get()).exists, true);
-    // Taking the Spanish tournaments away leaves a country admin of Sweden.
-    assert.equal((await updateUser(spanishAdmin.token, swede, { role: "COUNTRY_ADMIN", adminCountries: [], tournamentAssignments: [] })).status, 200);
-    assert.deepEqual((await auth.getUser(swede.uid)).customClaims, { countryAdmin: true });
-    assert.deepEqual((await db.doc(`users/${swede.uid}`).get()).get("adminCountries"), ["SE"]);
+    // Taking the Spanish tournaments away leaves a club admin of the Swedish club.
+    assert.equal((await updateUser(spanishAdmin.token, swede, { role: "CLUB_ADMIN", adminOrganizations: [], tournamentAssignments: [] })).status, 200);
+    assert.deepEqual((await auth.getUser(swede.uid)).customClaims, { clubAdmin: true });
+    assert.deepEqual((await db.doc(`users/${swede.uid}`).get()).get("adminOrganizations"), ["org-se"]);
   });
 
-  it("takes its own countries from another country admin, but cannot demote one with countries of others", async () => {
-    const both = await createAccount({ role: "COUNTRY_ADMIN", countries: ["ES", "SE"] });
+  it("takes its own organizations from another club admin, but cannot demote one with organizations of others", async () => {
+    const both = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-es", "org-se"] });
 
-    assert.equal((await updateUser(spanishAdmin.token, both, { role: "EDITOR", adminCountries: [], tournamentAssignments: [{ tournamentId: spain }] })).status, 403);
-    assert.equal((await updateUser(spanishAdmin.token, both, { role: "COUNTRY_ADMIN", adminCountries: [], tournamentAssignments: [] })).status, 200);
-    assert.deepEqual((await db.doc(`users/${both.uid}`).get()).get("adminCountries"), ["SE"]);
+    assert.equal((await updateUser(spanishAdmin.token, both, { role: "EDITOR", adminOrganizations: [], tournamentAssignments: [{ tournamentId: spain }] })).status, 403);
+    assert.equal((await updateUser(spanishAdmin.token, both, { role: "CLUB_ADMIN", adminOrganizations: [], tournamentAssignments: [] })).status, 200);
+    assert.deepEqual((await db.doc(`users/${both.uid}`).get()).get("adminOrganizations"), ["org-se"]);
   });
 
-  it("sees every player, the staff of its countries, and not the staff of other countries", async () => {
+  it("sees every player, the staff of its organizations, and not the staff of other organizations", async () => {
     const swedishEditor = await createAccount({ role: "EDITOR", memberOf: [sweden] });
     const someone = await createAccount({ role: "PLAYER", playerOf: [sweden] });
     const local = await createAccount({ role: "PLAYER", playerOf: [spain] });
@@ -688,7 +718,7 @@ describe("country admin rules", () => {
     assert.equal((await auth.getUser(withEma.uid)).disabled, false);
   });
 
-  it("asks a super admin to delete an account, after taking it out of its countries", async () => {
+  it("asks a super admin to delete an account, after taking it out of its organizations", async () => {
     const t = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
     const target = await createAccount({ role: "EDITOR", memberOf: [t, sweden], playerOf: [spain] });
 
