@@ -1,0 +1,31 @@
+{
+  "comment": "List prices in USD of the services that a tournament uses, for the cost report of the game day (scripts/rehearsal/cost.mjs, docs/benchmark.md). Firestore in eur3 (multi-region), the API in europe-southwest1 (Cloud Run functions, request-based billing, tier 1). Check them on cloud.google.com/firestore/pricing, cloud.google.com/run/pricing and firebase.google.com/pricing when they change, and the real bill in the Cloud Console (Billing > Reports).",
+  "updated": "2026-11-19",
+  "eurPerUsd": 0.86,
+  "firestore": {
+    "readsPer100k": 0.06,
+    "writesPer100k": 0.18,
+    "deletesPer100k": 0.02,
+    "freeReadsPerDay": 50000,
+    "freeWritesPerDay": 20000,
+    "freeDeletesPerDay": 20000
+  },
+  "cloudRun": {
+    "vcpuSecond": 0.000024,
+    "gibSecond": 0.0000025,
+    "perMillionRequests": 0.4,
+    "freeVcpuSecondsPerMonth": 180000,
+    "freeGibSecondsPerMonth": 360000,
+    "freeRequestsPerMonth": 2000000
+  },
+  "hosting": {
+    "comment": "The web apps and, in production, every answer of the API: the apps call it through Firebase Hosting (/api).",
+    "perGb": 0.15,
+    "freeGbPerMonth": 10
+  },
+  "storage": {
+    "comment": "Photos, logos and the Green Book. The bucket is not in a US region, so it has no free tier.",
+    "egressPerGb": 0.12,
+    "operationsPer10k": 0.004
+  }
+}
