@@ -870,6 +870,8 @@ La première qui marche gagne</string>
     <string name="admin_countries_not_yours">Les pays sans ✕ ne sont pas les vôtres.\nSeul un super administrateur ou leurs administrateurs peuvent les retirer.</string>
     <string name="remove_country_n">Retirer %1$s</string>
     <string name="editor_needs_tournament">Un éditeur a besoin d'au moins un tournoi.</string>
+    <string name="account_disabled_without_tournaments">Ce compte a été désactivé quand il a perdu son dernier tournoi.
+Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistrement.</string>
     <string name="account_grants_outside">Ce compte a aussi des pays ou des tournois que vous ne gérez pas.\nVous ne changez que les vôtres, et vous ne pouvez pas en faire un joueur.</string>
     <string name="email_hidden">Masqué</string>
     <string name="email_hidden_info">Vous voyez l'e-mail d'un joueur seulement quand il joue dans l'un de vos tournois.</string>

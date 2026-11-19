@@ -50,4 +50,9 @@ data class ManagedUser(
     val hasGrantsOutside: Boolean = false,
     /** True when the email is hidden from the signed-in account: a player of tournaments that it does not manage. */
     val emailHidden: Boolean = false,
+    /**
+     * True when the account was disabled because it lost its last tournament, not by a super admin. A new role with a
+     * tournament enables it again, also when a country admin gives it.
+     */
+    val disabledWithoutRole: Boolean = false,
 )

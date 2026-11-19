@@ -870,6 +870,8 @@ Vince la prima che riesce</string>
     <string name="admin_countries_not_yours">I paesi senza ✕ non sono tuoi.\nSolo un super amministratore o i loro amministratori possono toglierli.</string>
     <string name="remove_country_n">Togli %1$s</string>
     <string name="editor_needs_tournament">Un editor ha bisogno di almeno un torneo.</string>
+    <string name="account_disabled_without_tournaments">Questo account è stato disattivato quando ha perso il suo ultimo torneo.
+Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="account_grants_outside">Questo account ha anche paesi o tornei che non gestisci.\nCambi solo i tuoi e non puoi renderlo giocatore.</string>
     <string name="email_hidden">Nascosto</string>
     <string name="email_hidden_info">Vedi l'email di un giocatore solo quando gioca in uno dei tuoi tornei.</string>

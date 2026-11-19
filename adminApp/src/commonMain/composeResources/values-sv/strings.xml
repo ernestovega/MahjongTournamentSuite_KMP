@@ -870,6 +870,8 @@ Den första som fungerar vinner</string>
     <string name="admin_countries_not_yours">Länderna utan ✕ är inte dina.\nBara en superadministratör eller deras landsadministratörer kan ta bort dem.</string>
     <string name="remove_country_n">Ta bort %1$s</string>
     <string name="editor_needs_tournament">En redaktör behöver minst en turnering.</string>
+    <string name="account_disabled_without_tournaments">Kontot inaktiverades när det förlorade sin sista turnering.
+Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string>
     <string name="account_grants_outside">Kontot har också länder eller turneringar som du inte hanterar.\nDu ändrar bara dina, och du kan inte göra det till spelare.</string>
     <string name="email_hidden">Dold</string>
     <string name="email_hidden_info">Du ser en spelares e-post bara när spelaren spelar i en av dina turneringar.</string>
