@@ -12,7 +12,7 @@ import { planOngoingRound } from "../services/ongoingRound";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
 import { deleteTournament } from "../services/tournamentsService";
-import { forgetOrganizations, saveOrganizationLogo } from "../services/organizationsService";
+import { EMPTY_PLACE, forgetOrganizations, saveOrganizationLogo, type OrganizationPlace } from "../services/organizationsService";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
 import {
   randomTable,
@@ -205,10 +205,15 @@ const SEED_ORGANIZATIONS: Array<{
   logoAsset?: string;
   /** An address that does not load, to check how the screens look without the logo. */
   logoUrl?: string;
+  /** The premises of the club, optional. */
+  place?: OrganizationPlace;
 }> = [
   { id: TEST_CLUB_ID, name: "Test Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#02B16B" },
   { id: "seed-org-broken-logo", name: "Test Club With A Broken Logo", type: "CLUB", country: "ES", primaryColor: "#33691E", logoUrl: "https://invalid.example.test/logo.png" },
-  { id: "seed-org-madrid", name: "Madrid Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#B71C1C" },
+  {
+    id: "seed-org-madrid", name: "Madrid Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#B71C1C",
+    place: { mapUrl: "", name: "Club room", address: "Calle de Alcalá 100, 28009 Madrid", city: "Madrid" },
+  },
   { id: "seed-org-federacion-es", name: "Federación Española de Mahjong", type: "FEDERATION", country: "ES", primaryColor: "#C62828" },
   { id: "seed-org-uppsala", name: "Uppsala Mahjong Club", type: "CLUB", country: "SE", primaryColor: "#0067A5", logoAsset: "uppsala-mahjong.png" },
 ];
@@ -226,6 +231,7 @@ async function seedOrganizations(ids: Set<string>): Promise<void> {
       type: organization.type,
       country: organization.country,
       primaryColor: organization.primaryColor,
+      place: organization.place ?? EMPTY_PLACE,
       logoUrl: logo?.url ?? organization.logoUrl ?? null,
       logoPath: logo?.path ?? null,
       logoHash: logo?.hash ?? null,

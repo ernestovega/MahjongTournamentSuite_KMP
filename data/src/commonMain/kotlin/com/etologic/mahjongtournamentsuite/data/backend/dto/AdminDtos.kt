@@ -383,9 +383,18 @@ data class OrganizationDto(
     val type: String = "CLUB",
     val country: String = "",
     val primaryColor: String = "#02B16B",
+    val place: OrganizationPlaceDto = OrganizationPlaceDto(),
     val logoUrl: String? = null,
     val canEdit: Boolean = false,
     val canDelete: Boolean = false,
+)
+
+@Serializable
+data class OrganizationPlaceDto(
+    val mapUrl: String = "",
+    val name: String = "",
+    val address: String = "",
+    val city: String = "",
 )
 
 @Serializable
@@ -399,6 +408,8 @@ data class SaveOrganizationRequestDto(
     val type: String,
     val country: String,
     val primaryColor: String,
+    /** Null: no place. */
+    val place: OrganizationPlaceDto? = null,
     val logoContentType: String? = null,
     val logoDataBase64: String? = null,
     val removeLogo: Boolean = false,

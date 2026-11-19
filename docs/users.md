@@ -31,14 +31,29 @@ enable or disable of a super admin clears `disabledReason`).
 
 ## Organizations
 
-Clubs and federations own the tournaments (`organizations/{id}`: name, type `CLUB` or `FEDERATION`, country, color and
-logo). A federation works like a club. A tournament has one or more organizers in `tournaments/{id}.organizerIds`: the
+Clubs and federations own the tournaments (`organizations/{id}`: name, type `CLUB` or `FEDERATION`, country, color,
+logo and, for a club, its premises). A federation works like a club. A tournament has one or more organizers in `tournaments/{id}.organizerIds`: the
 first one is the main organizer, the others are co-organizers. The tournament has no logo or color of its own: it shows
 the ones of its main organizer (ID cards, apps). Its country is only the place and the statistics.
 
 Only a super admin creates and deletes organizations, and an organization that still organizes tournaments cannot be
-deleted. A club admin edits the details of its own organizations. Only a super admin changes the organizers of a
-tournament that exists. Screen: Tournaments → Organizations. API: `GET/POST /admin/organizations`,
+deleted. A club admin edits the details of its own organizations.
+
+**Who changes the organizers of a tournament that exists** (`tournaments.changeOrganizers`, `canChangeOrganizers` in
+`accessService.ts`, `AdminStatus.canChangeOrganizersOf` in the app):
+
+- A super admin, always.
+- A club admin of the **main** organizer. It adds and removes co-organizers and can hand the main role to another
+  organizer, but the new organizers must keep one of its organizations, so it never gives the tournament away by mistake.
+- Not the club admins of a co-organizer, and not the editors: they see the organizers but do not change them.
+
+**Premises of a club** (`organizations/{id}.place`: `mapUrl`, `name`, `address`, `city`). Optional: some clubs have
+their own room, which is not always the venue of their tournaments. The form reads it from a Google Maps link with the
+same tool as the venue of a tournament (`POST /venues/resolve-link`, Google Places): the link fills the name, the
+address and the city. Without a link the user types them. A place with some field needs a link or an address. The link
+never changes the country of the club. A federation has no premises. Players do not see the premises yet.
+
+Screen: Tournaments → Organizations. API: `GET/POST /admin/organizations`,
 `PUT/DELETE /admin/organizations/{id}`.
 
 ## Club Admin

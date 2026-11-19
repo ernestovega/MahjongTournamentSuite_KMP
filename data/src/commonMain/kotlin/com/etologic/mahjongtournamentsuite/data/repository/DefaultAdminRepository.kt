@@ -1,10 +1,5 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
-import com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveOrganizationRequestDto
-import com.etologic.mahjongtournamentsuite.domain.model.Organization
-import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
-import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto
@@ -13,8 +8,11 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.GlobalUserRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.LevelPermissionsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationPlaceDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveOrganizationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveRoleRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserPermissionsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
@@ -36,6 +34,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationPlace
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
@@ -387,6 +389,7 @@ private fun OrganizationDto.toDomain(): Organization = Organization(
     type = if (type == OrganizationType.FEDERATION.name) OrganizationType.FEDERATION else OrganizationType.CLUB,
     country = country,
     primaryColor = primaryColor,
+    place = OrganizationPlace(mapUrl = place.mapUrl, name = place.name, address = place.address, city = place.city),
     logoUrl = logoUrl?.ifBlank { null },
     canEdit = canEdit,
     canDelete = canDelete,
@@ -397,6 +400,9 @@ private fun OrganizationDraft.toDto(): SaveOrganizationRequestDto = SaveOrganiza
     type = type.name,
     country = country.trim().uppercase(),
     primaryColor = primaryColor.trim().uppercase(),
+    place = place.takeUnless { it.isEmpty }?.let {
+        OrganizationPlaceDto(mapUrl = it.mapUrl.trim(), name = it.name.trim(), address = it.address.trim(), city = it.city.trim())
+    },
     logoContentType = logoBytes?.let { logoContentType },
     logoDataBase64 = logoBytes?.let(Base64.Default::encode),
     removeLogo = removeLogo,

@@ -181,6 +181,21 @@ export async function canInTournament(access: Access, permission: Permission, to
   return permissionsOf(access, await rolesInTournament(access, tournamentId)).has(permission);
 }
 
+/**
+ * True when the account may change the organizers of a tournament from [current] to [next]. The organizers decide who
+ * manages the tournament, so:
+ * - A super admin changes them always.
+ * - A club admin of the main organizer changes them, and the new organizers must still hold one of its organizations,
+ *   so it never gives the tournament away by mistake.
+ * - Nobody else changes them: not the club admins of a co-organizer, not the editors.
+ */
+export function canChangeOrganizers(access: Access, current: readonly string[], next: readonly string[]): boolean {
+  if (access.superAdmin) return true;
+  const main = current[0];
+  if (main == null || !canInOrganization(access, "tournaments.changeOrganizers", main)) return false;
+  return next.some((id) => canInOrganization(access, "tournaments.changeOrganizers", id));
+}
+
 /** True when the account may use the permission for this organization: a super admin, or a club admin of it. */
 export function canInOrganization(access: Access, permission: Permission, organizationId: string): boolean {
   if (access.superAdmin && ROLE_PERMISSIONS.SUPER_ADMIN.includes(permission)) return true;

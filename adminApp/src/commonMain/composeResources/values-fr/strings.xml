@@ -862,7 +862,7 @@ La première qui marche gagne</string>
     <string name="role_super_admin">Super administrateur</string>
     <string name="role_club_admin">Administrateur de club</string>
     <string name="organizations_title">Organisations</string>
-    <string name="organizations_info">Les clubs et les fédérations organisent les tournois.\n• Un tournoi montre le logo et la couleur de son organisateur principal.\n• Les administrateurs de club de chaque organisateur gèrent ses tournois.\n• Seul un super administrateur crée et supprime des organisations.</string>
+    <string name="organizations_info">Les clubs et les fédérations organisent les tournois.\n• Un tournoi montre le logo et la couleur de son organisateur principal.\n• Les administrateurs de club de chaque organisateur gèrent ses tournois.\n• Seul un super administrateur crée et supprime des organisations.\n• Un administrateur de club de l’organisateur principal change les organisateurs de ses tournois.</string>
     <string name="organizations_empty">Il n’y a pas encore d’organisations.</string>
     <string name="organization_new">Nouvelle organisation</string>
     <string name="organization_edit">Modifier l’organisation</string>
@@ -881,7 +881,7 @@ La première qui marche gagne</string>
     <string name="tournament_main_organizer_needed">Choisissez l’organisateur principal.</string>
     <string name="tournament_organizers_need_yours">L’un des organisateurs doit être une de vos organisations.</string>
     <string name="tournament_organizers_branding">Le tournoi utilise le logo et la couleur de son organisateur principal.\nIls se changent dans Organisations.</string>
-    <string name="tournament_organizers_locked">Seul un super administrateur change les organisateurs d’un tournoi.</string>
+    <string name="tournament_organizers_locked">Seul un super administrateur ou un administrateur de club de l’organisateur principal change les organisateurs de ce tournoi.</string>
     <string name="tournament_organizers_none">Il n’y a pas encore d’organisations.\nUn super administrateur les crée dans Organisations.</string>
     <string name="perm_group_organizations">Organisations</string>
     <string name="perm_organizations_create">Créer des organisations</string>
@@ -1000,4 +1000,9 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
         <item quantity="one">%2$s disparaît.\n\nLe compte qui l’utilise revient au rôle standard %3$s.</item>
         <item quantity="other">%2$s disparaît.\n\nLes %1$d comptes qui l’utilisent reviennent au rôle standard %3$s.</item>
     </plurals>
+    <string name="organization_place">Local du club</string>
+    <string name="organization_place_info">Facultatif. Certains clubs ont leur propre local, qui n’est pas toujours le lieu de leurs tournois.\nColle un lien Google Maps et le formulaire remplit le reste.</string>
+    <string name="organization_place_name">Nom du local</string>
+    <string name="organization_place_needed">Ajoute un lien Google Maps ou une adresse, ou laisse le local vide.</string>
+    <string name="organization_place_link_hint">Ajoute un lien, ou écris l’adresse du local.\nLe formulaire lit le lieu depuis le lien.</string>
 </resources>

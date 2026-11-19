@@ -40,8 +40,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_FINISH_HAND_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
-import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -56,8 +56,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
-import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -94,13 +92,16 @@ import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs
 import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs_description
 import mahjongtournamentsuite.adminapp.generated.resources.tab_data
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
+import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
 import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
 import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.time_zone_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_data
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name_is_required
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_need_yours
 import mahjongtournamentsuite.adminapp.generated.resources.tries
 import mahjongtournamentsuite.adminapp.generated.resources.updated_at
 import mahjongtournamentsuite.adminapp.generated.resources.use_1_to_10_characters
@@ -145,8 +146,10 @@ fun EditTournamentDialog(
 
     val adminStatus by store.adminStatus.collectAsState()
     val canDeleteTournaments = adminStatus?.can(Permission.TOURNAMENT_DELETE, tournament.permissions) == true
-    // Only a super admin changes the organizers of a tournament, so a club admin cannot give it away.
-    val canChangeOrganizers = adminStatus?.canChangeTournamentOrganizers == true
+    // A super admin, or a club admin of the main organizer, changes the organizers. The club admin keeps one of its
+    // organizations among them, so it cannot give the tournament away.
+    val canChangeOrganizers = adminStatus?.canChangeOrganizersOf(tournament.organizerIds) == true
+    val ownOrganizations = adminStatus?.takeUnless { it.isSuperAdmin }?.adminOrganizations
     var organizations by remember { mutableStateOf<List<Organization>>(emptyList()) }
     var settingsOrganizerIds by remember(tournament.id) { mutableStateOf(tournament.organizerIds) }
     // The ID card preview uses the main organizer that the form shows, also before the save.
@@ -450,10 +453,11 @@ fun EditTournamentDialog(
                                         },
                                         enabled = !isLoading,
                                         editable = canChangeOrganizers,
-                                        error = if (TournamentEditField.ORGANIZERS in invalidEditFields) {
-                                            stringResource(Res.string.tournament_main_organizer_needed)
-                                        } else {
-                                            null
+                                        mainChoices = ownOrganizations,
+                                        error = when {
+                                            TournamentEditField.ORGANIZERS !in invalidEditFields -> null
+                                            settingsOrganizerIds.isEmpty() -> stringResource(Res.string.tournament_main_organizer_needed)
+                                            else -> stringResource(Res.string.tournament_organizers_need_yours)
                                         },
                                     )
                                     TournamentIdCardPreviewButton(
@@ -683,7 +687,7 @@ fun EditTournamentDialog(
                                 if (contactEmailRequiredError(settingsVenue.contactEmail) != null) {
                                     add(TournamentEditField.CONTACT_EMAIL)
                                 }
-                                if (canChangeOrganizers && settingsOrganizerIds.isEmpty()) {
+                                if (canChangeOrganizers && (settingsOrganizerIds.isEmpty() || adminStatus?.canKeepOrganizers(settingsOrganizerIds) != true)) {
                                     add(TournamentEditField.ORGANIZERS)
                                 }
                                 if (newEventStartDate == null) {

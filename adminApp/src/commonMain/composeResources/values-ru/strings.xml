@@ -870,7 +870,7 @@
     <string name="role_super_admin">Суперадминистратор</string>
     <string name="role_club_admin">Администратор клуба</string>
     <string name="organizations_title">Организации</string>
-    <string name="organizations_info">Клубы и федерации организуют турниры.\n• Турнир показывает логотип и цвет своего главного организатора.\n• Администраторы клуба каждого организатора управляют его турнирами.\n• Создаёт и удаляет организации только суперадминистратор.</string>
+    <string name="organizations_info">Клубы и федерации организуют турниры.\n• Турнир показывает логотип и цвет своего главного организатора.\n• Администраторы клуба каждого организатора управляют его турнирами.\n• Создаёт и удаляет организации только суперадминистратор.\n• Администратор клуба главного организатора меняет организаторов его турниров.</string>
     <string name="organizations_empty">Организаций пока нет.</string>
     <string name="organization_new">Новая организация</string>
     <string name="organization_edit">Изменить организацию</string>
@@ -889,7 +889,7 @@
     <string name="tournament_main_organizer_needed">Выберите главного организатора.</string>
     <string name="tournament_organizers_need_yours">Один из организаторов должен быть вашей организацией.</string>
     <string name="tournament_organizers_branding">Турнир использует логотип и цвет своего главного организатора.\nОни меняются в разделе «Организации».</string>
-    <string name="tournament_organizers_locked">Менять организаторов турнира может только суперадминистратор.</string>
+    <string name="tournament_organizers_locked">Менять организаторов этого турнира может только суперадминистратор или администратор клуба главного организатора.</string>
     <string name="tournament_organizers_none">Организаций пока нет.\nИх создаёт суперадминистратор в разделе «Организации».</string>
     <string name="perm_group_organizations">Организации</string>
     <string name="perm_organizations_create">Создавать организации</string>
@@ -1014,4 +1014,9 @@
         <item quantity="many">%2$s исчезнет.\n\n%1$d аккаунтов, которые её используют, вернутся к стандартной роли %3$s.</item>
         <item quantity="other">%2$s исчезнет.\n\n%1$d аккаунта, которые её используют, вернутся к стандартной роли %3$s.</item>
     </plurals>
+    <string name="organization_place">Помещение клуба</string>
+    <string name="organization_place_info">Необязательно. У некоторых клубов есть своё помещение, и это не всегда место их турниров.\nВставьте ссылку Google Maps, и форма заполнит остальное.</string>
+    <string name="organization_place_name">Название помещения</string>
+    <string name="organization_place_needed">Добавьте ссылку Google Maps или адрес либо оставьте помещение пустым.</string>
+    <string name="organization_place_link_hint">Добавьте ссылку или введите адрес помещения.\nФорма берёт место из ссылки.</string>
 </resources>

@@ -8,7 +8,7 @@ Solo la función `api` (y los scripts de mantenimiento de `firebase/functions/sr
 flowchart TB
   subgraph raiz["Colecciones raíz"]
     users["users/{uid}<br/>alias, emaId, photoUrl,<br/>adminOrganizations, customRoles,<br/>permissionChanges"]
-    organizations["organizations/{id}<br/>name, type (CLUB/FEDERATION),<br/>country, primaryColor, logoUrl"]
+    organizations["organizations/{id}<br/>name, type (CLUB/FEDERATION),<br/>country, primaryColor, logoUrl,<br/>place (local del club, opcional)"]
     roles["roles/{id}<br/>name, base, permissions<br/>(roles a medida)"]
     emaIdIndex["emaIdIndex/{emaId}<br/>uid (quién es dueño del EMA id)"]
     registry["emaPlayerRegistry/{emaId}<br/>firstName, lastName, country,<br/>photoUrl, hiddenFromPublic"]

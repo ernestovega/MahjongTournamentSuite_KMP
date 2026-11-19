@@ -29,9 +29,9 @@ enum `Permission` of `:domain` mirrors the names.
 | Tournament activity | — | View | View |
 | Create a tournament | — | With one of its organizations as organizer | Any organizer |
 | Rename, configure or delete a tournament | — | Use (a past one with results: only a super admin) | Use |
-| Change the organizers of a tournament | — | — | Use |
+| Change the organizers of a tournament | — | When its organization is the main organizer, keeping one of its organizations | Use |
 | See the organizations | View | View | View |
-| Edit an organization (name, type, country, color, logo) | — | Its own | Use |
+| Edit an organization (name, type, country, color, logo, premises of a club) | — | Its own | Use |
 | Create or delete an organization | — | — | Use |
 | See all player accounts (name, EMA ID) | View | View | View |
 | See the email of a player | Plays in its tournaments | Plays in its tournaments | All |
@@ -66,10 +66,10 @@ The four roles above are the standard ones and never change. On top of them (`se
   the difference with the role is saved, so a later change of the role still reaches the person. "Save as a new role"
   turns those changes into a reusable role.
 - Deleting a custom role puts its accounts back on the standard role.
-- Some permissions never leave the super admins (`SUPER_ADMIN_ONLY`): changing the organizers of a tournament, creating and
+- Some permissions never leave the super admins (`SUPER_ADMIN_ONLY`): creating and
   deleting organizations, deleting a finished tournament with results, super admin accounts, emails, EMA IDs, photos, disabling and deleting accounts,
   approving requests, the DEV menu and the roles themselves. An editor-based role never gets permissions that need an
-  organization, nor assigning editors (`GRANTABLE`). Every role keeps `tournament.view` (`REQUIRED`).
+  organization (creating tournaments, changing their organizers), nor assigning editors (`GRANTABLE`). Every role keeps `tournament.view` (`REQUIRED`).
 - What reaches the server is always cut to `GRANTABLE` and the API reads it at each request (30 s cache per server
   instance), so a change works without signing in again. Every change goes to the activity log.
 - Tests: `firebase/functions/src/api/customPermissions.integration.test.ts`.

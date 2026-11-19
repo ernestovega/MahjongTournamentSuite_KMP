@@ -40,11 +40,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COLOR
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationPlace
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
@@ -68,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentCol
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
@@ -97,6 +102,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.organization_edit
 import mahjongtournamentsuite.adminapp.generated.resources.organization_name
 import mahjongtournamentsuite.adminapp.generated.resources.organization_name_needed
 import mahjongtournamentsuite.adminapp.generated.resources.organization_new
+import mahjongtournamentsuite.adminapp.generated.resources.organization_place
+import mahjongtournamentsuite.adminapp.generated.resources.organization_place_info
+import mahjongtournamentsuite.adminapp.generated.resources.organization_place_link_hint
+import mahjongtournamentsuite.adminapp.generated.resources.organization_place_name
+import mahjongtournamentsuite.adminapp.generated.resources.organization_place_needed
 import mahjongtournamentsuite.adminapp.generated.resources.organization_type
 import mahjongtournamentsuite.adminapp.generated.resources.organization_type_club
 import mahjongtournamentsuite.adminapp.generated.resources.organization_type_federation
@@ -237,6 +247,7 @@ fun OrganizationsScreen(navController: NavHostController) {
             onSave = { draft -> save(current, draft) },
             onDelete = current.organization?.takeIf { it.canDelete }?.let { organization -> { deleting = organization } },
             onError = { error = it },
+            resolvePlaceLink = presenter::resolvePlaceLink,
         )
     }
     deleting?.let { organization ->
@@ -271,8 +282,9 @@ private fun OrganizationRow(organization: Organization, details: String, enabled
 }
 
 /**
- * Creates an organization, or edits one: name, type, country, color and logo. The tournaments of the organization show
- * this logo and this color when it is their main organizer.
+ * Creates an organization, or edits one: name, type, country, color, logo, and the optional premises of a club. The
+ * tournaments of the organization show this logo and this color when it is their main organizer. The premises are read
+ * from a Google Maps link with [resolvePlaceLink], like the venue of a tournament.
  */
 @Composable
 internal fun OrganizationEditorDialog(
@@ -283,8 +295,14 @@ internal fun OrganizationEditorDialog(
     /** Null when the viewer may not delete it. */
     onDelete: (() -> Unit)?,
     onError: (UiText) -> Unit,
+    resolvePlaceLink: suspend (String) -> AppResult<ResolvedVenueLink> = { AppResult.Failure(AppError.Unexpected("No place reader")) },
 ) {
     var name by remember(organization) { mutableStateOf(organization?.name.orEmpty()) }
+    val savedPlace = organization?.place ?: OrganizationPlace()
+    var placeVenue by remember(organization) {
+        mutableStateOf(TournamentVenue(name = savedPlace.name, address = savedPlace.address, mapUrl = savedPlace.mapUrl))
+    }
+    var placeCity by remember(organization) { mutableStateOf(savedPlace.city) }
     var type by remember(organization) { mutableStateOf(organization?.type ?: OrganizationType.CLUB) }
     var country by remember(organization) { mutableStateOf(organization?.country.orEmpty()) }
     var color by remember(organization) { mutableStateOf(organization?.primaryColor ?: DEFAULT_ORGANIZATION_COLOR) }
@@ -309,6 +327,13 @@ internal fun OrganizationEditorDialog(
     val nameError = trimmedName.isEmpty()
     val countryError = country.isBlank()
     val colorError = !Regex("^#[0-9A-F]{6}$").matches(normalizedColor)
+    // Only a club has premises. A federation saves none.
+    val place = if (type == OrganizationType.CLUB) {
+        OrganizationPlace(mapUrl = placeVenue.mapUrl.trim(), name = placeVenue.name.trim(), address = placeVenue.address.trim(), city = placeCity.trim())
+    } else {
+        OrganizationPlace()
+    }
+    val placeError = !place.isComplete
     val logoModel: Any? = newLogo?.dataUrl ?: organization?.logoUrl?.takeUnless { removeLogo }
     LaunchedEffect(Unit) { nameFocus.requestFocus() }
 
@@ -369,6 +394,33 @@ internal fun OrganizationEditorDialog(
                             onValueChange = { color = it },
                             onPreviewClick = { showColorPicker = true },
                         )
+                        if (type == OrganizationType.CLUB) {
+                            Text(stringResource(Res.string.organization_place), style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                stringResource(Res.string.organization_place_info),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            TournamentPlaceFields(
+                                venue = placeVenue,
+                                onVenueChange = { placeVenue = it },
+                                hostCountry = country,
+                                onHostCountryChange = {},
+                                hostCity = placeCity,
+                                onHostCityChange = { placeCity = it },
+                                countries = emptyList(),
+                                resolveLink = resolvePlaceLink,
+                                enabled = !saving,
+                                venueError = if (triedSave && placeError) stringResource(Res.string.organization_place_needed) else null,
+                                // The club keeps its country above, so the link leaves it.
+                                countryLocked = true,
+                                placeRequired = false,
+                                showCountry = false,
+                                showContactEmail = false,
+                                nameLabel = stringResource(Res.string.organization_place_name),
+                                linkHint = stringResource(Res.string.organization_place_link_hint),
+                            )
+                        }
                         Text(stringResource(Res.string.logo), style = MaterialTheme.typography.titleSmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
                             TournamentLogoPreview(model = logoModel, onImageInfo = {}, modifier = Modifier.size(120.dp))
@@ -395,13 +447,14 @@ internal fun OrganizationEditorDialog(
                     FocusedButton(
                         onClick = {
                             triedSave = true
-                            if (!nameError && !countryError && !colorError) {
+                            if (!nameError && !countryError && !colorError && !placeError) {
                                 onSave(
                                     OrganizationDraft(
                                         name = trimmedName,
                                         type = type,
                                         country = country,
                                         primaryColor = normalizedColor,
+                                        place = place,
                                         logoContentType = newLogo?.contentType,
                                         logoBytes = newLogo?.bytes,
                                         removeLogo = removeLogo && newLogo == null,

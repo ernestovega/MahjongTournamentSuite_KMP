@@ -862,7 +862,7 @@ De eerste die lukt, wint</string>
     <string name="role_super_admin">Superbeheerder</string>
     <string name="role_club_admin">Clubbeheerder</string>
     <string name="organizations_title">Organisaties</string>
-    <string name="organizations_info">Clubs en bonden organiseren de toernooien.\n• Een toernooi toont het logo en de kleur van zijn hoofdorganisator.\n• De clubbeheerders van elke organisator beheren zijn toernooien.\n• Alleen een superbeheerder maakt organisaties aan en verwijdert ze.</string>
+    <string name="organizations_info">Clubs en bonden organiseren de toernooien.\n• Een toernooi toont het logo en de kleur van zijn hoofdorganisator.\n• De clubbeheerders van elke organisator beheren zijn toernooien.\n• Alleen een superbeheerder maakt organisaties aan en verwijdert ze.\n• Een clubbeheerder van de hoofdorganisator wijzigt de organisatoren van zijn toernooien.</string>
     <string name="organizations_empty">Er zijn nog geen organisaties.</string>
     <string name="organization_new">Nieuwe organisatie</string>
     <string name="organization_edit">Organisatie bewerken</string>
@@ -881,7 +881,7 @@ De eerste die lukt, wint</string>
     <string name="tournament_main_organizer_needed">Kies de hoofdorganisator.</string>
     <string name="tournament_organizers_need_yours">Een van de organisatoren moet een organisatie van jou zijn.</string>
     <string name="tournament_organizers_branding">Het toernooi gebruikt het logo en de kleur van zijn hoofdorganisator.\nJe wijzigt ze bij Organisaties.</string>
-    <string name="tournament_organizers_locked">Alleen een superbeheerder wijzigt de organisatoren van een toernooi.</string>
+    <string name="tournament_organizers_locked">Alleen een superbeheerder of een clubbeheerder van de hoofdorganisator wijzigt de organisatoren van dit toernooi.</string>
     <string name="tournament_organizers_none">Er zijn nog geen organisaties.\nEen superbeheerder maakt ze aan bij Organisaties.</string>
     <string name="perm_group_organizations">Organisaties</string>
     <string name="perm_organizations_create">Organisaties aanmaken</string>
@@ -1000,4 +1000,9 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
         <item quantity="one">%2$s verdwijnt.\n\nHet account dat hem gebruikt, krijgt weer de standaardrol %3$s.</item>
         <item quantity="other">%2$s verdwijnt.\n\nDe %1$d accounts die hem gebruiken, krijgen weer de standaardrol %3$s.</item>
     </plurals>
+    <string name="organization_place">Clublokaal</string>
+    <string name="organization_place_info">Optioneel. Sommige clubs hebben een eigen lokaal, dat niet altijd de locatie van hun toernooien is.\nPlak een Google Maps-link en het formulier vult de rest in.</string>
+    <string name="organization_place_name">Naam van het lokaal</string>
+    <string name="organization_place_needed">Voeg een Google Maps-link of een adres toe, of laat het clublokaal leeg.</string>
+    <string name="organization_place_link_hint">Voeg een link toe, of typ het adres van het lokaal.\nHet formulier leest de plek uit de link.</string>
 </resources>

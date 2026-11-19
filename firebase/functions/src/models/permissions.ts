@@ -84,6 +84,7 @@ const CLUB_ADMIN: readonly Permission[] = [
   "accounts.passwordReset",
   "accounts.requestRemoval",
   "organizations.edit",
+  "tournaments.changeOrganizers",
   "ema.create",
 ];
 
@@ -107,7 +108,6 @@ export const CUSTOMIZABLE_ROLES: readonly CustomizableRole[] = ["EDITOR", "CLUB_
  * out roles and permissions, so they have no smaller scope to give.
  */
 export const SUPER_ADMIN_ONLY: ReadonlySet<Permission> = new Set<Permission>([
-  "tournaments.changeOrganizers",
   "organizations.create",
   "organizations.delete",
   "tournaments.deleteFinished",
@@ -126,12 +126,13 @@ export const SUPER_ADMIN_ONLY: ReadonlySet<Permission> = new Set<Permission>([
 /**
  * The permissions that a custom role or a change for one person may hold, by the role that it builds on. An editor
  * uses them in its assigned tournaments, so it gets no permission that needs an organization: creating tournaments,
- * managing staff accounts, removals. It never adds editors to a tournament either, because that hands out access.
+ * changing their organizers, managing staff accounts, removals. It never adds editors to a tournament either, because that hands out access.
  */
 export const GRANTABLE: Readonly<Record<CustomizableRole, readonly Permission[]>> = {
   EDITOR: PERMISSIONS.filter((permission) => !SUPER_ADMIN_ONLY.has(permission) && ![
     "tournament.members",
     "tournaments.create",
+    "tournaments.changeOrganizers",
     "accounts.manageStaff",
     "accounts.requestRemoval",
   ].includes(permission)),

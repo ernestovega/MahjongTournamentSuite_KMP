@@ -55,6 +55,7 @@ import {
   listOrganizations,
   parseOrganizationInput,
   updateOrganization,
+  type OrganizationPlace,
 } from "../../services/organizationsService";
 import {
   createCustomRole,
@@ -150,6 +151,11 @@ function mergeInScope(
     organizations: [...new Set([...outsideOrganizations, ...insideOrganizations])].sort(),
     assignments: [...new Map([...outsideAssignments, ...insideAssignments].map((assignment) => [assignment.tournamentId, assignment])).values()],
   };
+}
+
+/** What the activity log keeps of the place of a club: its address or its link, or nothing. */
+function placeSummary(place: OrganizationPlace): string | undefined {
+  return place.address || place.mapUrl || undefined;
 }
 
 /** Checks the role that an account gets against the organizations and the tournaments that it keeps. */
@@ -772,7 +778,7 @@ export function adminRouter(): Router {
       const organization = await createOrganization(input, accessOf(res).uid);
       await recordActivity({
         action: "organization.create", actor: actorFromToken(res.locals.auth), target: `organization ${organization.id}`,
-        details: { name: input.name, type: input.type, country: input.country, logo: input.logo != null },
+        details: { name: input.name, type: input.type, country: input.country, logo: input.logo != null, place: placeSummary(input.place) },
       });
       res.status(201).json(organization);
     } catch (error) {
@@ -795,6 +801,7 @@ export function adminRouter(): Router {
         details: {
           name: input.name, type: input.type, country: input.country, primaryColor: input.primaryColor,
           logo: input.removeLogo ? "removed" : input.logo != null ? "changed" : undefined,
+          place: placeSummary(input.place),
         },
       });
       res.status(200).json(organization);

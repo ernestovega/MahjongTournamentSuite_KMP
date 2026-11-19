@@ -5,6 +5,7 @@ import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { WORLD_COUNTRY_CODES } from "./countryCodes";
 import { bumpGlobalDataVersion } from "./dataVersionsService";
+import { normalizeMapUrl } from "./tournamentVenue";
 
 /**
  * A club or a federation. Organizations own the tournaments: each tournament has one or more organizers
@@ -13,6 +14,22 @@ import { bumpGlobalDataVersion } from "./dataVersionsService";
  */
 export type OrganizationType = "CLUB" | "FEDERATION";
 
+/**
+ * The premises of a club, optional: some clubs have their own place. It is not the venue of its tournaments. The form
+ * reads it from a Google Maps link, like the venue of a tournament. Every field is an empty text when it is unknown.
+ */
+export type OrganizationPlace = {
+  mapUrl: string;
+  name: string;
+  address: string;
+  city: string;
+};
+
+export const EMPTY_PLACE: OrganizationPlace = { mapUrl: "", name: "", address: "", city: "" };
+const MAX_PLACE_NAME_LENGTH = 120;
+const MAX_PLACE_ADDRESS_LENGTH = 250;
+const MAX_PLACE_CITY_LENGTH = 120;
+
 export type Organization = {
   id: string;
   name: string;
@@ -20,6 +37,7 @@ export type Organization = {
   /** Two-letter ISO code. */
   country: string;
   primaryColor: string;
+  place: OrganizationPlace;
   logoUrl: string | null;
   /** SHA-256 of the logo file. */
   logoHash: string | null;
@@ -60,11 +78,53 @@ function mapOrganization(snapshot: FirebaseFirestore.DocumentSnapshot): Organiza
     type: snapshot.get("type") === "FEDERATION" ? "FEDERATION" : "CLUB",
     country: String(snapshot.get("country") ?? "").trim().toUpperCase(),
     primaryColor: readPrimaryColor(snapshot.get("primaryColor")),
+    place: readPlace(snapshot.get("place")),
     logoUrl: typeof snapshot.get("logoUrl") === "string" ? snapshot.get("logoUrl") : null,
     logoHash: typeof snapshot.get("logoHash") === "string" ? snapshot.get("logoHash") : null,
     createdAt: toIsoString(snapshot.get("createdAt")),
     updatedAt: toIsoString(snapshot.get("updatedAt")),
   };
+}
+
+/** The stored place of an organization. A missing or broken value is an empty place. */
+export function readPlace(value: unknown): OrganizationPlace {
+  if (value == null || typeof value !== "object") return { ...EMPTY_PLACE };
+  const record = value as Record<string, unknown>;
+  const field = (key: string) => typeof record[key] === "string" ? (record[key] as string).trim() : "";
+  return { mapUrl: field("mapUrl"), name: field("name"), address: field("address"), city: field("city") };
+}
+
+function placeText(value: unknown, field: string, maxLength: number): string {
+  const text = String(value ?? "").trim();
+  if (text.length > maxLength) throw badRequest(`place.${field} must contain at most ${maxLength} characters`);
+  return text;
+}
+
+/**
+ * Reads the place of a request. The place is optional: a missing place, or one with every field empty, is no place.
+ * A place with some field needs a Google Maps link or an address, so players can find it.
+ */
+export function parsePlace(value: unknown): OrganizationPlace {
+  if (value == null) return { ...EMPTY_PLACE };
+  if (typeof value !== "object" || Array.isArray(value)) throw badRequest("place must be an object");
+  const record = value as Record<string, unknown>;
+  let mapUrl: string;
+  try {
+    mapUrl = normalizeMapUrl(record.mapUrl);
+  } catch (_error) {
+    throw badRequest("place.mapUrl must be an https link to Google Maps");
+  }
+  const place = {
+    mapUrl,
+    name: placeText(record.name, "name", MAX_PLACE_NAME_LENGTH),
+    address: placeText(record.address, "address", MAX_PLACE_ADDRESS_LENGTH),
+    city: placeText(record.city, "city", MAX_PLACE_CITY_LENGTH),
+  };
+  const hasSomething = place.mapUrl !== "" || place.name !== "" || place.address !== "" || place.city !== "";
+  if (hasSomething && place.mapUrl === "" && place.address === "") {
+    throw badRequest("place needs a Google Maps link or an address");
+  }
+  return place;
 }
 
 /** Every organization by id. The list is short, so each server instance keeps it for a short time. */
@@ -168,6 +228,7 @@ export type OrganizationInput = {
   type: OrganizationType;
   country: string;
   primaryColor: string;
+  place: OrganizationPlace;
   /** A new logo. Null keeps the current one. */
   logo: { contentType: string; dataBase64: string } | null;
   removeLogo: boolean;
@@ -193,6 +254,7 @@ export function parseOrganizationInput(body: unknown): OrganizationInput {
     type,
     country,
     primaryColor,
+    place: parsePlace(record.place),
     logo: contentType != null && dataBase64 != null ? { contentType, dataBase64 } : null,
     removeLogo: record.removeLogo === true,
   };
@@ -219,6 +281,7 @@ export async function createOrganization(input: OrganizationInput, createdByUid:
     type: input.type,
     country: input.country,
     primaryColor: input.primaryColor,
+    place: input.place,
     logoUrl: logo?.url ?? null,
     logoPath: logo?.path ?? null,
     logoHash: logo?.hash ?? null,
@@ -242,6 +305,7 @@ export async function updateOrganization(id: string, input: OrganizationInput): 
     type: input.type,
     country: input.country,
     primaryColor: input.primaryColor,
+    place: input.place,
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (logo !== undefined || input.removeLogo) {

@@ -8,7 +8,7 @@ import { accessOf, requirePermission, requireTournamentPermission } from "../mid
 import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
 import { WORLD_COUNTRY_CODES } from "../../services/countryCodes";
-import { canInOrganization, canInTournament, forgetTournamentOrganizers, isStaff, loadAccess, tournamentOrganizers, tournamentPermissions, type Access } from "../../services/accessService";
+import { canChangeOrganizers, canInOrganization, canInTournament, forgetTournamentOrganizers, isStaff, loadAccess, tournamentOrganizers, tournamentPermissions, type Access } from "../../services/accessService";
 import { parseOrganizerIds } from "../../services/organizationsService";
 import { listVisibleTournaments, tournamentHasResults, tournamentIsPast, visibleTournamentIdSet } from "../../services/tournamentScope";
 import { applyLostAssignments, listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
@@ -528,13 +528,13 @@ export function tournamentsRouter(): Router {
       if (!WORLD_COUNTRY_CODES.has(hostCountry)) {
         throw badRequest("Host country must be the two-letter code of a real country");
       }
-      // The organizers decide who manages the tournament, so only a super admin changes them.
+      // The organizers decide who manages the tournament. See canChangeOrganizers.
       const tournamentId = pathParam(req, "tournamentId");
       const currentOrganizerIds = (await tournamentOrganizers(tournamentId)) ?? [];
       const organizerIds = body.organizerIds === undefined ? undefined : await parseOrganizerIds(body.organizerIds);
       const organizersChange = organizerIds !== undefined && organizerIds.join(",") !== currentOrganizerIds.join(",");
-      if (organizersChange && !(await canInTournament(accessOf(res), "tournaments.changeOrganizers", tournamentId))) {
-        throw forbidden("Only a super admin can change the organizers of a tournament");
+      if (organizersChange && !canChangeOrganizers(accessOf(res), currentOrganizerIds, organizerIds)) {
+        throw forbidden("Only a super admin or a club admin of the main organizer changes the organizers, and the new ones must hold one of your organizations");
       }
       if (!hostCity) throw badRequest("Host city is required");
       const venue = normalizeVenue(body);

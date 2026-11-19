@@ -96,6 +96,18 @@ fun TournamentPlaceFields(
     countryLocked: Boolean = false,
     /** The countries that the account may choose, or null for every country. */
     allowedCountries: Set<String>? = null,
+    /**
+     * False for an optional place, like the premises of a club: the link and the city have no star. The same reading
+     * of the link fills the fields.
+     */
+    placeRequired: Boolean = true,
+    /** False when the form keeps the country somewhere else. Give [countryLocked] true then, so the link leaves it. */
+    showCountry: Boolean = true,
+    showContactEmail: Boolean = true,
+    /** The label of the name field. Null: the venue name. */
+    nameLabel: String? = null,
+    /** The help under the link before it is read. Null: the help of a tournament venue. */
+    linkHint: String? = null,
 ) {
     val currentCountryLocked by rememberUpdatedState(countryLocked)
     val currentAllowedCountries by rememberUpdatedState(allowedCountries)
@@ -193,12 +205,14 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.mapUrl,
             onValueChange = { onVenueChange(venue.copy(mapUrl = it.take(VENUE_MAP_URL_MAX_LENGTH))) },
-            label = { RequiredLabel(stringResource(Res.string.google_maps_link)) },
+            label = {
+                if (placeRequired) RequiredLabel(stringResource(Res.string.google_maps_link)) else Text(stringResource(Res.string.google_maps_link))
+            },
             placeholder = { Text(stringResource(Res.string.https_maps_app_goo_gl)) },
             supportingText = {
                 Text(
                     when (val current = status) {
-                        LinkStatus.Idle -> venueError ?: stringResource(Res.string.link_hint)
+                        LinkStatus.Idle -> venueError ?: linkHint ?: stringResource(Res.string.link_hint)
                         LinkStatus.Reading -> stringResource(Res.string.link_reading)
                         is LinkStatus.Read -> current.message.asString()
                         is LinkStatus.Failed -> current.message.asString()
@@ -213,7 +227,7 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.name,
             onValueChange = { onVenueChange(venue.copy(name = it.take(VENUE_NAME_MAX_LENGTH))) },
-            label = { Text(stringResource(Res.string.venue_name)) },
+            label = { Text(nameLabel ?: stringResource(Res.string.venue_name)) },
             isError = venueError != null,
             singleLine = true,
             enabled = enabled && PlaceField.NAME !in locked,
@@ -231,24 +245,26 @@ fun TournamentPlaceFields(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            EmaCountryDropdown(
-                selectedCode = hostCountry,
-                onCountrySelected = onHostCountryChange,
-                enabled = enabled && PlaceField.COUNTRY !in locked && !countryLocked,
-                modifier = Modifier.weight(1f),
-                focusRequester = countryFocusRequester,
-                isError = countryError != null,
-                errorMessage = countryError,
-                label = stringResource(Res.string.country),
-                required = true,
-                // The server stores the host country of a tournament with a two-letter code.
-                twoLetterCodes = true,
-                allowedCountries = allowedCountries,
-            )
+            if (showCountry) {
+                EmaCountryDropdown(
+                    selectedCode = hostCountry,
+                    onCountrySelected = onHostCountryChange,
+                    enabled = enabled && PlaceField.COUNTRY !in locked && !countryLocked,
+                    modifier = Modifier.weight(1f),
+                    focusRequester = countryFocusRequester,
+                    isError = countryError != null,
+                    errorMessage = countryError,
+                    label = stringResource(Res.string.country),
+                    required = true,
+                    // The server stores the host country of a tournament with a two-letter code.
+                    twoLetterCodes = true,
+                    allowedCountries = allowedCountries,
+                )
+            }
             OutlinedTextField(
                 value = hostCity,
                 onValueChange = onHostCityChange,
-                label = { RequiredLabel(stringResource(Res.string.city)) },
+                label = { if (placeRequired) RequiredLabel(stringResource(Res.string.city)) else Text(stringResource(Res.string.city)) },
                 singleLine = true,
                 isError = cityError != null,
                 supportingText = cityError?.let { message -> { Text(message) } },
@@ -258,17 +274,19 @@ fun TournamentPlaceFields(
                 },
             )
         }
-        OutlinedTextField(
-            value = venue.contactEmail,
-            onValueChange = { onVenueChange(venue.copy(contactEmail = it.take(CONTACT_EMAIL_MAX_LENGTH))) },
-            label = { RequiredLabel(stringResource(Res.string.contact_email)) },
-            placeholder = { Text(stringResource(Res.string.organizers_example_com)) },
-            isError = contactEmailError != null,
-            supportingText = contactEmailError?.let { message -> { Text(message) } },
-            singleLine = true,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth().optionalFocusRequester(contactEmailFocusRequester),
-        )
+        if (showContactEmail) {
+            OutlinedTextField(
+                value = venue.contactEmail,
+                onValueChange = { onVenueChange(venue.copy(contactEmail = it.take(CONTACT_EMAIL_MAX_LENGTH))) },
+                label = { RequiredLabel(stringResource(Res.string.contact_email)) },
+                placeholder = { Text(stringResource(Res.string.organizers_example_com)) },
+                isError = contactEmailError != null,
+                supportingText = contactEmailError?.let { message -> { Text(message) } },
+                singleLine = true,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth().optionalFocusRequester(contactEmailFocusRequester),
+            )
+        }
     }
 }
 

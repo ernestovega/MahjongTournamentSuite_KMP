@@ -40,7 +40,7 @@ val presentationModule get() = module {
     factory { PlayerImportPresenter(get(), get(), telemetry()) }
     factory { TeamsPresenter(get(), get(), get(), telemetry()) }
     factory { PlayerBasePresenter(get(), get(), telemetry()) }
-    factory { OrganizationsPresenter(get(), telemetry()) }
+    factory { OrganizationsPresenter(get(), telemetry(), get()) }
     factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get(), telemetry()) }
     factory {

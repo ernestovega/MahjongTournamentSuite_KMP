@@ -609,15 +609,52 @@ describe("club admin rules", () => {
     assert.deepEqual(tournament.organizers.map((organizer) => organizer.id), ["org-es", "org-se"]);
   });
 
-  it("changes the country of its tournament, but only a super admin changes the organizers", async () => {
-    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody(["org-es"]) });
+  it("changes the country of its tournament, and the organizers when its club is the main organizer", async () => {
+    for (const id of ["org-fr"]) await seedOrganization({ id });
+    const frenchAdmin = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-fr"] });
+    const created = await server.request("POST", "/tournaments", { token: spanishAdmin.token, body: tournamentBody(["org-es", "org-fr"]) });
     const id = (created.body as { id: string }).id;
+    const settings = (token: string, organizerIds: string[], hostCountry = "ES") =>
+      server.request("PUT", `/tournaments/${id}/settings`, { token, body: tournamentBody(organizerIds, hostCountry) });
 
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody(["org-se"]) })).status, 403);
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: spanishAdmin.token, body: tournamentBody(["org-es"], "SE") })).status, 200);
-    assert.equal((await server.request("PUT", `/tournaments/${id}/settings`, { token: superAdmin.token, body: tournamentBody(["org-se"]) })).status, 200);
+    assert.equal((await settings(spanishAdmin.token, ["org-es", "org-fr"], "SE")).status, 200, "the country is free");
+    // The club admin of a co-organizer manages the tournament, but its organizers belong to the main organizer.
+    assert.equal((await settings(frenchAdmin.token, ["org-fr", "org-es"])).status, 403);
+    assert.equal((await settings(frenchAdmin.token, ["org-es", "org-fr"], "FR")).status, 200, "sending the same organizers is no change");
+    assert.equal((await settings(spanishEditor.token, ["org-es"])).status, 403);
+    // The main organizer adds and removes co-organizers, and may hand the main role to a co-organizer it keeps.
+    assert.equal((await settings(spanishAdmin.token, ["org-es", "org-fr", "org-se"])).status, 200);
+    assert.equal((await settings(spanishAdmin.token, ["org-es"])).status, 200);
+    assert.equal((await settings(spanishAdmin.token, ["org-fr", "org-es"])).status, 200);
+    // Now the French club is the main organizer, so the Spanish admin no longer changes the organizers.
+    assert.equal((await settings(spanishAdmin.token, ["org-es", "org-fr"])).status, 403);
+    // A club admin never gives the tournament away: the new organizers must hold one of its organizations.
+    assert.equal((await settings(frenchAdmin.token, ["org-se"])).status, 403);
+    assert.equal((await settings(superAdmin.token, ["org-se"])).status, 200, "a super admin changes them always");
     // The tournament belongs to the Swedish club now, so the Spanish admin no longer manages it.
     assert.equal((await server.request("GET", `/tournaments/${id}`, { token: spanishAdmin.token })).status, 403);
+  });
+
+  it("keeps the optional place of a club, read from a Google Maps link or typed", async () => {
+    const base = { name: "Spanish club", type: "CLUB", country: "ES", primaryColor: "#AA0000" };
+    const save = (place: unknown) => server.request("PUT", "/admin/organizations/org-es", { token: spanishAdmin.token, body: { ...base, place } });
+    const place = { mapUrl: "https://maps.app.goo.gl/abc123", name: "Club room", address: "Calle Mayor 1", city: "Madrid" };
+
+    const saved = await save(place);
+    assert.equal(saved.status, 200, JSON.stringify(saved.body));
+    assert.deepEqual((saved.body as { place: unknown }).place, place);
+    const listed = (await server.request("GET", "/admin/organizations", { token: spanishAdmin.token })).body as { organizations: Array<{ id: string; place: unknown }> };
+    assert.deepEqual(listed.organizations.find((organization) => organization.id === "org-es")?.place, place);
+
+    assert.equal((await save({ address: "Calle Mayor 1", city: "Madrid" })).status, 200, "an address without a link");
+    assert.equal((await save({ name: "Club room", city: "Madrid" })).status, 400, "a place needs a link or an address");
+    assert.equal((await save({ mapUrl: "https://example.com/place" })).status, 400, "the link goes to Google Maps");
+    assert.equal((await save({ address: "x".repeat(251) })).status, 400);
+    const cleared = await save(null);
+    assert.equal(cleared.status, 200);
+    assert.deepEqual((cleared.body as { place: unknown }).place, { mapUrl: "", name: "", address: "", city: "" }, "the place is optional");
+    // The club admin reads its place from a link with the venue tool.
+    assert.notEqual((await server.request("POST", "/venues/resolve-link", { token: spanishAdmin.token, body: { url: "" } })).status, 403);
   });
 
   it("edits its own organization only, and only a super admin creates and deletes organizations", async () => {

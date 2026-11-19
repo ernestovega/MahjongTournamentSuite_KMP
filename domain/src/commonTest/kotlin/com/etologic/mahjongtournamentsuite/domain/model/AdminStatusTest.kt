@@ -40,7 +40,7 @@ class AdminStatusTest {
         assertFalse(status.canDeleteUsers)
         assertFalse(status.canChangeEmails)
         assertFalse(status.canChangeEmaIds)
-        assertFalse(status.canChangeTournamentOrganizers)
+        assertTrue(status.canChangeTournamentOrganizers)
         assertFalse(status.canReviewRequests)
         assertFalse(status.canUseDevMenu)
     }
@@ -57,6 +57,46 @@ class AdminStatusTest {
         assertTrue(status.canUseDevMenu)
         assertTrue(status.canChangeTournamentOrganizers)
         assertFalse(status.canRequestRemoval)
+    }
+
+    @Test
+    fun aClubAdminChangesTheOrganizersOnlyWhenItsClubIsTheMainOrganizer() {
+        val status = AdminStatus(uid = "ca", role = GlobalUserRole.CLUB_ADMIN, adminOrganizations = setOf("madrid"))
+
+        assertTrue(status.canChangeOrganizersOf(listOf("madrid", "paris")))
+        assertFalse(status.canChangeOrganizersOf(listOf("paris", "madrid")), "a co-organizer does not")
+        assertFalse(status.canChangeOrganizersOf(emptyList()))
+        assertTrue(status.canKeepOrganizers(listOf("paris", "madrid")))
+        assertFalse(status.canKeepOrganizers(listOf("paris")), "it never gives the tournament away")
+    }
+
+    @Test
+    fun aSuperAdminChangesAnyOrganizersAndAnEditorNone() {
+        val superAdmin = AdminStatus(uid = "sa", role = GlobalUserRole.SUPER_ADMIN)
+        assertTrue(superAdmin.canChangeOrganizersOf(listOf("paris")))
+        assertTrue(superAdmin.canKeepOrganizers(listOf("lisbon")))
+
+        val editor = AdminStatus(uid = "ed", role = GlobalUserRole.EDITOR, adminOrganizations = setOf("madrid"))
+        assertFalse(editor.canChangeOrganizersOf(listOf("madrid")))
+
+        val withoutPermission = AdminStatus(
+            uid = "ca",
+            role = GlobalUserRole.CLUB_ADMIN,
+            adminOrganizations = setOf("madrid"),
+            permissions = Permission.defaultsOf(GlobalUserRole.CLUB_ADMIN) - Permission.TOURNAMENTS_CHANGE_ORGANIZERS,
+        )
+        assertFalse(withoutPermission.canChangeOrganizersOf(listOf("madrid")))
+    }
+
+    @Test
+    fun aClubPlaceIsOptionalButNeedsALinkOrAnAddress() {
+        assertTrue(OrganizationPlace().isEmpty)
+        assertTrue(OrganizationPlace().isComplete)
+        assertTrue(OrganizationPlace(mapUrl = "https://maps.app.goo.gl/x").isComplete)
+        assertTrue(OrganizationPlace(address = "Calle Mayor 1").isComplete)
+        assertFalse(OrganizationPlace(name = "Club room").isComplete)
+        assertFalse(OrganizationPlace(city = "Madrid").isComplete)
+        assertFalse(OrganizationPlace(city = "Madrid").isEmpty)
     }
 
     @Test

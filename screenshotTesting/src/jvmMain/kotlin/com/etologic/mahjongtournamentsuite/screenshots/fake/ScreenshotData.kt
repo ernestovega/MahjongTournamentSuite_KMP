@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationPlace
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PermissionChange
@@ -233,7 +234,16 @@ object ScreenshotData {
 
     /** The clubs and federations that organize the tournaments of the screenshots. They have no logo, so no network. */
     val organizations: List<Organization> = listOf(
-        Organization("org-madrid", "Madrid Mahjong Club", OrganizationType.CLUB, "ES", "#02B16B", canEdit = true, canDelete = true),
+        Organization(
+            id = "org-madrid",
+            name = "Madrid Mahjong Club",
+            type = OrganizationType.CLUB,
+            country = "ES",
+            primaryColor = "#02B16B",
+            place = OrganizationPlace("https://maps.app.goo.gl/madridclub", "Club room", "Calle de Alcalá 100, 28009 Madrid", "Madrid"),
+            canEdit = true,
+            canDelete = true,
+        ),
         Organization("org-fed-es", "Federación Española de Mahjong", OrganizationType.FEDERATION, "ES", "#C62828", canEdit = true, canDelete = true),
         Organization("org-lisbon", "Lisboa Riichi Club", OrganizationType.CLUB, "PT", "#1565C0", canEdit = true, canDelete = true),
         Organization("org-paris", "Paris Mahjong", OrganizationType.CLUB, "FR", "#6A1B9A", canEdit = true, canDelete = true),

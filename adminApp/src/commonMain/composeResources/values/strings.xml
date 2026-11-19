@@ -862,7 +862,7 @@ The first one that works wins</string>
     <string name="role_super_admin">Super Admin</string>
     <string name="role_club_admin">Club Admin</string>
     <string name="organizations_title">Organizations</string>
-    <string name="organizations_info">Clubs and federations organize the tournaments.\n• A tournament shows the logo and the color of its main organizer.\n• The Club Admins of each organizer manage its tournaments.\n• Only a Super Admin creates and deletes organizations.</string>
+    <string name="organizations_info">Clubs and federations organize the tournaments.\n• A tournament shows the logo and the color of its main organizer.\n• The Club Admins of each organizer manage its tournaments.\n• Only a Super Admin creates and deletes organizations.\n• A Club Admin of the main organizer changes the organizers of its tournaments.</string>
     <string name="organizations_empty">There are no organizations yet.</string>
     <string name="organization_new">New organization</string>
     <string name="organization_edit">Edit organization</string>
@@ -881,7 +881,7 @@ The first one that works wins</string>
     <string name="tournament_main_organizer_needed">Choose the main organizer.</string>
     <string name="tournament_organizers_need_yours">One of the organizers must be an organization of yours.</string>
     <string name="tournament_organizers_branding">The tournament uses the logo and the color of its main organizer.\nThey are changed in Organizations.</string>
-    <string name="tournament_organizers_locked">Only a Super Admin changes the organizers of a tournament.</string>
+    <string name="tournament_organizers_locked">Only a Super Admin or a Club Admin of the main organizer changes the organizers of this tournament.</string>
     <string name="tournament_organizers_none">There are no organizations yet.\nA Super Admin creates them in Organizations.</string>
     <string name="perm_group_organizations">Organizations</string>
     <string name="perm_organizations_create">Create organizations</string>
@@ -1000,4 +1000,9 @@ Give it a tournament as an editor and it is enabled again when you save.</string
         <item quantity="one">%2$s goes away.\n\nThe account that uses it goes back to the standard role %3$s.</item>
         <item quantity="other">%2$s goes away.\n\nThe %1$d accounts that use it go back to the standard role %3$s.</item>
     </plurals>
+    <string name="organization_place">Club premises</string>
+    <string name="organization_place_info">Optional. Some clubs have their own premises, which are not always the venue of their tournaments.\nPaste a Google Maps link and the form fills in the rest.</string>
+    <string name="organization_place_name">Name of the premises</string>
+    <string name="organization_place_needed">Add a Google Maps link or an address, or leave the premises empty.</string>
+    <string name="organization_place_link_hint">Add a link, or type the address of the premises.\nThe form reads the place from the link.</string>
 </resources>

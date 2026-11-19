@@ -862,7 +862,7 @@ Den första som fungerar vinner</string>
     <string name="role_super_admin">Superadministratör</string>
     <string name="role_club_admin">Klubbadministratör</string>
     <string name="organizations_title">Organisationer</string>
-    <string name="organizations_info">Klubbar och förbund arrangerar turneringarna.\n• En turnering visar logotypen och färgen från sin huvudarrangör.\n• Klubbadministratörerna för varje arrangör hanterar dess turneringar.\n• Bara en superadministratör skapar och raderar organisationer.</string>
+    <string name="organizations_info">Klubbar och förbund arrangerar turneringarna.\n• En turnering visar logotypen och färgen från sin huvudarrangör.\n• Klubbadministratörerna för varje arrangör hanterar dess turneringar.\n• Bara en superadministratör skapar och raderar organisationer.\n• En klubbadministratör för huvudarrangören ändrar arrangörerna av dess turneringar.</string>
     <string name="organizations_empty">Det finns inga organisationer än.</string>
     <string name="organization_new">Ny organisation</string>
     <string name="organization_edit">Redigera organisation</string>
@@ -881,7 +881,7 @@ Den första som fungerar vinner</string>
     <string name="tournament_main_organizer_needed">Välj huvudarrangören.</string>
     <string name="tournament_organizers_need_yours">En av arrangörerna måste vara en av dina organisationer.</string>
     <string name="tournament_organizers_branding">Turneringen använder logotypen och färgen från sin huvudarrangör.\nDe ändras under Organisationer.</string>
-    <string name="tournament_organizers_locked">Bara en superadministratör ändrar arrangörerna av en turnering.</string>
+    <string name="tournament_organizers_locked">Bara en superadministratör eller en klubbadministratör för huvudarrangören ändrar arrangörerna av den här turneringen.</string>
     <string name="tournament_organizers_none">Det finns inga organisationer än.\nEn superadministratör skapar dem under Organisationer.</string>
     <string name="perm_group_organizations">Organisationer</string>
     <string name="perm_organizations_create">Skapa organisationer</string>
@@ -1000,4 +1000,9 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
         <item quantity="one">%2$s försvinner.\n\nKontot som använder den får standardrollen %3$s igen.</item>
         <item quantity="other">%2$s försvinner.\n\nDe %1$d konton som använder den får standardrollen %3$s igen.</item>
     </plurals>
+    <string name="organization_place">Klubblokal</string>
+    <string name="organization_place_info">Valfritt. Vissa klubbar har en egen lokal, som inte alltid är platsen för deras turneringar.\nKlistra in en Google Maps-länk så fyller formuläret i resten.</string>
+    <string name="organization_place_name">Lokalens namn</string>
+    <string name="organization_place_needed">Lägg till en Google Maps-länk eller en adress, eller lämna klubblokalen tom.</string>
+    <string name="organization_place_link_hint">Lägg till en länk, eller skriv lokalens adress.\nFormuläret läser platsen från länken.</string>
 </resources>

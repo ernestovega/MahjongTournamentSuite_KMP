@@ -37,6 +37,17 @@ data class AdminStatus(
     val canEditEmaPlayers: Boolean get() = has(Permission.EMA_EDIT)
     val canDeleteEmaPlayers: Boolean get() = has(Permission.EMA_DELETE)
     val canChangeTournamentOrganizers: Boolean get() = has(Permission.TOURNAMENTS_CHANGE_ORGANIZERS)
+
+    /**
+     * True when the account may change the organizers of a tournament whose organizers are [organizerIds]: a super
+     * admin always, a club admin when one of its organizations is the main organizer. The server also checks that the
+     * new organizers keep one of the organizations of a club admin, see [canKeepOrganizers].
+     */
+    fun canChangeOrganizersOf(organizerIds: List<String>): Boolean = canChangeTournamentOrganizers &&
+        (isSuperAdmin || organizerIds.firstOrNull()?.let { it in adminOrganizations } == true)
+
+    /** True when [organizerIds] may be the new organizers: a club admin never gives a tournament away. */
+    fun canKeepOrganizers(organizerIds: List<String>): Boolean = isSuperAdmin || organizerIds.any { it in adminOrganizations }
     val canCreateOrganizations: Boolean get() = has(Permission.ORGANIZATIONS_CREATE)
     val canEditOrganizations: Boolean get() = has(Permission.ORGANIZATIONS_EDIT)
 

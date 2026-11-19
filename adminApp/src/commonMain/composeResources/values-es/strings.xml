@@ -862,7 +862,7 @@ Gana el primero que sale bien</string>
     <string name="role_super_admin">Superadministrador</string>
     <string name="role_club_admin">Administrador de club</string>
     <string name="organizations_title">Organizaciones</string>
-    <string name="organizations_info">Los clubs y las federaciones organizan los torneos.\n• Un torneo muestra el logo y el color de su organizador principal.\n• Los administradores de club de cada organizador gestionan sus torneos.\n• Solo un superadministrador crea y borra organizaciones.</string>
+    <string name="organizations_info">Los clubs y las federaciones organizan los torneos.\n• Un torneo muestra el logo y el color de su organizador principal.\n• Los administradores de club de cada organizador gestionan sus torneos.\n• Solo un superadministrador crea y borra organizaciones.\n• Un administrador de club del organizador principal cambia los organizadores de sus torneos.</string>
     <string name="organizations_empty">Todavía no hay organizaciones.</string>
     <string name="organization_new">Nueva organización</string>
     <string name="organization_edit">Editar organización</string>
@@ -881,7 +881,7 @@ Gana el primero que sale bien</string>
     <string name="tournament_main_organizer_needed">Elige el organizador principal.</string>
     <string name="tournament_organizers_need_yours">Uno de los organizadores tiene que ser una organización tuya.</string>
     <string name="tournament_organizers_branding">El torneo usa el logo y el color de su organizador principal.\nSe cambian en Organizaciones.</string>
-    <string name="tournament_organizers_locked">Solo un superadministrador cambia los organizadores de un torneo.</string>
+    <string name="tournament_organizers_locked">Solo un superadministrador o un administrador de club del organizador principal cambia los organizadores de este torneo.</string>
     <string name="tournament_organizers_none">Todavía no hay organizaciones.\nUn superadministrador las crea en Organizaciones.</string>
     <string name="perm_group_organizations">Organizaciones</string>
     <string name="perm_organizations_create">Crear organizaciones</string>
@@ -1000,4 +1000,9 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
         <item quantity="one">%2$s desaparece.\n\nLa cuenta que lo usa vuelve al rol estándar %3$s.</item>
         <item quantity="other">%2$s desaparece.\n\nLas %1$d cuentas que lo usan vuelven al rol estándar %3$s.</item>
     </plurals>
+    <string name="organization_place">Local del club</string>
+    <string name="organization_place_info">Opcional. Algunos clubs tienen local propio, que no siempre es la sede de sus torneos.\nPega un enlace de Google Maps y el formulario rellena el resto.</string>
+    <string name="organization_place_name">Nombre del local</string>
+    <string name="organization_place_needed">Añade un enlace de Google Maps o una dirección, o deja el local vacío.</string>
+    <string name="organization_place_link_hint">Añade un enlace, o escribe la dirección del local.\nEl formulario lee el lugar del enlace.</string>
 </resources>

@@ -7910,6 +7910,9 @@
      "primaryColor": {
       "type": "string"
      },
+     "place": {
+      "$ref": "#/components/schemas/OrganizationPlace"
+     },
      "logoUrl": {
       "type": [
        "string",
@@ -7926,6 +7929,23 @@
     "required": [
      "id"
     ]
+   },
+   "OrganizationPlace": {
+    "type": "object",
+    "properties": {
+     "mapUrl": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "address": {
+      "type": "string"
+     },
+     "city": {
+      "type": "string"
+     }
+    }
    },
    "OrganizationsResponse": {
     "type": "object",
@@ -8776,6 +8796,17 @@
      },
      "primaryColor": {
       "type": "string"
+     },
+     "place": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/OrganizationPlace"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Null: no place."
      },
      "logoContentType": {
       "type": [

@@ -51,12 +51,12 @@ test("each role has the permissions that Ernesto chose", () => {
     assert.ok(!editor.has(permission), permission);
   }
   // Club admins: destructive actions in their tournaments, new EMA players, no DEV menu, no global account actions.
-  for (const permission of ["tournament.delete", "tournament.resetTable", "tournaments.create", "ema.create", "accounts.manageStaff", "organizations.edit"] as const) {
+  for (const permission of ["tournament.delete", "tournament.resetTable", "tournaments.create", "tournaments.changeOrganizers", "ema.create", "accounts.manageStaff", "organizations.edit"] as const) {
     assert.ok(clubAdmin.has(permission), permission);
   }
   for (const permission of [
     "dev.activity", "dev.errors", "ema.edit", "ema.delete", "accounts.disable", "accounts.delete", "accounts.changeEmail",
-    "accounts.changeEmaId", "accounts.manageSuperAdmins", "tournaments.changeOrganizers", "organizations.create", "organizations.delete", "tournaments.deleteFinished",
+    "accounts.changeEmaId", "accounts.manageSuperAdmins", "organizations.create", "organizations.delete", "tournaments.deleteFinished",
   ] as const) {
     assert.ok(!clubAdmin.has(permission), permission);
   }

@@ -102,7 +102,7 @@ data class RenameTournamentRequestDto(
 data class UpdateTournamentSettingsRequestDto(
     val name: String,
     val shortName: String,
-    /** Null keeps the organizers. Only a super admin changes them. */
+    /** Null keeps the organizers. A super admin or a club admin of the main organizer changes them. */
     val organizerIds: List<String>? = null,
     val eventStartDate: String,
     val eventEndDate: String,

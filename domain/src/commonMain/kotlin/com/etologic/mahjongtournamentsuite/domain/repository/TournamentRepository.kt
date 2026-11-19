@@ -42,7 +42,7 @@ interface TournamentRepository {
         tournamentId: String,
         name: String,
         shortName: String,
-        /** The new organizers. Null keeps them. Only a super admin changes them. */
+        /** The new organizers. Null keeps them. A super admin or a club admin of the main organizer changes them. */
         organizerIds: List<String>? = null,
         eventStartDate: String,
         eventEndDate: String,
