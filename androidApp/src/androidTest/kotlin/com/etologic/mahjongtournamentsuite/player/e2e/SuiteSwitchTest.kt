@@ -27,6 +27,8 @@ class SuiteSwitchTest : PlayerE2eTest() {
     @Test
     fun managementButtonOpensTheAdminPartAndBackReturns() {
         start(E2eAccounts.ADMIN)
+        // On a phone the buttons at the start of the top bar (Profile, Management) are in the first menu.
+        c.clickButton("Menu")
         c.clickButton("Management")
         c.waitForText(ADMIN_LIST)
         // Back on the first screen of the admin part returns to the player part.
@@ -38,6 +40,8 @@ class SuiteSwitchTest : PlayerE2eTest() {
     @Test
     fun playerViewButtonReturnsToThePlayerPart() {
         start(E2eAccounts.ADMIN)
+        // On a phone the buttons at the start of the top bar (Profile, Management) are in the first menu.
+        c.clickButton("Menu")
         c.clickButton("Management")
         c.waitForText(ADMIN_LIST)
         // On a phone the buttons at the start of the top bar are in the first menu.

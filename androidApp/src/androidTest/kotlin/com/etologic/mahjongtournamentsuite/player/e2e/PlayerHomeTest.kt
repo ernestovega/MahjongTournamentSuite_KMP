@@ -37,6 +37,8 @@ class PlayerHomeTest : PlayerE2eTest() {
     fun cardShowsThePlayerPlace() {
         home(E2eAccounts.PLAYER)
         c.waitForText("Show the details")
+        // The player has a live table, so the "Go to my table" dialog can open over the list.
+        c.dismissMyTableReminder()
         c.clickButton("Show the details")
         c.waitForText("• Place: ", substring = true)
     }

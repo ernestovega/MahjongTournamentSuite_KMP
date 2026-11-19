@@ -65,8 +65,10 @@ val PublicCache = named("publicCache")
  * What both apps share: network, session, cache, telemetry and the repositories that work the same in both.
  * Each app adds the repositories that read tournaments in its own way: [adminRepositoriesModule] or
  * [publicRepositoriesModule]. No definition overrides another one.
+ * Every module here is a new object on each read: Koin keeps the single instances in the module, and each graph must
+ * have its own, because closing a graph closes them.
  */
-val dataModule = module {
+val dataModule get() = module {
     single<Telemetry> {
         val platform = providePlatformTelemetry()
         val reporter = ErrorReporter(platform, get(), get())
@@ -112,7 +114,7 @@ val dataModule = module {
 }
 
 /** The admin app reads the tournaments with the account of the user and its own cache. */
-val adminRepositoriesModule = module {
+val adminRepositoriesModule get() = module {
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), persisted = get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get()) }
     single<StatisticsRepository> { DefaultStatisticsRepository(get(), get(), get()) }
@@ -123,7 +125,7 @@ val adminRepositoriesModule = module {
  * The player app: everyone reads every public tournament without an account, with a cache that signing in or out
  * keeps. The account only writes hands and marks the own player.
  */
-val publicRepositoriesModule = module {
+val publicRepositoriesModule get() = module {
     single<RepositoryCache>(PublicCache) { SessionRepositoryCache(logger = get(), persisted = get()) } withOptions { onClose { it?.close() } }
     single<TournamentRepository> {
         DefaultTournamentRepository(get(), get(), get(), get(PublicCache), get(), persisted = get(), publicReads = true)
@@ -134,7 +136,7 @@ val publicRepositoriesModule = module {
 }
 
 /** The use cases of the statistics and the rankings, the same in both apps. They keep no state. */
-val useCasesModule = module {
+val useCasesModule get() = module {
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }
     factory { LoadStatisticsUseCase(get(), get(), get()) }

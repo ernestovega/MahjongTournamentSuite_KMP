@@ -401,7 +401,14 @@ def main() -> int:
     parser.add_argument("--no-build", action="store_true", help="Use the APKs of the last build")
     parser.add_argument("--wait-ms", default=os.environ.get("E2E_WAIT_MS"), help="How long a test waits for a screen")
     parser.add_argument("--keep", action="store_true", help="Leave the emulators and backends running at the end")
+    parser.add_argument("--adb-port", type=int, default=5038,
+                        help="Port of a private adb server for the emulators of the run (default 5038). Android Studio "
+                             "restarts its own adb server (5037) when an emulator starts or stops, which cut the tests. "
+                             "Not used with --serials, whose emulators are on the usual server")
     options = parser.parse_args()
+    if not options.serials and "ANDROID_ADB_SERVER_PORT" not in os.environ:
+        # adb and the emulators read the port from the environment, also in the processes that this script starts.
+        os.environ["ANDROID_ADB_SERVER_PORT"] = str(options.adb_port)
 
     apps = ["admin", "player"] if options.app == "both" else [options.app]
     OUT.mkdir(parents=True, exist_ok=True)
@@ -542,6 +549,9 @@ def main() -> int:
                     device.shell("wm density reset")
             for backend in backends:
                 backend.stop()
+            if not options.serials and os.environ.get("ANDROID_ADB_SERVER_PORT") == str(options.adb_port):
+                # The private adb server of the run.
+                run([ADB, "kill-server"], check=False, timeout=30)
 
 
 if __name__ == "__main__":

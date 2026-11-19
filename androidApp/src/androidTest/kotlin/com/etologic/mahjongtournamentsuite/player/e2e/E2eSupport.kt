@@ -338,3 +338,15 @@ fun ComposeTestRule.typeHandScore(score: String) {
         waitForIdle()
     }
 }
+
+/**
+ * Closes the "Go to my table" dialog with Later, when it opens. It opens over the home of a player whose table is live,
+ * a moment after the list loads.
+ */
+fun ComposeTestRule.dismissMyTableReminder(timeoutMs: Long = 5_000) {
+    val shown = runCatching { waitUntil(timeoutMs) { isOnScreen("Later") } }.isSuccess
+    if (shown) {
+        clickButton("Later")
+        waitForNoText("Later")
+    }
+}

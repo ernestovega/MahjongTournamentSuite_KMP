@@ -97,7 +97,7 @@ data class StatisticsRoute(
 )
 
 /** The presenters of the player app. The data comes from dataModule, publicRepositoriesModule and useCasesModule. */
-internal val playerModule = module {
+internal val playerModule get() = module {
     factory { PlayerSessionPresenter(get(), get(), telemetry()) }
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get(), telemetry()) }
@@ -105,8 +105,12 @@ internal val playerModule = module {
     factory { PlayerStatisticsPresenter(get(), get(), get(), get(), telemetry()) }
 }
 
-/** The whole Koin graph of the player app. */
-internal val playerAppModules = listOf(dataModule, publicRepositoriesModule, useCasesModule, playerModule)
+/**
+ * The whole Koin graph of the player app. Each read builds new modules: Koin keeps the single instances in the module
+ * objects, so two graphs made from the same objects would share them, and closing one graph would close the network
+ * client of the other (the player and admin parts of the Android app, or a player part started again).
+ */
+internal val playerAppModules get() = listOf(dataModule, publicRepositoriesModule, useCasesModule, playerModule)
 
 /**
  * The player application.

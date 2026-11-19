@@ -25,7 +25,7 @@ import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
 import org.koin.dsl.module
 
 /** The presenters of the admin app. The data comes from dataModule, adminRepositoriesModule and useCasesModule. */
-val presentationModule = module {
+val presentationModule get() = module {
     single { AppMemoryStore() }
     factory { AuthPresenter(get(), get(), telemetry()) }
     factory { TournamentsPresenter(get(), get(), get(), telemetry()) }
@@ -45,5 +45,5 @@ val presentationModule = module {
     factory { ActivityPresenter(get()) { get<TournamentRepository>().listTournaments() } }
 }
 
-/** The whole Koin graph of the admin app. */
-val adminAppModules = listOf(dataModule, adminRepositoriesModule, useCasesModule, presentationModule)
+/** The whole Koin graph of the admin app. Each read builds new modules, so two graphs share no instance (see playerAppModules). */
+val adminAppModules get() = listOf(dataModule, adminRepositoriesModule, useCasesModule, presentationModule)
