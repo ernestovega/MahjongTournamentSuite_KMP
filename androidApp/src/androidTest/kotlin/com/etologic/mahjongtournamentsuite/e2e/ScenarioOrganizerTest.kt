@@ -76,6 +76,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val email: String,
         val via: String,
         val accountBefore: Boolean,
+        /** A player of an earlier game day, who comes back with that account. */
+        val returning: Boolean,
     )
 
     private val slots: List<Slot> by lazy {
@@ -84,7 +86,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             list.getJSONObject(index).let {
                 Slot(
                     it.getInt("slot"), it.getString("emaId"), it.getString("name"), it.getString("lastName"), it.getString("email"),
-                    it.getString("via"), it.getBoolean("accountBefore"),
+                    it.getString("via"), it.getBoolean("accountBefore"), it.optBoolean("returning"),
                 )
             }
         }
@@ -133,7 +135,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
         if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
-        slots.filter { it.accountBefore }.forEach { createAccountInUsers(it) }
+        // The players of earlier game days have their account already.
+        slots.filter { it.accountBefore && !it.returning }.forEach { createAccountInUsers(it) }
         createTheTournamentWithTheForm()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }
@@ -325,13 +328,23 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             c.waitForText("Emails are missing", timeoutMs = 60_000)
             manual.forEach { slot ->
                 val field = hasSetTextAction() and hasText("${slot.slot} · ", substring = true)
-                // The list of the dialog is lazy: a field further down exists once the list scrolls to it.
-                if (c.onAllNodes(field).fetchSemanticsNodes().isEmpty()) {
-                    runCatching { c.onAllNodes(hasScrollToNodeAction()).onLast().performScrollToNode(field) }
-                    c.waitForIdle()
+                // The list of the dialog is lazy: a field further down exists once the list scrolls to it, and a scroll
+                // can compose it again as a new node. The editor looks for it again and types the whole email again.
+                var typed: Result<Unit> = Result.failure(IllegalStateException("not typed"))
+                for (attempt in 1..5) {
+                    if (c.onAllNodes(field).fetchSemanticsNodes().isEmpty()) {
+                        runCatching { c.onAllNodes(hasScrollToNodeAction()).onLast().performScrollToNode(field) }
+                        c.waitForIdle()
+                    }
+                    typed = runCatching {
+                        c.onAllNodes(field).onLast().apply { runCatching { performScrollTo() } }
+                        c.waitForIdle()
+                        c.onAllNodes(field).onLast().performTextReplacement(slot.email)
+                    }
+                    if (typed.isSuccess) break
+                    log("the email field of slot ${slot.slot} moved while typing, attempt $attempt")
                 }
-                c.onAllNodes(field).onLast()
-                    .apply { runCatching { performScrollTo() } }.performTextInput(slot.email)
+                typed.getOrThrow()
             }
             c.clickLastButton("Send (${manual.size})")
         }
