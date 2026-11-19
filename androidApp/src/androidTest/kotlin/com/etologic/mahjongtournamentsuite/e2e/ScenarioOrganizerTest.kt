@@ -206,7 +206,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         setSwitch("Best hands", plan.getBoolean("countBestHands"))
         setSwitch("Chicken hands", plan.getBoolean("countChickenHands"))
         c.field("Match duration (minutes)").performTextReplacement(plan.getInt("matchDurationMinutes").toString())
-        c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast().performClick()
+        // The extra time shows once the switch is on. The form has more switches now (Open registrations): the switch
+        // is set to on by its state, not tapped blindly.
+        setSwitch("Finish the hand in play", true)
+        c.waitForText("Extra time (minutes)", timeoutMs = 10_000)
         c.field("Extra time (minutes)").performTextReplacement(plan.getInt("matchExtraMinutes").toString())
         c.clickLastButton("Venue")
         chooseCountry("Spain")
