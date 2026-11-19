@@ -11,7 +11,13 @@ data class Tournament(
     /** When false, the app does not count or show the chicken hands. */
     val countChickenHands: Boolean = true,
     val shortName: String = "",
+    /** The organizations that own the tournament. The first one is the main organizer. */
+    val organizerIds: List<String> = emptyList(),
+    /** The organizers as the tournament shows them, in the order of [organizerIds]. */
+    val organizers: List<TournamentOrganizer> = emptyList(),
+    /** The color of the main organizer. A tournament has no color of its own. */
     val primaryColor: String = "#02B16B",
+    /** The logo of the main organizer. A tournament has no logo of its own. */
     val associationLogoUrl: String? = null,
     /** Hash of the logo file. Tournaments that share a logo have the same hash. */
     val associationLogoHash: String? = null,
@@ -65,10 +71,8 @@ data class CreateTournamentRequest(
     val players: List<TournamentPlayer>,
     val tables: List<TournamentTable>,
     val shortName: String,
-    val primaryColor: String,
-    val associationLogoContentType: String? = null,
-    val associationLogoBytes: ByteArray? = null,
-    val associationLogoSourceTournamentId: String? = null,
+    /** The organizations that own the tournament. The first one is the main organizer. At least one. */
+    val organizerIds: List<String>,
     val hostCountry: String,
     val hostCity: String,
     val venue: TournamentVenue = TournamentVenue(),
@@ -78,6 +82,16 @@ data class CreateTournamentRequest(
     val matchEndMode: MatchEndMode = MatchEndMode.STOP,
     val matchExtraMinutes: Int = DEFAULT_MATCH_EXTRA_MINUTES,
     val timeZone: String? = null,
+)
+
+/** One organizer of a tournament: a club or a federation, see [Organization]. */
+data class TournamentOrganizer(
+    val id: String,
+    val name: String,
+    val type: OrganizationType = OrganizationType.CLUB,
+    val country: String = "",
+    val primaryColor: String = "#02B16B",
+    val logoUrl: String? = null,
 )
 
 const val DEFAULT_MATCH_DURATION_MINUTES = 120

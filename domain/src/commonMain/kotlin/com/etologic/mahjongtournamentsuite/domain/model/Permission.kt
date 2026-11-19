@@ -16,8 +16,11 @@ enum class Permission(val key: String) {
     TOURNAMENT_ACTIVITY("tournament.activity"),
     TOURNAMENT_PLAYER_EMAILS("tournament.playerEmails"),
     TOURNAMENTS_CREATE("tournaments.create"),
-    TOURNAMENTS_CHANGE_COUNTRY("tournaments.changeCountry"),
+    TOURNAMENTS_CHANGE_ORGANIZERS("tournaments.changeOrganizers"),
     TOURNAMENTS_DELETE_FINISHED("tournaments.deleteFinished"),
+    ORGANIZATIONS_CREATE("organizations.create"),
+    ORGANIZATIONS_EDIT("organizations.edit"),
+    ORGANIZATIONS_DELETE("organizations.delete"),
     ACCOUNTS_VIEW("accounts.view"),
     ACCOUNTS_CREATE_PLAYER("accounts.createPlayer"),
     ACCOUNTS_MANAGE_STAFF("accounts.manageStaff"),
@@ -51,10 +54,10 @@ enum class Permission(val key: String) {
             TOURNAMENT_VIEW, TOURNAMENT_EDIT, TOURNAMENT_ROUND_CONTROL, TOURNAMENT_PLAYER_EMAILS,
             ACCOUNTS_VIEW, ACCOUNTS_CREATE_PLAYER, TOOLS_VENUES, TOOLS_ID_CARDS,
         )
-        private val countryAdmin = editor + setOf(
+        private val clubAdmin = editor + setOf(
             TOURNAMENT_EDIT_COMPLETED, TOURNAMENT_CONFIGURE, TOURNAMENT_DELETE, TOURNAMENT_RESET_TABLE,
             TOURNAMENT_MEMBERS, TOURNAMENT_ACTIVITY, TOURNAMENTS_CREATE, ACCOUNTS_MANAGE_STAFF,
-            ACCOUNTS_PASSWORD_RESET, ACCOUNTS_REQUEST_REMOVAL, EMA_CREATE,
+            ACCOUNTS_PASSWORD_RESET, ACCOUNTS_REQUEST_REMOVAL, EMA_CREATE, ORGANIZATIONS_EDIT,
         )
 
         /**
@@ -64,7 +67,7 @@ enum class Permission(val key: String) {
         fun defaultsOf(role: GlobalUserRole): Set<Permission> = when (role) {
             GlobalUserRole.PLAYER -> emptySet()
             GlobalUserRole.EDITOR -> editor
-            GlobalUserRole.COUNTRY_ADMIN -> countryAdmin
+            GlobalUserRole.CLUB_ADMIN -> clubAdmin
             GlobalUserRole.SUPER_ADMIN -> entries.toSet() - ACCOUNTS_REQUEST_REMOVAL
         }
     }

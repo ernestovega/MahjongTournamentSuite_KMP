@@ -14,7 +14,7 @@ class AdminStatusTest {
         assertTrue(status.has(Permission.ACCOUNTS_CREATE_PLAYER))
         assertTrue(status.has(Permission.TOURNAMENT_ROUND_CONTROL))
         assertFalse(status.isSuperAdmin)
-        assertFalse(status.isCountryAdmin)
+        assertFalse(status.isClubAdmin)
         assertFalse(status.canManageStaff)
         assertFalse(status.canCreateTournaments)
         assertFalse(status.has(Permission.TOURNAMENT_DELETE))
@@ -24,10 +24,10 @@ class AdminStatusTest {
     }
 
     @Test
-    fun countryAdminManagesItsCountriesButNotTheWholeApp() {
-        val status = AdminStatus(uid = "ca", role = GlobalUserRole.COUNTRY_ADMIN, adminCountries = setOf("ES"))
+    fun clubAdminManagesItsOrganizationsButNotTheWholeApp() {
+        val status = AdminStatus(uid = "ca", role = GlobalUserRole.CLUB_ADMIN, adminOrganizations = setOf("org-es"))
 
-        assertTrue(status.isCountryAdmin)
+        assertTrue(status.isClubAdmin)
         assertTrue(status.canCreateTournaments)
         assertTrue(status.canManageStaff)
         assertTrue(status.canCreateEmaPlayers)
@@ -40,7 +40,7 @@ class AdminStatusTest {
         assertFalse(status.canDeleteUsers)
         assertFalse(status.canChangeEmails)
         assertFalse(status.canChangeEmaIds)
-        assertFalse(status.canChangeTournamentCountry)
+        assertFalse(status.canChangeTournamentOrganizers)
         assertFalse(status.canReviewRequests)
         assertFalse(status.canUseDevMenu)
     }
@@ -55,13 +55,13 @@ class AdminStatusTest {
         assertTrue(status.canEditEmaPlayers)
         assertTrue(status.canReviewRequests)
         assertTrue(status.canUseDevMenu)
-        assertTrue(status.canChangeTournamentCountry)
+        assertTrue(status.canChangeTournamentOrganizers)
         assertFalse(status.canRequestRemoval)
     }
 
     @Test
     fun theTournamentPermissionsDecideInsideATournament() {
-        val status = AdminStatus(uid = "ca", role = GlobalUserRole.COUNTRY_ADMIN, adminCountries = setOf("ES"))
+        val status = AdminStatus(uid = "ca", role = GlobalUserRole.CLUB_ADMIN, adminOrganizations = setOf("org-es"))
 
         // A tournament of another country where the account is an editor: no delete there.
         assertFalse(status.can(Permission.TOURNAMENT_DELETE, setOf(Permission.TOURNAMENT_VIEW, Permission.TOURNAMENT_EDIT)))

@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
@@ -31,8 +33,8 @@ interface AdminRepository {
         tournamentAssignments: List<TournamentAssignment>,
         /** The EMA ID of the new account. */
         emaId: String? = null,
-        /** The countries of a new country admin, as two-letter codes. */
-        adminCountries: Set<String> = emptySet(),
+        /** The organizations of a new club admin, as organization ids. */
+        adminOrganizations: Set<String> = emptySet(),
     ): AppResult<ManagedUser>
 
     suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser>
@@ -78,14 +80,26 @@ interface AdminRepository {
     suspend fun loadActivity(filter: ActivityFilter, cursor: String? = null): AppResult<ActivityPage>
 
     /**
-     * A country admin takes an account out of its countries: its countries and its tournaments there. With a [kind]
+     * A club admin takes an account out of its organizations: those organizations and their tournaments. With a [kind]
      * it also asks the super admins to disable or delete the whole account. Answers the account as it is now.
      */
-    suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = AppResult.Failure(AppError.Unexpected("Not supported"))
+    suspend fun removeFromMyOrganizations(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = AppResult.Failure(AppError.Unexpected("Not supported"))
 
-    /** The open requests of the country admins. Only super admins load them. */
+    /** The open requests of the club admins. Only super admins load them. */
     suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = AppResult.Success(emptyList())
 
     /** A super admin approves a request, which disables or deletes the account at once, or rejects it. */
     suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** Every organization (club or federation), by name, with what the signed-in account may do with each one. */
+    suspend fun listOrganizations(): AppResult<List<Organization>> = AppResult.Success(emptyList())
+
+    /** Only a super admin creates organizations. */
+    suspend fun createOrganization(draft: OrganizationDraft): AppResult<Organization> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** A super admin edits any organization, a club admin its own ones. */
+    suspend fun updateOrganization(id: String, draft: OrganizationDraft): AppResult<Organization> = AppResult.Failure(AppError.Unexpected("Not supported"))
+
+    /** Only a super admin deletes an organization, and only one that organizes no tournament. */
+    suspend fun deleteOrganization(id: String): AppResult<Unit> = AppResult.Failure(AppError.Unexpected("Not supported"))
 }

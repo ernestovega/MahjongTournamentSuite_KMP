@@ -2,6 +2,17 @@ package com.etologic.mahjongtournamentsuite.data.backend.dto
 
 import kotlinx.serialization.Serializable
 
+/** One organizer of a tournament, as the tournament shows it. */
+@Serializable
+data class TournamentOrganizerDto(
+    val id: String,
+    val name: String = "",
+    val type: String = "CLUB",
+    val country: String = "",
+    val primaryColor: String = "#02B16B",
+    val logoUrl: String? = null,
+)
+
 @Serializable
 data class TournamentDto(
     val id: String,
@@ -12,6 +23,8 @@ data class TournamentDto(
     val countBestHands: Boolean = true,
     val countChickenHands: Boolean = true,
     val shortName: String = "",
+    val organizerIds: List<String> = emptyList(),
+    val organizers: List<TournamentOrganizerDto> = emptyList(),
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
     val associationLogoHash: String? = null,
@@ -65,10 +78,7 @@ data class CreateTournamentRequestDto(
     val players: List<TournamentPlayerDto>,
     val tables: List<TournamentTableDto>,
     val shortName: String,
-    val primaryColor: String,
-    val associationLogoContentType: String? = null,
-    val associationLogoDataBase64: String? = null,
-    val associationLogoSourceTournamentId: String? = null,
+    val organizerIds: List<String>,
     val hostCountry: String,
     val hostCity: String,
     val venueName: String = "",
@@ -92,7 +102,8 @@ data class RenameTournamentRequestDto(
 data class UpdateTournamentSettingsRequestDto(
     val name: String,
     val shortName: String,
-    val primaryColor: String,
+    /** Null keeps the organizers. Only a super admin changes them. */
+    val organizerIds: List<String>? = null,
     val eventStartDate: String,
     val eventEndDate: String,
     val hostCountry: String,
@@ -106,10 +117,6 @@ data class UpdateTournamentSettingsRequestDto(
     val countChickenHands: Boolean? = null,
     val isPublic: Boolean? = null,
     val showTableDiffs: Boolean? = null,
-    val associationLogoContentType: String? = null,
-    val associationLogoDataBase64: String? = null,
-    val associationLogoSourceTournamentId: String? = null,
-    val removeAssociationLogo: Boolean = false,
     val roundSchedules: List<TournamentRoundScheduleDto>? = null,
     val agendaItems: List<TournamentAgendaItemDto>? = null,
     /** Null keeps the stored value. */

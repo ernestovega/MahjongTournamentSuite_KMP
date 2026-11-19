@@ -400,7 +400,7 @@ fun <T> AppResult<T>.trackAction(telemetry: Telemetry, action: String): AppResul
 /** The role that GA4 uses to split the users. An account with several roles counts as the strongest one. */
 fun Collection<GlobalUserRole>.telemetryRole(): String = when {
     GlobalUserRole.SUPER_ADMIN in this -> "super_admin"
-    GlobalUserRole.COUNTRY_ADMIN in this -> "country_admin"
+    GlobalUserRole.CLUB_ADMIN in this -> "club_admin"
     GlobalUserRole.EDITOR in this -> "editor"
     else -> "player"
 }

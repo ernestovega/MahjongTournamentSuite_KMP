@@ -42,16 +42,13 @@ interface TournamentRepository {
         tournamentId: String,
         name: String,
         shortName: String,
-        primaryColor: String,
+        /** The new organizers. Null keeps them. Only a super admin changes them. */
+        organizerIds: List<String>? = null,
         eventStartDate: String,
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
         venue: TournamentVenue = TournamentVenue(),
-        associationLogoContentType: String? = null,
-        associationLogoBytes: ByteArray? = null,
-        associationLogoSourceTournamentId: String? = null,
-        removeAssociationLogo: Boolean = false,
         roundSchedules: List<TournamentRoundSchedule> = emptyList(),
         agendaItems: List<TournamentAgendaItem> = emptyList(),
         /** Null keeps the stored value. */

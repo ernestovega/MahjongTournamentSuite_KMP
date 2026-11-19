@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
+import com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveOrganizationRequestDto
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
@@ -58,7 +63,7 @@ class DefaultAdminRepository(
             uid = status.uid,
             role = GlobalUserRole.valueOf(status.role.name),
             roles = roles,
-            adminCountries = status.adminCountries.toSet(),
+            adminOrganizations = status.adminOrganizations.toSet(),
             permissions = status.permissions?.let { Permission.fromKeys(it) }
                 ?: roles.flatMapTo(mutableSetOf()) { Permission.defaultsOf(it) },
         )
@@ -143,7 +148,7 @@ class DefaultAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
-        adminCountries: Set<String>,
+        adminOrganizations: Set<String>,
     ): AppResult<ManagedUser> = managedUserRequest("Creating user") { idToken ->
         backendApi.createUser(
             idToken = idToken,
@@ -153,7 +158,7 @@ class DefaultAdminRepository(
                 role = GlobalUserRoleDto.valueOf(role.name),
                 tournamentAssignments = tournamentAssignments.map(TournamentAssignment::toDto),
                 emaId = emaId.orEmpty(),
-                adminCountries = adminCountries.sorted(),
+                adminOrganizations = adminOrganizations.sorted(),
             ),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
@@ -168,7 +173,7 @@ class DefaultAdminRepository(
                 role = GlobalUserRoleDto.valueOf(user.role.name),
                 tournamentAssignments = user.tournamentAssignments.map(TournamentAssignment::toDto),
                 emaId = user.emaId.orEmpty(),
-                adminCountries = user.adminCountries.sorted(),
+                adminOrganizations = user.adminOrganizations.sorted(),
             ),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
@@ -216,8 +221,8 @@ class DefaultAdminRepository(
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY) }
     }
 
-    override suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = managedUserRequest("Removing an account from the countries") { idToken ->
-        backendApi.removeFromMyCountries(idToken, uid, AccountRemovalRequestDto(kind = kind?.name, reason = reason.trim()))
+    override suspend fun removeFromMyOrganizations(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = managedUserRequest("Removing an account from the organizations") { idToken ->
+        backendApi.removeFromMyOrganizations(idToken, uid, AccountRemovalRequestDto(kind = kind?.name, reason = reason.trim()))
             .user.toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
 
@@ -238,6 +243,23 @@ class DefaultAdminRepository(
     override suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = managedUserRequest("Resolving an account request") { idToken ->
         backendApi.resolveAccountRequest(idToken, id, approve)
         cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
+    }
+
+    override suspend fun listOrganizations(): AppResult<List<Organization>> = managedUserRequest("Listing organizations") { idToken ->
+        backendApi.listOrganizations(idToken).organizations.map(OrganizationDto::toDomain)
+    }
+
+    override suspend fun createOrganization(draft: OrganizationDraft): AppResult<Organization> = managedUserRequest("Creating an organization") { idToken ->
+        backendApi.createOrganization(idToken, draft.toDto()).toDomain()
+    }
+
+    override suspend fun updateOrganization(id: String, draft: OrganizationDraft): AppResult<Organization> = managedUserRequest("Updating an organization") { idToken ->
+        backendApi.updateOrganization(idToken, id, draft.toDto()).toDomain()
+    }
+
+    override suspend fun deleteOrganization(id: String): AppResult<Unit> = managedUserRequest("Deleting an organization") { idToken ->
+        backendApi.deleteOrganization(idToken, id)
+        Unit
     }
 
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = managedUserRequest("Removing the photo of a user") { idToken ->
@@ -302,13 +324,34 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
         TournamentAssignment(
             tournamentId = assignment.tournamentId,
             tournamentName = assignment.tournamentName,
-            country = assignment.country,
+            organizerIds = assignment.organizerIds,
         )
     },
-    adminCountries = adminCountries.toSet(),
+    adminOrganizations = adminOrganizations.toSet(),
     canManage = canManage,
     hasGrantsOutside = hasGrantsOutside,
     emailHidden = emailHidden,
+)
+
+private fun OrganizationDto.toDomain(): Organization = Organization(
+    id = id,
+    name = name,
+    type = if (type == OrganizationType.FEDERATION.name) OrganizationType.FEDERATION else OrganizationType.CLUB,
+    country = country,
+    primaryColor = primaryColor,
+    logoUrl = logoUrl?.ifBlank { null },
+    canEdit = canEdit,
+    canDelete = canDelete,
+)
+
+private fun OrganizationDraft.toDto(): SaveOrganizationRequestDto = SaveOrganizationRequestDto(
+    name = name.trim(),
+    type = type.name,
+    country = country.trim().uppercase(),
+    primaryColor = primaryColor.trim().uppercase(),
+    logoContentType = logoBytes?.let { logoContentType },
+    logoDataBase64 = logoBytes?.let(Base64.Default::encode),
+    removeLogo = removeLogo,
 )
 
 private fun TournamentAssignment.toDto(): TournamentAssignmentDto = TournamentAssignmentDto(

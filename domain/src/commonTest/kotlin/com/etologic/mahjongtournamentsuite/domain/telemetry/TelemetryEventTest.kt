@@ -31,7 +31,7 @@ class TelemetryEventTest {
     @Test
     fun strongestRoleWins() {
         assertEquals("super_admin", setOf(GlobalUserRole.EDITOR, GlobalUserRole.SUPER_ADMIN).telemetryRole())
-        assertEquals("country_admin", setOf(GlobalUserRole.EDITOR, GlobalUserRole.COUNTRY_ADMIN).telemetryRole())
+        assertEquals("club_admin", setOf(GlobalUserRole.EDITOR, GlobalUserRole.CLUB_ADMIN).telemetryRole())
         assertEquals("editor", setOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER).telemetryRole())
         assertTrue(setOf(GlobalUserRole.PLAYER).telemetryRole() == "player")
     }

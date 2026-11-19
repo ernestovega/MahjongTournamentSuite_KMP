@@ -16,7 +16,7 @@ data class UserProfile(
 /** The roles of an account. An account may hold several, see the backend `models/globalRole.ts`. */
 enum class GlobalUserRole {
     EDITOR,
-    COUNTRY_ADMIN,
+    CLUB_ADMIN,
     SUPER_ADMIN,
     PLAYER,
 }
@@ -24,8 +24,8 @@ enum class GlobalUserRole {
 data class TournamentAssignment(
     val tournamentId: String,
     val tournamentName: String,
-    /** The host country of the tournament, as a two-letter code. Empty when the answer did not say. */
-    val country: String = "",
+    /** The organizers of the tournament. The organizations of an editor are the organizers of its tournaments. */
+    val organizerIds: List<String> = emptyList(),
 )
 
 data class ManagedUser(
@@ -42,11 +42,11 @@ data class ManagedUser(
     val photoUrl: String? = null,
     /** True when [photoUrl] is the own photo of the account and not the photo of the EMA player. */
     val hasOwnPhoto: Boolean = false,
-    /** The countries of a country admin, as two-letter codes. */
-    val adminCountries: Set<String> = emptySet(),
-    /** True when the signed-in account may change the role, the countries or the tournaments of this account. */
+    /** The organizations of a club admin, as organization ids. */
+    val adminOrganizations: Set<String> = emptySet(),
+    /** True when the signed-in account may change the role, the organizations or the tournaments of this account. */
     val canManage: Boolean = false,
-    /** True when the account has countries or tournaments that the signed-in account does not manage. */
+    /** True when the account has organizations or tournaments that the signed-in account does not manage. */
     val hasGrantsOutside: Boolean = false,
     /** True when the email is hidden from the signed-in account: a player of tournaments that it does not manage. */
     val emailHidden: Boolean = false,

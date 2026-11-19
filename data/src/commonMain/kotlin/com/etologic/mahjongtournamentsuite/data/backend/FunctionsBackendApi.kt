@@ -236,7 +236,7 @@ class FunctionsBackendApi(
 
     suspend fun deleteUser(idToken: String, uid: String): OkResponseDto = delete(path = "/admin/users/$uid", idToken = idToken)
 
-    suspend fun removeFromMyCountries(
+    suspend fun removeFromMyOrganizations(
         idToken: String,
         uid: String,
         request: com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto,
@@ -245,6 +245,32 @@ class FunctionsBackendApi(
         requestBody = request,
         idToken = idToken,
     )
+
+    suspend fun listOrganizations(idToken: String): com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationsResponseDto = get(
+        path = "/admin/organizations",
+        idToken = idToken,
+    )
+
+    suspend fun createOrganization(
+        idToken: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.SaveOrganizationRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationDto = post(
+        path = "/admin/organizations",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updateOrganization(
+        idToken: String,
+        id: String,
+        request: com.etologic.mahjongtournamentsuite.data.backend.dto.SaveOrganizationRequestDto,
+    ): com.etologic.mahjongtournamentsuite.data.backend.dto.OrganizationDto = put(
+        path = "/admin/organizations/$id",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun deleteOrganization(idToken: String, id: String): OkResponseDto = delete(path = "/admin/organizations/$id", idToken = idToken)
 
     suspend fun listAccountRequests(idToken: String): com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRequestsResponseDto = get(
         path = "/admin/account-requests",

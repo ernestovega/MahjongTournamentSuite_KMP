@@ -7,7 +7,7 @@ data class WhoAmIResponseDto(
     val uid: String,
     val role: GlobalUserRoleDto,
     val roles: List<GlobalUserRoleDto> = emptyList(),
-    val adminCountries: List<String> = emptyList(),
+    val adminOrganizations: List<String> = emptyList(),
     /** The permissions that some role of the account grants somewhere. Null from an older backend. */
     val permissions: List<String>? = null,
 )
@@ -15,7 +15,7 @@ data class WhoAmIResponseDto(
 @Serializable
 enum class GlobalUserRoleDto {
     EDITOR,
-    COUNTRY_ADMIN,
+    CLUB_ADMIN,
     SUPER_ADMIN,
     PLAYER,
 }
@@ -24,7 +24,7 @@ enum class GlobalUserRoleDto {
 data class TournamentAssignmentDto(
     val tournamentId: String,
     val tournamentName: String = "",
-    val country: String = "",
+    val organizerIds: List<String> = emptyList(),
 )
 
 @Serializable
@@ -39,7 +39,7 @@ data class ManagedUserDto(
     val roles: List<GlobalUserRoleDto> = emptyList(),
     val disabled: Boolean,
     val tournamentAssignments: List<TournamentAssignmentDto> = emptyList(),
-    val adminCountries: List<String> = emptyList(),
+    val adminOrganizations: List<String> = emptyList(),
     val canManage: Boolean = false,
     val hasGrantsOutside: Boolean = false,
     val emailHidden: Boolean = false,
@@ -58,8 +58,8 @@ data class SaveManagedUserRequestDto(
     val tournamentAssignments: List<TournamentAssignmentDto>,
     /** The EMA ID of the account. An empty text clears it. */
     val emaId: String = "",
-    /** The countries of a country admin, as two-letter codes. */
-    val adminCountries: List<String> = emptyList(),
+    /** The organizations of a club admin, as organization ids. */
+    val adminOrganizations: List<String> = emptyList(),
 )
 
 @Serializable
@@ -336,7 +336,7 @@ data class ErrorGroupDetailDto(
 
 @Serializable
 data class AccountRemovalRequestDto(
-    /** DISABLE or DELETE, or null to only take the account out of the countries of the caller. */
+    /** DISABLE or DELETE, or null to only take the account out of the organizations of the caller. */
     val kind: String? = null,
     val reason: String = "",
 )
@@ -370,4 +370,32 @@ data class ResolveAccountRequestDto(
 @Serializable
 data class ResolveAccountRequestResponseDto(
     val outcome: String = "",
+)
+
+@Serializable
+data class OrganizationDto(
+    val id: String,
+    val name: String = "",
+    val type: String = "CLUB",
+    val country: String = "",
+    val primaryColor: String = "#02B16B",
+    val logoUrl: String? = null,
+    val canEdit: Boolean = false,
+    val canDelete: Boolean = false,
+)
+
+@Serializable
+data class OrganizationsResponseDto(
+    val organizations: List<OrganizationDto> = emptyList(),
+)
+
+@Serializable
+data class SaveOrganizationRequestDto(
+    val name: String,
+    val type: String,
+    val country: String,
+    val primaryColor: String,
+    val logoContentType: String? = null,
+    val logoDataBase64: String? = null,
+    val removeLogo: Boolean = false,
 )

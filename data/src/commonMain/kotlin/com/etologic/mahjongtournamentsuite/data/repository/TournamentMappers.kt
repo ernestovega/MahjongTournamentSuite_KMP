@@ -17,8 +17,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_M
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 
@@ -31,6 +33,17 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     numPlayers = numPlayers,
     numRounds = numRounds,
     shortName = shortName,
+    organizerIds = organizerIds,
+    organizers = organizers.map { organizer ->
+        TournamentOrganizer(
+            id = organizer.id,
+            name = organizer.name,
+            type = if (organizer.type == OrganizationType.FEDERATION.name) OrganizationType.FEDERATION else OrganizationType.CLUB,
+            country = organizer.country,
+            primaryColor = organizer.primaryColor,
+            logoUrl = organizer.logoUrl.normalizedOrNull(),
+        )
+    },
     primaryColor = primaryColor,
     associationLogoUrl = associationLogoUrl.normalizedOrNull(),
     associationLogoHash = associationLogoHash.normalizedOrNull(),

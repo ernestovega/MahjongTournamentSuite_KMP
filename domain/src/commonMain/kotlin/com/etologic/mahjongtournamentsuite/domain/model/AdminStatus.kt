@@ -1,18 +1,18 @@
 package com.etologic.mahjongtournamentsuite.domain.model
 
 /**
- * The signed-in account of the management app: its roles, the countries of a country admin, and the permissions
+ * The signed-in account of the management app: its roles, the organizations of a club admin, and the permissions
  * that it has somewhere. A tournament carries the permissions of the account in that tournament, see [can].
  */
 data class AdminStatus(
     val uid: String,
     val role: GlobalUserRole,
     val roles: Set<GlobalUserRole> = setOf(role),
-    val adminCountries: Set<String> = emptySet(),
+    val adminOrganizations: Set<String> = emptySet(),
     val permissions: Set<Permission> = roles.flatMapTo(mutableSetOf()) { Permission.defaultsOf(it) },
 ) {
     val isSuperAdmin: Boolean get() = role == GlobalUserRole.SUPER_ADMIN
-    val isCountryAdmin: Boolean get() = GlobalUserRole.COUNTRY_ADMIN in roles
+    val isClubAdmin: Boolean get() = GlobalUserRole.CLUB_ADMIN in roles
 
     fun has(permission: Permission): Boolean = permission in permissions
 
@@ -36,7 +36,9 @@ data class AdminStatus(
     val canCreateEmaPlayers: Boolean get() = has(Permission.EMA_CREATE)
     val canEditEmaPlayers: Boolean get() = has(Permission.EMA_EDIT)
     val canDeleteEmaPlayers: Boolean get() = has(Permission.EMA_DELETE)
-    val canChangeTournamentCountry: Boolean get() = has(Permission.TOURNAMENTS_CHANGE_COUNTRY)
+    val canChangeTournamentOrganizers: Boolean get() = has(Permission.TOURNAMENTS_CHANGE_ORGANIZERS)
+    val canCreateOrganizations: Boolean get() = has(Permission.ORGANIZATIONS_CREATE)
+    val canEditOrganizations: Boolean get() = has(Permission.ORGANIZATIONS_EDIT)
 
     /** The DEV menu: the activity of the whole app, the errors and the design system. */
     val canUseDevMenu: Boolean get() = has(Permission.DEV_ERRORS)
