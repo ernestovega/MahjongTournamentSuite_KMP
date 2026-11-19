@@ -74,6 +74,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
@@ -604,9 +605,11 @@ private fun RankingPage(
                     fontWeight = FontWeight.Bold,
                 )
             }
+            // The photo is as tall as a line of text, so it does not change the rows that fit on a page.
+            val photoSize = with(androidx.compose.ui.platform.LocalDensity.current) { textStyle.lineHeight.toDp() }
             val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
             val measuredWidths = rememberRankingColumnWidths(page, textStyle)
-            val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing) else measuredWidths
+            val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing, if (page.showPhoto) photoSize else null) else measuredWidths
 
             Column(modifier = Modifier.width(if (compact) maxWidth else RankingTableWidth).fillMaxHeight()) {
                 Row(
@@ -619,6 +622,7 @@ private fun RankingPage(
                     ),
                 ) {
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
+                    if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
                     if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
                     RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
                     if (page.extraHeader != null) {
@@ -657,6 +661,10 @@ private fun RankingPage(
                                 TextAlign.Center,
                                 textStyle,
                             )
+                            if (page.showPhoto) {
+                                // A hidden top three shows the empty photo, so the photo does not tell the name.
+                                PlayerPhoto(if (row.isMasked) null else row.photoUrl, row.name, size = photoSize)
+                            }
                             if (page.showCountry) {
                                 if (row.isMasked) {
                                     RankingCell("???", widths.country, TextAlign.Center, textStyle)
@@ -750,7 +758,7 @@ private fun RankingCountryCell(
 }
 
 /** Gives the name column the width that the other columns leave free in [total]. */
-private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp): RankingColumnWidths {
+private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp, photo: Dp?): RankingColumnWidths {
     // The flag alone tells the country, so the column loses the width of its title.
     // The team and the extra column are cut short, so the name keeps most of the width.
     val fitted = copy(
@@ -761,6 +769,7 @@ private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp): RankingColumn
     val others = with(fitted) {
         listOfNotNull(
             position,
+            photo,
             country.takeIf { showCountry },
             extra.takeIf { showExtra },
             points.takeIf { showPoints },
@@ -828,6 +837,8 @@ private data class RankingPage(
     val extraHeader: String? = null,
     val teamHeader: String? = null,
     val showCountry: Boolean = true,
+    /** A team has no photo. */
+    val showPhoto: Boolean = showCountry,
     val showPoints: Boolean = true,
     val showScore: Boolean = true,
     val rows: List<RankingRow>,
@@ -842,6 +853,7 @@ private data class RankingRow(
     val points: Double,
     val score: Int,
     val country: String = "",
+    val photoUrl: String? = null,
     val isMasked: Boolean = false,
     /** The player is excluded from the EMA ranking. The name shows with strikethrough. */
     val isExcluded: Boolean = false,
@@ -948,6 +960,7 @@ private fun PlayerRanking.toRow(
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
+    photoUrl = displayPhoto(playerId, slots, players),
     isExcluded = substitution?.struckThrough == true,
 )
 
@@ -967,6 +980,7 @@ private fun ChickenHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players:
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
+    photoUrl = displayPhoto(playerId, slots, players),
 )
 
 private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels) = RankingRow(
@@ -977,6 +991,7 @@ private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Ma
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
+    photoUrl = displayPhoto(playerId, slots, players),
 )
 
 private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String = slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
@@ -984,6 +999,8 @@ private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, player
     ?: labels.playerN(playerId).uppercase()
 
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String = slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
+
+private fun displayPhoto(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String? = slots[playerId]?.assignedEmaId?.let(players::get)?.photoUrl?.takeIf { it.isNotBlank() }
 
 private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 

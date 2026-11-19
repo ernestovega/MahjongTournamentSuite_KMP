@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -21,6 +22,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -1438,6 +1440,8 @@ private data class RankingRow(
     val subtitle: String?,
     /** The country code of the player. The line shows its flag next to the name. */
     val country: String? = null,
+    /** The photo of the player. A team line has none and shows no photo. */
+    val photoUrl: String? = null,
     val chip: String,
     val chipChicken: Boolean = false,
     /** A row of the best hands: the first three show a gold, silver or bronze hand instead of a trophy. */
@@ -1473,6 +1477,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = row.substitution?.label(),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = formatPoints(row.points),
                 score = "${row.score}",
                 mine = row.playerId == view.mySlotId,
@@ -1491,6 +1496,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                         title = view.nameOf(member.playerId),
                         subtitle = member.substitution?.label(),
                         country = view.players[member.playerId]?.country?.takeIf { it.isNotBlank() },
+                        photoUrl = view.players[member.playerId]?.photoUrl,
                         chip = formatPoints(member.points),
                         score = "${member.score}",
                         mine = member.playerId == view.mySlotId,
@@ -1516,6 +1522,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = "${row.chickenHands}",
                 chipChicken = true,
                 mine = row.playerId == view.mySlotId,
@@ -1529,6 +1536,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 title = view.nameOf(row.playerId),
                 subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
+                photoUrl = view.players[row.playerId]?.photoUrl,
                 chip = "${row.handScore}",
                 bestHand = true,
                 mine = row.playerId == view.mySlotId,
@@ -1594,45 +1602,49 @@ private fun RankingRows(
     val myIndex = visible.indexOfFirst { it.mine }
     Column {
         tabs()
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-        ) {
-            item(key = "controls") {
-                // One row that scrolls with the list: "Jump to me", then the search.
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val jumpToMe = stringResource(Res.string.jump_to_me)
-                    if (myIndex >= 0) {
-                        Column(
-                            Modifier.width(44.dp).height(44.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .clickable { scope.launch { listState.animateScrollToItem(myIndex + 1) } }
-                                .semantics { contentDescription = jumpToMe },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                            Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+        // On a phone the lines are narrow: less space around the position and the points, so the names keep more width.
+        BoxWithConstraints {
+            val narrow = maxWidth < 600.dp
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+            ) {
+                item(key = "controls") {
+                    // One row that scrolls with the list: "Jump to me", then the search.
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val jumpToMe = stringResource(Res.string.jump_to_me)
+                        if (myIndex >= 0) {
+                            Column(
+                                Modifier.width(44.dp).height(44.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .clickable { scope.launch { listState.animateScrollToItem(myIndex + 1) } }
+                                    .semantics { contentDescription = jumpToMe },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                            }
                         }
+                        // The dropdown does not filter the list. Choosing a line scrolls the list to it.
+                        SelectField<String>(
+                            label = stringResource(Res.string.field_search),
+                            options = options,
+                            selected = null,
+                            onSelect = { key ->
+                                val index = visible.indexOfFirst { it.key == key }
+                                if (index >= 0) scope.launch { listState.animateScrollToItem(index + 1) }
+                            },
+                            modifier = Modifier.weight(1f),
+                            compact = true,
+                        )
                     }
-                    // The dropdown does not filter the list. Choosing a line scrolls the list to it.
-                    SelectField<String>(
-                        label = stringResource(Res.string.field_search),
-                        options = options,
-                        selected = null,
-                        onSelect = { key ->
-                            val index = visible.indexOfFirst { it.key == key }
-                            if (index >= 0) scope.launch { listState.animateScrollToItem(index + 1) }
-                        },
-                        modifier = Modifier.weight(1f),
-                        compact = true,
-                    )
                 }
-            }
-            items(visible, key = { it.key }) { row ->
-                RankingCard(row, onPlayerClick)
+                items(visible, key = { it.key }) { row ->
+                    RankingCard(row, onPlayerClick, narrow)
+                }
             }
         }
     }
@@ -1640,7 +1652,7 @@ private fun RankingRows(
 
 /** One ranking line. A team line folds out to show its players. */
 @Composable
-private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit) {
+private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit, narrow: Boolean = false) {
     val colors = MaterialTheme.colorScheme
     val foldable = row.members.isNotEmpty()
     var expanded by rememberSaveable(row.key) { mutableStateOf(false) }
@@ -1666,34 +1678,40 @@ private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column {
-            RankingLine(row, trailing = if (foldable) expanded else null)
+            RankingLine(row, trailing = if (foldable) expanded else null, narrow = narrow)
             if (foldable && expanded) {
                 row.members.forEach { member ->
                     val memberId = member.playerId
                     Box(
                         if (memberId != null) Modifier.fillMaxWidth().clickable { onPlayerClick(memberId) } else Modifier.fillMaxWidth(),
-                    ) { RankingLine(member, compact = true) }
+                    ) { RankingLine(member, compact = true, narrow = narrow) }
                 }
             }
         }
     }
 }
 
+/** The photo of a player in a ranking line: as tall as the name and the score chip. */
+private val RankingPhotoSize = 36.dp
+
 /** The content of a ranking line. [trailing] is null for a line that cannot be folded, else it is the folded state. */
 @Composable
-private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boolean? = null) {
+private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boolean? = null, narrow: Boolean = false) {
     val colors = MaterialTheme.colorScheme
+    // A phone gets less space around the position and the points.
+    val gap = if (narrow) 6.dp else 12.dp
+    val edge = if (narrow) 8.dp else 12.dp
     Row(
-        Modifier.fillMaxWidth().padding(start = if (compact) 24.dp else 12.dp, top = 12.dp, end = 12.dp, bottom = 12.dp),
+        Modifier.fillMaxWidth().padding(start = if (compact) 24.dp else edge, top = 12.dp, end = edge, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(gap),
     ) {
         if (!compact) {
-            Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.width(if (narrow) 30.dp else 36.dp), contentAlignment = Alignment.Center) {
                 if (row.position <= 3) {
                     // A circle behind the trophy or the hand keeps it visible on the colored card.
                     Box(
-                        Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
+                        Modifier.size(if (narrow) 30.dp else 34.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (row.bestHand) BestHandIcon(row.position, size = 24.dp) else PositionTrophy(row.position, size = 24.dp)
@@ -1703,8 +1721,12 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
                 }
             }
         }
-        // The flag comes first and has a fixed width, so the names are aligned. A team has no flag.
-        if (row.playerId != null) PlayerFlag(row.country)
+        // The photo comes after the position, then the flag with a fixed width, so the names are aligned.
+        // A team has no photo and no flag.
+        if (row.playerId != null) {
+            PlayerPhoto(row.photoUrl, row.title, size = RankingPhotoSize)
+            PlayerFlag(row.country)
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 row.title,
@@ -1724,7 +1746,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
             border = BorderStroke(1.5.dp, colors.onSurface),
         ) {
             Row(
-                Modifier.padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
+                Modifier.padding(horizontal = if (narrow) MtsTheme.spacing.sm else MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
@@ -1740,7 +1762,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
         row.score?.let {
             Text(
                 it,
-                Modifier.widthIn(min = 56.dp),
+                Modifier.widthIn(min = if (narrow) 44.dp else 56.dp),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
                 textAlign = TextAlign.End,
