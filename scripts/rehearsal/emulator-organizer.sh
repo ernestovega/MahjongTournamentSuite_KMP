@@ -51,7 +51,7 @@ fi
 "${adb_cmd[@]}" push "$plan_dir" /data/local/tmp/scenario >/dev/null
 
 "${adb_cmd[@]}" logcat -c || true
-"${adb_cmd[@]}" logcat -s SCENARIO:I E2E:I TestRunner:I AndroidRuntime:E MahjongTournamentSuite:W > "$out/logcat.txt" 2>&1 &
+"${adb_cmd[@]}" logcat -s SCENARIO:I E2E:I TestRunner:I AndroidRuntime:E MahjongTournamentSuite:I > "$out/logcat.txt" 2>&1 &
 logcat_pid=$!
 
 # The screen, in pieces of 3 minutes: screenrecord stops at 3 minutes.
@@ -94,6 +94,8 @@ if ! printf '%s\n' "$result" | grep -q '^OK (1 test)'; then
   sleep 2
   echo "--- last steps of the organizer ---"
   grep -E 'SCENARIO|E2E' "$out/logcat.txt" | tail -n 25 || true
+  echo "--- last lines of the app (addresses hidden) ---"
+  grep 'MahjongTournamentSuite' "$out/logcat.txt" | tail -n 40 | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' || true
   echo "--- crashes of the app ---"
   grep -A 40 'FATAL EXCEPTION' "$out/logcat.txt" | head -n 80 || true
   exit 1

@@ -39,7 +39,7 @@ It prints, for each product, the version on `main` (the latest) next to the publ
 - **Backend**: what `https://mts.mahjongmadrid.com/api/health` answers.
 - **Android app**: the release on each Google Play track (internal testing, closed, open, production).
 
-Google Play needs credentials. The easy way, also from a phone: **Actions > Versions > Run workflow** on `main`, and read the table in the summary of the run. It only reads. The runs of **Tests and deploy** end with the same table. On a computer, Google Play is shown after `gcloud auth application-default login` with an account that has access to the app in Play Console, and `pip install google-auth google-api-python-client`; without them the command still shows the web and the backend. `MTS_SITE_URL` changes the site that it asks.
+Google Play needs credentials. The easy way, also from a phone: **Actions > Check · Published versions > Run workflow** on `main`, and read the table in the summary of the run. It only reads. The runs of **Deploy · Production** end with the same table. On a computer, Google Play is shown after `gcloud auth application-default login` with an account that has access to the app in Play Console, and `pip install google-auth google-api-python-client`; without them the command still shows the web and the backend. `MTS_SITE_URL` changes the site that it asks.
 
 Every push to `main` deploys the web and the backend together (`firebase deploy`), so both are usually up to date a few minutes after a push. The Android app only goes to Google Play when the workflow is started by hand (see [android-release.md](android-release.md)), so its published version is usually behind.
 

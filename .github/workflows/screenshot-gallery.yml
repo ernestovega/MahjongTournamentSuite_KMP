@@ -1,7 +1,7 @@
 # The gallery of the screenshot tests and the game day videos (docs/screenshot-gallery.md), a web page on its own
 # Hosting site in the staging project. It runs after every push to main that changes a reference image, after every
-# run of Screenshot tests and Game day, and by hand. It checks nothing and blocks nothing.
-name: Screenshot gallery
+# run of Test · Screenshots and Test · Game day · Auto, and by hand. It checks nothing and blocks nothing.
+name: Publish · Screenshot gallery
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
       - "scripts/gallery/**"
       - ".github/workflows/screenshot-gallery.yml"
   workflow_run:
-    workflows: ["Screenshot tests", "Game day"]
+    workflows: ["Test · Screenshots", "Test · Game day · Auto"]
     types: [completed]
   workflow_dispatch:
 
@@ -45,13 +45,13 @@ jobs:
           fi
 
       # The whole history of main, without the LFS images: the script downloads only the ones the site lacks.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
           lfs: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -71,7 +71,7 @@ jobs:
           workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: Publish
         run: python3 scripts/gallery/gallery.py publish --out "$OUT" --site "$SITE" --project "$STAGING"

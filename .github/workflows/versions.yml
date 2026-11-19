@@ -1,7 +1,7 @@
 # Shows, for each product, the version on main and the published one: the web and the backend as the site answers
-# them, and the Android app on each Google Play track. Run it with Actions > Versions > Run workflow and read the
+# them, and the Android app on each Google Play track. Run it with Actions > Check · Published versions > Run workflow and read the
 # table in the summary of the run. It only reads: it deploys and uploads nothing. See docs/versioning.md.
-name: Versions
+name: Check · Published versions
 
 on:
   workflow_dispatch:
@@ -21,9 +21,9 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 

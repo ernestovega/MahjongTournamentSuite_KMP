@@ -66,7 +66,7 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 
 ## Run the tests on GitHub
 
-The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. Until the apps are in production it runs only by hand, in **Actions > UI tests > Run workflow**. Pick where it runs, the app, and optionally test classes.
+The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. Until the apps are in production it runs only by hand, in **Actions > Test · UI (emulators) > Run workflow**. Pick where it runs, the app, and optionally test classes.
 In both cases the runner starts the local backend on the emulators, like `npm run e2e:backend`. No test touches the production project.
 
 ### On an emulator in the GitHub runner (default)

@@ -36,7 +36,7 @@ flowchart LR
 
 | Workflow | Cuándo | Qué hace |
 |---|---|---|
-| `firebase.yml` «Tests and deploy» | Push a `main` (y a mano) | Tests de las funciones y `firebase deploy` de hosting (las dos webs + `/api-docs/`), funciones, reglas e índices. La subida a Google Play solo cuando se lanza a mano. |
+| `firebase.yml` «Deploy · Production» | Push a `main` (y a mano) | `firebase deploy` (sin tests hasta producción) de hosting (las dos webs + `/api-docs/`), funciones, reglas e índices. La subida a Google Play solo cuando se lanza a mano. |
 | `ui-tests.yml` | A mano | Tests instrumentados en emulador de GitHub o Firebase Test Lab |
 | `screenshots.yml` | A mano | Tests de capturas (Roborazzi): verificar o grabar |
 | `versions.yml` | A mano | Muestra la versión de `main` frente a la publicada |

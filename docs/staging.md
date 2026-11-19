@@ -30,7 +30,7 @@ production data.
 
 ## Deploy and seed
 
-- Actions > Deploy staging > Run workflow, action `deploy`: publishes main on staging. The functions read
+- Actions > Deploy · Staging > Run workflow, action `deploy`: publishes main on staging. The functions read
   `.env.<project>`, written by the workflow: invitation links to the staging web and photos in the staging bucket.
   The staging web apps send no Analytics and no App Check token to production.
 - The same workflow, action `seed`: countries, the admin account of `STAGING_ADMIN_EMAIL` (a new one gets the

@@ -10,9 +10,9 @@ The benchmark measures production as a guest sees it, so a slower deploy shows u
 **Paused since 2026-11-13:** it only runs by hand. To turn it back on, uncomment `workflow_run` and `schedule` in
 the workflow.
 
-The workflow **Benchmark** (`.github/workflows/benchmark.yml`) runs:
+The workflow **Check · Production benchmark** (`.github/workflows/benchmark.yml`) runs:
 
-- after each successful run of **Tests and deploy** on `main`;
+- after each successful run of **Deploy · Production** on `main`;
 - every day at 05:00 UTC;
 - by hand: Actions › Benchmark › Run workflow. You can choose the web app, the tournament, and the number of calls
   and visits.

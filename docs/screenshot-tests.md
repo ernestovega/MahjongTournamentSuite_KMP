@@ -54,7 +54,7 @@ has the actual image (`*_actual.png`) and the comparison (`*_compare.png`).
 
 ## GitHub Actions
 
-`.github/workflows/screenshots.yml` runs by hand (Actions > Screenshot tests > Run workflow), with `verify` or
+`.github/workflows/screenshots.yml` runs by hand (Actions > Test · Screenshots > Run workflow), with `verify` or
 `record`. It uploads the images as an artifact. The trigger on the pull requests to main is commented out until the
 release.
 

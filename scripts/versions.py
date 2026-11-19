@@ -10,7 +10,7 @@ The versions live in gradle/libs.versions.toml. See docs/versioning.md.
 
 `status` puts the version of each product on main next to the published one: the web and the backend as the site
 answers them, and the Android app on each Google Play track. Google Play needs credentials: in GitHub Actions run
-Actions > Versions > Run workflow; on a computer, sign in with `gcloud auth application-default login` and install
+Actions > Check · Published versions > Run workflow; on a computer, sign in with `gcloud auth application-default login` and install
 google-auth and google-api-python-client. Without them, `status` still shows the web and the backend.
 
 `check` lists the files that the branch changed since it left the base branch, finds the products
@@ -261,7 +261,7 @@ def published_android(latest_code: str) -> list[str]:
         import play
         tracks = play.tracks(play.publisher(), play.PACKAGES[ADMIN])
     except ImportError:
-        return ["needs google-auth and google-api-python-client (or run Actions > Versions)"]
+        return ["needs google-auth and google-api-python-client (or run Actions > Check · Published versions)"]
     except Exception as error:  # noqa: BLE001
         return [f"could not read Google Play ({type(error).__name__}: {error})"]
     order = list(TRACK_LABELS)

@@ -1,12 +1,12 @@
 # Measures the response times of the public API and the load times of the screens of the player web app, in
 # production. It runs after each deploy of main, every morning, and by hand. It fails when a time is over its budget
 # (benchmarks/budgets.json) or clearly slower than the recent runs, twice in a row. See docs/benchmark.md.
-name: Benchmark
+name: Check · Production benchmark
 
 on:
   # Paused (Ernesto, 2026-11-13): it only runs by hand. To turn it back on, uncomment the two triggers below.
   # workflow_run:
-  #   workflows: ["Tests and deploy"]
+  #   workflows: ["Deploy · Production"]
   #   types: [completed]
   #   branches: [main]
   # schedule:
@@ -47,9 +47,9 @@ jobs:
       BENCH_API_BASE: ${{ inputs.url || 'https://mts.mahjongmadrid.com' }}/api
       TOURNAMENT: ${{ inputs.tournament || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -96,7 +96,7 @@ jobs:
 
       - name: Keep the results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: |

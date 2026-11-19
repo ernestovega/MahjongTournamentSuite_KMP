@@ -7,7 +7,7 @@ spectators that only read. The plan of the day and its targets are in the rehear
 ## Who plays each slot
 
 The account of slot N is the local part of `STAGING_ADMIN_EMAIL` plus `+mts-jNN` (slot 7 is `<local>+mts-j07@<domain>`).
-Ernesto creates these accounts with the invitations of the tournament. Then `Rehearsal > passwords` gives them the
+Ernesto creates these accounts with the invitations of the tournament. Then `Test · Game day · Participating > passwords` gives them the
 rehearsal password, so the bots and emulators can sign in.
 
 | Slots | Who | Where |
@@ -31,7 +31,7 @@ To read it on the Mac:
 gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts---staging
 ```
 
-## The workflow (Actions > Rehearsal)
+## The workflow (Actions > Test · Game day · Participating)
 
 - `calibrate`: creates the 16 calibration accounts (`+mts-cal01..16`, EMA 99980001-16) and the bot admin
   (`+mts-botadmin`), plays a tournament of 16 bots in 2 short rounds and checks it. The tournament stays in staging, with the time of the run in its name. About 25 minutes.
