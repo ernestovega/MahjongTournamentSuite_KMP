@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,8 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsOutlinedTag
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 
 /**
  * A page that shows every token of the design system: colors, text styles, spacing and shapes.
@@ -41,7 +42,7 @@ fun MtsCatalog(modifier: Modifier = Modifier) {
     val colors = MtsTheme.colors
     Surface(modifier = modifier, color = scheme.background) {
         Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()).padding(MtsTheme.layout.screenGutter),
+            modifier = Modifier.verticalScrollWithIndicators(rememberScrollState(), MtsScrollbar.Overlay).padding(MtsTheme.layout.screenGutter),
             verticalArrangement = Arrangement.spacedBy(MtsTheme.layout.sectionGap),
         ) {
             CatalogTitle("Window: ${MtsTheme.windowWidth}")

@@ -52,6 +52,7 @@ In `designsystem/.../presentation/components`:
 | `MtsOutlinedTag` | A tag with a thin border, like the status of a tournament or the place of the player. |
 | `MtsTintedChip` | A pill tinted with an accent, with an icon and a text, like the way of winning a hand. |
 | `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
+| `Modifier.scrollIndicators`, `verticalScrollWithIndicators`, `horizontalScrollWithIndicators` | The fading edges and the always visible scrollbar of every list (see below). |
 
 `MtsCatalog` (same folder as the tokens) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
 **DEV > Design system** in the top bar of the tournament list (`DesignSystemRoute`).
@@ -63,6 +64,26 @@ In `designsystem/.../presentation/components`:
 - Paddings and gaps use the spacing scale or the layout tokens. Sizes of things (icons, widths) can stay in dp.
 - A value with a sign uses `signedText` and `signedColor`, not its own `if (value > 0) "+$value"`.
 - Buttons are `Debounced*` or `Focused*` (`ButtonConventionTest`).
+- Every list, column or row that scrolls (lazy or not, vertical or horizontal, also a strip of chips) has its scroll
+  indicators: `Modifier.scrollIndicators(state)` before the scroll, or `verticalScrollWithIndicators()` /
+  `horizontalScrollWithIndicators()` instead of `verticalScroll()` / `horizontalScroll()`.
+
+### Scroll indicators (fading edges and scrollbar)
+
+Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while scrolling):
+
+- A **fading edge**: a soft shadow on each edge that still has content behind it. It shows also when the edge falls in
+  the gap between two items, so a list cut there still looks like a list. It grows with the first pixels of the scroll.
+- A **scrollbar that is always visible** while the content can scroll, on every platform (also Android and web). The
+  thumb can be dragged (with a finger too) and a tap in the strip takes it there.
+- Where the scrollbar goes (`MtsScrollbar`):
+  - `Outside` (default): its own 10 dp strip beside the list (under a horizontal one), outside the content. The strip
+    comes the first time the content can scroll (a list that fits keeps all its width) and then stays, so content that
+    gets shorter when narrower cannot make the layout go back and forth.
+  - `Overlay`: on the edge of the container, over its own margin, for a screen or a list whose content already keeps
+    a margin of 10 dp or more on the end (the player lists, the statistics, `ScreenColumn`). Both margins stay equal.
+  - `None`: only the shadows, for a list that has its own `DraggableScrollbar` (the tables of the player app with the
+    round bubble, the tournament table of the admin app).
 
 `DesignTokenRatchetTest` (ui, jvmTest) counts the raw colors, raw corner shapes and paddings off the scale. It fails
 when a count goes up. When a change lowers a count, lower its baseline in the same commit.

@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
@@ -569,7 +571,8 @@ fun TournamentsScreen(navController: NavHostController) {
                             Box(Modifier.weight(1f)) {
                                 LazyColumn(
                                     state = listState,
-                                    modifier = Modifier.fillMaxSize(),
+                                    // The draggable scrollbar below is the scrollbar of this list.
+                                    modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.None),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                     contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                                 ) {
@@ -1216,7 +1219,8 @@ internal fun TableList(
             // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
             LazyColumn(
                 state = state,
-                modifier = Modifier.fillMaxSize(),
+                // The draggable scrollbar of the tables is the scrollbar of this list.
+                modifier = Modifier.fillMaxSize().scrollIndicators(state, scrollbar = MtsScrollbar.None),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             ) {
@@ -1595,6 +1599,7 @@ private fun RankingRows(
         tabs()
         LazyColumn(
             state = listState,
+            modifier = Modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         ) {

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -79,6 +80,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -445,7 +447,7 @@ private fun RoundStrip(
             val width = constraints.maxWidth + 2 * extra
             val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
             layout(constraints.maxWidth, placeable.height) { placeable.place(-extra, 0) }
-        },
+        }.scrollIndicators(listState, Orientation.Horizontal),
     ) {
         items((1..numRounds.coerceAtLeast(1)).toList()) { round ->
             FilterChip(

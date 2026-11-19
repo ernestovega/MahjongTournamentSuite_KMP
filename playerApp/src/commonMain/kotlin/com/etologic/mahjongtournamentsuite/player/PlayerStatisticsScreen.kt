@@ -1,12 +1,8 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollableTabRow
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PersonSearch
@@ -27,23 +22,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
@@ -53,9 +49,14 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChosenPlayerBar
 import com.etologic.mahjongtournamentsuite.presentation.components.ChosenTournamentBar
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollableTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
@@ -65,18 +66,19 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.map
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.action_cancel
 import mahjongtournamentsuite.playerapp.generated.resources.action_change
@@ -96,8 +98,6 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
-import com.etologic.mahjongtournamentsuite.domain.model.byRound
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 
 /**
  * Tells the screen that the tab is loading. The screen shows its progress bar under the top bar while this is true.
@@ -326,7 +326,7 @@ fun TournamentStatisticsTab(
             edge = MtsTheme.spacing.lg,
         )
         Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
+            Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(rememberPersistentScrollState("statistics-TOURNAMENT"), MtsScrollbar.Overlay)
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
         ) {
@@ -360,7 +360,7 @@ fun PersonStatisticsTab(
     val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("person-statistics-$emaId"))
+        Modifier.fillMaxSize().verticalScrollWithIndicators(rememberPersistentScrollState("person-statistics-$emaId"), MtsScrollbar.Overlay)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
@@ -398,7 +398,7 @@ fun PlayerSlotStatisticsTab(
     val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("player-statistics-$slotId"))
+        Modifier.fillMaxSize().verticalScrollWithIndicators(rememberPersistentScrollState("player-statistics-$slotId"), MtsScrollbar.Overlay)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
@@ -563,7 +563,7 @@ private fun ChosenPlayerStatistics(
                 }
             }
         }
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(bottom = 12.dp)) {
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(scroll).padding(bottom = 12.dp)) {
             message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (emaId == null) {
                 AppEmptyState(

@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -135,7 +137,12 @@ internal fun MissingEmailsDialog(
             text = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(Res.string.these_players_have_no_email))
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val emailsState = rememberLazyListState()
+                    LazyColumn(
+                        Modifier.fillMaxWidth().heightIn(max = 360.dp).scrollIndicators(emailsState),
+                        state = emailsState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         items(players, key = { it.id }) { slot ->
                             val value = emails[slot.id].orEmpty()
                             OutlinedTextField(

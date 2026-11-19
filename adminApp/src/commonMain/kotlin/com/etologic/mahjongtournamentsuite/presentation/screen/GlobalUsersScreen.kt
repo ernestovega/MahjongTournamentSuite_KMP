@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Search
@@ -100,6 +99,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnt
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -856,7 +856,7 @@ private fun ManageUserDialog(
             title = { MtsDialogTitle(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
             text = {
                 Column(
-                    modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
+                    modifier = Modifier.heightIn(max = 560.dp).verticalScrollWithIndicators(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     // Only admins set the photo of another account. Editors do not see this part.

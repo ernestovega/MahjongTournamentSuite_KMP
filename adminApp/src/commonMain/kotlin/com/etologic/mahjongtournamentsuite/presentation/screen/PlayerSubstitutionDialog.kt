@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
@@ -33,6 +31,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -82,7 +82,7 @@ fun PlayerSubstitutionDialog(
             title = { MtsDialogTitle(stringResource(Res.string.substitution), subtitle = playerName) },
             // The same gap between the sections, and the same height for every radio and checkbox line.
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
+                Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
                     Text(
                         stringResource(Res.string.substitution_explanation),
                         Modifier.fillMaxWidth(),
@@ -108,7 +108,7 @@ fun PlayerSubstitutionDialog(
                     }
                     SubstitutionSection(stringResource(Res.string.first_round_of_the_substitute)) {
                         Row(
-                            Modifier.align(Alignment.CenterHorizontally).horizontalScroll(rememberScrollState()),
+                            Modifier.align(Alignment.CenterHorizontally).horizontalScrollWithIndicators(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             rounds.forEach { round ->

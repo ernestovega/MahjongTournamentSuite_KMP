@@ -1,59 +1,33 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.Text
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
-@Composable
-expect fun PlatformVerticalScrollbar(
-    listState: LazyListState,
-    modifier: Modifier = Modifier,
-)
-
-@Composable
-expect fun PlatformVerticalScrollbar(
-    scrollState: ScrollState,
-    modifier: Modifier = Modifier,
-)
-
-@Composable
-expect fun PlatformHorizontalScrollbar(
-    scrollState: ScrollState,
-    modifier: Modifier = Modifier,
-)
-
-expect val PlatformScrollbarThickness: Dp
-
 /**
- * Displays a vertical lazy list with a scrollbar that floats over the trailing edge.
- * The list uses the full width. The scrollbar takes no space from the rows.
- * The scrollbar must not fill the width because it would intercept row pointer input.
+ * A vertical lazy list with the fading edges and an always visible scrollbar beside it, outside the rows
+ * ([scrollIndicators]).
  */
 @Composable
 fun LazyColumnWithScrollbar(
@@ -62,31 +36,28 @@ fun LazyColumnWithScrollbar(
     contentPadding: PaddingValues = PaddingValues.Zero,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    scrollbar: MtsScrollbar = MtsScrollbar.Outside,
     content: LazyListScope.() -> Unit,
 ) {
     Box(modifier = modifier) {
         LazyColumn(
             state = state,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().scrollIndicators(state, scrollbar = scrollbar),
             contentPadding = contentPadding,
             verticalArrangement = verticalArrangement,
             horizontalAlignment = horizontalAlignment,
             content = content,
         )
-        PlatformVerticalScrollbar(
-            listState = state,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .width(PlatformScrollbarThickness),
-        )
     }
 }
 
+/** A scrollable column with the fading edges and an always visible scrollbar beside it ([scrollIndicators]). */
 @Composable
 fun ScrollableColumnWithScrollbar(
     state: ScrollState,
     modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    scrollbar: MtsScrollbar = MtsScrollbar.Outside,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // A fixed height from the caller reaches the column through the min constraints. A height that is only a maximum
@@ -95,19 +66,11 @@ fun ScrollableColumnWithScrollbar(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(end = PlatformScrollbarThickness)
+                .scrollIndicators(state, scrollbar = scrollbar)
                 .verticalScroll(state),
+            verticalArrangement = verticalArrangement,
             content = content,
         )
-        // The scrollbar takes the size of the box and never sets it.
-        Box(Modifier.matchParentSize(), contentAlignment = Alignment.CenterEnd) {
-            PlatformVerticalScrollbar(
-                scrollState = state,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(PlatformScrollbarThickness),
-            )
-        }
     }
 }
 
@@ -116,54 +79,15 @@ fun ScrollableColumnWithScrollbar(
 private fun PlatformScrollbarsPreview() {
     MtsTheme(useDarkTheme = false) {
         val listState = rememberLazyListState()
-        val scrollState = rememberScrollState()
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(end = PlatformScrollbarThickness, bottom = PlatformScrollbarThickness),
-            ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.height(220.dp),
-                ) {
-                    items((1..40).toList()) { index ->
-                        Text(
-                            text = "Row $index",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(28.dp),
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(96.dp)
-                        .horizontalScroll(scrollState),
-                ) {
-                    Text(
-                        text = "This is a horizontally scrollable preview area that is intentionally wider than the viewport.",
-                    )
+        Column {
+            LazyColumnWithScrollbar(state = listState, modifier = Modifier.height(220.dp)) {
+                items((1..40).toList()) { index ->
+                    Text(text = "Row $index", modifier = Modifier.fillMaxWidth().height(28.dp))
                 }
             }
-
-            PlatformVerticalScrollbar(
-                listState = listState,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxHeight()
-                    .width(PlatformScrollbarThickness),
-            )
-            PlatformHorizontalScrollbar(
-                scrollState = scrollState,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .height(PlatformScrollbarThickness),
-            )
+            ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.height(96.dp)) {
+                repeat(10) { Text("Line $it") }
+            }
         }
     }
 }

@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -91,9 +90,9 @@ internal fun scrollbarTargetIndex(fraction: Float, totalItems: Int, visibleItems
 }
 
 /**
- * A scrollbar for every platform that shows only while the list scrolls or the person drags it, and fades out a
- * moment after. The thumb is big enough for a finger: a drag on it, or anywhere in its strip, moves the list fast,
- * also while it is hidden. A tap in the strip jumps there, only while it shows.
+ * A scrollbar for every platform that is always visible while the list can scroll. The thumb is big enough for a
+ * finger: a drag on it, or anywhere in its strip, moves the list fast. A tap in the strip jumps there.
+ * The list keeps its fading edges with `Modifier.scrollIndicators(state, scrollbar = MtsScrollbar.None)`.
  * While the person drags, [label] can show a text next to the thumb, for example the round of the first visible item.
  * Put it in the same box as the list, aligned to the end. It takes the full height and a narrow strip.
  */
@@ -134,9 +133,6 @@ fun DraggableScrollbar(
     val density = LocalDensity.current
     val colors = MaterialTheme.colorScheme
     val thumbWidth by animateDpAsState(if (dragging) 10.dp else 6.dp)
-    val shown = rememberScrollbarShown(state.isScrollInProgress, dragging)
-    val thumbAlpha by scrollbarAlpha(shown)
-    val currentShown by rememberUpdatedState(shown)
     BoxWithConstraints(modifier.fillMaxHeight().width(TouchWidth)) {
         val trackPx = with(density) { maxHeight.toPx() }
         val minThumbPx = with(density) { MinThumbHeight.toPx() }
@@ -158,8 +154,7 @@ fun DraggableScrollbar(
             Modifier
                 .matchParentSize()
                 .pointerInput(state) {
-                    // A tap on a hidden scrollbar goes nowhere: the person did not see it.
-                    detectTapGestures { offset -> if (currentShown) target = fractionAt(offset.y) }
+                    detectTapGestures { offset -> target = fractionAt(offset.y) }
                 }
                 .pointerInput(state) {
                     try {
@@ -200,7 +195,6 @@ fun DraggableScrollbar(
                 .padding(end = 4.dp)
                 .width(thumbWidth)
                 .height(with(density) { thumbPx.toDp() })
-                .alpha(thumbAlpha)
                 .clip(MtsTheme.shapes.pill)
                 .background(if (dragging) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.55f))
                 .testTag(DRAGGABLE_SCROLLBAR_TAG),

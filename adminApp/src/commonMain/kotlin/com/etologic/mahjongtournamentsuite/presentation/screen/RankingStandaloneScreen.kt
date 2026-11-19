@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
@@ -78,7 +76,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
@@ -540,7 +541,7 @@ private fun RankingControls(
         Column(
             modifier = modifier
                 .alpha(if (playing) 0.12f else 1f)
-                .verticalScroll(rememberScrollState())
+                .verticalScrollWithIndicators(rememberScrollState())
                 .appFocusGroup(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
@@ -578,7 +579,7 @@ private fun RankingPage(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = if (compact) 0.dp else RankingHorizontalPadding)
-                .then(if (compact) Modifier else Modifier.horizontalScroll(rememberScrollState())),
+                .then(if (compact) Modifier else Modifier.horizontalScrollWithIndicators(rememberScrollState())),
             contentAlignment = Alignment.TopCenter,
         ) {
             val headerHeight = 28.dp
@@ -631,7 +632,8 @@ private fun RankingPage(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .scrollIndicators(listState),
                 ) {
                     itemsIndexed(page.rows, key = { _, row -> row.key }) { index, row ->
                         DataTableRow(

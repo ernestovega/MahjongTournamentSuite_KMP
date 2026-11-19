@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -75,7 +74,7 @@ private fun RoundCanvas(
         var active by remember { mutableStateOf(false) }
         val select by rememberUpdatedState(onSelect)
         Canvas(
-            Modifier.horizontalScroll(scroll).width(width).height(height)
+            Modifier.horizontalScrollWithIndicators(scroll).width(width).height(height)
                 .semantics { if (description != null) contentDescription = description }
                 .pointerInput(rounds) {
                     awaitPointerEventScope {

@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -347,7 +346,7 @@ private fun PlayerHandsView(
     val scroll = rememberScrollState()
     // Like the charts, the row starts at the end, where the last rounds are.
     LaunchedEffect(rounds.size, scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
-    Row(Modifier.fillMaxWidth().horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+    Row(Modifier.fillMaxWidth().horizontalScrollWithIndicators(scroll), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
         rounds.forEachIndexed { index, round ->
             val highlight = if (index == selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent
             Column(

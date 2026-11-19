@@ -192,11 +192,10 @@ Apply these rules to every new or changed dialog:
 
 ## Scrollable Lists And Pointer Input
 
-- Use `LazyColumnWithScrollbar` for a vertical lazy list that needs a visible scrollbar.
-- Use `ScrollableColumnWithScrollbar` for other vertical content that needs a visible scrollbar.
-- A vertical scrollbar must fill only the height. Use `fillMaxHeight()` and a fixed width.
-- A horizontal scrollbar must fill only the width. Use `fillMaxWidth()` and a fixed height.
-- Never use `fillMaxSize()` on a scrollbar. It can cover the content and intercept pointer input.
+- Every scrolling list, column or row has its fading edges and always visible scrollbar: `Modifier.scrollIndicators(state)`
+  on a lazy list, `verticalScrollWithIndicators()` / `horizontalScrollWithIndicators()` instead of `verticalScroll()` /
+  `horizontalScroll()` (see docs/design-system.md, "Scroll indicators").
+- `LazyColumnWithScrollbar` and `ScrollableColumnWithScrollbar` (ui) already include them.
 - Keep each row's hover and click target within that row's bounds.
 - Test list changes with mouse hover, mouse click, wheel scrolling, and keyboard navigation.
 - For desktop regression tests, use coordinate-based mouse input. A semantics click can bypass pointer interception.

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /** One line in a [PlayerLinesCard]: a name (a player or an account) and the lines under it. */
@@ -45,8 +48,10 @@ internal fun PlayerLinesCard(
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
+        val listState = rememberLazyListState()
         LazyColumn(
-            Modifier.fillMaxWidth().heightIn(max = maxHeight),
+            Modifier.fillMaxWidth().heightIn(max = maxHeight).scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
+            state = listState,
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {

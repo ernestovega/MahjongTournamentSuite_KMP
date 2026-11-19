@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -36,8 +35,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.forRound
@@ -45,8 +44,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
-import kotlin.math.ceil
-import kotlin.math.roundToInt
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_discard
@@ -55,8 +52,8 @@ import mahjongtournamentsuite.ui.generated.resources.leader_best_hand_value
 import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
-import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.open_player_statistics
+import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
 import mahjongtournamentsuite.ui.generated.resources.rounds_title
@@ -84,6 +81,8 @@ import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 /**
  * The statistics of one tournament, or of all tournaments, in the same cards as the player statistics.
@@ -489,7 +488,7 @@ internal fun RoundChipsRow(modifier: Modifier, bleed: Dp, content: @Composable R
         }.fillMaxWidth(),
     ) {
         Row(
-            Modifier.horizontalScroll(rememberScrollState()).widthIn(min = maxWidth).padding(horizontal = bleed),
+            Modifier.horizontalScrollWithIndicators(rememberScrollState()).widthIn(min = maxWidth).padding(horizontal = bleed),
             horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
             content = content,
