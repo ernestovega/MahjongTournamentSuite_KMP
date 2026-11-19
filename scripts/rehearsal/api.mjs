@@ -40,7 +40,8 @@ export class Metrics {
         statuses: entry.statuses,
         p50: percentile(entry.ms, 50),
         p95: percentile(entry.ms, 95),
-        max: Math.max(0, ...entry.ms),
+        // A spread of a long list overflows the stack: the medium scenario makes hundreds of thousands of calls.
+        max: entry.ms.reduce((max, ms) => Math.max(max, ms), 0),
       };
     }
     return { labels, refusals: Object.fromEntries(this.refusals), events: this.events };

@@ -355,7 +355,8 @@ export function verdicts(check, botReports, integrity) {
   add(server5xx === 0 && network === 0, `No server error (${server5xx} answers 5xx, ${network} network failures).`);
   add(tooMany === 0, `No request refused for too many calls (${tooMany} answers 429).`);
   add(p95 != null && p95 < 1_500, `Saving a hand takes p95 ${p95 ?? "-"} ms (target under 1500 ms).`);
-  if (delays.length > 0) add(Math.max(...delays) < 20_000, `A hand reaches the other phones of the table in p95 ${Math.max(...delays)} ms (target under 20 s).`);
+  const slowest = delays.reduce((max, delay) => Math.max(max, delay), 0);
+  if (delays.length > 0) add(slowest < 20_000, `A hand reaches the other phones of the table in p95 ${slowest} ms (target under 20 s).`);
   add(check.openTables.length === 0, `Every table is closed (${check.openTables.length} open${check.openTables.length ? `: ${check.openTables.join(", ")}` : ""}).`);
   if (check.standings != null) {
     const s = check.standings;
