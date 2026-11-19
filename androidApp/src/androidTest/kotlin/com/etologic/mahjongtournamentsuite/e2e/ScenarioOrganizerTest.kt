@@ -710,8 +710,11 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             } else {
                 // The Back of the top bar by its click action: a tap is injected into the window with the focus,
                 // which is not always the app after the Timer window closes.
+                // On a tablet the Back shows its label, so it is found by its text or its description. It is off while
+                // the screen loads.
                 val clicked = runCatching {
-                    c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst()
+                    c.waitUntil(15_000) { c.onAllNodes(hasLabel("Back") and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+                    c.onAllNodes(hasLabel("Back") and hasClickAction() and isEnabled()).onFirst()
                         .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
                 }
                 if (clicked.isFailure) log("the Back of the top bar did not answer: ${clicked.exceptionOrNull()?.message?.take(80)}")
