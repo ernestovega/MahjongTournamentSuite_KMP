@@ -324,7 +324,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         if (manual.isNotEmpty()) {
             c.waitForText("Emails are missing", timeoutMs = 60_000)
             manual.forEach { slot ->
-                c.onAllNodes(hasSetTextAction() and hasText("${slot.slot} · ", substring = true)).onLast()
+                val field = hasSetTextAction() and hasText("${slot.slot} · ", substring = true)
+                // The list of the dialog is lazy: a field further down exists once the list scrolls to it.
+                if (c.onAllNodes(field).fetchSemanticsNodes().isEmpty()) {
+                    runCatching { c.onAllNodes(hasScrollToNodeAction()).onLast().performScrollToNode(field) }
+                    c.waitForIdle()
+                }
+                c.onAllNodes(field).onLast()
                     .apply { runCatching { performScrollTo() } }.performTextInput(slot.email)
             }
             c.clickLastButton("Send (${manual.size})")
