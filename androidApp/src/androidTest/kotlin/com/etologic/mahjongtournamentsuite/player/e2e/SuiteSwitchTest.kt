@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
 import org.junit.Test
 
@@ -29,7 +33,9 @@ class SuiteSwitchTest : PlayerE2eTest() {
         start(E2eAccounts.ADMIN)
         // On a phone the buttons at the start of the top bar (Profile, Management) are in the first menu.
         c.clickButton("Menu")
-        c.clickButton("Management")
+        // The hidden top bar button is also in the tree with the same label. The item of the open menu is the last one.
+        c.waitForText("Management")
+        c.onAllNodes(hasText("Management") and hasClickAction()).onLast().performClick()
         c.waitForText(ADMIN_LIST)
         // Back on the first screen of the admin part returns to the player part.
         Espresso.pressBack()
@@ -42,7 +48,9 @@ class SuiteSwitchTest : PlayerE2eTest() {
         start(E2eAccounts.ADMIN)
         // On a phone the buttons at the start of the top bar (Profile, Management) are in the first menu.
         c.clickButton("Menu")
-        c.clickButton("Management")
+        // The hidden top bar button is also in the tree with the same label. The item of the open menu is the last one.
+        c.waitForText("Management")
+        c.onAllNodes(hasText("Management") and hasClickAction()).onLast().performClick()
         c.waitForText(ADMIN_LIST)
         // On a phone the buttons at the start of the top bar are in the first menu.
         c.clickButton("Menu")
