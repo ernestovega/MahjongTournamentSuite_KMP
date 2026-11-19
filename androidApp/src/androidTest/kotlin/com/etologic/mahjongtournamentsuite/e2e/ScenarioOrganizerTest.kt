@@ -647,6 +647,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Pause timer")
         val clocks = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks").json().getJSONArray("roundClocks")
         check((0 until clocks.length()).any { clocks.getJSONObject(it).getInt("roundId") == round }) { "Round $round has no clock" }
+        // The organizer closes the Timer window. Its back key is not reliable on the emulator: it can leave the Timer
+        // alive behind the app, where its texts still show to the test.
+        closeTheTimerWindow()
         backToTheTournament()
     }
 
@@ -660,12 +663,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             // The tree of a window in the background is still readable, but its back keys go to the window in front.
             bringTheAppToTheFront()
             if (c.isOnScreen("Players & results")) return
+            log("back to the tournament, attempt ${it + 1}: resumed ${resumedActivities()}, ${timerActivities().size} timers")
             shell("input keyevent KEYCODE_BACK")
             runCatching { c.waitForText("Players & results", timeoutMs = 5_000) }
             if (c.isOnScreen("Players & results")) return
             // The Timer window has no Back of its own: the Back under it would leave the tournament.
             // When its back key is lost, the test closes the Timer as its back key would.
-            if (c.isOnScreen("Pause timer") || c.isOnScreen("Start timer")) {
+            if (timerActivities().isNotEmpty()) {
                 closeTheTimerWindow()
             } else {
                 runCatching { c.onAllNodes(hasContentDescription("Back") and hasClickAction()).onFirst().performClick() }
@@ -703,16 +707,28 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         runCatching { c.waitForIdle() }
     }
 
+    /** The Timer activities that are alive, in front or behind the app. */
+    private fun timerActivities(): List<android.app.Activity> {
+        var found = emptyList<android.app.Activity>()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val monitor = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+            found = listOf(
+                androidx.test.runner.lifecycle.Stage.RESUMED,
+                androidx.test.runner.lifecycle.Stage.PAUSED,
+                androidx.test.runner.lifecycle.Stage.STOPPED,
+            ).flatMap { monitor.getActivitiesInStage(it) }.filter { it.javaClass.simpleName == "TimerActivity" }
+        }
+        return found
+    }
+
     /** Finishes the Timer activity, which is what its back key does. */
     private fun closeTheTimerWindow() {
-        val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-        instrumentation.runOnMainSync {
-            androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
-                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
-                .filter { it.javaClass.simpleName == "TimerActivity" }
-                .forEach { it.finish() }
-        }
-        log("the back key did not close the Timer, so the test closed it")
+        val timers = timerActivities()
+        if (timers.isEmpty()) return
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync { timers.forEach { it.finish() } }
+        val until = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < until && timerActivities().isNotEmpty()) Thread.sleep(500)
+        log("the test closed the Timer window (${timers.size})")
         Thread.sleep(1_000)
         bringTheAppToTheFront()
     }
