@@ -86,6 +86,10 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
     gets shorter when narrower cannot make the layout go back and forth.
   - `Overlay`: on the edge of the container, over its own margin, for a screen or a list whose content already keeps
     a margin of 10 dp or more on the end (the player lists, the statistics, `ScreenColumn`). Both margins stay equal.
+  - `Margin`: like `Outside`, but the strip goes past the end of the list, into the margin of the screen, so the list
+    keeps the width of the search field and filters above it and looks the same on both sides. For the single list of a
+    screen whose margin is 10 dp or more and does not clip (admin Players, Teams, Users, App errors, phone Tournaments).
+    The admin desktop Tournaments table moves its `DraggableScrollbar` into the margin the same way.
   - `None`: only the shadows, for a list that has its own `DraggableScrollbar` (the tables of the player app with the
     round bubble, the tournament table of the admin app).
 

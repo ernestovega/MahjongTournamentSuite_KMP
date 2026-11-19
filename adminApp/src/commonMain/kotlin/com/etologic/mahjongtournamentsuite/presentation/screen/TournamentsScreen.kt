@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -121,7 +122,6 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -418,7 +418,7 @@ fun TournamentsScreen(
                     val listState = rememberPersistentLazyListState("tournaments")
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize().scrollIndicators(listState),
+                        modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Margin),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 32.dp),
                     ) {
@@ -475,7 +475,7 @@ fun TournamentsScreen(
                                         val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
                                         val needsHorizontalScroll = baseMinWidth > maxWidth
 
-                                        val headerBackground = CardDefaults.cardColors().containerColor
+                                        val headerBackground = MaterialTheme.colorScheme.background
                                         val tableContent: @Composable (Modifier) -> Unit = { modifier ->
                                             LazyColumn(
                                                 state = listState,
@@ -541,21 +541,22 @@ fun TournamentsScreen(
                                                     tableContent(Modifier.width(baseMinWidth))
                                                 }
 
-                                                // The same draggable scrollbar on every platform, also for a finger.
+                                                // The same draggable scrollbar on every platform, also for a finger. It goes in the
+                                                // margin of the screen, after the table, so both sides of the table look the same.
                                                 DraggableScrollbar(
                                                     state = listState,
-                                                    modifier = Modifier.align(Alignment.CenterEnd),
+                                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = TableScrollbarBleed),
                                                 )
                                             }
                                         } else {
                                             Box(modifier = Modifier.fillMaxWidth()) {
-                                                // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
-                                                tableContent(Modifier.fillMaxWidth().padding(end = MtsTheme.spacing.lg))
+                                                tableContent(Modifier.fillMaxWidth())
 
-                                                // The same draggable scrollbar on every platform, also for a finger.
+                                                // The same draggable scrollbar on every platform, also for a finger. It goes in the
+                                                // margin of the screen, after the table, so both sides of the table look the same.
                                                 DraggableScrollbar(
                                                     state = listState,
-                                                    modifier = Modifier.align(Alignment.CenterEnd),
+                                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = TableScrollbarBleed),
                                                 )
                                             }
                                         }
@@ -1089,3 +1090,6 @@ private fun UserProfile.toUiName(): String {
 
     return rawName.ifBlank { email }
 }
+
+/** How far the scrollbar of the table goes past its end, into the 24 dp margin of the screen: the width of its strip. */
+private val TableScrollbarBleed = 20.dp

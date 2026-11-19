@@ -100,6 +100,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -1158,6 +1159,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     DataTableDivider()
                     LazyColumnWithScrollbar(
                         state = assignmentsListState,
+                        scrollbar = MtsScrollbar.Margin,
                         modifier = Modifier.weight(1f, fill = false),
                     ) {
                         items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
