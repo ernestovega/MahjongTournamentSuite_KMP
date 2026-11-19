@@ -64,6 +64,9 @@ async function freePlayers(api, token) {
     // The test players of the registry are not people of a tournament: the numbers from 00 (the Google Play
     // reviewers have 00000000) and the names with "test", as the seeds leave them out.
     && !player.emaId.startsWith("00")
+    // An EMA number has 8 digits. The registry keeps a few with a lost leading zero (8010027): the import pads
+    // the file to 8 digits and then does not find them, so a file with them would be refused.
+    && /^\d{8}$/.test(player.emaId)
     && !/test/i.test(`${player.firstName} ${player.lastName}`));
 }
 
