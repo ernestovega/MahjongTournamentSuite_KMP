@@ -143,6 +143,15 @@ export async function makePlan(args) {
   // new players take their place. A new player needs an EMA player without an account, and the registry of staging
   // has a few hundred: players who come back keep a large scenario at about 70 of them.
   const kinds = Array.from({ length: size.players }, (_, index) => slotKind(index + 1));
+  // When the free EMA players run short, players of earlier game days also take slots of new players, from the last slot
+  // up, while a few new players (1 in 20, at least 2) still get an invitation.
+  const minimumNew = Math.max(2, Math.ceil(size.players / 20));
+  for (let index = kinds.length - 1; index >= 0; index -= 1) {
+    const backWanted = kinds.filter((kind) => kind === "returning").length;
+    const newWanted = kinds.length - Math.min(backWanted, earlier.length);
+    if (newWanted <= all.length || backWanted >= earlier.length || kinds.length - backWanted <= minimumNew) break;
+    if (kinds[index] !== "returning") kinds[index] = "returning";
+  }
   const back = shuffle(earlier).slice(0, kinds.filter((kind) => kind === "returning").length);
   const newCount = size.players - back.length;
   const guests = shuffle(all.filter(isGuest)).slice(0, Math.min(2, newCount));

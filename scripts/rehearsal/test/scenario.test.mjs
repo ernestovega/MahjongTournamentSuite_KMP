@@ -138,3 +138,15 @@ test("a plan seats the players of earlier game days with their own email, and fe
   assert.equal(new Set(plan.slots.map((slot) => slot.emaId)).size, 240);
   await assert.rejects(planFor({ scenario: "large" }, players.slice(0, 210), users), /free EMA players, and 200 players of earlier game days/);
 });
+
+test("with few free players, players of earlier game days also take slots of new players, and a few new ones stay", async () => {
+  const players = registry(600);
+  const users = players.slice(0, 540).map((player, index) => ({
+    emaId: player.emaId, email: `mailbox+gd1118old${index % 10}-s${String(index + 1).padStart(3, "0")}@example.test`,
+  }));
+  // 60 free players: a large scenario would want 72 of them (1 in 4 new, 1 in 20 with an account made in Users).
+  const { plan } = await planFor({ scenario: "large" }, players, users);
+  const fresh = plan.slots.filter((slot) => !slot.returning);
+  assert.ok(fresh.length <= 60 && fresh.length >= 12, `${fresh.length} new players`);
+  assert.equal(new Set(plan.slots.map((slot) => slot.emaId)).size, 240);
+});
