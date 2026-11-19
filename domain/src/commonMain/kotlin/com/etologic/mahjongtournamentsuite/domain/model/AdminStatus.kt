@@ -37,7 +37,6 @@ data class AdminStatus(
     val canEditEmaPlayers: Boolean get() = has(Permission.EMA_EDIT)
     val canDeleteEmaPlayers: Boolean get() = has(Permission.EMA_DELETE)
     val canChangeTournamentCountry: Boolean get() = has(Permission.TOURNAMENTS_CHANGE_COUNTRY)
-    val canSeeOverview: Boolean get() = has(Permission.STATISTICS_OVERVIEW)
 
     /** The DEV menu: the activity of the whole app, the errors and the design system. */
     val canUseDevMenu: Boolean get() = has(Permission.DEV_ERRORS)

@@ -18,7 +18,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Icon
 import androidx.compose.ui.platform.testTag
 import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
@@ -616,16 +616,6 @@ fun CreateTournamentDialog(
                                         )
                                     }
 
-                                    // How the tables of the rounds are drawn, with a flowchart.
-                                    AppTextButton(
-                                        onClick = { showDrawExplanation = true },
-                                        modifier = Modifier.testTag("drawExplanationButton"),
-                                    ) {
-                                        Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(stringResource(Res.string.draw_help_button))
-                                    }
-
                                     MatchTimeFields(
                                         durationText = matchDurationText,
                                         onDurationChange = {
@@ -934,18 +924,33 @@ fun CreateTournamentDialog(
                 }
             },
             confirmButton = {
-                MtsDialogButtons {
-                    Button(onClick = ::startCreate, enabled = !isLoading) {
-                        Text(stringResource(Res.string.create))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    // How the tables of the rounds are drawn, with a flowchart. Centered just above Cancel and Create.
+                    AppTextButton(
+                        onClick = { showDrawExplanation = true },
+                        modifier = Modifier.testTag("drawExplanationButton"),
+                    ) {
+                        Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(Res.string.draw_help_button))
                     }
-                    if (!isLoading) {
-                        AppTextButton(
-                            onClick = {
-                                cancelCreation()
-                                onDismiss()
-                            },
-                        ) {
-                            Text(stringResource(Res.string.cancel))
+                    Spacer(Modifier.height(8.dp))
+                    MtsDialogButtons {
+                        Button(onClick = ::startCreate, enabled = !isLoading) {
+                            Text(stringResource(Res.string.create))
+                        }
+                        if (!isLoading) {
+                            AppTextButton(
+                                onClick = {
+                                    cancelCreation()
+                                    onDismiss()
+                                },
+                            ) {
+                                Text(stringResource(Res.string.cancel))
+                            }
                         }
                     }
                 }

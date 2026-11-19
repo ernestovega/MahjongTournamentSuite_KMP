@@ -35,7 +35,6 @@ enum class Permission(val key: String) {
     EMA_DELETE("ema.delete"),
     TOOLS_VENUES("tools.venues"),
     TOOLS_ID_CARDS("tools.idCards"),
-    STATISTICS_OVERVIEW("statistics.overview"),
     DEV_ACTIVITY("dev.activity"),
     DEV_ERRORS("dev.errors"),
     ;
@@ -50,7 +49,7 @@ enum class Permission(val key: String) {
 
         private val editor = setOf(
             TOURNAMENT_VIEW, TOURNAMENT_EDIT, TOURNAMENT_ROUND_CONTROL, TOURNAMENT_PLAYER_EMAILS,
-            ACCOUNTS_VIEW, ACCOUNTS_CREATE_PLAYER, TOOLS_VENUES, TOOLS_ID_CARDS, STATISTICS_OVERVIEW,
+            ACCOUNTS_VIEW, ACCOUNTS_CREATE_PLAYER, TOOLS_VENUES, TOOLS_ID_CARDS,
         )
         private val countryAdmin = editor + setOf(
             TOURNAMENT_EDIT_COMPLETED, TOURNAMENT_CONFIGURE, TOURNAMENT_DELETE, TOURNAMENT_RESET_TABLE,

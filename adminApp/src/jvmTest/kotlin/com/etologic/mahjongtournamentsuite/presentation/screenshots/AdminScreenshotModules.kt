@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
+import com.etologic.mahjongtournamentsuite.data.di.AdminPublicReads
 import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -59,6 +60,8 @@ internal fun adminModules(
         single<AuthRepository> { auth }
         single<AdminRepository> { admin }
         single<StatisticsRepository> { statistics }
+        single<TournamentRepository>(AdminPublicReads) { tournaments }
+        single<StatisticsRepository>(AdminPublicReads) { statistics }
         single<FeatureFlagsRepository> { ScreenshotFeatureFlagsRepository() }
         single<SupportRepository> { ScreenshotSupportRepository() }
         single<PlayerAccountRepository> { NoPlayerAccounts() }

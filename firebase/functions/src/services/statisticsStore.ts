@@ -334,6 +334,12 @@ export async function removeTournamentStats(tournamentId: string): Promise<void>
   await tournamentsCollection().doc(tournamentId).delete();
 }
 
+/** The ids of the tournaments that anyone can see. */
+export async function publicTournamentIds(): Promise<Set<string>> {
+  const snapshot = await db.collection("tournaments").select("isPublic").get();
+  return new Set(snapshot.docs.filter((doc) => doc.get("isPublic") !== false).map((doc) => doc.id));
+}
+
 export type OverviewPlayer = PlayerTotals & { emaId: string };
 
 export type Overview = {

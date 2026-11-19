@@ -15,7 +15,6 @@ import {
   createTournament,
   deleteTournament,
   listAllTournaments,
-  listTournamentsForUser,
   renameTournament,
   updateTournamentSettings,
 } from "../../services/tournamentsService";
@@ -56,7 +55,7 @@ import { parseRoundClockAction } from "../../services/roundClock";
 import { parseRoundControlChange, parseTablesToComplete } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
-import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
+import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
 import { applyPlayerImport, exportPlayers, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
 
@@ -150,8 +149,9 @@ export function tournamentsRouter(): Router {
   /**
    * The statistics of all tournaments together: sums and the leaderboards.
    * The server keeps them up to date when a table changes. This request reads a fixed number of documents.
+   * Statistics are public data, so every signed-in account can read them.
    */
-  router.get("/statistics/overview", requireAuth, requirePermission("statistics.overview"), async (_req, res, next) => {
+  router.get("/statistics/overview", requireAuth, async (_req, res, next) => {
     try {
       res.status(200).json(await loadOverview());
     } catch (e) {
@@ -160,13 +160,15 @@ export function tournamentsRouter(): Router {
   });
 
   /**
-   * The ids of the tournaments that the signed-in account can see, or null for a super admin.
-   * It is the same rule as the tournament list above.
+   * The ids of the tournaments whose statistics the signed-in account can see, or null for a super admin.
+   * Statistics are public data: every account sees the public tournaments, and the staff also the ones that it manages.
    */
   const visibleTournamentIds = async (decoded: { uid: string }) => {
     const access = await loadAccess(decoded.uid);
-    if (access.disabled || !isStaff(access)) return new Set<string>();
-    return visibleTournamentIdSet(access);
+    if (access.superAdmin && !access.disabled) return null;
+    const visible = await publicTournamentIds();
+    if (!access.disabled && isStaff(access)) ((await visibleTournamentIdSet(access)) ?? []).forEach((id) => visible.add(id));
+    return visible;
   };
 
   const readEmaParam = (value: unknown): string => {

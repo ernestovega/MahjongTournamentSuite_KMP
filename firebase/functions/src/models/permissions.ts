@@ -42,7 +42,6 @@ export const PERMISSIONS = [
   // Tools.
   "tools.venues",
   "tools.idCards",
-  "statistics.overview",
   // DEV menu.
   "dev.activity",
   "dev.errors",
@@ -64,7 +63,6 @@ const EDITOR: readonly Permission[] = [
   "accounts.createPlayer",
   "tools.venues",
   "tools.idCards",
-  "statistics.overview",
 ];
 
 const COUNTRY_ADMIN: readonly Permission[] = [

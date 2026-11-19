@@ -477,7 +477,6 @@
     <string name="scope_by_tournaments">Per torneo</string>
     <string name="scope_overall">Totale</string>
     <string name="stats_player_field">Giocatore (nome o numero EMA)</string>
-    <string name="stats_admin_only">Le statistiche di tutti i tornei sono riservate agli amministratori. Cerca un torneo per vederne le statistiche.</string>
     <string name="id_cards_proportion_info">La larghezza e l'altezza sono collegate, quindi il cartellino mantiene la sua proporzione.\n• La proporzione è il rapporto tra la larghezza e l'altezza del cartellino. La larghezza è sempre %1$s volte l'altezza.\n• Quando cambi un lato, l'altro cambia da solo. Il cartellino non viene mai deformato.\n• La dimensione originale è %2$s x %3$s mm. È la dimensione che permette di mettere 10 cartellini su un foglio A4 verticale, in 2 colonne e 5 righe.</string>
     <string name="use_range">Usa da %1$s a %2$s.</string>
     <string name="substitution_explanation">Un sostituto gioca per questo giocatore dal turno scelto. Il sostituto non viene registrato e non ha nessun risultato in classifica. Il giocatore ottiene 0 punti tavolo per i turni che gioca il sostituto.</string>

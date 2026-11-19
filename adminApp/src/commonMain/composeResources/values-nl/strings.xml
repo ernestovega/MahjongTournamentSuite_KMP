@@ -477,7 +477,6 @@
     <string name="scope_by_tournaments">Per toernooi</string>
     <string name="scope_overall">Totaal</string>
     <string name="stats_player_field">Speler (naam of EMA-nummer)</string>
-    <string name="stats_admin_only">De statistieken van alle toernooien zijn voor beheerders. Zoek een toernooi om de statistieken ervan te zien.</string>
     <string name="id_cards_proportion_info">De breedte en de hoogte zijn gekoppeld, zodat de kaart haar verhouding behoudt.\n• De verhouding is de relatie tussen de breedte en de hoogte van de kaart. De breedte is altijd %1$s keer de hoogte.\n• Als je één kant wijzigt, verandert de andere kant vanzelf. De kaart wordt nooit uitgerekt.\n• Het oorspronkelijke formaat is %2$s x %3$s mm. Met dit formaat passen 10 kaarten op één staand A4-vel, in 2 kolommen en 5 rijen.</string>
     <string name="use_range">Gebruik %1$s tot %2$s.</string>
     <string name="substitution_explanation">Een vervanger speelt vanaf de gekozen ronde voor deze speler. De vervanger wordt niet geregistreerd en krijgt geen resultaat in het klassement. De speler krijgt 0 tafelpunten voor de ronden die de vervanger speelt.</string>

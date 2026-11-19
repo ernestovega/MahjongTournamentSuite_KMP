@@ -57,7 +57,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/venues/resolve-link", "tools.venues"],
   ["POST", "/tournaments/id-card-proof", "tools.idCards"],
   ["POST", "/tournaments/id-card-preview", "tools.idCards"],
-  ["GET", "/tournaments/statistics/overview", "statistics.overview"],
+  ["GET", "/tournaments/statistics/overview", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/me", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/me/standings", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/persons/:emaId", "SIGNED_IN"],
