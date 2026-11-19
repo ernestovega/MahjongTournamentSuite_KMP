@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -36,7 +34,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -90,6 +87,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RegistrationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -170,6 +168,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_without_team
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 /**
  * The registrations of a tournament before its draw: places, waiting list and people who did not confirm the email
@@ -552,11 +551,11 @@ private fun SummaryCard(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onAdd, enabled = !busy) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = 6.dp))
+                    Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = 8.dp))
                 }
                 FocusedButton(onClick = onDraw, enabled = !busy && settings.status == RegistrationPhase.CLOSED) {
                     Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = 6.dp))
+                    Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = 8.dp))
                 }
                 if (settings.isOpen) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
             }
@@ -697,7 +696,7 @@ private fun RegistrationEditDialog(
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(title) },
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (registration == null) {
                         OutlinedButton(onClick = { picking = true }, modifier = Modifier.fillMaxWidth()) {
                             Text(person?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: stringResource(Res.string.reg_pick_person))
@@ -767,7 +766,7 @@ private fun RegistrationSettingsDialog(
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(Res.string.reg_settings_title)) },
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Switch(checked = open, onCheckedChange = { open = it })
                         Text(stringResource(Res.string.reg_status_open_switch))

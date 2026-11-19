@@ -1072,4 +1072,6 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_problem_ema_not_found">The EMA number is not in the EMA registry.</string>
     <string name="reg_problem_already_registered">The person is already registered.</string>
     <string name="reg_open_registrations">Registrations</string>
+    <string name="activity_action_registration_update">Changed the registrations</string>
+    <string name="activity_action_registration_draw">Made the draw of the registrations</string>
 </resources>

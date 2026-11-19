@@ -1072,4 +1072,6 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="reg_problem_ema_not_found">Het EMA-nummer staat niet in het EMA-register.</string>
     <string name="reg_problem_already_registered">De persoon is al ingeschreven.</string>
     <string name="reg_open_registrations">Inschrijvingen</string>
+    <string name="activity_action_registration_update">Wijzigde de inschrijvingen</string>
+    <string name="activity_action_registration_draw">Maakte de loting van de inschrijvingen</string>
 </resources>

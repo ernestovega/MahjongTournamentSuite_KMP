@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
+import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
@@ -9,21 +11,30 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationImport
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationUpdate
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryOutcome
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeAdminRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakePlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeSignedInAuthRepository
@@ -32,6 +43,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerControl
 import com.etologic.mahjongtournamentsuite.presentation.screen.syncTable
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.RecordingTelemetry
 import kotlinx.coroutines.test.runTest
+import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -62,6 +74,43 @@ class AdminActionTrackingTest {
         val tablePresenter = TableManagerPresenter(tournaments, Logger.withTag("test"), telemetry)
         val timer = RoundTimerController(tournaments, "t1", 1, telemetry)
         val rankingPresenter = RankingPresenter(tournaments, players, CalculateTournamentRankingsUseCase(), Logger.withTag("test"), telemetry)
+        val registrationsPresenter = RegistrationsPresenter(
+            RegistrationFakes.registrations(works),
+            players,
+            GenerateTournamentScheduleBruteForceParallelUseCase(),
+            Logger.withTag("test"),
+            telemetry,
+        )
+    }
+
+    private object RegistrationFakes {
+        /** The registrations of the server: every write works, or fails, as a whole. */
+        fun registrations(works: Boolean): RegistrationRepository = Proxy.newProxyInstance(
+            RegistrationRepository::class.java.classLoader,
+            arrayOf(RegistrationRepository::class.java),
+        ) { _, method, _ ->
+            if (!works) return@newProxyInstance AppResult.Failure(AppError.Network)
+            AppResult.Success(
+                when (method.name) {
+                    "adminAdd", "adminUpdate" -> AdminRegistration("1234", "Ann Lee", "ES", RegistrationStatus.CONFIRMED, 1)
+                    "updateSettings" -> RegistrationSettings()
+                    "applyImport" -> RegistrationImport(emptyList(), 0)
+                    "makeDraw" -> RegistrationFakes.DRAW_TOURNAMENT
+                    else -> Unit
+                },
+            )
+        } as RegistrationRepository
+
+        val DRAW_TOURNAMENT = Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 0, numRounds = 1, drawPending = true)
+
+        /** 16 people with a place, the smallest draw. */
+        val CONFIRMED = AdminRegistrations(
+            settings = RegistrationSettings(status = RegistrationPhase.CLOSED),
+            isTeams = false,
+            drawPending = true,
+            registrations = (1..16).map { AdminRegistration("100000$it".padStart(8, '0'), "P$it", "ES", RegistrationStatus.CONFIRMED, it) },
+            teams = emptyList(),
+        )
     }
 
     /** The shared EMA players. The writes work or fail as a whole. */
@@ -136,6 +185,12 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.TABLE_RESET) { it.tablePresenter.resetTable("t1", 1, 1) },
         Case(TelemetryAction.ROUND_CONTROL_CHANGED) { it.timer.changeControl(RoundControlChange(hands = ControlMode.CLOSED)) },
         Case(TelemetryAction.TABLES_COMPLETED) { it.timer.completeTables(listOf(TableKey(1, 1))) },
+        Case(TelemetryAction.REGISTRATION_ADDED) { it.registrationsPresenter.add("t1", NewRegistration("1234")) },
+        Case(TelemetryAction.REGISTRATION_UPDATED) { it.registrationsPresenter.update("t1", "1234", RegistrationUpdate(paid = true)) },
+        Case(TelemetryAction.REGISTRATION_REMOVED) { it.registrationsPresenter.remove("t1", "1234", notify = false) },
+        Case(TelemetryAction.REGISTRATION_SETTINGS_UPDATED) { it.registrationsPresenter.saveSettings("t1", RegistrationSettings()) },
+        Case(TelemetryAction.REGISTRATIONS_IMPORTED) { it.registrationsPresenter.applyImport("t1", "form.csv", ByteArray(1)) },
+        Case(TelemetryAction.DRAW_MADE) { it.registrationsPresenter.makeDraw(RegistrationFakes.DRAW_TOURNAMENT, RegistrationFakes.CONFIRMED) {} },
     )
 
     private fun expected(action: String, outcome: String) = TelemetryEvent.ADMIN_ACTION to mapOf<String, Any>(TelemetryParam.ACTION to action, TelemetryParam.OUTCOME to outcome)

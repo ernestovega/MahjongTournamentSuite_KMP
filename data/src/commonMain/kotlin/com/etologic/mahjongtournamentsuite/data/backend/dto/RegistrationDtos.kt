@@ -96,16 +96,25 @@ data class RegisterResultDto(
 )
 
 @Serializable
-data class ConfirmRegistrationRequestDto(val token: String)
+data class ConfirmRegistrationRequestDto(
+    val token: String,
+)
 
 @Serializable
-data class UpdateOwnRegistrationRequestDto(val foodRestrictions: String, val consent: Boolean)
+data class UpdateOwnRegistrationRequestDto(
+    val foodRestrictions: String,
+    val consent: Boolean,
+)
 
 @Serializable
-data class RegistrationTeamNameRequestDto(val name: String)
+data class RegistrationTeamNameRequestDto(
+    val name: String,
+)
 
 @Serializable
-data class RegistrationTeamMemberRequestDto(val emaId: String)
+data class RegistrationTeamMemberRequestDto(
+    val emaId: String,
+)
 
 @Serializable
 data class NoEmaNumberRequestDto(
@@ -173,13 +182,23 @@ data class RegistrationImportDto(
 )
 
 @Serializable
-data class DrawPlayerDto(val id: Int, val team: Int)
+data class DrawPlayerDto(
+    val id: Int,
+    val team: Int,
+)
 
 @Serializable
-data class DrawTableDto(val roundId: Int, val tableId: Int, val playerIds: List<Int>)
+data class DrawTableDto(
+    val roundId: Int,
+    val tableId: Int,
+    val playerIds: List<Int>,
+)
 
 @Serializable
-data class DrawAssignmentDto(val playerId: Int, val emaId: String)
+data class DrawAssignmentDto(
+    val playerId: Int,
+    val emaId: String,
+)
 
 @Serializable
 data class MakeDrawRequestDto(
@@ -190,4 +209,6 @@ data class MakeDrawRequestDto(
 )
 
 @Serializable
-data class RegistrationLinkDto(val tournamentId: String)
+data class RegistrationLinkDto(
+    val tournamentId: String,
+)

@@ -96,6 +96,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_playe
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_email
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_import
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_substitute
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_draw
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_delete
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_photo
@@ -830,6 +832,8 @@ private val ACTION_LABELS: Map<String, StringResource> = mapOf(
     "table.reset" to Res.string.activity_action_table_reset,
     "table.conflict" to Res.string.activity_action_table_conflict,
     "script.run" to Res.string.activity_action_script_run,
+    "registration.update" to Res.string.activity_action_registration_update,
+    "registration.draw" to Res.string.activity_action_registration_draw,
 )
 
 /** A new action of the server shows its code until the app has a text for it. */

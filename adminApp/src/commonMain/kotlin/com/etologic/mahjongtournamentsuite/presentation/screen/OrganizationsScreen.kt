@@ -377,7 +377,7 @@ private fun OrganizationCard(organization: Organization, details: String, enable
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (organization.country.isNotBlank()) CountryFlag(code = organization.country, width = 16.dp)
                         Text(
                             details,
@@ -394,7 +394,9 @@ private fun OrganizationCard(organization: Organization, details: String, enable
                         Icons.Default.Edit,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(20.dp),
+                        modifier = Modifier.align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(20.dp),
                     )
                 }
             }

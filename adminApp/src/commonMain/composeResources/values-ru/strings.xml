@@ -1086,4 +1086,6 @@
     <string name="reg_problem_ema_not_found">Номера нет в реестре EMA.</string>
     <string name="reg_problem_already_registered">Участник уже зарегистрирован.</string>
     <string name="reg_open_registrations">Регистрация</string>
+    <string name="activity_action_registration_update">Изменил регистрацию</string>
+    <string name="activity_action_registration_draw">Провёл жеребьёвку по регистрации</string>
 </resources>

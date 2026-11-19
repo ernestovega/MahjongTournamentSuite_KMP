@@ -1072,4 +1072,6 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_problem_ema_not_found">Le numéro EMA n'est pas dans le registre de l'EMA.</string>
     <string name="reg_problem_already_registered">La personne est déjà inscrite.</string>
     <string name="reg_open_registrations">Inscriptions</string>
+    <string name="activity_action_registration_update">A modifié les inscriptions</string>
+    <string name="activity_action_registration_draw">A fait le tirage des inscriptions</string>
 </resources>

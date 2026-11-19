@@ -1072,4 +1072,6 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_problem_ema_not_found">Die EMA-Nummer steht nicht im EMA-Register.</string>
     <string name="reg_problem_already_registered">Die Person ist schon angemeldet.</string>
     <string name="reg_open_registrations">Anmeldungen</string>
+    <string name="activity_action_registration_update">Hat die Anmeldungen geändert</string>
+    <string name="activity_action_registration_draw">Hat die Auslosung der Anmeldungen gemacht</string>
 </resources>

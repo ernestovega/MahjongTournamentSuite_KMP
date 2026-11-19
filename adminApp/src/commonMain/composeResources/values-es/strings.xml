@@ -1072,4 +1072,6 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_problem_ema_not_found">El número EMA no está en el registro de la EMA.</string>
     <string name="reg_problem_already_registered">La persona ya está inscrita.</string>
     <string name="reg_open_registrations">Inscripciones</string>
+    <string name="activity_action_registration_update">Cambió las inscripciones</string>
+    <string name="activity_action_registration_draw">Hizo el sorteo de las inscripciones</string>
 </resources>
