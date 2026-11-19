@@ -422,6 +422,56 @@ jobs:
           path: out/check.json
           retention-days: 30
 
+  # What the game day cost in staging, and what a real tournament would cost, in euros (docs/benchmark.md, "Cost").
+  # Only a report: it never fails the run.
+  cost:
+    name: Cost
+    needs: [plan, bots]
+    if: ${{ !cancelled() && needs.bots.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: scenario-plan
+          path: out/scenario/
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: bots
+          path: out/
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Cost of the game day and of a real tournament
+        run: |
+          # Cloud Monitoring shows the last minutes of use a few minutes late.
+          sleep 240
+          node scripts/rehearsal/cost.mjs --project="$STAGING" --bots=out/bots.json --plan=out/scenario/plan.json \
+            --until="$(date -u +%Y-%m-%dT%H:%M:%SZ)" --report=out/cost.json
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cost
+          path: out/cost.json
+          retention-days: 90
+
   # The organizer stopped: the bots would play to the end of the schedule for nothing. The whole run stops.
   fail-fast:
     name: Stop when the organizer fails

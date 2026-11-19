@@ -49,6 +49,7 @@ for role in \
   roles/serviceusage.serviceUsageConsumer \
   roles/cloudtestservice.testAdmin \
   roles/firebase.analyticsViewer \
+  roles/monitoring.viewer \
   roles/storage.admin; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${SA_EMAIL}" --role="$role" --condition=None >/dev/null
