@@ -53,6 +53,8 @@ How it works:
 - Every emulator gets its own backend: Auth and Firestore emulators on ports 9300+10·i, API on port 5060+i, project `demo-mts-e2e-<i+1>`.
   The tests reset the `test-*` tournaments, so two emulators on one backend would break each other's tests.
   The app gets the address in the `e2eBackendUrl` argument (`http://10.0.2.2:506i/api`).
+- Before an emulator takes tests, the script checks that it reaches its backend. If it does not reach `10.0.2.2` within a minute, the script tries `adb reverse` and `http://127.0.0.1:506i/api`.
+  An emulator that reaches neither takes no tests, and the other emulators run them.
 - The tests go out in groups of 5 from one queue. An emulator that finishes takes the next group, so both parts share the emulators. Both parts use the same APKs; the script picks the tests of each part by package.
   Before an admin group the screen becomes a landscape tablet (1920x1200, density 240). Before a player group it becomes a phone (1080x2400, density 420).
 - It runs the AndroidX Test Orchestrator with `adb shell am instrument`, not Gradle, because one Gradle build cannot run different tests on different devices.

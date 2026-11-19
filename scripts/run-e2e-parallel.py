@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -220,6 +221,8 @@ class Device:
     process: subprocess.Popen | None = None
     logcat: subprocess.Popen | None = None
     shape: str | None = None
+    # The address of the backend as the app on this emulator reaches it. See check_backend.
+    backend_url: str = ""
     results: list[Result] = field(default_factory=list)
 
     def shell(self, command: str, check: bool = False, timeout: float | None = 120) -> str:
@@ -311,6 +314,62 @@ def prepare(device: Device, apks: list[Path], packages: list[str]) -> None:
                                      stdout=(OUT / f"logcat-{device.serial}.txt").open("w"), stderr=subprocess.STDOUT)
 
 
+def host_reaches(port: int) -> bool:
+    """Any HTTP answer counts: the API answers 404 to an unknown path."""
+    try:
+        urllib.request.urlopen(f"http://127.0.0.1:{port}/api/", timeout=5)
+        return True
+    except urllib.error.HTTPError:
+        return True
+    except Exception:
+        return False
+
+
+def device_reaches(device: Device, host: str, port: int) -> bool | None:
+    """True or False when the emulator reaches host:port, None when it has no tool to try."""
+    url = f"http://{host}:{port}/api/"
+    output = device.shell(
+        "if command -v curl >/dev/null 2>&1; then curl -s -m 5 -o /dev/null -w 'HTTP%{http_code}' " + url + "; "
+        f"elif toybox nc --help >/dev/null 2>&1; then toybox nc -w 3 {host} {port} </dev/null >/dev/null 2>&1 && echo HTTPOK; "
+        "else echo NOTOOL; fi", timeout=30).strip()
+    if "NOTOOL" in output:
+        return None
+    return output.startswith("HTTP") and output != "HTTP000"
+
+
+def check_backend(device: Device, timeout: float = 60) -> bool:
+    """Makes sure that the emulator reaches its backend before it takes tests.
+
+    Sometimes an emulator does not reach the computer at 10.0.2.2, and all its tests failed. The script tries for a
+    minute, then tries the backend through `adb reverse` at 127.0.0.1. An emulator that reaches neither takes no tests,
+    and the other emulators run them.
+    """
+    port = device.backend.api_port
+    device.backend_url = f"http://10.0.2.2:{port}/api"
+    if not host_reaches(port):
+        log(f"Backend {device.backend.index + 1} does not answer on 127.0.0.1:{port}. See {device.backend.log_path}")
+        return False
+    deadline = time.time() + timeout
+    while True:
+        reached = device_reaches(device, "10.0.2.2", port)
+        if reached is None:
+            log(f"{device.serial} has no curl or nc, so the script cannot check that it reaches its backend.")
+            return True
+        if reached:
+            return True
+        if time.time() > deadline:
+            break
+        time.sleep(5)
+    log(f"{device.serial} does not reach 10.0.2.2:{port}. Trying adb reverse.")
+    adb(device.serial, "reverse", f"tcp:{port}", f"tcp:{port}", check=False, timeout=30)
+    if device_reaches(device, "127.0.0.1", port):
+        device.backend_url = f"http://127.0.0.1:{port}/api"
+        log(f"{device.serial} reaches its backend at {device.backend_url}.")
+        return True
+    log(f"{device.serial} does not reach its backend. It takes no tests.")
+    return False
+
+
 def set_shape(device: Device, app: str) -> None:
     if device.shape == app:
         return
@@ -344,7 +403,7 @@ def run_group(device: Device, runner: str, tests: list[str], wait_ms: str | None
     args = [
         f"-e targetInstrumentation {runner}",
         "-e clearPackageData true",
-        f"-e e2eBackendUrl http://10.0.2.2:{device.backend.api_port}/api",
+        f"-e e2eBackendUrl {device.backend_url or f'http://10.0.2.2:{device.backend.api_port}/api'}",
         f"-e class {','.join(tests)}",
     ]
     if wait_ms:
@@ -466,6 +525,13 @@ def main() -> int:
         for backend in backends:
             backend.wait_ready()
         log("Backends ready.")
+        reachable: dict[str, bool] = {}
+        threads = [threading.Thread(target=lambda d=device: reachable.__setitem__(d.serial, check_backend(d))) for device in devices]
+        [thread.start() for thread in threads]
+        [thread.join() for thread in threads]
+        working = [device for device in devices if reachable.get(device.serial)]
+        if not working:
+            raise RuntimeError("No emulator reaches its backend.")
 
         runners = {app: instrumentation(devices[0], MODULES[app]["package"]) for app in apps}
         work: queue.Queue = queue.Queue()
@@ -513,7 +579,7 @@ def main() -> int:
                         work.put((app, again, attempt + 1))
                     pending[0] -= 1
 
-        threads = [threading.Thread(target=worker, args=(device,), daemon=True) for device in devices]
+        threads = [threading.Thread(target=worker, args=(device,), daemon=True) for device in working]
         [thread.start() for thread in threads]
         [thread.join() for thread in threads]
         while not work.empty():  # Every emulator was lost before the end.
@@ -535,7 +601,7 @@ def main() -> int:
             print(f"FAILED {app} {test}\n    {short_message(result.message)}")
         passed = sum(1 for _, (_, r) in rows if r.status == "PASS")
         minutes = (time.time() - started) / 60
-        print(f"{passed} passed, {len(failed)} failed, in {minutes:.1f} min on {count} emulators. Details in {OUT}")
+        print(f"{passed} passed, {len(failed)} failed, in {minutes:.1f} min on {len(working)} emulators. Details in {OUT}")
         return 0 if not failed and passed > 0 else 1
     finally:
         if not options.keep:
@@ -547,6 +613,7 @@ def main() -> int:
                 else:
                     device.shell("wm size reset")
                     device.shell("wm density reset")
+                    adb(device.serial, "reverse", "--remove-all", check=False, timeout=30)
             for backend in backends:
                 backend.stop()
             if not options.serials and os.environ.get("ANDROID_ADB_SERVER_PORT") == str(options.adb_port):
