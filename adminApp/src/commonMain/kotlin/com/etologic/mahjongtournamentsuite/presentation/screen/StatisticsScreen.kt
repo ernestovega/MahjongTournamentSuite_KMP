@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -84,7 +83,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.scope_by_tournaments
 import mahjongtournamentsuite.adminapp.generated.resources.scope_overall
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
-import mahjongtournamentsuite.adminapp.generated.resources.stats_admin_only
 import mahjongtournamentsuite.adminapp.generated.resources.stats_player_field
 import mahjongtournamentsuite.adminapp.generated.resources.table
 import mahjongtournamentsuite.adminapp.generated.resources.this_table_has_no_statistics_yet
@@ -152,7 +150,6 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     var registry by remember { mutableStateOf<List<Player>>(emptyList()) }
     var tournamentData by remember { mutableStateOf<TournamentStatisticsData?>(null) }
     var overview by remember { mutableStateOf<OverviewStatisticsData?>(null) }
-    var overviewAllowed by remember { mutableStateOf(true) }
     var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
     var emaId by rememberPersistentText("person", route.emaId)
     var chosenSlotText by rememberPersistentText("slot", route.slotId?.toString())
@@ -174,12 +171,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             }
         } else {
             tournamentData = null
-            overviewAllowed = presenter.canSeeOverview()
-            if (overviewAllowed) {
-                when (val result = presenter.overview()) {
-                    is AppResult.Success -> overview = result.value
-                    is AppResult.Failure -> message = result.error.toUiText()
-                }
+            when (val result = presenter.overview()) {
+                is AppResult.Success -> overview = result.value
+                is AppResult.Failure -> message = result.error.toUiText()
             }
         }
         isLoading = false
@@ -406,12 +400,6 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     changingPlayer = false
                                     scope = StatisticsScope.PLAYER
                                 },
-                            )
-                        } else if (tournamentId == null && !overviewAllowed) {
-                            Text(
-                                stringResource(Res.string.stats_admin_only),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         } else if (tournamentId == null && all != null) {
                             TournamentStatisticsPanel(

@@ -56,7 +56,7 @@ import { parseRoundClockAction } from "../../services/roundClock";
 import { parseRoundControlChange, parseTablesToComplete } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
-import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
+import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
 import { applyPlayerImport, exportPlayers, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
 
@@ -151,8 +151,9 @@ export function tournamentsRouter(): Router {
   /**
    * The statistics of all tournaments together: sums and the leaderboards.
    * The server keeps them up to date when a table changes. This request reads a fixed number of documents.
+   * Statistics are public data, so every signed-in account can read them.
    */
-  router.get("/statistics/overview", requireAuth, requireAdmin, async (_req, res, next) => {
+  router.get("/statistics/overview", requireAuth, async (_req, res, next) => {
     try {
       res.status(200).json(await loadOverview());
     } catch (e) {
@@ -161,14 +162,15 @@ export function tournamentsRouter(): Router {
   });
 
   /**
-   * The ids of the tournaments that the signed-in account can see, or null for an administrator.
-   * It is the same rule as the tournament list above.
+   * The ids of the tournaments whose statistics the signed-in account can see, or null for an administrator.
+   * Statistics are public data: every account sees the public tournaments, and an editor also the own ones.
    */
   const visibleTournamentIds = async (decoded: { uid: string; admin?: boolean; editor?: boolean }) => {
     const role = await listingRole(decoded);
     if (role === "ADMIN") return null;
-    if (role !== "EDITOR") return new Set<string>();
-    return new Set((await listTournamentsForUser(decoded.uid)).map((tournament) => tournament.id));
+    const visible = await publicTournamentIds();
+    if (role === "EDITOR") (await listTournamentsForUser(decoded.uid)).forEach((tournament) => visible.add(tournament.id));
+    return visible;
   };
 
   const readEmaParam = (value: unknown): string => {

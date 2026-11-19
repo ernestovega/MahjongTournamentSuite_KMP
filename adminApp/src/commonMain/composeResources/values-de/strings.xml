@@ -478,7 +478,6 @@
     <string name="scope_by_tournaments">Nach Turnieren</string>
     <string name="scope_overall">Gesamt</string>
     <string name="stats_player_field">Spieler (Name oder EMA-Nummer)</string>
-    <string name="stats_admin_only">Die Statistiken aller Turniere sind für Administratoren. Suche ein Turnier, um seine Statistiken zu sehen.</string>
     <string name="id_cards_proportion_info">Breite und Höhe sind verknüpft, damit der Ausweis sein Seitenverhältnis behält.\n• Das Seitenverhältnis ist die Beziehung zwischen Breite und Höhe des Ausweises. Die Breite ist immer %1$s-mal die Höhe.\n• Wenn du eine Seite änderst, ändert sich die andere von selbst. Der Ausweis wird nie verzerrt.\n• Die Originalgröße ist %2$s x %3$s mm. Mit dieser Größe passen 10 Ausweise auf ein A4-Blatt im Hochformat, in 2 Spalten und 5 Zeilen.</string>
     <string name="use_range">Verwende %1$s bis %2$s.</string>
     <string name="substitution_explanation">Ein Ersatzspieler spielt ab der gewählten Runde für diesen Spieler. Der Ersatzspieler wird nicht erfasst und erhält kein Ergebnis in der Rangliste. Der Spieler erhält 0 Tischpunkte für die Runden, die der Ersatzspieler spielt.</string>

@@ -18,6 +18,9 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPre
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.data.di.AdminPublicReads
 import com.etologic.mahjongtournamentsuite.data.di.adminRepositoriesModule
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
@@ -38,7 +41,19 @@ val presentationModule get() = module {
     factory { PlayerBasePresenter(get(), get(), telemetry()) }
     factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get(), telemetry()) }
-    factory { StatisticsPresenter(get(), get(), get(), get(), get(), telemetry()) }
+    factory {
+        StatisticsPresenter(
+            loadStatistics = get(),
+            loadOverview = get(),
+            tournamentRepository = get(),
+            playerRepository = get(),
+            adminRepository = get(),
+            publicLoadStatistics = LoadStatisticsUseCase(get(AdminPublicReads), get(), get()),
+            publicLoadOverview = LoadStoredStatisticsUseCase(get(AdminPublicReads), get(AdminPublicReads), get()),
+            publicTournamentRepository = get(AdminPublicReads),
+            telemetry = telemetry(),
+        )
+    }
     factory { RankingPresenter(get(), get(), get(), get(), telemetry()) }
     factory { IdCardProofPresenter(get(), telemetry()) }
     factory { ErrorsPresenter(get()) }

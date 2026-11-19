@@ -49,7 +49,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/venues/resolve-link", "EDITOR"],
   ["POST", "/tournaments/id-card-proof", "EDITOR"],
   ["POST", "/tournaments/id-card-preview", "EDITOR"],
-  ["GET", "/tournaments/statistics/overview", "ADMIN"],
+  ["GET", "/tournaments/statistics/overview", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/me", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/me/standings", "SIGNED_IN"],
   ["GET", "/tournaments/statistics/persons/:emaId", "SIGNED_IN"],

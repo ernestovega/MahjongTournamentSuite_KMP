@@ -478,7 +478,6 @@
     <string name="scope_by_tournaments">Por torneos</string>
     <string name="scope_overall">General</string>
     <string name="stats_player_field">Jugador (nombre o número EMA)</string>
-    <string name="stats_admin_only">Las estadísticas de todos los torneos son solo para administradores. Busca un torneo para ver sus estadísticas.</string>
     <string name="id_cards_proportion_info">El ancho y el alto están vinculados, así que la tarjeta mantiene su proporción.\n• La proporción es la relación entre el ancho y el alto de la tarjeta. El ancho es siempre %1$s veces el alto.\n• Cuando cambias un lado, el otro cambia solo. La tarjeta nunca se estira.\n• El tamaño original es %2$s x %3$s mm. Es el tamaño que permite colocar 10 tarjetas en una hoja A4 vertical, en 2 columnas y 5 filas.</string>
     <string name="use_range">Usa de %1$s a %2$s.</string>
     <string name="substitution_explanation">Un suplente juega por este jugador desde la ronda elegida. El suplente no se registra y no tiene resultado en la clasificación. El jugador recibe 0 puntos de mesa en las rondas que juega el suplente.</string>

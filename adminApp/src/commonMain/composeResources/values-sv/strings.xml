@@ -478,7 +478,6 @@
     <string name="scope_by_tournaments">Per turnering</string>
     <string name="scope_overall">Totalt</string>
     <string name="stats_player_field">Spelare (namn eller EMA-nummer)</string>
-    <string name="stats_admin_only">Statistiken för alla turneringar är för administratörer. Sök en turnering för att se dess statistik.</string>
     <string name="id_cards_proportion_info">Bredden och höjden är kopplade så att kortet behåller sina proportioner.\n• Proportionen är förhållandet mellan kortets bredd och höjd. Bredden är alltid %1$s gånger höjden.\n• När du ändrar en sida ändras den andra av sig själv. Kortet sträcks aldrig ut.\n• Originalstorleken är %2$s x %3$s mm. Med den storleken får 10 kort plats på ett stående A4-ark, i 2 kolumner och 5 rader.</string>
     <string name="use_range">Använd %1$s till %2$s.</string>
     <string name="substitution_explanation">En ersättare spelar för den här spelaren från den valda omgången. Ersättaren registreras inte och får inget resultat i rankingen. Spelaren får 0 bordspoäng för de omgångar som ersättaren spelar.</string>

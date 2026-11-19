@@ -4,7 +4,7 @@ import { db } from "../../firebase";
 import { listCountries } from "../../services/countriesService";
 import { getGlobalDataVersions, getTournamentManifest } from "../../services/dataVersionsService";
 import { listHiddenEmaIds, listPlayers } from "../../services/playersService";
-import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
+import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
 import {
   getAllTablesWithHands,
   getRoundTablesWithHands,
@@ -76,12 +76,6 @@ type Handler = (req: Request, res: Response) => Promise<void>;
 const handle = (handler: Handler) => (req: Request, res: Response, next: NextFunction) => {
   handler(req, res).catch(next);
 };
-
-/** The ids of the tournaments that anyone can see. */
-async function publicTournamentIds(): Promise<Set<string>> {
-  const snapshot = await db.collection("tournaments").select("isPublic").get();
-  return new Set(snapshot.docs.filter((doc) => doc.get("isPublic") !== false).map((doc) => doc.id));
-}
 
 /**
  * Read routes for everyone, without an account. They never read the token, so a cached answer never holds the data

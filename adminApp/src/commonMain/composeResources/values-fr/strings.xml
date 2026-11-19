@@ -478,7 +478,6 @@
     <string name="scope_by_tournaments">Par tournoi</string>
     <string name="scope_overall">Global</string>
     <string name="stats_player_field">Joueur (nom ou numéro EMA)</string>
-    <string name="stats_admin_only">Les statistiques de tous les tournois sont réservées aux administrateurs. Cherchez un tournoi pour voir ses statistiques.</string>
     <string name="id_cards_proportion_info">La largeur et la hauteur sont liées, donc la carte garde sa proportion.\n• La proportion est le rapport entre la largeur et la hauteur de la carte. La largeur vaut toujours %1$s fois la hauteur.\n• Quand vous changez un côté, l'autre change tout seul. La carte n'est jamais déformée.\n• La taille d'origine est %2$s x %3$s mm. C'est la taille qui permet de placer 10 cartes sur une feuille A4 en portrait, en 2 colonnes et 5 lignes.</string>
     <string name="use_range">Utilisez de %1$s à %2$s.</string>
     <string name="substitution_explanation">Un remplaçant joue pour ce joueur à partir du tour choisi. Le remplaçant n'est pas enregistré et n'a aucun résultat dans le classement. Le joueur obtient 0 point de table pour les tours que le remplaçant joue.</string>

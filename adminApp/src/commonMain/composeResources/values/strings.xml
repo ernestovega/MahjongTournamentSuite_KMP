@@ -478,7 +478,6 @@
     <string name="scope_by_tournaments">By tournaments</string>
     <string name="scope_overall">Overall</string>
     <string name="stats_player_field">Player (name or EMA number)</string>
-    <string name="stats_admin_only">The statistics of all tournaments are for administrators. Search a tournament to see its statistics.</string>
     <string name="id_cards_proportion_info">The width and the height are linked, so the card keeps its proportion.\n• The proportion is the relation between the width and the height of the card. The width is always %1$s times the height.\n• When you change one side, the other side changes by itself. The card is never stretched.\n• The original size is %2$s x %3$s mm. It is the size that lets 10 cards fit on one portrait A4 sheet, in 2 columns and 5 rows.</string>
     <string name="use_range">Use %1$s to %2$s.</string>
     <string name="substitution_explanation">A substitute plays for this player from the chosen round. The substitute is not recorded and gets no result in the ranking. The player gets 0 table points for the rounds that the substitute plays.</string>
