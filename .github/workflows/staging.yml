@@ -111,6 +111,15 @@ jobs:
             printf '%s' "$STAGING_ADMIN_EMAIL" | gcloud secrets create MTS_SUPPORT_EMAIL --data-file=- --project="$STAGING"
           fi
 
+      # The first deploy of the registrations made registrationsHourly in Madrid, where Cloud Scheduler does not exist, so
+      # the Firebase CLI cannot delete it (it asks for its scheduler job there first). gcloud deletes the function alone.
+      # It does nothing once that function is gone.
+      - name: Remove the old registrationsHourly of Madrid
+        run: |
+          if gcloud functions describe registrationsHourly --region=europe-southwest1 --project="$STAGING" >/dev/null 2>&1; then
+            gcloud functions delete registrationsHourly --region=europe-southwest1 --project="$STAGING" --quiet
+          fi
+
       - name: Deploy
         run: >
           npx firebase deploy
