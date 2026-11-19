@@ -546,6 +546,7 @@
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versies</string>
     <string name="dev_api_docs">API (Swagger)</string>
+    <string name="dev_architecture_docs">Architectuur (GitHub)</string>
     <string name="dev_privacy_policy">Privacybeleid</string>
     <string name="dev_staging">Staging (testsite)</string>
     <string name="open_player_statistics">Statistieken van de speler openen</string>

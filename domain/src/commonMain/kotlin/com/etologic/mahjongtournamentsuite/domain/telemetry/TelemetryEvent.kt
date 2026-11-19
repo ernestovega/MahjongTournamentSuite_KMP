@@ -302,6 +302,9 @@ object TelemetryLink {
     const val VERSIONS = "versions"
     const val SCREENSHOT_GALLERY = "screenshot_gallery"
     const val API_DOCS = "api_docs"
+
+    /** The documentation of the architecture on GitHub (DEV menu). */
+    const val ARCHITECTURE_DOCS = "architecture_docs"
     const val STAGING = "staging"
     const val GREEN_BOOK = "green_book"
 
@@ -323,6 +326,7 @@ object TelemetryLink {
         VERSIONS,
         SCREENSHOT_GALLERY,
         API_DOCS,
+        ARCHITECTURE_DOCS,
         STAGING,
         GREEN_BOOK,
         VENUE_MAP,
