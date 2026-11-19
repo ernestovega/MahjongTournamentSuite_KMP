@@ -550,6 +550,7 @@
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versiones</string>
     <string name="dev_api_docs">API (Swagger)</string>
+    <string name="dev_architecture_docs">Arquitectura (GitHub)</string>
     <string name="dev_privacy_policy">Política de privacidad</string>
     <string name="dev_staging">Staging (web de pruebas)</string>
     <string name="open_player_statistics">Abrir las estadísticas del jugador</string>
