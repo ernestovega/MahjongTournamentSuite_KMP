@@ -9,6 +9,11 @@
     <string name="info_directions">Directions</string>
     <string name="info_open_directions">Open directions in Google Maps</string>
     <string name="info_contact">Contact</string>
+    <string name="info_organizers">Organizers</string>
+    <string name="info_main_organizer">Main organizer</string>
+    <string name="info_co_organizer">Co-organizer</string>
+    <string name="info_organizer_club">Club</string>
+    <string name="info_organizer_federation">Federation</string>
     <string name="info_no_date">No date yet</string>
     <string name="round_n">Round %1$d</string>
     <string name="details_no_seats_title">No seats yet</string>

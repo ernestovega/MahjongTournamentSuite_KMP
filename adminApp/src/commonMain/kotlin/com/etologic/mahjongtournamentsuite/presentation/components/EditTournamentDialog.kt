@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -28,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -43,10 +41,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_F
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
-import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
-import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -59,6 +56,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -77,22 +76,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament_editors_note
 import mahjongtournamentsuite.adminapp.generated.resources.delete_tournament_message
 import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament
-import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_country
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_host_city
 import mahjongtournamentsuite.adminapp.generated.resources.from
 import mahjongtournamentsuite.adminapp.generated.resources.id
-import mahjongtournamentsuite.adminapp.generated.resources.logo
-import mahjongtournamentsuite.adminapp.generated.resources.logo_choose
-import mahjongtournamentsuite.adminapp.generated.resources.logo_current
-import mahjongtournamentsuite.adminapp.generated.resources.logo_current_info
-import mahjongtournamentsuite.adminapp.generated.resources.logo_from
-import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_2mb
-import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_jpeg_png
-import mahjongtournamentsuite.adminapp.generated.resources.logo_none
-import mahjongtournamentsuite.adminapp.generated.resources.logo_upload
-import mahjongtournamentsuite.adminapp.generated.resources.logo_url
-import mahjongtournamentsuite.adminapp.generated.resources.logo_will_be_removed
 import mahjongtournamentsuite.adminapp.generated.resources.match_duration_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.match_extra_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
@@ -100,22 +87,17 @@ import mahjongtournamentsuite.adminapp.generated.resources.no
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.public_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.public_tournament_description
-import mahjongtournamentsuite.adminapp.generated.resources.remove
-import mahjongtournamentsuite.adminapp.generated.resources.reuse
 import mahjongtournamentsuite.adminapp.generated.resources.rounds
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
 import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs
 import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs_description
-import mahjongtournamentsuite.adminapp.generated.resources.tab_branding
 import mahjongtournamentsuite.adminapp.generated.resources.tab_data
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
 import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
 import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.time_zone_invalid
-import mahjongtournamentsuite.adminapp.generated.resources.tournament_country_change_warning
-import mahjongtournamentsuite.adminapp.generated.resources.tournament_country_locked
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_data
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_name_is_required
@@ -138,7 +120,7 @@ private enum class TournamentEditField {
     HOST_CITY,
     VENUE,
     CONTACT_EMAIL,
-    PRIMARY_COLOR,
+    ORGANIZERS,
     START_DATE,
     END_DATE,
 }
@@ -146,7 +128,7 @@ private enum class TournamentEditField {
 private enum class EditTournamentTab(val title: StringResource) {
     GENERAL(Res.string.tab_general),
     VENUE(Res.string.tab_venue),
-    BRANDING(Res.string.tab_branding),
+    ORGANIZERS(Res.string.tab_organizers),
     SCHEDULE(Res.string.tab_schedule),
     DATA(Res.string.tab_data),
 }
@@ -162,10 +144,13 @@ fun EditTournamentDialog(
     val coroutineScope = rememberCoroutineScope()
 
     val adminStatus by store.adminStatus.collectAsState()
-    val tournaments by store.tournaments.collectAsState()
     val canDeleteTournaments = adminStatus?.can(Permission.TOURNAMENT_DELETE, tournament.permissions) == true
-    // A tournament keeps its country. Only a super admin corrects it.
-    val canChangeCountry = adminStatus?.canChangeTournamentCountry == true
+    // Only a super admin changes the organizers of a tournament, so a club admin cannot give it away.
+    val canChangeOrganizers = adminStatus?.canChangeTournamentOrganizers == true
+    var organizations by remember { mutableStateOf<List<Organization>>(emptyList()) }
+    var settingsOrganizerIds by remember(tournament.id) { mutableStateOf(tournament.organizerIds) }
+    // The ID card preview uses the main organizer that the form shows, also before the save.
+    val mainOrganizer = organizations.firstOrNull { it.id == settingsOrganizerIds.firstOrNull() }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -177,7 +162,6 @@ fun EditTournamentDialog(
     var settingsShortName by remember(tournament.id) {
         mutableStateOf(tournament.shortName.ifBlank { tournament.name.take(10) })
     }
-    var settingsPrimaryColor by remember(tournament.id) { mutableStateOf(tournament.primaryColor) }
     var settingsEventStartDate by remember(tournament.id) {
         mutableStateOf(tournament.eventStartDate.toDisplayTournamentDate())
     }
@@ -212,13 +196,6 @@ fun EditTournamentDialog(
     var selectedTab by remember { mutableStateOf(EditTournamentTab.GENERAL) }
     var pendingFocusField by remember { mutableStateOf<TournamentEditField?>(null) }
     var showDateRangePicker by remember { mutableStateOf(false) }
-    var showColorPickerDialog by remember { mutableStateOf(false) }
-    var settingsLogo by remember { mutableStateOf<SelectedImage?>(null) }
-    var settingsLogoToCrop by remember { mutableStateOf<SelectedImage?>(null) }
-    var reusedSettingsLogoTournament by remember { mutableStateOf<Tournament?>(null) }
-    var showSettingsLogoLibrary by remember { mutableStateOf(false) }
-    var removeSettingsLogo by remember { mutableStateOf(false) }
-    var logoImageInfo by remember { mutableStateOf<String?>(null) }
     var renameError by remember { mutableStateOf<UiText?>(null) }
     var invalidEditFields by remember { mutableStateOf(emptySet<TournamentEditField>()) }
     val renameFieldFocusRequester = remember { FocusRequester() }
@@ -229,25 +206,8 @@ fun EditTournamentDialog(
     val settingsContactEmailFocusRequester = remember { FocusRequester() }
     val settingsStartDateFocusRequester = remember { FocusRequester() }
     val settingsEndDateFocusRequester = remember { FocusRequester() }
-    val settingsColorFocusRequester = remember { FocusRequester() }
     val renameConfirmFocusRequester = remember { FocusRequester() }
     val renameCancelFocusRequester = remember { FocusRequester() }
-    val settingsLogoPicker = rememberImagePicker(
-        onImageSelected = { image ->
-            invalidEditFields = emptySet()
-            if (image.contentType !in setOf("image/jpeg", "image/png")) {
-                renameError = UiText.of(Res.string.logo_must_be_jpeg_png)
-            } else if (image.bytes.size > 2 * 1024 * 1024) {
-                renameError = UiText.of(Res.string.logo_must_be_2mb)
-            } else {
-                settingsLogoToCrop = image
-            }
-        },
-        onError = { message ->
-            invalidEditFields = emptySet()
-            renameError = message
-        },
-    )
 
     suspend fun refreshTournaments() {
         when (val result = presenter.loadTournaments(force = true)) {
@@ -257,6 +217,10 @@ fun EditTournamentDialog(
     }
 
     LaunchedEffect(presenter) {
+        when (val result = presenter.loadOrganizations()) {
+            is AppResult.Success -> organizations = result.value
+            is AppResult.Failure -> errorMessage = result.error.toUiText()
+        }
         when (val result = presenter.loadCountries()) {
             is AppResult.Success -> countries = result.value
             is AppResult.Failure -> errorMessage = result.error.toUiText()
@@ -286,7 +250,7 @@ fun EditTournamentDialog(
             TournamentEditField.CONTACT_EMAIL -> settingsContactEmailFocusRequester.requestFocus()
             TournamentEditField.START_DATE -> settingsStartDateFocusRequester.requestFocus()
             TournamentEditField.END_DATE -> settingsEndDateFocusRequester.requestFocus()
-            TournamentEditField.PRIMARY_COLOR -> settingsColorFocusRequester.requestFocus()
+            TournamentEditField.ORGANIZERS -> Unit
         }
         pendingFocusField = null
     }
@@ -298,7 +262,6 @@ fun EditTournamentDialog(
             onDismissRequest = {
                 if (!isLoading) {
                     showDateRangePicker = false
-                    showColorPickerDialog = false
                     onDismiss()
                 }
             },
@@ -470,130 +433,36 @@ fun EditTournamentDialog(
                                         },
                                         mapUrlFocusRequester = settingsMapUrlFocusRequester,
                                         contactEmailFocusRequester = settingsContactEmailFocusRequester,
-                                        countryLocked = !canChangeCountry,
                                     )
-                                    if (!canChangeCountry) {
-                                        Text(
-                                            text = stringResource(Res.string.tournament_country_locked),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    } else if (settingsHostCountry.trim().uppercase() != tournament.hostCountry.trim().uppercase()) {
-                                        Text(
-                                            text = stringResource(Res.string.tournament_country_change_warning),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
                                     VenueTimeZoneField(
                                         timeZoneText = settingsTimeZone,
                                         onTimeZoneChange = { settingsTimeZone = it },
                                         enabled = !isLoading,
                                     )
                                 }
-                                EditTournamentTab.BRANDING -> {
-                                    TournamentColorField(
-                                        value = settingsPrimaryColor,
+                                EditTournamentTab.ORGANIZERS -> {
+                                    TournamentOrganizersField(
+                                        organizations = organizations,
+                                        selected = settingsOrganizerIds,
+                                        onChange = {
+                                            settingsOrganizerIds = it
+                                            invalidEditFields = invalidEditFields - TournamentEditField.ORGANIZERS
+                                        },
                                         enabled = !isLoading,
-                                        isError = TournamentEditField.PRIMARY_COLOR in invalidEditFields,
-                                        errorMessage = if (TournamentEditField.PRIMARY_COLOR in invalidEditFields) {
-                                            stringResource(Res.string.field_error_color)
+                                        editable = canChangeOrganizers,
+                                        error = if (TournamentEditField.ORGANIZERS in invalidEditFields) {
+                                            stringResource(Res.string.tournament_main_organizer_needed)
                                         } else {
                                             null
                                         },
-                                        onValueChange = {
-                                            settingsPrimaryColor = it
-                                            invalidEditFields = invalidEditFields - TournamentEditField.PRIMARY_COLOR
-                                            renameError = null
-                                        },
-                                        onPreviewClick = {
-                                            showDateRangePicker = false
-                                            showColorPickerDialog = true
-                                        },
-                                        fieldModifier = Modifier.focusRequester(settingsColorFocusRequester),
                                     )
-
-                                    Text(stringResource(Res.string.logo), style = MaterialTheme.typography.titleSmall)
-                                    val logoModel = when {
-                                        removeSettingsLogo -> null
-                                        settingsLogo != null -> settingsLogo?.dataUrl
-                                        reusedSettingsLogoTournament != null -> reusedSettingsLogoTournament?.associationLogoUrl
-                                        else -> tournament.associationLogoUrl
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.Top,
-                                    ) {
-                                        TournamentLogoPreview(
-                                            model = logoModel,
-                                            onImageInfo = { logoImageInfo = it },
-                                            modifier = Modifier.size(120.dp),
-                                        )
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            Text(
-                                                text = when {
-                                                    removeSettingsLogo -> stringResource(Res.string.logo_will_be_removed)
-                                                    settingsLogo != null -> buildString {
-                                                        append(settingsLogo?.fileName.orEmpty())
-                                                        append(" · ")
-                                                        append(formatByteSize(settingsLogo?.bytes?.size?.toLong() ?: 0L))
-                                                        logoImageInfo?.let { append(" · ").append(it) }
-                                                    }
-                                                    reusedSettingsLogoTournament != null ->
-                                                        stringResource(Res.string.logo_from, reusedSettingsLogoTournament?.name.orEmpty())
-                                                    tournament.associationLogoUrl != null ->
-                                                        logoImageInfo?.let { stringResource(Res.string.logo_current_info, it) } ?: stringResource(Res.string.logo_current)
-                                                    else -> stringResource(Res.string.logo_none)
-                                                },
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Button(onClick = settingsLogoPicker::launch) {
-                                                    Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
-                                                }
-                                                if (tournaments.any {
-                                                        it.id != tournament.id && !it.associationLogoUrl.isNullOrBlank()
-                                                    }
-                                                ) {
-                                                    Button(onClick = { showSettingsLogoLibrary = true }) {
-                                                        Text(stringResource(Res.string.reuse))
-                                                    }
-                                                }
-                                                if (logoModel != null) {
-                                                    FocusedTextButton(
-                                                        onClick = {
-                                                            settingsLogo = null
-                                                            reusedSettingsLogoTournament = null
-                                                            removeSettingsLogo = true
-                                                            logoImageInfo = null
-                                                        },
-                                                    ) { Text(stringResource(Res.string.remove)) }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    TournamentReadOnlyField(
-                                        label = stringResource(Res.string.logo_url),
-                                        value = tournament.associationLogoUrl ?: "—",
-                                    )
-
                                     TournamentIdCardPreviewButton(
                                         shortName = settingsShortName,
-                                        primaryColor = settingsPrimaryColor,
+                                        primaryColor = mainOrganizer?.primaryColor ?: tournament.primaryColor,
                                         year = settingsEventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
-                                        associationLogoContentType = settingsLogo?.contentType,
-                                        associationLogoBytes = settingsLogo?.bytes,
-                                        associationLogoUrl = reusedSettingsLogoTournament?.associationLogoUrl
-                                            ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
+                                        associationLogoContentType = null,
+                                        associationLogoBytes = null,
+                                        associationLogoUrl = if (mainOrganizer != null) mainOrganizer.logoUrl else tournament.associationLogoUrl,
                                         roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
                                         onError = { renameError = it },
                                     )
@@ -780,7 +649,6 @@ fun EditTournamentDialog(
                         enabled = !isLoading,
                         onClick = {
                             showDateRangePicker = false
-                            showColorPickerDialog = false
                             onDismiss()
                         },
                         focusRequester = renameCancelFocusRequester,
@@ -792,7 +660,6 @@ fun EditTournamentDialog(
                         onClick = {
                             val newName = renameValue.text.trim()
                             val newShortName = settingsShortName.trim()
-                            val newPrimaryColor = settingsPrimaryColor.trim().uppercase()
                             val newEventStartDate = settingsEventStartDate.toIsoTournamentDateOrNull()
                             val newEventEndDate = settingsEventEndDate.toIsoTournamentDateOrNull()
                             val newHostCountry = settingsHostCountry.trim().uppercase()
@@ -816,8 +683,8 @@ fun EditTournamentDialog(
                                 if (contactEmailRequiredError(settingsVenue.contactEmail) != null) {
                                     add(TournamentEditField.CONTACT_EMAIL)
                                 }
-                                if (!Regex("^#[0-9A-F]{6}$").matches(newPrimaryColor)) {
-                                    add(TournamentEditField.PRIMARY_COLOR)
+                                if (canChangeOrganizers && settingsOrganizerIds.isEmpty()) {
+                                    add(TournamentEditField.ORGANIZERS)
                                 }
                                 if (newEventStartDate == null) {
                                     add(TournamentEditField.START_DATE)
@@ -838,7 +705,7 @@ fun EditTournamentDialog(
                                 invalidEditFields = newInvalidFields
                                 val firstInvalid = newInvalidFields.first()
                                 selectedTab = when (firstInvalid) {
-                                    TournamentEditField.PRIMARY_COLOR -> EditTournamentTab.BRANDING
+                                    TournamentEditField.ORGANIZERS -> EditTournamentTab.ORGANIZERS
                                     TournamentEditField.HOST_COUNTRY,
                                     TournamentEditField.HOST_CITY,
                                     TournamentEditField.VENUE,
@@ -891,16 +758,12 @@ fun EditTournamentDialog(
                                         tournamentId = tournament.id,
                                         name = newName,
                                         shortName = newShortName,
-                                        primaryColor = newPrimaryColor,
+                                        organizerIds = settingsOrganizerIds.takeIf { canChangeOrganizers && it != tournament.organizerIds },
                                         eventStartDate = validEventStartDate,
                                         eventEndDate = validEventEndDate,
                                         hostCountry = newHostCountry,
                                         hostCity = newHostCity,
                                         venue = settingsVenue,
-                                        associationLogoContentType = settingsLogo?.contentType,
-                                        associationLogoBytes = settingsLogo?.bytes,
-                                        associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,
-                                        removeAssociationLogo = removeSettingsLogo,
                                         roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
                                         agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
                                         countBestHands = settingsCountBestHands,
@@ -915,7 +778,6 @@ fun EditTournamentDialog(
                                 ) {
                                     is AppResult.Success -> {
                                         showDateRangePicker = false
-                                        showColorPickerDialog = false
                                         store.updateTournament(result.value)
                                         // A non-forced refresh serves the stale cached list while it revalidates
                                         // in the background, which would overwrite the saved schedule.
@@ -958,50 +820,6 @@ fun EditTournamentDialog(
                 )
                 renameError = null
                 showDateRangePicker = false
-            },
-        )
-    }
-
-    if (showColorPickerDialog) {
-        TournamentColorPickerDialog(
-            initialColor = settingsPrimaryColor,
-            onDismiss = { showColorPickerDialog = false },
-            onColorSelected = { selectedColor ->
-                settingsPrimaryColor = selectedColor
-                invalidEditFields = invalidEditFields - TournamentEditField.PRIMARY_COLOR
-                renameError = null
-                showColorPickerDialog = false
-            },
-        )
-    }
-
-    settingsLogoToCrop?.let { image ->
-        TournamentLogoCropDialog(
-            image = image,
-            onDismiss = { settingsLogoToCrop = null },
-            onCropped = { croppedImage ->
-                settingsLogo = croppedImage
-                reusedSettingsLogoTournament = null
-                removeSettingsLogo = false
-                logoImageInfo = null
-                renameError = null
-                settingsLogoToCrop = null
-            },
-            onError = { message -> renameError = message },
-        )
-    }
-
-    if (showSettingsLogoLibrary) {
-        TournamentLogoLibraryDialog(
-            tournaments = tournaments.filter { it.id != tournament.id },
-            onDismiss = { showSettingsLogoLibrary = false },
-            onSelect = { sourceTournament ->
-                settingsLogo = null
-                reusedSettingsLogoTournament = sourceTournament
-                removeSettingsLogo = false
-                logoImageInfo = null
-                renameError = null
-                showSettingsLogoLibrary = false
             },
         )
     }

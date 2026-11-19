@@ -64,7 +64,7 @@ class TournamentMatchSettingsMappingTest {
     @Test
     fun theUpdateRequestSendsOnlyTheMatchSettingsThatItHas() {
         fun update(minutes: Int?, mode: String?, extra: Int?, zone: String?) = UpdateTournamentSettingsRequestDto(
-            name = "T", shortName = "T", primaryColor = "#123456", eventStartDate = "2026-10-03", eventEndDate = "2026-10-04",
+            name = "T", shortName = "T", eventStartDate = "2026-10-03", eventEndDate = "2026-10-04",
             hostCountry = "ES", hostCity = "Madrid",
             matchDurationMinutes = minutes, matchEndMode = mode, matchExtraMinutes = extra, timeZone = zone,
         )
@@ -85,7 +85,7 @@ class TournamentMatchSettingsMappingTest {
         val request = CreateTournamentRequestDto(
             name = "T", eventStartDate = "2026-10-03", eventEndDate = "2026-10-04", isTeams = false, numPlayers = 4,
             numRounds = 1, numTries = 0, players = emptyList(), tables = emptyList(), shortName = "T",
-            primaryColor = "#123456", hostCountry = "ES", hostCity = "Madrid",
+            organizerIds = listOf("org-es"), hostCountry = "ES", hostCity = "Madrid",
         )
 
         assertEquals(120, request.matchDurationMinutes)
@@ -112,7 +112,6 @@ class TournamentMatchSettingsMappingTest {
         val request = UpdateTournamentSettingsRequestDto(
             name = "T",
             shortName = "T",
-            primaryColor = "#02B16B",
             eventStartDate = "2026-10-01",
             eventEndDate = "2026-10-01",
             hostCountry = "ES",

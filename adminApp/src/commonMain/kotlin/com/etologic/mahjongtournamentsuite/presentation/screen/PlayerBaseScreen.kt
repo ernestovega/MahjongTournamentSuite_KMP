@@ -170,7 +170,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val players by store.players.collectAsState()
     LoadMissingSession()
     val admin by store.adminStatus.collectAsState()
-    // Super admins and country admins add EMA players of any country. Only super admins change or delete them.
+    // Super admins and club admins add EMA players of any country. Only super admins change or delete them.
     val canCreate = admin?.canCreateEmaPlayers == true
     val canEdit = admin?.canEditEmaPlayers == true
     val canEditEmaNumber = admin?.canEditEmaPlayers == true
@@ -718,7 +718,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        // Only super admins and country admins add players. An editor has no button here, so there is no empty
+        // Only super admins and club admins add players. An editor has no button here, so there is no empty
         // three-dots menu on a phone.
         actions = if (canCreate) {
             { AppTopBarActions(onNewPlayer = ::openNewPlayerDialog) }

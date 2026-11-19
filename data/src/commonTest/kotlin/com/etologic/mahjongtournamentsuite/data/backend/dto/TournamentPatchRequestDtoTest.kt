@@ -49,7 +49,6 @@ class TournamentPatchRequestDtoTest {
         val payload = UpdateTournamentSettingsRequestDto(
             name = "European Championship",
             shortName = "EC2026",
-            primaryColor = "#123456",
             eventStartDate = "2026-10-03",
             eventEndDate = "2026-10-04",
             hostCountry = "ESP",
@@ -66,28 +65,27 @@ class TournamentPatchRequestDtoTest {
         val encoded = json.encodeToString(payload)
 
         assertEquals(
-            """{"name":"European Championship","shortName":"EC2026","primaryColor":"#123456","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","roundSchedules":[{"roundId":1,"date":"2026-10-03","startTime":"09:30"},{"roundId":2}],"agendaItems":[{"title":"Registration","date":"2026-10-03","startTime":"08:30"}]}""",
+            """{"name":"European Championship","shortName":"EC2026","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","roundSchedules":[{"roundId":1,"date":"2026-10-03","startTime":"09:30"},{"roundId":2}],"agendaItems":[{"title":"Registration","date":"2026-10-03","startTime":"08:30"}]}""",
             encoded,
         )
     }
 
     @Test
-    fun serializesReusableTournamentLogoSource() {
+    fun serializesNewOrganizersOnlyWhenTheyChange() {
         val payload = UpdateTournamentSettingsRequestDto(
             name = "European Championship",
             shortName = "EC2026",
-            primaryColor = "#123456",
+            organizerIds = listOf("org-main", "org-co"),
             eventStartDate = "2026-10-03",
             eventEndDate = "2026-10-04",
             hostCountry = "ESP",
             hostCity = "Madrid",
-            associationLogoSourceTournamentId = "source-tournament",
         )
 
         val encoded = json.encodeToString(payload)
 
         assertEquals(
-            """{"name":"European Championship","shortName":"EC2026","primaryColor":"#123456","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","associationLogoSourceTournamentId":"source-tournament"}""",
+            """{"name":"European Championship","shortName":"EC2026","organizerIds":["org-main","org-co"],"eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid"}""",
             encoded,
         )
     }
@@ -97,7 +95,6 @@ class TournamentPatchRequestDtoTest {
         val payload = UpdateTournamentSettingsRequestDto(
             name = "European Championship",
             shortName = "EC2026",
-            primaryColor = "#123456",
             eventStartDate = "2026-10-03",
             eventEndDate = "2026-10-04",
             hostCountry = "ESP",

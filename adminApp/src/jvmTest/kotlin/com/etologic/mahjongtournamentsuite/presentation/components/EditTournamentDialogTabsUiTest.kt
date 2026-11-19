@@ -75,7 +75,7 @@ class EditTournamentDialogTabsUiTest {
             }
         }
         waitForIdle()
-        listOf("Venue", "Branding", "Schedule", "Data", "General").forEach {
+        listOf("Venue", "Organizers", "Schedule", "Data", "General").forEach {
             onNodeWithText(it).performClick()
             waitForIdle()
         }

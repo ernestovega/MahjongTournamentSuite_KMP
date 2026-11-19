@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
@@ -48,7 +49,7 @@ class CreateTournamentDialogUiTest {
                             single<TournamentRepository> { FakeTournamentRepository() }
                             single { AppMemoryStore() }
                             factory { GenerateTournamentScheduleBruteForceParallelUseCase() }
-                            factory { CreateTournamentPresenter(get(), get(), get()) }
+                            factory { CreateTournamentPresenter(get(), get(), get(), adminRepository = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)) }
                             factory { IdCardProofPresenter(get()) }
                         },
                     )
@@ -71,9 +72,9 @@ class CreateTournamentDialogUiTest {
         onAllNodesWithText(" *").assertCountEquals(GeneralRequiredFieldCount)
         onNodeWithText("Fields marked with * are required.").assertExists()
 
-        onNodeWithText("Branding").performClick()
+        onNodeWithText("Organizers").performClick()
         waitForIdle()
-        onAllNodesWithText(" *").assertCountEquals(BrandingRequiredFieldCount)
+        onAllNodesWithText(" *").assertCountEquals(OrganizersRequiredFieldCount)
 
         onNodeWithText("Venue").performClick()
         waitForIdle()
@@ -161,8 +162,8 @@ class CreateTournamentDialogUiTest {
         /** Map link, country, city, contact email, time zone. */
         const val VenueRequiredFieldCount = 5
 
-        /** Color. */
-        const val BrandingRequiredFieldCount = 1
+        /** The main organizer. */
+        const val OrganizersRequiredFieldCount = 1
 
         /** The 7 rounds of a new tournament. */
         const val DefaultRoundCount = 7
@@ -180,7 +181,7 @@ class CreateTournamentDialogUiTest {
         onNodeWithText("Crea las rondas, las mesas y los jugadores automáticamente.").assertExists()
         onNodeWithText("General").assertExists()
         onNodeWithText("Sede").assertExists()
-        onNodeWithText("Imagen").assertExists()
+        onNodeWithText("Organizadores").assertExists()
         onNodeWithText("Horario").assertExists()
         onNodeWithText("Crear").assertExists()
     }

@@ -2,14 +2,14 @@ package com.etologic.mahjongtournamentsuite.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollScope
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -42,8 +42,10 @@ private inline fun <reified T : Any> kind(): RouteKind<T> = RouteKind(
 private val savedKinds: List<RouteKind<*>> = listOf(
     kind<TournamentsRoute>(),
     kind<PlayerBaseRoute>(),
+    kind<OrganizationsRoute>(),
     kind<TournamentRoute>(),
     kind<UsersRoute>(),
+    kind<RolesRoute>(),
     kind<PlayersRoute>(),
     kind<TeamsRoute>(),
     kind<StatisticsRoute>(),

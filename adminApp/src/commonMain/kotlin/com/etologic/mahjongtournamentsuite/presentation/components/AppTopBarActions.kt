@@ -2,7 +2,9 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
@@ -36,6 +38,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.new_player
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
+import mahjongtournamentsuite.adminapp.generated.resources.roles_open
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_ema_players
@@ -58,12 +62,16 @@ fun AppTopBarActions(
     importLocked: Boolean = false,
     onExportPlayers: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
+    /** The clubs and federations that organize the tournaments. */
+    onOrganizations: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     onStatistics: (() -> Unit)? = null,
     onEmaReport: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
     onNewPlayer: (() -> Unit)? = null,
     onNewUser: (() -> Unit)? = null,
+    /** The custom roles. Only super admins have it. */
+    onRoles: (() -> Unit)? = null,
     teamsFocusRequester: FocusRequester? = null,
     playersFocusRequester: FocusRequester? = null,
     idCardsFocusRequester: FocusRequester? = null,
@@ -111,9 +119,11 @@ fun AppTopBarActions(
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }
+        onOrganizations?.let { AppTopBarButton(stringResource(Res.string.organizations_title), Icons.Default.Business, it) }
         onPlayerBase?.let { AppTopBarButton(stringResource(Res.string.top_bar_ema_players), Icons.Default.People, it, playerBaseFocusRequester) }
         onNewTournament?.let { AppTopBarButton(stringResource(Res.string.new_tournament), Icons.Outlined.AddBox, it, newTournamentFocusRequester) }
         onNewPlayer?.let { AppTopBarButton(stringResource(Res.string.new_player), Icons.Default.PersonAdd, it, newPlayerFocusRequester) }
+        onRoles?.let { AppTopBarButton(stringResource(Res.string.roles_open), Icons.Default.AdminPanelSettings, it) }
         onNewUser?.let { AppTopBarButton(stringResource(Res.string.top_bar_new_user), Icons.Default.PersonAdd, it, newUserFocusRequester) }
     }
 }

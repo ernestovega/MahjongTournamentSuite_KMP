@@ -9,6 +9,11 @@
     <string name="info_directions">Vägbeskrivning</string>
     <string name="info_open_directions">Öppna vägbeskrivningen i Google Maps</string>
     <string name="info_contact">Kontakt</string>
+    <string name="info_organizers">Arrangörer</string>
+    <string name="info_main_organizer">Huvudarrangör</string>
+    <string name="info_co_organizer">Medarrangör</string>
+    <string name="info_organizer_club">Klubb</string>
+    <string name="info_organizer_federation">Förbund</string>
     <string name="info_no_date">Inget datum än</string>
     <string name="round_n">Omgång %1$d</string>
     <string name="details_no_seats_title">Inga platser än</string>

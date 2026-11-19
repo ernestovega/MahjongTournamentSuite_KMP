@@ -1,7 +1,8 @@
 import { auth, db } from "../firebase";
 import { getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
 import { readOrganizerIds } from "./organizationsService";
-import { PERMISSIONS, ROLE_PERMISSIONS, TOURNAMENT_PERMISSIONS, type Permission } from "../models/permissions";
+import { PERMISSIONS, ROLE_PERMISSIONS, TOURNAMENT_PERMISSIONS, type CustomizableRole, type Permission } from "../models/permissions";
+import { effectivePermissions, loadCustomRoles, readPermissionSettings } from "./customPermissions";
 
 /**
  * What one account may do, read from the account itself and not from the token. A token keeps the claims of the
@@ -16,6 +17,11 @@ export type Access = {
   adminOrganizations: ReadonlySet<string>;
   editor: boolean;
   player: boolean;
+  /**
+   * What the account may do as an editor and as a club admin: the standard role or its custom role, with the
+   * changes for this person (`customPermissions.ts`). A super admin always has the whole standard role.
+   */
+  rolePermissions: Readonly<Record<CustomizableRole, ReadonlySet<Permission>>>;
 };
 
 const ACCESS_TTL_MS = 30_000;
@@ -40,6 +46,11 @@ export function forgetTournamentOrganizers(tournamentId: string): void {
   organizersCache.delete(tournamentId);
 }
 
+/** Forgets the access of every account, after a custom role changed. */
+export function forgetAllAccess(): void {
+  accessCache.clear();
+}
+
 /** A stored list of organization ids, sorted and without repeats. */
 export function readOrganizationList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -49,10 +60,12 @@ export function readOrganizationList(value: unknown): string[] {
 export async function loadAccess(uid: string): Promise<Access> {
   const cached = accessCache.get(uid);
   if (cached && cached.until > Date.now()) return cached.access;
-  const [user, profile] = await Promise.all([
+  const [user, profile, customRoles] = await Promise.all([
     auth.getUser(uid).catch(() => null),
     db.doc(`users/${uid}`).get(),
+    loadCustomRoles(),
   ]);
+  const settings = readPermissionSettings(profile.data());
   const roles = user ? getGlobalUserRoles(user) : [];
   const organizations = roles.includes("CLUB_ADMIN") ? readOrganizationList(profile.get("adminOrganizations")) : [];
   const access: Access = {
@@ -62,6 +75,10 @@ export async function loadAccess(uid: string): Promise<Access> {
     adminOrganizations: new Set(organizations),
     editor: roles.includes("EDITOR"),
     player: roles.includes("PLAYER"),
+    rolePermissions: {
+      EDITOR: effectivePermissions("EDITOR", settings, customRoles),
+      CLUB_ADMIN: effectivePermissions("CLUB_ADMIN", settings, customRoles),
+    },
   };
   remember(accessCache, uid, { until: Date.now() + ACCESS_TTL_MS, access });
   return access;
@@ -81,9 +98,15 @@ export function isStaff(access: Access): boolean {
   return access.superAdmin || access.adminOrganizations.size > 0 || access.editor;
 }
 
+/** The permissions of one role of the account, with its custom role and its own changes. */
+export function permissionsOfRole(access: Access, role: GlobalUserRole): ReadonlySet<Permission> {
+  if (role === "EDITOR" || role === "CLUB_ADMIN") return access.rolePermissions[role];
+  return new Set(ROLE_PERMISSIONS[role]);
+}
+
 /** True when some role of the account grants the permission somewhere. A route then checks the scope. */
 export function hasPermissionSomewhere(access: Access, permission: Permission): boolean {
-  return heldRoles(access).some((role) => ROLE_PERMISSIONS[role].includes(permission));
+  return heldRoles(access).some((role) => permissionsOfRole(access, role).has(permission));
 }
 
 /** Every permission that some role of the account grants somewhere. The apps use it to show or hide actions. */
@@ -140,8 +163,8 @@ export async function rolesInTournament(
   return roles;
 }
 
-export function permissionsOf(roles: GlobalUserRole[]): Set<Permission> {
-  return new Set(roles.flatMap((role) => ROLE_PERMISSIONS[role]));
+export function permissionsOf(access: Access, roles: GlobalUserRole[]): Set<Permission> {
+  return new Set(roles.flatMap((role) => [...permissionsOfRole(access, role)]));
 }
 
 /** The tournament permissions of the account in one tournament, for the apps. */
@@ -150,16 +173,16 @@ export async function tournamentPermissions(
   tournamentId: string,
   known?: { organizerIds?: string[] | null; member?: boolean },
 ): Promise<Permission[]> {
-  const granted = permissionsOf(await rolesInTournament(access, tournamentId, known));
+  const granted = permissionsOf(access, await rolesInTournament(access, tournamentId, known));
   return PERMISSIONS.filter((permission) => TOURNAMENT_PERMISSIONS.has(permission) && granted.has(permission));
 }
 
 export async function canInTournament(access: Access, permission: Permission, tournamentId: string): Promise<boolean> {
-  return permissionsOf(await rolesInTournament(access, tournamentId)).has(permission);
+  return permissionsOf(access, await rolesInTournament(access, tournamentId)).has(permission);
 }
 
 /** True when the account may use the permission for this organization: a super admin, or a club admin of it. */
 export function canInOrganization(access: Access, permission: Permission, organizationId: string): boolean {
   if (access.superAdmin && ROLE_PERMISSIONS.SUPER_ADMIN.includes(permission)) return true;
-  return access.adminOrganizations.has(organizationId) && ROLE_PERMISSIONS.CLUB_ADMIN.includes(permission);
+  return access.adminOrganizations.has(organizationId) && access.rolePermissions.CLUB_ADMIN.has(permission);
 }

@@ -7,38 +7,46 @@ import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CustomRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.GlobalUserRoleDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.AccountRemovalRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.LevelPermissionsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveRoleRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserPermissionsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserDeletesRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
+import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.PermissionChange
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
-import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
-import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -262,6 +270,40 @@ class DefaultAdminRepository(
         Unit
     }
 
+    override suspend fun listRoles(): AppResult<RolesCatalog> = managedUserRequest("Listing roles") { idToken ->
+        val dto = backendApi.listRoles(idToken)
+        RolesCatalog(
+            standard = dto.standard.mapNotNull { role -> role.id.toRole()?.let { it to Permission.fromKeys(role.permissions) } }.toMap(),
+            custom = dto.custom.mapNotNull { it.toDomain() },
+            grantable = dto.grantable.mapNotNull { (key, keys) -> key.toRole()?.let { it to Permission.fromKeys(keys) } }.toMap(),
+            required = Permission.fromKeys(dto.required),
+        )
+    }
+
+    override suspend fun createRole(name: String, base: GlobalUserRole, permissions: Set<Permission>): AppResult<CustomRole> = managedUserRequest("Creating a role") { idToken ->
+        val request = SaveRoleRequestDto(name = name.trim(), base = base.name, permissions = permissions.toKeys())
+        backendApi.createRole(idToken, request).toDomain() ?: error("The server answered an unknown role")
+    }
+
+    override suspend fun updateRole(id: String, name: String, permissions: Set<Permission>): AppResult<CustomRole> = managedUserRequest("Changing a role") { idToken ->
+        val request = SaveRoleRequestDto(name = name.trim(), permissions = permissions.toKeys())
+        (backendApi.updateRole(idToken, id, request).toDomain() ?: error("The server answered an unknown role"))
+            .also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
+    }
+
+    override suspend fun deleteRole(id: String): AppResult<Int> = managedUserRequest("Deleting a role") { idToken ->
+        backendApi.deleteRole(idToken, id).accounts.also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
+    }
+
+    override suspend fun setUserPermissions(uid: String, levels: Map<GlobalUserRole, LevelPermissions>): AppResult<ManagedUser> = managedUserRequest("Changing the permissions of a user") { idToken ->
+        val request = SetUserPermissionsRequestDto(
+            levels = levels.mapKeys { it.key.name }.mapValues { (_, level) ->
+                LevelPermissionsDto(roleId = level.customRoleId, permissions = level.permissions?.toKeys())
+            },
+        )
+        backendApi.setUserPermissions(idToken, uid, request).toDomain().also { cache.markStale(USERS_CACHE_KEY) }
+    }
+
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = managedUserRequest("Removing the photo of a user") { idToken ->
         backendApi.removeUserPhoto(idToken, uid).toDomain().also { cache.markStale(USERS_CACHE_KEY) }
     }
@@ -331,6 +373,11 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
     canManage = canManage,
     hasGrantsOutside = hasGrantsOutside,
     emailHidden = emailHidden,
+    customRoleIds = permissionSettings?.customRoles.orEmpty().mapNotNull { (key, id) -> key.toRole()?.let { it to id } }.toMap(),
+    permissionChanges = permissionSettings?.permissionChanges.orEmpty().mapNotNull { (key, change) ->
+        key.toRole()?.let { it to PermissionChange(Permission.fromKeys(change.added), Permission.fromKeys(change.removed)) }
+    }.toMap(),
+    rolePermissions = rolePermissions.orEmpty().mapNotNull { (key, keys) -> key.toRole()?.let { it to Permission.fromKeys(keys) } }.toMap(),
 )
 
 private fun OrganizationDto.toDomain(): Organization = Organization(
@@ -353,6 +400,15 @@ private fun OrganizationDraft.toDto(): SaveOrganizationRequestDto = SaveOrganiza
     logoDataBase64 = logoBytes?.let(Base64.Default::encode),
     removeLogo = removeLogo,
 )
+
+private fun String.toRole(): GlobalUserRole? = GlobalUserRole.entries.firstOrNull { it.name == this }
+
+/** The keys of the permissions, in the order of the enum, so a request is always the same for the same set. */
+private fun Set<Permission>.toKeys(): List<String> = Permission.entries.filter { it in this }.map { it.key }
+
+private fun CustomRoleDto.toDomain(): CustomRole? = base.toRole()?.let { role ->
+    CustomRole(id = id, name = name, base = role, permissions = Permission.fromKeys(permissions), accounts = accounts)
+}
 
 private fun TournamentAssignment.toDto(): TournamentAssignmentDto = TournamentAssignmentDto(
     tournamentId = tournamentId,

@@ -79,16 +79,12 @@ open class ScreenshotTournamentRepository(
         tournamentId: String,
         name: String,
         shortName: String,
-        primaryColor: String,
+        organizerIds: List<String>?,
         eventStartDate: String,
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
         venue: TournamentVenue,
-        associationLogoContentType: String?,
-        associationLogoBytes: ByteArray?,
-        associationLogoSourceTournamentId: String?,
-        removeAssociationLogo: Boolean,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean?,
@@ -196,7 +192,7 @@ open class ScreenshotAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
-        adminCountries: Set<String>,
+        adminOrganizations: Set<String>,
     ): AppResult<ManagedUser> = noWrite()
 
     override suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = noWrite()
@@ -210,6 +206,8 @@ open class ScreenshotAdminRepository(
 
     override suspend fun loadErrorGroup(id: String, reportCursor: ErrorLogCursor?): AppResult<ErrorGroupDetail> = noWrite()
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = ok(ActivityPage(entries = emptyList(), nextCursor = null))
+    override suspend fun listRoles() = ok(ScreenshotData.rolesCatalog)
+    override suspend fun listOrganizations() = ok(ScreenshotData.organizations)
 }
 
 /**

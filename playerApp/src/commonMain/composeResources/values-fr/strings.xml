@@ -9,6 +9,11 @@
     <string name="info_directions">Itinéraire</string>
     <string name="info_open_directions">Ouvrir l'itinéraire dans Google Maps</string>
     <string name="info_contact">Contact</string>
+    <string name="info_organizers">Organisateurs</string>
+    <string name="info_main_organizer">Organisateur principal</string>
+    <string name="info_co_organizer">Co-organisateur</string>
+    <string name="info_organizer_club">Club</string>
+    <string name="info_organizer_federation">Fédération</string>
     <string name="info_no_date">Pas encore de date</string>
     <string name="round_n">Tour %1$d</string>
     <string name="details_no_seats_title">Pas encore de places</string>

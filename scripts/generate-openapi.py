@@ -134,6 +134,8 @@ TB = {"name": "tableId", "in": "path", "required": True, "schema": {"type": "int
 P = {"name": "playerId", "in": "path", "required": True, "schema": {"type": "integer"}, "description": "Número de hueco (slot) del jugador en el torneo."}
 UID = {"name": "uid", "in": "path", "required": True, "schema": {"type": "string"}, "description": "Uid de Firebase Auth de la cuenta."}
 EMA = {"name": "emaId", "in": "path", "required": True, "schema": {"type": "string"}, "description": "EMA id (8 cifras)."}
+ORG = {"name": "organizationId", "in": "path", "required": True, "schema": {"type": "string"}, "description": "Id de la organización."}
+ROLE = {"name": "roleId", "in": "path", "required": True, "schema": {"type": "string"}, "description": "Id del rol a medida."}
 
 
 def q(name, description, schema=None, required=False):
@@ -342,9 +344,6 @@ ROUTES = [
      "Incluye `hiddenFromPublic` (en público sale como «#N»).", [EMA], "UpdatePlayerRequest", OK),
     ("put", "/ema-player-registry/{emaId}/photo", "Registro EMA", "admin", "Foto de un jugador EMA", "Storage `playerPhotos/{emaId}`.",
      [EMA], "UpdatePlayerPhotoRequest", "Player"),
-    ("post", "/ema-player-registry/accounts/delete", "Registro EMA", "admin", "Borrar cuentas de jugadores EMA",
-     "Borra las cuentas que tienen esos EMA id. El registro EMA nunca se borra.", [], "PlayerAccountDeletesRequest",
-     "PlayerAccountDeletesResponse"),
     ("get", "/countries", "Registro EMA", "auth", "Países", "", [], None, "CountriesResponse"),
     ("post", "/venues/resolve-link", "Registro EMA", "editor", "Resolver un enlace corto de Google Maps",
      "Sigue hasta 5 redirecciones de Google y devuelve el enlace completo y, si puede, nombre, dirección, ciudad, país y zona horaria.",
@@ -366,6 +365,23 @@ ROUTES = [
      "PasswordResetsRequest", "PasswordResetsResponse"),
     ("get", "/admin/users/lookup", "Admin", "editor", "Buscar una cuenta", "",
      [q("identifier", "Email, uid o EMA id.", required=True)], None, "UserProfile"),
+    ("get", "/admin/organizations", "Organizaciones", "editor", "Organizaciones",
+     "Clubs y federaciones dueños de los torneos, con `canEdit` y `canDelete` para quien pregunta.", [], None, "OrganizationsResponse"),
+    ("post", "/admin/organizations", "Organizaciones", "admin", "Crear una organización", "Solo superadministrador. Responde 201.", [],
+     "SaveOrganizationRequest", "Organization", "201"),
+    ("put", "/admin/organizations/{organizationId}", "Organizaciones", "admin", "Editar una organización",
+     "Superadministrador, o administrador de club de esa organización. Logo JPEG o PNG de hasta 2 MB.", [ORG], "SaveOrganizationRequest",
+     "Organization"),
+    ("delete", "/admin/organizations/{organizationId}", "Organizaciones", "admin", "Borrar una organización",
+     "Solo superadministrador, y solo si no organiza ningún torneo (409).", [ORG], None, OK),
+    ("get", "/admin/roles", "Admin", "editor", "Roles", "Roles estándar y a medida, con lo que puede tener cada base.", [], None, "RolesResponse"),
+    ("post", "/admin/roles", "Admin", "admin", "Crear un rol a medida", "Solo superadministrador.", [], "SaveRoleRequest", "CustomRole"),
+    ("put", "/admin/roles/{roleId}", "Admin", "admin", "Editar un rol a medida", "Solo superadministrador.", [ROLE], "SaveRoleRequest", "CustomRole"),
+    ("delete", "/admin/roles/{roleId}", "Admin", "admin", "Borrar un rol a medida", "Sus cuentas vuelven al rol estándar.", [ROLE], None,
+     "DeleteRoleResponse"),
+    ("put", "/admin/users/{uid}/permissions", "Admin", "admin", "Rol y permisos de una persona",
+     "Superadministrador, o administrador de club para el personal de sus organizaciones (solo roles).", [UID], "SetUserPermissionsRequest",
+     "ManagedUser"),
     ("get", "/admin/activity", "Admin", "admin", "Registro de actividad",
      "Cambios de mesas y acciones de gestión, del más nuevo al más viejo.",
      [q("limit", "Tamaño de página (máx. 50).", {"type": "integer"}), q("source", "all, tables u other."),

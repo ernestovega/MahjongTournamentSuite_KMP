@@ -70,7 +70,7 @@ internal fun PasswordResetBar(
     onDelete: () -> Unit,
     /** False on a phone, where the send button floats at the bottom of the screen. */
     showSend: Boolean = true,
-    /** False for a country admin: only super admins delete accounts. */
+    /** False for a club admin: only super admins delete accounts. */
     showDelete: Boolean = true,
 ) {
     // The items wrap on a narrow screen. On a wide one the send button stays at the end of the line.

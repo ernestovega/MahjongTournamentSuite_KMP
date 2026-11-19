@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,12 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
@@ -62,7 +56,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -88,7 +81,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
-import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -116,9 +108,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.logo_none
 import mahjongtournamentsuite.adminapp.generated.resources.logo_unknown_dimensions
 import mahjongtournamentsuite.adminapp.generated.resources.match_duration_hint
 import mahjongtournamentsuite.adminapp.generated.resources.match_duration_minutes
-import mahjongtournamentsuite.adminapp.generated.resources.no_saved_tournament_logos_are_available
 import mahjongtournamentsuite.adminapp.generated.resources.ok
-import mahjongtournamentsuite.adminapp.generated.resources.reuse_tournament_logo
 import mahjongtournamentsuite.adminapp.generated.resources.rrggbb
 import mahjongtournamentsuite.adminapp.generated.resources.select_time
 import mahjongtournamentsuite.adminapp.generated.resources.show_info_for
@@ -470,97 +460,6 @@ fun TournamentLogoCropDialog(
         onCropped = onCropped,
         onError = onError,
     )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun TournamentLogoLibraryDialog(
-    tournaments: List<Tournament>,
-    onDismiss: () -> Unit,
-    onSelect: (Tournament) -> Unit,
-) {
-    val logos = remember(tournaments) {
-        tournaments
-            .filter { !it.associationLogoUrl.isNullOrBlank() }
-            .distinctBy { it.associationLogoHash ?: it.associationLogoUrl }
-    }
-    val itemFocusRequesters = remember(logos.map { it.id }) { logos.map { FocusRequester() } }
-    val cancelFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(logos) {
-        if (itemFocusRequesters.isNotEmpty()) {
-            itemFocusRequesters.first().requestFocus()
-        } else {
-            cancelFocusRequester.requestFocus()
-        }
-    }
-
-    TrackedDialog("ReuseTournamentLogo") {
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = onDismiss,
-            title = { MtsDialogTitle(stringResource(Res.string.reuse_tournament_logo)) },
-            text = {
-                if (logos.isEmpty()) {
-                    Text(
-                        stringResource(Res.string.no_saved_tournament_logos_are_available),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 400.dp)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        logos.forEachIndexed { index, tournament ->
-                            val previous = if (index == 0) cancelFocusRequester else itemFocusRequesters[index - 1]
-                            val next = if (index == logos.lastIndex) cancelFocusRequester else itemFocusRequesters[index + 1]
-                            FocusedButton(
-                                onClick = { onSelect(tournament) },
-                                focusRequester = itemFocusRequesters[index],
-                                buttonModifier = Modifier.focusLoop(previous = previous, next = next),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                            ) {
-                                AsyncImage(
-                                    model = tournament.associationLogoUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(112.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White),
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                MtsDialogButtons {
-                    Box(
-                        if (logos.isEmpty()) Modifier.fillMaxWidth() else Modifier,
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        FocusedTextButton(
-                            onClick = onDismiss,
-                            focusRequester = cancelFocusRequester,
-                            buttonModifier = if (itemFocusRequesters.isEmpty()) {
-                                Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
-                            } else {
-                                Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
-                            },
-                        ) {
-                            Text(stringResource(Res.string.cancel))
-                        }
-                    }
-                }
-            },
-        )
-    }
 }
 
 /** Today has an outline. Only a selected day has a filled background. */

@@ -78,6 +78,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
+import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
@@ -381,6 +382,7 @@ fun TournamentsScreen(
             // A Timer without a tournament, for any use apart from a tournament. It changes no data.
             AppTopBarTimerAction(onTimer = { openTimer(navController, tournamentId = null) })
             AppTopBarActions(
+                onOrganizations = { navController.navigate(OrganizationsRoute) },
                 onPlayerBase = {
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)

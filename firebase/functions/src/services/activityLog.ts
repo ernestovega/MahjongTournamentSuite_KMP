@@ -16,7 +16,8 @@ export type ActivityAction =
   | "team.update" | "member.add" | "member.remove" | "round.clock" | "round.control"
   | "account.send" | "player.email"
   | "user.create" | "user.passwordReset" | "user.update" | "user.disable" | "user.enable" | "user.delete" | "user.photo" | "user.photo.remove"
-  | "user.removal" | "user.request.approve" | "user.request.reject"
+  | "user.removal" | "user.request.approve" | "user.request.reject" | "user.permissions"
+  | "role.create" | "role.update" | "role.delete"
   | "registry.create" | "registry.update" | "registry.photo" | "registry.delete"
   | "organization.create" | "organization.update" | "organization.delete";
 

@@ -7,7 +7,7 @@ This application is for tournament management. The public viewer application is 
 The management application has three staff roles, and the player application one:
 
 - `EDITOR`: the tournaments assigned to it.
-- `COUNTRY_ADMIN`: every tournament of its countries.
+- `CLUB_ADMIN`: every tournament of its organizations (clubs or federations).
 - `SUPER_ADMIN`: everything.
 - `PLAYER`: the player app.
 
@@ -17,27 +17,39 @@ An account can have several roles. What each role may do is in [the permissions 
 
 An editor works in the tournaments assigned to it: players, tables, hands, results, the Timer and the round control. It
 creates player accounts and sees every player account, but the email of a player only when the player plays in one of
-its tournaments. It sees the editors and admins of its countries (the countries of its tournaments).
+its tournaments. It sees the editors and admins of the organizations of its tournaments.
 
-An editor always has at least one tournament. When it loses the last one (a country admin takes it away, or the
+An editor always has at least one tournament. When it loses the last one (a club admin takes it away, or the
 tournament is deleted), the account becomes a player, or it is disabled when it has no EMA ID (`syncRoleClaims`).
 
-## Country Admin
+## Organizations
 
-A country admin manages every tournament of its countries without an assignment: it creates them (only in its
-countries), configures, deletes (a past tournament with results only a super admin deletes) and assigns their editors.
-It creates and changes editors and country admins of its countries, and it never takes away what an account has in other
-countries: a country admin that is also a country admin elsewhere cannot be demoted by it, only its own countries change.
-It creates EMA players of any country.
+Clubs and federations own the tournaments (`organizations/{id}`: name, type `CLUB` or `FEDERATION`, country, color and
+logo). A federation works like a club. A tournament has one or more organizers in `tournaments/{id}.organizerIds`: the
+first one is the main organizer, the others are co-organizers. The tournament has no logo or color of its own: it shows
+the ones of its main organizer (ID cards, apps). Its country is only the place and the statistics.
 
-A country admin does not disable or delete accounts. It removes an account from its countries ("Remove from my
-countries"), and it can ask the super admins to disable or delete the whole account with a reason
+Only a super admin creates and deletes organizations, and an organization that still organizes tournaments cannot be
+deleted. A club admin edits the details of its own organizations. Only a super admin changes the organizers of a
+tournament that exists. Screen: Tournaments → Organizations. API: `GET/POST /admin/organizations`,
+`PUT/DELETE /admin/organizations/{id}`.
+
+## Club Admin
+
+A club admin manages every tournament that one of its organizations organizes, without an assignment: it creates them
+(one of its organizations must be an organizer), configures, deletes (a past tournament with results only a super admin
+deletes) and assigns their editors. It creates and changes editors and club admins of its organizations, and it never
+takes away what an account has in other organizations: a club admin that is also a club admin elsewhere cannot be
+demoted by it, only its own organizations change. It creates EMA players of any country.
+
+A club admin does not disable or delete accounts. It removes an account from its organizations ("Remove from my
+organizations"), and it can ask the super admins to disable or delete the whole account with a reason
 (`POST /admin/users/{uid}/removal`). The super admins get an email and see the request in Accounts.
 
 ## Super Admin
 
-A super admin has every permission: every tournament and account, the country of a tournament, the email and the EMA ID
-of an account, the photos, the EMA players, the requests of the country admins and the DEV menu.
+A super admin has every permission: every tournament and account, the organizations and the organizers of a tournament,
+the email and the EMA ID of an account, the photos, the EMA players, the requests of the club admins and the DEV menu.
 
 The last enabled super admin cannot be demoted, disabled or deleted. A super admin cannot disable or delete their own
 account in App users.
@@ -56,9 +68,11 @@ show "No account" again. It cannot be undone.
 
 Firebase Authentication stores the sign-in email and disabled state.
 
-The custom claims `superAdmin`, `countryAdmin`, `editor` and `player` hold the roles. The API reads the roles and the
-countries from the account itself on each request (cached 30 seconds), not from the token, so a change works at once.
-The countries of a country admin are in `users/{uid}.adminCountries`.
+The custom claims `superAdmin`, `clubAdmin`, `editor` and `player` hold the roles. The API reads the roles and the
+organizations from the account itself on each request (cached 30 seconds), not from the token, so a change works at once.
+The organizations of a club admin are in `users/{uid}.adminOrganizations`. `npm run migrate:organizations` (dry run;
+`migrate:organizations:apply` writes) gives each old tournament a placeholder organizer of its country and takes the old
+`countryAdmin` claim away.
 
 The application has no public sign-up endpoint. The API has no route to create the first super admin: set the
 `superAdmin: true` custom claim with the Firebase Admin SDK. `npm run migrate:role-claims` turns the old `admin` claim
@@ -74,7 +88,7 @@ tournaments/{tournamentId}/members/{uid}
 
 The document contains `uid`, `createdAt`, and `updatedAt`. It does not contain a role or permission.
 
-Country admins and super admins do not need membership documents.
+Club admins and super admins do not need membership documents.
 
 ## User management API
 
@@ -82,7 +96,7 @@ Country admins and super admins do not need membership documents.
 GET /admin/users                       accounts.view
 POST /admin/users                      accounts.createPlayer (staff roles need accounts.manageStaff)
 PUT /admin/users/{uid}                 accounts.view (then the account rules)
-POST /admin/users/{uid}/removal        accounts.requestRemoval (country admins)
+POST /admin/users/{uid}/removal        accounts.requestRemoval (club admins)
 GET /admin/account-requests            accounts.reviewRequests (super admins)
 POST /admin/account-requests/{id}      accounts.reviewRequests
 PUT /admin/users/{uid}/disabled        accounts.disable (super admins)
@@ -90,7 +104,7 @@ DELETE /admin/users/{uid}              accounts.delete (super admins)
 ```
 
 A viewer receives only the assignments of the tournaments that it manages. The backend keeps the hidden assignments and
-the countries that the viewer does not manage.
+the organizations that the viewer does not manage.
 
 ## Tournament member API
 
@@ -100,7 +114,7 @@ PUT /tournaments/{tournamentId}/members/{uid}      tournament.members
 DELETE /tournaments/{tournamentId}/members/{uid}   tournament.members
 ```
 
-The member list includes the assigned editors, the country admins of the country of the tournament and all enabled super
+The member list includes the assigned editors, the club admins of the organizers of the tournament and all enabled super
 admins. The last two are implicit and cannot be removed.
 
 ## Full access reset

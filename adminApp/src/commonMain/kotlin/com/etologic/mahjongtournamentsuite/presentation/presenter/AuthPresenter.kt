@@ -34,7 +34,7 @@ class AuthPresenter(
     }
 
     /**
-     * Success(true) when the signed-in account is a super admin, a country admin or an editor. This app is only for them.
+     * Success(true) when the signed-in account is a super admin, a club admin or an editor. This app is only for them.
      * Failure when the profile cannot load. The caller must not let the account pass then.
      */
     suspend fun isManager(): AppResult<Boolean> = when (val result = authRepository.getMe()) {

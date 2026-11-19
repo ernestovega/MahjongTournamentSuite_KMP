@@ -10,14 +10,20 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroup
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
@@ -39,7 +45,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 internal class FakeAdminRepository(
     private val role: GlobalUserRole,
     var users: List<ManagedUser> = emptyList(),
-    private val countries: Set<String> = if (role == GlobalUserRole.COUNTRY_ADMIN) setOf("ES") else emptySet(),
+    private val organizations: Set<String> = if (role == GlobalUserRole.CLUB_ADMIN) setOf("org-es") else emptySet(),
 ) : AdminRepository {
     val calls = mutableListOf<String>()
 
@@ -48,7 +54,16 @@ internal class FakeAdminRepository(
 
     private fun <T> write(value: () -> T): AppResult<T> = if (failWrites) AppResult.Failure(AppError.Network) else AppResult.Success(value())
 
-    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(AdminStatus("me", role, adminCountries = countries))
+    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(AdminStatus("me", role, adminOrganizations = organizations))
+    override suspend fun listOrganizations() = AppResult.Success(
+        listOf(
+            Organization("org-es", "Madrid Club", OrganizationType.CLUB, "ES", canEdit = true),
+            Organization("org-fr", "Paris Club", OrganizationType.CLUB, "FR"),
+        ),
+    )
+    override suspend fun createOrganization(draft: OrganizationDraft) = write { Organization("new", draft.name, draft.type, draft.country) }
+    override suspend fun updateOrganization(id: String, draft: OrganizationDraft) = write { Organization(id, draft.name, draft.type, draft.country) }
+    override suspend fun deleteOrganization(id: String) = write {}
     override suspend fun lookupUser(identifier: String, tournamentId: String?): AppResult<UserProfile> = error("unused")
     override suspend fun listUsers(refreshMode: RefreshMode) = AppResult.Success(users)
     override suspend fun createUser(
@@ -57,14 +72,34 @@ internal class FakeAdminRepository(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String?,
-        adminCountries: Set<String>,
+        adminOrganizations: Set<String>,
     ): AppResult<ManagedUser> = write {
-        calls += "create $role ${adminCountries.sorted().joinToString(",")}"
-        ManagedUser("new", email, alias, role, false, tournamentAssignments, emaId = emaId, adminCountries = adminCountries)
+        calls += "create $role ${adminOrganizations.sorted().joinToString(",")}"
+        ManagedUser("new", email, alias, role, false, tournamentAssignments, emaId = emaId, adminOrganizations = adminOrganizations)
     }
 
-    override suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> {
+    override suspend fun removeFromMyOrganizations(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> {
         calls += "removal $uid ${kind ?: "NONE"} $reason"
+        return write { users.first { it.uid == uid } }
+    }
+
+    override suspend fun createRole(name: String, base: GlobalUserRole, permissions: Set<Permission>): AppResult<CustomRole> {
+        calls += "createRole $name $base"
+        return write { CustomRole("new-role", name, base, permissions) }
+    }
+
+    override suspend fun updateRole(id: String, name: String, permissions: Set<Permission>): AppResult<CustomRole> {
+        calls += "updateRole $id"
+        return write { CustomRole(id, name, GlobalUserRole.EDITOR, permissions) }
+    }
+
+    override suspend fun deleteRole(id: String): AppResult<Int> {
+        calls += "deleteRole $id"
+        return write { 0 }
+    }
+
+    override suspend fun setUserPermissions(uid: String, levels: Map<GlobalUserRole, LevelPermissions>): AppResult<ManagedUser> {
+        calls += "permissions $uid"
         return write { users.first { it.uid == uid } }
     }
 

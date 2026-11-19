@@ -23,26 +23,32 @@ import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExport
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcome
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcomeDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.AccountPermissionsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteOrganizationDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteRoleDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.NewRoleNameDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.OpenTablesReviewDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationEditorDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerWithData
-import com.etologic.mahjongtournamentsuite.presentation.screen.RemoveFromCountriesDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.RemoveFromOrganizationsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoleDraft
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoleEditorDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialogContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
@@ -90,9 +96,6 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun colorPicker() = dialog("color-picker") { TournamentColorPickerDialog("#02B16B", onDismiss = {}, onColorSelected = {}) }
-
-    @Test
-    fun logoLibrary() = dialog("logo-library") { TournamentLogoLibraryDialog(ScreenshotData.tournaments, onDismiss = {}, onSelect = {}) }
 
     @Test
     fun datePicker() = dialog("date-picker") { TournamentDatePickerDialog("16/05/2026", onDismiss = {}, onDateSelected = {}) }
@@ -245,8 +248,86 @@ class AdminDialogsScreenshotTest {
     }
 
     @Test
-    fun removeFromCountries() = dialog("remove-from-countries") {
-        RemoveFromCountriesDialog(user = ScreenshotData.users[1], saving = false, onDismiss = {}, onConfirm = { _, _ -> })
+    fun accountPermissions() = dialog("account-permissions") {
+        AccountPermissionsDialog(
+            user = ScreenshotData.customizedEditor,
+            catalog = ScreenshotData.rolesCatalog,
+            access = AdminStatus("admin-1", GlobalUserRole.SUPER_ADMIN),
+            saving = false,
+            onDismiss = {},
+            onSave = {},
+            onSaveAsNewRole = { _, _ -> },
+        )
+    }
+
+    @Test
+    fun accountPermissionsClubAdmin() = dialog("account-permissions-club-admin") {
+        AccountPermissionsDialog(
+            user = ScreenshotData.customizedEditor,
+            catalog = ScreenshotData.rolesCatalog,
+            access = AdminStatus("admin-1", GlobalUserRole.CLUB_ADMIN, adminOrganizations = setOf("org-madrid")),
+            saving = false,
+            onDismiss = {},
+            onSave = {},
+            onSaveAsNewRole = { _, _ -> },
+        )
+    }
+
+    @Test
+    fun roleEditor() = dialog("role-editor") {
+        val role = ScreenshotData.rolesCatalog.custom.first()
+        RoleEditorDialog(
+            draft = RoleDraft(role.id, role.name, role.base, role.permissions, accounts = role.accounts),
+            catalog = ScreenshotData.rolesCatalog,
+            saving = false,
+            onDismiss = {},
+            onSave = { _, _, _ -> },
+            onDuplicate = {},
+            onDelete = {},
+        )
+    }
+
+    @Test
+    fun roleStandard() = dialog("role-standard") {
+        RoleEditorDialog(
+            draft = RoleDraft(null, "", GlobalUserRole.CLUB_ADMIN, ScreenshotData.rolesCatalog.standard.getValue(GlobalUserRole.CLUB_ADMIN), readOnly = true),
+            catalog = ScreenshotData.rolesCatalog,
+            saving = false,
+            onDismiss = {},
+            onSave = { _, _, _ -> },
+            onDuplicate = {},
+            onDelete = {},
+        )
+    }
+
+    @Test
+    fun roleDelete() = dialog("role-delete") {
+        DeleteRoleDialog(ScreenshotData.rolesCatalog.custom.first(), saving = false, onDismiss = {}, onConfirm = {})
+    }
+
+    @Test
+    fun organizationNew() = dialog("organization-new") {
+        OrganizationEditorDialog(organization = null, saving = false, onDismiss = {}, onSave = {}, onDelete = null, onError = {})
+    }
+
+    @Test
+    fun organizationEdit() = dialog("organization-edit") {
+        OrganizationEditorDialog(organization = ScreenshotData.organizations.first(), saving = false, onDismiss = {}, onSave = {}, onDelete = {}, onError = {})
+    }
+
+    @Test
+    fun organizationDelete() = dialog("organization-delete") {
+        DeleteOrganizationDialog(ScreenshotData.organizations.first(), saving = false, onDismiss = {}, onConfirm = {})
+    }
+
+    @Test
+    fun newRoleName() = dialog("new-role-name") {
+        NewRoleNameDialog(ScreenshotData.rolesCatalog, initialName = "Bruno", saving = false, onDismiss = {}, onConfirm = {})
+    }
+
+    @Test
+    fun removeFromOrganizations() = dialog("remove-from-organizations") {
+        RemoveFromOrganizationsDialog(user = ScreenshotData.users[1], saving = false, onDismiss = {}, onConfirm = { _, _ -> })
     }
 
     @Test

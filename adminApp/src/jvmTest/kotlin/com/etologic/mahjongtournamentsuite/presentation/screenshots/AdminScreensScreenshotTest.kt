@@ -17,10 +17,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsSco
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
@@ -153,6 +155,12 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun activity() = adminScreenshots("activity") { nav -> ActivityScreen(nav) }
+
+    @Test
+    fun roles() = adminScreenshots("roles", ready = { waitForText("Head referee") }) { nav -> RolesScreen(nav) }
+
+    @Test
+    fun organizations() = adminScreenshots("organizations", ready = { waitForText("Madrid Mahjong Club") }) { nav -> OrganizationsScreen(nav) }
 
     @Test
     fun errors() = adminScreenshots("errors") { nav -> ErrorsScreen(nav) }

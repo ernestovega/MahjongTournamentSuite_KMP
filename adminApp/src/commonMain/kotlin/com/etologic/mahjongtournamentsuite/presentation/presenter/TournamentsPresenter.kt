@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
@@ -52,6 +53,9 @@ class TournamentsPresenter(
 
     suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.toRefreshMode())
 
+    /** The clubs and federations, to choose the organizers of a tournament. */
+    suspend fun loadOrganizations(): AppResult<List<Organization>> = adminRepository.listOrganizations()
+
     suspend fun loadCountries(force: Boolean = false): AppResult<List<Country>> = tournamentRepository.listCountries(force.toRefreshMode())
 
     suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> = tournamentRepository.listTournamentPlayers(tournamentId, force.toRefreshMode())
@@ -67,16 +71,12 @@ class TournamentsPresenter(
         tournamentId: String,
         name: String,
         shortName: String,
-        primaryColor: String,
+        organizerIds: List<String>?,
         eventStartDate: String,
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
         venue: TournamentVenue,
-        associationLogoContentType: String?,
-        associationLogoBytes: ByteArray?,
-        associationLogoSourceTournamentId: String?,
-        removeAssociationLogo: Boolean,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean? = null,
@@ -91,16 +91,12 @@ class TournamentsPresenter(
         tournamentId = tournamentId,
         name = name,
         shortName = shortName,
-        primaryColor = primaryColor,
+        organizerIds = organizerIds,
         eventStartDate = eventStartDate,
         eventEndDate = eventEndDate,
         hostCountry = hostCountry,
         hostCity = hostCity,
         venue = venue,
-        associationLogoContentType = associationLogoContentType,
-        associationLogoBytes = associationLogoBytes,
-        associationLogoSourceTournamentId = associationLogoSourceTournamentId,
-        removeAssociationLogo = removeAssociationLogo,
         roundSchedules = roundSchedules,
         agendaItems = agendaItems,
         countBestHands = countBestHands,

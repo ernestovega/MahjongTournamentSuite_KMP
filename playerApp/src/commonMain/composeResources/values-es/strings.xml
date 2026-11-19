@@ -9,6 +9,11 @@
     <string name="info_directions">Cómo llegar</string>
     <string name="info_open_directions">Abrir las indicaciones en Google Maps</string>
     <string name="info_contact">Contacto</string>
+    <string name="info_organizers">Organizadores</string>
+    <string name="info_main_organizer">Organizador principal</string>
+    <string name="info_co_organizer">Coorganizador</string>
+    <string name="info_organizer_club">Club</string>
+    <string name="info_organizer_federation">Federación</string>
     <string name="info_no_date">Aún sin fecha</string>
     <string name="round_n">Ronda %1$d</string>
     <string name="details_no_seats_title">Aún no hay asientos</string>

@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.11",
+  "version": "1.0.26",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -55,6 +55,9 @@
   },
   {
    "name": "Admin"
+  },
+  {
+   "name": "Organizaciones"
   }
  ],
  "paths": {
@@ -4634,60 +4637,6 @@
     }
    }
   },
-  "/ema-player-registry/accounts/delete": {
-   "post": {
-    "tags": [
-     "Registro EMA"
-    ],
-    "summary": "Borrar cuentas de jugadores EMA",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nBorra las cuentas que tienen esos EMA id. El registro EMA nunca se borra.",
-    "security": [
-     {
-      "bearer": []
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/PlayerAccountDeletesResponse"
-        }
-       }
-      }
-     },
-     "400": {
-      "$ref": "#/components/responses/E400"
-     },
-     "401": {
-      "$ref": "#/components/responses/E401"
-     },
-     "403": {
-      "$ref": "#/components/responses/E403"
-     },
-     "404": {
-      "$ref": "#/components/responses/E404"
-     },
-     "409": {
-      "$ref": "#/components/responses/E409"
-     },
-     "429": {
-      "$ref": "#/components/responses/E429"
-     }
-    },
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/PlayerAccountDeletesRequest"
-       }
-      }
-     }
-    }
-   }
-  },
   "/countries": {
    "get": {
     "tags": [
@@ -5390,6 +5339,499 @@
     ]
    }
   },
+  "/admin/organizations": {
+   "get": {
+    "tags": [
+     "Organizaciones"
+    ],
+    "summary": "Organizaciones",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nClubs y federaciones dueños de los torneos, con `canEdit` y `canDelete` para quien pregunta.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OrganizationsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Organizaciones"
+    ],
+    "summary": "Crear una organización",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador. Responde 201.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Organization"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveOrganizationRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/organizations/{organizationId}": {
+   "put": {
+    "tags": [
+     "Organizaciones"
+    ],
+    "summary": "Editar una organización",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSuperadministrador, o administrador de club de esa organización. Logo JPEG o PNG de hasta 2 MB.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Organization"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id de la organización."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveOrganizationRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Organizaciones"
+    ],
+    "summary": "Borrar una organización",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador, y solo si no organiza ningún torneo (409).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OkResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id de la organización."
+     }
+    ]
+   }
+  },
+  "/admin/roles": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Roles",
+    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nRoles estándar y a medida, con lo que puede tener cada base.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RolesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Crear un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CustomRole"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveRoleRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/roles/{roleId}": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Editar un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CustomRole"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "roleId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del rol a medida."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SaveRoleRequest"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Borrar un rol a medida",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSus cuentas vuelven al rol estándar.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DeleteRoleResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "roleId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del rol a medida."
+     }
+    ]
+   }
+  },
+  "/admin/users/{uid}/permissions": {
+   "put": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Rol y permisos de una persona",
+    "description": "🛡️ Solo admin (claim `admin`).\n\nSuperadministrador, o administrador de club para el personal de sus organizaciones (solo roles).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ManagedUser"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Uid de Firebase Auth de la cuenta."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SetUserPermissionsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
   "/admin/activity": {
    "get": {
     "tags": [
@@ -5752,6 +6194,75 @@
    }
   },
   "schemas": {
+   "AccountRemovalRequest": {
+    "type": "object",
+    "properties": {
+     "kind": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "DISABLE or DELETE, or null to only take the account out of the organizations of the caller."
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   },
+   "AccountRemovalResponse": {
+    "type": "object",
+    "properties": {
+     "user": {
+      "$ref": "#/components/schemas/ManagedUser"
+     }
+    },
+    "required": [
+     "user"
+    ]
+   },
+   "AccountRequest": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string"
+     },
+     "targetUid": {
+      "type": "string"
+     },
+     "targetEmail": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "requestedByEmail": {
+      "type": "string"
+     },
+     "createdAtMs": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "id",
+     "kind",
+     "targetUid"
+    ]
+   },
+   "AccountRequestsResponse": {
+    "type": "object",
+    "properties": {
+     "requests": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AccountRequest"
+      }
+     }
+    }
+   },
    "ActivityDetail": {
     "type": "object",
     "properties": {
@@ -6034,26 +6545,11 @@
      "shortName": {
       "type": "string"
      },
-     "primaryColor": {
-      "type": "string"
-     },
-     "associationLogoContentType": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "associationLogoDataBase64": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "associationLogoSourceTournamentId": {
-      "type": [
-       "string",
-       "null"
-      ]
+     "organizerIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
      },
      "hostCountry": {
       "type": "string"
@@ -6120,9 +6616,38 @@
      "players",
      "tables",
      "shortName",
-     "primaryColor",
+     "organizerIds",
      "hostCountry",
      "hostCity"
+    ]
+   },
+   "CustomRole": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "base": {
+      "type": "string"
+     },
+     "permissions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "accounts": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "base"
     ]
    },
    "DataVersion": {
@@ -6163,6 +6688,18 @@
        "format": "int64"
       },
       "description": "Exact version of each saved table. The key is `<roundId>_<tableId>`. Only tournaments have it."
+     }
+    }
+   },
+   "DeleteRoleResponse": {
+    "type": "object",
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     },
+     "accounts": {
+      "type": "integer",
+      "format": "int32"
      }
     }
    },
@@ -6296,6 +6833,95 @@
       "format": "int32"
      }
     }
+   },
+   "EmaPlayerDeleteResult": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "emaId",
+     "outcome"
+    ]
+   },
+   "EmaPlayerDeletesPreviewResponse": {
+    "type": "object",
+    "properties": {
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EmaPlayerTournaments"
+      }
+     }
+    }
+   },
+   "EmaPlayerDeletesRequest": {
+    "type": "object",
+    "properties": {
+     "emaIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "emaIds"
+    ]
+   },
+   "EmaPlayerDeletesResponse": {
+    "type": "object",
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EmaPlayerDeleteResult"
+      }
+     }
+    }
+   },
+   "EmaPlayerTournament": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name"
+    ]
+   },
+   "EmaPlayerTournaments": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "tournaments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EmaPlayerTournament"
+      }
+     }
+    },
+    "required": [
+     "emaId"
+    ]
    },
    "EmaReportRankingRow": {
     "type": "object",
@@ -6588,9 +7214,187 @@
     "type": "string",
     "enum": [
      "EDITOR",
-     "ADMIN",
+     "CLUB_ADMIN",
+     "SUPER_ADMIN",
      "PLAYER"
     ]
+   },
+   "GroupPerson": {
+    "type": "object",
+    "properties": {
+     "emaId": {
+      "type": "string"
+     },
+     "tournaments": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tables": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "points": {
+      "type": "number",
+      "format": "double"
+     },
+     "score": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "place1": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "place2": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "place3": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "place4": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablesWithHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsPlayed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsWon": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "dealIns": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "drawnHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "chickenHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "dealInScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "lostToSelfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "otherWins": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyPoints": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "bestHand": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "bestTableScore": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "mostHandsWonAtATable": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "maxPenalty": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableWinRun": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handWinRun": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     },
+     "noDealInRun": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int32"
+     }
+    }
+   },
+   "GroupTables": {
+    "type": "object",
+    "properties": {
+     "tablesCompleted": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tablesWithHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "handsPlayed": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "drawnHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "selfDraws": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "winningScoreSum": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "chickenHands": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "penaltyCount": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "highestHand": {
+      "type": "integer",
+      "format": "int32"
+     }
+    }
    },
    "HandPatchRequest": {
     "type": "object",
@@ -6899,6 +7703,28 @@
      "row"
     ]
    },
+   "LevelPermissions": {
+    "type": "object",
+    "properties": {
+     "roleId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "Null for the standard role."
+     },
+     "permissions": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      },
+      "description": "The whole list that the account gets. Null keeps the changes that it has."
+     }
+    }
+   },
    "ManagedUser": {
     "type": "object",
     "properties": {
@@ -6943,6 +7769,44 @@
       "items": {
        "$ref": "#/components/schemas/TournamentAssignment"
       }
+     },
+     "adminOrganizations": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "canManage": {
+      "type": "boolean"
+     },
+     "hasGrantsOutside": {
+      "type": "boolean"
+     },
+     "emailHidden": {
+      "type": "boolean"
+     },
+     "permissionSettings": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PermissionSettings"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "rolePermissions": {
+      "type": [
+       "object",
+       "null"
+      ],
+      "additionalProperties": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "description": "What the account may do as EDITOR and as CLUB_ADMIN. Null from an older backend."
      }
     },
     "required": [
@@ -7024,6 +7888,52 @@
     "required": [
      "ok"
     ]
+   },
+   "Organization": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "logoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "canEdit": {
+      "type": "boolean"
+     },
+     "canDelete": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id"
+    ]
+   },
+   "OrganizationsResponse": {
+    "type": "object",
+    "properties": {
+     "organizations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Organization"
+      }
+     }
+    }
    },
    "PasswordResetRequest": {
     "type": "object",
@@ -7110,6 +8020,40 @@
      "expectedVersion"
     ]
    },
+   "PermissionChange": {
+    "type": "object",
+    "properties": {
+     "added": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "removed": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "PermissionSettings": {
+    "type": "object",
+    "properties": {
+     "customRoles": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      }
+     },
+     "permissionChanges": {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/PermissionChange"
+      }
+     }
+    }
+   },
    "PersonStatistics": {
     "type": "object",
     "properties": {
@@ -7162,6 +8106,9 @@
      "hiddenFromPublic": {
       "type": "boolean"
      },
+     "disabled": {
+      "type": "boolean"
+     },
      "createdAt": {
       "type": [
        "string",
@@ -7202,52 +8149,6 @@
       "type": "array",
       "items": {
        "$ref": "#/components/schemas/PlayerAccountResult"
-      }
-     }
-    }
-   },
-   "PlayerAccountDeleteResult": {
-    "type": "object",
-    "properties": {
-     "emaId": {
-      "type": "string"
-     },
-     "outcome": {
-      "type": "string"
-     },
-     "reason": {
-      "type": [
-       "string",
-       "null"
-      ]
-     }
-    },
-    "required": [
-     "emaId",
-     "outcome"
-    ]
-   },
-   "PlayerAccountDeletesRequest": {
-    "type": "object",
-    "properties": {
-     "emaIds": {
-      "type": "array",
-      "items": {
-       "type": "string"
-      }
-     }
-    },
-    "required": [
-     "emaIds"
-    ]
-   },
-   "PlayerAccountDeletesResponse": {
-    "type": "object",
-    "properties": {
-     "results": {
-      "type": "array",
-      "items": {
-       "$ref": "#/components/schemas/PlayerAccountDeleteResult"
       }
      }
     }
@@ -7567,6 +8468,25 @@
      "name"
     ]
    },
+   "ResolveAccountRequest": {
+    "type": "object",
+    "properties": {
+     "approve": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "approve"
+    ]
+   },
+   "ResolveAccountRequestResponse": {
+    "type": "object",
+    "properties": {
+     "outcome": {
+      "type": "string"
+     }
+    }
+   },
    "ResolveVenueLinkRequest": {
     "type": "object",
     "properties": {
@@ -7598,6 +8518,38 @@
     "required": [
      "url"
     ]
+   },
+   "RolesResponse": {
+    "type": "object",
+    "properties": {
+     "standard": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/StandardRole"
+      }
+     },
+     "custom": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CustomRole"
+      }
+     },
+     "grantable": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     "required": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
    },
    "RoundClock": {
     "type": "object",
@@ -7792,12 +8744,82 @@
      "emaId": {
       "type": "string",
       "description": "The EMA ID of the account. An empty text clears it."
+     },
+     "adminOrganizations": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The organizations of a club admin, as organization ids."
      }
     },
     "required": [
      "email",
      "role",
      "tournamentAssignments"
+    ]
+   },
+   "SaveOrganizationRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "logoContentType": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "logoDataBase64": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "removeLogo": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "name",
+     "type",
+     "country",
+     "primaryColor"
+    ]
+   },
+   "SaveRoleRequest": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "base": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "Only when the role is created. The base of a role never changes."
+     },
+     "permissions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "name",
+     "permissions"
     ]
    },
    "SaveTableStateRequest": {
@@ -7874,6 +8896,20 @@
      "disabled"
     ]
    },
+   "SetUserPermissionsRequest": {
+    "type": "object",
+    "properties": {
+     "levels": {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/LevelPermissions"
+      }
+     }
+    },
+    "required": [
+     "levels"
+    ]
+   },
    "SignInRequest": {
     "type": "object",
     "properties": {
@@ -7906,6 +8942,27 @@
      "idToken",
      "refreshToken",
      "uid"
+    ]
+   },
+   "StandardRole": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "base": {
+      "type": "string"
+     },
+     "permissions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "id",
+     "base"
     ]
    },
    "Standing": {
@@ -7990,6 +9047,26 @@
       "type": "array",
       "items": {
        "$ref": "#/components/schemas/Standing"
+      }
+     }
+    }
+   },
+   "StatisticsGroup": {
+    "type": "object",
+    "properties": {
+     "tournamentIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "tables": {
+      "$ref": "#/components/schemas/GroupTables"
+     },
+     "persons": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GroupPerson"
       }
      }
     }
@@ -8133,6 +9210,14 @@
      },
      "playerNorthPenalty": {
       "type": "string"
+     },
+     "doneAtMs": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64",
+      "description": "When the hand was marked done, in milliseconds since 1970. Null for older hands."
      }
     },
     "required": [
@@ -8382,6 +9467,18 @@
      "shortName": {
       "type": "string"
      },
+     "organizerIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "organizers": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TournamentOrganizer"
+      }
+     },
      "primaryColor": {
       "type": "string"
      },
@@ -8507,6 +9604,13 @@
        "string",
        "null"
       ]
+     },
+     "permissions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "What the signed-in account may do in the tournament, by permission name."
      }
     },
     "required": [
@@ -8548,6 +9652,12 @@
      },
      "tournamentName": {
       "type": "string"
+     },
+     "organizerIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
      }
     },
     "required": [
@@ -8565,11 +9675,43 @@
      },
      "role": {
       "$ref": "#/components/schemas/GlobalUserRole"
+     },
+     "onlyTournament": {
+      "type": "boolean"
      }
     },
     "required": [
      "uid",
      "role"
+    ]
+   },
+   "TournamentOrganizer": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "country": {
+      "type": "string"
+     },
+     "primaryColor": {
+      "type": "string"
+     },
+     "logoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "id"
     ]
    },
    "TournamentPlayer": {
@@ -8876,6 +10018,9 @@
      },
      "hiddenFromPublic": {
       "type": "boolean"
+     },
+     "disabled": {
+      "type": "boolean"
      }
     },
     "required": [
@@ -8894,8 +10039,15 @@
      "shortName": {
       "type": "string"
      },
-     "primaryColor": {
-      "type": "string"
+     "organizerIds": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      },
+      "description": "Null keeps the organizers. Only a super admin changes them."
      },
      "eventStartDate": {
       "type": "string"
@@ -8946,27 +10098,6 @@
        "null"
       ]
      },
-     "associationLogoContentType": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "associationLogoDataBase64": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "associationLogoSourceTournamentId": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "removeAssociationLogo": {
-      "type": "boolean"
-     },
      "roundSchedules": {
       "type": [
        "array",
@@ -9016,7 +10147,6 @@
     "required": [
      "name",
      "shortName",
-     "primaryColor",
      "eventStartDate",
      "eventEndDate",
      "hostCountry",
@@ -9186,6 +10316,22 @@
       "items": {
        "$ref": "#/components/schemas/GlobalUserRole"
       }
+     },
+     "adminOrganizations": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "permissions": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      },
+      "description": "The permissions that some role of the account grants somewhere. Null from an older backend."
      }
     },
     "required": [

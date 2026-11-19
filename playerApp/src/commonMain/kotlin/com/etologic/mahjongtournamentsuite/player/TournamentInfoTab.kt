@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
@@ -51,11 +52,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
+import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.info_co_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.info_contact
+import mahjongtournamentsuite.playerapp.generated.resources.info_main_organizer
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_club
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_federation
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizers
 import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_google_maps
 import mahjongtournamentsuite.playerapp.generated.resources.info_no_date
@@ -81,13 +90,14 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
     val tournament = view.tournament
     val venue = tournament.venue
     val hasPlace = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
-    val hasInfo = !venue.isEmpty || hasPlace || hasSchedule(tournament)
+    val hasInfo = !venue.isEmpty || hasPlace || hasSchedule(tournament) || tournament.organizers.isNotEmpty()
     Column(
         // The padding is inside the scroll, so the content ends at the tabs.
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ProgressCard(view.progress)
+        if (tournament.organizers.isNotEmpty()) OrganizersCard(tournament.organizers)
         if (hasSchedule(tournament)) {
             InfoCard(stringResource(Res.string.info_schedule), Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
         }
@@ -173,6 +183,34 @@ private fun VenueButton(icon: ImageVector, label: String, description: String, o
 }
 
 /** The contact email of the organizers. A tap opens the mail app. */
+/** The clubs and federations that organize the tournament, with their logo. The main organizer comes first. */
+@Composable
+private fun OrganizersCard(organizers: List<TournamentOrganizer>) {
+    InfoCard(stringResource(Res.string.info_organizers), Icons.Default.Groups) {
+        organizers.forEachIndexed { index, organizer ->
+            if (index > 0) HorizontalDivider()
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OrganizationLogo(organizer, size = 48.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(organizer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (organizer.country.isNotBlank()) CountryFlag(code = organizer.country, width = 16.dp)
+                        val type = stringResource(
+                            if (organizer.type == OrganizationType.FEDERATION) Res.string.info_organizer_federation else Res.string.info_organizer_club,
+                        )
+                        val role = stringResource(if (index == 0) Res.string.info_main_organizer else Res.string.info_co_organizer)
+                        Text("$type · $role", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ContactCard(email: String) {
     val openEmail = rememberOpenLink(TelemetryLink.ORGANIZER_EMAIL)

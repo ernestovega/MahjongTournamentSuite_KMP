@@ -1370,7 +1370,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         },
                                                     )
                                                 }
-                                                // Super admins and country admins edit an account. The edit dialog has the button to reset the password.
+                                                // Super admins and club admins edit an account. The edit dialog has the button to reset the password.
                                                 val accountUid = slot.accountUid
                                                 if (canEditAccounts && slot.hasAccount && accountUid != null) {
                                                     DropdownMenuItem(

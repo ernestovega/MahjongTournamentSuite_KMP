@@ -194,10 +194,19 @@ object TelemetryAction {
     const val ACCOUNT_PHOTO_UPDATED = "account_photo_updated"
     const val ACCOUNT_PHOTO_REMOVED = "account_photo_removed"
 
-    /** A country admin took an account out of its countries, maybe with a request to the super admins. */
-    const val ACCOUNT_REMOVED_FROM_COUNTRIES = "account_removed_from_countries"
+    /** A club admin took an account out of its organizations, maybe with a request to the super admins. */
+    const val ACCOUNT_REMOVED_FROM_ORGANIZATIONS = "account_removed_from_organizations"
     const val ACCOUNT_REQUEST_APPROVED = "account_request_approved"
     const val ACCOUNT_REQUEST_REJECTED = "account_request_rejected"
+
+    /** The custom role or the single permissions of an account changed. */
+    const val ACCOUNT_PERMISSIONS_UPDATED = "account_permissions_updated"
+    const val ROLE_CREATED = "role_created"
+    const val ROLE_UPDATED = "role_updated"
+    const val ROLE_DELETED = "role_deleted"
+    const val ORGANIZATION_CREATED = "organization_created"
+    const val ORGANIZATION_UPDATED = "organization_updated"
+    const val ORGANIZATION_DELETED = "organization_deleted"
     const val REGISTRY_PLAYER_CREATED = "registry_player_created"
     const val REGISTRY_PLAYER_UPDATED = "registry_player_updated"
     const val REGISTRY_PHOTO_UPDATED = "registry_photo_updated"
@@ -231,9 +240,16 @@ object TelemetryAction {
         ACCOUNT_DELETED,
         ACCOUNT_PHOTO_UPDATED,
         ACCOUNT_PHOTO_REMOVED,
-        ACCOUNT_REMOVED_FROM_COUNTRIES,
+        ACCOUNT_REMOVED_FROM_ORGANIZATIONS,
         ACCOUNT_REQUEST_APPROVED,
         ACCOUNT_REQUEST_REJECTED,
+        ACCOUNT_PERMISSIONS_UPDATED,
+        ROLE_CREATED,
+        ROLE_UPDATED,
+        ROLE_DELETED,
+        ORGANIZATION_CREATED,
+        ORGANIZATION_UPDATED,
+        ORGANIZATION_DELETED,
         REGISTRY_PLAYER_CREATED,
         REGISTRY_PLAYER_UPDATED,
         REGISTRY_PHOTO_UPDATED,

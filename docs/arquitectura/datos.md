@@ -7,11 +7,12 @@ Solo la función `api` (y los scripts de mantenimiento de `firebase/functions/sr
 ```mermaid
 flowchart TB
   subgraph raiz["Colecciones raíz"]
-    users["users/{uid}<br/>alias, emaId, photoUrl"]
+    users["users/{uid}<br/>alias, emaId, photoUrl,<br/>adminOrganizations"]
+    organizations["organizations/{id}<br/>name, type (CLUB/FEDERATION),<br/>country, primaryColor, logoUrl"]
     emaIdIndex["emaIdIndex/{emaId}<br/>uid (quién es dueño del EMA id)"]
     registry["emaPlayerRegistry/{emaId}<br/>firstName, lastName, country,<br/>photoUrl, hiddenFromPublic"]
     countries["countries/{code}<br/>code, name"]
-    tournaments["tournaments/{tournamentId}"]
+    tournaments["tournaments/{tournamentId}<br/>organizerIds (principal primero)"]
     stats["statsTables · statsPlayers ·<br/>statsTournaments · statsGlobal"]
     activity["activity/{id}<br/>acciones de gestión"]
     errors["errorGroups/{id}<br/>└ reports/{id}"]
@@ -37,6 +38,8 @@ flowchart TB
   emaIdIndex -. uid .-> users
   players -. assignedEmaId .-> registry
   members -. uid .-> users
+  tournaments -. organizerIds .-> organizations
+  users -. adminOrganizations .-> organizations
 ```
 
 ## Relaciones (modelo entidad-relación)
@@ -48,6 +51,8 @@ erDiagram
   EMA_PLAYER ||--o{ SLOT : "assignedEmaId"
   TOURNAMENT ||--|{ SLOT : "players/{slotId}"
   TOURNAMENT ||--o{ TEAM : "teams/{teamId}"
+  ORGANIZATION ||--o{ TOURNAMENT : "organizerIds (el primero es el principal)"
+  ORGANIZATION ||--o{ USER : "adminOrganizations (Club Admin)"
   TEAM ||--|{ SLOT : "slot.team"
   TOURNAMENT ||--o{ MEMBER : "members/{uid}"
   USER ||--o{ MEMBER : "editor asignado"
@@ -123,7 +128,8 @@ erDiagram
 ## Lo importante en pocas líneas
 
 - **Cuenta ≠ jugador EMA.** Una cuenta de Firebase Auth (`users/{uid}`) puede tener un EMA id. El jugador EMA vive en `emaPlayerRegistry/{emaId}`, compartido por todos los torneos. `emaIdIndex/{emaId}` garantiza que un EMA id tiene como mucho una cuenta.
-- **Los roles no están en Firestore**: son *custom claims* de la cuenta en Firebase Auth (`admin`, `editor`, `player`).
+- **Los roles no están en Firestore**: son *custom claims* de la cuenta en Firebase Auth (`superAdmin`, `clubAdmin`, `editor`, `player`).
+- **Las organizaciones (clubs y federaciones) son las dueñas de los torneos.** Un torneo tiene uno o varios organizadores (`organizerIds`); el primero es el principal y el torneo usa su logo y su color. Los Club Admin de cada organizador gestionan el torneo.
 - **Un torneo tiene huecos (slots)** numerados del 1 al N (`players/{slotId}`). Cada hueco tiene un EMA id o está vacío. Una cuenta «juega» un torneo si su EMA id está en algún hueco: no se guarda ningún enlace cuenta↔torneo, se calcula.
 - **Rondas y mesas las genera la app** (sorteo) al crear el torneo; el backend solo valida y guarda.
 - **Cada mesa tiene 16 manos** (`hands/1..16`) y una copia de las 16 en el propio documento (`handsCopy`) para leer una mesa con una sola lectura.

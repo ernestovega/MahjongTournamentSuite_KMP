@@ -12,11 +12,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
+import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
@@ -29,7 +31,11 @@ class CreateTournamentPresenter(
     private val logger: Logger,
     private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
     private val telemetry: Telemetry = NoTelemetry,
+    private val adminRepository: AdminRepository? = null,
 ) {
+    /** The clubs and federations that can organize the new tournament. */
+    suspend fun loadOrganizations(): AppResult<List<Organization>> = adminRepository?.listOrganizations() ?: AppResult.Success(emptyList())
+
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
 
     suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = tournamentRepository.resolveVenueLink(url)
@@ -54,10 +60,7 @@ class CreateTournamentPresenter(
     suspend fun createTournament(
         name: String,
         shortName: String,
-        primaryColor: String,
-        associationLogoContentType: String?,
-        associationLogoBytes: ByteArray?,
-        associationLogoSourceTournamentId: String?,
+        organizerIds: List<String>,
         eventStartDate: String,
         eventEndDate: String,
         hostCountry: String,
@@ -151,10 +154,7 @@ class CreateTournamentPresenter(
                 players = schedule.players,
                 tables = schedule.tables,
                 shortName = shortName,
-                primaryColor = primaryColor,
-                associationLogoContentType = associationLogoContentType,
-                associationLogoBytes = associationLogoBytes,
-                associationLogoSourceTournamentId = associationLogoSourceTournamentId,
+                organizerIds = organizerIds,
                 hostCountry = hostCountry,
                 hostCity = hostCity,
                 venue = venue,

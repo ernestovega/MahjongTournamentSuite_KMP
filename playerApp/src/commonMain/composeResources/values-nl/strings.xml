@@ -9,6 +9,11 @@
     <string name="info_directions">Route</string>
     <string name="info_open_directions">Route openen in Google Maps</string>
     <string name="info_contact">Contact</string>
+    <string name="info_organizers">Organisatoren</string>
+    <string name="info_main_organizer">Hoofdorganisator</string>
+    <string name="info_co_organizer">Medeorganisator</string>
+    <string name="info_organizer_club">Club</string>
+    <string name="info_organizer_federation">Bond</string>
     <string name="info_no_date">Nog geen datum</string>
     <string name="round_n">Ronde %1$d</string>
     <string name="details_no_seats_title">Nog geen plaatsen</string>

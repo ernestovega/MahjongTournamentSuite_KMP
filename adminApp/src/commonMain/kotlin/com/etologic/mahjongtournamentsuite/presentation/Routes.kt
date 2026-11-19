@@ -18,6 +18,10 @@ data object TournamentsRoute
 @Serializable
 data object PlayerBaseRoute
 
+/** The clubs and federations that organize the tournaments. Every staff account opens it from the tournaments. */
+@Serializable
+data object OrganizationsRoute
+
 @Serializable
 data class TournamentRoute(
     val tournamentId: String,
@@ -28,6 +32,10 @@ data class TournamentRoute(
 data class UsersRoute(
     val editUid: String? = null,
 )
+
+/** The standard roles and the custom ones. Only super admins open it, from the accounts screen. */
+@Serializable
+data object RolesRoute
 
 @Serializable
 data class PlayersRoute(

@@ -49,6 +49,8 @@ export const PERMISSIONS = [
   // DEV menu.
   "dev.activity",
   "dev.errors",
+  // Custom roles and the permissions of each person.
+  "permissions.manage",
 ] as const;
 
 export type Permission = typeof PERMISSIONS[number];
@@ -94,4 +96,51 @@ export const ROLE_PERMISSIONS: Readonly<Record<GlobalUserRole, readonly Permissi
 
 export function roleHasPermission(role: GlobalUserRole, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role].includes(permission);
+}
+
+/** The roles whose permissions a super admin may change for one person or with a custom role. */
+export type CustomizableRole = "EDITOR" | "CLUB_ADMIN";
+export const CUSTOMIZABLE_ROLES: readonly CustomizableRole[] = ["EDITOR", "CLUB_ADMIN"];
+
+/**
+ * Permissions that only a super admin ever has. Their routes act on every account or every tournament, or they hand
+ * out roles and permissions, so they have no smaller scope to give.
+ */
+export const SUPER_ADMIN_ONLY: ReadonlySet<Permission> = new Set<Permission>([
+  "tournaments.changeOrganizers",
+  "organizations.create",
+  "organizations.delete",
+  "tournaments.deleteFinished",
+  "accounts.manageSuperAdmins",
+  "accounts.changeEmail",
+  "accounts.changeEmaId",
+  "accounts.photo",
+  "accounts.disable",
+  "accounts.delete",
+  "accounts.reviewRequests",
+  "dev.activity",
+  "dev.errors",
+  "permissions.manage",
+]);
+
+/**
+ * The permissions that a custom role or a change for one person may hold, by the role that it builds on. An editor
+ * uses them in its assigned tournaments, so it gets no permission that needs an organization: creating tournaments,
+ * managing staff accounts, removals. It never adds editors to a tournament either, because that hands out access.
+ */
+export const GRANTABLE: Readonly<Record<CustomizableRole, readonly Permission[]>> = {
+  EDITOR: PERMISSIONS.filter((permission) => !SUPER_ADMIN_ONLY.has(permission) && ![
+    "tournament.members",
+    "tournaments.create",
+    "accounts.manageStaff",
+    "accounts.requestRemoval",
+  ].includes(permission)),
+  CLUB_ADMIN: PERMISSIONS.filter((permission) => !SUPER_ADMIN_ONLY.has(permission)),
+};
+
+/** Permissions that a role always keeps: without them the role has nothing to work on. */
+export const REQUIRED: readonly Permission[] = ["tournament.view"];
+
+export function isPermission(value: unknown): value is Permission {
+  return typeof value === "string" && (PERMISSIONS as readonly string[]).includes(value);
 }

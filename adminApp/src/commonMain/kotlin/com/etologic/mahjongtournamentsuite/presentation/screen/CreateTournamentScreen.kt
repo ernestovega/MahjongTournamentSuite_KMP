@@ -54,7 +54,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COLOR
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOrganizersField
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
@@ -70,13 +73,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
@@ -86,7 +84,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.compactDateTextStyle
 import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.deviceTimeZoneId
-import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
 import com.etologic.mahjongtournamentsuite.presentation.components.isTimeZoneIdShape
 import com.etologic.mahjongtournamentsuite.presentation.components.matchDurationOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.matchExtraMinutesOrNull
@@ -99,8 +96,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentA
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
 import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
 import com.etologic.mahjongtournamentsuite.presentation.components.venueRequiredError
-import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
-import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -116,6 +111,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_need_yours
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -133,7 +131,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.date_to
 import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
 import mahjongtournamentsuite.adminapp.generated.resources.error_star_prefix
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_city
-import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_country
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_date
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_end_before_start
@@ -145,22 +142,12 @@ import mahjongtournamentsuite.adminapp.generated.resources.field_error_short_nam
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_time_zone
 import mahjongtournamentsuite.adminapp.generated.resources.from
 import mahjongtournamentsuite.adminapp.generated.resources.heavy_computing
-import mahjongtournamentsuite.adminapp.generated.resources.logo
-import mahjongtournamentsuite.adminapp.generated.resources.logo_choose
-import mahjongtournamentsuite.adminapp.generated.resources.logo_from
-import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_2mb
-import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_jpeg_png
-import mahjongtournamentsuite.adminapp.generated.resources.logo_none
-import mahjongtournamentsuite.adminapp.generated.resources.logo_upload
 import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.remove
-import mahjongtournamentsuite.adminapp.generated.resources.reuse_existing
 import mahjongtournamentsuite.adminapp.generated.resources.rounds
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
-import mahjongtournamentsuite.adminapp.generated.resources.tab_branding
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
 import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
 import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
@@ -190,13 +177,13 @@ private enum class CreateField {
     MATCH_DURATION,
     TIME_ZONE,
     EXTRA_TIME,
-    COLOR,
+    ORGANIZERS,
 }
 
 private enum class CreateTab(val title: StringResource) {
     GENERAL(Res.string.tab_general),
     VENUE(Res.string.tab_venue),
-    BRANDING(Res.string.tab_branding),
+    ORGANIZERS(Res.string.tab_organizers),
     SCHEDULE(Res.string.tab_schedule),
 }
 
@@ -208,7 +195,7 @@ private fun CreateField.tab(): CreateTab = when (this) {
     CreateField.COUNTRY, CreateField.CITY, CreateField.VENUE, CreateField.CONTACT_EMAIL,
     CreateField.TIME_ZONE,
     -> CreateTab.VENUE
-    CreateField.COLOR -> CreateTab.BRANDING
+    CreateField.ORGANIZERS -> CreateTab.ORGANIZERS
     CreateField.START_DATE, CreateField.END_DATE -> CreateTab.SCHEDULE
 }
 
@@ -220,11 +207,9 @@ fun CreateTournamentDialog(
 ) {
     val presenter = koinInject<CreateTournamentPresenter>()
     val store = koinInject<AppMemoryStore>()
-    val tournaments by store.tournaments.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val nameFocusRequester = remember { FocusRequester() }
     val shortNameFocusRequester = remember { FocusRequester() }
-    val primaryColorFocusRequester = remember { FocusRequester() }
     val hostCountryFocusRequester = remember { FocusRequester() }
     val hostCityFocusRequester = remember { FocusRequester() }
     val eventStartDateFocusRequester = remember { FocusRequester() }
@@ -240,20 +225,16 @@ fun CreateTournamentDialog(
 
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
-    var primaryColor by remember { mutableStateOf("#02B16B") }
     val adminStatus by store.adminStatus.collectAsState()
-    // A country admin creates tournaments only in its countries. A super admin creates them in any country.
-    val allowedCountries = adminStatus?.takeUnless { it.isSuperAdmin }?.adminCountries
-    var hostCountry by remember { mutableStateOf(allowedCountries?.singleOrNull().orEmpty()) }
+    // A club admin creates tournaments of its organizations. A super admin creates them for any organization.
+    val ownOrganizations = adminStatus?.takeUnless { it.isSuperAdmin }?.adminOrganizations
+    var organizations by remember { mutableStateOf<List<Organization>>(emptyList()) }
+    var organizerIds by remember { mutableStateOf(ownOrganizations?.singleOrNull()?.let(::listOf).orEmpty()) }
+    val mainOrganizer = organizations.firstOrNull { it.id == organizerIds.firstOrNull() }
+    var hostCountry by remember { mutableStateOf("") }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
     var hostCity by remember { mutableStateOf("") }
     var venue by remember { mutableStateOf(TournamentVenue()) }
-    var showColorPickerDialog by remember { mutableStateOf(false) }
-    var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
-    var logoToCrop by remember { mutableStateOf<SelectedImage?>(null) }
-    var reusedLogoTournament by remember { mutableStateOf<Tournament?>(null) }
-    var showLogoLibrary by remember { mutableStateOf(false) }
-    var logoImageInfo by remember { mutableStateOf<String?>(null) }
     var showDrawExplanation by remember { mutableStateOf(false) }
     val today = remember {
         Clock.System.now()
@@ -287,18 +268,6 @@ fun CreateTournamentDialog(
     var progress by remember { mutableStateOf<CreateTournamentPresenter.Progress?>(null) }
     var createJob by remember { mutableStateOf<Job?>(null) }
     var calcStartMark by remember { mutableStateOf<TimeMark?>(null) }
-    val logoPicker = rememberImagePicker(
-        onImageSelected = { image ->
-            if (image.contentType !in setOf("image/jpeg", "image/png")) {
-                errorMessage = UiText.of(Res.string.error_star_prefix, UiText.of(Res.string.logo_must_be_jpeg_png))
-            } else if (image.bytes.size > 2 * 1024 * 1024) {
-                errorMessage = UiText.of(Res.string.error_star_prefix, UiText.of(Res.string.logo_must_be_2mb))
-            } else {
-                logoToCrop = image
-            }
-        },
-        onError = { message -> errorMessage = UiText.of(Res.string.error_star_prefix, message) },
-    )
     val teamsToggleInteractionSource = remember { MutableInteractionSource() }
     val computeToggleInteractionSource = remember { MutableInteractionSource() }
 
@@ -351,8 +320,7 @@ fun CreateTournamentDialog(
             CreateField.START_DATE -> eventStartDateFocusRequester
             CreateField.END_DATE -> eventEndDateFocusRequester
             CreateField.MATCH_DURATION -> matchDurationFocusRequester
-            CreateField.COLOR -> primaryColorFocusRequester
-            CreateField.TIME_ZONE, CreateField.EXTRA_TIME -> null
+            CreateField.TIME_ZONE, CreateField.EXTRA_TIME, CreateField.ORGANIZERS -> null
         }?.requestFocus()
         pendingFocusField = null
     }
@@ -363,6 +331,14 @@ fun CreateTournamentDialog(
             is AppResult.Success -> countries = result.value
             is AppResult.Failure -> errorMessage = result.error.toUiText()
         }
+        when (val result = presenter.loadOrganizations()) {
+            is AppResult.Success -> {
+                organizations = result.value
+                // The country of the main organizer is a good first guess for the host country.
+                if (hostCountry.isBlank()) hostCountry = result.value.firstOrNull { it.id == organizerIds.firstOrNull() }?.country.orEmpty()
+            }
+            is AppResult.Failure -> errorMessage = result.error.toUiText()
+        }
     }
 
     fun startCreate() {
@@ -370,7 +346,6 @@ fun CreateTournamentDialog(
 
         val trimmedName = name.trim()
         val trimmedShortName = shortName.trim()
-        val normalizedPrimaryColor = primaryColor.trim().uppercase()
         val normalizedHostCountry = hostCountry.trim().uppercase()
         val trimmedHostCity = hostCity.trim()
         val trimmedStartDate = eventStartDate.toIsoTournamentDateOrNull()
@@ -409,7 +384,11 @@ fun CreateTournamentDialog(
         if (finishHandInPlay && matchExtraMinutes == null) {
             errors[CreateField.EXTRA_TIME] = UiText.of(Res.string.field_error_minutes, MAX_MATCH_EXTRA_MINUTES)
         }
-        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) errors[CreateField.COLOR] = UiText.of(Res.string.field_error_color)
+        if (organizerIds.isEmpty()) {
+            errors[CreateField.ORGANIZERS] = UiText.of(Res.string.tournament_main_organizer_needed)
+        } else if (ownOrganizations != null && organizerIds.none { it in ownOrganizations }) {
+            errors[CreateField.ORGANIZERS] = UiText.of(Res.string.tournament_organizers_need_yours)
+        }
         if (errors.isNotEmpty()) {
             fieldErrorTexts = errors
             val firstField = errors.keys.first()
@@ -453,10 +432,7 @@ fun CreateTournamentDialog(
                     val result = presenter.createTournament(
                         name = trimmedName,
                         shortName = trimmedShortName,
-                        primaryColor = normalizedPrimaryColor,
-                        associationLogoContentType = associationLogo?.contentType,
-                        associationLogoBytes = associationLogo?.bytes,
-                        associationLogoSourceTournamentId = reusedLogoTournament?.id,
+                        organizerIds = organizerIds,
                         eventStartDate = trimmedStartDate,
                         eventEndDate = trimmedEndDate,
                         hostCountry = normalizedHostCountry,
@@ -717,7 +693,6 @@ fun CreateTournamentDialog(
                                 }
                                 CreateTab.VENUE -> {
                                     TournamentPlaceFields(
-                                        allowedCountries = allowedCountries,
                                         venue = venue,
                                         onVenueChange = {
                                             venue = it
@@ -759,88 +734,25 @@ fun CreateTournamentDialog(
                                         timeZoneError = fieldErrors[CreateField.TIME_ZONE],
                                     )
                                 }
-                                CreateTab.BRANDING -> {
-                                    TournamentColorField(
-                                        value = primaryColor,
+                                CreateTab.ORGANIZERS -> {
+                                    TournamentOrganizersField(
+                                        organizations = organizations,
+                                        selected = organizerIds,
+                                        onChange = {
+                                            organizerIds = it
+                                            clearError(CreateField.ORGANIZERS)
+                                        },
                                         enabled = !isLoading,
-                                        isError = CreateField.COLOR in fieldErrors,
-                                        errorMessage = fieldErrors[CreateField.COLOR],
-                                        onValueChange = {
-                                            primaryColor = it
-                                            clearError(CreateField.COLOR)
-                                        },
-                                        onPreviewClick = {
-                                            showDateRangePicker = false
-                                            showColorPickerDialog = true
-                                        },
-                                        fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
+                                        mainChoices = ownOrganizations,
+                                        error = fieldErrors[CreateField.ORGANIZERS],
                                     )
-
-                                    Text(stringResource(Res.string.logo), style = MaterialTheme.typography.titleSmall)
-                                    val logoModel = associationLogo?.dataUrl ?: reusedLogoTournament?.associationLogoUrl
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.Top,
-                                    ) {
-                                        TournamentLogoPreview(
-                                            model = logoModel,
-                                            onImageInfo = { logoImageInfo = it },
-                                            modifier = Modifier.size(120.dp),
-                                        )
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            Text(
-                                                text = when {
-                                                    associationLogo != null -> buildString {
-                                                        append(associationLogo?.fileName.orEmpty())
-                                                        append(" · ")
-                                                        append(formatByteSize(associationLogo?.bytes?.size?.toLong() ?: 0L))
-                                                        logoImageInfo?.let { append(" · ").append(it) }
-                                                    }
-                                                    reusedLogoTournament != null -> stringResource(Res.string.logo_from, reusedLogoTournament?.name.orEmpty())
-                                                    else -> stringResource(Res.string.logo_none)
-                                                },
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                style = MaterialTheme.typography.bodySmall,
-                                            )
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Button(enabled = !isLoading, onClick = logoPicker::launch) {
-                                                    Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
-                                                }
-                                                if (tournaments.any { !it.associationLogoUrl.isNullOrBlank() }) {
-                                                    Button(
-                                                        enabled = !isLoading,
-                                                        onClick = { showLogoLibrary = true },
-                                                    ) {
-                                                        Text(stringResource(Res.string.reuse_existing))
-                                                    }
-                                                }
-                                                if (logoModel != null) {
-                                                    AppTextButton(
-                                                        enabled = !isLoading,
-                                                        onClick = {
-                                                            associationLogo = null
-                                                            reusedLogoTournament = null
-                                                            logoImageInfo = null
-                                                        },
-                                                    ) { Text(stringResource(Res.string.remove)) }
-                                                }
-                                            }
-                                        }
-                                    }
                                     TournamentIdCardPreviewButton(
                                         shortName = shortName,
-                                        primaryColor = primaryColor,
+                                        primaryColor = mainOrganizer?.primaryColor ?: DEFAULT_ORGANIZATION_COLOR,
                                         year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
-                                        associationLogoContentType = associationLogo?.contentType,
-                                        associationLogoBytes = associationLogo?.bytes,
-                                        associationLogoUrl = reusedLogoTournament?.associationLogoUrl,
+                                        associationLogoContentType = null,
+                                        associationLogoBytes = null,
+                                        associationLogoUrl = mainOrganizer?.logoUrl,
                                         roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
                                         onError = { errorMessage = it },
                                     )
@@ -975,47 +887,7 @@ fun CreateTournamentDialog(
         )
     }
 
-    if (showColorPickerDialog) {
-        TournamentColorPickerDialog(
-            initialColor = primaryColor,
-            onDismiss = { showColorPickerDialog = false },
-            onColorSelected = { selectedColor ->
-                primaryColor = selectedColor
-                showColorPickerDialog = false
-            },
-        )
-    }
-
-    logoToCrop?.let { image ->
-        TournamentLogoCropDialog(
-            image = image,
-            onDismiss = { logoToCrop = null },
-            onCropped = { croppedImage ->
-                associationLogo = croppedImage
-                reusedLogoTournament = null
-                logoImageInfo = null
-                errorMessage = null
-                logoToCrop = null
-            },
-            onError = { message -> errorMessage = UiText.of(Res.string.error_star_prefix, message) },
-        )
-    }
-
     if (showDrawExplanation) {
         DrawExplanationDialog(onDismiss = { showDrawExplanation = false })
-    }
-
-    if (showLogoLibrary) {
-        TournamentLogoLibraryDialog(
-            tournaments = tournaments,
-            onDismiss = { showLogoLibrary = false },
-            onSelect = { tournament ->
-                associationLogo = null
-                reusedLogoTournament = tournament
-                logoImageInfo = null
-                errorMessage = null
-                showLogoLibrary = false
-            },
-        )
     }
 }

@@ -1,14 +1,21 @@
 package com.etologic.mahjongtournamentsuite.screenshots.fake
 
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.PermissionChange
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
@@ -224,27 +231,44 @@ object ScreenshotData {
         TournamentRoundSchedule(round, date = if (round <= 2) start else start.dropLast(2) + "%02d".format(start.takeLast(2).toInt() + 1), startTime = if (round % 2 == 1) "10:00" else "16:00")
     }
 
+    /** The clubs and federations that organize the tournaments of the screenshots. They have no logo, so no network. */
+    val organizations: List<Organization> = listOf(
+        Organization("org-madrid", "Madrid Mahjong Club", OrganizationType.CLUB, "ES", "#02B16B", canEdit = true, canDelete = true),
+        Organization("org-fed-es", "Federación Española de Mahjong", OrganizationType.FEDERATION, "ES", "#C62828", canEdit = true, canDelete = true),
+        Organization("org-lisbon", "Lisboa Riichi Club", OrganizationType.CLUB, "PT", "#1565C0", canEdit = true, canDelete = true),
+        Organization("org-paris", "Paris Mahjong", OrganizationType.CLUB, "FR", "#6A1B9A", canEdit = true, canDelete = true),
+        Organization("org-berlin", "Berlin Mahjong Verein", OrganizationType.CLUB, "DE", "#C62828", canEdit = true, canDelete = true),
+    )
+
+    private fun organizersOf(vararg ids: String): List<TournamentOrganizer> = ids.map { id ->
+        organizations.first { it.id == id }.let { TournamentOrganizer(it.id, it.name, it.type, it.country, it.primaryColor, it.logoUrl) }
+    }
+
     val tournaments: List<Tournament> = listOf(
         Tournament(
             id = ONGOING, name = "Madrid Open 2026", isTeams = true, numPlayers = 16, numRounds = 4, shortName = "MOM26",
             hostCountry = "ES", hostCity = "Madrid", eventStartDate = "2026-05-16", eventEndDate = "2026-05-17",
             venue = TournamentVenue(name = "Casa Asia", address = "Calle de Alcalá 1, Madrid", contactEmail = "open@example.test"),
             roundSchedules = schedule("2026-05-16"), timeZone = "Europe/Madrid", numTries = 1000,
+            organizerIds = listOf("org-madrid", "org-fed-es"), organizers = organizersOf("org-madrid", "org-fed-es"),
         ),
         Tournament(
             id = COMPLETED, name = "Lisbon Cup 2025", isTeams = true, numPlayers = 16, numRounds = 4, shortName = "LC25",
             primaryColor = "#1565C0", hostCountry = "PT", hostCity = "Lisbon", eventStartDate = "2025-10-04",
             eventEndDate = "2025-10-05", roundSchedules = schedule("2025-10-04"), timeZone = "Europe/Lisbon", isCompleted = true,
+            organizerIds = listOf("org-lisbon"), organizers = organizersOf("org-lisbon"),
         ),
         Tournament(
             id = INDIVIDUAL, name = "Paris Classic 2026", isTeams = false, numPlayers = 16, numRounds = 4, shortName = "PC26",
             primaryColor = "#6A1B9A", hostCountry = "FR", hostCity = "Paris", eventStartDate = "2026-03-07",
             eventEndDate = "2026-03-08", roundSchedules = schedule("2026-03-07"), timeZone = "Europe/Paris", isCompleted = true,
+            organizerIds = listOf("org-paris"), organizers = organizersOf("org-paris"),
         ),
         Tournament(
             id = UPCOMING, name = "Berlin Spring 2099", isTeams = false, numPlayers = 16, numRounds = 4, shortName = "BS99",
             primaryColor = "#C62828", hostCountry = "DE", hostCity = "Berlin", eventStartDate = "2099-04-10",
             eventEndDate = "2099-04-11", roundSchedules = schedule("2099-04-10"), timeZone = "Europe/Berlin", isPublic = false,
+            organizerIds = listOf("org-berlin"), organizers = organizersOf("org-berlin"),
         ),
     )
 
@@ -260,6 +284,46 @@ object ScreenshotData {
         emaId = players[0].emaId,
         roles = setOf(GlobalUserRole.PLAYER),
     )
+
+    /** Two custom roles next to the standard ones, as a super admin sees them in Accounts → Roles. */
+    val rolesCatalog: RolesCatalog by lazy {
+        val editor = Permission.defaultsOf(GlobalUserRole.EDITOR)
+        val clubAdmin = Permission.defaultsOf(GlobalUserRole.CLUB_ADMIN)
+        val grantableClubAdmin = Permission.entries.toSet() - setOf(
+            Permission.TOURNAMENTS_CHANGE_ORGANIZERS, Permission.ORGANIZATIONS_CREATE, Permission.ORGANIZATIONS_DELETE, Permission.TOURNAMENTS_DELETE_FINISHED, Permission.ACCOUNTS_MANAGE_SUPER_ADMINS,
+            Permission.ACCOUNTS_CHANGE_EMAIL, Permission.ACCOUNTS_CHANGE_EMA_ID, Permission.ACCOUNTS_PHOTO, Permission.ACCOUNTS_DISABLE,
+            Permission.ACCOUNTS_DELETE, Permission.ACCOUNTS_REVIEW_REQUESTS, Permission.DEV_ACTIVITY, Permission.DEV_ERRORS,
+            Permission.PERMISSIONS_MANAGE,
+        )
+        RolesCatalog(
+            standard = listOf(GlobalUserRole.EDITOR, GlobalUserRole.CLUB_ADMIN, GlobalUserRole.SUPER_ADMIN).associateWith { Permission.defaultsOf(it) },
+            custom = listOf(
+                CustomRole("role-referee", "Head referee", GlobalUserRole.EDITOR, editor + setOf(Permission.TOURNAMENT_RESET_TABLE, Permission.TOURNAMENT_EDIT_COMPLETED), accounts = 2),
+                CustomRole("role-registry", "Registry keeper", GlobalUserRole.CLUB_ADMIN, clubAdmin + setOf(Permission.EMA_EDIT), accounts = 0),
+            ),
+            grantable = mapOf(
+                GlobalUserRole.EDITOR to grantableClubAdmin - setOf(
+                    Permission.TOURNAMENT_MEMBERS,
+                    Permission.TOURNAMENTS_CREATE,
+                    Permission.ACCOUNTS_MANAGE_STAFF,
+                    Permission.ACCOUNTS_REQUEST_REMOVAL,
+                ),
+                GlobalUserRole.CLUB_ADMIN to grantableClubAdmin,
+            ),
+            required = setOf(Permission.TOURNAMENT_VIEW),
+        )
+    }
+
+    /** An editor with the custom role of a head referee, and one permission less for this person. */
+    val customizedEditor: ManagedUser by lazy {
+        val role = rolesCatalog.custom.first()
+        users[1].copy(
+            canManage = true,
+            customRoleIds = mapOf(GlobalUserRole.EDITOR to role.id),
+            permissionChanges = mapOf(GlobalUserRole.EDITOR to PermissionChange(removed = setOf(Permission.TOOLS_ID_CARDS))),
+            rolePermissions = mapOf(GlobalUserRole.EDITOR to role.permissions - Permission.TOOLS_ID_CARDS),
+        )
+    }
 
     val users: List<ManagedUser> = listOf(
         ManagedUser("admin-1", "ada@example.test", "Ada", GlobalUserRole.SUPER_ADMIN, false, emptyList()),

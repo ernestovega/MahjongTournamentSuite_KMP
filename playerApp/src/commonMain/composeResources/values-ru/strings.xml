@@ -9,6 +9,11 @@
     <string name="info_directions">Маршрут</string>
     <string name="info_open_directions">Открыть маршрут в Google Maps</string>
     <string name="info_contact">Контакты</string>
+    <string name="info_organizers">Организаторы</string>
+    <string name="info_main_organizer">Главный организатор</string>
+    <string name="info_co_organizer">Соорганизатор</string>
+    <string name="info_organizer_club">Клуб</string>
+    <string name="info_organizer_federation">Федерация</string>
     <string name="info_no_date">Дата ещё не указана</string>
     <string name="round_n">Раунд %1$d</string>
     <string name="details_no_seats_title">Места ещё не заданы</string>

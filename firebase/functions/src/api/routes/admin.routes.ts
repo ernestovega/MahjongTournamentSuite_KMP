@@ -37,7 +37,17 @@ import { deleteAccountChecked } from "../../services/accountDeletes";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
 import { FEED_ORIGINS, FEED_SOURCES, listActivityFeed, type FeedOrigin, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
-import { canInOrganization, canInTournament, forgetAccess, hasPermissionSomewhere, loadAccess, permissionsSomewhere, readOrganizationList } from "../../services/accessService";
+import {
+  canInOrganization,
+  canInTournament,
+  forgetAccess,
+  forgetAllAccess,
+  hasPermissionSomewhere,
+  loadAccess,
+  permissionsSomewhere,
+  readOrganizationList,
+  type Access,
+} from "../../services/accessService";
 import {
   assertOrganizationsExist,
   createOrganization,
@@ -46,6 +56,18 @@ import {
   parseOrganizationInput,
   updateOrganization,
 } from "../../services/organizationsService";
+import {
+  createCustomRole,
+  deleteCustomRole,
+  listCustomRoles,
+  loadCustomRoles,
+  parseGrantablePermissions,
+  rolePermissionsOf,
+  savePermissionSettings,
+  updateCustomRole,
+  type PermissionSettings,
+} from "../../services/customPermissions";
+import { CUSTOMIZABLE_ROLES, GRANTABLE, PERMISSIONS, REQUIRED, ROLE_PERMISSIONS, type Permission } from "../../models/permissions";
 import { canSeeAccount, isStaffAccount, loadAccountScope, viewOfAccount, type AccountScope } from "../../services/accountScope";
 import {
   createAccountRequest,
@@ -154,6 +176,73 @@ async function removeInScope(scope: AccountScope, current: ManagedUser): Promise
   }
   await syncUserTournamentAssignments(current.uid, [], scope.manageTournamentIds);
   await syncRoleClaims(current.uid);
+}
+
+
+/**
+ * The custom roles and the changes of one person that a viewer asks for. `levels.EDITOR` and `levels.CLUB_ADMIN`
+ * hold `roleId` (a custom role, or null for the standard one) and `permissions` (the whole list that the person
+ * gets, or null to use the role as it is). Only the difference with the role is saved.
+ * - A super admin changes everything.
+ * - A club admin chooses the role of the editors and club admins of its organizations, among the roles that do not
+ *   hold more than it holds, and only for accounts with nothing outside its organizations. It never changes single
+ *   permissions.
+ */
+async function permissionSettingsFor(
+  access: Access,
+  current: ManagedUser,
+  body: Record<string, unknown> | undefined,
+  scopeAllowsAll: boolean,
+): Promise<PermissionSettings> {
+  const levels = body?.levels as Record<string, unknown> | undefined;
+  if (levels == null || typeof levels !== "object") throw badRequest("levels must be an object");
+  const roles = await loadCustomRoles();
+  const managesPermissions = hasPermissionSomewhere(access, "permissions.manage");
+  const next: PermissionSettings = {
+    customRoles: { ...current.permissionSettings.customRoles },
+    permissionChanges: { ...current.permissionSettings.permissionChanges },
+  };
+  for (const level of CUSTOMIZABLE_ROLES) {
+    const sent = levels[level] as Record<string, unknown> | undefined;
+    if (sent == null) continue;
+    const rawRoleId = sent.roleId;
+    const roleId = rawRoleId == null || rawRoleId === "" ? undefined : String(rawRoleId);
+    if (roleId != null) {
+      const role = roles.get(roleId);
+      if (!role) throw badRequest(`Role not found (${roleId})`);
+      if (role.base !== level) throw badRequest(`The role ${role.name} builds on ${role.base}, not on ${level}`);
+    }
+    const rolePermissions = rolePermissionsOf(level, roleId, roles);
+    if (roleId !== current.permissionSettings.customRoles[level] && !managesPermissions) {
+      if (!scopeAllowsAll) throw forbidden("The account has organizations or tournaments outside yours, so a super admin chooses its role");
+      const own = access.rolePermissions.CLUB_ADMIN;
+      const extra = rolePermissions.find((permission) => !own.has(permission));
+      if (extra) throw forbidden(`You cannot give a role with a permission that you do not have (${extra})`);
+    }
+    if (roleId == null) delete next.customRoles[level];
+    else next.customRoles[level] = roleId;
+
+    if (sent.permissions === undefined) {
+      // Without a list the person keeps its own changes on top of the new role.
+      continue;
+    }
+    const wanted = sent.permissions === null
+      ? null
+      : new Set([...parseGrantablePermissions(sent.permissions, level, `levels.${level}.permissions`), ...REQUIRED]);
+    const base = new Set(rolePermissions);
+    const change = wanted == null
+      ? undefined
+      : {
+        added: PERMISSIONS.filter((permission) => wanted.has(permission) && !base.has(permission)),
+        removed: PERMISSIONS.filter((permission) => !wanted.has(permission) && base.has(permission)),
+      };
+    const currentChange = current.permissionSettings.permissionChanges[level];
+    const same = JSON.stringify(change ?? { added: [], removed: [] }) === JSON.stringify(currentChange ?? { added: [], removed: [] });
+    if (!same && !managesPermissions) throw forbidden("Only a super admin changes single permissions of an account");
+    if (change == null || (change.added.length === 0 && change.removed.length === 0)) delete next.permissionChanges[level];
+    else next.permissionChanges[level] = change;
+  }
+  return next;
 }
 
 export function adminRouter(): Router {
@@ -373,6 +462,92 @@ export function adminRouter(): Router {
         },
       });
       res.status(200).json({ ...(await viewFor(res, current.uid)), roleChange: result });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * The roles: the four standard ones as the code has them and the custom ones of `roles/{id}`, with how many
+   * accounts use each. `grantable` says which permissions a role that builds on Editor or Club Admin may hold.
+   */
+  router.get("/roles", requireAuth, requirePermission("accounts.view"), async (_req, res, next) => {
+    try {
+      res.status(200).json({
+        standard: (["EDITOR", "CLUB_ADMIN", "SUPER_ADMIN"] as const).map((role) => ({ id: role, base: role, permissions: ROLE_PERMISSIONS[role] })),
+        custom: await listCustomRoles(),
+        grantable: GRANTABLE,
+        required: REQUIRED,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/roles", requireAuth, requirePermission("permissions.manage"), async (req, res, next) => {
+    try {
+      const role = await createCustomRole(req.body, accessOf(res).uid);
+      await recordActivity({
+        action: "role.create", actor: actorFromToken(res.locals.auth), target: `role ${role.name}`,
+        details: { id: role.id, base: role.base, permissions: role.permissions },
+      });
+      res.status(201).json({ ...role, accounts: 0 });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.put("/roles/:roleId", requireAuth, requirePermission("permissions.manage"), async (req, res, next) => {
+    try {
+      const role = await updateCustomRole(pathParam(req, "roleId"), req.body, accessOf(res).uid);
+      forgetAllAccess();
+      await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "role.update", actor: actorFromToken(res.locals.auth), target: `role ${role.name}`,
+        details: { id: role.id, base: role.base, permissions: role.permissions },
+      });
+      const accounts = (await listCustomRoles()).find((item) => item.id === role.id)?.accounts ?? 0;
+      res.status(200).json({ ...role, accounts });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Deletes a custom role. The accounts that used it get the standard role again. */
+  router.delete("/roles/:roleId", requireAuth, requirePermission("permissions.manage"), async (req, res, next) => {
+    try {
+      const { role, uids } = await deleteCustomRole(pathParam(req, "roleId"));
+      forgetAllAccess();
+      await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "role.delete", actor: actorFromToken(res.locals.auth), target: `role ${role.name}`,
+        details: { id: role.id, base: role.base, accounts: uids },
+      });
+      res.status(200).json({ ok: true, accounts: uids.length });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** The custom roles and the single permissions of one editor or club admin. See permissionSettingsFor. */
+  router.put("/users/:uid/permissions", requireAuth, requirePermission("accounts.manageStaff"), async (req, res, next) => {
+    try {
+      const access = accessOf(res);
+      const current = await getManagedUser(pathParam(req, "uid"));
+      if (access.uid === current.uid) throw badRequest("You cannot change your own permissions");
+      if (current.roles.includes("SUPER_ADMIN")) throw badRequest("A super admin always has every permission");
+      const scope = await loadAccountScope(access);
+      const view = viewOfAccount(scope, current);
+      if (!canSeeAccount(scope, current) || !view.canManage) throw forbidden("You cannot change this account");
+      const settings = await permissionSettingsFor(access, current, req.body, access.superAdmin || !view.hasGrantsOutside);
+      await savePermissionSettings(current.uid, settings);
+      forgetAccess(current.uid);
+      await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "user.permissions", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
+        details: { customRoles: settings.customRoles, permissionChanges: settings.permissionChanges },
+      });
+      res.status(200).json(await viewFor(res, current.uid));
     } catch (error) {
       next(error);
     }

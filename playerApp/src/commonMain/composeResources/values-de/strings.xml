@@ -9,6 +9,11 @@
     <string name="info_directions">Route</string>
     <string name="info_open_directions">Route in Google Maps öffnen</string>
     <string name="info_contact">Kontakt</string>
+    <string name="info_organizers">Veranstalter</string>
+    <string name="info_main_organizer">Hauptveranstalter</string>
+    <string name="info_co_organizer">Mitveranstalter</string>
+    <string name="info_organizer_club">Club</string>
+    <string name="info_organizer_federation">Verband</string>
     <string name="info_no_date">Noch kein Datum</string>
     <string name="round_n">Runde %1$d</string>
     <string name="details_no_seats_title">Noch keine Plätze</string>

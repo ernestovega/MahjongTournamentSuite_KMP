@@ -151,8 +151,8 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun countryAdminCreatesAndEditsTournamentsButHasNoDevMenu() = runComposeUiTest {
-        show(World(GlobalUserRole.COUNTRY_ADMIN, emptyList())) { TournamentsScreen(rememberNavController()) }
+    fun clubAdminCreatesAndEditsTournamentsButHasNoDevMenu() = runComposeUiTest {
+        show(World(GlobalUserRole.CLUB_ADMIN, emptyList())) { TournamentsScreen(rememberNavController()) }
 
         onNodeWithText("New tournament").assertExists()
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
@@ -503,8 +503,8 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun countryAdminGivesTheCountryAdminRoleWithItsCountries() = runComposeUiTest {
-        show(World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+    fun clubAdminGivesTheClubAdminRoleWithItsOrganizations() = runComposeUiTest {
+        show(World(GlobalUserRole.CLUB_ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("New user").performClick()
@@ -512,17 +512,17 @@ class RoleGatingUiTest {
         onNodeWithText("Global role").performClick()
         waitForIdle()
 
-        // A country admin never creates a super admin: only the role filter and the row of Boss say Super Admin.
+        // A club admin never creates a super admin: only the role filter and the row of Boss say Super Admin.
         onAllNodesWithText("Super Admin").assertCountEquals(2)
-        onAllNodesWithText("Country Admin").onLast().performClick()
+        onAllNodesWithText("Club Admin").onLast().performClick()
         waitForIdle()
-        onNodeWithText("Add a country").assertExists()
-        onNodeWithText("A Country Admin needs at least one country.").assertExists()
+        onNodeWithText("Add an organization").assertExists()
+        onNodeWithText("A Club Admin needs at least one organization.").assertExists()
     }
 
     @Test
-    fun countryAdminRemovesAnAccountFromItsCountriesAndAsksTheSuperAdmins() = runComposeUiTest {
-        val world = World(GlobalUserRole.COUNTRY_ADMIN, listOf(boss, ed.copy(canManage = true)))
+    fun clubAdminRemovesAnAccountFromItsOrganizationsAndAsksTheSuperAdmins() = runComposeUiTest {
+        val world = World(GlobalUserRole.CLUB_ADMIN, listOf(boss, ed.copy(canManage = true)))
         show(world) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
@@ -530,7 +530,7 @@ class RoleGatingUiTest {
         waitForIdle()
         onAllNodesWithText("Disable account").assertCountEquals(0)
         onAllNodesWithText("Delete account").assertCountEquals(0)
-        onNodeWithText("Remove from my countries").performClick()
+        onNodeWithText("Remove from my organizations").performClick()
         waitForIdle()
         onNodeWithText("And ask a Super Admin to disable the account").performClick()
         waitForIdle()

@@ -4,12 +4,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.CustomRole
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserDeleteFailure
@@ -45,21 +50,38 @@ class UsersPresenter(
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String? = null,
-        adminCountries: Set<String> = emptySet(),
-    ): AppResult<ManagedUser> = adminRepository.createUser(email, alias, role, tournamentAssignments, emaId, adminCountries)
+        adminOrganizations: Set<String> = emptySet(),
+    ): AppResult<ManagedUser> = adminRepository.createUser(email, alias, role, tournamentAssignments, emaId, adminOrganizations)
         .trackAction(telemetry, TelemetryAction.ACCOUNT_CREATED)
 
     /**
-     * A country admin takes the account out of its countries. With a [kind] it also asks the super admins to disable
+     * A club admin takes the account out of its organizations. With a [kind] it also asks the super admins to disable
      * or delete the whole account, with the [reason].
      */
-    suspend fun removeFromMyCountries(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = adminRepository.removeFromMyCountries(uid, kind, reason).trackAction(telemetry, TelemetryAction.ACCOUNT_REMOVED_FROM_COUNTRIES)
+    suspend fun removeFromMyOrganizations(uid: String, kind: AccountRequestKind?, reason: String): AppResult<ManagedUser> = adminRepository.removeFromMyOrganizations(uid, kind, reason).trackAction(telemetry, TelemetryAction.ACCOUNT_REMOVED_FROM_ORGANIZATIONS)
 
-    /** The open requests of the country admins. Only super admins load them. */
+    /** Every organization, to name the organizations of the club admins and to choose them. */
+    suspend fun loadOrganizations(): AppResult<List<Organization>> = adminRepository.listOrganizations()
+
+    /** The open requests of the club admins. Only super admins load them. */
     suspend fun loadAccountRequests(): AppResult<List<AccountRequest>> = adminRepository.listAccountRequests()
 
     suspend fun resolveAccountRequest(id: String, approve: Boolean): AppResult<Unit> = adminRepository.resolveAccountRequest(id, approve)
         .trackAction(telemetry, if (approve) TelemetryAction.ACCOUNT_REQUEST_APPROVED else TelemetryAction.ACCOUNT_REQUEST_REJECTED)
+
+    /** The standard roles and the custom ones, with what each base may hold. */
+    suspend fun loadRoles(): AppResult<RolesCatalog> = adminRepository.listRoles()
+
+    /** Only super admins create, change and delete custom roles. */
+    suspend fun createRole(name: String, base: GlobalUserRole, permissions: Set<Permission>): AppResult<CustomRole> = adminRepository.createRole(name, base, permissions).trackAction(telemetry, TelemetryAction.ROLE_CREATED)
+
+    suspend fun updateRole(id: String, name: String, permissions: Set<Permission>): AppResult<CustomRole> = adminRepository.updateRole(id, name, permissions).trackAction(telemetry, TelemetryAction.ROLE_UPDATED)
+
+    /** Answers how many accounts went back to the standard role. */
+    suspend fun deleteRole(id: String): AppResult<Int> = adminRepository.deleteRole(id).trackAction(telemetry, TelemetryAction.ROLE_DELETED)
+
+    /** The custom roles and, from a super admin, the single permissions of an editor or a club admin. */
+    suspend fun setUserPermissions(uid: String, levels: Map<GlobalUserRole, LevelPermissions>): AppResult<ManagedUser> = adminRepository.setUserPermissions(uid, levels).trackAction(telemetry, TelemetryAction.ACCOUNT_PERMISSIONS_UPDATED)
 
     /** The shared EMA player list. The account dialog uses it to pick an EMA ID. */
     suspend fun loadEmaPlayers(force: Boolean = false): AppResult<List<Player>> = playerRepository.listPlayers(force.mode())

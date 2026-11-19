@@ -24,13 +24,13 @@ import kotlin.test.assertTrue
 class UserFiltersUiTest {
 
     @Test
-    fun theRoleButtonsAreInTheOrderSuperAdminCountryAdminEditorPlayer() = runComposeUiTest {
+    fun theRoleButtonsAreInTheOrderSuperAdminClubAdminEditorPlayer() = runComposeUiTest {
         setContent { UserFilters("", {}, emptySet(), {}, emptyList(), null, {}) }
-        val left = listOf("Super Admin", "Country Admin", "Editor", "Player").map { onNodeWithText(it).getBoundsInRoot().left }
+        val left = listOf("Super Admin", "Club Admin", "Editor", "Player").map { onNodeWithText(it).getBoundsInRoot().left }
         assertEquals(left.sorted(), left)
         assertEquals(4, left.distinct().size)
         assertEquals(
-            listOf(GlobalUserRole.SUPER_ADMIN, GlobalUserRole.COUNTRY_ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER),
+            listOf(GlobalUserRole.SUPER_ADMIN, GlobalUserRole.CLUB_ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER),
             RoleFilterOrder,
         )
     }
@@ -41,9 +41,9 @@ class UserFiltersUiTest {
         setContent { UserFilters("", {}, emptySet(), { toggled += it }, emptyList(), null, {}) }
         onNodeWithText("Player").performClick()
         onNodeWithText("Super Admin").performClick()
-        onNodeWithText("Country Admin").performClick()
+        onNodeWithText("Club Admin").performClick()
         onNodeWithText("Editor").performClick()
-        assertEquals(listOf(GlobalUserRole.PLAYER, GlobalUserRole.SUPER_ADMIN, GlobalUserRole.COUNTRY_ADMIN, GlobalUserRole.EDITOR), toggled)
+        assertEquals(listOf(GlobalUserRole.PLAYER, GlobalUserRole.SUPER_ADMIN, GlobalUserRole.CLUB_ADMIN, GlobalUserRole.EDITOR), toggled)
         assertEquals(GlobalUserRole.entries.toSet(), RoleFilterOrder.toSet())
     }
 

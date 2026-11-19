@@ -7,7 +7,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.LevelPermissions
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationDraft
+import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
@@ -54,6 +57,7 @@ class AdminActionTrackingTest {
         val teamsPresenter = TeamsPresenter(tournaments, players, Logger.withTag("test"), telemetry)
         val playerBasePresenter = PlayerBasePresenter(players, tournaments, telemetry)
         val proofPresenter = IdCardProofPresenter(tournaments, telemetry)
+        val organizationsPresenter = OrganizationsPresenter(admin, telemetry)
         val usersPresenter = UsersPresenter(tournaments, admin, FakeSignedInAuthRepository(), players, telemetry)
         val tablePresenter = TableManagerPresenter(tournaments, Logger.withTag("test"), telemetry)
         val timer = RoundTimerController(tournaments, "t1", 1, telemetry)
@@ -82,16 +86,12 @@ class AdminActionTrackingTest {
                 tournamentId = "t1",
                 name = "Open",
                 shortName = "O",
-                primaryColor = "#fff",
+                organizerIds = null,
                 eventStartDate = "2026-01-01",
                 eventEndDate = "2026-01-02",
                 hostCountry = "ES",
                 hostCity = "Madrid",
                 venue = TournamentVenue(),
-                associationLogoContentType = null,
-                associationLogoBytes = null,
-                associationLogoSourceTournamentId = null,
-                removeAssociationLogo = false,
                 roundSchedules = emptyList(),
                 agendaItems = emptyList(),
             )
@@ -117,9 +117,18 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.ACCOUNT_DELETED) { it.usersPresenter.deleteUser(USER.uid) },
         Case(TelemetryAction.ACCOUNT_PHOTO_UPDATED) { it.usersPresenter.updateUserPhoto(USER.uid, "image/png", ByteArray(1)) },
         Case(TelemetryAction.ACCOUNT_PHOTO_REMOVED) { it.usersPresenter.removeUserPhoto(USER.uid) },
-        Case(TelemetryAction.ACCOUNT_REMOVED_FROM_COUNTRIES) { it.usersPresenter.removeFromMyCountries(USER.uid, AccountRequestKind.DISABLE, "Left the club") },
+        Case(TelemetryAction.ACCOUNT_REMOVED_FROM_ORGANIZATIONS) { it.usersPresenter.removeFromMyOrganizations(USER.uid, AccountRequestKind.DISABLE, "Left the club") },
         Case(TelemetryAction.ACCOUNT_REQUEST_APPROVED) { it.usersPresenter.resolveAccountRequest("r1", approve = true) },
         Case(TelemetryAction.ACCOUNT_REQUEST_REJECTED) { it.usersPresenter.resolveAccountRequest("r1", approve = false) },
+        Case(TelemetryAction.ACCOUNT_PERMISSIONS_UPDATED) {
+            it.usersPresenter.setUserPermissions(USER.uid, mapOf(GlobalUserRole.EDITOR to LevelPermissions(customRoleId = null)))
+        },
+        Case(TelemetryAction.ORGANIZATION_CREATED) { it.organizationsPresenter.createOrganization(ORGANIZATION) },
+        Case(TelemetryAction.ORGANIZATION_UPDATED) { it.organizationsPresenter.updateOrganization("o1", ORGANIZATION) },
+        Case(TelemetryAction.ORGANIZATION_DELETED) { it.organizationsPresenter.deleteOrganization("o1") },
+        Case(TelemetryAction.ROLE_CREATED) { it.usersPresenter.createRole("Referee", GlobalUserRole.EDITOR, emptySet()) },
+        Case(TelemetryAction.ROLE_UPDATED) { it.usersPresenter.updateRole("r1", "Referee", emptySet()) },
+        Case(TelemetryAction.ROLE_DELETED) { it.usersPresenter.deleteRole("r1") },
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },
         Case(TelemetryAction.REGISTRY_PLAYER_UPDATED) { it.playerBasePresenter.updatePlayer("1234", PLAYER) },
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },
@@ -178,6 +187,7 @@ class AdminActionTrackingTest {
     private companion object {
         val USER = ManagedUser("u1", "u1@example.test", "User", GlobalUserRole.EDITOR, false, emptyList())
         val PLAYER = Player(emaId = "1234", firstName = "Ann", lastName = "Lee")
+        val ORGANIZATION = OrganizationDraft("Madrid Club", OrganizationType.CLUB, "ES", "#123456")
 
         /** Every word of [TelemetryAction]. A test of the domain module checks that the list is complete. */
         val TELEMETRY_ACTION_WORDS = TelemetryAction.all.toSet()
