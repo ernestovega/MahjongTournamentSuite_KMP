@@ -107,6 +107,13 @@ describe("what anyone can read without an account", () => {
     const editor = await createAccount({ role: "EDITOR" });
 
     assert.equal((await get("/tournaments/statistics/overview", editor.token)).status, 200);
+    const group = await get("/tournaments/statistics/groups?playerCountry=ESP", editor.token);
+    assert.equal(group.status, 200);
+    assert.deepEqual(group.body.tournamentIds, [open]);
+    const publicGroup = await get("/public/statistics/groups?playerCountry=ESP");
+    assert.deepEqual(publicGroup.body.tournamentIds, [open]);
+    assert.ok(publicGroup.body.persons.some((p: { emaId: string }) => p.emaId === "20000002"));
+    assert.equal((await get("/public/statistics/groups?tournamentCountry=ESP")).status, 400);
     const person = await get("/tournaments/statistics/persons/20000002", editor.token);
     assert.equal(person.status, 200);
     assert.deepEqual(person.body.tournaments.map((t: { tournamentId: string }) => t.tournamentId), [open]);

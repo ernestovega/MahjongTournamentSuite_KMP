@@ -36,7 +36,7 @@ import {
   listTournamentTeams,
   updateTournamentTeam,
 } from "../../services/tournamentContentService";
-import { playerExists, validateEmaId } from "../../services/playersService";
+import { listHiddenEmaIds, playerExists, validateEmaId } from "../../services/playersService";
 import {
   getAllTablesWithHands,
   getRoundTablesWithHands,
@@ -55,6 +55,8 @@ import { parseRoundClockAction } from "../../services/roundClock";
 import { parseRoundControlChange, parseTablesToComplete } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
+import { readGroupFilter } from "../groupFilter";
+import { groupTournament, loadGroupStatistics } from "../../services/statisticsGroups";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
 import { applyPlayerImport, exportPlayers, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
@@ -216,6 +218,21 @@ export function tournamentsRouter(): Router {
       next(e);
     }
   };
+
+  /** The statistics of a group of tournaments and players, in the tournaments that the account can see. See readGroupFilter. */
+  router.get("/statistics/groups", requireAuth, async (req, res, next) => {
+    try {
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
+      const filter = readGroupFilter(req.query as Record<string, unknown>);
+      const [tournaments, allowed] = await Promise.all([listAllTournaments(), visibleTournamentIds(decoded)]);
+      const visible = tournaments.filter((tournament) => allowed == null || allowed.has(tournament.id)).map(groupTournament);
+      // An administrator also sees the people who asked not to be shown publicly.
+      const hidden = allowed == null ? new Set<string>() : await listHiddenEmaIds();
+      res.status(200).json(await loadGroupStatistics(visible, filter, hidden));
+    } catch (e) {
+      next(e);
+    }
+  });
 
   router.get("/statistics/me", requireAuth, personHandler(true));
   router.get("/statistics/me/standings", requireAuth, standingsHandler(true));

@@ -40,6 +40,7 @@ describe("the limits of the public routes", () => {
       ["/public/tournaments", PUBLIC_CACHE_SECONDS.lists],
       [`/public/tournaments/${open}`, PUBLIC_CACHE_SECONDS.live],
       ["/public/statistics/overview", PUBLIC_CACHE_SECONDS.lists],
+      ["/public/statistics/groups", PUBLIC_CACHE_SECONDS.lists],
       ["/public/players", PUBLIC_CACHE_SECONDS.registry],
       ["/public/countries", PUBLIC_CACHE_SECONDS.registry],
     ];

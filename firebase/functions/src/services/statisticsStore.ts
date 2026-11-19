@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { seatIdsOf } from "./handScoring";
 import { readSubstitution, slotResultIgnored, substitutePlays } from "./playerSubstitution";
+import { removeTournamentSummary } from "./statisticsGroups";
 import { standingOf, type PersonStanding } from "./statisticsStandings";
 import { buildTableDigest, DIGEST_VERSION, type DigestResult, type DigestTable, type TableDigest } from "./statisticsDigest";
 
@@ -15,6 +16,7 @@ import { buildTableDigest, DIGEST_VERSION, type DigestResult, type DigestTable, 
  * - `statsTournaments/{tournamentId}`: points and score of every slot, the team of every slot, and the chicken hands
  *   and the best hand of every slot at every table. The standings of the tournament list read only this document.
  * - `statsGlobal/overview-{n}`: sums of all tournaments, split in shards so that many saves do not wait for each other.
+ * - `statsTournamentSummaries/{tournamentId}`: built on demand for the statistics groups, see statisticsGroups.ts.
  */
 
 type Data = Record<string, unknown>;
@@ -273,9 +275,9 @@ export async function prepareTableStats(
       if (Object.keys(chicken).length > 0) tournamentChanges.chicken = chicken;
       if (Object.keys(best).length > 0) tournamentChanges.best = best;
       if (teamBySlot.size > 0) tournamentChanges.teams = Object.fromEntries([...teamBySlot].map(([slotId, team]) => [String(slotId), team]));
-      if (Object.keys(tournamentChanges).length > 0) {
-        tx.set(tournamentsCollection().doc(params.tournamentId), tournamentChanges, { merge: true });
-      }
+      // The revision tells the summaries of the statistics groups that this tournament changed.
+      tournamentChanges.revision = FieldValue.increment(1);
+      tx.set(tournamentsCollection().doc(params.tournamentId), tournamentChanges, { merge: true });
       tx.set(globalCollection().doc(`overview-${shardOf(ref.id)}`), {
         tablesCompleted: FieldValue.increment(global.tablesCompleted),
         tablesWithHands: FieldValue.increment(global.tablesWithHands),
@@ -331,7 +333,7 @@ export async function removeTournamentStats(tournamentId: string): Promise<void>
       plan?.commit(transaction);
     });
   }
-  await tournamentsCollection().doc(tournamentId).delete();
+  await Promise.all([tournamentsCollection().doc(tournamentId).delete(), removeTournamentSummary(tournamentId)]);
 }
 
 /** The ids of the tournaments that anyone can see. */
