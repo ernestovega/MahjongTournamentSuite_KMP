@@ -862,7 +862,6 @@ Gana el primero que sale bien</string>
     <string name="role_super_admin">Superadministrador</string>
     <string name="role_club_admin">Administrador de club</string>
     <string name="organizations_title">Organizaciones</string>
-    <string name="organizations_info">Los clubs y las federaciones organizan los torneos.\n• Un torneo muestra el logo y el color de su organizador principal.\n• Los administradores de club de cada organizador gestionan sus torneos.\n• Solo un superadministrador crea y borra organizaciones.\n• Un administrador de club del organizador principal cambia los organizadores de sus torneos.</string>
     <string name="organizations_empty">Todavía no hay organizaciones.</string>
     <string name="organization_new">Nueva organización</string>
     <string name="organization_edit">Editar organización</string>

@@ -870,7 +870,6 @@
     <string name="role_super_admin">Суперадминистратор</string>
     <string name="role_club_admin">Администратор клуба</string>
     <string name="organizations_title">Организации</string>
-    <string name="organizations_info">Клубы и федерации организуют турниры.\n• Турнир показывает логотип и цвет своего главного организатора.\n• Администраторы клуба каждого организатора управляют его турнирами.\n• Создаёт и удаляет организации только суперадминистратор.\n• Администратор клуба главного организатора меняет организаторов его турниров.</string>
     <string name="organizations_empty">Организаций пока нет.</string>
     <string name="organization_new">Новая организация</string>
     <string name="organization_edit">Изменить организацию</string>

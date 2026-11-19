@@ -862,7 +862,6 @@ De eerste die lukt, wint</string>
     <string name="role_super_admin">Superbeheerder</string>
     <string name="role_club_admin">Clubbeheerder</string>
     <string name="organizations_title">Organisaties</string>
-    <string name="organizations_info">Clubs en bonden organiseren de toernooien.\n• Een toernooi toont het logo en de kleur van zijn hoofdorganisator.\n• De clubbeheerders van elke organisator beheren zijn toernooien.\n• Alleen een superbeheerder maakt organisaties aan en verwijdert ze.\n• Een clubbeheerder van de hoofdorganisator wijzigt de organisatoren van zijn toernooien.</string>
     <string name="organizations_empty">Er zijn nog geen organisaties.</string>
     <string name="organization_new">Nieuwe organisatie</string>
     <string name="organization_edit">Organisatie bewerken</string>

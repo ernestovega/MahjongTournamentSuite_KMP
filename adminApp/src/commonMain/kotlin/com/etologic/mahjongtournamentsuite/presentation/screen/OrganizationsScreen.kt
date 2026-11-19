@@ -3,20 +3,33 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -36,6 +49,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -56,8 +70,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
@@ -75,6 +91,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
@@ -85,16 +102,19 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.delete
 import mahjongtournamentsuite.adminapp.generated.resources.error_star_prefix
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
+import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.loading
 import mahjongtournamentsuite.adminapp.generated.resources.logo
 import mahjongtournamentsuite.adminapp.generated.resources.logo_choose
 import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_2mb
 import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_jpeg_png
 import mahjongtournamentsuite.adminapp.generated.resources.logo_upload
+import mahjongtournamentsuite.adminapp.generated.resources.no_matches
 import mahjongtournamentsuite.adminapp.generated.resources.organization_country_needed
 import mahjongtournamentsuite.adminapp.generated.resources.organization_delete_text
 import mahjongtournamentsuite.adminapp.generated.resources.organization_delete_title
@@ -111,10 +131,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.organization_type
 import mahjongtournamentsuite.adminapp.generated.resources.organization_type_club
 import mahjongtournamentsuite.adminapp.generated.resources.organization_type_federation
 import mahjongtournamentsuite.adminapp.generated.resources.organizations_empty
-import mahjongtournamentsuite.adminapp.generated.resources.organizations_info
 import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
 import mahjongtournamentsuite.adminapp.generated.resources.remove
 import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -148,6 +168,9 @@ fun OrganizationsScreen(navController: NavHostController) {
     var error by remember { mutableStateOf<UiText?>(null) }
     var editing by remember { mutableStateOf<OrganizationEditing?>(null) }
     var deleting by remember { mutableStateOf<Organization?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCountryCodes by remember { mutableStateOf(emptySet<String>()) }
+    val searchFocusRequester = remember { FocusRequester() }
 
     fun reload() {
         scope.launch {
@@ -217,21 +240,78 @@ fun OrganizationsScreen(navController: NavHostController) {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 900.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ScreenColumn(maxWidth = 1200.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
             val countryNameOf = rememberCountryNames()
-            SectionCard(container = false, title = stringResource(Res.string.organizations_title), subtitle = stringResource(Res.string.organizations_info)) {
-                val list = organizations
+            SectionCard(container = false) {
+                val all = organizations
+                val countryCodes = all.orEmpty().map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
+                val query = searchQuery.trim()
+                val list = all?.filter { organization ->
+                    (selectedCountryCodes.isEmpty() || organization.country.uppercase() in selectedCountryCodes) &&
+                        (query.isEmpty() || organization.name.contains(query, ignoreCase = true))
+                }
+                if (!all.isNullOrEmpty()) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text(stringResource(Res.string.search)) },
+                        singleLine = true,
+                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                            {
+                                IconButton(onClick = {
+                                    searchQuery = ""
+                                    searchFocusRequester.requestFocus()
+                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
+                            }
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                    )
+                    if (countryCodes.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            countryCodes.forEach { code ->
+                                val isSelected = code in selectedCountryCodes
+                                val count = all.count { it.country.uppercase() == code }
+                                TextButton(
+                                    onClick = { selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code },
+                                    shape = CircleShape,
+                                    colors = if (isSelected) {
+                                        ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    } else {
+                                        ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
+                                ) {
+                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("$code ($count)")
+                                }
+                            }
+                        }
+                    }
+                }
                 when {
+                    all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    else -> list.forEachIndexed { index, organization ->
-                        if (index > 0) HorizontalDivider()
-                        OrganizationRow(
+                    else -> OrganizationsGrid(list) { organization ->
+                        OrganizationCard(
                             organization = organization,
                             details = stringResource(organization.type.labelRes()) + " · " + countryNameOf(organization.country, organization.country),
                             enabled = !saving && organization.canEdit,
                             onClick = { editing = OrganizationEditing(organization.id, organization) },
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
@@ -255,31 +335,74 @@ fun OrganizationsScreen(navController: NavHostController) {
     }
 }
 
+/** The organizations in a grid of cards: as many columns as fit [OrganizationCardMinWidth], and two on a phone. */
 @Composable
-private fun OrganizationRow(organization: Organization, details: String, enabled: Boolean, onClick: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .activateOnEnter(enabled, onClick)
-                .clickable(enabled = enabled, interactionSource = interactionSource, indication = null, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            OrganizationLogo(organization, size = 40.dp)
-            Column(Modifier.weight(1f)) {
-                Text(organization.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (organization.country.isNotBlank()) CountryFlag(code = organization.country, width = 16.dp)
-                    Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun OrganizationsGrid(organizations: List<Organization>, card: @Composable (Organization) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = (maxWidth / OrganizationCardMinWidth).toInt().coerceAtLeast(2)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            organizations.chunked(columns).forEach { row ->
+                // The cards of a row take the height of the tallest one.
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    row.forEach { organization -> Box(Modifier.weight(1f).fillMaxHeight()) { card(organization) } }
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
-            if (enabled) Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
+
+@Composable
+private fun OrganizationCard(organization: Organization, details: String, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val interactionSource = remember { MutableInteractionSource() }
+    FocusHighlightContainer(modifier = modifier, interactionSource = interactionSource) {
+        Card(
+            modifier = Modifier
+                .fillMaxSize()
+                .activateOnEnter(enabled, onClick)
+                .clickable(enabled = enabled, interactionSource = interactionSource, onClick = onClick),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OrganizationLogo(organization, size = 64.dp)
+                    Text(
+                        organization.name,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (organization.country.isNotBlank()) CountryFlag(code = organization.country, width = 16.dp)
+                        Text(
+                            details,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                if (enabled) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(20.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val OrganizationCardMinWidth = 220.dp
 
 /**
  * Creates an organization, or edits one: name, type, country, color, logo, and the optional premises of a club. The

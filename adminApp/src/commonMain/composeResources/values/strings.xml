@@ -862,7 +862,6 @@ The first one that works wins</string>
     <string name="role_super_admin">Super Admin</string>
     <string name="role_club_admin">Club Admin</string>
     <string name="organizations_title">Organizations</string>
-    <string name="organizations_info">Clubs and federations organize the tournaments.\n• A tournament shows the logo and the color of its main organizer.\n• The Club Admins of each organizer manage its tournaments.\n• Only a Super Admin creates and deletes organizations.\n• A Club Admin of the main organizer changes the organizers of its tournaments.</string>
     <string name="organizations_empty">There are no organizations yet.</string>
     <string name="organization_new">New organization</string>
     <string name="organization_edit">Edit organization</string>

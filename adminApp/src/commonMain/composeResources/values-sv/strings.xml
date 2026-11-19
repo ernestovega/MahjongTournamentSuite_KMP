@@ -862,7 +862,6 @@ Den första som fungerar vinner</string>
     <string name="role_super_admin">Superadministratör</string>
     <string name="role_club_admin">Klubbadministratör</string>
     <string name="organizations_title">Organisationer</string>
-    <string name="organizations_info">Klubbar och förbund arrangerar turneringarna.\n• En turnering visar logotypen och färgen från sin huvudarrangör.\n• Klubbadministratörerna för varje arrangör hanterar dess turneringar.\n• Bara en superadministratör skapar och raderar organisationer.\n• En klubbadministratör för huvudarrangören ändrar arrangörerna av dess turneringar.</string>
     <string name="organizations_empty">Det finns inga organisationer än.</string>
     <string name="organization_new">Ny organisation</string>
     <string name="organization_edit">Redigera organisation</string>
