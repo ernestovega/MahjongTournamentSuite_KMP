@@ -275,7 +275,9 @@ export function markdownCost(report, title = "Cost") {
   }
   lines.push(`| **Total** | **${eur(c.gameDay.total, rate)}** | **${eur(c.day.total, rate)}** | **${eur(c.tournament.total, rate)}** | **${eur(c.month.total, rate)}** | **${eur(c.monthWithFreeTier.total, rate)}** |`, "");
   const pct = (value) => (value == null ? "-" : `${Math.round(value * 100)} %`);
-  lines.push(`Screens (GET) made ${pct(report.shares.reads)} of the reads the bots saw, ${pct(report.shares.requests)} of their calls and ${pct(report.shares.bytes)} of the bytes. They scale ×${report.scale.screens.toFixed(2)} (players and minutes), the actions ×${report.scale.actions.toFixed(2)} (players and rounds).`);
+  if (report.shares.reads == null) {
+    lines.push(`Without the reads of each call of the bots (a backend before 1.0.27, or no bots), all the reads, calls and bytes count as screens and scale ×${report.scale.screens.toFixed(2)} (players and minutes): an upper bound. Writes scale ×${report.scale.actions.toFixed(2)} (players and rounds).`);
+  } else lines.push(`Screens (GET) made ${pct(report.shares.reads)} of the reads the bots saw, ${pct(report.shares.requests)} of their calls and ${pct(report.shares.bytes)} of the bytes. They scale ×${report.scale.screens.toFixed(2)} (players and minutes), the actions ×${report.scale.actions.toFixed(2)} (players and rounds).`);
   if (report.readsByLabel.length > 0) {
     lines.push("", "Firestore by call of the bots (the most reads first):", "", "| Call | Calls | Reads | Reads per call | Writes | kB per call |", "| --- | ---: | ---: | ---: | ---: | ---: |");
     for (const row of report.readsByLabel.slice(0, 15)) {
