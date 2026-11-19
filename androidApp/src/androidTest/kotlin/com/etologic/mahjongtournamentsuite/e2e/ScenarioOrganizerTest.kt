@@ -635,15 +635,27 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             c.settle()
             if (c.isOnScreen("Round $round") && c.isOnScreen("Start timer")) break
             check(System.currentTimeMillis() < deadline) { "The Timer did not reach round $round" }
-            when {
-                c.isOnScreen("Pause timer") -> {
-                    c.clickButton("Pause timer")
-                    c.waitForText("Start timer")
+            // A tap while the new Timer window takes the focus is refused ("Failed to inject touch input"): the loop
+            // looks again and taps again until its deadline.
+            val tapped = runCatching {
+                when {
+                    c.isOnScreen("Pause timer") -> {
+                        c.clickButton("Pause timer")
+                        c.waitForText("Start timer")
+                    }
+                    c.isOnScreen("Increase round") -> c.clickButton("Increase round")
                 }
-                c.isOnScreen("Increase round") -> c.clickButton("Increase round")
+            }
+            if (tapped.isFailure) {
+                log("a tap on the Timer was refused (${tapped.exceptionOrNull()?.message?.take(80)}), it is tried again")
+                Thread.sleep(1_000)
             }
         }
-        c.clickButton("Start timer")
+        for (attempt in 1..5) {
+            if (runCatching { c.clickButton("Start timer") }.isSuccess) break
+            log("the tap on Start timer was refused, attempt $attempt")
+            Thread.sleep(1_000)
+        }
         c.waitForText("Pause timer")
         val clocks = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks").json().getJSONArray("roundClocks")
         check((0 until clocks.length()).any { clocks.getJSONObject(it).getInt("roundId") == round }) { "Round $round has no clock" }
