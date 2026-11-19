@@ -118,8 +118,12 @@ async function loadTableOf(
   const registration = await getPlayerRegistration(uid, key.tournamentId);
   if (!registration) throw forbidden("You are not registered in this tournament");
   const tableRef = db.doc(`tournaments/${key.tournamentId}/tables/${key.roundId}_${key.tableId}`);
+  // The tournament document is read outside the transaction. Every save of every table writes it (the versions that
+  // polling clients compare), so a read in the transaction made all the tables of the tournament wait for each other:
+  // the save of a hand took p95 2.3 s with 16 tables. Its fields here (the clock, the plan B switches and the end of
+  // the tournament) change a few times per round, and the table version of the transaction still refuses a stale save.
   const [tournamentSnap, slotSnap, tableSnap, handSnaps] = await Promise.all([
-    read.get(db.doc(`tournaments/${key.tournamentId}`)),
+    db.doc(`tournaments/${key.tournamentId}`).get(),
     read.get(db.doc(`tournaments/${key.tournamentId}/players/${registration.playerId}`)),
     read.get(tableRef),
     readAll(Array.from({ length: HANDS_PER_TABLE }, (_, i) => tableRef.collection("hands").doc(String(i + 1)))),
