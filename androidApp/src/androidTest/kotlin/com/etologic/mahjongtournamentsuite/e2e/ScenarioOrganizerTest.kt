@@ -383,8 +383,24 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 hands = doneHands(tournamentId, round, table)
             }
             check(hands.size >= item.getInt("minHands")) { "Table $round-$table played only ${hands.size} hands" }
+            // A correction changes the score of a won hand: a draw has no score to correct (with one it is no longer a
+            // valid hand, and the player writes it again). The last hand is waited for until it is a won hand, and an
+            // older one is the nearest won hand before it.
+            val won = { hand: JSONObject -> hand.optString("playerWinnerId").isNotBlank() }
+            if (item.getString("kind") == "edit" && item.getString("which") == "last") {
+                while (!won(hands.maxBy { it.getInt("handId") }) && System.currentTimeMillis() < deadline) {
+                    idle(5_000)
+                    hands = doneHands(tournamentId, round, table)
+                }
+            }
             val newest = hands.maxOf { it.getInt("handId") }
-            val handId = if (item.getString("which") == "last") newest else newest - item.optInt("back", 3)
+            val target = if (item.getString("which") == "last") newest else newest - item.optInt("back", 3)
+            val handId = if (item.getString("kind") != "edit") {
+                target
+            } else {
+                hands.filter { it.getInt("handId") <= target && won(it) }.maxOfOrNull { it.getInt("handId") } ?: target
+            }
+            if (handId != target) log("table $round-$table: hand $target is a draw, the editor corrects hand $handId")
             val before = hands.first { it.getInt("handId") == handId }
             openTable(round, table)
             // A hand of the player saved while the editor types replaces the unsaved changes ("Table updated"), as in a

@@ -363,6 +363,8 @@ class PlayerBot {
       } else if (forced == null && Math.random() < this.penaltyRate) {
         await this.penalty(roundId, table.tableId, seats, data.table.version);
       }
+      // The hand that the editor corrects while the table waits is a won hand: a draw has no score to correct.
+      if (kind === "hand" && hold != null && data.hands.filter((hand) => hand.isDone).length === hold - 1) kind = "won";
       const outcome = await this.writeHand(roundId, table, key, seats, kind);
       if (outcome === "done") return;
       nextHandAt = Date.now() + (outcome === "wait" ? this.waitMs : randomBetween(...this.handSeconds) * 1_000);
@@ -404,7 +406,8 @@ class PlayerBot {
   /** Preview, then save, as the app does. Returns "ok", "wait" or "done". */
   async writeHand(roundId, table, key, seats, kind = "hand") {
     const path = `/player/tournaments/${this.tournament.id}/tables/${roundId}/${table.tableId}/hands`;
-    const hand = kind === "draw" ? { isDraw: true } : randomHand(seats);
+    let hand = kind === "draw" ? { isDraw: true } : randomHand(seats);
+    while (kind === "won" && hand.isDraw) hand = randomHand(seats);
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const token = await this.session.bearer();
       const preview = await this.api.call("POST", `${path}/preview`, { token, body: hand, label: "POST hand preview" });
