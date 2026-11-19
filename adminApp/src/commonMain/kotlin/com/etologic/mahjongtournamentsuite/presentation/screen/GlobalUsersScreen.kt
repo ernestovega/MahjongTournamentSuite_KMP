@@ -504,6 +504,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             }
             val canReset = access?.canSendPasswordResets == true
             SectionCard(
+                container = false,
                 title = stringResource(Res.string.accounts),
                 subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
             ) {

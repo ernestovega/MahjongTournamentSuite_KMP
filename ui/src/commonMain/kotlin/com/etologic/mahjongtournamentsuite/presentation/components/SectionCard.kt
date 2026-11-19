@@ -38,12 +38,17 @@ fun SectionCard(
     /** Content at the start (left) of the title row. It works only with [centerTitle]. */
     startContent: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
+    /**
+     * False draws the section straight on the screen background, without the card and its padding. Use it when the
+     * section is the only list of the screen: a big card around the whole screen adds nothing.
+     */
+    container: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val compact = LocalCompactLayout.current
-    Card(modifier = modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+    val body: @Composable (Modifier) -> Unit = { columnModifier ->
         Column(
-            modifier = Modifier.padding(screenLayout.cardPadding),
+            modifier = columnModifier,
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
             if (compact && centerTitle && (title != null || subtitle != null || titleAction != null || actions != null || startContent != null)) {
@@ -119,6 +124,13 @@ fun SectionCard(
 
             content()
         }
+    }
+    if (container) {
+        Card(modifier = modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+            body(Modifier.padding(screenLayout.cardPadding))
+        }
+    } else {
+        body(modifier.fillMaxWidth())
     }
 }
 

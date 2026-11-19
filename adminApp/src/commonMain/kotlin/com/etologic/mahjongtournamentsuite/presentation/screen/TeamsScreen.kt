@@ -386,7 +386,7 @@ fun TeamsScreen(
                     }
                 }
             }
-            SectionCard {
+            SectionCard(container = false) {
                 if (teams.isEmpty() && !loading) {
                     AppEmptyState(Icons.Default.Groups, stringResource(Res.string.no_teams), stringResource(Res.string.no_teams_message), compact = true)
                 } else if (filteredTeams.isEmpty() && !loading) {

@@ -1076,7 +1076,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     onDismiss = { idCardsDialogOpen = false },
                 )
             }
-            SectionCard {
+            SectionCard(container = false) {
                 if (players.isNotEmpty()) {
                     OutlinedTextField(
                         value = searchQuery,

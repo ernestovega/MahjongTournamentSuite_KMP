@@ -210,7 +210,7 @@ fun OrganizationsScreen(navController: NavHostController) {
         ScreenColumn(maxWidth = 900.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
             val countryNameOf = rememberCountryNames()
-            SectionCard(title = stringResource(Res.string.organizations_title), subtitle = stringResource(Res.string.organizations_info)) {
+            SectionCard(container = false, title = stringResource(Res.string.organizations_title), subtitle = stringResource(Res.string.organizations_info)) {
                 val list = organizations
                 when {
                     list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)

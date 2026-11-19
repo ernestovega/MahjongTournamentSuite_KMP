@@ -42,6 +42,10 @@ In `ui`, `screenLayout` gives the layout tokens of the screens of the app: the c
 compact layout (`LocalCompactLayout`, only the admin app), else the wide ones. `ScreenColumn`, `SectionCard` and the
 admin screens read it, so a screen does not write `if (compact) 12.dp else 16.dp`.
 
+A screen whose content is a single list (Players, Teams, Tournaments, Users, Organizations, App errors) does not
+wrap it in a big card: it uses `SectionCard(container = false)`, which keeps the title, subtitle and actions but
+draws them straight on the screen background. Cards stay for screens with several sections or panels.
+
 ## Components
 
 In `designsystem/.../presentation/components`:
