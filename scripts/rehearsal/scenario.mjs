@@ -65,11 +65,33 @@ export function playerEmail(mailbox, tag, slot) {
  * EMA players of the staging registry that no account uses yet: real names and countries, as in a real tournament.
  * The made-up players of the seeds and of the calibration (numbers from 99980000) stay out.
  */
-async function freePlayers(api, token) {
+async function freePlayers(api, token, mailbox) {
   const registry = await api.call("GET", "/ema-player-registry", { token, label: "admin GET EMA registry" });
   const users = await api.call("GET", "/admin/users", { token, label: "admin GET users" });
   if (registry.status !== 200 || users.status !== 200) throw new Error(`Reading the registry: ${registry.status}, the accounts: ${users.status}`);
-  return eligiblePlayers(registry.json.players ?? [], users.json.users ?? []);
+  return {
+    free: eligiblePlayers(registry.json.players ?? [], users.json.users ?? []),
+    returning: returningPlayers(registry.json.players ?? [], users.json.users ?? [], mailbox),
+  };
+}
+
+/**
+ * The players of earlier game days: an account of the mailbox of the tests (local+gd<tag>-sNNN@domain) with the EMA
+ * player of the registry that a scenario may seat. They play again with their account, as a person who played other
+ * tournaments does: the app sends them a reminder instead of an invitation. Each one comes with the email of its account.
+ */
+export function returningPlayers(registryPlayers, users, mailbox) {
+  const [local, domain] = String(mailbox).toLowerCase().split("@");
+  if (!local || !domain) return [];
+  const escape = (text) => text.replace(/[.*+?^$()|[\]{}\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escape(local)}\\+gd[a-z0-9]+-s\\d{3}@${escape(domain)}$`);
+  const allowed = new Map(eligiblePlayers(registryPlayers, []).map((player) => [player.emaId, player]));
+  return users.flatMap((user) => {
+    const email = String(user.email ?? "").toLowerCase();
+    const player = allowed.get(user.emaId);
+    if (user.disabled || player == null || !pattern.test(email)) return [];
+    return [{ ...player, email }];
+  });
 }
 
 /** The players of the registry that a scenario may seat: see [freePlayers]. */
@@ -84,6 +106,13 @@ export function eligiblePlayers(registryPlayers, users) {
     // the file to 8 digits and then does not find them, so a file with them would be refused.
     && /^\d{8}$/.test(player.emaId)
     && !/test/i.test(`${player.firstName} ${player.lastName}`));
+}
+
+/** How the player of a slot comes: "new" (an invitation), "account-before" (an account made by hand in Users) or "returning". */
+export function slotKind(slot) {
+  if (slot % 4 === 1) return "new";
+  if (slot % 20 === 2) return "account-before";
+  return "returning";
 }
 
 function csv(rows) {
@@ -107,11 +136,20 @@ export async function makePlan(args) {
   const admin = new Session(api, rehearsalEmail(baseEmail, "botadmin"), password);
   if (!(await admin.signIn())) throw new Error("The bot admin could not sign in.");
   // The EMA guests (people without an EMA number of their own) play too: two of them, when the registry has them.
-  const all = await freePlayers(api, admin.token);
+  const { free: all, returning: earlier } = await freePlayers(api, admin.token, mailbox);
   const isGuest = (player) => /EMA GUEST/i.test(`${player.firstName} ${player.lastName}`);
-  const guests = shuffle(all.filter(isGuest)).slice(0, 2);
-  const free = shuffle([...guests, ...shuffle(all.filter((player) => !isGuest(player))).slice(0, size.players - guests.length)]);
-  if (free.length < size.players) throw new Error(`The registry has only ${free.length} free EMA players.`);
+  // Who plays: 1 in 4 players is new and gets an invitation, 1 in 20 has an account made by hand in Users before the
+  // tournament, and the others played an earlier game day and come back with their account. Without enough of those,
+  // new players take their place. A new player needs an EMA player without an account, and the registry of staging
+  // has a few hundred: players who come back keep a large scenario at about 70 of them.
+  const kinds = Array.from({ length: size.players }, (_, index) => slotKind(index + 1));
+  const back = shuffle(earlier).slice(0, kinds.filter((kind) => kind === "returning").length);
+  const newCount = size.players - back.length;
+  const guests = shuffle(all.filter(isGuest)).slice(0, Math.min(2, newCount));
+  const fresh = shuffle([...guests, ...shuffle(all.filter((player) => !isGuest(player))).slice(0, newCount - guests.length)]);
+  if (fresh.length < newCount) {
+    throw new Error(`The registry has only ${fresh.length} free EMA players, and ${earlier.length} players of earlier game days.`);
+  }
 
   const now = new Date();
   const stamp = madrid(now);
@@ -125,19 +163,24 @@ export async function makePlan(args) {
   // About 1 in 4 players has an account before the tournament, made by hand in Users. The last slots (1 in 10, at
   // least 2) are not in the file: the organizer assigns them by hand and types their emails in the invitations.
   const manualCount = Math.max(2, Math.round(size.players / 10));
+  // The slots that would come back take the players of earlier game days while there are some, then new players.
+  let backIndex = 0;
+  let freshIndex = 0;
   const slots = Array.from({ length: size.players }, (_, index) => {
     const slot = index + 1;
-    const player = free[index];
+    const returning = kinds[index] === "returning" && backIndex < back.length;
+    const player = returning ? back[backIndex++] : fresh[freshIndex++];
     return {
       slot,
       emaId: player.emaId,
       name: `${player.firstName} ${player.lastName}`,
       lastName: player.lastName,
-      email: playerEmail(mailbox, tag, slot),
+      email: returning ? player.email : playerEmail(mailbox, tag, slot),
+      returning,
       team: isTeams ? Math.floor(index / 4) + 1 : 0,
       teamName: isTeams ? `Equipo ${String.fromCharCode(65 + (Math.floor(index / 4) % 26))}${Math.floor(index / 104) || ""}` : "",
       via: slot > size.players - manualCount ? "manual" : "import",
-      accountBefore: slot % 4 === 2,
+      accountBefore: returning || kinds[index] === "account-before",
     };
   });
 
@@ -206,7 +249,7 @@ async function main() {
   fs.writeFileSync(path.join(out, "plan.json"), `${JSON.stringify(plan, null, 2)}\n`);
   for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(out, name), text);
   console.log(`${plan.name}: ${plan.players} players, ${plan.rounds} rounds of ${plan.matchDurationMinutes} minutes, `
-    + `${plan.slots.filter((slot) => slot.accountBefore).length} accounts before, `
+    + `${plan.slots.filter((slot) => slot.returning).length} back from earlier game days, ${plan.slots.filter((slot) => slot.accountBefore && !slot.returning).length} accounts made in Users, `
     + `${plan.slots.filter((slot) => slot.via === "manual").length} slots by hand. Written to ${out}.`);
 }
 

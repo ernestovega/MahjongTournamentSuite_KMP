@@ -76,6 +76,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val email: String,
         val via: String,
         val accountBefore: Boolean,
+        /** A player of an earlier game day, who comes back with that account. */
+        val returning: Boolean,
     )
 
     private val slots: List<Slot> by lazy {
@@ -84,7 +86,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             list.getJSONObject(index).let {
                 Slot(
                     it.getInt("slot"), it.getString("emaId"), it.getString("name"), it.getString("lastName"), it.getString("email"),
-                    it.getString("via"), it.getBoolean("accountBefore"),
+                    it.getString("via"), it.getBoolean("accountBefore"), it.optBoolean("returning"),
                 )
             }
         }
@@ -133,7 +135,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
         if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
-        slots.filter { it.accountBefore }.forEach { createAccountInUsers(it) }
+        // The players of earlier game days have their account already.
+        slots.filter { it.accountBefore && !it.returning }.forEach { createAccountInUsers(it) }
         createTheTournamentWithTheForm()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }

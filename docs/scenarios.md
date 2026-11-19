@@ -51,6 +51,20 @@ Deploy · Staging). The app of the test and the backend it talks to are always t
 The players use addresses `<local>+<scenario>-<slot>@<domain>` of one mailbox for tests (the secret
 `REHEARSAL_IMAP_URI`). The scripts read the invitation of each slot by IMAP and open its link, as a person would.
 
+## Who plays
+
+A player of a real tournament usually played others before. In a plan (`slotKind` in `scenario.mjs`):
+
+- 1 in 4 players is new: an EMA player without an account, who gets an invitation and creates the account.
+- 1 in 20 has an account made by hand in Users before the tournament.
+- The others played an earlier game day and come back with that account (`returning` in the plan): the email of then,
+  a reminder instead of an invitation. `invitations.mjs` signs them in with the password of the tests; when it does not
+  work (that game day stopped before its players chose one), the player uses Forgot password and opens that email.
+- Without enough players of earlier game days, new players take their slots.
+
+Each new player uses up an EMA player of the registry of staging (a few hundred), as an EMA number has one account. With
+players who come back, a large scenario uses about 70 of them instead of 240.
+
 ## The plan of corner cases
 
 The orchestrator writes a plan before the run: which table does what, and when. The organizer, the phones and the bots
