@@ -230,9 +230,7 @@ class RegistrationsTabUiTest {
 }
 
 @OptIn(ExperimentalTestApi::class)
-private fun androidx.compose.ui.test.ComposeUiTest.onAllNodesWithTextExists(text: String, substring: Boolean = false) =
-    onAllNodes(androidx.compose.ui.test.hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
+private fun androidx.compose.ui.test.ComposeUiTest.onAllNodesWithTextExists(text: String, substring: Boolean = false) = onAllNodes(androidx.compose.ui.test.hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
 
 @OptIn(ExperimentalTestApi::class)
-private fun androidx.compose.ui.test.ComposeUiTest.onAllNodesWithTagExists(tag: String) =
-    onAllNodes(androidx.compose.ui.test.hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+private fun androidx.compose.ui.test.ComposeUiTest.onAllNodesWithTagExists(tag: String) = onAllNodes(androidx.compose.ui.test.hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()

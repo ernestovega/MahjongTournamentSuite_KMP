@@ -40,23 +40,17 @@ class RegistrationsPresenter(
     /** The EMA registry, to pick the person to add. */
     suspend fun loadRegistry(): AppResult<List<Player>> = playerRepository.listPlayers(RefreshMode.IF_CHANGED)
 
-    suspend fun add(tournamentId: String, registration: NewRegistration): AppResult<AdminRegistration> =
-        repository.adminAdd(tournamentId, registration).trackAction(telemetry, TelemetryAction.REGISTRATION_ADDED)
+    suspend fun add(tournamentId: String, registration: NewRegistration): AppResult<AdminRegistration> = repository.adminAdd(tournamentId, registration).trackAction(telemetry, TelemetryAction.REGISTRATION_ADDED)
 
-    suspend fun update(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> =
-        repository.adminUpdate(tournamentId, emaId, update).trackAction(telemetry, TelemetryAction.REGISTRATION_UPDATED)
+    suspend fun update(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> = repository.adminUpdate(tournamentId, emaId, update).trackAction(telemetry, TelemetryAction.REGISTRATION_UPDATED)
 
-    suspend fun remove(tournamentId: String, emaId: String, notify: Boolean): AppResult<Unit> =
-        repository.adminRemove(tournamentId, emaId, notify).trackAction(telemetry, TelemetryAction.REGISTRATION_REMOVED)
+    suspend fun remove(tournamentId: String, emaId: String, notify: Boolean): AppResult<Unit> = repository.adminRemove(tournamentId, emaId, notify).trackAction(telemetry, TelemetryAction.REGISTRATION_REMOVED)
 
-    suspend fun saveSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> =
-        repository.updateSettings(tournamentId, settings).trackAction(telemetry, TelemetryAction.REGISTRATION_SETTINGS_UPDATED)
+    suspend fun saveSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> = repository.updateSettings(tournamentId, settings).trackAction(telemetry, TelemetryAction.REGISTRATION_SETTINGS_UPDATED)
 
-    suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
-        repository.previewImport(tournamentId, fileName, bytes)
+    suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.previewImport(tournamentId, fileName, bytes)
 
-    suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
-        repository.applyImport(tournamentId, fileName, bytes).trackAction(telemetry, TelemetryAction.REGISTRATIONS_IMPORTED)
+    suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.applyImport(tournamentId, fileName, bytes).trackAction(telemetry, TelemetryAction.REGISTRATIONS_IMPORTED)
 
     /**
      * Makes the draw with the confirmed people, as the creation of a tournament does: the app computes the rounds and

@@ -35,8 +35,7 @@ class CreateTournamentDialogUiTest {
     @kotlin.test.AfterTest
     fun restoreLocale() = java.util.Locale.setDefault(originalLocale)
 
-    private fun ComposeUiTest.awaitText(text: String) =
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    private fun ComposeUiTest.awaitText(text: String) = waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     private fun ComposeUiTest.showForm() {
         setContent {

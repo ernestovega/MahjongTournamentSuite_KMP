@@ -188,30 +188,23 @@ class PlayerRegistrationPresenter(
         return repository.resolveLink(link.slug.orEmpty())
     }
 
-    suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult> =
-        repository.register(tournamentId, request).counted(TelemetryRegistrationAction.REGISTERED)
+    suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult> = repository.register(tournamentId, request).counted(TelemetryRegistrationAction.REGISTERED)
 
-    suspend fun saveFood(tournamentId: String, food: String, consent: Boolean): AppResult<OwnRegistration> =
-        repository.updateOwn(tournamentId, food, consent).counted(TelemetryRegistrationAction.FOOD_UPDATED)
+    suspend fun saveFood(tournamentId: String, food: String, consent: Boolean): AppResult<OwnRegistration> = repository.updateOwn(tournamentId, food, consent).counted(TelemetryRegistrationAction.FOOD_UPDATED)
 
     suspend fun cancel(tournamentId: String): AppResult<Unit> = repository.cancelOwn(tournamentId).counted(TelemetryRegistrationAction.CANCELLED)
 
-    suspend fun createTeam(tournamentId: String, name: String): AppResult<OwnRegistration> =
-        repository.createTeam(tournamentId, name).counted(TelemetryRegistrationAction.TEAM_CREATED)
+    suspend fun createTeam(tournamentId: String, name: String): AppResult<OwnRegistration> = repository.createTeam(tournamentId, name).counted(TelemetryRegistrationAction.TEAM_CREATED)
 
-    suspend fun renameTeam(tournamentId: String, name: String): AppResult<OwnRegistration> =
-        repository.renameTeam(tournamentId, name).counted(TelemetryRegistrationAction.TEAM_RENAMED)
+    suspend fun renameTeam(tournamentId: String, name: String): AppResult<OwnRegistration> = repository.renameTeam(tournamentId, name).counted(TelemetryRegistrationAction.TEAM_RENAMED)
 
     suspend fun leaveTeam(tournamentId: String): AppResult<OwnRegistration> = repository.leaveTeam(tournamentId).counted(TelemetryRegistrationAction.TEAM_LEFT)
 
-    suspend fun addMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> =
-        repository.addTeamMember(tournamentId, emaId).counted(TelemetryRegistrationAction.TEAM_MEMBER_ADDED)
+    suspend fun addMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> = repository.addTeamMember(tournamentId, emaId).counted(TelemetryRegistrationAction.TEAM_MEMBER_ADDED)
 
-    suspend fun removeMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> =
-        repository.removeTeamMember(tournamentId, emaId).counted(TelemetryRegistrationAction.TEAM_MEMBER_REMOVED)
+    suspend fun removeMember(tournamentId: String, emaId: String): AppResult<OwnRegistration> = repository.removeTeamMember(tournamentId, emaId).counted(TelemetryRegistrationAction.TEAM_MEMBER_REMOVED)
 
-    suspend fun writeWithoutEma(tournamentId: String, request: NoEmaNumberRequest): AppResult<Unit> =
-        repository.requestWithoutEmaNumber(tournamentId, request).counted(TelemetryRegistrationAction.NO_EMA_MESSAGE)
+    suspend fun writeWithoutEma(tournamentId: String, request: NoEmaNumberRequest): AppResult<Unit> = repository.requestWithoutEmaNumber(tournamentId, request).counted(TelemetryRegistrationAction.NO_EMA_MESSAGE)
 }
 
 /** How often the list of registrations is read again while it is on screen. */
@@ -401,8 +394,7 @@ internal fun RegistrationsTab(tournament: Tournament) {
 
 /** "12 with a place of 60 · 3 on the waiting list". */
 @Composable
-internal fun registrationPlacesText(confirmed: Int, maxPlayers: Int?, waiting: Int): String =
-    stringResource(Res.string.preg_places, confirmed, maxPlayers?.toString() ?: "∞", waiting)
+internal fun registrationPlacesText(confirmed: Int, maxPlayers: Int?, waiting: Int): String = stringResource(Res.string.preg_places, confirmed, maxPlayers?.toString() ?: "∞", waiting)
 
 @Composable
 private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams: Boolean, isMe: Boolean) {

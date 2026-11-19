@@ -379,6 +379,7 @@ class PlayerScreensScreenshotTest {
 }
 
 /** The tournaments of the screenshots, with [UPCOMING] before its draw and taking registrations. */
-private class RegistrationTournamentRepository : ScreenshotTournamentRepository(
-    tournaments = ScreenshotData.tournaments.map { if (it.id == UPCOMING) ScreenshotData.registrationTournament else it },
-)
+private class RegistrationTournamentRepository :
+    ScreenshotTournamentRepository(
+        tournaments = ScreenshotData.tournaments.map { if (it.id == UPCOMING) ScreenshotData.registrationTournament else it },
+    )

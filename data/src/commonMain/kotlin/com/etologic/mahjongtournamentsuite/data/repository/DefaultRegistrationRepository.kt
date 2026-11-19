@@ -113,8 +113,7 @@ class DefaultRegistrationRepository(
         }
     }
 
-    override suspend fun updateOwn(tournamentId: String, foodRestrictions: String, consent: Boolean): AppResult<OwnRegistration> =
-        personCall(tournamentId, "Saving the own registration") { idToken, token ->
+    override suspend fun updateOwn(tournamentId: String, foodRestrictions: String, consent: Boolean): AppResult<OwnRegistration> = personCall(tournamentId, "Saving the own registration") { idToken, token ->
             backendApi.updateOwnRegistration(idToken, token, tournamentId, UpdateOwnRegistrationRequestDto(foodRestrictions.trim(), consent)).toDomain()
         }
 
@@ -180,8 +179,7 @@ class DefaultRegistrationRepository(
         ).toDomain()
     }
 
-    override suspend fun adminUpdate(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> =
-        adminCall("Changing a registration") { idToken ->
+    override suspend fun adminUpdate(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> = adminCall("Changing a registration") { idToken ->
             backendApi.adminUpdateRegistration(
                 idToken,
                 tournamentId,
@@ -201,19 +199,15 @@ class DefaultRegistrationRepository(
         Unit
     }
 
-    override suspend fun updateSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> =
-        adminCall("Changing the registration settings") { idToken ->
+    override suspend fun updateSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> = adminCall("Changing the registration settings") { idToken ->
             backendApi.updateRegistrationSettings(idToken, tournamentId, settings.toRequestDto()).toDomain()
         }
 
-    override suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
-        import(tournamentId, fileName, bytes, apply = false)
+    override suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = import(tournamentId, fileName, bytes, apply = false)
 
-    override suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> =
-        import(tournamentId, fileName, bytes, apply = true)
+    override suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = import(tournamentId, fileName, bytes, apply = true)
 
-    private suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport> =
-        adminCall("Importing registrations") { idToken ->
+    private suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport> = adminCall("Importing registrations") { idToken ->
             val dto = backendApi.importRegistrations(idToken, tournamentId, RegistrationImportRequestDto(fileName, Base64.Default.encode(bytes), apply))
             RegistrationImport(
                 rows = dto.rows.map { row ->

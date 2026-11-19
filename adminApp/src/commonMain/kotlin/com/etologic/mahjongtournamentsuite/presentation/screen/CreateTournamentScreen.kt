@@ -719,33 +719,35 @@ fun CreateTournamentDialog(
                                         onCheckedChange = { countChickenHands = it },
                                     )
 
-                                    if (!withRegistration) FocusHighlightContainer(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        interactionSource = computeToggleInteractionSource,
-                                    ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                    if (!withRegistration) {
+                                        FocusHighlightContainer(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            interactionSource = computeToggleInteractionSource,
                                         ) {
-                                            val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                                            Switch(
-                                                checked = isHeavy,
-                                                onCheckedChange = ::setHeavyCompute,
-                                                enabled = !isLoading,
-                                                interactionSource = computeToggleInteractionSource,
-                                            )
-                                            Text(
-                                                text = stringResource(Res.string.heavy_computing),
-                                                modifier = Modifier.toggleable(
-                                                    value = isHeavy,
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
+                                                Switch(
+                                                    checked = isHeavy,
+                                                    onCheckedChange = ::setHeavyCompute,
                                                     enabled = !isLoading,
-                                                    role = Role.Switch,
                                                     interactionSource = computeToggleInteractionSource,
-                                                    indication = null,
-                                                    onValueChange = ::setHeavyCompute,
-                                                ),
-                                            )
-                                            InfoTooltipIcon(stringResource(Res.string.create_heavy_info))
+                                                )
+                                                Text(
+                                                    text = stringResource(Res.string.heavy_computing),
+                                                    modifier = Modifier.toggleable(
+                                                        value = isHeavy,
+                                                        enabled = !isLoading,
+                                                        role = Role.Switch,
+                                                        interactionSource = computeToggleInteractionSource,
+                                                        indication = null,
+                                                        onValueChange = ::setHeavyCompute,
+                                                    ),
+                                                )
+                                                InfoTooltipIcon(stringResource(Res.string.create_heavy_info))
+                                            }
                                         }
                                     }
                                 }
