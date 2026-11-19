@@ -251,7 +251,7 @@ class PlayerScreensScreenshotTest {
     fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab(MainTab.PLAYERS) }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText(uiText("stats_skills"), substring = true) }) { nav ->
+    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("EMA 04010001", substring = true) }) { nav ->
         TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1))
     }
 

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
@@ -42,6 +42,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRou
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlinx.coroutines.flow.map
@@ -121,7 +122,7 @@ fun PersonStatisticsTab(
     val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("person-statistics-$emaId"))
+        Modifier.fillMaxSize().verticalScrollWithIndicators(rememberPersistentScrollState("person-statistics-$emaId"), MtsScrollbar.Overlay)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
@@ -159,7 +160,7 @@ fun PlayerSlotStatisticsTab(
     val message = polled.message
     ReportLoading(data == null && message == null, onLoadingChange)
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("player-statistics-$slotId"))
+        Modifier.fillMaxSize().verticalScrollWithIndicators(rememberPersistentScrollState("player-statistics-$slotId"), MtsScrollbar.Overlay)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
@@ -279,7 +280,7 @@ internal fun FilteredStatisticsTab(
             TournamentRoundChips(shown.statistics, shown.tournament.roundIds(), round, { round = it }, edge = MtsTheme.spacing.lg)
         }
         Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll)
+            Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay)
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
         ) {

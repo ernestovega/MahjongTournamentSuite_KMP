@@ -56,4 +56,9 @@ data class ManagedUser(
     val permissionChanges: Map<GlobalUserRole, PermissionChange> = emptyMap(),
     /** What the account may do as an editor and as a club admin, with its custom roles and its changes. */
     val rolePermissions: Map<GlobalUserRole, Set<Permission>> = emptyMap(),
+    /**
+     * True when the account was disabled because it lost its last tournament, not by a super admin. A new role with a
+     * tournament enables it again, also when a club admin gives it.
+     */
+    val disabledWithoutRole: Boolean = false,
 )

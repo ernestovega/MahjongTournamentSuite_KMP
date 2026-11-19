@@ -13,6 +13,9 @@ The management application has three staff roles, and the player application one
 
 An account can have several roles. What each role may do is in [the permissions matrix](user-roles-matrix.md).
 
+The roles restrict only the management app. The player app (and the player part of the Android app) reads the public
+list of tournaments without the account (`/public/tournaments`), so every role sees every tournament there.
+
 ## Editor
 
 An editor works in the tournaments assigned to it: players, tables, hands, results, the Timer and the round control. It
@@ -21,6 +24,10 @@ its tournaments. It sees the editors and admins of the organizations of its tour
 
 An editor always has at least one tournament. When it loses the last one (a club admin takes it away, or the
 tournament is deleted), the account becomes a player, or it is disabled when it has no EMA ID (`syncRoleClaims`).
+That account keeps `users/{uid}.disabledReason: "NO_ROLE"`, and the account dialog says so. A country admin sees it
+like a player account and brings it back: it gives it the editor role with a tournament of its countries, and saving
+enables the account again. An account that a super admin disabled stays disabled: only a super admin enables it (any
+enable or disable of a super admin clears `disabledReason`).
 
 ## Organizations
 

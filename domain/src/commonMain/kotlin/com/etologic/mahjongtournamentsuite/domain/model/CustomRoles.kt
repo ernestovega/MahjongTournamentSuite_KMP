@@ -1,7 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.model
 
 /**
- * A role that a super admin made. It builds on [base], Editor or Country Admin, which gives its scope (the assigned
+ * A role that a super admin made. It builds on [base], Editor or Club Admin, which gives its scope (the assigned
  * tournaments or the countries) and the permissions that it may hold. See the backend `services/customPermissions.ts`.
  */
 data class CustomRole(
@@ -13,7 +13,7 @@ data class CustomRole(
     val accounts: Int = 0,
 )
 
-/** The standard roles, the custom ones and what a role that builds on Editor or Country Admin may hold. */
+/** The standard roles, the custom ones and what a role that builds on Editor or Club Admin may hold. */
 data class RolesCatalog(
     val standard: Map<GlobalUserRole, Set<Permission>>,
     val custom: List<CustomRole>,

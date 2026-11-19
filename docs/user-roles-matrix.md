@@ -6,11 +6,13 @@ club admin of a Madrid club who is an editor of one tournament of a Swedish club
 
 - An **editor** works in the tournaments assigned to it (a membership document `tournaments/{id}/members/{uid}`). An
   editor always has at least one tournament: one that loses its last tournament becomes a player, or is disabled when it
-  has no EMA ID.
+  has no EMA ID. A club admin enables that account again by giving it a tournament of its organizations.
 - A **club admin** manages every tournament that one of its organizations (clubs or federations) organizes, without an
   assignment. The organizations are ids in `users/{uid}.adminOrganizations`, set by a super admin or by another club
   admin of the same organizations. A tournament has one or more organizers (`organizerIds`, the main one first).
 - A **super admin** manages everything.
+
+These roles restrict only the management app. In the player app every role sees every public tournament.
 
 The server keeps the rules in one table of named permissions, `firebase/functions/src/models/permissions.ts`. Each route
 asks for one permission (`requirePermission`) or for one permission inside the tournament (`requireTournamentPermission`).

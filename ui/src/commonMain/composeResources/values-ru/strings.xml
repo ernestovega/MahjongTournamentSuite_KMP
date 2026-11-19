@@ -554,7 +554,6 @@
     <string name="stats_all_tournaments">Все турниры</string>
     <string name="stats_filters">Фильтры</string>
     <string name="stats_filters_title">Фильтр статистики</string>
-    <string name="stats_filters_message">Фильтры можно сочетать.\nЕсли выбран игрок, страна игроков не учитывается.</string>
     <string name="stats_filter_player">Игрок</string>
     <string name="stats_filter_any_player">Любой игрок</string>
     <string name="stats_filter_tournament">Турнир</string>
@@ -568,7 +567,7 @@
     <string name="stats_filter_to_year">По</string>
     <string name="stats_filter_any_year">Любой год</string>
     <string name="stats_filter_apply">Применить</string>
-    <string name="stats_filter_clear">Сбросить всё</string>
+    <string name="stats_filter_clear">Очистить</string>
     <string name="stats_filter_everything">Все турниры и игроки</string>
     <string name="stats_chip_tournaments_in">Турниры: %1$s</string>
     <string name="stats_chip_players_from">Игроки: %1$s</string>

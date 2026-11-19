@@ -53,6 +53,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerCountryAndEma
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
@@ -65,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideO
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
@@ -141,9 +143,10 @@ private fun PlayerList(view: PlayerTournamentView, onSelect: (Int) -> Unit) {
     var query by rememberPersistentText("players-search", "")
     val rows = remember(view) { view.playerRows() }
     val shown = rows.filter { it.matches(query.orEmpty()) }
+    val listState = rememberPersistentLazyListState("players")
     LazyColumn(
-        state = rememberPersistentLazyListState("players"),
-        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(16.dp),
     ) {
@@ -369,7 +372,8 @@ private fun ColumnScope.PlayerContent(
         Box(Modifier.weight(1f)) {
             LazyColumn(
                 state = state,
-                modifier = Modifier.fillMaxSize(),
+                // The draggable scrollbar of the tables is the scrollbar of this list.
+                modifier = Modifier.fillMaxSize().scrollIndicators(state, scrollbar = MtsScrollbar.None),
                 verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                 contentPadding = PaddingValues(16.dp),
             ) {

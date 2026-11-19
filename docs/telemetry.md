@@ -49,7 +49,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `table_saved` | An editor saves a table | `hands` |
 | `players_imported`, `players_exported` | Import or export of players | `format`: `csv` or `xlsx` |
 | `accounts_sent` | Invite or reminder to players | `players` |
-| `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
+| `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `group`, `person`, `me` |
 | `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |

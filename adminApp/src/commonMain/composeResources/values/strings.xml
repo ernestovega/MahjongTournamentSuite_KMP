@@ -894,6 +894,8 @@ The first one that works wins</string>
     <string name="admin_organizations_not_yours">The organizations without ✕ are not yours.\nOnly a Super Admin or their Club Admins remove them.</string>
     <string name="remove_organization_n">Remove %1$s</string>
     <string name="editor_needs_tournament">An editor needs at least one tournament.</string>
+    <string name="account_disabled_without_tournaments">This account was disabled when it lost its last tournament.
+Give it a tournament as an editor and it is enabled again when you save.</string>
     <string name="account_grants_outside">This account also has organizations or tournaments that you do not manage.\nYou change only yours, and you cannot make it a player.</string>
     <string name="email_hidden">Hidden</string>
     <string name="email_hidden_info">You see the email of a player only when the player plays in one of your tournaments.</string>

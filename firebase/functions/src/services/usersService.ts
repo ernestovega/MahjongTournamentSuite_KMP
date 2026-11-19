@@ -44,6 +44,8 @@ export type ManagedUser = UserProfile & {
   role: GlobalUserRole;
   roles: GlobalUserRole[];
   disabled: boolean;
+  /** True when the account was disabled because it lost its last role (syncRoleClaims), not by a super admin. */
+  disabledWithoutRole: boolean;
   tournamentAssignments: TournamentAssignment[];
   /** The organizations of a club admin. Empty for the other roles. */
   adminOrganizations: string[];
@@ -160,6 +162,7 @@ export async function listManagedUsers(
         role: getGlobalUserRole(user),
         roles: getGlobalUserRoles(user),
         disabled: user.disabled,
+        disabledWithoutRole: user.disabled && profile?.disabledReason === DISABLED_WITHOUT_ROLE,
         tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
         adminOrganizations: getGlobalUserRoles(user).includes("CLUB_ADMIN") ? readOrganizationList(profile?.adminOrganizations) : [],
         ...permissionFieldsOf(profile, customRoles),
@@ -205,6 +208,7 @@ export async function getManagedUser(
     role: getGlobalUserRole(user),
     roles: getGlobalUserRoles(user),
     disabled: user.disabled,
+    disabledWithoutRole: user.disabled && profile.get("disabledReason") === DISABLED_WITHOUT_ROLE,
     tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
     adminOrganizations: getGlobalUserRoles(user).includes("CLUB_ADMIN") ? readOrganizationList(profile.get("adminOrganizations")) : [],
     ...permissionFieldsOf(profile.data(), await loadCustomRoles()),
@@ -241,6 +245,9 @@ export async function setGlobalUserRole(uid: string, role: GlobalUserRole, admin
   // The role decides which tournaments the account lists, so the cached lists are old.
   await bumpGlobalDataVersion("tournaments");
 }
+
+/** The `disabledReason` of an account that syncRoleClaims disabled. A super admin that enables or disables clears it. */
+const DISABLED_WITHOUT_ROLE = "NO_ROLE";
 
 /** What happened to an account after it lost an organization or a tournament. */
 export type RoleSyncResult = "UNCHANGED" | "BECAME_PLAYER" | "DISABLED";
@@ -279,7 +286,11 @@ export async function syncRoleClaims(uid: string): Promise<RoleSyncResult> {
     }
   }
   if (JSON.stringify(claims) !== before) await auth.setCustomUserClaims(uid, claims);
-  if (result === "DISABLED" && !user.disabled) await setManagedUserDisabled(uid, true);
+  if (result === "DISABLED" && !user.disabled) {
+    await setManagedUserDisabled(uid, true);
+    // A club admin may enable it again by giving it a tournament of its organizations (PUT /admin/users/:uid).
+    await db.doc(`users/${uid}`).set({ disabledReason: DISABLED_WITHOUT_ROLE }, { merge: true });
+  }
   forgetAccess(uid);
   if (result !== "UNCHANGED") await bumpGlobalDataVersion("users");
   return result;
@@ -436,7 +447,7 @@ export async function setManagedUserDisabled(uid: string, disabled: boolean): Pr
   if (disabled) await auth.revokeRefreshTokens(uid);
   forgetAccess(uid);
   await db.doc(`users/${uid}`).set(
-    { disabled, updatedAt: FieldValue.serverTimestamp() },
+    { disabled, disabledReason: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }

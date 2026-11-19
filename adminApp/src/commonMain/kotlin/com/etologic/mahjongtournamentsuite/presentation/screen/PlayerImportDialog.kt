@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -348,7 +350,12 @@ internal fun ImportPreviewContent(
                 LegendItem(ImportCellState.WARNING, stringResource(Res.string.import_legend_warning))
             }
         }
-        LazyColumn(Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).testTag("import_table"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        val rowsState = rememberLazyListState()
+        LazyColumn(
+            Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).scrollIndicators(rowsState).testTag("import_table"),
+            state = rowsState,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
             stickyHeader { ImportTableHeader(showTeam = preview.isTeams && preview.hasTeamColumn) }
             items(rows, key = { it.row }) { row -> ImportRowLine(row, preview, playerNameOf) }
             items(preview.removed, key = { "removed-${it.slotId}" }) { removed ->

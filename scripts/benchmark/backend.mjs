@@ -53,6 +53,9 @@ function percentile(sorted, p) {
 
 async function measure(path, mode) {
   const times = [];
+  // In origin mode the function answers every call, so it can tell its Firestore reads (header X-MTS-Firestore).
+  const reads = [];
+  const callHeaders = mode === "origin" ? { ...headers, "x-mts-usage": "1" } : headers;
   let bytes = 0;
   let cache = "";
   let errors = 0;
@@ -62,7 +65,7 @@ async function measure(path, mode) {
     const url = base + path + (mode === "origin" ? `${path.includes("?") ? "&" : "?"}bench=${Date.now()}-${i}` : "");
     const start = performance.now();
     try {
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { headers: callHeaders });
       const body = await response.arrayBuffer();
       const ms = performance.now() - start;
       if (!response.ok) {
@@ -70,6 +73,8 @@ async function measure(path, mode) {
         continue;
       }
       times.push(ms);
+      const usage = /reads=(\d+)/.exec(response.headers.get("x-mts-firestore") ?? "");
+      if (usage) reads.push(Number(usage[1]));
       bytes = body.byteLength;
       cache = response.headers.get("x-cache") ?? response.headers.get("cache-control") ?? "";
     } catch {
@@ -86,6 +91,8 @@ async function measure(path, mode) {
     errors,
     kb: Math.round(bytes / 102.4) / 10,
     cache,
+    // The median Firestore reads of a call that reaches the function: what the endpoint costs. null in cdn mode.
+    reads: reads.length > 0 ? [...reads].sort((a, b) => a - b)[Math.floor(reads.length / 2)] : null,
   };
 }
 
@@ -118,7 +125,7 @@ for (const [name, path] of endpoints) {
   for (const mode of ["cdn", "origin"]) {
     const result = await measure(path, mode);
     results.push({ name, mode, path: path.replace(id, ":tournament").replace(emaId ?? "\u0000", ":emaId"), ...result });
-    console.log(`${name.padEnd(30)} ${mode.padEnd(6)} p50 ${String(result.p50).padStart(5)} ms  p95 ${String(result.p95).padStart(5)} ms  ${result.kb} kB${result.errors ? `  errors ${result.errors}` : ""}`);
+    console.log(`${name.padEnd(30)} ${mode.padEnd(6)} p50 ${String(result.p50).padStart(5)} ms  p95 ${String(result.p95).padStart(5)} ms  ${result.kb} kB${result.reads == null ? "" : `  ${result.reads} reads`}${result.errors ? `  errors ${result.errors}` : ""}`);
   }
 }
 

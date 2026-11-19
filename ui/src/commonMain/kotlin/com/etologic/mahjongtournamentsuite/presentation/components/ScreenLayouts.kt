@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -145,6 +145,7 @@ fun FullBleedRow(
                     }
                 }
             }
+            .scrollIndicators(scrollState, Orientation.Horizontal)
             .horizontalScroll(scrollState)
             .padding(start = bleed.start, end = bleed.end),
         horizontalArrangement = horizontalArrangement,
@@ -208,24 +209,26 @@ fun ScreenColumn(
                         .align(Alignment.TopCenter)
                         .onGloballyPositioned { screenScroll.viewportTop = it.positionInRoot().y }
                         .then(
+                            // The scrollbar goes on the edge of the screen, over the side margin, so both margins stay equal.
                             if (scrollable && paddingInsideScroll) {
-                                Modifier.verticalScroll(scrollState).padding(sidePadding)
+                                Modifier
+                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.Overlay)
+                                    .verticalScroll(scrollState)
+                                    .padding(sidePadding)
+                            } else if (scrollable) {
+                                // The shadows go inside the margins, where the content is cut.
+                                Modifier
+                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.Overlay, fadingEdges = false)
+                                    .padding(sidePadding)
+                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.None)
+                                    .verticalScroll(scrollState)
                             } else {
-                                Modifier.padding(sidePadding).then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
+                                Modifier.padding(sidePadding)
                             },
                         ),
                     verticalArrangement = verticalArrangement,
                     horizontalAlignment = horizontalAlignment,
                     content = content,
-                )
-            }
-            if (scrollable) {
-                PlatformVerticalScrollbar(
-                    scrollState = scrollState,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight()
-                        .width(PlatformScrollbarThickness),
                 )
             }
         }

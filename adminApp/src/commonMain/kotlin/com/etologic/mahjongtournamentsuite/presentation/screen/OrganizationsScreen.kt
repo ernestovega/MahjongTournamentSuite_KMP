@@ -253,14 +253,14 @@ private fun OrganizationRow(organization: Organization, details: String, enabled
                 .fillMaxWidth()
                 .activateOnEnter(enabled, onClick)
                 .clickable(enabled = enabled, interactionSource = interactionSource, indication = null, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             OrganizationLogo(organization, size = 40.dp)
             Column(Modifier.weight(1f)) {
                 Text(organization.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (organization.country.isNotBlank()) CountryFlag(code = organization.country, width = 16.dp)
                     Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

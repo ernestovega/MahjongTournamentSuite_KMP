@@ -716,11 +716,15 @@ class FunctionsBackendApi(
         idToken: String,
         tournamentId: String,
         request: PlayerAccountActionRequestDto,
-    ): PlayerAccountActionResponseDto = post(
-        path = "/tournaments/$tournamentId/player-accounts/send",
-        requestBody = request,
-        idToken = idToken,
-    )
+    ): PlayerAccountActionResponseDto {
+        // Each player of the request gets an email: the request can take longer than a usual one.
+        val response = httpClient.post(url("/tournaments/$tournamentId/player-accounts/send")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
+        }
+        return response.requireSuccessBody()
+    }
 
     suspend fun savePlayerEmails(
         idToken: String,

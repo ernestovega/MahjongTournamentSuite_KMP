@@ -158,6 +158,12 @@ It also asks the server the places of every player, as the list of tournaments s
 hands and best hand), and compares each one with its own count. The bots mark about a third of the hands won on a
 discard with 8 to 12 points as chicken hands, so every scenario has some.
 
+## The cost
+
+After the checks, the job **Cost** reads from Cloud Monitoring of staging what the game day used (Firestore, the API,
+Storage), prices it in euros and projects it to a real tournament of 60 players. Only a report: it never fails the
+run. See docs/benchmark.md, "Cost".
+
 ## Corners: the corner cases in minutes
 
 `corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,

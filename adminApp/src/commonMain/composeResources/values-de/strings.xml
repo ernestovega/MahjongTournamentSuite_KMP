@@ -894,6 +894,8 @@ Die erste, die klappt, gewinnt</string>
     <string name="admin_organizations_not_yours">Die Organisationen ohne ✕ gehören nicht dir.\nNur ein Superadministrator oder ihre Club-Administratoren entfernen sie.</string>
     <string name="remove_organization_n">%1$s entfernen</string>
     <string name="editor_needs_tournament">Ein Editor braucht mindestens ein Turnier.</string>
+    <string name="account_disabled_without_tournaments">Dieses Konto wurde deaktiviert, als es sein letztes Turnier verlor.
+Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktiviert.</string>
     <string name="account_grants_outside">Dieses Konto hat auch Organisationen oder Turniere, die du nicht verwaltest.\nDu änderst nur deine und kannst es nicht zum Spieler machen.</string>
     <string name="email_hidden">Verborgen</string>
     <string name="email_hidden_info">Du siehst die E-Mail eines Spielers nur, wenn er in einem deiner Turniere spielt.</string>

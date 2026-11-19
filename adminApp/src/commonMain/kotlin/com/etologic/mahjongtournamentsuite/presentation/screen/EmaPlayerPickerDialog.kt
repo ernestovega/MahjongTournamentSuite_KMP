@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -87,7 +89,8 @@ internal fun EmaPlayerPickerDialog(
                     if (matches.isEmpty()) {
                         Text(stringResource(Res.string.no_player_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                        val matchesState = rememberLazyListState()
+                        LazyColumn(Modifier.heightIn(max = 360.dp).scrollIndicators(matchesState), state = matchesState) {
                             items(matches.take(MAX_RESULTS), key = { it.emaId }) { player ->
                                 val owner = owners[player.emaId]
                                 Row(

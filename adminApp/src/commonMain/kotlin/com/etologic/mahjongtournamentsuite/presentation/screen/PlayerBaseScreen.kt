@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
@@ -88,8 +87,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
@@ -99,6 +96,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
@@ -590,8 +588,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScroll(newPlayerScrollState)
-                                .padding(end = PlatformScrollbarThickness),
+                                .verticalScrollWithIndicators(newPlayerScrollState),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
@@ -652,13 +649,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 )
                             }
                         }
-                        PlatformVerticalScrollbar(
-                            scrollState = newPlayerScrollState,
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .fillMaxHeight()
-                                .width(PlatformScrollbarThickness),
-                        )
                     }
                 },
                 confirmButton = {
@@ -962,8 +952,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .verticalScroll(detailsScrollState)
-                                        .padding(end = PlatformScrollbarThickness),
+                                        .verticalScrollWithIndicators(detailsScrollState),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     OutlinedTextField(
@@ -1039,13 +1028,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
-                                PlatformVerticalScrollbar(
-                                    scrollState = detailsScrollState,
-                                    modifier = Modifier
-                                        .align(Alignment.CenterEnd)
-                                        .fillMaxHeight()
-                                        .width(PlatformScrollbarThickness),
-                                )
                             }
                         }
                     }

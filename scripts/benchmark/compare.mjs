@@ -132,7 +132,8 @@ for (const report of current) {
   if (kind === "backend") {
     lines.push(`## Backend (${report.base}, ${report.runs} calls each)`, "");
     lines.push(`Tournament: ${report.tournament.name || report.tournament.id}`, "");
-    lines.push("| Endpoint | Mode | p50 | p95 | Budget p95 | Recent p50 | Size | |", "|---|---|---:|---:|---:|---:|---:|---|");
+    lines.push("Reads: the Firestore reads of one call that reaches the function (the cost of the endpoint, docs/benchmark.md).", "");
+    lines.push("| Endpoint | Mode | p50 | p95 | Budget p95 | Recent p50 | Size | Reads | Recent reads | |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---|");
   } else {
     lines.push(`## Screens of the player app (${report.url}, median of ${report.samples})`, "");
     lines.push("The screen time counts from the opening of the screen to its content. The navigation time counts from the start of the page, so it includes the download and start of the app.", "");
@@ -158,7 +159,10 @@ for (const report of current) {
     const baseline = baselineOf(kind, report, row, history);
     const recent = baseline != null ? `${baseline} ms` : "–";
     if (kind === "backend") {
-      lines.push(`| ${row.name} | ${row.mode} | ${row.p50} ms | ${row.p95} ms | ${k.budget(row)} ms | ${recent} | ${row.kb} kB | ${mark} |`);
+      // Only shown, never judged: a change in the reads is a change in the cost, not a failure.
+      const recentReads = previousRow?.reads ?? null;
+      const readsMark = row.reads != null && recentReads != null && row.reads > recentReads ? " ⬆️" : "";
+      lines.push(`| ${row.name} | ${row.mode} | ${row.p50} ms | ${row.p95} ms | ${k.budget(row)} ms | ${recent} | ${row.kb} kB | ${row.reads ?? "–"}${readsMark} | ${recentReads ?? "–"} | ${mark} |`);
     } else {
       lines.push(`| ${row.name} | ${row.profile} | ${row.appMs} ms | ${row.sinceNavigationMs} ms | ${k.budget(row)} ms | ${recent} | ${mark} |`);
     }

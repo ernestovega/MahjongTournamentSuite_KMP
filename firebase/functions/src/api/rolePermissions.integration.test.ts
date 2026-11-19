@@ -718,6 +718,29 @@ describe("club admin rules", () => {
     assert.equal((removed.body as { result: string }).result, "DISABLED");
     assert.equal((await auth.getUser(withoutEma.uid)).disabled, true);
 
+    // A country admin brings it back with a tournament of its countries.
+    const listed = ((await server.request("GET", "/admin/users", { token: spanishAdmin.token })).body as { users: Array<{ uid: string; canManage: boolean; disabledWithoutRole: boolean }> })
+      .users.find((user) => user.uid === withoutEma.uid);
+    assert.equal(listed?.canManage, true);
+    assert.equal(listed?.disabledWithoutRole, true);
+    const back = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
+    const reassigned = await server.request("PUT", `/admin/users/${withoutEma.uid}`, {
+      token: spanishAdmin.token, body: { email: "", alias: "Back", role: "EDITOR", tournamentAssignments: [{ tournamentId: back }] },
+    });
+    assert.equal(reassigned.status, 200);
+    assert.equal((await auth.getUser(withoutEma.uid)).disabled, false);
+    assert.equal((await auth.getUser(withoutEma.uid)).customClaims?.editor, true);
+    assert.equal((reassigned.body as { disabledWithoutRole: boolean }).disabledWithoutRole, false);
+
+    // An account that a super admin disabled stays disabled.
+    const blocked = await createAccount({ role: "EDITOR", memberOf: [back] });
+    assert.equal((await server.request("PUT", `/admin/users/${blocked.uid}/disabled`, { token: superAdmin.token, body: { disabled: true } })).status, 200);
+    const other = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
+    assert.equal((await server.request("PUT", `/admin/users/${blocked.uid}`, {
+      token: spanishAdmin.token, body: { email: "", alias: "", role: "EDITOR", tournamentAssignments: [{ tournamentId: back }, { tournamentId: other }] },
+    })).status, 200);
+    assert.equal((await auth.getUser(blocked.uid)).disabled, true);
+
     assert.equal((await server.request("DELETE", `/tournaments/${t}`, { token: spanishAdmin.token })).status, 200);
     assert.deepEqual((await auth.getUser(withEma.uid)).customClaims, { player: true });
     assert.equal((await auth.getUser(withEma.uid)).disabled, false);

@@ -554,7 +554,6 @@
     <string name="stats_all_tournaments">Alla turneringar</string>
     <string name="stats_filters">Filter</string>
     <string name="stats_filters_title">Filtrera statistiken</string>
-    <string name="stats_filters_message">Filtren kan kombineras.\nMed en vald spelare gäller inte spelarnas land.</string>
     <string name="stats_filter_player">Spelare</string>
     <string name="stats_filter_any_player">Alla spelare</string>
     <string name="stats_filter_tournament">Turnering</string>
@@ -568,7 +567,7 @@
     <string name="stats_filter_to_year">Till</string>
     <string name="stats_filter_any_year">Alla år</string>
     <string name="stats_filter_apply">Använd</string>
-    <string name="stats_filter_clear">Rensa alla</string>
+    <string name="stats_filter_clear">Rensa</string>
     <string name="stats_filter_everything">Alla turneringar och spelare</string>
     <string name="stats_chip_tournaments_in">Turneringar i %1$s</string>
     <string name="stats_chip_players_from">Spelare från %1$s</string>

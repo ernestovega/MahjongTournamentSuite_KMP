@@ -558,7 +558,6 @@
     <string name="stats_all_tournaments">Tous les tournois</string>
     <string name="stats_filters">Filtres</string>
     <string name="stats_filters_title">Filtrer les statistiques</string>
-    <string name="stats_filters_message">Les filtres se combinent.\nAvec un joueur choisi, le pays des joueurs ne s’applique pas.</string>
     <string name="stats_filter_player">Joueur</string>
     <string name="stats_filter_any_player">Tous les joueurs</string>
     <string name="stats_filter_tournament">Tournoi</string>
@@ -572,7 +571,7 @@
     <string name="stats_filter_to_year">Jusqu’à</string>
     <string name="stats_filter_any_year">Toutes les années</string>
     <string name="stats_filter_apply">Appliquer</string>
-    <string name="stats_filter_clear">Tout effacer</string>
+    <string name="stats_filter_clear">Effacer</string>
     <string name="stats_filter_everything">Tous les tournois et joueurs</string>
     <string name="stats_chip_tournaments_in">Tournois en %1$s</string>
     <string name="stats_chip_players_from">Joueurs de %1$s</string>

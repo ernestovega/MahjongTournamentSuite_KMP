@@ -123,6 +123,19 @@ class StatisticsTabsUiTest {
     }
 
     @Test
+    fun theFiltersDialogChoosesACountryOfTheTournamentsAndTheChipRemovesIt() = runComposeUiTest {
+        show(session = null) { MyStatisticsTab() }
+        waitForText("All tournaments and players")
+        onNodeWithText("Filters").performClick()
+        waitForText("Filter the stats")
+        onNodeWithText("Clear").assertExists()
+        onNodeWithText("Cancel").assertDoesNotExist()
+        onNodeWithText("Apply").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Filter the stats")).fetchSemanticsNodes().isEmpty() }
+        waitForText("All tournaments and players")
+    }
+
+    @Test
     fun aGuestSeesAllTournamentsAndPlayersWithoutTabs() = runComposeUiTest {
         show(session = null) { MyStatisticsTab() }
         waitForText("All tournaments and players")

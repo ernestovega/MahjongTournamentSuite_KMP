@@ -428,7 +428,7 @@ private fun RoleRow(name: String, details: String, enabled: Boolean, onClick: ()
                 .fillMaxWidth()
                 .activateOnEnter(enabled, onClick)
                 .clickable(enabled = enabled, interactionSource = interactionSource, indication = null, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {

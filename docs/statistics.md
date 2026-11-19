@@ -2,7 +2,8 @@
 
 Both apps show the same statistics. One shared use case computes them: `CalculateStatisticsUseCase` in `:domain`.
 `LoadStatisticsUseCase` loads one tournament through the existing repositories and revision cache.
-`LoadOverviewStatisticsUseCase` shows many tournaments from the sums that the server keeps (see Server statistics store).
+`LoadStoredStatisticsUseCase` shows a person or a group of tournaments from the sums that the server keeps (see Server statistics store).
+All statistics are public: every role, and a guest, sees the statistics of every public tournament (rule of 2026-11-19).
 
 ## Rules
 - A table counts when it is completed. It counts with hands or with manual totals.
@@ -10,12 +11,12 @@ Both apps show the same statistics. One shared use case computes them: `Calculat
 - A hand counts when it is done (or its table is completed) and has a valid result. Rules match `handScoring.ts`.
 - The place at a table comes from the score. Equal scores share the place.
 - Rates need at least 8 hands before a leaderboard shows them.
-- "Me" and "My tournaments" link a person to slots with the EMA id of the account.
+- A person is linked to the slots with the same EMA number.
 
 ## What the screens show
 The tournament and table views use plain rows with a title. The player view uses three big cards (`PlayerStatisticsPanel`).
-The two apps use a wider viewport (1100 dp) for the Player, Me and My tournaments scopes.
-- **Player**: cards in this order: Skills, Places, Totals, Records, Best Rivals (scope Me). The Skills and Places cards have no title. On wide screens the header and Skills are on the left, Places on the right, and Totals use the full width below.
+The two apps use a wider viewport (1100 dp) for the person view.
+- **Player**: cards in this order: Skills, Places, Totals, Records, Best Rivals. The Skills and Places cards have no title. On wide screens the header and Skills are on the left, Places on the right, and Totals use the full width below.
   - **Totals**: tournaments, tables, hands, a ring chart of the hands won, lost and drawn (the outer ring shows the way of each win or loss, and the chicken hands as a part of the wins by discard).
   - **Records**: in this order: highest table score, highest hand score, hands won on a table, best tables won streak, best hands won streak, hands without a deal-in, most chicken hands (total), most chicken hands on a table, and last highest penalty got (the biggest single penalty, `TableResult.maxPenalty`). No highest rank (removed 2026-11-15). Runs of tables and hands join across all tables of the player in play order, also from one tournament to the next. A table without entered hands does not break a run of hands. Data: `TableResult.winRun` and `noDealInRun` (`HandRun`: best, start, end).
   - **Best Rivals**: the top 3 opponents (the name of each rival with five big numbers: shared tables, finished above you, your discards to him/her, his/her self-draws, his/her wins on a discard of another player) with at least 2 shared tables. The score is `10 * tables behind + 5 * discards + 3 * self-draws + 1 * wins on another player's discard`, divided by the shared tables. The weights are in `RivalWeights`. Every number counts only the tables that you and the rival played together. The tooltip of the card says this and lists the four criteria and their weights, without reasons. An opponent is the EMA number, or `tournamentId#slotId` without one (`RivalTally.opponent`).
@@ -24,20 +25,30 @@ The two apps use a wider viewport (1100 dp) for the Player, Me and My tournament
   - **By tournament** (scope My tournaments in the player app, Player tournaments in the admin app): one card for each tournament, with the tables, hands, best table score, rank, a skills chart and a places ring chart. The newest tournament comes first and the five newest are open. Only five show at the start. "Show 5 more" and "Show all" show more. A select field of the tournaments (its search field filters the list) scrolls to one tournament. A "From" and a "To" date show only the tournaments in that range. The ranks load for the tournaments on screen only.
 - **Tournament**: summary (tables completed, hands played, draw rate, average winning hand, highest hand), top lists (points, win rate, deal-in rate, self-draws).
   - One row of round chips chooses the whole tournament or one round, and every card shows that round (`TournamentStatistics.forRound`). A round without a completed table has no chip. The row scrolls sideways; in the player app it stays above the scrolling cards.
-  - No Totals card for one tournament (removed 2026-11-18: tables and rounds were not needed; the ring shows the hands of the chosen round). The overview of all tournaments keeps Totals: tournaments, tables, players, hands. **Hands**: ring chart of wins by discard, by self-draw and drawn, and average hands per table, average winning hand and penalties. The ring has no part for lost hands: in a tournament every win is a loss of another player. With the whole tournament chosen and three or more rounds with hands, a line chart under the ring shows the share of each way to end a hand in each round, with the percentage of each guide line (a tap shows the round in a bubble). The averages, the time per hand and the penalties close the card. **Time per hand**: since 2026-11-18 the server stamps each hand when it becomes done (`doneAtMs`, `doneStamps` in `tableManagerService.ts`; undone clears it). The time of a hand is the gap to the done hand right before it, counted only between 1 and 30 minutes (`handTimesMs`), so hands entered in a row at the end of a table or after a break leave no time. The value shows only when some hand has a time. **Records**: highest hand value, most points from one hand, best table score, most hands won at one table, and the runs; for one round the run of tables is hidden (one table per player). No highest penalty.
+  - No Totals card for one tournament (removed 2026-11-18: tables and rounds were not needed; the ring shows the hands of the chosen round). The group view keeps Totals: tournaments, tables, players, hands. **Hands**: ring chart of wins by discard, by self-draw and drawn, and average hands per table, average winning hand and penalties. The ring has no part for lost hands: in a tournament every win is a loss of another player. With the whole tournament chosen and three or more rounds with hands, a line chart under the ring shows the share of each way to end a hand in each round, with the percentage of each guide line (a tap shows the round in a bubble). The averages, the time per hand and the penalties close the card. **Time per hand**: since 2026-11-18 the server stamps each hand when it becomes done (`doneAtMs`, `doneStamps` in `tableManagerService.ts`; undone clears it). The time of a hand is the gap to the done hand right before it, counted only between 1 and 30 minutes (`handTimesMs`), so hands entered in a row at the end of a table or after a break leave no time. The value shows only when some hand has a time. **Records**: highest hand value, most points from one hand, best table score, most hands won at one table, and the runs; for one round the run of tables is hidden (one table per player). No highest penalty.
 - **Table**: result table (place, score, points, wins, deal-ins), hands, score after each hand.
 - The player header shows photo, name, country and EMA number. The tournament header shows logo, name and dates.
 
 ## Where the buttons are
 - **Statistics icon**: `StatisticsIcon` in `:ui` (Insights). Every statistics button, tab and screen uses it. The ranking icon is `Leaderboard`.
-- **Player app**: the second tab "Statistics" of the tournaments screen has two tabs inside, "Me" and "My tournaments". A fourth tab "Statistics" on the Tournament screen shows that tournament. The My tournaments, Table and Player screens have a top bar button.
+- **Player app**: the second tab "Statistics" of the tournaments screen opens with the player of the account, or with all tournaments and players without one. A fourth tab "Statistics" on the Tournament screen opens with that tournament. The Table and Player screens have a top bar button.
 - **Admin app**: the statistics button is on the right of the top bar of the Tournaments, Tournament, Players, Teams and Tables screens.
 
-## Admin app scopes
-- **Tournaments**: all tournaments together by default (administrators only). A search field picks one tournament.
-- **Table**: opens from the Tournament screen when a table is selected.
-- **Player in tournament**: one slot of the picked tournament.
-- **Player overall**: one EMA player over all tournaments.
+## One screen with filters
+Both apps show one statistics screen, without tabs: a row of filters on top (`StatisticsFilterBar`) and the statistics under it (`FilteredStatistics`), both in `:ui`. Each active filter is a chip; a tap on the chip removes it. Without filters the row says "All tournaments and players". The **Filters** button opens `StatisticsFiltersDialog`: player, rival, tournament, country of the tournaments, country of the players (with "No country") and the years from and to. Nothing changes until **Apply**; **Clear** empties the fields. The filters combine (`StatisticsFilters`) and are kept across a page refresh (`encode`/`decode`).
+- A chosen country of the players narrows the list of the players. The country and the years of the tournaments narrow the list of the tournaments.
+- The rival needs a player, and the country of the players does not apply with a player (both fields are disabled). Another player clears the rival.
+
+What shows depends on the filters (`StatisticsFilters.view`):
+| View | Filters | Shows |
+| --- | --- | --- |
+| Person | a player | The player cards over the kept tournaments, then one card for each tournament. With a rival, only the tables against that rival count (`PersonStatisticsData.only`). |
+| Table | a tournament, a round and a table | The table. Only a table entry point sets round and table. |
+| Seat | a tournament and a seat | The standing, the place after each round and the player cards of that tournament. A tap on a player of a tournament opens it. |
+| Tournament | a tournament, no country of the players | The tournament, with the round chips. |
+| Group | anything else | Totals (tournaments, tables, players, hands), Hands, Records and the top players of the kept tournaments and players. |
+
+A tap on a player or a rival opens that person with the filters of the tournaments kept.
 
 ## Server statistics store
 The server keeps the statistics up to date. A request never builds them.
@@ -50,17 +61,18 @@ The update uses the table and hands that the transaction already holds. The memo
 | `statsPlayers/{emaId}` | The sums of one player over all tournaments. `leaderWinRate` and `leaderDealInRate` exist only with at least 8 hands, so the leaderboard queries skip other players. |
 | `statsTournaments/{tournamentId}` | Points and score of every slot, the team of every slot, and the chicken hands and best hand of every slot at every table. The standings read only this document. |
 | `statsGlobal/overview-{0..7}` | The sums of all tournaments, in 8 shards. A request adds the shards. |
+| `statsTournamentSummaries/{tournamentId}` | The table sums and the sums of each person of one tournament (`statisticsGroups.ts`). `statsTournaments.revision` goes up on every change; a read rebuilds a summary whose revision or `SUMMARY_VERSION` is old, from the `statsTables` of the tournament. A group reads one summary for each tournament. |
 
 An update subtracts the stored digest of the table and adds the new one, so an edit does not count twice.
 `TableResult` has `rivals`, `winRun` and `noDealInRun` since digest version 3, and `maxPenalty` since version 4. Change `DIGEST_VERSION` when the rules change, then run the backfill.
 
 Requests (they read a fixed number of documents, or the tables of one player):
-- `GET /tournaments/statistics/overview` (administrators): the sums, the highest hand, the number of tournaments, and the players of three leaderboards (top 5 each).
+- `GET /tournaments/statistics/groups` (any account) and `GET /public/statistics/groups` (anyone): the statistics of a group of tournaments. Filters: `tournaments` (ids, comma separated, up to 200), `tournamentCountry` (two letters), `playerCountry` (EMA code, or `none` for no country), `from` and `to` (ISO dates of the first day). The country of a player is read from the EMA registry at the time of the request. With a country of the players, only the tournaments where one of them played count. Hidden players are left out of the persons.
+- `GET /tournaments/statistics/overview` (any account): the sums, the highest hand, the number of tournaments, and the players of three leaderboards (top 5 each).
 - `GET /tournaments/statistics/me` (any account): the results of the player of the account. The account sees only the tournaments that it can see in the tournament list.
 - `GET /tournaments/statistics/persons/:emaId` (every signed-in account): the same for another player. The results come only from the tournaments that the account can see. A player picks the other player from `GET /players`, which lists only the people that the player plays with.
 - `GET /tournaments/statistics/me/standings?tournaments=a,b` and `.../persons/:emaId/standings?tournaments=a,b`: the final place of the player in up to 25 tournaments, with the place of the team, the place by chicken hands and the place of the best hand. The apps ask only for the tournaments on screen.
 
-The Tournaments scope without a chosen tournament is for administrators.
 The tournament scope with one tournament loads the hands of that tournament. The person scopes use the server store in both apps and load no hands.
 
 Other events that call the store:

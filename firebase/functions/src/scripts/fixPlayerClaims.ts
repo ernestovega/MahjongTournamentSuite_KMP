@@ -16,11 +16,11 @@ async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} the player capability fix for ${firebaseProjectId}.`);
   const users = await db.collection("users").select("emaId").get();
   const emaIdOf = new Map(users.docs.map((doc) => [doc.id, typeof doc.get("emaId") === "string" && doc.get("emaId") !== "" ? String(doc.get("emaId")) : null]));
-  const claimsOf = new Map<string, { superAdmin?: boolean; countryAdmin?: boolean; editor?: boolean; player?: boolean }>();
+  const claimsOf = new Map<string, { superAdmin?: boolean; clubAdmin?: boolean; editor?: boolean; player?: boolean }>();
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1_000, pageToken);
-    page.users.forEach((user) => claimsOf.set(user.uid, (user.customClaims ?? {}) as { superAdmin?: boolean; countryAdmin?: boolean; editor?: boolean; player?: boolean }));
+    page.users.forEach((user) => claimsOf.set(user.uid, (user.customClaims ?? {}) as { superAdmin?: boolean; clubAdmin?: boolean; editor?: boolean; player?: boolean }));
     pageToken = page.pageToken;
   } while (pageToken);
   const problems = findPlayerClaimProblems([...claimsOf].map(([uid, claims]) => ({
@@ -28,11 +28,11 @@ async function main(): Promise<void> {
   })));
   for (const problem of problems) {
     const claims = claimsOf.get(problem.uid)!;
-    const isManager = claims.superAdmin === true || claims.countryAdmin === true || claims.editor === true;
+    const isManager = claims.superAdmin === true || claims.clubAdmin === true || claims.editor === true;
     if (problem.code === "PLAYER_WITHOUT_EMA_ID" && !isManager) {
       console.log(`${problem.uid}: player only, no EMA id. Left as it is.`);
     } else if (problem.code === "PLAYER_WITHOUT_EMA_ID") {
-      console.log(`${problem.uid}: ${claims.superAdmin ? "super admin" : claims.countryAdmin ? "country admin" : "editor"} with the player capability and no EMA id -> remove the player capability`);
+      console.log(`${problem.uid}: ${claims.superAdmin ? "super admin" : claims.clubAdmin ? "club admin" : "editor"} with the player capability and no EMA id -> remove the player capability`);
       if (applyChanges) await revokePlayerCapability(problem.uid);
     } else {
       console.log(`${problem.uid}: owns an EMA id and has no player capability -> grant it`);

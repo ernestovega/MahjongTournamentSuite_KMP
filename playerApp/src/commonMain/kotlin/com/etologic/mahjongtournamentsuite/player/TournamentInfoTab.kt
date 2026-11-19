@@ -1,12 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import mahjongtournamentsuite.playerapp.generated.resources.progress_title
-import mahjongtournamentsuite.playerapp.generated.resources.progress_rounds_label
-import mahjongtournamentsuite.playerapp.generated.resources.progress_tables_label
-import mahjongtournamentsuite.playerapp.generated.resources.progress_ongoing_label
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Email
@@ -29,34 +21,37 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
+import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.info_co_organizer
@@ -73,8 +68,14 @@ import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_venue
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.info_venue
+import mahjongtournamentsuite.playerapp.generated.resources.progress_ongoing_label
+import mahjongtournamentsuite.playerapp.generated.resources.progress_rounds_label
+import mahjongtournamentsuite.playerapp.generated.resources.progress_tables_label
+import mahjongtournamentsuite.playerapp.generated.resources.progress_title
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** One day of the agenda. A null [date] holds the items that have no date yet. */
 data class AgendaDay(val date: String?, val items: List<TournamentAgendaItem>)
@@ -93,7 +94,7 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
     val hasInfo = !venue.isEmpty || hasPlace || hasSchedule(tournament) || tournament.organizers.isNotEmpty()
     Column(
         // The padding is inside the scroll, so the content ends at the tabs.
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+        Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState(), MtsScrollbar.Overlay).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ProgressCard(view.progress)
@@ -197,7 +198,7 @@ private fun OrganizersCard(organizers: List<TournamentOrganizer>) {
                 OrganizationLogo(organizer, size = 48.dp)
                 Column(Modifier.weight(1f)) {
                     Text(organizer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (organizer.country.isNotBlank()) CountryFlag(code = organizer.country, width = 16.dp)
                         val type = stringResource(
                             if (organizer.type == OrganizationType.FEDERATION) Res.string.info_organizer_federation else Res.string.info_organizer_club,

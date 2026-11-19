@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -101,10 +100,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
@@ -1099,7 +1098,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     if (tournamentCountryCodes.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 tournamentCountryCodes.forEach { code ->
@@ -1471,7 +1470,7 @@ private fun PlayerRoundTablesStrip(
         Column(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
-                    .horizontalScroll(scrollState)
+                    .horizontalScrollWithIndicators(scrollState)
                     .padding(horizontal = RoundTableStripPadding),
                 horizontalArrangement = Arrangement.spacedBy(RoundTableStripGap),
                 verticalAlignment = Alignment.Top,
@@ -1512,15 +1511,6 @@ private fun PlayerRoundTablesStrip(
                         )
                     }
                 }
-            }
-            if (scrollState.maxValue > 0) {
-                PlatformHorizontalScrollbar(
-                    scrollState = scrollState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = RoundTableStripPadding, end = RoundTableStripPadding, top = 2.dp)
-                        .height(8.dp),
-                )
             }
         }
     }

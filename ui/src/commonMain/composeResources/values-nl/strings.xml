@@ -554,7 +554,6 @@
     <string name="stats_all_tournaments">Alle toernooien</string>
     <string name="stats_filters">Filters</string>
     <string name="stats_filters_title">Statistieken filteren</string>
-    <string name="stats_filters_message">De filters zijn te combineren.\nMet een gekozen speler geldt het land van de spelers niet.</string>
     <string name="stats_filter_player">Speler</string>
     <string name="stats_filter_any_player">Alle spelers</string>
     <string name="stats_filter_tournament">Toernooi</string>
@@ -568,7 +567,7 @@
     <string name="stats_filter_to_year">Tot</string>
     <string name="stats_filter_any_year">Alle jaren</string>
     <string name="stats_filter_apply">Toepassen</string>
-    <string name="stats_filter_clear">Alles wissen</string>
+    <string name="stats_filter_clear">Wissen</string>
     <string name="stats_filter_everything">Alle toernooien en spelers</string>
     <string name="stats_chip_tournaments_in">Toernooien in %1$s</string>
     <string name="stats_chip_players_from">Spelers uit %1$s</string>

@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -102,17 +101,19 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DevMenuAction
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusOnOpen
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
@@ -417,7 +418,7 @@ fun TournamentsScreen(
                     val listState = rememberPersistentLazyListState("tournaments")
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().scrollIndicators(listState),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 32.dp),
                     ) {
@@ -477,7 +478,8 @@ fun TournamentsScreen(
                                         val tableContent: @Composable (Modifier) -> Unit = { modifier ->
                                             LazyColumn(
                                                 state = listState,
-                                                modifier = modifier,
+                                                // The draggable scrollbar is the scrollbar of this list.
+                                                modifier = modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.None),
                                             ) {
                                                 stickyHeader {
                                                     Column(modifier = Modifier.background(headerBackground)) {
@@ -527,7 +529,7 @@ fun TournamentsScreen(
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .horizontalScroll(scrollState)
+                                                        .horizontalScrollWithIndicators(scrollState)
                                                         .pointerInput(scrollState) {
                                                             detectHorizontalDragGestures { change, dragAmount ->
                                                                 change.consume()
@@ -542,14 +544,6 @@ fun TournamentsScreen(
                                                 DraggableScrollbar(
                                                     state = listState,
                                                     modifier = Modifier.align(Alignment.CenterEnd),
-                                                )
-
-                                                PlatformHorizontalScrollbar(
-                                                    scrollState = scrollState,
-                                                    modifier = Modifier
-                                                        .align(Alignment.BottomStart)
-                                                        .fillMaxWidth()
-                                                        .height(12.dp),
                                                 )
                                             }
                                         } else {

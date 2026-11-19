@@ -5,6 +5,8 @@ import { versionsPage } from "../services/versionsPage";
 import { gzipJson } from "./middleware/gzipJson";
 import { appCheck } from "./middleware/appCheck";
 import { errorHandler } from "./middleware/errorHandler";
+import { firestoreUsage, installFirestoreUsageCountersOn } from "./middleware/firestoreUsage";
+import { db } from "../firebase";
 import { rateLimit } from "./middleware/rateLimit";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
@@ -60,6 +62,9 @@ export function buildApp(): express.Express {
     res.setHeader("Cache-Control", "no-store");
     next();
   });
+  // The Firestore operations of each request, for the cost of the benchmark and the game day (docs/benchmark.md).
+  installFirestoreUsageCountersOn(db);
+  app.use(firestoreUsage());
   app.use(gzipJson);
   // Routes that anyone can call without an account take small bodies only. The others carry photos, logos and
   // imports, so they keep the large limit. The parser runs before the token is checked.

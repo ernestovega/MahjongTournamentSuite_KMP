@@ -453,12 +453,15 @@ export function adminRouter(): Router {
         adminOrganizations: merged.organizations,
         tournamentAssignments: merged.assignments,
       });
+      // An account disabled because it lost its last tournament comes back with its new role.
+      const enabled = current.disabledWithoutRole && !self && role !== "PLAYER" && result !== "DISABLED";
+      if (enabled) await setManagedUserDisabled(current.uid, false);
       await bumpGlobalDataVersion("users");
       await recordActivity({
         action: "user.update", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
         details: {
           roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined,
-          adminOrganizations: merged.organizations, tournamentAssignments: merged.assignments,
+          adminOrganizations: merged.organizations, tournamentAssignments: merged.assignments, enabled: enabled || undefined,
         },
       });
       res.status(200).json({ ...(await viewFor(res, current.uid)), roleChange: result });

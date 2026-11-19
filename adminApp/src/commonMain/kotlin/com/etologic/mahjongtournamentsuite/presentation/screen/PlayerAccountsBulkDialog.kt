@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -185,7 +187,8 @@ fun PlayerAccountsBulkDialog(
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         // The filters scroll away with the rows, so the list gets the whole height on a phone.
-                        LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
+                        val accountsState = rememberLazyListState()
+                        LazyColumn(Modifier.fillMaxWidth().weight(1f).scrollIndicators(accountsState).testTag("account_list"), state = accountsState) {
                             item(key = "filters") {
                                 Column(Modifier.padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

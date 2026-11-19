@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
@@ -71,6 +69,9 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -274,6 +275,8 @@ fun CombinationsScreen(navController: NavHostController) {
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            // The rows keep a margin on the end, so the scrollbar goes there and both margins stay equal.
+            scrollbar = MtsScrollbar.Overlay,
         ) {
             item(key = "search") {
                 CombinationTools(
@@ -464,7 +467,7 @@ private fun CombinationSearch(query: String, onChange: (String) -> Unit, modifie
 @Composable
 private fun PointsChips(counts: Map<Int, Int>, selected: List<Int>, onToggle: (Int) -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
+        modifier = modifier.horizontalScrollWithIndicators(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         counts.forEach { (points, count) ->
@@ -619,7 +622,7 @@ internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) 
                         textAlign = TextAlign.Center,
                     )
                     Column(
-                        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                        Modifier.weight(1f, fill = false).verticalScrollWithIndicators(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Text(

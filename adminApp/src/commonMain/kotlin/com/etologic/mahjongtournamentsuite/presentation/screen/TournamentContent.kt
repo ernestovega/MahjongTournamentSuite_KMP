@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
@@ -68,6 +68,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.next_round
@@ -188,7 +190,7 @@ internal fun TournamentContent(
                         .fillMaxWidth()
                         .align(Alignment.TopCenter)
                         .onGloballyPositioned { stickyHost.viewportTop = it.positionInRoot().y }
-                        .verticalScroll(scrollState)
+                        .verticalScrollWithIndicators(scrollState)
                         .padding(bottom = 96.dp),
                 ) {
                     tableHeader(selectedEditor)
@@ -347,7 +349,7 @@ private fun RoundTableStrip(
     val tableChips: @Composable (Modifier) -> Unit = { modifier ->
         LazyRow(
             state = chipsState,
-            modifier = modifier,
+            modifier = modifier.scrollIndicators(chipsState, Orientation.Horizontal),
             horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {

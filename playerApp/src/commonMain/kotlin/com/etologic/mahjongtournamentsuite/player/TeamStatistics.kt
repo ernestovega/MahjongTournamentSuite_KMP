@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,12 +28,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.StatCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TeamRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -87,7 +88,7 @@ internal fun TeamStatisticsTab(
     LaunchedEffect(loading) { onLoadingChange(loading) }
     DisposableEffect(Unit) { onDispose { onLoadingChange(false) } }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("team-statistics-" + members.joinToString("-")))
+        Modifier.fillMaxSize().verticalScrollWithIndicators(rememberPersistentScrollState("team-statistics-" + members.joinToString("-")), MtsScrollbar.Overlay)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
@@ -45,7 +44,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.no_country
 import mahjongtournamentsuite.ui.generated.resources.stats_all_tournaments
 import mahjongtournamentsuite.ui.generated.resources.stats_chip_from_year
@@ -71,7 +69,6 @@ import mahjongtournamentsuite.ui.generated.resources.stats_filter_to_year
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_tournament
 import mahjongtournamentsuite.ui.generated.resources.stats_filter_tournament_country
 import mahjongtournamentsuite.ui.generated.resources.stats_filters
-import mahjongtournamentsuite.ui.generated.resources.stats_filters_message
 import mahjongtournamentsuite.ui.generated.resources.stats_filters_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -364,10 +361,9 @@ internal fun StatisticsFiltersDialog(
             title = { MtsDialogTitle(stringResource(Res.string.stats_filters_title)) },
             text = {
                 Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                 ) {
-                    MtsDialogText(stringResource(Res.string.stats_filters_message))
                     SelectField(
                         stringResource(Res.string.stats_filter_player),
                         playerOptions,
@@ -441,7 +437,6 @@ internal fun StatisticsFiltersDialog(
                 MtsDialogButtons {
                     DebouncedButton(onClick = { onApply(draft) }) { Text(stringResource(Res.string.stats_filter_apply)) }
                     DebouncedTextButton(onClick = { draft = StatisticsFilters() }) { Text(stringResource(Res.string.stats_filter_clear)) }
-                    DebouncedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

@@ -894,6 +894,8 @@ De eerste die lukt, wint</string>
     <string name="admin_organizations_not_yours">De organisaties zonder ✕ zijn niet van jou.\nAlleen een superbeheerder of hun clubbeheerders kunnen ze verwijderen.</string>
     <string name="remove_organization_n">%1$s verwijderen</string>
     <string name="editor_needs_tournament">Een redacteur heeft minstens één toernooi nodig.</string>
+    <string name="account_disabled_without_tournaments">Dit account is uitgeschakeld toen het zijn laatste toernooi verloor.
+Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.</string>
     <string name="account_grants_outside">Dit account heeft ook organisaties of toernooien die jij niet beheert.\nJe wijzigt alleen de jouwe, en je kunt er geen speler van maken.</string>
     <string name="email_hidden">Verborgen</string>
     <string name="email_hidden_info">Je ziet het e-mailadres van een speler alleen als die in een van jouw toernooien speelt.</string>

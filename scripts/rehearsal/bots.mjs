@@ -532,6 +532,7 @@ export async function findTournament(api, nameOrId) {
  * [planOptions], and the waits that the tests make short: signInGapMs, clockCacheMs, holdMs, waitMs, extraTimeAfterMs.
  */
 export async function runBots(options) {
+  const startedAt = new Date().toISOString();
   const metrics = options.metrics ?? new Metrics();
   const api = options.api ?? new Api(options.apiBase ?? STAGING_API, metrics);
   const tournament = new Tournament(api, options.tournamentId, options.clockCacheMs);
@@ -611,6 +612,7 @@ export async function runBots(options) {
     tournamentId: options.tournamentId,
     slots: options.slots,
     signedIn: bots.length,
+    startedAt,
     finishedAt: new Date().toISOString(),
     hands: context.handLog,
     handDelayMs: { count: context.delays.length, p50: percentile(context.delays, 50), p95: percentile(context.delays, 95) },
