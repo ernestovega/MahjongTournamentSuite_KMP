@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -103,6 +104,38 @@ class MtsScrollIndicatorsUiTest {
         waitForIdle()
         val bounds = onNodeWithTag("content").getBoundsInRoot()
         assertEquals(300.dp, bounds.right - bounds.left)
+    }
+
+    @Test
+    fun theMarginScrollbarKeepsTheWidthAndIsDraggedInTheMargin() = runComposeUiTest {
+        val state = LazyListState()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                // A screen with a 24 dp margin on each side, and a list in the middle.
+                Box(Modifier.width(348.dp).height(400.dp).testTag("screen")) {
+                    Box(Modifier.padding(horizontal = 24.dp).width(300.dp).height(400.dp)) {
+                        LazyColumn(
+                            Modifier.fillMaxWidth().scrollIndicators(state, scrollbar = MtsScrollbar.Margin).testTag("list"),
+                            state = state,
+                        ) {
+                            items((1..200).toList(), key = { it }) { Text("Row $it", Modifier.fillMaxWidth().height(40.dp).testTag("row$it")) }
+                        }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        // The rows keep the whole width of the place of the list: the strip is past its end.
+        val row = onNodeWithTag("row1").getBoundsInRoot()
+        assertEquals(24.dp, row.left)
+        assertEquals(324.dp, row.right)
+        onNodeWithTag("screen").performTouchInput {
+            // Down on the thumb, in the margin just after the list, and a drag to the bottom.
+            val x = (324.dp + MtsScrollbarThickness / 2).toPx()
+            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+        }
+        waitForIdle()
+        assertTrue(state.firstVisibleItemIndex > 150, "The list is at ${state.firstVisibleItemIndex}")
     }
 
     @Test

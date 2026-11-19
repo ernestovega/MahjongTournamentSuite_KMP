@@ -96,6 +96,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -735,6 +736,7 @@ private fun UsersTable(
     val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("users"),
+        scrollbar = MtsScrollbar.Margin,
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
         if (!compact) {

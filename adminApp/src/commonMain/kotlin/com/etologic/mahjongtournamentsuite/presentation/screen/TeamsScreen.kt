@@ -74,6 +74,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSe
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -405,6 +406,7 @@ fun TeamsScreen(
                     DataTableDivider()
                     LazyColumnWithScrollbar(
                         state = listState,
+                        scrollbar = MtsScrollbar.Margin,
                         modifier = Modifier.weight(1f, fill = false),
                     ) {
                         itemsIndexed(filteredTeams, key = { _, team -> team.id }) { index, team ->
