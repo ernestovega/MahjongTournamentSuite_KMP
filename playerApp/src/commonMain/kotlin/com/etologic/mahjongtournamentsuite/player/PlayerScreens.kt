@@ -1,13 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
-import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -26,12 +18,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,10 +36,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.ContactSupport
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContactSupport
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -58,20 +48,19 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
-import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
+import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -106,6 +95,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -119,10 +109,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.passwordResetEmailError
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -132,24 +118,31 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenPrivacyPolicy
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalTopBarMenu
-import com.etologic.mahjongtournamentsuite.presentation.components.TopBarMenuScope
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalTopBarMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
+import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
@@ -158,28 +151,35 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChooserDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
+import com.etologic.mahjongtournamentsuite.presentation.components.TopBarMenuScope
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
+import com.etologic.mahjongtournamentsuite.presentation.components.passwordResetEmailError
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberOpenPrivacyPolicy
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.appSwitchLeavesPage
 import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -187,10 +187,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
-import mahjongtournamentsuite.playerapp.generated.resources.icon_chicken_mono
-import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
-import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
-import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
 import mahjongtournamentsuite.playerapp.generated.resources.action_open
 import mahjongtournamentsuite.playerapp.generated.resources.age_hours
 import mahjongtournamentsuite.playerapp.generated.resources.age_minutes
@@ -204,15 +200,19 @@ import mahjongtournamentsuite.playerapp.generated.resources.hand_discard
 import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
 import mahjongtournamentsuite.playerapp.generated.resources.hand_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.hand_self_pick
+import mahjongtournamentsuite.playerapp.generated.resources.icon_chicken_mono
 import mahjongtournamentsuite.playerapp.generated.resources.info_contact
 import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
 import mahjongtournamentsuite.playerapp.generated.resources.menu_contact
-import mahjongtournamentsuite.playerapp.generated.resources.menu_privacy
 import mahjongtournamentsuite.playerapp.generated.resources.menu_more
+import mahjongtournamentsuite.playerapp.generated.resources.menu_privacy
 import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
+import mahjongtournamentsuite.playerapp.generated.resources.preg_closed
+import mahjongtournamentsuite.playerapp.generated.resources.preg_open
+import mahjongtournamentsuite.playerapp.generated.resources.preg_register
 import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
@@ -222,7 +222,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_points_score
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
+import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
 import mahjongtournamentsuite.playerapp.generated.resources.schedule_hide
 import mahjongtournamentsuite.playerapp.generated.resources.scope_me
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
@@ -246,9 +250,9 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_n
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import mahjongtournamentsuite.playerapp.generated.resources.tables_all_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
-import mahjongtournamentsuite.playerapp.generated.resources.tables_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
+import mahjongtournamentsuite.playerapp.generated.resources.tables_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
@@ -281,8 +285,11 @@ fun SplashScreen(
     openSignIn: Boolean = false,
     /** True when the address was `/support`, the link of the privacy policy. */
     openSupport: Boolean = false,
+    /** A registration link of the web, `/inscripcion/...`. */
+    openRegistration: RegistrationLink? = null,
 ) {
     val session = koinInject<PlayerSessionPresenter>()
+    val openRegistrationLink = rememberRegistrationLinkOpener(navController)
     LaunchedEffect(Unit) {
         val signInFirst = openSignIn && !session.hasSession()
         // Everything is public, so the app opens on the tournaments with or without an account.
@@ -291,6 +298,9 @@ fun SplashScreen(
         if (openSupport) {
             // The support form over the tournaments, so Back returns to the list.
             navController.navigate(SupportRoute())
+        } else if (openRegistration != null) {
+            // The registrations of the tournament. The link of the emails also confirms the email.
+            openRegistrationLink(openRegistration)
         } else if (signInFirst) {
             navController.navigate(SignInRoute())
         } else if (restored.isNotEmpty()) {
@@ -780,6 +790,26 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
                 // The places of the player are at the top right, one line for each.
                 if (standing != null) StandingBadges(standing)
             }
+            // A tournament before its draw shows its registrations. The button opens the tournament on its Players tab.
+            tournament.registration?.takeIf { tournament.inRegistration }?.let { registration ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(if (registration.isOpen) Res.string.preg_open else Res.string.preg_closed),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            registrationPlacesText(registration.confirmed, registration.maxPlayers, registration.waiting),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    if (registration.isOpen) {
+                        Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
+                    }
+                }
+            }
             // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
             if (hasCity || mapLink != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -954,8 +984,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     var selectedTeam by rememberPersistentOptionalInt("selectedTeam")
     var teamTab by rememberPersistentInt("teamTab", 0)
     // The tabs in their order. Teams shows only in a tournament with teams.
-    val mainTabs = MainTab.visible(isTeams = view?.tournament?.isTeams == true)
-    val shownTab = tab.takeIf { it in mainTabs } ?: MainTab.TABLES
+    val inRegistration = view?.tournament?.inRegistration == true
+    val mainTabs = MainTab.visible(isTeams = view?.tournament?.isTeams == true, inRegistration = inRegistration)
+    // A tournament that takes registrations opens on Players, the list of the registrations.
+    val shownTab = tab.takeIf { it in mainTabs } ?: mainTabs.first()
     val teamOpen = shownTab == MainTab.TEAMS && selectedTeam != null
     PlatformBackHandler(enabled = teamOpen) { selectedTeam = null }
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
@@ -1090,7 +1122,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                             }
                         }
                         MainTab.RANKING -> RankingTab(view) { openPlayer(it) }
-                        MainTab.PLAYERS -> PlayersTab(view) { openPlayer(it) }
+                        MainTab.PLAYERS -> if (inRegistration) RegistrationsTab(view.tournament) else PlayersTab(view) { openPlayer(it) }
                         MainTab.TEAMS -> TeamsTab(
                             view = view,
                             selectedTeam = selectedTeam,

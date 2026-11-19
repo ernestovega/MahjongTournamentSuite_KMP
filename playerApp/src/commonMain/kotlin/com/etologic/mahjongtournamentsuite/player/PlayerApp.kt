@@ -1,55 +1,55 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.domain.AppVersion
-import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
-import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
-import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
-import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.navigation.NavHostController
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
-import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
-import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.data.di.publicRepositoriesModule
-import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
-import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
+import com.etologic.mahjongtournamentsuite.data.di.useCasesModule
+import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
+import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
-import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
-import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
-import androidx.compose.runtime.produceState
+import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
+import com.etologic.mahjongtournamentsuite.presentation.di.AppKoin
+import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNotice
+import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
+import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackPreferenceChanges
-import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import kotlinx.serialization.Serializable
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
-import kotlinx.serialization.Serializable
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import org.koin.compose.getKoin
+import org.koin.compose.koinInject
 import org.koin.dsl.module
 
 @Serializable
@@ -102,6 +102,7 @@ internal val playerModule get() = module {
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get(), telemetry()) }
     factory { MyTableReminderPresenter(get()) }
+    factory { PlayerRegistrationPresenter(get(), get(), get(), telemetry()) }
     factory { PlayerStatisticsPresenter(get(), get(), get(), get(), get(), telemetry()) }
 }
 
@@ -126,6 +127,8 @@ fun PlayerApp(
     openSignIn: Boolean = false,
     /** True when the address was `/support`: the app opens the support form over the tournaments. */
     openSupport: Boolean = false,
+    /** The registration link of the address, `/inscripcion/...`: the app opens that tournament on its registrations. */
+    openRegistration: RegistrationLink? = null,
     /** True on a phone or a tablet app: the score of a hand is typed on a numpad of the app, not on the system keyboard. */
     numpadEntry: Boolean = false,
     /** True in the Android app of the suite, which also holds the admin part. See [AppKoin]. */
@@ -152,7 +155,7 @@ fun PlayerApp(
                     TrackPreferenceChanges()
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport)
+                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport, openRegistration)
                         }
                     }
                 }
@@ -167,6 +170,7 @@ private fun PlayerNavigation(
     sessionStorage: SessionStateStorage?,
     openSignIn: Boolean,
     openSupport: Boolean,
+    openRegistration: RegistrationLink?,
 ) {
     val navController = rememberNavController()
     val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
@@ -178,7 +182,7 @@ private fun PlayerNavigation(
     }
 
     Box(Modifier.fillMaxSize()) {
-        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn, openSupport)
+        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration)
         // On the web the back and forward of the browser move through the screens like the back of the app.
         BrowserHistory(navController)
         // Over every screen: the table of the player when a round of the player starts soon or is in play.
@@ -195,9 +199,10 @@ private fun PlayerNavHost(
     restoredRoutes: List<Any>,
     openSignIn: Boolean,
     openSupport: Boolean,
+    openRegistration: RegistrationLink?,
 ) {
     NavHost(navController = navController, startDestination = SplashRoute) {
-        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn, openSupport) }
+        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration) }
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)

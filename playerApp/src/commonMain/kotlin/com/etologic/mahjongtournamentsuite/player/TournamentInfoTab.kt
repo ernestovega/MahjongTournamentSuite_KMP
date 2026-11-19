@@ -42,11 +42,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
-import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
@@ -56,16 +56,16 @@ import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.info_co_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.info_contact
-import mahjongtournamentsuite.playerapp.generated.resources.info_main_organizer
-import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_club
-import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_federation
-import mahjongtournamentsuite.playerapp.generated.resources.info_organizers
 import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_google_maps
+import mahjongtournamentsuite.playerapp.generated.resources.info_main_organizer
 import mahjongtournamentsuite.playerapp.generated.resources.info_no_date
 import mahjongtournamentsuite.playerapp.generated.resources.info_none
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_venue
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_club
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizer_federation
+import mahjongtournamentsuite.playerapp.generated.resources.info_organizers
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.info_venue
 import mahjongtournamentsuite.playerapp.generated.resources.progress_ongoing_label
@@ -97,7 +97,7 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
         Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState(), MtsScrollbar.Overlay).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ProgressCard(view.progress)
+        if (!view.tournament.inRegistration) ProgressCard(view.progress)
         if (tournament.organizers.isNotEmpty()) OrganizersCard(tournament.organizers)
         if (hasSchedule(tournament)) {
             InfoCard(stringResource(Res.string.info_schedule), Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }

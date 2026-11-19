@@ -420,8 +420,13 @@ internal object MainTab {
     const val INFO = 4
     const val TEAMS = 5
 
-    /** The tabs in their order. Teams shows only in a tournament with teams, after Players. */
-    fun visible(isTeams: Boolean): List<Int> = if (isTeams) {
+    /**
+     * The tabs in their order. Teams shows only in a tournament with teams, after Players. Before the draw, while the
+     * tournament takes registrations, only Players (the registrations) and Info have content.
+     */
+    fun visible(isTeams: Boolean, inRegistration: Boolean = false): List<Int> = if (inRegistration) {
+        listOf(PLAYERS, INFO)
+    } else if (isTeams) {
         listOf(TABLES, RANKING, PLAYERS, TEAMS, STATISTICS, INFO)
     } else {
         listOf(TABLES, RANKING, PLAYERS, STATISTICS, INFO)
