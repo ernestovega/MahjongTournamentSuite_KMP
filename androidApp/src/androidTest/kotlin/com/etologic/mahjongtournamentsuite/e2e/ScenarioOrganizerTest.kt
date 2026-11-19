@@ -447,6 +447,17 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         checkNotNull(ids) { "Table $round-$table has no players" }
         val slotId = (0 until ids.length()).maxOf { ids.getInt(it) }
         val slot = slots.first { it.slot == slotId }
+        // The menu of a player has Substitute once a table of the tournament has a hand, and the Players screen reads
+        // the tables when it opens: it is opened once the first hand of the round is saved, as an organizer sees it.
+        val tableIds = (0 until list.length()).map { list.getJSONObject(it).getInt("tableId") }
+        val deadline = System.currentTimeMillis() + 600_000
+        while (tableIds.none { doneHands(tournamentId, round, it).isNotEmpty() }) {
+            if (System.currentTimeMillis() > deadline) {
+                log("round $round has no hand after 10 minutes")
+                break
+            }
+            idle(15_000)
+        }
         c.clickButton("Players")
         c.waitForText("Tournament players", timeoutMs = 60_000)
         // The search finds the slot by its EMA number. The email of the slot is the other key that only it has: it is
