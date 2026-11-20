@@ -344,7 +344,17 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("$count of $count rows can be imported.", timeoutMs = 60_000)
         c.clickButton("Import $count")
         c.waitForText("$count people were imported.", timeoutMs = 60_000)
-        c.clickLastButton("OK")
+        // The result stays until OK closes it: the organizer taps OK again while it shows.
+        for (attempt in 1..4) {
+            if (!c.isOnScreen("$count people were imported.")) break
+            c.settle()
+            runCatching {
+                c.onAllNodes(hasLabel("OK") and hasClickAction()).onLast()
+                    .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            }
+            runCatching { c.waitForNoText("$count people were imported.", timeoutMs = 10_000) }
+        }
+        c.waitForNoText("$count people were imported.", timeoutMs = 10_000)
         c.waitForText("With a place ($count)", timeoutMs = 60_000)
         log("$count people imported from the Google Form")
     }
@@ -382,7 +392,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.onAllNodes(row).onLast().performClick()
         c.waitForText(emaId, substring = true)
         c.clickLastButton("Save")
-        c.waitForText("Waiting list (1)", timeoutMs = 60_000)
+        // The summary at the top counts the waiting list: its section is further down the lazy list.
+        c.waitForText("1 on the waiting list", substring = true, timeoutMs = 60_000)
         log("a person added by hand goes to the waiting list")
     }
 
