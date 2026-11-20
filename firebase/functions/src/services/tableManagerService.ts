@@ -361,6 +361,25 @@ async function writeWithRetries(write: () => Promise<unknown>, attempts = 5): Pr
   }
 }
 
+/**
+ * Sets whether the tournament is complete from its open tables, after a save that completed a table or opened it again.
+ * It runs after the commit of that save. The settles of one tournament wait for each other on the tournament document,
+ * and each one looks at the tables after its own save committed, so the last one sees every save before it: of two
+ * last tables that complete at the same moment, the second one completes the tournament. The query of the open tables
+ * is not part of the transaction, so it locks no table and the hand saves of the other tables go on.
+ */
+export async function settleTournamentCompletion(tournamentRef: FirebaseFirestore.DocumentReference): Promise<void> {
+  await db.runTransaction(async (transaction) => {
+    const tournament = await transaction.get(tournamentRef);
+    if (!tournament.exists) return;
+    const open = await tournamentRef.collection("tables").where("isCompleted", "==", false).limit(1).get();
+    const complete = open.empty;
+    if (Boolean(tournament.get("isCompleted")) !== complete) {
+      transaction.update(tournamentRef, { isCompleted: complete, updatedAt: FieldValue.serverTimestamp() });
+    }
+  });
+}
+
 /** Writes to a shared document after the transaction when [runTableTransaction] runs it, or in it otherwise. */
 function writeShared(
   transaction: FirebaseFirestore.Transaction,
@@ -428,9 +447,12 @@ export async function saveTableStateInTransaction(
   const isComplete = Boolean(mergedTable.isCompleted);
 
   // Only a table that becomes complete can finish the tournament. Other saves skip this query,
-  // so editors of different tables do not lock each other.
+  // so editors of different tables do not lock each other. In a transaction of [runTableTransaction] the query runs
+  // after the commit instead (see [settleTournamentCompletion]): in the transaction it locked the first open tables of
+  // the tournament, which are the tables in play in the last rounds, and their hand saves were aborted.
+  const deferCompletion = sharedWrites.has(transaction);
   let tournamentIsComplete = false;
-  if (isComplete) {
+  if (isComplete && !deferCompletion) {
     const incompleteTables = await transaction.get(
       tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2),
     );
@@ -477,7 +499,14 @@ export async function saveTableStateInTransaction(
   // The end of the tournament can change only when the last table completes or a completed table opens again. Then the
   // tournament is written in the transaction, with the query of the open tables above, so two such saves cannot cross.
   // Every other save leaves the end of the tournament as it is and writes the rest after the transaction.
-  const completionChanges = tournamentIsComplete || (wasComplete && !isComplete);
+  const completionChanges = !deferCompletion && (tournamentIsComplete || (wasComplete && !isComplete));
+  if (deferCompletion && wasComplete !== isComplete) {
+    // The tournament list changes its version once the end of the tournament is settled.
+    sharedWrites.get(transaction)?.push(async () => {
+      await settleTournamentCompletion(tournamentRef);
+      await db.collection("_meta").doc("dataVersions").set(globalVersionUpdate("tournaments"), { merge: true });
+    });
+  }
   writeShared(transaction, tournamentRef, {
     ...(completionChanges ? { isCompleted: tournamentIsComplete } : {}),
     updatedAt: FieldValue.serverTimestamp(),
@@ -485,7 +514,7 @@ export async function saveTableStateInTransaction(
     ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
   }, "update", completionChanges);
   // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
-  if (wasComplete !== isComplete) {
+  if (wasComplete !== isComplete && !deferCompletion) {
     writeShared(transaction, db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), "merge");
   }
   transaction.set(tournamentRef.collection("changes").doc(), {

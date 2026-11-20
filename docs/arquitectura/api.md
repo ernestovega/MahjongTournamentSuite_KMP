@@ -52,12 +52,19 @@ sequenceDiagram
   F->>A: requireAuth: verifica el ID token (revocación cacheada 30 s)
   F->>DB: requireTournamentEditor: ¿admin o members/{uid}? (caché 30 s)
   F->>DB: transacción: mesa + manos + copia de manos + estadísticas + registro de cambios
+  F->>DB: después de la transacción: versiones de la mesa en el torneo<br/>y, si la mesa se cerró o se reabrió, si el torneo ha terminado
   alt expectedVersion no coincide
     F-->>App: 409 conflict + datos actuales de la mesa
   else todo bien
     F-->>App: 200 mesa con sus manos
   end
 ```
+
+La transacción solo toca documentos de la mesa. Lo que comparten todas las mesas (el documento del torneo, `_meta`)
+se escribe justo después, y la consulta de mesas abiertas que decide si el torneo ha terminado también va después, en
+una transacción corta sobre el torneo. Dentro de la transacción del guardado, esa consulta bloqueaba las primeras mesas
+abiertas, que en las últimas rondas son las que se están jugando, y Firestore abortaba sus guardados (Game day grande,
+noviembre de 2026).
 
 ## Autenticación
 

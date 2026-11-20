@@ -251,6 +251,18 @@ describe("tournament completion with concurrent saves", () => {
     }
   });
 
+  it("completes the tournament when every table of the last round completes at once, and other saves go on", async () => {
+    // In the large game day the query of the open tables ran in the save transaction and locked the tables in play,
+    // so their hand saves were aborted. Now it runs after the commit: every save here must succeed.
+    const tables = Array.from({ length: 12 }, (_, index) => ({ roundId: 1, tableId: index + 1 }));
+    const id = await seedTournament({ tables });
+
+    await Promise.all(tables.slice(0, 6).map((table) => save(id, table.tableId, 0, { playerEastId: "3" })));
+    await Promise.all(tables.map((table) => save(id, table.tableId, table.tableId <= 6 ? 1 : 0, { isCompleted: true })));
+
+    assert.equal((await readTournament(id)).isCompleted, true);
+  });
+
   it("does not complete the tournament when one table completes while another reopens", async () => {
     for (let attempt = 0; attempt < 5; attempt++) {
       const id = await seedTournament({
