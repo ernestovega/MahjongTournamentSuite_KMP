@@ -163,6 +163,10 @@ fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = fa
  */
 fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWORD) {
     waitForText("Sign in")
+    // After a sign-out the app opens on the public tournament list: its Sign in button opens the form.
+    val emailField = hasSetTextAction() and hasText("Email")
+    if (onAllNodes(emailField).fetchSemanticsNodes().isEmpty()) clickButton("Sign in")
+    waitUntil(WAIT_MS) { onAllNodes(emailField).fetchSemanticsNodes().isNotEmpty() }
     onNodeWithText("Email").performTextInput(email)
     onNodeWithText("Password").performTextInput(password)
     clickButton("Sign in")
