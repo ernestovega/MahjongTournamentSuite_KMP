@@ -345,6 +345,10 @@ internal class TableManagerEditorState private constructor(
         return patch
     }
 
+    /** The hands that the user changed and that have a valid result without Done. A completed or manual table counts no hand. */
+    fun changedValidHandsNotDone(): List<Int> =
+        if (isCompleted || useTotalsOnly) emptyList() else hands.filter { it.isChangedValidButNotDone }.map { it.handId }
+
     fun buildHandPatches(): List<Pair<Int, Map<String, Any?>>> {
         return hands.mapNotNull { draft ->
             val patch = draft.buildPatch()

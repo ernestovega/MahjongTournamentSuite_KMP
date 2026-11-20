@@ -1074,4 +1074,8 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_open_registrations">Inscripciones</string>
     <string name="activity_action_registration_update">Cambió las inscripciones</string>
     <string name="activity_action_registration_draw">Hizo el sorteo de las inscripciones</string>
+    <string name="hands_not_done_title">Manos sin marcar como hechas</string>
+    <string name="hands_not_done_text">Estas manos tienen un resultado válido, pero Hecha está desmarcada.\nNo cuentan hasta que se marquen como hechas.\nPuede ser a propósito. Si no, vuelve y márcalas.</string>
+    <string name="hands_not_done_line">Ronda %1$d · Mesa %2$d · Mano %3$d</string>
+    <string name="hands_not_done_save">Guardar igualmente</string>
 </resources>

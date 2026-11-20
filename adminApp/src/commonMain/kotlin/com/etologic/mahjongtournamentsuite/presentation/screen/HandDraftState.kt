@@ -145,6 +145,13 @@ internal class HandDraftState private constructor(
             playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty() &&
             penaltyRows.none { row -> (0..3).any { row.value(it).isNotBlank() } }
 
+    /**
+     * The hand has a valid result that the user changed, and Done is off: it will not count. It can be on purpose, or a
+     * Done that the user forgot to mark again after a correction, so the editor asks before saving it.
+     */
+    val isChangedValidButNotDone: Boolean
+        get() = !isDone && !isCompletelyEmpty && !isResultSelectionInvalid && buildPatch().isNotEmpty()
+
     val isIgnoredForCalculation: Boolean
         get() = isResultSelectionInvalid || isCompletelyEmpty
 

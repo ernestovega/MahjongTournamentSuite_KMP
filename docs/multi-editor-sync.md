@@ -8,6 +8,11 @@ Several people can edit one tournament at the same time. This page describes how
 - **Every replacement is shown.** A dialog names the table. If the user had typed values, the dialog lists them so the user can type them again.
 - **A save names the version it is based on.** The backend refuses a save from an old version with HTTP 409. The 409 answer carries the current table.
 - **A user must save or discard before leaving a table.** At most one table can have unsaved changes.
+- **A hand without Done is confirmed.** A changed hand with a valid result (winner and score) and Done off does not
+  count. That can be on purpose, or a Done that the editor forgot to mark again after a correction, so Save first shows
+  "Hands without Done" with each hand (round, table and hand) and the buttons "Save anyway" and "Cancel"
+  (`HandsNotDoneDialog`, `TableManagerEditorState.changedValidHandsNotDone`). A hand cleared to delete it, a completed
+  table and a table with Manual scores are not asked about.
 
 ## How the app finds changes
 

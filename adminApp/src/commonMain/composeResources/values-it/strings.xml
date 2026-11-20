@@ -1074,4 +1074,8 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="reg_open_registrations">Iscrizioni</string>
     <string name="activity_action_registration_update">Ha modificato le iscrizioni</string>
     <string name="activity_action_registration_draw">Ha fatto il sorteggio delle iscrizioni</string>
+    <string name="hands_not_done_title">Mani senza Fatto</string>
+    <string name="hands_not_done_text">Queste mani hanno un risultato valido, ma Fatto non è selezionato.\nNon contano finché non sono segnate come fatte.\nPuò essere voluto. Altrimenti, torna indietro e segnale.</string>
+    <string name="hands_not_done_line">Turno %1$d · Tavolo %2$d · Mano %3$d</string>
+    <string name="hands_not_done_save">Salva comunque</string>
 </resources>

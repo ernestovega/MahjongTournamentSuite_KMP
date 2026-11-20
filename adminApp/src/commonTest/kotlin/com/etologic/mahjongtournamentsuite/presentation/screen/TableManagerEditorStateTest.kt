@@ -56,6 +56,56 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun correctedHandLeftWithoutDoneIsAskedBeforeSaving() {
+        // A done hand: the editor turns Done off to correct it and forgets to mark it again.
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = false),
+            hands = listOf(sampleHand(handId = 1, winner = "1", loser = "2", score = "16").copy(isDone = true), sampleHand(handId = 2)),
+        )
+        val hand = editor.hands.first()
+        hand.updateDoneState(false)
+        hand.updateHandScore("11")
+
+        assertEquals(listOf(1), editor.changedValidHandsNotDone())
+
+        hand.updateDoneState(true)
+        assertEquals(emptyList<Int>(), editor.changedValidHandsNotDone())
+    }
+
+    @Test
+    fun handsThatAreNotAskedBeforeSaving() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = false),
+            hands = listOf(
+                sampleHand(handId = 1, winner = "1", loser = "2", score = "16"),
+                sampleHand(handId = 2),
+                sampleHand(handId = 3, winner = "1", score = "8").copy(isDone = true),
+            ),
+        )
+        // Not changed: a hand with a result that was already not done.
+        // Not valid: a score without a winner cannot be done anyway.
+        editor.hands[1].updateHandScore("12")
+        // Deleted on purpose: Done off and every field empty.
+        editor.hands[2].updateDoneState(false)
+        editor.hands[2].setWinnerPlayerId("-")
+        editor.hands[2].updateHandScore("")
+
+        assertEquals(emptyList<Int>(), editor.changedValidHandsNotDone())
+    }
+
+    @Test
+    fun completedOrManualTableIsNotAskedBeforeSaving() {
+        val hands = listOf(sampleHand(handId = 1, winner = "1", loser = "2", score = "16").copy(isDone = true))
+        val manual = TableManagerEditorState.from(table = sampleTableState(useTotalsOnly = true), hands = hands)
+        manual.hands.first().updateDoneState(false)
+        assertEquals(emptyList<Int>(), manual.changedValidHandsNotDone())
+
+        val completed = TableManagerEditorState.from(table = sampleTableState(useTotalsOnly = false).copy(isCompleted = true), hands = hands)
+        completed.hands.first().updateDoneState(false)
+        assertEquals(emptyList<Int>(), completed.changedValidHandsNotDone())
+    }
+
+    @Test
     fun freshEditorHasNoUnsavedChanges() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(),

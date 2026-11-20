@@ -1074,4 +1074,8 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_open_registrations">Anmälningar</string>
     <string name="activity_action_registration_update">Ändrade anmälningarna</string>
     <string name="activity_action_registration_draw">Gjorde lottningen av anmälningarna</string>
+    <string name="hands_not_done_title">Händer utan Gjord</string>
+    <string name="hands_not_done_text">De här händerna har ett giltigt resultat, men Gjord är av.\nDe räknas inte förrän de markeras som gjorda.\nDet kan vara avsiktligt. Om inte, gå tillbaka och markera dem.</string>
+    <string name="hands_not_done_line">Omgång %1$d · Bord %2$d · Hand %3$d</string>
+    <string name="hands_not_done_save">Spara ändå</string>
 </resources>

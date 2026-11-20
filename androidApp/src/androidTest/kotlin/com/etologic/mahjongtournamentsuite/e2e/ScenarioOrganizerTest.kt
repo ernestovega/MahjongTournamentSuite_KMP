@@ -777,6 +777,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 val othersBefore = doneHandsOfTheRound(tournamentId, round, except = table)
                 // The message can also open just as Save is tapped: the tap goes nowhere, and the editor does it again.
                 val saved = runCatching { c.clickButton("Save") }
+                // The app asks before saving a hand with a result and Done off: here that is a mistake, so back.
+                if (c.isOnScreen("Hands without Done")) {
+                    log("table $round-$table: the app asked about hands without Done, attempt $attempt")
+                    c.clickLastButton("Cancel")
+                    continue
+                }
                 if (tableUpdatedShown()) continue
                 if (saved.isFailure) {
                     c.waitForIdle()
@@ -1067,7 +1073,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         writeScore(handId, score)
         setDone(handId, true)
         // What Save sends: the new score in a hand that is done. Anything else is typed again.
-        val shown = scoreField(handId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text
+        // A done hand is locked: its field has no text action, so the score is read from the cell.
+        val shown = c.onAllNodes(hasAnyAncestor(hasTestTag("hand-$handId-score")), useUnmergedTree = true).fetchSemanticsNodes()
+            .firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.EditableText)?.text }
         check(shown == score && isDone(handId) == true) { "Hand $handId shows score $shown and done ${isDone(handId)} before Save" }
     }
 

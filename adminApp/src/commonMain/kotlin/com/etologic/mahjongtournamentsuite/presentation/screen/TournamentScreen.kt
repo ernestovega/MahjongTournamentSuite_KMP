@@ -160,6 +160,7 @@ fun TournamentScreen(
     var roundControlRound by remember { mutableStateOf<Int?>(null) }
     var editingTournament by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
+    var handsNotDoneSave by remember { mutableStateOf<HandsNotDoneSave?>(null) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
 
     val saveFocusRequester = remember { FocusRequester() }
@@ -401,9 +402,22 @@ fun TournamentScreen(
         if (hasUnsavedChanges) pendingAction = action else perform(action)
     }
 
-    /** Saves the given tables, or all tables with changes. Table saves are independent, so one failure keeps the other data. */
-    fun requestSave(action: RoundEditorAction? = null, tableIds: List<Int>? = null) {
+    /**
+     * Saves the given tables, or all tables with changes. Table saves are independent, so one failure keeps the other data.
+     * A changed hand with a valid result and Done off does not count: the user confirms it first ([HandsNotDoneDialog]).
+     */
+    fun requestSave(action: RoundEditorAction? = null, tableIds: List<Int>? = null, confirmedNotDone: Boolean = false) {
         val targets = tableIds ?: tableEditors.filterValues { it.hasUnsavedChanges }.keys.toList()
+        if (!confirmedNotDone) {
+            val notDone = targets.sorted().flatMap { tableId ->
+                val editor = tableEditors[tableId] ?: return@flatMap emptyList()
+                editor.changedValidHandsNotDone().map { HandNotDone(editor.roundId, tableId, it) }
+            }
+            if (notDone.isNotEmpty()) {
+                handsNotDoneSave = HandsNotDoneSave(action, tableIds, notDone)
+                return
+            }
+        }
         scope.launch {
             // The save suspends. The action can navigate, and the navigation must run on the main thread.
             if (sync.saveTables(targets)) action?.let { withContext(Dispatchers.Main) { perform(it) } }
@@ -414,6 +428,16 @@ fun TournamentScreen(
         tableEditors.values.forEach { it.discard() }
     }
 
+    handsNotDoneSave?.let { pending ->
+        HandsNotDoneDialog(
+            hands = pending.hands,
+            onSave = {
+                handsNotDoneSave = null
+                requestSave(pending.action, pending.tableIds, confirmedNotDone = true)
+            },
+            onDismiss = { handsNotDoneSave = null },
+        )
+    }
     pendingAction?.let { action ->
         UnsavedChangesDialog(
             isSaving = isLoading,
@@ -578,3 +602,10 @@ internal fun Tournament.timerRound(
 }
 
 private fun List<TournamentTable>.roundsWithHands(): Set<Int> = filter { it.hasProgress }.map { it.roundId }.toSet()
+
+/** A save that waits for the user to confirm the hands with a valid result and Done off. */
+private data class HandsNotDoneSave(
+    val action: RoundEditorAction?,
+    val tableIds: List<Int>?,
+    val hands: List<HandNotDone>,
+)

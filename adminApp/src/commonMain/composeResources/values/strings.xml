@@ -1074,4 +1074,8 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_open_registrations">Registrations</string>
     <string name="activity_action_registration_update">Changed the registrations</string>
     <string name="activity_action_registration_draw">Made the draw of the registrations</string>
+    <string name="hands_not_done_title">Hands without Done</string>
+    <string name="hands_not_done_text">These hands have a valid result, but Done is off.\nThey do not count until they are marked as done.\nIt can be on purpose. If not, go back and mark them.</string>
+    <string name="hands_not_done_line">Round %1$d · Table %2$d · Hand %3$d</string>
+    <string name="hands_not_done_save">Save anyway</string>
 </resources>

@@ -1074,4 +1074,8 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_open_registrations">Anmeldungen</string>
     <string name="activity_action_registration_update">Hat die Anmeldungen geändert</string>
     <string name="activity_action_registration_draw">Hat die Auslosung der Anmeldungen gemacht</string>
+    <string name="hands_not_done_title">Hände nicht erledigt</string>
+    <string name="hands_not_done_text">Diese Hände haben ein gültiges Ergebnis, aber Erledigt ist aus.\nSie zählen erst, wenn sie als erledigt markiert sind.\nDas kann Absicht sein. Wenn nicht, geh zurück und markiere sie.</string>
+    <string name="hands_not_done_line">Runde %1$d · Tisch %2$d · Hand %3$d</string>
+    <string name="hands_not_done_save">Trotzdem speichern</string>
 </resources>
