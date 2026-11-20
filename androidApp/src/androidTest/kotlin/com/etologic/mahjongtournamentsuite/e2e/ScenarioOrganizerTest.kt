@@ -261,8 +261,14 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The row of the account, not the search field that has the same text.
         val row = hasClickAction() and !hasSetTextAction() and hasText(CLUB_ADMIN)
         c.waitUntil(30_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(row).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
-        c.waitForText("Edit account", timeoutMs = 30_000)
+        // While the list loads, a row does not open: the organizer taps again.
+        for (attempt in 1..6) {
+            if (c.isOnScreen("Edit account")) break
+            c.settle()
+            runCatching { c.onAllNodes(row).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) }
+            runCatching { c.waitForText("Edit account", timeoutMs = 10_000) }
+        }
+        c.waitForText("Edit account", timeoutMs = 10_000)
         chooseInSelect("Global role", "Club Admin")
         c.waitForText("Add an organization", timeoutMs = 10_000)
         // The chip of the organization shows once the account is of the club; the field adds it.
