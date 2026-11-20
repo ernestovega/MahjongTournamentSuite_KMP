@@ -773,6 +773,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                     closeOpenMenu()
                     continue
                 }
+                // Save sends every table of the round with changes: the done hands of the other tables must stay.
+                val othersBefore = doneHandsOfTheRound(tournamentId, round, except = table)
                 // The message can also open just as Save is tapped: the tap goes nowhere, and the editor does it again.
                 val saved = runCatching { c.clickButton("Save") }
                 if (tableUpdatedShown()) continue
@@ -784,11 +786,26 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 }
                 idle(3_000)
                 dismissTableUpdated()
+                val othersAfter = doneHandsOfTheRound(tournamentId, round, except = table)
+                othersBefore.forEach { (where, hand) ->
+                    val now = othersAfter[where]
+                    if (now != hand) log("table $round-$table: the save of the editor changed hand $where: $hand -> ${now ?: "not done"}")
+                }
                 // The table on the server has the change. A deleted hand can already be written again by the player.
                 val after = handOf(tournamentId, round, table, handId)
-                reached = after == null || !after.optBoolean("isDone") ||
-                    after.optString("handScore") != before.optString("handScore") ||
-                    after.optString("playerWinnerId") != before.optString("playerWinnerId")
+                reached = if (item.getString("kind") == "edit") {
+                    // A correction is a done hand with the new score. A hand left not done would no longer count:
+                    // the phones would see it deleted (docs/scenarios.md).
+                    after != null && after.optBoolean("isDone") && after.optString("handScore") == newScoreOf(before) &&
+                        after.optString("playerWinnerId") == before.optString("playerWinnerId")
+                } else {
+                    after == null || !after.optBoolean("isDone") ||
+                        after.optString("handScore") != before.optString("handScore") ||
+                        after.optString("playerWinnerId") != before.optString("playerWinnerId")
+                }
+                if (!reached && after != null) {
+                    log("table $round-$table: after the ${item.getString("kind")} the server has hand $handId done ${after.optBoolean("isDone")}, score ${after.optString("handScore")}")
+                }
                 if (reached) break
                 log("table $round-$table: the ${item.getString("kind")} did not reach the server, attempt $attempt")
             }
@@ -930,6 +947,26 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         return (0 until hands.length()).map { hands.getJSONObject(it) }.filter { it.optBoolean("isDone") }
     }
 
+    /** The done hands of the other tables of the round, "table#hand" to "winner/score". A player only adds hands. */
+    private fun doneHandsOfTheRound(tournamentId: String, round: Int, except: Int): Map<String, String> {
+        val reply = runCatching { E2eApi.call("GET", "/public/tournaments/$tournamentId/rounds/$round/tables-with-hands") }.getOrNull()
+        if (reply?.status != 200) return emptyMap()
+        val tables = reply.json().getJSONArray("tables")
+        return buildMap {
+            for (index in 0 until tables.length()) {
+                val item = tables.getJSONObject(index)
+                val tableId = item.getJSONObject("table").optInt("tableId")
+                if (tableId == except) continue
+                val hands = item.optJSONArray("hands") ?: continue
+                for (h in 0 until hands.length()) {
+                    val hand = hands.getJSONObject(h)
+                    if (!hand.optBoolean("isDone")) continue
+                    put("$tableId#${hand.optInt("handId")}", "${hand.optString("playerWinnerId")}/${hand.optString("handScore")}")
+                }
+            }
+        }
+    }
+
     private fun handOf(tournamentId: String, round: Int, table: Int, handId: Int): JSONObject? {
         val hands = tableData(tournamentId, round, table)?.optJSONArray("hands") ?: return null
         return (0 until hands.length()).map { hands.getJSONObject(it) }.firstOrNull { it.getInt("handId") == handId }
@@ -993,7 +1030,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val open = hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$handId-score")) and isEnabled()
         repeat(3) {
             if (c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) return
-            tapCell(handId, "done")
+            setDone(handId, false)
             runCatching { c.waitUntil(5_000) { c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() } }
         }
         check(c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) { "Hand $handId stays locked after Done off" }
@@ -1023,10 +1060,33 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     }
 
     /** Another score that is valid for any hand, also a chicken hand (8 to 12). */
+    private fun newScoreOf(before: JSONObject) = if (before.optString("handScore") == "11") "10" else "11"
+
     private fun editHand(handId: Int, before: JSONObject) {
-        val score = if (before.optString("handScore") == "11") "10" else "11"
+        val score = newScoreOf(before)
         writeScore(handId, score)
-        tapCell(handId, "done")
+        setDone(handId, true)
+        // What Save sends: the new score in a hand that is done. Anything else is typed again.
+        val shown = scoreField(handId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text
+        check(shown == score && isDone(handId) == true) { "Hand $handId shows score $shown and done ${isDone(handId)} before Save" }
+    }
+
+    /** The Done box of a hand, by its toggle state: a touch at the centre of its cell can land on the sticky header. */
+    private fun doneBox(handId: Int) =
+        c.onAllNodes(isToggleable() and hasAnyAncestor(hasTestTag("hand-$handId-done")), useUnmergedTree = true)
+
+    private fun isDone(handId: Int): Boolean? = doneBox(handId).fetchSemanticsNodes().firstOrNull()
+        ?.config?.getOrNull(SemanticsProperties.ToggleableState)?.let { it == androidx.compose.ui.state.ToggleableState.On }
+
+    /** Turns Done of a hand on or off. The app refuses Done for a hand that is not valid: the error says so. */
+    private fun setDone(handId: Int, on: Boolean) {
+        runCatching { cell(handId, "done").performScrollTo() }
+        repeat(3) {
+            if (isDone(handId) == on) return
+            runCatching { doneBox(handId).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) }
+            runCatching { c.waitUntil(5_000) { isDone(handId) == on } }
+        }
+        check(isDone(handId) == on) { "Done of hand $handId stays ${isDone(handId)}, the editor wanted $on" }
     }
 
     /** A save of a player while the editor works shows "Table updated", or "Tables updated" when other tables changed too. */

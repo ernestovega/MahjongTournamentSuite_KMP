@@ -91,6 +91,10 @@ read it, so each one knows its part.
 - A wrong hand: the editor deletes it in the admin app and the phone writes it again. Both the last hand of the table
   and a hand of several hands before.
 - A hand edited by the editor (the last one and an older one), and the phone of the table shows the correction.
+  The editor turns Done on by the state of its box (not a tap at the centre of the cell) and checks, before Save, that
+  the hand shows the new score and is done. After Save the hand on the server must be done with the new score: a hand
+  left not done no longer counts, and the phones see it deleted. The organizer also logs any done hand of another table
+  of the round that changed with its Save, because Save sends every table with changes.
 
   Done (plan.cornerCases, round 2, tables 2 to 5). The organizer waits until the table has played a few hands, opens
   it in the table editor and turns Done off and clears the hand, or types another score. The bots of the table see the

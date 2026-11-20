@@ -190,10 +190,12 @@ class PlayerBot {
       if (!server.isDone) {
         entry.deleted = true;
         deleted = true;
-        this.metrics.event("hand-deleted-seen", { table: key, handId: entry.handId, newest, slot: this.slotNumber });
+        this.metrics.event("hand-deleted-seen", {
+          table: key, handId: entry.handId, newest, slot: this.slotNumber, version: data.table?.version, to: handOf(server),
+        });
       } else if (!sameHand(entry.hand, server)) {
         this.metrics.event("hand-corrected-seen", {
-          table: key, handId: entry.handId, newest, slot: this.slotNumber, from: entry.hand, to: handOf(server),
+          table: key, handId: entry.handId, newest, slot: this.slotNumber, from: entry.hand, to: handOf(server), version: data.table?.version,
         });
         entry.hand = handOf(server);
         entry.corrected = true;
@@ -211,7 +213,7 @@ class PlayerBot {
       this.signatures.set(id, signature);
       if (before == null || before === "" || before === signature) continue;
       const kind = signature === "" ? "hand-deleted-seen" : "hand-corrected-seen";
-      this.metrics.event(kind, { table: key, handId: hand.handId, slot: this.slotNumber, watcher: true });
+      this.metrics.event(kind, { table: key, handId: hand.handId, slot: this.slotNumber, watcher: true, version: data?.table?.version });
     }
   }
 

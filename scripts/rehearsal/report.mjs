@@ -237,7 +237,7 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
     const saved = botReports.flatMap((report) => report.hands ?? []).filter((hand) => hand.table === key)
       .map((hand) => `#${hand.handId} ${hand.at?.slice(11, 19)} ${hand.hand?.handScore ?? ""}${hand.reentry ? " again" : ""}`);
     const seen = events.filter((event) => event.table === key && /hand-(deleted|corrected)-seen|hand-reentered/.test(event.kind))
-      .map((event) => `${event.at?.slice(11, 19)} ${event.kind} #${event.handId} slot ${event.slot}${event.watcher ? " (watcher)" : ""}`);
+      .map((event) => `${event.at?.slice(11, 19)} ${event.kind} #${event.handId} slot ${event.slot}${event.watcher ? " (watcher)" : ""}${event.version != null ? ` v${event.version}` : ""}${event.to ? ` to ${event.to.playerWinnerId ?? "-"}/${event.to.handScore ?? ""}` : ""}`);
     lines.push(`  Saved at ${key}: ${saved.join(", ") || "none"}.`);
     lines.push(`  Seen at ${key}: ${seen.join(", ") || "nothing"}.`);
   };
