@@ -38,22 +38,37 @@ class TournamentFilterTest {
     }
 
     @Test
-    fun listShowsLiveThenNearestUpcomingThenNewestFinished() {
+    fun listShowsOwnLiveFirstThenEveryOtherByDateFromTheLatest() {
         val status = mapOf(
-            "live" to TournamentStatus.IN_PROGRESS,
+            "mine-live" to TournamentStatus.IN_PROGRESS,
+            "other-live" to TournamentStatus.IN_PROGRESS,
             "soon" to TournamentStatus.UPCOMING,
             "later" to TournamentStatus.UPCOMING,
             "old" to TournamentStatus.FINISHED,
             "recent" to TournamentStatus.FINISHED,
+            "mine-old" to TournamentStatus.FINISHED,
+            "mine-soon" to TournamentStatus.UPCOMING,
         )
         val list = listOf(
             tournament("old", start = "2024-01-01"),
             tournament("later", start = "2027-06-01"),
             tournament("recent", start = "2026-01-01"),
             tournament("nodate"),
+            tournament("other-live", start = "2026-11-15"),
             tournament("soon", start = "2026-12-01"),
-            tournament("live", start = "2026-11-10"),
+            tournament("mine-old", start = "2025-05-01"),
+            tournament("mine-soon", start = "2026-11-28"),
+            tournament("mine-live", start = "2026-11-10"),
         )
-        assertEquals(listOf("live", "soon", "later", "recent", "old", "nodate"), list.sortedForList { status[it.id] }.map { it.id })
+        val mine = setOf("mine-live", "mine-old", "mine-soon")
+        assertEquals(
+            listOf("mine-live", "later", "soon", "mine-soon", "other-live", "recent", "mine-old", "old", "nodate"),
+            list.sortedForList(mine) { status[it.id] }.map { it.id },
+        )
+        // Without an own tournament in play, the whole list goes by date.
+        assertEquals(
+            listOf("later", "soon", "mine-soon", "other-live", "mine-live", "recent", "mine-old", "old", "nodate"),
+            list.sortedForList(emptySet()) { status[it.id] }.map { it.id },
+        )
     }
 }

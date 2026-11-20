@@ -96,24 +96,20 @@ internal fun TournamentFilter.accepts(tournament: Tournament, status: Tournament
 }
 
 /**
- * The order of the list: the tournaments in play first, then the upcoming ones from the nearest, then the finished
- * ones from the newest. Tournaments without dates come last.
+ * The order of the list: the tournaments in play where the account plays ([mine]) first, and then all the others by
+ * date, from the latest start to the oldest one (upcoming, in play and finished alike). Tournaments without dates come
+ * last.
  */
-internal fun List<Tournament>.sortedForList(statusOf: (Tournament) -> TournamentStatus?): List<Tournament> {
-    fun group(tournament: Tournament) = when (statusOf(tournament)) {
-        TournamentStatus.IN_PROGRESS -> 0
-        TournamentStatus.UPCOMING -> 1
-        TournamentStatus.FINISHED -> 2
-        null -> 3
+internal fun List<Tournament>.sortedForList(mine: Set<String>, statusOf: (Tournament) -> TournamentStatus?): List<Tournament> {
+    fun group(tournament: Tournament) = when {
+        tournament.id in mine && statusOf(tournament) == TournamentStatus.IN_PROGRESS -> 0
+        tournament.eventStartDate.isNullOrBlank() -> 2
+        else -> 1
     }
     return sortedWith(
         compareBy<Tournament> { group(it) }
-            .thenComparator { a, b ->
-                val left = a.eventStartDate.orEmpty()
-                val right = b.eventStartDate.orEmpty()
-                // Upcoming: the nearest first. The others: the newest first.
-                if (group(a) == 1) left.compareTo(right) else right.compareTo(left)
-            }
+            .thenByDescending { it.eventStartDate.orEmpty() }
+            .thenByDescending { it.eventEndDate.orEmpty() }
             .thenBy { it.name.lowercase() },
     )
 }

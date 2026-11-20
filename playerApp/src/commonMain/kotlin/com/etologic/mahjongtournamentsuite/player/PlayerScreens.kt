@@ -578,7 +578,7 @@ fun TournamentsScreen(navController: NavHostController) {
                         }
                         // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                         else -> {
-                            val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(::statusOf)
+                            val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(mine, ::statusOf)
                             val listState = rememberPersistentLazyListState("tournaments")
                             Box(Modifier.weight(1f)) {
                                 LazyColumn(
