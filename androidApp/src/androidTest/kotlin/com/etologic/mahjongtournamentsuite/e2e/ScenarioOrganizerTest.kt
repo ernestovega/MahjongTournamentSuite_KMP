@@ -451,7 +451,11 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         check(nodes.isNotEmpty()) { "The form has no switch $label" }
         val state = nodes.last().config.getOrNull(SemanticsProperties.ToggleableState)
         val isOn = state == androidx.compose.ui.state.ToggleableState.On
-        if (isOn != on) c.onAllNodes(matcher).onLast().apply { runCatching { performScrollTo() } }.performClick()
+        // By its click action: after the Timer window a tap can be refused ("Failed to inject touch input").
+        if (isOn != on) {
+            c.onAllNodes(matcher).onLast().apply { runCatching { performScrollTo() } }
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        }
     }
 
     private fun createTheTournamentWithTheForm() {
@@ -759,6 +763,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val tied = tie?.let { seatsOf(tableData(tournamentId, it.getInt("round"), it.getInt("table"))) }.orEmpty()
         val planned = item.getJSONArray("scores").let { list -> (0 until list.length()).map { list.getString(it) } }
         val scores = if (seats.any { it in tied }) List(4) { "0" } else planned
+        backToTheTournament()
         openTable(round, table)
         var saved = false
         for (attempt in 1..3) {
@@ -770,7 +775,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                     c.onNode(hasTestTag("table-total-$seat")).apply { runCatching { performScrollTo() } }.performTextReplacement(score)
                 }
                 setSwitch("Completed", true)
-                c.clickButton("Save")
+                val save = hasLabel("Save") and hasClickAction() and isEnabled()
+                c.waitUntil(10_000) { c.onAllNodes(save).fetchSemanticsNodes().isNotEmpty() }
+                c.onAllNodes(save).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
             }
             idle(3_000)
             if (tableUpdatedShown()) continue
