@@ -655,8 +655,8 @@
     "tags": [
      "Sesión"
     ],
-    "summary": "Mis huecos en los torneos",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nEMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio.",
+    "summary": "Mis huecos en los torneos y mis inscripciones",
+    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nEMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio. También da las inscripciones de la persona (con plaza o en lista de espera) en los torneos que esperan su sorteo.",
     "security": [
      {
       "bearer": []
@@ -9177,6 +9177,27 @@
       "items": {
        "$ref": "#/components/schemas/MyTournamentSlot"
       }
+     },
+     "registrations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/MyRegistration"
+      }
+     }
+    }
+   },
+   "MyRegistration": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "CONFIRMED",
+       "WAITING"
+      ]
      }
     }
    },

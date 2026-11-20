@@ -24,7 +24,7 @@ in its CDN and every viewer of a tournament shares one call to the function.
 | `GET /public/players` | The EMA registry: number, name and country. No photos | 1 h |
 | `GET /public/countries` | The countries | 1 h |
 | `GET /public/sync/manifest` | The global revisions | 15 s |
-| `GET /me` (token) | The EMA number of the account and its slot and team in each tournament | none |
+| `GET /me` (token) | The EMA number of the account, its slot and team in each tournament, and its registrations (`CONFIRMED` or `WAITING`) in the tournaments before their draw | none |
 
 A browser keeps an answer for 5 seconds at most (`max-age`), so polling sees new data soon after the CDN does.
 A hidden tournament answers 404 on every public route.

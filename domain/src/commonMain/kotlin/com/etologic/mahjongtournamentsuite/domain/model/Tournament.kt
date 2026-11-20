@@ -162,6 +162,21 @@ data class TournamentMember(
     val onlyTournament: Boolean = false,
 )
 
+/**
+ * A registration of the signed-in player in a tournament that waits for its draw: with a place, or on the waiting
+ * list ([waiting]).
+ */
+data class MyRegistration(
+    val tournamentId: String,
+    val waiting: Boolean,
+)
+
+/** The tournaments of the signed-in player: the slots after the draws and the registrations before them. */
+data class MyTournaments(
+    val slots: List<MyTournamentSlot> = emptyList(),
+    val registrations: List<MyRegistration> = emptyList(),
+)
+
 /** The slot and the team of the signed-in player in one tournament. */
 data class MyTournamentSlot(
     val tournamentId: String,

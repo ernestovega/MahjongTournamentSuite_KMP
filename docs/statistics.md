@@ -31,7 +31,7 @@ The two apps use a wider viewport (1100 dp) for the person view.
 
 ## Where the buttons are
 - **Statistics icon**: `StatisticsIcon` in `:ui` (Insights). Every statistics button, tab and screen uses it. The ranking icon is `Leaderboard`.
-- **Player app**: the second tab "Statistics" of the tournaments screen opens with the player of the account, or with all tournaments and players without one. A fourth tab "Statistics" on the Tournament screen opens with that tournament. The Table and Player screens have a top bar button.
+- **Player app**: the tab "Statistics" of the tournaments screen (the last one, after "In play" and "All") opens with the player of the account, or with all tournaments and players without one. A fourth tab "Statistics" on the Tournament screen opens with that tournament. The Table and Player screens have a top bar button.
 - **Admin app**: the statistics button is on the right of the top bar of the Tournaments, Tournament, Players, Teams and Tables screens.
 
 ## One screen with filters

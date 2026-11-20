@@ -22,6 +22,14 @@ data class DataVersionsManifestDto(
 data class MyTournamentsResponseDto(
     val emaId: String = "",
     val tournaments: List<MyTournamentSlotDto> = emptyList(),
+    val registrations: List<MyRegistrationDto> = emptyList(),
+)
+
+@Serializable
+data class MyRegistrationDto(
+    val tournamentId: String,
+    /** CONFIRMED or WAITING. */
+    val status: String = "",
 )
 
 @Serializable

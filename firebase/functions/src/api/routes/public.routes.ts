@@ -21,7 +21,7 @@ import {
 import { listAllTournaments, tournamentFromSnapshot, type Tournament } from "../../services/tournamentsService";
 import { getUserProfile } from "../../services/usersService";
 import { getRoundClocks } from "../../services/roundClockService";
-import { publicRegistrations, tournamentOfSlug } from "../../services/registrationsService";
+import { publicRegistrations, registrationsOfEma, tournamentOfSlug } from "../../services/registrationsService";
 import { assertSafeDocumentId, badRequest, notFound } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { rateLimit } from "../middleware/rateLimit";
@@ -284,8 +284,10 @@ export function meRouter(): Router {
         return [{ tournamentId, playerId: Number(slot.get("id") ?? slot.id), teamId: Number(slot.get("team") ?? 0) }];
       });
     }
+    // The tournaments before their draw where the person is registered, so the player app marks them too.
+    const registrations = await registrationsOfEma(emaId);
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ emaId, tournaments: slots });
+    res.status(200).json({ emaId, tournaments: slots, registrations });
   }));
 
   return router;

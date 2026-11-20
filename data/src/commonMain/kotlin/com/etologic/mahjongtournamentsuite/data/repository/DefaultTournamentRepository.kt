@@ -47,7 +47,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
+import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
@@ -1009,10 +1011,19 @@ class DefaultTournamentRepository(
     /** Whose cache a read fills. Public answers are the same for everyone. */
     private suspend fun readOwner(): String = if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
 
-    override suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = runCatching {
-        if (authRepository.currentSession() == null) return AppResult.Success(emptyList())
+    override suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = when (val mine = listMyTournaments()) {
+        is AppResult.Success -> AppResult.Success(mine.value.slots)
+        is AppResult.Failure -> mine
+    }
+
+    override suspend fun listMyTournaments(): AppResult<MyTournaments> = runCatching {
+        if (authRepository.currentSession() == null) return AppResult.Success(MyTournaments())
         withFreshIdToken { token ->
-            backendApi.myTournaments(token).tournaments.map { MyTournamentSlot(it.tournamentId, it.playerId, it.teamId) }
+            val response = backendApi.myTournaments(token)
+            MyTournaments(
+                slots = response.tournaments.map { MyTournamentSlot(it.tournamentId, it.playerId, it.teamId) },
+                registrations = response.registrations.map { MyRegistration(it.tournamentId, waiting = it.status == "WAITING") },
+            )
         }
     }.fold(
         onSuccess = { AppResult.Success(it) },

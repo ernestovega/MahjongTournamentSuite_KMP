@@ -23,7 +23,7 @@ Todo es una aplicación Express dentro de una sola Cloud Function (`firebase/fun
 | Prefijo | Para qué | Fichero |
 |---|---|---|
 | `/auth` | Iniciar sesión, renovar token, mi perfil | `auth.routes.ts` |
-| `/me` | Mis huecos en los torneos | `public.routes.ts` |
+| `/me` | Mis huecos en los torneos y mis inscripciones (con plaza o en espera) | `public.routes.ts` |
 | `/public` | Todo lo que ve cualquiera, sin cuenta, con caché CDN | `public.routes.ts` |
 | `/player` | El jugador apunta manos, asientos y penalizaciones en su mesa | `player.routes.ts` |
 | `/tournaments` | Gestión de torneos: jugadores, equipos, mesas, reloj, exportaciones, estadísticas | `tournaments.routes.ts` |

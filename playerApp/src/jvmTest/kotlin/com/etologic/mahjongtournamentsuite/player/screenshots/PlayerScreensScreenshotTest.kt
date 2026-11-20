@@ -23,6 +23,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
+import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
@@ -33,6 +37,7 @@ import com.etologic.mahjongtournamentsuite.player.CreditsDialog
 import com.etologic.mahjongtournamentsuite.player.MainTab
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
+import com.etologic.mahjongtournamentsuite.player.MyTournamentMark
 import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.RoundMoment
@@ -128,7 +133,7 @@ class PlayerScreensScreenshotTest {
                     position = 1, of = 16, points = 12.0, score = 210, teamRank = 2, teamOf = 4, teamPoints = 18.5,
                     chickenRank = 3, chickenHands = 2, chickenOf = 7, bestHandRank = 1, bestHand = 88, bestHandOf = 64,
                 ),
-                mine = true,
+                mark = MyTournamentMark.PLAYS,
             ) {}
             TournamentCard(
                 ScreenshotData.tournament(COMPLETED),
@@ -136,12 +141,12 @@ class PlayerScreensScreenshotTest {
                     position = 7, of = 16, points = 4.5, score = -35, teamRank = 4, teamOf = 4, teamPoints = -6.0,
                     chickenRank = 5, chickenHands = 1, chickenOf = 9, bestHandRank = 12, bestHand = 32, bestHandOf = 64,
                 ),
-                mine = true,
+                mark = MyTournamentMark.PLAYS,
             ) {}
             TournamentCard(
                 ScreenshotData.tournament(INDIVIDUAL),
                 TournamentStanding(position = 3, of = 16, points = 9.0, score = 120, bestHandRank = 2, bestHand = 64, bestHandOf = 64),
-                mine = true,
+                mark = MyTournamentMark.PLAYS,
             ) {}
         }
     }
@@ -310,6 +315,33 @@ class PlayerScreensScreenshotTest {
         ready = { waitForText("Berlin Spring 2099", substring = true) },
     ) { nav -> TournamentsScreen(nav) }
 
+    /**
+     * The In play tab of an account that plays now in [ONGOING] (it ends in 2099 here, so it is in play): only its own
+     * tournament in play, with the chip of the own tournaments on.
+     */
+    @Test
+    fun tournamentsLiveTab() = playerScreenshots(
+        "tournaments-live-tab",
+        modules = { playerModules(tournaments = MineTournamentRepository()) },
+        ready = { openStartTab("tournaments_tab_live") },
+    ) { nav -> TournamentsScreen(nav) }
+
+    /** The All tab of the same account: no borders, and the marks of every own tournament (plays, played, has a place). */
+    @Test
+    fun tournamentsMine() = playerScreenshots(
+        "tournaments-mine",
+        modules = { playerModules(tournaments = MineTournamentRepository()) },
+        ready = { openStartTab("tournaments_tab_all") },
+    ) { nav -> TournamentsScreen(nav) }
+
+    private fun ComposeUiTest.openStartTab(key: String) {
+        val title = playerText(key)
+        waitForText(title)
+        waitForText(playerText("tournament_mark_plays"))
+        onAllNodesWithText(title).onFirst().performClick()
+        waitForIdle()
+    }
+
     @Test
     fun tableCompleted() = playerScreenshots("table-completed", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav ->
         TableScreen(nav, ONGOING, roundId = 1, tableId = 1)
@@ -383,3 +415,25 @@ private class RegistrationTournamentRepository :
     ScreenshotTournamentRepository(
         tournaments = ScreenshotData.tournaments.map { if (it.id == UPCOMING) ScreenshotData.registrationTournament else it },
     )
+
+/**
+ * The tournaments of an account: it plays now in [ONGOING] (in play until 2099), played [COMPLETED] and has a place
+ * in [UPCOMING] before its draw.
+ */
+private class MineTournamentRepository :
+    ScreenshotTournamentRepository(
+        tournaments = ScreenshotData.tournaments.map {
+            when (it.id) {
+                ONGOING -> it.copy(eventEndDate = "2099-12-31")
+                UPCOMING -> ScreenshotData.registrationTournament
+                else -> it
+            }
+        },
+    ) {
+    override suspend fun listMyTournaments(): AppResult<MyTournaments> = AppResult.Success(
+        MyTournaments(
+            slots = listOf(MyTournamentSlot(ONGOING, 1, 1), MyTournamentSlot(COMPLETED, 1, 1)),
+            registrations = listOf(MyRegistration(UPCOMING, waiting = false)),
+        ),
+    )
+}

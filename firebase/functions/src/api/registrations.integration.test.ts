@@ -165,6 +165,8 @@ describe("registrations", () => {
     const result = await registerSignedIn(id, { foodRestrictions: "Celiac", consent: true });
     assert.equal(result.status, 200, JSON.stringify(result.body));
     assert.equal((result.body as { status: string }).status, "CONFIRMED");
+    const me = (await server.request("GET", "/me", { token: result.account.token })).body as { registrations: Array<{ tournamentId: string; status: string }> };
+    assert.deepEqual(me.registrations.filter((item) => item.tournamentId === id), [{ tournamentId: id, status: "CONFIRMED" }]);
     const list = await publicList(id);
     assert.equal(list.registrations.length, 1);
     assert.equal(list.registrations[0].emaId, result.emaId);
@@ -240,6 +242,9 @@ describe("registrations", () => {
     const fifth = await registerSignedIn(id);
     assert.equal((fifth.body as { status: string; position: number }).status, "WAITING");
     assert.equal((fifth.body as { position: number }).position, 1);
+    // The account finds the tournament among its own, on the waiting list.
+    const me = (await server.request("GET", "/me", { token: fifth.account.token })).body as { registrations: Array<{ tournamentId: string; status: string }> };
+    assert.deepEqual(me.registrations.filter((item) => item.tournamentId === id), [{ tournamentId: id, status: "WAITING" }]);
     assert.match(sent[0].subject, /waiting list/);
     let list = await publicList(id);
     assert.equal(list.settings.confirmed, 4);
@@ -261,6 +266,8 @@ describe("registrations", () => {
     sent.length = 0;
     const cancel = await server.request("DELETE", `/registrations/${id}/me`, { token: first.account.token });
     assert.equal(cancel.status, 200);
+    const me = (await server.request("GET", "/me", { token: first.account.token })).body as { registrations: Array<{ tournamentId: string }> };
+    assert.equal(me.registrations.some((item) => item.tournamentId === id), false);
     assert.deepEqual(sent.map((email) => email.to).sort(), [first.account.email.toLowerCase(), "org@example.test"].sort());
     const organization = sent.find((email) => email.to === "org@example.test");
     assert.match(organization?.subject ?? "", /Baja en Registration open/);

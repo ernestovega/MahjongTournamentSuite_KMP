@@ -121,8 +121,14 @@ class PlayerTournamentPresenter(
         if (keys.any { it == null }) null else keys.joinToString(",")
     }
 
-    /** The ids of the tournaments where the signed-in account plays. Empty without an account. */
-    suspend fun myTournamentIds(): Set<String> = (tournamentRepository.listMyTournamentSlots() as? AppResult.Success)?.value.orEmpty().mapTo(mutableSetOf()) { it.tournamentId }
+    /**
+     * The tournaments of the signed-in account, each with its mark: the ones where it plays or played, and the ones
+     * before their draw where it is registered. Empty without an account.
+     */
+    internal suspend fun myTournamentMarks(): Map<String, MyTournamentMark> {
+        val mine = (tournamentRepository.listMyTournaments() as? AppResult.Success)?.value ?: return emptyMap()
+        return myTournamentMarksOf(mine)
+    }
 
     /**
      * Loads the tournament. The repositories check the revision first and load only what changed.

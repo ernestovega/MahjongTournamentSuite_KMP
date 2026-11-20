@@ -197,7 +197,12 @@
     <string name="green_book_offline">The Green Book in your language could not be downloaded.\nThe English version opens instead.</string>
     <string name="tournaments_title">Tournaments</string>
     <string name="tournaments_no_match">No tournament matches the filters.</string>
-    <string name="tournament_you_play">You play in this tournament</string>
+    <string name="tournament_mark_plays">You play</string>
+    <string name="tournament_mark_played">You played</string>
+    <string name="tournament_mark_registered">You have a place</string>
+    <string name="tournament_mark_waiting">Waiting list</string>
+    <string name="tournaments_tab_live">In play</string>
+    <string name="tournaments_tab_all">All</string>
     <string name="table_sign_in_to_enter_hands">Sign in to write down the hands of your table</string>
     <string name="filter_search">Search by name, city or venue</string>
     <string name="filter_country">Country</string>

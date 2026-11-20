@@ -934,6 +934,23 @@ export async function tournamentOfSlug(slug: string): Promise<string> {
   return tournamentId;
 }
 
+/**
+ * The registrations of a person in the tournaments that wait for their draw, with a place or on the waiting list.
+ * A pending registration (its email is not confirmed yet) is left out. After the draw the person has a slot instead.
+ */
+export async function registrationsOfEma(emaId: string): Promise<Array<{ tournamentId: string; status: "CONFIRMED" | "WAITING" }>> {
+  if (emaId === "") return [];
+  const pending = await db.collection("tournaments").where("drawPending", "==", true).get();
+  if (pending.empty) return [];
+  const snapshots = await db.getAll(...pending.docs.map((doc) => doc.ref.collection(REGISTRATIONS).doc(emaId)));
+  return snapshots.flatMap((snapshot) => {
+    const status = snapshot.exists ? snapshot.get("status") : null;
+    const tournamentId = snapshot.ref.parent.parent?.id;
+    if ((status !== "CONFIRMED" && status !== "WAITING") || tournamentId == null) return [];
+    return [{ tournamentId, status }];
+  });
+}
+
 /** Removes the pending registrations whose link is too old. */
 export async function removeExpiredPending(tournament: TournamentForRegistrations, nowMs: number): Promise<number> {
   const pending = await tournament.ref.collection(REGISTRATIONS).where("status", "==", "PENDING").get();

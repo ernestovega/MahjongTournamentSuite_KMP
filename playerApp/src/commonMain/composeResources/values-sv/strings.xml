@@ -197,7 +197,12 @@
     <string name="green_book_offline">Green Book på ditt språk kunde inte laddas ner.\nDen engelska versionen öppnas i stället.</string>
     <string name="tournaments_title">Turneringar</string>
     <string name="tournaments_no_match">Ingen turnering matchar filtren.</string>
-    <string name="tournament_you_play">Du spelar i den här turneringen</string>
+    <string name="tournament_mark_plays">Du spelar</string>
+    <string name="tournament_mark_played">Du spelade</string>
+    <string name="tournament_mark_registered">Du har en plats</string>
+    <string name="tournament_mark_waiting">Väntelista</string>
+    <string name="tournaments_tab_live">Pågår</string>
+    <string name="tournaments_tab_all">Alla</string>
     <string name="table_sign_in_to_enter_hands">Logga in för att föra in händerna vid ditt bord</string>
     <string name="filter_search">Sök på namn, stad eller spelplats</string>
     <string name="filter_country">Land</string>

@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Schedule
@@ -123,7 +124,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
@@ -236,6 +236,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
+import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.status_finished
 import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
@@ -260,10 +261,15 @@ import mahjongtournamentsuite.playerapp.generated.resources.team_hide_players
 import mahjongtournamentsuite.playerapp.generated.resources.team_n
 import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_logo_of
-import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_played
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_plays
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_registered
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_waiting
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_tab_all
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_tab_live
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -454,12 +460,18 @@ fun TournamentsScreen(navController: NavHostController) {
     var message by remember { mutableStateOf<UiText?>(null) }
     // The place of the player in each tournament that started. It fills in while the list is on screen.
     var standings by remember { mutableStateOf<Map<String, TournamentStanding>>(emptyMap()) }
-    var tab by rememberPersistentInt("tournaments-tab", 0)
+    // The chosen tab. The In play tab shows only while a tournament is in play. A new key, so an old saved index of
+    // the two tabs before it does not open the wrong one.
+    var tabId by rememberPersistentInt("tournaments-tab-v2", StartTab.ALL.ordinal)
+    // The own tournaments in play are filtered by default in the In play tab. Null until the person changes it.
+    var liveMineOnly by remember { mutableStateOf<Boolean?>(null) }
     // The statistics tab tells this screen when it loads, so the progress bar under the top bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
     // Every public tournament shows. With an account, its own tournaments are marked and can be filtered.
     var signedIn by remember { mutableStateOf(false) }
     var mine by remember { mutableStateOf<Set<String>>(emptySet()) }
+    // How the account takes part in each own tournament: it plays or played, or it is registered before the draw.
+    var marks by remember { mutableStateOf<Map<String, MyTournamentMark>>(emptyMap()) }
     var myEmaId by remember { mutableStateOf<String?>(null) }
     var filterText by rememberPersistentText("tournaments-filter", null)
     val filter = TournamentFilter.decode(filterText)
@@ -467,7 +479,8 @@ fun TournamentsScreen(navController: NavHostController) {
     LaunchedEffect(Unit) {
         signedIn = session.hasSession()
         if (signedIn) {
-            mine = tournaments.myTournamentIds()
+            marks = tournaments.myTournamentMarks()
+            mine = marks.keys
             myEmaId = session.myEmaId()
         }
     }
@@ -521,6 +534,19 @@ fun TournamentsScreen(navController: NavHostController) {
         }.toMap()
     }
 
+    val anyLive = items.orEmpty().any { statusOf(it) == TournamentStatus.IN_PROGRESS }
+    val ownLive = items.orEmpty().any { it.id in mine && statusOf(it) == TournamentStatus.IN_PROGRESS }
+    val tabs = listOfNotNull(StartTab.LIVE.takeIf { anyLive }, StartTab.ALL, StartTab.STATS)
+    val tab = StartTab.entries.getOrNull(tabId)?.takeIf { it in tabs } ?: StartTab.ALL
+    // The app opens on the In play tab when the account plays a tournament now, once each time the app starts, so
+    // coming back from a tournament keeps the tab that the person chose.
+    LaunchedEffect(ownLive) {
+        if (ownLive && !StartTab.liveOpened) {
+            StartTab.liveOpened = true
+            tabId = StartTab.LIVE.ordinal
+        }
+    }
+
     // The tab rows hide when the content scrolls down and show when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
     val account = rememberAccountActions(navController)
@@ -529,7 +555,7 @@ fun TournamentsScreen(navController: NavHostController) {
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),
         actions = { InfoTopBarButtons(navController) },
-        isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
+        isLoading = (items == null && message == null) || (tab == StartTab.STATS && statisticsLoading),
         autoFocusFirst = false,
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
@@ -540,18 +566,22 @@ fun TournamentsScreen(navController: NavHostController) {
                 HideOnScrollTabs(tab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         MtsTabRow(
-                            selectedTabIndex = tab,
+                            selectedTabIndex = tabs.indexOf(tab),
                             modifier = Modifier.widthIn(max = 720.dp),
                         ) {
-                            listOf(stringResource(Res.string.tournaments_title), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
+                            tabs.forEach { option ->
                                 CompactTab(
-                                    selected = tab == index,
-                                    onClick = { tab = index },
-                                    title = title,
-                                    trackingName = if (index == 0) "Tournaments" else "Statistics",
+                                    selected = tab == option,
+                                    onClick = { tabId = option.ordinal },
+                                    title = stringResource(option.title),
+                                    trackingName = option.trackingName,
                                     icon = {
                                         Icon(
-                                            if (index == 0) Icons.Default.EmojiEvents else StatisticsIcon,
+                                            when (option) {
+                                                StartTab.LIVE -> Icons.Default.PlayCircle
+                                                StartTab.ALL -> Icons.Default.EmojiEvents
+                                                StartTab.STATS -> StatisticsIcon
+                                            },
                                             contentDescription = null,
                                             Modifier.size(20.dp),
                                         )
@@ -563,9 +593,9 @@ fun TournamentsScreen(navController: NavHostController) {
                 }
                 Column(
                     Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
-                        .then(if (tab == 1) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth()),
+                        .then(if (tab == StartTab.STATS) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth()),
                 ) {
-                    if (tab == 1) {
+                    if (tab == StartTab.STATS) {
                         MyStatisticsTab { statisticsLoading = it }
                         return@Column
                     }
@@ -578,8 +608,16 @@ fun TournamentsScreen(navController: NavHostController) {
                         }
                         // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                         else -> {
-                            val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(mine, ::statusOf)
-                            val listState = rememberPersistentLazyListState("tournaments")
+                            val liveOnly = tab == StartTab.LIVE
+                            val mineOnlyLive = liveMineOnly ?: ownLive
+                            val shown = if (liveOnly) {
+                                // The In play tab: the tournaments in play, only the own ones while its chip is on.
+                                list.filter { statusOf(it) == TournamentStatus.IN_PROGRESS && (!mineOnlyLive || it.id in mine) }.sortedForList(mine, ::statusOf)
+                            } else {
+                                list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(mine, ::statusOf)
+                            }
+                            // Each tab keeps its own scroll.
+                            val listState = rememberPersistentLazyListState(if (liveOnly) "tournaments-live" else "tournaments")
                             Box(Modifier.weight(1f)) {
                                 LazyColumn(
                                     state = listState,
@@ -589,12 +627,19 @@ fun TournamentsScreen(navController: NavHostController) {
                                     contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                                 ) {
                                     item(key = "filters") {
-                                        TournamentFilterBar(
-                                            filter = filter,
-                                            onChange = { filterText = it.encode() },
-                                            tournaments = list,
-                                            signedIn = signedIn,
-                                        )
+                                        if (liveOnly) {
+                                            // Only the chip of the own tournaments. Without an account there is nothing to filter.
+                                            if (signedIn) {
+                                                Chip(stringResource(Res.string.scope_my_tournaments), mineOnlyLive) { liveMineOnly = !mineOnlyLive }
+                                            }
+                                        } else {
+                                            TournamentFilterBar(
+                                                filter = filter,
+                                                onChange = { filterText = it.encode() },
+                                                tournaments = list,
+                                                signedIn = signedIn,
+                                            )
+                                        }
                                     }
                                     if (shown.isEmpty()) {
                                         item(key = "no-match") {
@@ -602,7 +647,7 @@ fun TournamentsScreen(navController: NavHostController) {
                                         }
                                     }
                                     items(shown, key = { it.id }) { tournament ->
-                                        TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
+                                        TournamentCard(tournament, standings[tournament.id], mark = marks[tournament.id]) {
                                             navController.navigate(TournamentRoute(tournament.id))
                                         }
                                     }
@@ -628,6 +673,19 @@ fun TournamentsScreen(navController: NavHostController) {
 @Composable
 private fun EmptyState(icon: ImageVector, title: String, message: String) {
     AppEmptyState(icon, title, message, compact = true)
+}
+
+/** The tabs of the start screen. [LIVE] shows only while a tournament is in play. */
+internal enum class StartTab(val title: StringResource, val trackingName: String) {
+    LIVE(Res.string.tournaments_tab_live, "In play"),
+    ALL(Res.string.tournaments_tab_all, "Tournaments"),
+    STATS(Res.string.stats_title, "Statistics"),
+    ;
+
+    companion object {
+        /** True once the app opened the In play tab by itself, so it does it once each time the app starts. */
+        var liveOpened = false
+    }
 }
 
 internal enum class TournamentStatus(val label: StringResource) {
@@ -701,6 +759,42 @@ private fun StatusChip(status: TournamentStatus) {
     )
 }
 
+/** The text of the mark of an own tournament: it plays or played, or it has a place or waits before the draw. */
+private fun MyTournamentMark.label(status: TournamentStatus?): StringResource = when (this) {
+    MyTournamentMark.PLAYS -> if (status == TournamentStatus.FINISHED) Res.string.tournament_mark_played else Res.string.tournament_mark_plays
+    MyTournamentMark.REGISTERED -> Res.string.tournament_mark_registered
+    MyTournamentMark.WAITING -> Res.string.tournament_mark_waiting
+}
+
+/**
+ * The mark of an own tournament: a small filled pill with a person and a short text, beside the status. Every
+ * tournament where the account plays, played or is registered has it.
+ */
+@Composable
+private fun MyTournamentMarkChip(mark: MyTournamentMark, status: TournamentStatus?) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        Modifier.clip(CircleShape).background(colors.primaryContainer).padding(start = 6.dp, end = 10.dp, top = 2.dp, bottom = 2.dp)
+            .testTag("tournament-mark"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            if (mark == MyTournamentMark.PLAYS) Icons.Default.Person else Icons.Default.HowToReg,
+            contentDescription = null,
+            Modifier.size(16.dp),
+            tint = colors.onPrimaryContainer,
+        )
+        Text(
+            stringResource(mark.label(status)),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onPrimaryContainer,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
 /** The logo of the tournament. A neutral box with a trophy shows while the tournament has no logo. */
 @Composable
 private fun TournamentLogo(tournament: Tournament) {
@@ -731,7 +825,12 @@ private fun TournamentLogo(tournament: Tournament) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, mine: Boolean = false, onClick: () -> Unit) {
+internal fun TournamentCard(
+    tournament: Tournament,
+    standing: TournamentStanding?,
+    mark: MyTournamentMark? = null,
+    onClick: () -> Unit,
+) {
     var expanded by remember(tournament.id) { mutableStateOf(false) }
     val status = statusOf(tournament)
     // A tournament in progress and an upcoming tournament have an accent color. A finished tournament has none.
@@ -750,30 +849,23 @@ internal fun TournamentCard(tournament: Tournament, standing: TournamentStanding
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        // A tournament in progress has a border with the accent color of its status chip.
-        border = accent?.let { BorderStroke(2.dp, it) },
+        // No border (Ernesto, 20-nov): the status and the Open button keep the color of the status.
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
                 // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
-                    if (status != null || mine) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (status != null || mark != null) {
+                        // On a narrow phone the mark goes under the status when both do not fit in one line.
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing),
+                            itemVerticalAlignment = Alignment.CenterVertically,
+                        ) {
                             if (status != null) StatusChip(status)
                             // The own tournaments are marked, so they stand out in the list of all tournaments.
-                            if (mine) {
-                                // The tooltip says what the icon means. A tap shows it and does not open the tournament.
-                                val youPlay = stringResource(Res.string.tournament_you_play)
-                                AppTooltipBox(youPlay) {
-                                    Box(
-                                        Modifier.size(24.dp).clip(CircleShape).clickable(onClickLabel = youPlay) { toggleTooltip() },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(Icons.Default.Person, contentDescription = youPlay, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                }
-                            }
+                            if (mark != null) MyTournamentMarkChip(mark, status)
                         }
                     }
                     Text(

@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
+import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
@@ -229,4 +230,10 @@ interface TournamentRepository {
 
     /** The tournaments where the signed-in account plays, with its slot and team. Empty without an account. */
     suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = AppResult.Success(emptyList())
+
+    /** The slots of [listMyTournamentSlots] and the registrations of the account in tournaments before their draw. */
+    suspend fun listMyTournaments(): AppResult<MyTournaments> = when (val slots = listMyTournamentSlots()) {
+        is AppResult.Success -> AppResult.Success(MyTournaments(slots = slots.value))
+        is AppResult.Failure -> slots
+    }
 }

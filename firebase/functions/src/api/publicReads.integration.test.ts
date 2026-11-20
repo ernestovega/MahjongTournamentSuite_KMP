@@ -134,7 +134,7 @@ describe("what anyone can read without an account", () => {
     const editor = await createAccount({ role: "EDITOR" });
     const { body } = await get("/me", editor.token);
 
-    assert.deepEqual(body, { emaId: "", tournaments: [] });
+    assert.deepEqual(body, { emaId: "", tournaments: [], registrations: [] });
   });
   it("shows a person who asked to stay hidden only as a number", async () => {
     await db.doc("emaPlayerRegistry/20000001").update({ hiddenFromPublic: true });
