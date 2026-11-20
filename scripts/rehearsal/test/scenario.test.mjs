@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { eligiblePlayers, makePlan, plannedStart, returningPlayers, SCENARIOS, slotKind } from "../scenario.mjs";
+import { accountsToFreeUp, eligiblePlayers, makePlan, plannedStart, returningPlayers, SCENARIOS, slotKind } from "../scenario.mjs";
 import { ENV, planStaging, registry, withEnv, withFetch } from "./support.mjs";
 
 const planFor = (args, players = registry(300), users = []) => withEnv(ENV, () => withFetch(planStaging(players, users), () => makePlan(args)));
@@ -162,4 +162,27 @@ test("with no free player, every player comes back from an earlier game day", as
   // With 5 free players, those 5 are the new ones.
   const { plan: few } = await planFor({ scenario: "large" }, players, users.slice(5));
   assert.equal(few.slots.filter((slot) => !slot.returning).length, 5);
+});
+
+test("with too few free players, the accounts of the oldest game days are deleted, so new players are invited again", async () => {
+  const players = registry(300);
+  const users = players.map((player, index) => ({
+    uid: `u${index}`, emaId: player.emaId,
+    email: `mailbox+gd${index < 100 ? "1101" : "1118"}old-s${String(index + 1).padStart(3, "0")}@example.test`,
+  }));
+  const deleted = [];
+  const { plan } = await withEnv(ENV, () => withFetch(planStaging(players, users, deleted), () => makePlan({ scenario: "small" })));
+  // Small has 24 players: 6 new and 2 with an account made in Users need free EMA players.
+  assert.equal(deleted.length, 8);
+  assert.ok(deleted.every((uid) => Number(uid.slice(1)) < 100), "the oldest game day goes first");
+  assert.equal(plan.slots.filter((slot) => !slot.returning).length, 8);
+  assert.ok(plan.slots.filter((slot) => !slot.returning).every((slot) => slot.email.includes(plan.tag)));
+});
+
+test("the accounts to free up keep enough players of earlier game days and need a uid", () => {
+  const back = Array.from({ length: 10 }, (_, index) => ({ uid: `u${index}`, email: `m+gd11${10 + index}x-s001@d` }));
+  assert.deepEqual(accountsToFreeUp(back, 5, 4, 3), []);
+  assert.deepEqual(accountsToFreeUp(back, 0, 4, 3).map((player) => player.uid), ["u0", "u1", "u2", "u3"]);
+  assert.equal(accountsToFreeUp(back, 0, 20, 8).length, 2);
+  assert.deepEqual(accountsToFreeUp([{ email: "m+gd1101x-s001@d" }], 0, 1, 0), []);
 });

@@ -90,8 +90,34 @@ export function returningPlayers(registryPlayers, users, mailbox) {
     const email = String(user.email ?? "").toLowerCase();
     const player = allowed.get(user.emaId);
     if (user.disabled || player == null || !pattern.test(email)) return [];
-    return [{ ...player, email }];
+    return [{ ...player, email, ...(user.uid ? { uid: user.uid } : {}) }];
   });
+}
+
+/**
+ * The accounts of earlier game days to delete so that [wanted] EMA players are free: the oldest game days first (by the
+ * date in the tag of the email, gdMMDD), and never so many that fewer than [keep] players of earlier game days stay.
+ * Deleting an account leaves its EMA player and the tournaments it played; the EMA player is then free for a new
+ * player, so each game day invites new accounts again (approved by Ernesto, 20 November 2026).
+ */
+export function accountsToFreeUp(returning, freeCount, wanted, keep) {
+  const missing = wanted - freeCount;
+  if (missing <= 0) return [];
+  const tagOf = (player) => (/\+gd(\d{4})/.exec(player.email)?.[1] ?? "9999");
+  const oldest = [...returning].sort((a, b) => tagOf(a).localeCompare(tagOf(b)) || a.email.localeCompare(b.email));
+  return oldest.slice(0, Math.max(0, Math.min(missing, returning.length - keep))).filter((player) => player.uid);
+}
+
+/** Deletes the accounts in Users, as the bot admin, at most 50 a request (the limit of the server). */
+async function deleteAccounts(api, token, accounts) {
+  let deleted = 0;
+  for (let start = 0; start < accounts.length; start += 50) {
+    const uids = accounts.slice(start, start + 50).map((account) => account.uid);
+    const reply = await api.call("POST", "/admin/users/delete", { token, body: { uids }, label: "admin POST users delete" });
+    if (reply.status !== 200) throw new Error(`Deleting accounts of earlier game days: ${reply.status}`);
+    deleted += (reply.json.results ?? []).filter((result) => result.outcome === "DELETED").length;
+  }
+  return deleted;
 }
 
 /** The players of the registry that a scenario may seat: see [freePlayers]. */
@@ -136,7 +162,16 @@ export async function makePlan(args) {
   const admin = new Session(api, rehearsalEmail(baseEmail, "botadmin"), password);
   if (!(await admin.signIn())) throw new Error("The bot admin could not sign in.");
   // The EMA guests (people without an EMA number of their own) play too: two of them, when the registry has them.
-  const { free: all, returning: earlier } = await freePlayers(api, admin.token, mailbox);
+  let { free: all, returning: earlier } = await freePlayers(api, admin.token, mailbox);
+  // The new players and those with an account made in Users need free EMA players. When the registry has too few, the
+  // accounts of the oldest game days are deleted, and their EMA players are free again.
+  const wantedFree = Array.from({ length: size.players }, (_, index) => slotKind(index + 1)).filter((kind) => kind !== "returning").length;
+  const freeUp = accountsToFreeUp(earlier, all.length, wantedFree, size.players - wantedFree);
+  if (freeUp.length > 0) {
+    const deleted = await deleteAccounts(api, admin.token, freeUp);
+    console.log(`${deleted} accounts of the oldest game days deleted, so their EMA players are free for new players.`);
+    ({ free: all, returning: earlier } = await freePlayers(api, admin.token, mailbox));
+  }
   const isGuest = (player) => /EMA GUEST/i.test(`${player.firstName} ${player.lastName}`);
   // Who plays: 1 in 4 players is new and gets an invitation, 1 in 20 has an account made by hand in Users before the
   // tournament, and the others played an earlier game day and come back with their account. Without enough of those,

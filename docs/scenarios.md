@@ -64,8 +64,10 @@ A player of a real tournament usually played others before. In a plan (`slotKind
   a network or server failure) and opens that email.
 - Without enough players of earlier game days, new players take their slots. Without enough free EMA players, players
   of earlier game days also take slots of new players, from the last slot up, while 1 in 20 (at least 2) stay new. With
-  fewer free EMA players than that, only those are new, and with none (staging since 20 November 2026) every player comes
-  back: the invitation of a new account is then not part of the run.
+  fewer free EMA players than that, only those are new, and with none every player comes back.
+- Before that, the plan frees EMA players: when the registry has fewer free ones than the new players and the accounts
+  made in Users need, the bot admin deletes in Users the accounts of the oldest game days (the date in the tag of their
+  email). Their EMA players and the tournaments they played stay. So every game day invites new accounts again.
 
 Each new player uses up an EMA player of the registry of staging (a few hundred), as an EMA number has one account. With
 players who come back, a large scenario uses about 70 of them instead of 240.

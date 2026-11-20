@@ -50,11 +50,18 @@ export const ENV = {
 };
 
 /** A staging that answers the plan of a scenario: the bot admin signs in, and the registry has [players]. */
-export function planStaging(players, users = []) {
-  return (method, path) => {
+export function planStaging(players, users = [], deleted = []) {
+  let accounts = [...users];
+  return (method, path, body) => {
     if (method === "POST" && path === "/auth/signIn") return [200, { idToken: "token", refreshToken: "refresh" }];
     if (path === "/ema-player-registry") return [200, { players }];
-    if (path === "/admin/users") return [200, { users }];
+    if (path === "/admin/users") return [200, { users: accounts }];
+    if (method === "POST" && path === "/admin/users/delete") {
+      const uids = new Set(body.uids);
+      deleted.push(...body.uids);
+      accounts = accounts.filter((user) => !uids.has(user.uid));
+      return [200, { results: body.uids.map((uid) => ({ uid, outcome: "DELETED" })) }];
+    }
     return [404, { message: "no route" }];
   };
 }
