@@ -25,7 +25,6 @@ import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
@@ -306,10 +305,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickLastButton("Organizers")
         // A club admin of one organization has it as main organizer already.
         c.waitForText(ORGANIZATION, timeoutMs = 30_000)
-        c.selectField("Add a co-organizer").performClick()
+        c.selectField("Add a co-organizer").tap()
         val choice = hasText(CO_ORGANIZATION) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
         c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(choice).onLast().performClick()
+        c.onAllNodes(choice).onLast().tap()
         c.waitUntil(10_000) { c.onAllNodes(hasContentDescription("Remove $CO_ORGANIZATION", substring = true)).fetchSemanticsNodes().isNotEmpty() }
         c.clickLastButton("Venue")
         chooseCountry("Spain")
@@ -374,10 +373,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun cardMenu(emaId: String, action: String) {
         showCard(emaId)
-        c.onNode(hasContentDescription("More actions for", substring = true) and hasAnyAncestor(registrationCard(emaId))).performClick()
+        c.onNode(hasContentDescription("More actions for", substring = true) and hasAnyAncestor(registrationCard(emaId))).tap()
         val item = hasText(action) and hasClickAction()
         c.waitUntil(10_000) { c.onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(item).onLast().performClick()
+        c.onAllNodes(item).onLast().tap()
     }
 
     /** Add a person: the EMA player from the registry. The places are full, so the person goes to the waiting list. */
@@ -389,7 +388,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.onAllNodes(hasSetTextAction()).onLast().performTextInput(emaId)
         val row = hasClickAction() and hasText(emaId, substring = true) and !hasSetTextAction()
         c.waitUntil(30_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(row).onLast().performClick()
+        c.onAllNodes(row).onLast().tap()
         c.waitForText(emaId, substring = true)
         c.clickLastButton("Save")
         // The summary at the top counts the waiting list: its section is further down the lazy list.
@@ -405,18 +404,18 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
         c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
         runCatching { c.onNode(open).performScrollTo() }
-        c.onNode(open).performClick()
+        c.onNode(open).tap()
         c.waitForText("Registrations are open", timeoutMs = 60_000)
         c.clickButton("Register")
         c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-submit") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        c.onNode(hasTestTag("registration-submit")).performClick()
+        c.onNode(hasTestTag("registration-submit")).tap()
         c.waitForText("on the waiting list", substring = true, timeoutMs = 60_000)
         log("the player registered in the player app and is on the waiting list")
         c.clickLastButton("Close")
         c.waitForText("My registration", timeoutMs = 30_000)
         c.clickButton("My registration")
         c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-cancel")).fetchSemanticsNodes().isNotEmpty() }
-        c.onNode(hasTestTag("registration-cancel")).performClick()
+        c.onNode(hasTestTag("registration-cancel")).tap()
         c.waitForText("Cancel your registration?")
         c.clickButton("Cancel registration")
         c.waitForText("Register", timeoutMs = 60_000)
@@ -536,13 +535,13 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     }
 
     private fun chooseCountry(name: String) {
-        c.selectField("Country").performClick()
+        c.selectField("Country").tap()
         // The menu lists every country and composes only the first ones. Its search field finds the country.
         c.waitUntil(10_000) { c.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
         c.onAllNodes(hasSetTextAction()).onLast().performTextInput(name)
         val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
         c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(option).onLast().performClick()
+        c.onAllNodes(option).onLast().tap()
         c.waitUntil(5_000) { c.onAllNodes(hasText(name) and isDropdownList()).fetchSemanticsNodes().isNotEmpty() }
     }
 
@@ -585,7 +584,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(slot.emaId)
         val row = hasClickAction() and hasText(slot.emaId, substring = true) and !hasSetTextAction()
         c.waitUntil(20_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(row).onLast().performClick()
+        c.onAllNodes(row).onLast().tap()
         c.waitForNoText("ASSIGN EMA PLAYER TO PLAYER ${slot.slot}")
         log("slot ${slot.slot} assigned by hand")
     }
@@ -607,7 +606,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(button) }
             }
             c.waitForIdle()
-            buttons[0].performClick()
+            buttons[0].tap()
             runCatching { c.waitForText(title, timeoutMs = 10_000) }
         }
         c.waitForText(title)
@@ -872,7 +871,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         for (attempt in 1..8) {
             if (c.isOnScreen("Substitute")) break
             c.waitForIdle()
-            c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().performClick()
+            c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).onFirst().tap()
             if (runCatching { c.waitForText("Substitute", timeoutMs = 10_000) }.isSuccess) break
             log("the menu of slot $slotId has no Substitute yet, attempt $attempt")
             closeOpenMenu()
@@ -881,8 +880,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Substitute")
         c.clickLastButton("Substitute")
         c.waitForText("A substitute plays for this player from the chosen round.", substring = true)
-        c.onAllNodes(hasText("The player came late.")).onLast().performClick()
-        c.onAllNodes(hasText("$round") and hasClickAction()).onLast().performClick()
+        c.onAllNodes(hasText("The player came late.")).onLast().tap()
+        c.onAllNodes(hasText("$round") and hasClickAction()).onLast().tap()
         c.clickLastButton("Substitute")
         c.waitForNoText("A substitute plays for this player from the chosen round.", substring = true, timeoutMs = 60_000)
         val saved = E2eApi.call("GET", "/public/tournaments/$tournamentId/players").json().getJSONArray("players")
@@ -943,7 +942,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun clearPlayer(handId: Int, field: String) {
         tapCell(handId, field)
         idle(1_000)
-        c.onAllNodes(hasText("-") and hasClickAction()).onLast().performClick()
+        c.onAllNodes(hasText("-") and hasClickAction()).onLast().tap()
         c.waitForIdle()
         closeOpenMenu()
     }
@@ -1194,7 +1193,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             c.waitForText("Open tables in ended rounds")
             // The checkbox of the header selects every row.
             val boxes = c.onAllNodes(androidx.compose.ui.test.isToggleable())
-            boxes[0].performClick()
+            boxes[0].tap()
             c.clickButton("Close selected")
             c.waitForNoText("Open tables in ended rounds", timeoutMs = 120_000)
             log("the organizer closed the open tables of the ended rounds")

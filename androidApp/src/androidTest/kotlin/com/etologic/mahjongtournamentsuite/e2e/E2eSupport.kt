@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -186,7 +187,20 @@ fun ComposeTestRule.clickButton(text: String) {
     val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
     // A button outside a scroll container is already visible.
     runCatching { button.performScrollTo() }
-    button.performClick()
+    button.tap()
+}
+
+/**
+ * A tap, or the click action of the node when the system refuses the touch ("Failed to inject touch input"): after
+ * another activity (the Timer) the window can lose the focus for a while.
+ */
+fun SemanticsNodeInteraction.tap() {
+    try {
+        performClick()
+    } catch (error: AssertionError) {
+        if (error.message?.contains("Failed to inject touch input") != true) throw error
+        performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+    }
 }
 
 /**
@@ -369,5 +383,5 @@ fun ComposeTestRule.pickSeat(wind: String, which: Int) {
 
 /** Presses the last button with this text. A dialog is the last one in the tree, so this reaches its button, not the page's. */
 fun ComposeTestRule.clickLastButton(text: String) {
-    onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction()).onLast().performClick()
+    onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction()).onLast().tap()
 }
