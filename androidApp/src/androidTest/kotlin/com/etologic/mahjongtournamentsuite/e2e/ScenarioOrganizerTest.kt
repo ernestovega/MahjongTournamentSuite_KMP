@@ -392,8 +392,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText(emaId, substring = true)
         c.clickLastButton("Save")
         // The summary at the top counts the waiting list: its section is further down the lazy list.
-        c.waitForText("1 on the waiting list", substring = true, timeoutMs = 60_000)
-        log("a person added by hand goes to the waiting list")
+        waitForCounts(byHand.getJSONArray("form").length(), 1)
+        log("a person added by hand goes to the waiting list: ${counts()}")
     }
 
     /** The player part: the player opens the tournament, registers (number 2 of the waiting list) and cancels. */
@@ -420,7 +420,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             runCatching { c.waitUntil(20_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() } }
         }
         c.waitUntil(30_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() }
-        log("the player registered in the player app and is on the waiting list")
+        log("the player registered in the player app and is on the waiting list: ${counts()}")
         c.clickLastButton("Close")
         c.waitForText("My registration", timeoutMs = 30_000)
         c.clickButton("My registration")
@@ -430,21 +430,37 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickButton("Cancel registration")
         c.waitForText("Register", timeoutMs = 60_000)
         c.waitForNoText("My registration", timeoutMs = 60_000)
-        log("the player cancelled the registration in the player app")
+        log("the player cancelled the registration in the player app: ${counts()}")
         c.clickButton("Back")
+    }
+
+    /** The counts at the top of the registrations ("16 with a place of 16 · 1 on the waiting list"), for the log. */
+    private fun counts(): String = c.onAllNodes(hasText("with a place of", substring = true)).fetchSemanticsNodes()
+        .joinToString(" | ") { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text } ?: "" }
+        .replace("\n", " ")
+
+    /** Waits for the counts at the top: the headers of the lazy list can be scrolled out of the screen. */
+    private fun waitForCounts(withAPlace: Int, waiting: Int) {
+        val text = "$withAPlace with a place of ${byHand.getInt("places")}"
+        c.waitUntil(60_000) {
+            val now = counts()
+            now.contains(text) && now.contains("$waiting on the waiting list")
+        }
     }
 
     /** A person with a place leaves: the club admin removes it, and gives the place to the first of the waiting list. */
     private fun removeAndGiveThePlace(removed: String, added: String) {
         val count = byHand.getJSONArray("form").length()
-        c.waitForText("With a place ($count)", timeoutMs = 60_000)
+        c.waitUntil(60_000) { counts().contains("with a place of") }
+        log("the club admin opens the registrations again: ${counts()}")
+        waitForCounts(count, 1)
         cardMenu(removed, "Remove")
         c.waitForText("Remove the registration?")
         c.clickLastButton("Remove")
-        c.waitForText("With a place (${count - 1})", timeoutMs = 60_000)
+        waitForCounts(count - 1, 1)
         cardMenu(added, "Give a place")
-        c.waitForText("With a place ($count)", timeoutMs = 60_000)
-        log("a person removed, and the place given to the waiting list")
+        waitForCounts(count, 0)
+        log("a person removed, and the place given to the waiting list: ${counts()}")
     }
 
     private fun closeAndMakeTheDraw() {
