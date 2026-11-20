@@ -293,7 +293,8 @@ class PlayerBot {
       if (deleted) {
         // The player who called the organization writes the right hand again, at once.
         const seatsNow = seatsOf(data.table);
-        if (seatsNow != null && (await this.writeHand(roundId, table, key, seatsNow, "reentry")) === "done") return;
+        // A table of the tie plays only draws, also when a hand is written again.
+        if (seatsNow != null && (await this.writeHand(roundId, table, key, seatsNow, tie ? "reentry-draw" : "reentry")) === "done") return;
         continue;
       }
       if (!(await this.tournament.hasClock(roundId)) && seatsOf(data.table) != null) {

@@ -352,6 +352,7 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       const place = rows.length === 0 ? "-" : (check.ranking.filter((entry) => beats(entry, rows[0])).length + 1);
       add(level,
         `The ${tied.length} players of table ${key} finish level in the ranking (${rows.map((row) => `${round6(row.points)} points, ${row.score}`).join(" / ") || "not ranked"}) and share place ${place}; the places of the server are compared in the check of the places.`);
+      if (!level) detail(key);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);
@@ -364,6 +365,7 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
   if (cases.length > 0) {
     const elsewhere = events.filter((event) => (event.kind === "hand-deleted-seen" || event.kind === "hand-corrected-seen") && !planned.has(event.table));
     add(elsewhere.length === 0, `No hand changed at the other tables (${elsewhere.length}${elsewhere.length ? `: ${[...new Set(elsewhere.map((event) => event.table))].join(", ")}` : ""}).`);
+    for (const key of new Set(elsewhere.map((event) => event.table))) detail(key);
   }
   return lines;
 }

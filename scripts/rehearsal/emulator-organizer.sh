@@ -89,6 +89,10 @@ result="$("${adb_cmd[@]}" shell am instrument -w -r \
   -e scenarioPhase "$phase" \
   com.etologic.mahjongtournamentsuite.staging.test/androidx.test.runner.AndroidJUnitRunner)"
 printf '%s\n' "$result" | tee "$out/instrument.txt"
+# The steps of the organizer go to the job log also when it passes: the Checks can then be read against them.
+sleep 2
+echo "--- steps of the organizer ---"
+grep -E 'SCENARIO' "$out/logcat.txt" | hide_emails || true
 # am instrument ends with OK when the test passed.
 if ! printf '%s\n' "$result" | grep -q '^OK (1 test)'; then
   echo "The organizer failed in the phase $phase." >&2
