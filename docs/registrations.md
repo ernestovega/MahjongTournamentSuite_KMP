@@ -81,6 +81,10 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
 | `tournaments/{id}/registrationTeams/{teamId}` | name, captain |
 | `tournaments/{id}/registrationLog` | the changes for the weekly report |
 | `registrationSlugs/{slug}` | the tournament of a public link |
+
+A new tournament from the app has no link name yet (the app sends an empty one). The API then makes it from the short
+name and the year (`gdr20-2026`), and adds `-2`, `-3`... when another tournament uses that one. The organizer can change
+it later in Registration settings.
 | `personPrivate/{emaId}` | the food restrictions and their consent |
 
 The scheduled function `registrationsHourly` deletes the expired pending registrations, closes on the last day, sends

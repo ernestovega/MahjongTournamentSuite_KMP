@@ -123,6 +123,27 @@ describe("registrations", () => {
     assert.equal((integrity.body as { findings: Array<{ code: string }> }).findings.some((finding) => finding.code === "info.numPlayers"), false);
   });
 
+  it("gives a free link name from the short name when the app sends an empty one", async () => {
+    // The form of a new tournament has no link name: the app sends "" and the API makes one.
+    const shortName = `E${randomUUID().slice(0, 6)}`;
+    const create = () => server.request("POST", "/tournaments", {
+      token: admin.token,
+      body: {
+        name: "Empty link", shortName, organizerIds: ["org-es"], eventStartDate: "2027-03-01", eventEndDate: "2027-03-01",
+        hostCountry: "ES", hostCity: "Madrid", venueName: "Club", venueAddress: "Calle 1", contactEmail: "org@example.test",
+        isTeams: false, numRounds: 1, roundSchedules: fullRoundSchedules(1, "2027-03-01"), registration: { status: "OPEN", maxPlayers: 16, slug: "" },
+      },
+    });
+    const first = await create();
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    const second = await create();
+    assert.equal(second.status, 200, JSON.stringify(second.body));
+    const base = `${shortName.toLowerCase()}-2027`;
+    const slugOf = async (id: string) => ((await server.request("GET", `/public/tournaments/${id}`)).body as { registration: Settings }).registration.slug;
+    assert.equal(await slugOf((first.body as { id: string }).id), base);
+    assert.equal(await slugOf((second.body as { id: string }).id), `${base}-2`);
+  });
+
   it("refuses a link name that another tournament uses", async () => {
     const slug = `same-${randomUUID().slice(0, 6)}`;
     await createTournament({ slug });

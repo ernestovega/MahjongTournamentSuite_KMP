@@ -11,6 +11,7 @@ import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer, validateEmaId } from "./playe
 import { readSpreadsheetRecords } from "./playerImport";
 import {
   isValidEmail,
+  MAX_SLUG_LENGTH,
   normalizeFoodRestrictions,
   parseTeamName,
   PENDING_HOURS,
@@ -895,6 +896,22 @@ export async function updateRegistrationSettings(params: {
 }
 
 /** Keeps the link name for one tournament. Another tournament cannot take it. */
+/**
+ * A free link name from [base]: the base itself, or the base with "-2", "-3"... when another tournament uses it.
+ * The organizer did not type one, so the tournament gets one that works (the claim checks it again).
+ */
+export async function freeSlug(base: string): Promise<string> {
+  for (let n = 1; n <= 50; n++) {
+    const suffix = n === 1 ? "" : `-${n}`;
+    const candidate = `${base.slice(0, MAX_SLUG_LENGTH - suffix.length).replace(/-+$/g, "")}${suffix}`;
+    const current = await db.collection(SLUGS).doc(candidate).get();
+    if (!current.exists) return candidate;
+    const owner = await db.collection("tournaments").doc(String(current.get("tournamentId"))).get();
+    if (!owner.exists) return candidate;
+  }
+  throw conflict("Another tournament uses this link", { code: "SLUG_TAKEN" });
+}
+
 export async function claimSlug(slug: string, tournamentId: string, previous: string | null): Promise<void> {
   await db.runTransaction(async (transaction) => {
     const ref = db.collection(SLUGS).doc(slug);

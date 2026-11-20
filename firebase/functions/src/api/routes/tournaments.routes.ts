@@ -67,6 +67,7 @@ import {
   adminRemoveRegistration,
   adminUpdateRegistration,
   claimSlug,
+  freeSlug,
   importRegistrations,
   updateRegistrationSettings,
 } from "../../services/registrationsService";
@@ -329,7 +330,9 @@ export function tournamentsRouter(): Router {
       let registration: Record<string, unknown> | undefined;
       if (registrationBody) {
         try {
-          const slug = parseSlug(registrationBody.slug ?? defaultSlug(shortName, eventStartDate));
+          // No link name typed (null or empty): the tournament gets one from its short name and year.
+          const typedSlug = String(registrationBody.slug ?? "").trim();
+          const slug = typedSlug === "" ? await freeSlug(parseSlug(defaultSlug(shortName, eventStartDate))) : parseSlug(typedSlug);
           registration = {
             status: registrationBody.status === "CLOSED" ? "CLOSED" : "OPEN",
             maxPlayers: parseMaxPlayers(registrationBody.maxPlayers),
