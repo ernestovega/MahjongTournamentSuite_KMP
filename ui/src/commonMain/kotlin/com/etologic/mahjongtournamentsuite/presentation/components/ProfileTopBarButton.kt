@@ -26,7 +26,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 /**
  * The button of the own profile in the top bar: the round photo and, beside it, the name.
  * With [secondLine], such as the role, the name takes one line and [secondLine] goes under it. Without it, the name can
- * take two lines, and in a three-dots menu or in a bar that shows only icons it is a plain top bar button with the photo.
+ * take two lines. In a three-dots menu or in a bar that shows only icons it is a plain top bar button with the photo,
+ * unless [labeledInMenus] keeps the photo, the name and [secondLine] there too (the admin app, with the role).
  */
 @Composable
 fun ProfileTopBarButton(
@@ -35,8 +36,9 @@ fun ProfileTopBarButton(
     clickLabel: String,
     onClick: () -> Unit,
     secondLine: String? = null,
+    labeledInMenus: Boolean = secondLine != null,
 ) {
-    if (secondLine == null && (LocalTopBarMenu.current != null || !LocalTopBarLabels.current)) {
+    if (!labeledInMenus && (LocalTopBarMenu.current != null || !LocalTopBarLabels.current)) {
         AppTopBarButton(
             text = name,
             icon = Icons.Default.Person,

@@ -32,9 +32,10 @@ import kotlin.test.assertEquals
 private class SessionAuthRepository(
     private val session: AuthSession?,
     private val roles: Set<GlobalUserRole> = setOf(GlobalUserRole.PLAYER),
+    private val emaId: String? = null,
 ) : AuthRepository {
     override suspend fun currentSession(): AuthSession? = session
-    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", alias = "Pat", roles = roles))
+    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", alias = "Pat", emaId = emaId, roles = roles))
     override suspend fun signIn(email: String, password: String): AppResult<AuthSession> = AppResult.Failure(AppError.Network)
     override suspend fun requestPasswordReset(email: String): AppResult<Unit> = AppResult.Failure(AppError.Network)
     override suspend fun savedCredentials(): SavedCredentials? = null
@@ -60,10 +61,14 @@ class AccountButtonUiTest {
 
     private val opened = mutableListOf<SuiteApp>()
 
-    private fun ComposeUiTest.show(session: AuthSession?, roles: Set<GlobalUserRole> = setOf(GlobalUserRole.PLAYER)) = setContent {
+    private fun ComposeUiTest.show(
+        session: AuthSession?,
+        roles: Set<GlobalUserRole> = setOf(GlobalUserRole.PLAYER),
+        emaId: String? = null,
+    ) = setContent {
         MtsTheme(useDarkTheme = false) {
             KoinApplication(application = {
-                modules(module { single { PlayerSessionPresenter(SessionAuthRepository(session, roles), Logger.withTag("ui-test")) } })
+                modules(module { single { PlayerSessionPresenter(SessionAuthRepository(session, roles, emaId), Logger.withTag("ui-test")) } })
             }) {
                 CompositionLocalProvider(LocalSuiteAppSwitcher provides { app: SuiteApp -> opened += app }) {
                     val navController = rememberNavController()
@@ -95,6 +100,21 @@ class AccountButtonUiTest {
         show(session = AuthSession(uid = "u1", idToken = "id", refreshToken = "refresh"))
         waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
         onNodeWithText("Sign in").assertDoesNotExist()
+    }
+
+    @Test
+    fun aPlayerWithAnEmaPlayerSeesTheEmaNumberUnderTheName() = runComposeUiTest {
+        show(session = SignedIn, emaId = "10990136")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("10990136").assertExists()
+    }
+
+    @Test
+    fun aPlayerWithoutAnEmaPlayerSeesOnlyTheName() = runComposeUiTest {
+        show(session = SignedIn)
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
+        waitForIdle()
+        onNodeWithText("10990136").assertDoesNotExist()
     }
 
     @Test

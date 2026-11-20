@@ -83,7 +83,8 @@ class AccountActions(
         when (signedIn) {
             null -> Unit
             true -> {
-                // Like the admin app: the photo and the name, in two lines when it is long. Until the profile loads, the plain button.
+                // Like the admin app: the photo and the name, in two lines when it is long, or in one with the EMA number
+                // under it when the account has an EMA player. Until the profile loads, the plain button.
                 val user = me
                 if (user == null) {
                     AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
@@ -93,6 +94,8 @@ class AccountActions(
                         name = user.alias.trim().ifBlank { user.email.substringBefore("@") },
                         clickLabel = stringResource(Res.string.menu_profile),
                         onClick = ::openProfile,
+                        secondLine = user.emaId?.trim()?.takeIf { it.isNotEmpty() },
+                        labeledInMenus = false,
                     )
                 }
                 if (canManage) SuiteAppSwitchButton(SuiteApp.ADMIN)
