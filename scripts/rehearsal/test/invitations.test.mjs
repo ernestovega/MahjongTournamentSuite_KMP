@@ -61,3 +61,19 @@ test("a returning player skips an email of the earlier game day and waits for th
   }));
   assert.deepEqual(results.map((result) => result.outcome), ["NO_EMAIL"]);
 });
+
+test("a returning player taps Forgot password again when the first answer is a network or server failure", async () => {
+  const plan = { slots: [{ slot: 1, email: "forgot@example.test", returning: true }] };
+  const emails = new Map([["forgot@example.test", { code: "new", at: new Date(Date.now() + 1000).toUTCString() }]]);
+  let resets = 0;
+  const results = await withFetch(async (method, path) => {
+    if (path === "/auth/signIn") return [400, {}];
+    if (path === "/auth/passwordReset") return (resets += 1) === 1 ? [503, {}] : [200, {}];
+    return [200, {}];
+  }, () => openInvitations({
+    plan, slots: [1], password: "secret", minutes: 1,
+    api: new Api("https://api.example.test/api", new Metrics()), pause: async () => {}, openMailbox: fakeMailbox(emails),
+  }));
+  assert.equal(resets, 2);
+  assert.deepEqual(results.map((result) => result.outcome), ["PASSWORD_SET"]);
+});

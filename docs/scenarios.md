@@ -60,7 +60,8 @@ A player of a real tournament usually played others before. In a plan (`slotKind
 - 1 in 20 has an account made by hand in Users before the tournament.
 - The others played an earlier game day and come back with that account (`returning` in the plan): the email of then,
   a reminder instead of an invitation. `invitations.mjs` signs them in with the password of the tests; when it does not
-  work (that game day stopped before its players chose one), the player uses Forgot password and opens that email.
+  work (that game day stopped before its players chose one), the player uses Forgot password (again, up to 3 times, after
+  a network or server failure) and opens that email.
 - Without enough players of earlier game days, new players take their slots. Without enough free EMA players, players
   of earlier game days also take slots of new players, from the last slot up, while 1 in 20 (at least 2) stay new. With
   fewer free EMA players than that, only those are new, and with none (staging since 20 November 2026) every player comes

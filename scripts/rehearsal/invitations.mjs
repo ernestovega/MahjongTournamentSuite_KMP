@@ -35,7 +35,12 @@ async function signInTheReturning({ api, plan, slots, password, results, pause =
     if (await new Session(api, slot.email, password).signIn()) {
       results.push({ slot: slot.slot, outcome: "SIGNED_IN" });
     } else {
-      const reply = await api.call("POST", "/auth/passwordReset", { body: { email: slot.email }, label: "POST passwordReset" });
+      // A network failure or a busy server: the player taps the button again, up to 3 times.
+      let reply = await api.call("POST", "/auth/passwordReset", { body: { email: slot.email }, label: "POST passwordReset" });
+      for (let attempt = 2; attempt <= 3 && (reply.status === 0 || reply.status === 429 || reply.status >= 500); attempt += 1) {
+        await pause(5_000 * attempt);
+        reply = await api.call("POST", "/auth/passwordReset", { body: { email: slot.email }, label: "POST passwordReset" });
+      }
       if (reply.status === 200) waiting.push(slot);
       else results.push({ slot: slot.slot, outcome: "FAILED", error: `Forgot password answered ${reply.status}` });
     }
