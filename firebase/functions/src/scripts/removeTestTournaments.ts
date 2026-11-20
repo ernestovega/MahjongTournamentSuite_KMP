@@ -13,7 +13,10 @@ const applyChanges = process.argv.includes("--apply");
  * players and hands) in output/removed-tournaments-backup-<date>.json.
  */
 const KEEP_PREFIX = "legacy-";
-const KEEP_IDS = new Set(["madrid-open-2026", "madrid-spring-open-2027", "uppsala-mcr-open-2026"]);
+const KEEP_IDS = new Set([
+  "madrid-open-2026", "toledo-mcr-challenge-2026", "alcala-team-cup-2026", "barcelona-mahjong-open-2027",
+  "madrid-spring-open-2027", "uppsala-mcr-open-2026",
+]);
 
 const keeps = (id: string) => id.startsWith(KEEP_PREFIX) || KEEP_IDS.has(id);
 

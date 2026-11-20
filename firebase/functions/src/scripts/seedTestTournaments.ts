@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import { FieldValue } from "firebase-admin/firestore";
@@ -113,6 +114,12 @@ type TournamentSpec = {
    * time of the run, as the script prepareOngoingRound does: the rounds before it are over and it has no clock.
    */
   readyRound?: number;
+  /**
+   * A tournament with open registrations, before its draw (docs/registrations.md): it has no player slots, tables or
+   * teams. The players of the spec are the registered people, in the order of their registration: the first
+   * [maxPlayers] get a place and the rest wait. The registrations have no email, so the seed never mails anyone.
+   */
+  registrations?: { maxPlayers: number | null; closesOn: string; slug: string };
   /** Match time settings. Without it, the tournament uses the defaults (120 minutes, the table stops). */
   match?: { durationMinutes: number; endMode: "STOP" | "FINISH_HAND"; extraMinutes: number; timeZone: string };
 };
@@ -216,7 +223,44 @@ const SEED_ORGANIZATIONS: Array<{
   },
   { id: "seed-org-federacion-es", name: "Federación Española de Mahjong", type: "FEDERATION", country: "ES", primaryColor: "#C62828" },
   { id: "seed-org-uppsala", name: "Uppsala Mahjong Club", type: "CLUB", country: "SE", primaryColor: "#0067A5", logoAsset: "uppsala-mahjong.png" },
+  {
+    id: "seed-org-barcelona", name: "Barcelona Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#6A1B9A",
+    place: { mapUrl: "", name: "Club room", address: "Carrer de Provença 300, 08008 Barcelona", city: "Barcelona" },
+  },
+  { id: "seed-org-asturias", name: "Asturias Mahjong Club", type: "CLUB", country: "ES", primaryColor: "#1565C0" },
 ];
+
+/**
+ * The organizers of production tournaments that the seed does not write (the imported legacy ones, and the ones that
+ * the seed must not write again). The production run gives them these organizers, so no tournament is left without
+ * one. A missing tournament is skipped.
+ */
+const PRODUCTION_ORGANIZERS: Record<string, string[]> = {
+  "legacy-madrid-2017": ["seed-org-madrid"],
+  "legacy-madrid-2018": ["seed-org-madrid"],
+  "legacy-madrid-2025": ["seed-org-madrid", "seed-org-federacion-es"],
+  "madrid-spring-open-2027": ["seed-org-asturias"],
+  "uppsala-mcr-open-2026": ["seed-org-uppsala"],
+};
+
+/** Gives the stored tournaments of [PRODUCTION_ORGANIZERS] their organizers. */
+async function seedProductionOrganizers(): Promise<void> {
+  let changed = 0;
+  for (const [id, organizerIds] of Object.entries(PRODUCTION_ORGANIZERS)) {
+    const snapshot = await db.collection("tournaments").doc(id).get();
+    if (!snapshot.exists) {
+      console.log(`  ${id}: not stored, skipped`);
+      continue;
+    }
+    const current = Array.isArray(snapshot.get("organizerIds")) ? (snapshot.get("organizerIds") as unknown[]).map(String) : [];
+    const same = current.length === organizerIds.length && current.every((value, index) => value === organizerIds[index]);
+    console.log(`  ${id} (${String(snapshot.get("name") ?? "")}): [${current.join(", ")}] -> [${organizerIds.join(", ")}]${same ? " (no change)" : ""}`);
+    if (same || !applyChanges) continue;
+    await snapshot.ref.update({ organizerIds, updatedAt: FieldValue.serverTimestamp() });
+    changed += 1;
+  }
+  if (applyChanges && changed > 0) await db.collection("_meta").doc("dataVersions").set(globalVersionUpdate("tournaments"), { merge: true });
+}
 
 /** Writes the organizations that the chosen tournaments use. */
 async function seedOrganizations(ids: Set<string>): Promise<void> {
@@ -696,20 +740,49 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
 
 /**
  * The tournaments that stay in production. They look like real events, with real EMA players, team names by country
- * and no "Test" in any text. The testers play in all of them but the Uppsala Open. The ongoing one is a big tournament that starts on the
- * day of the seed run and lasts 6 days, so it covers the week. Its rounds start at 10:00, 12:30, 18:00 and 20:30, so the
- * testers can play a round in the morning, in the afternoon and at night. The rounds that started before the seed run
- * are complete and over. The last round that started by the planned times is empty and starts at the time of the seed
- * run, without a clock, so Play in the Timer starts it; the whole schedule moves to make it so. The later rounds are
- * empty. `npm run prepare:ongoing-round` does the same later on the stored tournament, after the testers enter hands.
+ * and no "Test" in any text. The testers play in all of them but the Uppsala Open and the Barcelona Open.
+ *
+ * The ongoing series: three tournaments in a row, of 2 days each, that start on the day of the seed run, so they cover
+ * 6 days. Each day has 7 rounds from 07:00 to 22:00 (Madrid), so the testers can play a round at any time of the day.
+ * The testers play in all three, which never overlap. The rounds whose match time is over at the run are complete,
+ * and the round in play at the run has its clock from its planned start and no hands, so the testers can play it.
+ * The later rounds wait for Play in the Timer.
  */
 const PROD_TIMES = ["09:00", "11:30", "14:00", "16:30"];
-const ONGOING_TIMES = ["10:00", "12:30", "18:00", "20:30"];
-const ONGOING_DAYS = 6;
-const ONGOING_START = TESTER_START;
-const ONGOING_ROUNDS = ONGOING_TIMES.length * ONGOING_DAYS;
-/** The last round that started by the planned times at the seed run. Round 1 when no round started yet. */
-const ONGOING_NOW_ROUND = Math.max(1, ONGOING_TIMES.filter((time) => time <= localSlot(new Date()).startTime).length);
+const SERIES_TIMES = ["07:00", "09:30", "12:00", "14:30", "17:00", "19:30", "22:00"];
+const SERIES_DAYS = 2;
+const SERIES_ROUNDS = SERIES_TIMES.length * SERIES_DAYS;
+const SERIES_START = TESTER_START;
+/** The match time of the series: 120 minutes and 15 to finish the hand. */
+const SERIES_MATCH = { durationMinutes: 120, endMode: "FINISH_HAND" as const, extraMinutes: 15, timeZone: "Europe/Madrid" };
+
+/** The first day of part [part] (0, 1, 2) of the series. */
+const seriesStart = (part: number) => addDays(SERIES_START, part * SERIES_DAYS);
+const seriesSchedule = (part: number) => spread(SERIES_ROUNDS, seriesStart(part), SERIES_TIMES.length, SERIES_TIMES);
+
+/** True when the match time and the extra time of a round of the series are over at the run. The seed runs in Madrid. */
+function seriesRoundIsOver(slot: { date: string; startTime: string }): boolean {
+  const startMs = new Date(`${slot.date}T${slot.startTime}:00`).getTime();
+  return startMs + (SERIES_MATCH.durationMinutes + SERIES_MATCH.extraMinutes) * 60_000 <= Date.now();
+}
+
+/** The rounds that are over are complete, with a few draws and penalties. The others have no hands. */
+function seriesMode(part: number): TournamentSpec["mode"] {
+  const schedule = seriesSchedule(part);
+  return (round, table) => (seriesRoundIsOver(schedule[round - 1])
+    ? { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" }
+    : { kind: "empty" });
+}
+
+function seriesAgenda(part: number): Agenda[] {
+  return [
+    { title: "Registration and welcome coffee", date: seriesStart(part), startTime: "06:30" },
+    ...Array.from({ length: SERIES_DAYS }, (_, day) => [
+      { title: "Lunch break", date: addDays(seriesStart(part), day), startTime: "14:05" },
+      { title: "Dinner break", date: addDays(seriesStart(part), day), startTime: "21:35" },
+    ]).flat(),
+  ];
+}
 
 /** Slots (counted from 1) of the testers. Edgar and Edu share team 1. Héctor and Raúl share team 2. */
 const PROD_TESTER_SLOTS: Record<number, string> = {
@@ -724,6 +797,17 @@ function playersByCountry(countries: Array<[string, number]>): PlayerSpec[] {
     return emaId ? { emaId } : pick;
   });
 }
+
+const ALCALA_TEAMS = [
+  "Cervantes Mahjong", "Los Complutenses", "Dragones del Henares", "Club Alcalá Centro", "Viento de Levante", "Las Cigüeñas",
+  "Mahjong Guadalajara", "Bambú de Torrejón", "Fichas de Coslada", "Tigres de Getafe", "Mahjong Toledo", "Los Ocho Vientos",
+  "Grullas de Segovia", "Mahjong Cuenca",
+  "Les Tuiles de Paris", "Mahjong Strasbourg", "Les Vents du Sud",
+  "Mahjong Napoli", "I Venti di Firenze",
+  "Mahjong Frankfurt", "Drachen Leipzig",
+  "Mahjong Rotterdam",
+  "Mahjong Lisboa", "Dragões do Porto",
+];
 
 const MADRID_OPEN_TEAMS = [
   // Spain: 24 teams
@@ -771,35 +855,113 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     name: "Madrid Mahjong Open 2026",
     shortName: "MMO 2026",
     organizerIds: ["seed-org-madrid", "seed-org-federacion-es"],
-    startDate: ONGOING_START, endDate: addDays(ONGOING_START, ONGOING_DAYS - 1),
+    startDate: seriesStart(0), endDate: addDays(seriesStart(0), SERIES_DAYS - 1),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "organizacion@madridmahjongopen.example",
     isTeams: true,
     teamNames: MADRID_OPEN_TEAMS,
-    numRounds: ONGOING_ROUNDS,
+    numRounds: SERIES_ROUNDS,
     // 96 Spanish players (24 teams) and 104 players from seven countries (26 teams).
     players: playersByCountry([["ESP", 96], ["FRA", 36], ["ITA", 16], ["GER", 16], ["NED", 12], ["POL", 8], ["SWE", 8], ["FIN", 8]]),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(ONGOING_ROUNDS, ONGOING_START, ONGOING_TIMES.length, ONGOING_TIMES),
-    // The rounds leave a free afternoon; the dinner break is at 17:15.
-    agenda: [
-      { title: "Registration and welcome coffee", date: ONGOING_START, startTime: "09:15" },
-      ...Array.from({ length: ONGOING_DAYS }, (_, day) => ({ title: "Dinner break", date: addDays(ONGOING_START, day), startTime: "17:15" })),
-    ],
-    mode: (round, table) => {
-      if (round < ONGOING_NOW_ROUND) return { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" };
-      return { kind: "empty" };
-    },
-    readyRound: ONGOING_NOW_ROUND,
-    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+    schedule: seriesSchedule(0),
+    agenda: seriesAgenda(0),
+    mode: seriesMode(0),
+    match: SERIES_MATCH,
     testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+    avoidPlayersOf: ["uppsala-mcr-open-2026"],
+  },
+  {
+    id: "toledo-mcr-challenge-2026",
+    name: "Toledo MCR Challenge 2026",
+    shortName: "TMC 2026",
+    organizerIds: ["seed-org-federacion-es"],
+    startDate: seriesStart(1), endDate: addDays(seriesStart(1), SERIES_DAYS - 1),
+    hostCountry: "ES", hostCity: "Toledo",
+    venue: {
+      venueName: "Palacio de Congresos El Greco",
+      venueAddress: "Paseo de Recaredo 1, 45004 Toledo",
+      venueMapUrl: "https://www.google.com/maps/search/?api=1&query=Palacio%20de%20Congresos%20El%20Greco%2C%20Toledo",
+    },
+    contactEmail: "info@toledomcrchallenge.example",
+    isTeams: false,
+    numRounds: SERIES_ROUNDS,
+    // 64 players, mostly from Spain and Portugal.
+    players: playersByCountry([["ESP", 40], ["POR", 8], ["FRA", 8], ["ITA", 8]]).map((entry) => (isCountryPick(entry) ? { ...entry, orAny: true } : entry)),
+    countBestHands: true, countChickenHands: true,
+    schedule: seriesSchedule(1),
+    agenda: seriesAgenda(1),
+    mode: seriesMode(1),
+    match: SERIES_MATCH,
+    testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+    avoidPlayersOf: ["uppsala-mcr-open-2026"],
+  },
+  {
+    id: "alcala-team-cup-2026",
+    name: "Alcalá Mahjong Team Cup 2026",
+    shortName: "AMTC 2026",
+    organizerIds: ["seed-org-madrid"],
+    startDate: seriesStart(2), endDate: addDays(seriesStart(2), SERIES_DAYS - 1),
+    hostCountry: "ES", hostCity: "Alcalá de Henares",
+    venue: {
+      venueName: "Centro Sociocultural Gilitos",
+      venueAddress: "Calle Nueva 2, 28801 Alcalá de Henares",
+      venueMapUrl: "https://www.google.com/maps/search/?api=1&query=Alcal%C3%A1%20de%20Henares",
+    },
+    contactEmail: "equipos@alcalamahjong.example",
+    isTeams: true,
+    teamNames: ALCALA_TEAMS,
+    numRounds: SERIES_ROUNDS,
+    // 96 players (24 teams): Spanish teams first, then teams from other countries.
+    players: playersByCountry([["ESP", 56], ["FRA", 12], ["ITA", 8], ["GER", 8], ["NED", 4], ["POR", 8]])
+      .map((entry) => (isCountryPick(entry) ? { ...entry, orAny: true } : entry)),
+    countBestHands: true, countChickenHands: true,
+    schedule: seriesSchedule(2),
+    agenda: seriesAgenda(2),
+    mode: seriesMode(2),
+    match: SERIES_MATCH,
+    testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+    avoidPlayersOf: ["uppsala-mcr-open-2026"],
+  },
+  {
+    id: "barcelona-mahjong-open-2027",
+    name: "Barcelona Mahjong Open 2027",
+    shortName: "BMO 2027",
+    organizerIds: ["seed-org-barcelona"],
+    startDate: "2027-01-23", endDate: "2027-01-24",
+    hostCountry: "ES", hostCity: "Barcelona",
+    venue: {
+      venueName: "Centre Cívic Sagrada Família",
+      venueAddress: "Carrer de Provença 480, 08025 Barcelona",
+      venueMapUrl: "https://www.google.com/maps/search/?api=1&query=Centre%20C%C3%ADvic%20Sagrada%20Fam%C3%ADlia%2C%20Barcelona",
+    },
+    contactEmail: "inscripciones@barcelonamahjongopen.example",
+    isTeams: false, numRounds: 7,
+    // 41 people registered for 48 places, so the 7 testers can still take a place, and whoever comes next waits.
+    players: playersFrom([["ESP", 25], ["FRA", 6], ["ITA", 4], ["GER", 2], ["NED", 2], ["POR", 2]]),
+    registrations: { maxPlayers: 48, closesOn: "2027-01-10", slug: "bmo-2027" },
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(7, "2027-01-23", 4, PROD_TIMES),
+    agenda: [
+      { title: "Registration and welcome coffee", date: "2027-01-23", startTime: "08:15" },
+      { title: "Lunch break", date: "2027-01-23", startTime: "13:30" },
+      { title: "Lunch break", date: "2027-01-24", startTime: "13:30" },
+      { title: "Awards ceremony", date: "2027-01-24", startTime: "17:30" },
+    ],
+    mode: () => ({ kind: "empty" }),
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+    production: true,
     avoidEmaIds: TESTER_EMA_IDS,
   },
   {
     id: "madrid-spring-open-2027",
-    name: "Madrid Spring Open 2027",
+    // Renamed in production on 17-nov-2026. The Asturias club organizes it.
+    name: "Asturias Spring Open 2027",
     shortName: "MSO 2027",
-    organizerIds: ["seed-org-madrid"],
+    organizerIds: ["seed-org-asturias"],
     startDate: "2027-03-06", endDate: "2027-03-07",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "organizacion@madridspringopen.example",
@@ -1166,6 +1328,7 @@ type BuiltTournament = {
 };
 
 function buildTournament(spec: TournamentSpec, registry: Registry, avoidStored: Set<string> = new Set()): BuiltTournament {
+  if (spec.registrations != null) return buildRegistrationTournament(spec, registry, avoidStored);
   const rng = seededRng(hashText(spec.id));
   const numPlayers = spec.players.length;
   if (numPlayers % 4 !== 0) throw new Error(`${spec.id}: players must be a multiple of 4`);
@@ -1332,6 +1495,120 @@ function buildTournament(spec: TournamentSpec, registry: Registry, avoidStored: 
   return { id: spec.id, writes, tournament, summary: { tables: kinds, players: numPlayers, ema, open, completed: allCompleted } };
 }
 
+/** The member of the registry for a slot of the spec, taken out of [pool]. */
+function pickMember(spec: TournamentSpec, entry: PlayerSpec, slot: number, registry: Registry, pool: Registry): Registry[number] {
+  let member: Registry[number] | undefined;
+  if (entry === "ema") member = pool.shift();
+  else if (entry === "tail") member = pool.pop();
+  else if (isFixedEma(entry)) member = registry.find((candidate) => candidate.id === entry.emaId);
+  else if (isCountryPick(entry)) {
+    const found = pool.findIndex((candidate) => candidate.country === entry.fromCountry);
+    member = found >= 0 ? pool.splice(found, 1)[0] : entry.orAny === true ? pool.shift() : undefined;
+  }
+  if (!member) throw new Error(`${spec.id}: no EMA player for slot ${slot}`);
+  return member;
+}
+
+/**
+ * A tournament with open registrations and no draw, as the admin app creates it (tournamentsService.createTournament
+ * with `registration`): the rounds and the schedule, no slots, tables or teams. Each player of the spec is a
+ * registration, a few days apart, the latest a day before the run. The public link has its slug document.
+ */
+function buildRegistrationTournament(spec: TournamentSpec, registry: Registry, avoidStored: Set<string>): BuiltTournament {
+  const settings = spec.registrations!;
+  const rng = seededRng(hashText(spec.id));
+  const root = `tournaments/${spec.id}`;
+  const stamp = () => ({ createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+  const writes: Write[] = [];
+  const avoid = new Set([...(spec.avoidEmaIds ?? []), ...avoidStored]);
+  const pool = shuffled(registry.filter((member) => !avoid.has(member.id)), rng);
+  const count = spec.players.length;
+  const lastMs = Date.now() - 24 * 60 * 60 * 1000;
+  let confirmed = 0;
+  let waiting = 0;
+  spec.players.forEach((entry, index) => {
+    const member = pickMember(spec, entry, index + 1, registry, pool);
+    const place = settings.maxPlayers == null || index < settings.maxPlayers;
+    if (place) confirmed += 1; else waiting += 1;
+    // About 6 hours apart, with some noise, so the list has a believable order.
+    const order = Math.round(lastMs - (count - 1 - index) * 6 * 60 * 60 * 1000 - rng() * 60 * 60 * 1000);
+    writes.push({
+      path: `${root}/registrations/${member.id}`,
+      data: {
+        emaId: member.id,
+        name: `${titleCase(member.firstName)} ${member.lastName}`,
+        country: member.country,
+        email: "",
+        status: place ? "CONFIRMED" : "WAITING",
+        order,
+        paid: rng() < 0.6,
+        teamId: null,
+        language: member.country === "ESP" ? "es" : "en",
+        source: index % 3 === 0 ? "IMPORT" : "SELF",
+        manageToken: randomBytes(24).toString("base64url"),
+        ...stamp(),
+      },
+    });
+  });
+  for (let round = 1; round <= spec.numRounds; round += 1) {
+    writes.push({ path: `${root}/rounds/${round}`, data: { roundId: round, ...stamp() } });
+  }
+  writes.push({ path: `registrationSlugs/${settings.slug}`, data: { tournamentId: spec.id, updatedAt: FieldValue.serverTimestamp() } });
+  const version = (revision: number) => ({ revision, changedAt: revision > 0 ? FieldValue.serverTimestamp() : null });
+  const tournament: Data = {
+    name: spec.name,
+    shortName: spec.shortName,
+    organizerIds: spec.organizerIds ?? [TEST_CLUB_ID],
+    eventStartDate: spec.startDate,
+    eventEndDate: spec.endDate,
+    hostCountry: spec.hostCountry,
+    hostCity: spec.hostCity,
+    venueName: spec.venue?.venueName ?? "",
+    venueAddress: spec.venue?.venueAddress ?? "",
+    venueMapUrl: spec.venue?.venueMapUrl ?? "",
+    contactEmail: spec.contactEmail,
+    isTeams: spec.isTeams,
+    countBestHands: spec.countBestHands,
+    countChickenHands: spec.countChickenHands,
+    ...(spec.match ? {
+      matchDurationMinutes: spec.match.durationMinutes,
+      matchEndMode: spec.match.endMode,
+      matchExtraMinutes: spec.match.extraMinutes,
+    } : {}),
+    timeZone: spec.match?.timeZone ?? DEFAULT_ZONE,
+    numPlayers: 0,
+    numRounds: spec.numRounds,
+    drawPending: true,
+    registration: {
+      status: "OPEN",
+      maxPlayers: settings.maxPlayers,
+      closesOn: settings.closesOn,
+      slug: settings.slug,
+      confirmed,
+      waiting,
+    },
+    roundSchedules: spec.schedule.map((entry, index) => ({ roundId: index + 1, date: entry.date, startTime: entry.startTime })),
+    agendaItems: spec.agenda,
+    numTries: 0,
+    isCompleted: false,
+    tablesWithProgress: 0,
+    createdByUid: CREATED_BY_UID,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+    dataVersions: {
+      members: version(0),
+      players: version(1),
+      teams: version(spec.isTeams ? 1 : 0),
+      rounds: version(1),
+      tables: version(1),
+    },
+  };
+  return {
+    id: spec.id, writes, tournament,
+    summary: { tables: { registrations: count, confirmed, waiting }, players: 0, ema: count, open: 0, completed: false },
+  };
+}
+
 // -- Run -------------------------------------------------------------------------------------
 
 /**
@@ -1418,12 +1695,17 @@ async function main(): Promise<void> {
     return spec.testers !== true && spec.production !== true;
   });
   if (specs.some((spec) => !spec.production && !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
-  const small = specs.find((spec) => !isValidPlayerCount(spec.players.length));
+  const small = specs.find((spec) => spec.registrations == null && !isValidPlayerCount(spec.players.length));
   if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);
   let created = 0;
 
   console.log("\nOrganizations");
   await seedOrganizations(new Set(specs.flatMap((spec) => spec.organizerIds ?? [TEST_CLUB_ID])));
+  if (onlyProduction || process.argv.includes("--organizers")) {
+    console.log("\nOrganizers of the stored production tournaments");
+    await seedOrganizations(new Set(Object.values(PRODUCTION_ORGANIZERS).flat()));
+    await seedProductionOrganizers();
+  }
   if (specs.some((spec) => spec.testers === true)) {
     console.log("\nTester accounts");
     await linkTesterAccounts();
