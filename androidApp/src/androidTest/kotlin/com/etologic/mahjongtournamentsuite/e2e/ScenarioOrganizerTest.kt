@@ -408,8 +408,18 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Registrations are open", timeoutMs = 60_000)
         c.clickButton("Register")
         c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-submit") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        c.onNode(hasTestTag("registration-submit")).tap()
-        c.waitForText("on the waiting list", substring = true, timeoutMs = 60_000)
+        // The result of the registration, not the summary of the places ("1 on the waiting list") behind the form.
+        val done = hasText("You are number", substring = true)
+        for (attempt in 1..4) {
+            if (c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty()) break
+            c.settle()
+            runCatching {
+                c.onNode(hasTestTag("registration-submit") and isEnabled())
+                    .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            }
+            runCatching { c.waitUntil(20_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() } }
+        }
+        c.waitUntil(30_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() }
         log("the player registered in the player app and is on the waiting list")
         c.clickLastButton("Close")
         c.waitForText("My registration", timeoutMs = 30_000)
