@@ -201,6 +201,7 @@
     <string name="tournament_mark_played">Je speelde</string>
     <string name="tournament_mark_registered">Je hebt een plaats</string>
     <string name="tournament_mark_waiting">Wachtlijst</string>
+    <string name="tournament_registered">Ingeschreven</string>
     <string name="tournaments_tab_live">Bezig</string>
     <string name="tournaments_tab_all">Alle</string>
     <string name="table_sign_in_to_enter_hands">Log in om de handen van je tafel in te voeren</string>

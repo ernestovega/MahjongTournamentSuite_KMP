@@ -201,6 +201,7 @@
     <string name="tournament_mark_played">Jugaste</string>
     <string name="tournament_mark_registered">Tienes plaza</string>
     <string name="tournament_mark_waiting">En lista de espera</string>
+    <string name="tournament_registered">Inscrito</string>
     <string name="tournaments_tab_live">En juego</string>
     <string name="tournaments_tab_all">Todos</string>
     <string name="table_sign_in_to_enter_hands">Inicia sesión para apuntar las manos de tu mesa</string>

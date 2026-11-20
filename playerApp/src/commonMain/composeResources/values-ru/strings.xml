@@ -207,6 +207,7 @@
     <string name="tournament_mark_played">Вы играли</string>
     <string name="tournament_mark_registered">У вас есть место</string>
     <string name="tournament_mark_waiting">Лист ожидания</string>
+    <string name="tournament_registered">Записан</string>
     <string name="tournaments_tab_live">Идут</string>
     <string name="tournaments_tab_all">Все</string>
     <string name="table_sign_in_to_enter_hands">Войдите, чтобы записывать раздачи своего стола</string>

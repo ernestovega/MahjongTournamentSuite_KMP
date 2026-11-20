@@ -38,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContactSupport
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -265,6 +266,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_play
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_plays
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_registered
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_waiting
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_registered
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
@@ -897,7 +899,22 @@ internal fun TournamentCard(
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                    if (registration.isOpen) {
+                    if (mark == MyTournamentMark.REGISTERED || mark == MyTournamentMark.WAITING) {
+                        // Already registered: a plain text, not a button (Ernesto, 20-nov). The tournament manages it.
+                        Row(
+                            Modifier.testTag("tournament-registered"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            Text(
+                                stringResource(Res.string.tournament_registered),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    } else if (registration.isOpen) {
                         Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
                     }
                 }

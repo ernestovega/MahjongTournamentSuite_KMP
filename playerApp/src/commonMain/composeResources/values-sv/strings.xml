@@ -201,6 +201,7 @@
     <string name="tournament_mark_played">Du spelade</string>
     <string name="tournament_mark_registered">Du har en plats</string>
     <string name="tournament_mark_waiting">Väntelista</string>
+    <string name="tournament_registered">Anmäld</string>
     <string name="tournaments_tab_live">Pågår</string>
     <string name="tournaments_tab_all">Alla</string>
     <string name="table_sign_in_to_enter_hands">Logga in för att föra in händerna vid ditt bord</string>
