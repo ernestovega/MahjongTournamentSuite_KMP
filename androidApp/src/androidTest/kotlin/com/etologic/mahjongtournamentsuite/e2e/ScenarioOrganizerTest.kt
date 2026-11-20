@@ -273,10 +273,15 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Add an organization", timeoutMs = 10_000)
         // The chip of the organization shows once the account is of the club; the field adds it.
         if (c.onAllNodes(hasContentDescription("Remove $ORGANIZATION", substring = true)).fetchSemanticsNodes().isEmpty()) {
-            c.selectField("Add an organization").performClick()
             val choice = hasText(ORGANIZATION) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
-            c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
-            c.onAllNodes(choice).onLast().performClick()
+            val behind = c.onAllNodes(choice).fetchSemanticsNodes().size
+            for (attempt in 1..4) {
+                c.settle()
+                runCatching { c.selectField("Add an organization").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) }
+                if (runCatching { c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().size > behind } }.isSuccess) break
+            }
+            c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().size > behind }
+            c.onAllNodes(choice).onLast().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
             c.waitUntil(10_000) { c.onAllNodes(hasContentDescription("Remove $ORGANIZATION", substring = true)).fetchSemanticsNodes().isNotEmpty() }
         }
         c.clickLastButton("Save")
@@ -438,11 +443,21 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
 
+    /**
+     * Opens the select by its click action and picks the option of its menu. The screen behind can have a node with
+     * the same text (the filter chip "Club Admin" of Users), so the option is one that the open menu added.
+     */
     private fun chooseInSelect(label: String, option: String) {
-        c.selectField(label).performClick()
         val choice = hasText(option) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
-        c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(choice).onLast().performClick()
+        val behind = c.onAllNodes(choice).fetchSemanticsNodes().size
+        for (attempt in 1..4) {
+            c.settle()
+            runCatching { c.selectField(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) }
+            val opened = runCatching { c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().size > behind } }.isSuccess
+            if (opened) break
+        }
+        c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().size > behind }
+        c.onAllNodes(choice).onLast().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         c.waitUntil(10_000) { c.onAllNodes(hasText(option) and isDropdownList()).fetchSemanticsNodes().isNotEmpty() }
     }
 
