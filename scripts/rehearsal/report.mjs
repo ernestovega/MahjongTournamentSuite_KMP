@@ -82,9 +82,12 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     if (!table.isCompleted) openTables.push(key);
     const seats = SEATS.map((name) => text(table[`player${name}Id`]));
     doneHands += hands.filter((hand) => hand.isDone).length;
-    if (seats.some((seat) => seat === "") || table.useTotalsOnly) continue;
-    const counted = hands.filter((hand) => hand.isDone || table.isCompleted);
-    const changes = counted.map((hand) => handChange(hand, seats)).filter(Boolean);
+    if (seats.some((seat) => seat === "")) continue;
+    // A table of manual totals has no hands that count: its totals are the ones that the editor typed.
+    const counted = table.useTotalsOnly ? [] : hands.filter((hand) => hand.isDone || table.isCompleted);
+    const changes = table.useTotalsOnly
+      ? [SEATS.map((name) => Number(text(table[`manualPlayer${name}Score`]) || text(table[`player${name}Score`]) || 0))]
+      : counted.map((hand) => handChange(hand, seats)).filter(Boolean);
     if (changes.length === 0) continue;
     const bestHere = new Map();
     for (const hand of counted) {
@@ -317,6 +320,38 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       add(ok,
         `Table ${key}: the players left after ${left?.hands ?? "-"} hands and the organizer closed the table (${data?.table?.isCompleted ? "completed" : "open"} with ${done} hands).`);
       if (!ok) detail(key);
+    } else if (item.kind === "manual-totals") {
+      const left = at("table-left-for-totals")[0];
+      const table = check?.tablesByKey?.get(key)?.table;
+      const scores = table == null ? [] : SEATS.map((name) => text(table[`player${name}Score`]));
+      const points = table == null ? [] : SEATS.map((name) => pointsText(table[`player${name}Points`]));
+      const sumZero = scores.length === 4 && scores.reduce((total, score) => total + Number(score), 0) === 0 && scores.every((score) => /^-?\d+$/.test(score));
+      const sameScores = !(check?.scoreProblems ?? []).some((line) => line.startsWith(`${key} `));
+      const ok = left != null && table?.useTotalsOnly === true && table?.isCompleted === true && sumZero && sameScores;
+      add(ok,
+        `Table ${key}: the table played on paper and the editor typed its totals with Manual scores (${table?.useTotalsOnly ? "manual" : "not manual"}, ${table?.isCompleted ? "completed" : "open"}, totals ${scores.join(" / ") || "-"}, table points ${points.join(" / ") || "-"}).`);
+      if (!ok) detail(key);
+    } else if (item.kind === "offline") {
+      const lost = at("offline-lost-reply")[0];
+      const back = at("offline-back")[0];
+      const away = at("background")[0];
+      const caughtUp = at("background-back")[0];
+      const extraHere = (check?.extra ?? []).filter((line) => line.startsWith(`${key}:`));
+      const data = check?.tablesByKey?.get(key);
+      const once = lost != null && (data?.hands ?? []).filter((hand) => hand.isDone && Number(hand.handId) === Number(lost.handId)).length === 1;
+      const ok = lost != null && back?.status === 409 && back?.shown === 1 && once && extraHere.length === 0
+        && away != null && caughtUp != null && caughtUp.after >= caughtUp.before;
+      add(ok,
+        `Table ${key}: a phone lost the network as it saved hand ${lost?.handId ?? "-"}, sent it again after ${lost?.seconds ?? "-"} s and was told the table changed (answer ${back?.status ?? "none"}), the hand is saved once, and a phone back from ${away?.seconds ?? "-"} s in the background shows the hands (${caughtUp == null ? "-" : `${caughtUp.before} before, ${caughtUp.after} after`}).`);
+      if (!ok) detail(key);
+    } else if (item.kind === "tie") {
+      const tied = (check?.tablesByKey?.get(key)?.table == null) ? [] : SEATS.map((name) => text(check.tablesByKey.get(key).table[`player${name}Id`]));
+      const rows = (check?.ranking ?? []).filter((entry) => tied.includes(entry.playerId));
+      const level = rows.length === tied.length && rows.length > 1
+        && rows.every((row) => round6(row.points) === round6(rows[0].points) && row.score === rows[0].score);
+      const place = rows.length === 0 ? "-" : (check.ranking.filter((entry) => beats(entry, rows[0])).length + 1);
+      add(level,
+        `The ${tied.length} players of table ${key} finish level in the ranking (${rows.map((row) => `${round6(row.points)} points, ${row.score}`).join(" / ") || "not ranked"}) and share place ${place}; the places of the server are compared in the check of the places.`);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);

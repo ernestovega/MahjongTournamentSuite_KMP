@@ -116,12 +116,28 @@ read it, so each one knows its part.
   closes the open tables of the ended rounds in the review of Round control. The checks want the table completed with
   those 3 hands.
 - A table with manual totals.
+
+  Done (plan.cornerCases, last round, table 3). The scorer saves the seats and the players leave: the table plays on
+  paper. The editor opens it in the table editor, turns Manual scores on, types the four totals (31 / 9 / -12 / -28, or
+  0 for all when a player of the tie sits there), turns Completed on and saves. The checks want the table manual and
+  completed, totals that add up to 0, and its table points in the independent count of the ranking.
 - A seat change after the seats are saved.
 
   Done (plan.cornerCases, round 1, table 4). The players swap East and South before the first hand (answer 200) and
   try again after it (answer 409). The checks want both answers and the new seats on the table.
 - A phone without network for a minute, and an app sent to the background.
+
+  Done (plan.cornerCases, last round, table 4). After 2 hands the scorer saves a hand and its answer never arrives (the
+  network is gone). A minute later it sends the same hand again, with the version of then, as the app does after a
+  failed send. The highest slot of the table goes to the background for that minute (no polls) and then looks again.
+  The checks want the second send refused (409, the table changed), the hand saved once, and the phone back from the
+  background showing at least the hands it had.
 - Ties in the ranking.
+
+  Done (plan.cornerCases, corners only, round 1, table 7: corners has 28 players for it). The table plays only draws
+  with no penalty, and so does every table of the next rounds with one of its players. The 4 players finish with the
+  same table points and score. The checks want them level in the independent count, and the check of the places wants
+  the server to give them the same place.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.
 
@@ -173,10 +189,10 @@ run. See docs/benchmark.md, "Cost".
 
 ## Corners: the corner cases in minutes
 
-`corners` is a small tournament of 24 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
+`corners` is a small tournament of 28 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
 the penalties and the draw are at table 1, the late table and its substitution at table 3, the seat change at table 4,
-and the deleted and edited hands at tables 2, 4, 5 and 6. The slow table of the extra time and the abandoned table are
-at tables 1 and 2 of round 2, the last one. It takes about
+the deleted and edited hands at tables 2, 4, 5 and 6, and the tie at table 7. The slow table of the extra time, the
+abandoned table, the manual totals and the phone without network are at tables 1 to 4 of round 2, the last one. It takes about
 45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.
 

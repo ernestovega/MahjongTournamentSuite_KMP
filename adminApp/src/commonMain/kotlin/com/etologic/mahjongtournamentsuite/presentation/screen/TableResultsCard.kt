@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -203,7 +204,9 @@ internal fun TableResultsCard(
                             textStyle = bigNumberStyle,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .focusRequester(seatScoreFocus[seat]),
+                                .focusRequester(seatScoreFocus[seat])
+                                // The game days type the totals of a table that played on paper (docs/scenarios.md).
+                                .testTag("table-total-$seat"),
                             onNavigateLeft = { moveScoreFocus(seat - 1) },
                             onNavigateRight = { moveScoreFocus(seat + 1) },
                         )

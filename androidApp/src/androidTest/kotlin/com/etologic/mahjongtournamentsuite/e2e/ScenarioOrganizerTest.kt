@@ -415,6 +415,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             if (round > 1) closeOpenTablesOfEndedRounds()
             substituteALatePlayer(tournamentId, round)
             correctTheHands(tournamentId, round)
+            typeTheManualTotals(tournamentId, round)
             val deadline = System.currentTimeMillis() + (minutes + 2) * 60_000L
             while (System.currentTimeMillis() < deadline && openTables(tournamentId, round) > 0) idle(30_000)
             log("round $round: ${openTables(tournamentId, round)} tables open at the end")
@@ -504,6 +505,54 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             log("table $round-$table: ${item.getString("kind")} of hand $handId (${item.getString("which")}, newest $newest)")
             closeTheEditor()
         }
+    }
+
+    /**
+     * A table that plays on paper: its players save the seats and leave, and at the end of the round they bring the
+     * sheet. The editor turns Manual scores on in the table editor, types the four totals and completes the table. The
+     * totals of a table with a player of the tie are 0, so the tie stays (docs/scenarios.md).
+     */
+    private fun typeTheManualTotals(tournamentId: String, round: Int) {
+        val cases = plan.optJSONArray("cornerCases") ?: return
+        val all = (0 until cases.length()).map { cases.getJSONObject(it) }
+        val item = all.firstOrNull { it.getString("kind") == "manual-totals" && it.getInt("round") == round } ?: return
+        val table = item.getInt("table")
+        val seatsOf = { data: JSONObject? ->
+            val row = data?.optJSONObject("table")
+            listOf("East", "South", "West", "North").map { row?.optString("player${it}Id").orEmpty() }
+        }
+        val deadline = System.currentTimeMillis() + 5 * 60_000L
+        while (seatsOf(tableData(tournamentId, round, table)).any { it.isBlank() } && System.currentTimeMillis() < deadline) idle(5_000)
+        val seats = seatsOf(tableData(tournamentId, round, table))
+        check(seats.none { it.isBlank() }) { "Table $round-$table has no seats for the manual totals" }
+        val tie = all.firstOrNull { it.getString("kind") == "tie" }
+        val tied = tie?.let { seatsOf(tableData(tournamentId, it.getInt("round"), it.getInt("table"))) }.orEmpty()
+        val planned = item.getJSONArray("scores").let { list -> (0 until list.length()).map { list.getString(it) } }
+        val scores = if (seats.any { it in tied }) List(4) { "0" } else planned
+        openTable(round, table)
+        var saved = false
+        for (attempt in 1..3) {
+            dismissTableUpdated()
+            val typed = runCatching {
+                setSwitch("Manual scores", true)
+                c.waitUntil(10_000) { c.onAllNodes(hasTestTag("table-total-0")).fetchSemanticsNodes().isNotEmpty() }
+                scores.forEachIndexed { seat, score ->
+                    c.onNode(hasTestTag("table-total-$seat")).apply { runCatching { performScrollTo() } }.performTextReplacement(score)
+                }
+                setSwitch("Completed", true)
+                c.clickButton("Save")
+            }
+            idle(3_000)
+            if (tableUpdatedShown()) continue
+            typed.getOrThrow()
+            val after = tableData(tournamentId, round, table)?.optJSONObject("table")
+            saved = after?.optBoolean("useTotalsOnly") == true && after.optBoolean("isCompleted")
+            if (saved) break
+            log("table $round-$table: the manual totals did not reach the server, attempt $attempt")
+        }
+        check(saved) { "The manual totals of table $round-$table did not reach the server" }
+        log("table $round-$table: manual totals ${scores.joinToString(" / ")}")
+        closeTheEditor()
     }
 
     /**

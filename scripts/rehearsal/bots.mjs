@@ -219,6 +219,19 @@ class PlayerBot {
     return this.scorerOf.get(key) === this.slotNumber;
   }
 
+  /**
+   * True when the table plays only draws for the tie of the plan: the tie table of round 1, and in the next rounds any
+   * table with one of its players. A draw with no penalty gives every player of the table the same result.
+   */
+  async playsForTheTie(roundId, table) {
+    if (this.tieTable == null) return false;
+    const [tieRound, tieTableId] = this.tieTable.split("_").map(Number);
+    if (roundId === tieRound) return table.tableId === tieTableId;
+    if (roundId < tieRound) return false;
+    const tied = (await this.tournament.tables(tieRound)).find((item) => item.tableId === tieTableId)?.playerIds ?? [];
+    return table.playerIds.some((id) => tied.includes(id));
+  }
+
   async run() {
     if (!(await this.findSlot())) {
       this.metrics.event("no-slot", { slot: this.slotNumber });
@@ -261,6 +274,8 @@ class PlayerBot {
       this.metrics.event("late-table", { table: key });
       await sleep(this.lateMs);
     }
+    const tie = await this.playsForTheTie(roundId, table);
+    if (tie) this.metrics.event("tie-table", { table: key, playerIds: table.playerIds });
     let nextHandAt = Date.now() + randomBetween(...this.handSeconds) * 1_000 * 0.5;
     while (Date.now() < this.until && !this.stopped()) {
       const data = await this.readTable(roundId, table.tableId);
@@ -308,6 +323,19 @@ class PlayerBot {
           continue;
         }
       }
+      if (this.totalsOnlyTables.has(key)) {
+        // The corner case: the table plays on paper, and an editor types its totals in the admin app.
+        this.metrics.event("table-left-for-totals", { table: key });
+        return;
+      }
+      const offline = this.offlineTables.get(key);
+      if (offline != null && !this.offlineDone.has(key) && doneHands >= offline.afterHands && Date.now() >= nextHandAt) {
+        this.offlineDone.add(key);
+        const outcome = await this.writeHand(roundId, table, key, seats, tie ? "offline-draw" : "offline");
+        if (outcome === "done") return;
+        nextHandAt = Date.now() + randomBetween(...this.handSeconds) * 1_000;
+        continue;
+      }
       const leaveAfter = this.abandonTables.get(key);
       if (leaveAfter != null && doneHands >= leaveAfter) {
         // The corner case: the players leave the table without finishing it, and the organizer closes it.
@@ -327,7 +355,7 @@ class PlayerBot {
           continue;
         }
         this.extraTimeTables.delete(key);
-        const outcome = await this.writeHand(roundId, table, key, seats, "extra");
+        const outcome = await this.writeHand(roundId, table, key, seats, tie ? "extra-draw" : "extra");
         if (outcome === "done") return;
         nextHandAt = Date.now() + this.waitMs;
         continue;
@@ -359,6 +387,8 @@ class PlayerBot {
           const reply = await this.penalty(roundId, table.tableId, seats, version, seat, value, true);
           if (reply.status === 200) version = Number(reply.json?.tableVersion ?? version + 1);
         }
+        kind = "draw";
+      } else if (tie) {
         kind = "draw";
       } else if (forced == null && Math.random() < this.penaltyRate) {
         await this.penalty(roundId, table.tableId, seats, data.table.version);
@@ -406,7 +436,9 @@ class PlayerBot {
   /** Preview, then save, as the app does. Returns "ok", "wait" or "done". */
   async writeHand(roundId, table, key, seats, kind = "hand") {
     const path = `/player/tournaments/${this.tournament.id}/tables/${roundId}/${table.tableId}/hands`;
-    let hand = kind === "draw" ? { isDraw: true } : randomHand(seats);
+    const draw = kind === "draw" || kind.endsWith("-draw");
+    kind = kind.replace(/-draw$/, "");
+    let hand = draw ? { isDraw: true } : randomHand(seats);
     while (kind === "won" && hand.isDraw) hand = randomHand(seats);
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const token = await this.session.bearer();
@@ -427,6 +459,7 @@ class PlayerBot {
         this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString(), ...(kind === "reentry" ? { reentry: true } : {}) });
         if (kind === "reentry") this.metrics.event("hand-reentered", { table: key, handId: reply.json.handId, slot: this.slotNumber });
         if (kind === "draw") this.metrics.event("planned-draw", { table: key, handId: reply.json.handId });
+        if (kind === "offline") await this.loseTheNetwork(key, path, body, reply.json.handId, roundId, table.tableId);
         if (kind === "extra") {
           const end = await this.tournament.matchEnd(roundId, this.matchMinutes);
           this.metrics.event("extra-time-hand", { table: key, handId: reply.json.handId, savedAt: Date.now(), matchEnd: end });
@@ -437,6 +470,21 @@ class PlayerBot {
       this.metrics.event("version-conflict", { table: key, attempt });
     }
     return "wait";
+  }
+
+  /**
+   * The answer of the hand never reached the phone: it lost the network. The phone is away for a while, and then it
+   * sends the same hand again, with the version of then, as the app does after a failed send. The server must refuse
+   * it (the table changed), so the hand is not saved twice, and the phone then shows the hand from the table.
+   */
+  async loseTheNetwork(key, path, body, handId, roundId, tableId) {
+    const away = this.offlineTables.get(key)?.seconds ?? 60;
+    this.metrics.event("offline-lost-reply", { table: key, handId, slot: this.slotNumber, seconds: away });
+    await sleep(away * 1_000);
+    const again = await this.api.call("POST", path, { token: await this.session.bearer(), body, label: "POST hand (after the network)" });
+    const data = await this.readTable(roundId, tableId);
+    const shown = (data?.hands ?? []).filter((hand) => hand.isDone && Number(hand.handId) === Number(handId)).length;
+    this.metrics.event("offline-back", { table: key, handId, slot: this.slotNumber, status: again.status, message: again.json?.message ?? "", shown });
   }
 
   /** The second player of the table sends the same hand at the same time, from another account. */
@@ -467,8 +515,28 @@ class PlayerBot {
         if (data?.table?.isCompleted) return;
       }
       if ((await this.tournament.currentRound()) !== roundId) return;
+      const offline = this.offlineTables.get(key);
+      const seenHere = (data) => (data?.hands ?? []).filter((hand) => hand.isDone).length;
+      if (offline != null && !this.backgroundDone.has(key) && this.watcherOf(table) === this.playerId) {
+        const before = seenHere(await this.readTable(roundId, table.tableId));
+        if (before >= offline.afterHands) {
+          // The corner case: this phone goes to the background (no polls), and then it comes back to the table.
+          this.backgroundDone.add(key);
+          const away = offline.seconds ?? 60;
+          this.metrics.event("background", { table: key, slot: this.slotNumber, seconds: away, hands: before });
+          await sleep(away * 1_000);
+          const data = await this.readTable(roundId, table.tableId);
+          this.noteHands(key, data);
+          this.metrics.event("background-back", { table: key, slot: this.slotNumber, before, after: seenHere(data) });
+        }
+      }
       await sleep(this.pollMs);
     }
+  }
+
+  /** The phone of the table that goes to the background: the highest slot, as the scorer is the lowest. */
+  watcherOf(table) {
+    return Math.max(...table.playerIds);
   }
 }
 
@@ -568,6 +636,15 @@ export async function runBots(options) {
     extraTimeTables: new Map(Object.entries(options.extraTimeTables ?? {})),
     extraWaiting: new Set(),
     abandonTables: new Map(Object.entries(options.abandonTables ?? {})),
+    // The tables of manual totals: the scorer saves the seats and the players leave; an editor types the totals.
+    totalsOnlyTables: new Set(options.totalsOnlyTables ?? []),
+    // The tables where a phone loses the network: the answer of a hand never arrives, the phone is away for a while
+    // and then sends the same hand again. Another phone of the table goes to the background as long.
+    offlineTables: new Map(Object.entries(options.offlineTables ?? {})),
+    offlineDone: new Set(),
+    backgroundDone: new Set(),
+    // The table of round 1 whose players finish level: it plays only draws, and so do their tables of the next rounds.
+    tieTable: options.tieTable ?? null,
     matchMinutes: options.matchMinutes ?? null,
     raceSessions: new Map(),
     raced: new Set(),
@@ -699,6 +776,10 @@ export function planOptions(plan, args = {}) {
       .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands }])),
     abandonTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "abandoned")
       .map((item) => [`${item.round}_${item.table}`, item.afterHands])),
+    totalsOnlyTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "manual-totals").map((item) => `${item.round}_${item.table}`),
+    offlineTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "offline")
+      .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, seconds: item.seconds }])),
+    tieTable: (plan?.cornerCases ?? []).filter((item) => item.kind === "tie").map((item) => `${item.round}_${item.table}`)[0] ?? null,
     matchMinutes: plan?.matchDurationMinutes ?? null,
   };
 }

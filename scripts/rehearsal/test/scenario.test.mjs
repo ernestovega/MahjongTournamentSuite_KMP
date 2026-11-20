@@ -39,7 +39,7 @@ test("the rounds start an hour later in Madrid, and at 23:59 when that is tomorr
 
 test("the corners plan has every corner case in round 1, and the slow and abandoned tables in the last round", async () => {
   const { plan } = await planFor({ scenario: "corners" });
-  assert.equal(plan.players, 24);
+  assert.equal(plan.players, 28);
   assert.equal(plan.rounds, 2);
   assert.equal(plan.matchDurationMinutes, 8);
   const at = (kind) => plan.cornerCases.filter((item) => item.kind === kind).map((item) => `${item.round}_${item.table}`);
@@ -50,6 +50,10 @@ test("the corners plan has every corner case in round 1, and the slow and abando
   assert.deepEqual(at("seat-change"), ["1_4"]);
   assert.deepEqual(at("extra-time"), ["2_1"]);
   assert.deepEqual(at("abandoned"), ["2_2"]);
+  assert.deepEqual(at("manual-totals"), ["2_3"]);
+  assert.deepEqual(at("offline"), ["2_4"]);
+  // Table 7 of round 1 has no other case: its players finish level.
+  assert.deepEqual(at("tie"), ["1_7"]);
   // The editor never plays at the late table.
   assert.deepEqual([...at("delete"), ...at("edit")], ["1_2", "1_4", "1_5", "1_6"]);
   assert.deepEqual(plan.cornerCases.find((item) => item.kind === "penalty-draw").penalties, ["-10", "-5"]);
@@ -61,7 +65,8 @@ test("every scenario plays the editor in round 2, the extra time and the abandon
     assert.equal(plan.players, SCENARIOS[scenario].players);
     assert.equal(plan.slots.length, plan.players);
     for (const item of plan.cornerCases.filter((each) => each.kind === "delete" || each.kind === "edit")) assert.equal(item.round, 2);
-    for (const kind of ["extra-time", "abandoned"]) assert.equal(plan.cornerCases.find((item) => item.kind === kind).round, plan.rounds);
+    for (const kind of ["extra-time", "abandoned", "manual-totals", "offline"]) assert.equal(plan.cornerCases.find((item) => item.kind === kind).round, plan.rounds);
+    assert.equal(plan.cornerCases.some((item) => item.kind === "tie"), false, "the tie is in corners only");
     assert.ok(plan.roundSchedules.every((round) => round.date === plan.roundSchedules[0].date), "every round on one day");
   }
 });

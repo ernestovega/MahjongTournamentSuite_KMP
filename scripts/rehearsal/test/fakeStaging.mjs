@@ -13,8 +13,8 @@ const sum = (text) => String(text ?? "").split(";").reduce((total, part) => tota
 
 /** The totals of the four seats, from the done hands (Green Book), and the table points 4, 2, 1 and 0 with ties shared. */
 function totals(table) {
-  const scores = [0, 0, 0, 0];
-  for (const hand of table.hands.filter((each) => each.isDone)) {
+  const scores = table.manualScores != null ? table.manualScores.map(Number) : [0, 0, 0, 0];
+  for (const hand of table.hands.filter((each) => each.isDone && table.manualScores == null)) {
     const points = Number(hand.handScore || 0);
     table.seats.forEach((seat, index) => {
       if (hand.playerWinnerId !== "") {
@@ -85,7 +85,7 @@ export class FakeStaging {
 
   tableJson(table) {
     const { scores, tablePoints } = totals({ ...table, seats: table.seats ?? ["", "", "", ""] });
-    const json = { roundId: table.roundId, tableId: table.tableId, version: table.version, isCompleted: table.isCompleted, useTotalsOnly: false };
+    const json = { roundId: table.roundId, tableId: table.tableId, version: table.version, isCompleted: table.isCompleted, useTotalsOnly: Boolean(table.manualScores) };
     SEATS.forEach((name, index) => {
       json[`player${name}Id`] = table.seats?.[index] ?? "";
       json[`player${name}Score`] = String(scores[index]);
@@ -183,6 +183,18 @@ export class FakeStaging {
         table.isCompleted = true;
         table.version += 1;
       }
+    }
+    // The editor types the totals of a table that played on paper (Manual scores), and completes it. The totals of a
+    // table with a player of the tie are 0, so the tie stays.
+    for (const event of this.metrics.events.filter((each) => each.kind === "table-left-for-totals")) {
+      const table = this.tables.get(event.table);
+      if (table.isCompleted) continue;
+      const item = this.plan.cornerCases.find((each) => each.kind === "manual-totals" && `${each.round}_${each.table}` === event.table);
+      const tie = this.plan.cornerCases.find((each) => each.kind === "tie");
+      const tied = tie == null ? [] : this.tables.get(`${tie.round}_${tie.table}`).playerIds;
+      table.manualScores = table.playerIds.some((id) => tied.includes(id)) ? ["0", "0", "0", "0"] : item.scores;
+      table.isCompleted = true;
+      table.version += 1;
     }
     for (const item of this.plan.cornerCases.filter((each) => each.kind === "delete" || each.kind === "edit")) {
       const key = `${item.round}_${item.table}`;

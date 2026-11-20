@@ -17,8 +17,9 @@ export const SCENARIOS = {
   small: { players: 24, rounds: 4 },
   medium: { players: 64, rounds: 7 },
   large: { players: 240, rounds: 11 },
-  // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1.
-  corners: { players: 24, rounds: 2, minutes: 8, cornerRound: 1 },
+  // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1. Its 7 tables leave
+  // table 7 of round 1 for the tie in the ranking.
+  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true },
 };
 
 /** Minutes of a round: the emulator that writes the hands takes about 70 s per hand, a bot about 40 s. */
@@ -261,6 +262,14 @@ export async function makePlan(args) {
       // The last round, table 2: the players leave after 3 hands, and the organizer closes the table in the review.
       { kind: "abandoned", round: size.rounds, table: 2, afterHands: 3 },
       { kind: "substitution", round: 1, table: 3, reason: "LATE", afterMinutes: 1 },
+      // The last round, table 3: the table plays on paper. The scorer saves the seats and the editor types the totals
+      // with Manual scores in the admin app, and completes the table.
+      { kind: "manual-totals", round: size.rounds, table: 3, scores: ["31", "9", "-12", "-28"] },
+      // The last round, table 4: after 2 hands the scorer loses the network as it saves a hand (the answer never
+      // arrives), is away a minute and sends the hand again. Another phone of the table is in the background as long.
+      { kind: "offline", round: size.rounds, table: 4, afterHands: 2, seconds: 60 },
+      // Corners only: the 4 players of table 7 of round 1 finish level in the ranking. Their tables play only draws.
+      ...(size.tie ? [{ kind: "tie", round: 1, table: 7 }] : []),
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
       { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
       { kind: "edit", round: fix, table: fixTables[2], which: "last", minHands: 4 },
