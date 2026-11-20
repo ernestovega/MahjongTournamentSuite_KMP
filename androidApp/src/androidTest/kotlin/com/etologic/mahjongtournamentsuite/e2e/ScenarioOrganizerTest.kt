@@ -16,7 +16,6 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.performScrollToNode
@@ -259,9 +258,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         }
         c.waitForText("New user", timeoutMs = 30_000)
         c.onAllNodes(hasSetTextAction() and hasText("Search")).onFirst().performTextInput(CLUB_ADMIN)
-        val row = hasClickAction() and hasAnyDescendant(hasText(CLUB_ADMIN))
-        c.waitUntil(30_000) { c.onAllNodes(row, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(row, useUnmergedTree = true).onFirst().performClick()
+        // The row of the account, not the search field that has the same text.
+        val row = hasClickAction() and !hasSetTextAction() and hasText(CLUB_ADMIN)
+        c.waitUntil(30_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(row).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         c.waitForText("Edit account", timeoutMs = 30_000)
         chooseInSelect("Global role", "Club Admin")
         c.waitForText("Add an organization", timeoutMs = 10_000)
