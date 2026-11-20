@@ -144,8 +144,9 @@ export async function makePlan(args) {
   // has a few hundred: players who come back keep a large scenario at about 70 of them.
   const kinds = Array.from({ length: size.players }, (_, index) => slotKind(index + 1));
   // When the free EMA players run short, players of earlier game days also take slots of new players, from the last slot
-  // up, while a few new players (1 in 20, at least 2) still get an invitation.
-  const minimumNew = Math.max(2, Math.ceil(size.players / 20));
+  // up, while a few new players (1 in 20, at least 2) still get an invitation. With fewer free EMA players than that, the
+  // free ones are the new players, and with none, every player comes back from an earlier game day.
+  const minimumNew = Math.min(all.length, Math.max(2, Math.ceil(size.players / 20)));
   for (let index = kinds.length - 1; index >= 0; index -= 1) {
     const backWanted = kinds.filter((kind) => kind === "returning").length;
     const newWanted = kinds.length - Math.min(backWanted, earlier.length);

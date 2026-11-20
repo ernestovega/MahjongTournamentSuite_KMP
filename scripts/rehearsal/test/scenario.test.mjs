@@ -150,3 +150,16 @@ test("with few free players, players of earlier game days also take slots of new
   assert.ok(fresh.length <= 60 && fresh.length >= 12, `${fresh.length} new players`);
   assert.equal(new Set(plan.slots.map((slot) => slot.emaId)).size, 240);
 });
+
+test("with no free player, every player comes back from an earlier game day", async () => {
+  const players = registry(300);
+  const users = players.map((player, index) => ({
+    emaId: player.emaId, email: `mailbox+gd1118old${index % 10}-s${String(index + 1).padStart(3, "0")}@example.test`,
+  }));
+  const { plan } = await planFor({ scenario: "large" }, players, users);
+  assert.ok(plan.slots.every((slot) => slot.returning && slot.accountBefore));
+  assert.equal(new Set(plan.slots.map((slot) => slot.emaId)).size, 240);
+  // With 5 free players, those 5 are the new ones.
+  const { plan: few } = await planFor({ scenario: "large" }, players, users.slice(5));
+  assert.equal(few.slots.filter((slot) => !slot.returning).length, 5);
+});
