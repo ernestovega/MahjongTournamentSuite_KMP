@@ -214,6 +214,25 @@ the scenario, in a second tournament that opens registrations (docs/registration
 
 Each step prints ✓ or ✗ in the summary of the job, and `registrations.json` keeps them. A ✗ fails the job.
 
+### By hand on the tablet (corners)
+
+The bots go through the API. In `corners` the tablet also goes through the screens (plan.byHand, before the tournament
+of the scenario, in the phase setup of `ScenarioOrganizerTest`):
+
+- The bot admin creates the organization "Game day co-club" in Organizations (once), and in Users makes the account
+  "Bot club admin" (`+mts-botclub`, made by `rehearsalAccounts.ts --calibration-setup` as a plain account) the Club
+  Admin of "Game day club".
+- The club admin signs in and creates a tournament with Open registrations: 16 places, 3 rounds, its club as main
+  organizer (the form puts it) and "Game day co-club" as co-organizer. The tournament opens on its registrations.
+- Import Google Form with `registrations-form.csv` (the first 16 people of the plan): 16 with a place. Add a person
+  (the 17th) from the EMA registry: the waiting list.
+- A player (`+mts-cal01`) signs in to the player app, opens the tournament, registers (number 2 of the waiting list)
+  and cancels in My registration.
+- The club admin removes the first person, gives the place to the person of the waiting list, closes the
+  registrations in Registration settings and makes the draw: the tournament opens on its players.
+
+A step that fails stops the organizer, as any other step of the tablet.
+
 ## Tests of the scripts
 
 `node --test scripts/rehearsal/test/*.test.mjs` (about 6 s, no network, no account) runs:

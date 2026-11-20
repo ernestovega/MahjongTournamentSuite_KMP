@@ -12,6 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Api, Metrics, STAGING_API, Session, parseArgs, rehearsalEmail } from "./api.mjs";
+import { formCsv } from "./registrations.mjs";
 
 export const SCENARIOS = {
   small: { players: 24, rounds: 4 },
@@ -19,7 +20,7 @@ export const SCENARIOS = {
   large: { players: 240, rounds: 11 },
   // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1. Its 7 tables leave
   // table 7 of round 1 for the tie in the ranking.
-  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true },
+  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true, byHand: true },
 };
 
 /** Minutes of a round: the emulator that writes the hands takes about 70 s per hand, a bot about 40 s. */
@@ -278,6 +279,21 @@ export async function makePlan(args) {
     roundSchedules: Array.from({ length: size.rounds }, (_, index) => ({ roundId: index + 1, date: start.date, startTime: start.time })),
     slots,
   };
+  // Corners only: before the tournament, the tablet runs a tournament with registrations by hand, in the screens of the
+  // apps (docs/scenarios.md). The club admin creates it with a co-organizer and imports the Google Form of 16 people,
+  // adds a 17th by hand, a player registers and cancels in the player app, and the club admin removes a person, gives
+  // the place to the waiting list, closes and makes the draw.
+  if (size.byHand) {
+    plan.byHand = {
+      name: `${plan.name} registrations`,
+      shortName: `GDR${stamp.date.slice(8)}`,
+      places: 16,
+      rounds: 3,
+      form: slots.slice(0, 16).map((slot) => slot.emaId),
+      added: slots[16].emaId,
+      removed: slots[0].emaId,
+    };
+  }
 
   const header = isTeams ? ["id", "ema id", "email", "team"] : ["id", "ema id", "email"];
   const row = (slot) => (isTeams ? [slot.slot, slot.emaId, slot.email, slot.teamName] : [slot.slot, slot.emaId, slot.email]);
@@ -290,7 +306,9 @@ export async function makePlan(args) {
   bad[2][2] = String(bad[2][2]).replace("@", "@@");
   bad.push([...bad[3]]);
   bad.push([size.players + 5, imported[4].emaId, "", ...(isTeams ? [""] : [])]);
-  return { plan, files: { "players.csv": csv(good), "players-errors.csv": csv(bad) } };
+  const files = { "players.csv": csv(good), "players-errors.csv": csv(bad) };
+  if (plan.byHand) files["registrations-form.csv"] = `${formCsv(slots.slice(0, 16), false)}\n`;
+  return { plan, files };
 }
 
 async function main() {

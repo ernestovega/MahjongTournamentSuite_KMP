@@ -16,6 +16,7 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.performScrollToNode
@@ -138,6 +139,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The players of earlier game days have their account already.
         slots.filter { it.accountBefore && !it.returning }.forEach { createAccountInUsers(it) }
         ensureTheOrganization()
+        if (plan.has("byHand")) registrationsByHand()
         createTheTournamentWithTheForm()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }
@@ -173,7 +175,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     // Organizations: every tournament has a main organizer. The game days are organized by one club, which the first
     // game day creates in Organizations and the next ones reuse.
 
-    private fun ensureTheOrganization() {
+    private fun ensureTheOrganization(name: String = ORGANIZATION) {
         // Organizations opens from the list of tournaments, not from Users.
         if (c.isOnScreen("New user")) c.clickButton("Back")
         c.waitForText("New tournament", timeoutMs = 60_000)
@@ -182,22 +184,250 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             runCatching { c.waitForText("New organization", timeoutMs = 20_000) }
         }
         c.waitForText("New organization", timeoutMs = 30_000)
-        runCatching { c.waitForAnyText(ORGANIZATION, "There are no organizations yet.", timeoutMs = 30_000) }
-        if (!c.isOnScreen(ORGANIZATION)) {
+        runCatching { c.waitForAnyText(name, "There are no organizations yet.", timeoutMs = 30_000) }
+        if (!c.isOnScreen(name)) {
             c.clickButton("New organization")
             c.waitForText("Club premises")
-            c.field("Name").performTextInput(ORGANIZATION)
+            c.field("Name").performTextInput(name)
             // A federation has no premises, so the dialog asks for less.
             c.onAllNodes(hasText("Federation") and hasClickAction()).onLast().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
             c.waitForNoText("Club premises")
             chooseCountry("Spain")
             c.clickLastButton("Save")
             c.waitUntil(60_000) { c.onAllNodes(hasText("Save") and hasClickAction()).fetchSemanticsNodes().isEmpty() }
-            c.waitForText(ORGANIZATION, timeoutMs = 30_000)
-            log("organization created")
+            c.waitForText(name, timeoutMs = 30_000)
+            log("organization $name created")
         }
         c.clickButton("Back")
         c.waitForText("New tournament", timeoutMs = 60_000)
+    }
+
+    // Registrations, by hand in the screens (corners only, plan.byHand): the club admin runs a tournament of its club
+    // with registrations from its creation to its draw, and a player registers and cancels in the player app.
+
+    private val byHand by lazy { plan.getJSONObject("byHand") }
+    private fun accountEmail(suffix: String) = email.replace("+mts-botadmin@", "+mts-$suffix@")
+
+    private fun registrationsByHand() {
+        ensureTheOrganization(CO_ORGANIZATION)
+        makeTheClubAdmin()
+        signOut()
+        signInToTheAdmin(accountEmail("botclub"))
+        createTheRegistrationTournament()
+        importTheGoogleForm()
+        addAPersonByHand(byHand.getString("added"))
+        signOut()
+        registerAndCancelInThePlayerApp(accountEmail("cal01"))
+        signOutOfThePlayerApp()
+        signInToTheAdmin(accountEmail("botclub"))
+        c.openTournament(byHand.getString("name"))
+        c.waitForText("Registration settings", timeoutMs = 60_000)
+        removeAndGiveThePlace(byHand.getString("removed"), byHand.getString("added"))
+        closeAndMakeTheDraw()
+        signOut()
+        signInToTheAdmin(email)
+        log("registrations by hand done")
+    }
+
+    private fun signInToTheAdmin(account: String) {
+        c.signIn(account, password)
+        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
+        c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
+        c.waitForText("New tournament", timeoutMs = 60_000)
+    }
+
+    /** The profile of the admin part: Logout, and the confirmation. */
+    private fun signOut(profile: String = PROFILE_BUTTON) {
+        if (c.isOnScreen("Back")) runCatching { c.clickButton("Back") }
+        c.waitForText(profile, timeoutMs = 60_000)
+        c.clickButton(profile)
+        c.waitForText("Logout")
+        c.clickButton("Logout")
+        c.waitForText("Yes, sign out")
+        c.clickButton("Yes, sign out")
+        c.waitForText("Sign in", timeoutMs = 60_000)
+    }
+
+    private fun signOutOfThePlayerApp() = signOut("Profile")
+
+    /** Users: the bot admin makes the plain account of the club admin the Club Admin of the club of the game days. */
+    private fun makeTheClubAdmin() {
+        repeat(3) {
+            if (!c.isOnScreen("New user")) runCatching { c.settle(); c.clickButton("Users") }
+            runCatching { c.waitForText("New user", timeoutMs = 20_000) }
+        }
+        c.waitForText("New user", timeoutMs = 30_000)
+        c.onAllNodes(hasSetTextAction() and hasText("Search")).onFirst().performTextInput(CLUB_ADMIN)
+        val row = hasClickAction() and hasAnyDescendant(hasText(CLUB_ADMIN))
+        c.waitUntil(30_000) { c.onAllNodes(row, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(row, useUnmergedTree = true).onFirst().performClick()
+        c.waitForText("Edit account", timeoutMs = 30_000)
+        chooseInSelect("Global role", "Club Admin")
+        c.waitForText("Add an organization", timeoutMs = 10_000)
+        // The chip of the organization shows once the account is of the club; the field adds it.
+        if (c.onAllNodes(hasContentDescription("Remove $ORGANIZATION", substring = true)).fetchSemanticsNodes().isEmpty()) {
+            c.selectField("Add an organization").performClick()
+            val choice = hasText(ORGANIZATION) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
+            c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
+            c.onAllNodes(choice).onLast().performClick()
+            c.waitUntil(10_000) { c.onAllNodes(hasContentDescription("Remove $ORGANIZATION", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        }
+        c.clickLastButton("Save")
+        c.waitForNoText("Edit account", timeoutMs = 60_000)
+        c.clickButton("Back")
+        c.waitForText("New tournament", timeoutMs = 60_000)
+        log("the club admin is Club Admin of $ORGANIZATION")
+    }
+
+    /** The club admin creates the tournament of its club with registrations: 16 places, a co-organizer, 3 rounds. */
+    private fun createTheRegistrationTournament() {
+        c.clickButton("New tournament")
+        c.waitForText("Creates rounds, tables, and players automatically.")
+        c.field("Name").performTextInput(byHand.getString("name"))
+        c.field("Short name").performTextInput(byHand.getString("shortName"))
+        setSwitch("Open registrations", true)
+        c.waitForText("Places (optional)", timeoutMs = 10_000)
+        c.field("Places (optional)").performTextInput(byHand.getInt("places").toString())
+        c.field("Rounds").performTextReplacement(byHand.getInt("rounds").toString())
+        setSwitch("Teams", false)
+        c.field("Match duration (minutes)").performTextReplacement(plan.getInt("matchDurationMinutes").toString())
+        c.clickLastButton("Organizers")
+        // A club admin of one organization has it as main organizer already.
+        c.waitForText(ORGANIZATION, timeoutMs = 30_000)
+        c.selectField("Add a co-organizer").performClick()
+        val choice = hasText(CO_ORGANIZATION) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
+        c.waitUntil(10_000) { c.onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(choice).onLast().performClick()
+        c.waitUntil(10_000) { c.onAllNodes(hasContentDescription("Remove $CO_ORGANIZATION", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        c.clickLastButton("Venue")
+        chooseCountry("Spain")
+        c.field("City").performTextInput("Madrid")
+        c.field("Venue name").performTextInput("Game day club")
+        c.field("Address").performTextInput("Calle Mayor 1, Madrid")
+        c.field("Contact email").performTextInput(slots.first().email.replace(Regex("\\+[^@]*"), ""))
+        c.clickLastButton("Schedule")
+        val rounds = byHand.getInt("rounds")
+        c.waitForText("Round $rounds")
+        val schedule = plan.getJSONArray("roundSchedules").getJSONObject(0)
+        val (year, month, day) = schedule.getString("date").split("-")
+        val dates = c.onAllNodes(hasSetTextAction() and hasText("Date"))
+        val times = c.onAllNodes(hasSetTextAction() and hasText("Start"))
+        repeat(rounds) { index ->
+            dates[index].performTextReplacement("$day/$month/$year")
+            times[index].performTextReplacement(schedule.getString("startTime"))
+        }
+        c.clickLastButton("General")
+        c.clickButton("Create")
+        // A tournament with registrations opens on its registrations, without players.
+        c.waitForText("Nobody has registered yet", timeoutMs = 120_000)
+        log("tournament with registrations created by the club admin, with $CO_ORGANIZATION as co-organizer")
+    }
+
+    private fun importTheGoogleForm() {
+        val count = byHand.getJSONArray("form").length()
+        pickNext("registrations-form.csv")
+        c.clickButton("Import Google Form")
+        c.waitForText("Import the Google Form", timeoutMs = 30_000)
+        c.clickButton("Choose the file")
+        c.waitForText("$count of $count rows can be imported.", timeoutMs = 60_000)
+        c.clickButton("Import $count")
+        c.waitForText("$count people were imported.", timeoutMs = 60_000)
+        c.clickLastButton("OK")
+        c.waitForText("With a place ($count)", timeoutMs = 60_000)
+        log("$count people imported from the Google Form")
+    }
+
+    private fun registrationCard(emaId: String): SemanticsMatcher = hasTestTag("registration-$emaId")
+
+    /** The list is lazy: it scrolls to the card of the person. */
+    private fun showCard(emaId: String) {
+        c.waitUntil(30_000) {
+            if (c.onAllNodes(registrationCard(emaId)).fetchSemanticsNodes().isEmpty()) {
+                runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(registrationCard(emaId)) }
+            }
+            c.onAllNodes(registrationCard(emaId)).fetchSemanticsNodes().isNotEmpty()
+        }
+        runCatching { c.onNode(registrationCard(emaId)).performScrollTo() }
+    }
+
+    private fun cardMenu(emaId: String, action: String) {
+        showCard(emaId)
+        c.onNode(hasContentDescription("More actions for", substring = true) and hasAnyAncestor(registrationCard(emaId))).performClick()
+        val item = hasText(action) and hasClickAction()
+        c.waitUntil(10_000) { c.onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(item).onLast().performClick()
+    }
+
+    /** Add a person: the EMA player from the registry. The places are full, so the person goes to the waiting list. */
+    private fun addAPersonByHand(emaId: String) {
+        c.clickButton("Add a person")
+        c.waitForText("Choose the EMA player", timeoutMs = 30_000)
+        c.clickButton("Choose the EMA player")
+        c.waitUntil(30_000) { c.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(hasSetTextAction()).onLast().performTextInput(emaId)
+        val row = hasClickAction() and hasText(emaId, substring = true) and !hasSetTextAction()
+        c.waitUntil(30_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(row).onLast().performClick()
+        c.waitForText(emaId, substring = true)
+        c.clickLastButton("Save")
+        c.waitForText("Waiting list (1)", timeoutMs = 60_000)
+        log("a person added by hand goes to the waiting list")
+    }
+
+    /** The player part: the player opens the tournament, registers (number 2 of the waiting list) and cancels. */
+    private fun registerAndCancelInThePlayerApp(account: String) {
+        c.signIn(account, password)
+        val name = byHand.getString("name")
+        c.scrollListTo(name)
+        val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
+        c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
+        runCatching { c.onNode(open).performScrollTo() }
+        c.onNode(open).performClick()
+        c.waitForText("Registrations are open", timeoutMs = 60_000)
+        c.clickButton("Register")
+        c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-submit") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        c.onNode(hasTestTag("registration-submit")).performClick()
+        c.waitForText("on the waiting list", substring = true, timeoutMs = 60_000)
+        log("the player registered in the player app and is on the waiting list")
+        c.clickLastButton("Close")
+        c.waitForText("My registration", timeoutMs = 30_000)
+        c.clickButton("My registration")
+        c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-cancel")).fetchSemanticsNodes().isNotEmpty() }
+        c.onNode(hasTestTag("registration-cancel")).performClick()
+        c.waitForText("Cancel your registration?")
+        c.clickButton("Cancel registration")
+        c.waitForText("Register", timeoutMs = 60_000)
+        c.waitForNoText("My registration", timeoutMs = 60_000)
+        log("the player cancelled the registration in the player app")
+        c.clickButton("Back")
+    }
+
+    /** A person with a place leaves: the club admin removes it, and gives the place to the first of the waiting list. */
+    private fun removeAndGiveThePlace(removed: String, added: String) {
+        val count = byHand.getJSONArray("form").length()
+        c.waitForText("With a place ($count)", timeoutMs = 60_000)
+        cardMenu(removed, "Remove")
+        c.waitForText("Remove the registration?")
+        c.clickLastButton("Remove")
+        c.waitForText("With a place (${count - 1})", timeoutMs = 60_000)
+        cardMenu(added, "Give a place")
+        c.waitForText("With a place ($count)", timeoutMs = 60_000)
+        log("a person removed, and the place given to the waiting list")
+    }
+
+    private fun closeAndMakeTheDraw() {
+        c.clickButton("Registration settings")
+        c.waitForText("Name of the public link", timeoutMs = 30_000)
+        setSwitch("Registrations open", false)
+        c.clickLastButton("Save")
+        c.waitForText("Registrations closed", timeoutMs = 60_000)
+        c.clickLastButton("Make the draw")
+        c.waitForText("Make the draw?", timeoutMs = 30_000)
+        c.clickLastButton("Make the draw")
+        // The app computes the draw, the server writes it, and the tournament opens on its players.
+        c.waitForAnyText("Tournament players", "Players & results", timeoutMs = 300_000)
+        log("registrations closed and draw made by the club admin")
     }
 
     private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
@@ -937,5 +1167,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private companion object {
         const val TAG = "SCENARIO"
         const val ORGANIZATION = "Game day club"
+        const val CO_ORGANIZATION = "Game day co-club"
+        const val CLUB_ADMIN = "Bot club admin"
     }
 }

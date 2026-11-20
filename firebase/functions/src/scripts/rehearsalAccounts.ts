@@ -13,11 +13,12 @@ import { runScript } from "./scriptRun";
  * --passwords: gives the rehearsal password to the accounts of the slots --from..--to (default 2..60). Ernesto
  *   creates them with the invitations of the tournament. They have no password until then, and the bots need one.
  * --calibration-setup: the accounts and EMA players of the calibration tournament (16 players, EMA 99980001-16) and
- *   the admin account of the bots, all with the rehearsal password. No email is sent.
+ *   the admin account of the bots, and the club admin of the game days (a plain account that the bot admin makes
+ *   Club Admin in the app), all with the rehearsal password. No email is sent.
  * --calibration-cleanup: removes the 16 calibration accounts and EMA players. Delete the calibration tournament first.
  *
- * Emails: the local part of STAGING_ADMIN_EMAIL plus "+mts-jNN", "+mts-calNN" or "+mts-botadmin". The password comes
- * from REHEARSAL_PASSWORD. It previews by default; add --apply to write. It needs --project=<id> and never runs on
+ * Emails: the local part of STAGING_ADMIN_EMAIL plus "+mts-jNN", "+mts-calNN", "+mts-botadmin" or "+mts-botclub".
+ * The password comes from REHEARSAL_PASSWORD. It previews by default; add --apply to write. It needs --project=<id> and never runs on
  * production.
  */
 const PRODUCTION_PROJECT = "mahjong-tournament-suite";
@@ -105,8 +106,21 @@ async function setupCalibration(baseEmail: string, password: string) {
     // The apps show the alias instead of a name made from the email, so the videos of a game day show no address.
     await updateOwnAlias(admin.uid, "Bot organizer");
   }
-  console.log(`Calibration${applyChanges ? "" : " (preview)"}: ${players} new EMA players, ${accounts} new accounts, bot admin ${adminState}.`);
-  return { players, accounts, admin: adminState };
+  // The club admin of the game days. It starts as a plain account: the bot admin makes it the Club Admin of the club of
+  // the game days in Users, in the admin app (docs/scenarios.md), and then it signs in to run a tournament of its club.
+  const clubEmail = rehearsalEmail(baseEmail, "botclub");
+  let club = await userByEmail(clubEmail);
+  const clubState = club == null ? "CREATE" : "OK";
+  if (applyChanges) {
+    if (club == null) {
+      club = await auth.createUser({ email: clubEmail, emailVerified: true });
+      await createUserProfile(club.uid, clubEmail);
+    }
+    await auth.updateUser(club.uid, { password, emailVerified: true });
+    await updateOwnAlias(club.uid, "Bot club admin");
+  }
+  console.log(`Calibration${applyChanges ? "" : " (preview)"}: ${players} new EMA players, ${accounts} new accounts, bot admin ${adminState}, club admin ${clubState}.`);
+  return { players, accounts, admin: adminState, club: clubState };
 }
 
 async function cleanupCalibration(baseEmail: string) {

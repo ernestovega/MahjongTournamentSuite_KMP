@@ -191,3 +191,19 @@ test("the accounts to free up keep enough players of earlier game days and need 
   assert.equal(accountsToFreeUp(back, 0, 20, 8).length, 2);
   assert.deepEqual(accountsToFreeUp([{ email: "m+gd1101x-s001@d" }], 0, 1, 0), []);
 });
+
+test("corners plans the registrations by hand: 16 people in the Google Form, a 17th by hand, and the first one leaves", async () => {
+  const { plan, files } = await planFor({ scenario: "corners" });
+  assert.equal(plan.byHand.places, 16);
+  assert.deepEqual(plan.byHand.form, plan.slots.slice(0, 16).map((slot) => slot.emaId));
+  assert.equal(plan.byHand.added, plan.slots[16].emaId);
+  assert.equal(plan.byHand.removed, plan.slots[0].emaId);
+  const rows = files["registrations-form.csv"].trim().split("\n");
+  assert.equal(rows.length, 17);
+  assert.ok(rows[0].includes("EMA number"));
+  assert.ok(plan.byHand.form.every((emaId) => files["registrations-form.csv"].includes(emaId)));
+  // The other scenarios leave it to the bots.
+  const { plan: small, files: smallFiles } = await planFor({ scenario: "small" });
+  assert.equal(small.byHand, undefined);
+  assert.equal(smallFiles["registrations-form.csv"], undefined);
+});
