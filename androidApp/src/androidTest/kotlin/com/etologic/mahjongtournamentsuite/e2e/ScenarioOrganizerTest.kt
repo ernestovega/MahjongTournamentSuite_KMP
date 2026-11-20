@@ -1073,7 +1073,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         writeScore(handId, score)
         setDone(handId, true)
         // What Save sends: the new score in a hand that is done. Anything else is typed again.
-        val shown = scoreField(handId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text
+        // A done hand is locked: its field has no text action, so the score is read from the cell.
+        val shown = c.onAllNodes(hasAnyAncestor(hasTestTag("hand-$handId-score")), useUnmergedTree = true).fetchSemanticsNodes()
+            .firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.EditableText)?.text }
         check(shown == score && isDone(handId) == true) { "Hand $handId shows score $shown and done ${isDone(handId)} before Save" }
     }
 
