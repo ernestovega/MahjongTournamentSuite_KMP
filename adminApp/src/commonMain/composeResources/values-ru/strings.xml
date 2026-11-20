@@ -1088,4 +1088,8 @@
     <string name="reg_open_registrations">Регистрация</string>
     <string name="activity_action_registration_update">Изменил регистрацию</string>
     <string name="activity_action_registration_draw">Провёл жеребьёвку по регистрации</string>
+    <string name="hands_not_done_title">Руки без отметки «Готово»</string>
+    <string name="hands_not_done_text">У этих рук верный результат, но «Готово» не отмечено.\nОни не считаются, пока их не отметят как готовые.\nЭто может быть намеренно. Если нет, вернитесь и отметьте их.</string>
+    <string name="hands_not_done_line">Раунд %1$d · Стол %2$d · Рука %3$d</string>
+    <string name="hands_not_done_save">Всё равно сохранить</string>
 </resources>

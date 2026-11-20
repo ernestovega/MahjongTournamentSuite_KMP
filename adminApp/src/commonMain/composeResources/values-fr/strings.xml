@@ -1074,4 +1074,8 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_open_registrations">Inscriptions</string>
     <string name="activity_action_registration_update">A modifié les inscriptions</string>
     <string name="activity_action_registration_draw">A fait le tirage des inscriptions</string>
+    <string name="hands_not_done_title">Mains non marquées Fait</string>
+    <string name="hands_not_done_text">Ces mains ont un résultat valide, mais Fait n’est pas coché.\nElles ne comptent pas tant qu’elles ne sont pas marquées comme faites.\nCela peut être voulu. Sinon, revenez et cochez-les.</string>
+    <string name="hands_not_done_line">Tour %1$d · Table %2$d · Main %3$d</string>
+    <string name="hands_not_done_save">Enregistrer quand même</string>
 </resources>

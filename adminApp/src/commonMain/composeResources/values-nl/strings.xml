@@ -1074,4 +1074,8 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="reg_open_registrations">Inschrijvingen</string>
     <string name="activity_action_registration_update">Wijzigde de inschrijvingen</string>
     <string name="activity_action_registration_draw">Maakte de loting van de inschrijvingen</string>
+    <string name="hands_not_done_title">Handen zonder Klaar</string>
+    <string name="hands_not_done_text">Deze handen hebben een geldig resultaat, maar Klaar staat uit.\nZe tellen pas mee als ze als klaar zijn gemarkeerd.\nDat kan de bedoeling zijn. Zo niet, ga terug en markeer ze.</string>
+    <string name="hands_not_done_line">Ronde %1$d · Tafel %2$d · Hand %3$d</string>
+    <string name="hands_not_done_save">Toch opslaan</string>
 </resources>

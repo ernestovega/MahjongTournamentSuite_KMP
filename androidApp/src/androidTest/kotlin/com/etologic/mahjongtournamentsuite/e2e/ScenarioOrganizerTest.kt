@@ -777,6 +777,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
                 val othersBefore = doneHandsOfTheRound(tournamentId, round, except = table)
                 // The message can also open just as Save is tapped: the tap goes nowhere, and the editor does it again.
                 val saved = runCatching { c.clickButton("Save") }
+                // The app asks before saving a hand with a result and Done off: here that is a mistake, so back.
+                if (c.isOnScreen("Hands without Done")) {
+                    log("table $round-$table: the app asked about hands without Done, attempt $attempt")
+                    c.clickLastButton("Cancel")
+                    continue
+                }
                 if (tableUpdatedShown()) continue
                 if (saved.isFailure) {
                     c.waitForIdle()

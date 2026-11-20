@@ -34,6 +34,10 @@ import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.enter_these_values_again_if_they
+import mahjongtournamentsuite.adminapp.generated.resources.hands_not_done_line
+import mahjongtournamentsuite.adminapp.generated.resources.hands_not_done_save
+import mahjongtournamentsuite.adminapp.generated.resources.hands_not_done_text
+import mahjongtournamentsuite.adminapp.generated.resources.hands_not_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.lost_change_line
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.reset_table
@@ -112,6 +116,40 @@ internal fun TableUpdatesDialog(
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
+                }
+            },
+        )
+    }
+}
+
+/** One hand with a valid result and Done off, in the warning before a save. */
+internal data class HandNotDone(val roundId: Int, val tableId: Int, val handId: Int)
+
+/**
+ * Asks before saving hands that have a valid result but Done off: they will not count. It can be on purpose, or a
+ * Done that the editor forgot to mark again after a correction.
+ */
+@Composable
+internal fun HandsNotDoneDialog(
+    hands: List<HandNotDone>,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    TrackedDialog("HandsNotDone") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { MtsDialogTitle(stringResource(Res.string.hands_not_done_title)) },
+            text = {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(Res.string.hands_not_done_text), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                    LostChangesCard(hands.map { stringResource(Res.string.hands_not_done_line, it.roundId, it.tableId, it.handId) })
+                }
+            },
+            confirmButton = {
+                MtsDialogButtons {
+                    Button(onClick = onSave, modifier = Modifier.testTag("handsNotDoneSave")) { Text(stringResource(Res.string.hands_not_done_save)) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
             },
         )
