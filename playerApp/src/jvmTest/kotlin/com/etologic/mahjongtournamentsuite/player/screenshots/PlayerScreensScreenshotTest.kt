@@ -337,7 +337,7 @@ class PlayerScreensScreenshotTest {
     private fun ComposeUiTest.openStartTab(key: String) {
         val title = playerText(key)
         waitForText(title)
-        waitForText(playerText("tournament_mark_plays"))
+        waitForText(playerText("tournament_mark_plays").uppercase())
         onAllNodesWithText(title).onFirst().performClick()
         waitForIdle()
     }

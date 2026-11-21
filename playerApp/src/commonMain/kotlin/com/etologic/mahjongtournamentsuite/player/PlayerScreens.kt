@@ -9,6 +9,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -769,29 +772,34 @@ private fun MyTournamentMark.label(status: TournamentStatus?): StringResource = 
 }
 
 /**
- * The mark of an own tournament: a small filled pill with a person and a short text, beside the status. Every
- * tournament where the account plays, played or is registered has it.
+ * Where the stamp of an own tournament sits on its card: in the right half, between the dates and the place. With the
+ * places of the player at the top right, it moves to the left of them.
+ */
+private val StampAlignment = BiasAlignment(horizontalBias = 0.85f, verticalBias = -0.3f)
+private val StampAlignmentBesidePlaces = BiasAlignment(horizontalBias = 0.4f, verticalBias = -0.3f)
+
+/**
+ * The mark of an own tournament, drawn as an ink stamp: tilted, a double frame, capital letters and a bit of
+ * transparency so the card shows through like ink on paper. Every tournament where the account plays, played or is
+ * registered has it.
  */
 @Composable
-private fun MyTournamentMarkChip(mark: MyTournamentMark, status: TournamentStatus?) {
-    val colors = MaterialTheme.colorScheme
-    Row(
-        Modifier.clip(CircleShape).background(colors.primaryContainer).padding(start = 6.dp, end = 10.dp, top = 2.dp, bottom = 2.dp)
-            .testTag("tournament-mark"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+private fun InkStamp(text: String, modifier: Modifier = Modifier) {
+    val ink = MaterialTheme.colorScheme.primary
+    Box(
+        modifier
+            .testTag("tournament-mark")
+            .graphicsLayer { rotationZ = -12f; alpha = 0.7f }
+            .border(3.dp, ink, RoundedCornerShape(8.dp))
+            .padding(3.dp)
+            .border(1.dp, ink, RoundedCornerShape(5.dp))
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        Icon(
-            if (mark == MyTournamentMark.PLAYS) Icons.Default.Person else Icons.Default.HowToReg,
-            contentDescription = null,
-            Modifier.size(16.dp),
-            tint = colors.onPrimaryContainer,
-        )
         Text(
-            stringResource(mark.label(status)),
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onPrimaryContainer,
-            fontWeight = FontWeight.SemiBold,
+            text.uppercase(),
+            color = ink,
+            style = MaterialTheme.typography.titleMedium.copy(letterSpacing = 2.sp),
+            fontWeight = FontWeight.Black,
             maxLines = 1,
         )
     }
@@ -853,22 +861,14 @@ internal fun TournamentCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         // No border (Ernesto, 20-nov): the status and the Open button keep the color of the status.
     ) {
+        Box {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
                 // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
-                    if (status != null || mark != null) {
-                        // On a narrow phone the mark goes under the status when both do not fit in one line.
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing),
-                            itemVerticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (status != null) StatusChip(status)
-                            // The own tournaments are marked, so they stand out in the list of all tournaments.
-                            if (mark != null) MyTournamentMarkChip(mark, status)
-                        }
+                    if (status != null) {
+                        if (status != null) StatusChip(status)
                     }
                     Text(
                         tournament.name,
@@ -975,6 +975,12 @@ internal fun TournamentCard(
                 }
             }
             if (expanded) TournamentSchedule(tournament)
+        }
+            // The mark of an own tournament: an ink stamp over the right half of the card, where there is most room
+            // (Ernesto, 20-nov). It draws over the card and takes no taps.
+            if (mark != null) {
+                InkStamp(stringResource(mark.label(status)), Modifier.align(if (standing != null) StampAlignmentBesidePlaces else StampAlignment))
+            }
         }
     }
 }
