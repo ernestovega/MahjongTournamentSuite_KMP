@@ -216,7 +216,6 @@
     <string name="filter_year">Год</string>
     <string name="filter_all_years">Все</string>
     <string name="filter_clear">Сбросить фильтры</string>
-    <string name="privacy_public_notice">Турниры, результаты и статистика публичны. В них видны имя, страна и номер EMA каждого игрока, но никогда не видны адреса почты или фото. Если вы не хотите там появляться, попросите организаторов: вас будут показывать только номером.</string>
     <string name="filter_status">Статус</string>
     <string name="filter_all_statuses">Все</string>
     <string name="sign_in_needed_title">Войдите, чтобы увидеть свои</string>

@@ -216,7 +216,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.preg_closed
 import mahjongtournamentsuite.playerapp.generated.resources.preg_open
 import mahjongtournamentsuite.playerapp.generated.resources.preg_register
-import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_hands
@@ -654,14 +653,6 @@ fun TournamentsScreen(navController: NavHostController) {
                                         TournamentCard(tournament, standings[tournament.id], mark = marks[tournament.id]) {
                                             navController.navigate(TournamentRoute(tournament.id))
                                         }
-                                    }
-                                    item(key = "privacy") {
-                                        Text(
-                                            text = stringResource(Res.string.privacy_public_notice),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                        )
                                     }
                                 }
                                 DraggableScrollbar(listState, Modifier.align(Alignment.CenterEnd))

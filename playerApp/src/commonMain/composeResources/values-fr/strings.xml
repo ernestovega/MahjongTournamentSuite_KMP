@@ -210,7 +210,6 @@
     <string name="filter_year">Année</string>
     <string name="filter_all_years">Toutes</string>
     <string name="filter_clear">Effacer les filtres</string>
-    <string name="privacy_public_notice">Les tournois, les résultats et les statistiques sont publics. Ils montrent le nom, le pays et le numéro EMA de chaque joueur, jamais les e-mails ni les photos. Si vous ne voulez pas apparaître, demandez-le aux organisateurs : vous serez affiché seulement comme un numéro.</string>
     <string name="filter_status">Statut</string>
     <string name="filter_all_statuses">Tous</string>
     <string name="sign_in_needed_title">Connectez-vous pour voir les vôtres</string>

@@ -210,7 +210,6 @@
     <string name="filter_year">År</string>
     <string name="filter_all_years">Alla</string>
     <string name="filter_clear">Rensa filter</string>
-    <string name="privacy_public_notice">Turneringar, resultat och statistik är offentliga. De visar varje spelares namn, land och EMA-nummer, aldrig e-post eller foton. Om du inte vill synas, be arrangörerna: då visas du bara som ett nummer.</string>
     <string name="filter_status">Status</string>
     <string name="filter_all_statuses">Alla</string>
     <string name="sign_in_needed_title">Logga in för att se dina</string>
