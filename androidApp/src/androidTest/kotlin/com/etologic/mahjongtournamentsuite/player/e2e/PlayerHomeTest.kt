@@ -20,9 +20,8 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Test - Live ongoing tournament")
         c.waitForText("Madrid")
         c.waitForText("In progress")
-        // The card shows only the city and the flag. The address is behind Directions and in the Info tab.
+        // The card shows only the city and the flag. The address is behind the Directions icon and in the Info tab.
         c.assertNoText("Eskalerria - Calle Cipriano Sancho 36, Madrid")
-        c.waitForText("Directions")
         c.waitForText("Contact")
     }
 

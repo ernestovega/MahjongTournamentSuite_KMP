@@ -206,7 +206,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.hand_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.hand_self_pick
 import mahjongtournamentsuite.playerapp.generated.resources.icon_chicken_mono
 import mahjongtournamentsuite.playerapp.generated.resources.info_contact
-import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
@@ -283,6 +282,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
@@ -911,8 +911,7 @@ internal fun TournamentCard(
                             if (tournament.hostCity.isNotBlank()) {
                                 Text(
                                     tournament.hostCity,
-                                    // With a stamp, the stamp takes the free room and a long city name is cut.
-                                    if (mark != null) Modifier.widthIn(max = 140.dp) else Modifier.weight(1f, fill = false),
+                                    Modifier.weight(1f, fill = false),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
@@ -921,19 +920,24 @@ internal fun TournamentCard(
                             if (tournament.hostCountry.isNotBlank()) {
                                 CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
                             }
-                            // The stamp of an own tournament fills the free room of this line, at its right, under the
-                            // dates and before Directions (Ernesto, 21-nov). It may draw past its room: a stamp
-                            // overlaps a little, like ink on paper.
-                            if (mark != null) {
-                                // The height of the line, so the stamp does not make the line taller.
-                                Box(Modifier.weight(1f).height(24.dp), contentAlignment = Alignment.CenterEnd) {
-                                    InkStamp(stringResource(mark.label(status)), Modifier.wrapContentSize(unbounded = true))
+                            // Directions is the usual map icon, right after the place (Ernesto, 21-nov).
+                            if (mapLink != null) {
+                                IconButton(onClick = { openDirections(mapLink) }, modifier = Modifier.size(36.dp)) {
+                                    Icon(
+                                        Icons.Default.Directions,
+                                        contentDescription = stringResource(Res.string.info_open_directions),
+                                        Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
                                 }
                             }
                         }
-                        if (mapLink != null) {
-                            LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
-                                openDirections(mapLink)
+                        // The stamp of an own tournament is at the end of this line, under the dates (Ernesto, 21-nov).
+                        // It may draw past the line: a stamp overlaps a little, like ink on paper.
+                        if (mark != null) {
+                            // The height of the line, so the stamp does not make the line taller.
+                            Box(Modifier.height(24.dp), contentAlignment = Alignment.CenterEnd) {
+                                InkStamp(stringResource(mark.label(status)), Modifier.wrapContentSize(unbounded = true))
                             }
                         }
                     }
