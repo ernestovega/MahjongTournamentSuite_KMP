@@ -197,11 +197,10 @@
     <string name="green_book_offline">Het Green Book in jouw taal kon niet worden gedownload.\nDe Engelse versie wordt geopend.</string>
     <string name="tournaments_title">Toernooien</string>
     <string name="tournaments_no_match">Geen toernooi past bij de filters.</string>
-    <string name="tournament_mark_plays">Je speelt</string>
-    <string name="tournament_mark_played">Je speelde</string>
-    <string name="tournament_mark_registered">Je hebt een plaats</string>
+    <string name="tournament_mark_plays">Speelt</string>
+    <string name="tournament_mark_played">Gespeeld</string>
+    <string name="tournament_mark_registered">Ingeschreven</string>
     <string name="tournament_mark_waiting">Wachtlijst</string>
-    <string name="tournament_registered">Ingeschreven</string>
     <string name="tournaments_tab_live">Bezig</string>
     <string name="tournaments_tab_all">Alle</string>
     <string name="table_sign_in_to_enter_hands">Log in om de handen van je tafel in te voeren</string>

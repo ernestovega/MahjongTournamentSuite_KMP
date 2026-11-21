@@ -197,11 +197,10 @@
     <string name="green_book_offline">Non è stato possibile scaricare il Green Book nella tua lingua.\nSi apre la versione inglese.</string>
     <string name="tournaments_title">Tornei</string>
     <string name="tournaments_no_match">Nessun torneo corrisponde ai filtri.</string>
-    <string name="tournament_mark_plays">Giochi</string>
-    <string name="tournament_mark_played">Hai giocato</string>
-    <string name="tournament_mark_registered">Hai un posto</string>
-    <string name="tournament_mark_waiting">Lista d'attesa</string>
-    <string name="tournament_registered">Iscritto</string>
+    <string name="tournament_mark_plays">In gioco</string>
+    <string name="tournament_mark_played">Giocato</string>
+    <string name="tournament_mark_registered">Iscritto</string>
+    <string name="tournament_mark_waiting">In attesa</string>
     <string name="tournaments_tab_live">In corso</string>
     <string name="tournaments_tab_all">Tutti</string>
     <string name="table_sign_in_to_enter_hands">Accedi per segnare le mani del tuo tavolo</string>

@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -41,7 +42,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContactSupport
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -269,7 +269,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_play
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_plays
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_registered
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_mark_waiting
-import mahjongtournamentsuite.playerapp.generated.resources.tournament_registered
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
@@ -771,12 +770,8 @@ private fun MyTournamentMark.label(status: TournamentStatus?): StringResource = 
     MyTournamentMark.WAITING -> Res.string.tournament_mark_waiting
 }
 
-/**
- * Where the stamp of an own tournament sits on its card: in the right half, between the dates and the place. With the
- * places of the player at the top right, it moves to the left of them.
- */
-private val StampAlignment = BiasAlignment(horizontalBias = 0.85f, verticalBias = -0.3f)
-private val StampAlignmentBesidePlaces = BiasAlignment(horizontalBias = 0.4f, verticalBias = -0.3f)
+/** Where the stamp of an own tournament sits on a card without the line of the place: in the right half. */
+private val StampAlignment = BiasAlignment(horizontalBias = 0.85f, verticalBias = 0.1f)
 
 /**
  * The mark of an own tournament, drawn as an ink stamp: tilted, a double frame, capital letters and a bit of
@@ -789,7 +784,10 @@ private fun InkStamp(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier
             .testTag("tournament-mark")
-            .graphicsLayer { rotationZ = -12f; alpha = 0.7f }
+            .graphicsLayer {
+                rotationZ = -12f
+                alpha = 0.7f
+            }
             .border(3.dp, ink, RoundedCornerShape(8.dp))
             .padding(3.dp)
             .border(1.dp, ink, RoundedCornerShape(5.dp))
@@ -862,124 +860,119 @@ internal fun TournamentCard(
         // No border (Ernesto, 20-nov): the status and the Open button keep the color of the status.
     ) {
         Box {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TournamentLogo(tournament)
-                // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
-                    if (status != null) {
-                        if (status != null) StatusChip(status)
-                    }
-                    Text(
-                        tournament.name,
-                        style = cardHeadlineStyle(),
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (dates != null) {
-                        Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-                // The places of the player are at the top right, one line for each.
-                if (standing != null) StandingBadges(standing)
-            }
-            // A tournament before its draw shows its registrations. The button opens the tournament on its Players tab.
-            tournament.registration?.takeIf { tournament.inRegistration }?.let { registration ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                    Column(Modifier.weight(1f)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TournamentLogo(tournament)
+                    // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
+                        if (status != null) {
+                            if (status != null) StatusChip(status)
+                        }
                         Text(
-                            stringResource(if (registration.isOpen) Res.string.preg_open else Res.string.preg_closed),
+                            tournament.name,
+                            style = cardHeadlineStyle(),
                             fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
-                        Text(
-                            registrationPlacesText(registration.confirmed, registration.maxPlayers, registration.waiting),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
+                        if (dates != null) {
+                            Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
-                    if (mark == MyTournamentMark.REGISTERED || mark == MyTournamentMark.WAITING) {
-                        // Already registered: a plain text, not a button (Ernesto, 20-nov). The tournament manages it.
-                        Row(
-                            Modifier.testTag("tournament-registered"),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    // The places of the player are at the top right, one line for each.
+                    if (standing != null) StandingBadges(standing)
+                }
+                // A tournament before its draw shows its registrations. The button opens the tournament on its Players tab.
+                tournament.registration?.takeIf { tournament.inRegistration }?.let { registration ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Column(Modifier.weight(1f)) {
                             Text(
-                                stringResource(Res.string.tournament_registered),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                stringResource(if (registration.isOpen) Res.string.preg_open else Res.string.preg_closed),
                                 fontWeight = FontWeight.SemiBold,
                             )
-                        }
-                    } else if (registration.isOpen) {
-                        Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
-                    }
-                }
-            }
-            // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
-            if (hasCity || mapLink != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (tournament.hostCity.isNotBlank()) {
                             Text(
-                                tournament.hostCity,
-                                Modifier.weight(1f, fill = false),
+                                registrationPlacesText(registration.confirmed, registration.maxPlayers, registration.waiting),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodySmall,
                             )
                         }
-                        if (tournament.hostCountry.isNotBlank()) {
-                            CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
-                        }
-                    }
-                    if (mapLink != null) {
-                        LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
-                            openDirections(mapLink)
+                        // Already registered: no button. The stamp of the card says it (Ernesto, 21-nov).
+                        if (registration.isOpen && mark != MyTournamentMark.REGISTERED && mark != MyTournamentMark.WAITING) {
+                            Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
                         }
                     }
                 }
-            }
-            // The link buttons are at the left. The Open button is at the bottom right, in line with them.
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                FlowRow(
-                    Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (email.isNotBlank()) {
-                        LinkButton(Icons.Default.Email, stringResource(Res.string.info_contact), stringResource(Res.string.contact_send_email)) { openEmail("mailto:$email") }
-                    }
-                    if (hasSchedule(tournament)) {
-                        LinkButton(Icons.Default.Schedule, stringResource(if (expanded) Res.string.schedule_hide else Res.string.info_schedule)) { expanded = !expanded }
+                // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
+                if (hasCity || mapLink != null) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (tournament.hostCity.isNotBlank()) {
+                                Text(
+                                    tournament.hostCity,
+                                    // With a stamp, the stamp takes the free room and a long city name is cut.
+                                    if (mark != null) Modifier.widthIn(max = 140.dp) else Modifier.weight(1f, fill = false),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            if (tournament.hostCountry.isNotBlank()) {
+                                CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+                            }
+                            // The stamp of an own tournament fills the free room of this line, at its right, under the
+                            // dates and before Directions (Ernesto, 21-nov). It may draw past its room: a stamp
+                            // overlaps a little, like ink on paper.
+                            if (mark != null) {
+                                // The height of the line, so the stamp does not make the line taller.
+                                Box(Modifier.weight(1f).height(24.dp), contentAlignment = Alignment.CenterEnd) {
+                                    InkStamp(stringResource(mark.label(status)), Modifier.wrapContentSize(unbounded = true))
+                                }
+                            }
+                        }
+                        if (mapLink != null) {
+                            LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
+                                openDirections(mapLink)
+                            }
+                        }
                     }
                 }
-                Button(
-                    onClick = onClick,
-                    // The button has the accent color of the card.
-                    colors = if (accent != null) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = accent,
-                            contentColor = if (status == TournamentStatus.IN_PROGRESS) MaterialTheme.colorScheme.onTertiary else onUpcomingBlue(),
-                        )
-                    } else {
-                        ButtonDefaults.buttonColors()
-                    },
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                ) {
-                    Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
+                // The link buttons are at the left. The Open button is at the bottom right, in line with them.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                    FlowRow(
+                        Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        if (email.isNotBlank()) {
+                            LinkButton(Icons.Default.Email, stringResource(Res.string.info_contact), stringResource(Res.string.contact_send_email)) { openEmail("mailto:$email") }
+                        }
+                        if (hasSchedule(tournament)) {
+                            LinkButton(Icons.Default.Schedule, stringResource(if (expanded) Res.string.schedule_hide else Res.string.info_schedule)) { expanded = !expanded }
+                        }
+                    }
+                    Button(
+                        onClick = onClick,
+                        // The button has the accent color of the card.
+                        colors = if (accent != null) {
+                            ButtonDefaults.buttonColors(
+                                containerColor = accent,
+                                contentColor = if (status == TournamentStatus.IN_PROGRESS) MaterialTheme.colorScheme.onTertiary else onUpcomingBlue(),
+                            )
+                        } else {
+                            ButtonDefaults.buttonColors()
+                        },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    ) {
+                        Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
+                    }
                 }
+                if (expanded) TournamentSchedule(tournament)
             }
-            if (expanded) TournamentSchedule(tournament)
-        }
-            // The mark of an own tournament: an ink stamp over the right half of the card, where there is most room
-            // (Ernesto, 20-nov). It draws over the card and takes no taps.
-            if (mark != null) {
-                InkStamp(stringResource(mark.label(status)), Modifier.align(if (standing != null) StampAlignmentBesidePlaces else StampAlignment))
+            // A card without the line of the place has its stamp over the right half.
+            if (mark != null && !hasCity && mapLink == null) {
+                InkStamp(stringResource(mark.label(status)), Modifier.align(StampAlignment))
             }
         }
     }

@@ -203,11 +203,10 @@
     <string name="green_book_offline">Не удалось загрузить Green Book на вашем языке.\nОткрывается английская версия.</string>
     <string name="tournaments_title">Турниры</string>
     <string name="tournaments_no_match">Нет турниров по этим фильтрам.</string>
-    <string name="tournament_mark_plays">Вы играете</string>
-    <string name="tournament_mark_played">Вы играли</string>
-    <string name="tournament_mark_registered">У вас есть место</string>
-    <string name="tournament_mark_waiting">Лист ожидания</string>
-    <string name="tournament_registered">Записан</string>
+    <string name="tournament_mark_plays">Играете</string>
+    <string name="tournament_mark_played">Сыграно</string>
+    <string name="tournament_mark_registered">Записан</string>
+    <string name="tournament_mark_waiting">Ожидание</string>
     <string name="tournaments_tab_live">Идут</string>
     <string name="tournaments_tab_all">Все</string>
     <string name="table_sign_in_to_enter_hands">Войдите, чтобы записывать раздачи своего стола</string>
