@@ -250,8 +250,9 @@ ROUTES = [
     ("post", "/tournaments/{tournamentId}/player-count", "Torneos", "tEditor", "Cambiar el número de jugadores",
      "Antes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; "
      "el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede "
-     "dar los huecos nuevos a la lista de espera. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. "
-     "Ver docs/player-count-change.md.", [T], "PlayerCountRequest", "Tournament"),
+     "dar los huecos nuevos a la lista de espera. Envía un correo a cada persona afectada y responde quién no lo recibió. "
+     "409 TOURNAMENT_STARTED si alguna mesa tiene datos. "
+     "Ver docs/player-count-change.md.", [T], "PlayerCountRequest", "PlayerCountResponse"),
     ("delete", "/tournaments/{tournamentId}", "Torneos", "admin", "Borrar un torneo", "Borra el torneo y todas sus subcolecciones.", [T], None, OK),
     ("get", "/tournaments/{tournamentId}/sync/manifest", "Torneos", "tEditor", "Revisiones de los datos del torneo", "", [T], None,
      "DataVersionsManifest"),

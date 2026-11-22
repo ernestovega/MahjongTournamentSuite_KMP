@@ -1964,7 +1964,7 @@
      "Torneos"
     ],
     "summary": "Cambiar el número de jugadores",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAntes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede dar los huecos nuevos a la lista de espera. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. Ver docs/player-count-change.md.",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAntes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede dar los huecos nuevos a la lista de espera. Envía un correo a cada persona afectada y responde quién no lo recibió. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. Ver docs/player-count-change.md.",
     "security": [
      {
       "bearer": []
@@ -1976,7 +1976,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/Tournament"
+         "$ref": "#/components/schemas/PlayerCountResponse"
         }
        }
       }
