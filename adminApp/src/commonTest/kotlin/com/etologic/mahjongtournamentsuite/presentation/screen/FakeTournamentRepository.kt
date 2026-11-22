@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
 import com.etologic.mahjongtournamentsuite.domain.model.*
 import com.etologic.mahjongtournamentsuite.domain.repository.*
 
@@ -327,7 +329,23 @@ internal class FakeTournamentRepository : TournamentRepository {
         if (failPlayers) return AppResult.Failure(AppError.Network)
         return AppResult.Success(players)
     }
-    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = AppResult.Success(emptyList<TournamentTeam>())
+    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = AppResult.Success(teams)
+
+    /** The teams that [listTournamentTeams] gives. */
+    var teams: List<TournamentTeam> = emptyList()
+
+    /** The last change of the number of players that reached the server. */
+    var playerCountRequest: PlayerCountChangeRequest? = null
+
+    /** Makes the change of the number of players fail with this error. */
+    var playerCountError: AppError? = null
+
+    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<Tournament> {
+        calls += "playerCount ${request.players.size}"
+        playerCountError?.let { return AppResult.Failure(it) }
+        playerCountRequest = request
+        return writeResult(Tournament(id = request.tournamentId, name = "Open", isTeams = false, numPlayers = request.players.size, numRounds = 1, numTries = request.numTries))
+    }
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = writeResult(Unit)
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = AppResult.Success(countries)
     override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = AppResult.Success(ResolvedVenueLink(url, null))

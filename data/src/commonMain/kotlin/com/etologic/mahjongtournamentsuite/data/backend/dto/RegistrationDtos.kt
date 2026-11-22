@@ -208,6 +208,16 @@ data class MakeDrawRequestDto(
     val assignments: List<DrawAssignmentDto>,
 )
 
+/** POST /tournaments/{id}/player-count: the new draw, the slots that leave and the people of the waiting list. */
+@Serializable
+data class PlayerCountRequestDto(
+    val numTries: Long,
+    val players: List<DrawPlayerDto>,
+    val tables: List<DrawTableDto>,
+    val removedSlotIds: List<Int>,
+    val waitingEmaIds: List<String>,
+)
+
 @Serializable
 data class RegistrationLinkDto(
     val tournamentId: String,

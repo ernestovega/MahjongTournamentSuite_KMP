@@ -236,6 +236,9 @@ object TelemetryAction {
     /** The draw of a tournament with registrations, with the confirmed people. */
     const val DRAW_MADE = "draw_made"
 
+    /** The number of players of a tournament changed before its first hand, with a new draw. */
+    const val PLAYER_COUNT_CHANGED = "player_count_changed"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         TOURNAMENT_RENAMED,
@@ -280,6 +283,7 @@ object TelemetryAction {
         REGISTRATION_SETTINGS_UPDATED,
         REGISTRATIONS_IMPORTED,
         DRAW_MADE,
+        PLAYER_COUNT_CHANGED,
     )
 }
 

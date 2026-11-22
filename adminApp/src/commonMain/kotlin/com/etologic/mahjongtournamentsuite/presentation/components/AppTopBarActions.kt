@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Groups
@@ -37,6 +38,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_players
 import mahjongtournamentsuite.adminapp.generated.resources.new_player
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
 import mahjongtournamentsuite.adminapp.generated.resources.roles_open
@@ -61,6 +63,9 @@ fun AppTopBarActions(
     /** True when the tournament has data. The import button then looks disabled and explains why it cannot run. */
     importLocked: Boolean = false,
     onExportPlayers: (() -> Unit)? = null,
+    /** Change of the number of players before the first hand. [playerCountLocked] makes it look disabled; it then explains why. */
+    onPlayerCount: (() -> Unit)? = null,
+    playerCountLocked: Boolean = false,
     onPlayerBase: (() -> Unit)? = null,
     /** The clubs and federations that organize the tournaments. */
     onOrganizations: (() -> Unit)? = null,
@@ -116,6 +121,7 @@ fun AppTopBarActions(
             )
         }
         onExportPlayers?.let { AppTopBarButton(stringResource(Res.string.export_players), Icons.Default.FileUpload, it) }
+        onPlayerCount?.let { AppTopBarButton(stringResource(Res.string.pc_top_bar), Icons.Default.Exposure, onClick = it, looksDisabled = playerCountLocked) }
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }

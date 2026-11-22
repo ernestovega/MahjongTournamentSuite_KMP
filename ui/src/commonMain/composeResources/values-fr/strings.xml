@@ -617,4 +617,12 @@
     <string name="registration_error_team_name_taken">Une autre équipe porte ce nom.</string>
     <string name="registration_error_too_many_rows">Le fichier est trop grand : 500 lignes au plus.</string>
     <string name="registration_error_use_leave">Pour quitter votre équipe, utilisez Quitter l'équipe.</string>
+    <string name="registration_error_bad_removed_slots">Les personnes qui partent ne correspondent pas au nouveau nombre de joueurs.</string>
+    <string name="registration_error_bad_waiting">Il y a plus de personnes de la liste d'attente que de nouvelles places.</string>
+    <string name="registration_error_draw_pending">Le tournoi n'a pas encore de tirage.</string>
+    <string name="registration_error_not_waiting">Une personne choisie n'est plus sur la liste d'attente. Rouvre la fenêtre.</string>
+    <string name="registration_error_partial_team">Une équipe part en entier : choisis des équipes complètes.</string>
+    <string name="registration_error_same_player_count">Le tournoi a déjà ce nombre de joueurs.</string>
+    <string name="registration_error_tournament_completed">Le tournoi est terminé.</string>
+    <string name="registration_error_tournament_started">Le tournoi a déjà des données à ses tables. Le tirage ne peut plus changer.</string>
 </resources>

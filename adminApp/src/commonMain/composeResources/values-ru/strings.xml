@@ -1092,4 +1092,51 @@
     <string name="hands_not_done_text">У этих рук верный результат, но «Готово» не отмечено.\nОни не считаются, пока их не отметят как готовые.\nЭто может быть намеренно. Если нет, вернитесь и отметьте их.</string>
     <string name="hands_not_done_line">Раунд %1$d · Стол %2$d · Рука %3$d</string>
     <string name="hands_not_done_save">Всё равно сохранить</string>
+    <string name="pc_title">Изменить число игроков</string>
+    <string name="pc_top_bar">Число игроков</string>
+    <string name="pc_change">Изменить</string>
+    <string name="pc_now">Сейчас: %1$d игроков, %2$d столов в раунде.</string>
+    <string name="pc_count">%1$d игроков · %2$d столов</string>
+    <string name="pc_less">На один стол меньше</string>
+    <string name="pc_more">На один стол больше</string>
+    <string name="pc_hint">Нажми − или +, чтобы убрать или добавить целые столы по 4 игрока.</string>
+    <string name="pc_choose_people">Кто уходит? Выбери %1$d.</string>
+    <string name="pc_choose_teams">Какие команды уходят? Выбери %1$d.</string>
+    <string name="pc_chosen">Выбрано %1$d из %2$d</string>
+    <string name="pc_empty_slot">#%1$d · без игрока</string>
+    <string name="pc_new_slots">%1$d новых мест, пустых, пока ты не назначишь их в разделе «Игроки».</string>
+    <string name="pc_new_teams">%1$d новых команд, пустых, пока ты не назначишь их в разделе «Команды».</string>
+    <string name="pc_waiting_title">Лист ожидания: до %1$d человек (необязательно)</string>
+    <string name="pc_waiting_none">В листе ожидания никого нет.</string>
+    <string name="pc_continue">Продолжить</string>
+    <string name="pc_confirm_title">Провести новую жеребьёвку?</string>
+    <string name="pc_from_to">С %1$d на %2$d игроков</string>
+    <string name="pc_removed_label">Удаляется:</string>
+    <string name="pc_removed_tables">Столы всех %1$d раундов. Они разыгрываются заново.</string>
+    <string name="pc_removed_people">Уходящие игроки: %1$s.</string>
+    <string name="pc_removed_teams">Уходящие команды с их игроками: %1$s.</string>
+    <string name="pc_removed_registrations">Их регистрации. Писем они не получат: сообщи им сам.</string>
+    <string name="pc_added_label">Добавляется:</string>
+    <string name="pc_added_slots">%1$d пустых мест, которые назначишь потом.</string>
+    <string name="pc_added_teams">%1$d новых команд.</string>
+    <string name="pc_added_waiting">Из листа ожидания, получают место: %1$s.</string>
+    <string name="pc_kept_label">Сохраняется:</string>
+    <string name="pc_kept_people">Остальные игроки с их игроком EMA, аккаунтом и почтой.</string>
+    <string name="pc_kept_teams">Остальные команды с их названием и игроками.</string>
+    <string name="pc_kept_rounds">Раунды, их расписание и часы.</string>
+    <string name="pc_note">Игроки увидят свои новые столы в приложении.
+Письма никому не отправляются. Изменение записывается в журнал действий.</string>
+    <string name="pc_confirm">Провести жеребьёвку</string>
+    <string name="pc_back">Назад</string>
+    <string name="pc_loading">Загрузка игроков…</string>
+    <string name="pc_saving">Сохранение новой жеребьёвки…</string>
+    <string name="pc_done_title">Готово</string>
+    <string name="pc_done_text">Теперь в турнире %1$d игроков и новая жеребьёвка.</string>
+    <string name="pc_locked_title">Число игроков изменить нельзя</string>
+    <string name="pc_locked_started">В турнире уже есть данные за столами.
+Число игроков можно изменить только до первой раздачи.</string>
+    <string name="pc_locked_completed">Турнир завершён.</string>
+    <string name="pc_locked_pending">У турнира ещё нет жеребьёвки.
+Измени число мест в разделе «Регистрация».</string>
+    <string name="activity_action_tournament_player_count">Изменил число игроков</string>
 </resources>

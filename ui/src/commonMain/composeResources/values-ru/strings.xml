@@ -613,4 +613,12 @@
     <string name="registration_error_team_name_taken">Это название уже у другой команды.</string>
     <string name="registration_error_too_many_rows">Файл слишком большой: не более 500 строк.</string>
     <string name="registration_error_use_leave">Чтобы выйти из своей команды, нажмите «Выйти из команды».</string>
+    <string name="registration_error_bad_removed_slots">Уходящие игроки не соответствуют новому числу игроков.</string>
+    <string name="registration_error_bad_waiting">Людей из листа ожидания больше, чем новых мест.</string>
+    <string name="registration_error_draw_pending">У турнира ещё нет жеребьёвки.</string>
+    <string name="registration_error_not_waiting">Кого-то из выбранных уже нет в листе ожидания. Открой окно заново.</string>
+    <string name="registration_error_partial_team">Команда уходит целиком: выбирай целые команды.</string>
+    <string name="registration_error_same_player_count">В турнире уже столько игроков.</string>
+    <string name="registration_error_tournament_completed">Турнир завершён.</string>
+    <string name="registration_error_tournament_started">В турнире уже есть данные за столами. Жеребьёвку больше нельзя изменить.</string>
 </resources>

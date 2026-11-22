@@ -1078,4 +1078,51 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="hands_not_done_text">De här händerna har ett giltigt resultat, men Gjord är av.\nDe räknas inte förrän de markeras som gjorda.\nDet kan vara avsiktligt. Om inte, gå tillbaka och markera dem.</string>
     <string name="hands_not_done_line">Omgång %1$d · Bord %2$d · Hand %3$d</string>
     <string name="hands_not_done_save">Spara ändå</string>
+    <string name="pc_title">Ändra antalet spelare</string>
+    <string name="pc_top_bar">Antal spelare</string>
+    <string name="pc_change">Ändra</string>
+    <string name="pc_now">Nu: %1$d spelare, %2$d bord per omgång.</string>
+    <string name="pc_count">%1$d spelare · %2$d bord</string>
+    <string name="pc_less">Ett bord mindre</string>
+    <string name="pc_more">Ett bord till</string>
+    <string name="pc_hint">Använd − eller + för att ta bort eller lägga till hela bord med 4 spelare.</string>
+    <string name="pc_choose_people">Vem lämnar? Välj %1$d.</string>
+    <string name="pc_choose_teams">Vilka lag lämnar? Välj %1$d.</string>
+    <string name="pc_chosen">%1$d av %2$d valda</string>
+    <string name="pc_empty_slot">#%1$d · ingen spelare</string>
+    <string name="pc_new_slots">%1$d nya platser, tomma tills du tilldelar dem under Spelare.</string>
+    <string name="pc_new_teams">%1$d nya lag, tomma tills du tilldelar dem under Lag.</string>
+    <string name="pc_waiting_title">Väntelista: upp till %1$d personer (valfritt)</string>
+    <string name="pc_waiting_none">Ingen står på väntelistan.</string>
+    <string name="pc_continue">Fortsätt</string>
+    <string name="pc_confirm_title">Göra en ny lottning?</string>
+    <string name="pc_from_to">Från %1$d till %2$d spelare</string>
+    <string name="pc_removed_label">Tas bort:</string>
+    <string name="pc_removed_tables">Borden i alla %1$d omgångar. De lottas om.</string>
+    <string name="pc_removed_people">Personerna som lämnar: %1$s.</string>
+    <string name="pc_removed_teams">Lagen som lämnar, med sina spelare: %1$s.</string>
+    <string name="pc_removed_registrations">Deras anmälningar. De får inget mejl: meddela dem själv.</string>
+    <string name="pc_added_label">Läggs till:</string>
+    <string name="pc_added_slots">%1$d tomma platser, att tilldela efteråt.</string>
+    <string name="pc_added_teams">%1$d nya lag.</string>
+    <string name="pc_added_waiting">Från väntelistan, som nu får en plats: %1$s.</string>
+    <string name="pc_kept_label">Behålls:</string>
+    <string name="pc_kept_people">Övriga spelare, med sin EMA-spelare, sitt konto och sin e-post.</string>
+    <string name="pc_kept_teams">Övriga lag, med sitt namn och sina spelare.</string>
+    <string name="pc_kept_rounds">Omgångarna, deras tider och deras klockor.</string>
+    <string name="pc_note">Spelarna ser sina nya bord i appen.
+Ingen får mejl. Ändringen registreras i aktiviteten.</string>
+    <string name="pc_confirm">Gör den nya lottningen</string>
+    <string name="pc_back">Tillbaka</string>
+    <string name="pc_loading">Laddar spelarna…</string>
+    <string name="pc_saving">Sparar den nya lottningen…</string>
+    <string name="pc_done_title">Klart</string>
+    <string name="pc_done_text">Turneringen har nu %1$d spelare och en ny lottning.</string>
+    <string name="pc_locked_title">Antalet spelare kan inte ändras</string>
+    <string name="pc_locked_started">Turneringen har redan data vid sina bord.
+Antalet spelare kan bara ändras före den första given.</string>
+    <string name="pc_locked_completed">Turneringen är avslutad.</string>
+    <string name="pc_locked_pending">Turneringen har ingen lottning än.
+Ändra platserna under Anmälningar.</string>
+    <string name="activity_action_tournament_player_count">Ändrade antalet spelare</string>
 </resources>

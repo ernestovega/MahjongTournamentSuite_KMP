@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.30",
+  "version": "1.0.38",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -1952,6 +1952,71 @@
       "application/json": {
        "schema": {
         "$ref": "#/components/schemas/UpdateTournamentSettingsRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/player-count": {
+   "post": {
+    "tags": [
+     "Torneos"
+    ],
+    "summary": "Cambiar el número de jugadores",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAntes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede dar los huecos nuevos a la lista de espera. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. Ver docs/player-count-change.md.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tournament"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlayerCountRequest"
        }
       }
      }
@@ -9146,6 +9211,21 @@
      "members"
     ]
    },
+   "MyRegistration": {
+    "type": "object",
+    "properties": {
+     "tournamentId": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string",
+      "description": "CONFIRMED or WAITING."
+     }
+    },
+    "required": [
+     "tournamentId"
+    ]
+   },
    "MyTournamentSlot": {
     "type": "object",
     "properties": {
@@ -9183,21 +9263,6 @@
       "items": {
        "$ref": "#/components/schemas/MyRegistration"
       }
-     }
-    }
-   },
-   "MyRegistration": {
-    "type": "object",
-    "properties": {
-     "tournamentId": {
-      "type": "string"
-     },
-     "status": {
-      "type": "string",
-      "enum": [
-       "CONFIRMED",
-       "WAITING"
-      ]
      }
     }
    },
@@ -9596,6 +9661,47 @@
     "required": [
      "playerId",
      "outcome"
+    ]
+   },
+   "PlayerCountRequest": {
+    "type": "object",
+    "properties": {
+     "numTries": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "players": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DrawPlayer"
+      }
+     },
+     "tables": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DrawTable"
+      }
+     },
+     "removedSlotIds": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "format": "int32"
+      }
+     },
+     "waitingEmaIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "numTries",
+     "players",
+     "tables",
+     "removedSlotIds",
+     "waitingEmaIds"
     ]
    },
    "PlayerEmailItem": {
@@ -11298,6 +11404,10 @@
      },
      "isCompleted": {
       "type": "boolean"
+     },
+     "hasTableData": {
+      "type": "boolean",
+      "description": "True when any table has data. The number of players cannot change then."
      },
      "isPublic": {
       "type": "boolean",

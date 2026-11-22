@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerCountRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DrawPlayerDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DrawTableDto
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
@@ -455,6 +459,31 @@ class DefaultTournamentRepository(
                     playerIds = dto.playerIds,
                 )
             }
+        },
+    )
+
+    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<Tournament> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.changePlayerCount(
+                idToken = idToken,
+                tournamentId = request.tournamentId,
+                request = PlayerCountRequestDto(
+                    numTries = request.numTries,
+                    players = request.players.map { DrawPlayerDto(it.id, it.team) },
+                    tables = request.tables.map { DrawTableDto(it.roundId, it.tableId, it.playerIds) },
+                    removedSlotIds = request.removedSlotIds,
+                    waitingEmaIds = request.waitingEmaIds,
+                ),
+            )
+            // The slots, the teams, the rounds and every table are new.
+            cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY, "tournament:${request.tournamentId}:")
+            dto.toDomain()
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the number of players failed." }
+            AppResult.Failure(throwable.toAppError())
         },
     )
 

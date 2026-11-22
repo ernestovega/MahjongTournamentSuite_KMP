@@ -79,6 +79,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     timeZone = timeZone.normalizedOrNull(),
     numTries = numTries,
     isCompleted = isCompleted,
+    hasTableData = hasTableData,
     permissions = Permission.fromKeys(permissions),
     isPublic = isPublic,
     showTableDiffs = showTableDiffs,

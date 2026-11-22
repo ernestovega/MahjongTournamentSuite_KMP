@@ -1,5 +1,14 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountChooseDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountLockedDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -97,6 +106,63 @@ class AdminDialogsScreenshotTest {
     fun registrationsDraw() = dialog("registrations-draw") {
         MakeDrawDialog(confirmed = 16, rounds = 7, tries = null, onConfirm = {}, onDismiss = {})
     }
+
+    /** Change of the number of players before the first hand: one table less, two of the four people chosen. */
+    @Test
+    fun playerCountRemove() = dialog("player-count-remove") {
+        val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 20)
+        PlayerCountChooseDialog(
+            tournament = tournament,
+            data = playerCountData(20),
+            form = PlayerCountForm(target = 16, chosen = setOf(5, 11)),
+            onFormChange = {},
+            onContinue = {},
+            onDismiss = {},
+        )
+    }
+
+    /** One table more in a tournament with registrations: the new places can take people of the waiting list. */
+    @Test
+    fun playerCountAdd() = dialog("player-count-add") {
+        val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 16, registration = ScreenshotData.registrationSettings)
+        PlayerCountChooseDialog(
+            tournament = tournament,
+            data = playerCountData(16).copy(
+                waiting = listOf(
+                    PlayerCountWaiting("10990136", nameOf(17), 1),
+                    PlayerCountWaiting("10990137", nameOf(18), 2),
+                ),
+            ),
+            form = PlayerCountForm(target = 20, waiting = listOf("10990136")),
+            onFormChange = {},
+            onContinue = {},
+            onDismiss = {},
+        )
+    }
+
+    /** The red confirmation: what the new draw deletes, adds and keeps, with "How does the draw work?" above the buttons. */
+    @Test
+    fun playerCountConfirm() = dialog("player-count-confirm") {
+        PlayerCountConfirmDialog(
+            summary = PlayerCountSummary(
+                from = 20, to = 16, rounds = 7, isTeams = false, hasRegistrations = true,
+                leaving = listOf("#5 · " + nameOf(5), "#6 · " + nameOf(6), "#11 · " + nameOf(11), "#12 · " + nameOf(12)),
+                newSlots = 0, fromWaiting = emptyList(),
+            ),
+            onConfirm = {},
+            onBack = {},
+            onDismiss = {},
+        )
+    }
+
+    @Test
+    fun playerCountLocked() = dialog("player-count-locked") { PlayerCountLockedDialog(PlayerCountBlocker.STARTED, onDismiss = {}) }
+
+    private fun playerCountData(count: Int) = PlayerCountData(
+        slots = (1..count).map { id -> PlayerCountSlot(id, nameOf(id), "1099${id.toString().padStart(4, '0')}", 0) },
+        teams = emptyList(),
+        waiting = emptyList(),
+    )
 
     @Test
     fun createProgress() = dialog("create-progress") {

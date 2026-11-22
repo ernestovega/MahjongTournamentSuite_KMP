@@ -34,6 +34,14 @@ import mahjongtournamentsuite.ui.generated.resources.registration_error_bad_draw
 import mahjongtournamentsuite.ui.generated.resources.registration_error_bad_player_count
 import mahjongtournamentsuite.ui.generated.resources.registration_error_consent_required
 import mahjongtournamentsuite.ui.generated.resources.registration_error_draw_made
+import mahjongtournamentsuite.ui.generated.resources.registration_error_bad_removed_slots
+import mahjongtournamentsuite.ui.generated.resources.registration_error_bad_waiting
+import mahjongtournamentsuite.ui.generated.resources.registration_error_draw_pending
+import mahjongtournamentsuite.ui.generated.resources.registration_error_not_waiting
+import mahjongtournamentsuite.ui.generated.resources.registration_error_partial_team
+import mahjongtournamentsuite.ui.generated.resources.registration_error_same_player_count
+import mahjongtournamentsuite.ui.generated.resources.registration_error_tournament_completed
+import mahjongtournamentsuite.ui.generated.resources.registration_error_tournament_started
 import mahjongtournamentsuite.ui.generated.resources.registration_error_ema_not_found
 import mahjongtournamentsuite.ui.generated.resources.registration_error_empty_file
 import mahjongtournamentsuite.ui.generated.resources.registration_error_food_too_long
@@ -85,8 +93,11 @@ fun AppError.toUiText(): UiText = when (this) {
         RegistrationErrorCode.BAD_ASSIGNMENTS -> UiText.of(Res.string.registration_error_bad_assignments)
         RegistrationErrorCode.BAD_DRAW -> UiText.of(Res.string.registration_error_bad_draw)
         RegistrationErrorCode.BAD_PLAYER_COUNT -> UiText.of(Res.string.registration_error_bad_player_count, args.firstOrNull().orEmpty())
+        RegistrationErrorCode.BAD_REMOVED_SLOTS -> UiText.of(Res.string.registration_error_bad_removed_slots)
+        RegistrationErrorCode.BAD_WAITING -> UiText.of(Res.string.registration_error_bad_waiting)
         RegistrationErrorCode.CONSENT_REQUIRED -> UiText.of(Res.string.registration_error_consent_required)
         RegistrationErrorCode.DRAW_MADE -> UiText.of(Res.string.registration_error_draw_made)
+        RegistrationErrorCode.DRAW_PENDING -> UiText.of(Res.string.registration_error_draw_pending)
         RegistrationErrorCode.EMA_NOT_FOUND -> UiText.of(Res.string.registration_error_ema_not_found)
         RegistrationErrorCode.EMPTY_FILE -> UiText.of(Res.string.registration_error_empty_file)
         RegistrationErrorCode.FOOD_TOO_LONG -> UiText.of(Res.string.registration_error_food_too_long)
@@ -105,14 +116,19 @@ fun AppError.toUiText(): UiText = when (this) {
         RegistrationErrorCode.NO_REGISTRATIONS -> UiText.of(Res.string.registration_error_no_registrations)
         RegistrationErrorCode.NO_TEAM -> UiText.of(Res.string.registration_error_no_team)
         RegistrationErrorCode.NO_TEAMS -> UiText.of(Res.string.registration_error_no_teams)
+        RegistrationErrorCode.NOT_WAITING -> UiText.of(Res.string.registration_error_not_waiting)
+        RegistrationErrorCode.PARTIAL_TEAM -> UiText.of(Res.string.registration_error_partial_team)
         RegistrationErrorCode.PENDING -> UiText.of(Res.string.registration_error_pending)
         RegistrationErrorCode.REGISTRATION_CLOSED -> UiText.of(Res.string.registration_error_closed)
         RegistrationErrorCode.REGISTRATION_NOT_FOUND -> UiText.of(Res.string.registration_error_not_found)
         RegistrationErrorCode.REGISTRATION_OPEN -> UiText.of(Res.string.registration_error_open)
+        RegistrationErrorCode.SAME_PLAYER_COUNT -> UiText.of(Res.string.registration_error_same_player_count)
         RegistrationErrorCode.SLUG_TAKEN -> UiText.of(Res.string.registration_error_slug_taken)
         RegistrationErrorCode.TEAM_FULL -> UiText.of(Res.string.registration_error_team_full)
         RegistrationErrorCode.TEAM_NAME_TAKEN -> UiText.of(Res.string.registration_error_team_name_taken)
         RegistrationErrorCode.TOO_MANY_ROWS -> UiText.of(Res.string.registration_error_too_many_rows)
+        RegistrationErrorCode.TOURNAMENT_COMPLETED -> UiText.of(Res.string.registration_error_tournament_completed)
+        RegistrationErrorCode.TOURNAMENT_STARTED -> UiText.of(Res.string.registration_error_tournament_started)
         RegistrationErrorCode.USE_LEAVE -> UiText.of(Res.string.registration_error_use_leave)
     }
     is AppError.Unexpected -> UiText.of(message.toFriendlyErrorResource())

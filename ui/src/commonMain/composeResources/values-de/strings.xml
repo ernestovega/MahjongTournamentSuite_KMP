@@ -613,4 +613,12 @@
     <string name="registration_error_team_name_taken">Ein anderes Team hat diesen Namen.</string>
     <string name="registration_error_too_many_rows">Die Datei ist zu groß: höchstens 500 Zeilen.</string>
     <string name="registration_error_use_leave">Um dein Team zu verlassen, nutze Team verlassen.</string>
+    <string name="registration_error_bad_removed_slots">Die gehenden Personen passen nicht zur neuen Spielerzahl.</string>
+    <string name="registration_error_bad_waiting">Es gibt mehr Personen von der Warteliste als neue Plätze.</string>
+    <string name="registration_error_draw_pending">Das Turnier hat noch keine Auslosung.</string>
+    <string name="registration_error_not_waiting">Jemand, den du gewählt hast, steht nicht mehr auf der Warteliste. Öffne den Dialog erneut.</string>
+    <string name="registration_error_partial_team">Ein Team geht nur ganz: wähle ganze Teams.</string>
+    <string name="registration_error_same_player_count">Das Turnier hat schon diese Spielerzahl.</string>
+    <string name="registration_error_tournament_completed">Das Turnier ist beendet.</string>
+    <string name="registration_error_tournament_started">Das Turnier hat schon Daten an seinen Tischen. Die Auslosung kann sich nicht mehr ändern.</string>
 </resources>

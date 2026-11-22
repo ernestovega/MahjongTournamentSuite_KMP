@@ -20,7 +20,8 @@ export const SCENARIOS = {
   large: { players: 240, rounds: 11 },
   // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1. Its 7 tables leave
   // table 7 of round 1 for the tie in the ranking.
-  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true, byHand: true },
+  // It is created with a table more (32 players), and the organizer takes that table out before the first hand.
+  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true, byHand: true, tableOut: true },
 };
 
 /** Minutes of a round: the emulator that writes the hands takes about 70 s per hand, a bot about 40 s. */
@@ -271,6 +272,10 @@ export async function makePlan(args) {
       { kind: "offline", round: size.rounds, table: 4, afterHands: 2, seconds: 60 },
       // Corners only: the 4 players of table 7 of round 1 finish level in the ranking. Their tables play only draws.
       ...(size.tie ? [{ kind: "tie", round: 1, table: 7 }] : []),
+      // Corners only: last minute withdrawals. The tournament is created with a table more, and before the first hand
+      // the organizer takes it out in Players (Number of players): a new draw for the players of the plan. Round 0: before
+      // the first round.
+      ...(size.tableOut ? [{ kind: "player-count", round: 0, table: 0, from: size.players + 4, to: size.players }] : []),
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
       { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
       { kind: "edit", round: fix, table: fixTables[2], which: "last", minHands: 4 },
@@ -279,6 +284,7 @@ export async function makePlan(args) {
     roundSchedules: Array.from({ length: size.rounds }, (_, index) => ({ roundId: index + 1, date: start.date, startTime: start.time })),
     slots,
   };
+  if (size.tableOut) plan.createWith = size.players + 4;
   // Corners only: before the tournament, the tablet runs a tournament with registrations by hand, in the screens of the
   // apps (docs/scenarios.md). The club admin creates it with a co-organizer and imports the Google Form of 16 people,
   // adds a 17th by hand, a player registers and cancels in the player app, and the club admin removes a person, gives

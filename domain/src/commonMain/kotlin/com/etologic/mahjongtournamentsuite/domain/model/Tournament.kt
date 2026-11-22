@@ -46,6 +46,8 @@ data class Tournament(
     val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
+    /** True when any table has data (a hand, totals or a completed mark). The draw cannot change then. */
+    val hasTableData: Boolean = false,
     /** What the signed-in account may do in this tournament. Only the tournament list of the management app has it. */
     val permissions: Set<Permission> = emptySet(),
     /** False hides a test tournament from the public list. Only its staff see it. */

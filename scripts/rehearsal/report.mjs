@@ -353,6 +353,22 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       add(level,
         `The ${tied.length} players of table ${key} finish level in the ranking (${rows.map((row) => `${round6(row.points)} points, ${row.score}`).join(" / ") || "not ranked"}) and share place ${place}; the places of the server are compared in the check of the places.`);
       if (!level) detail(key);
+    } else if (item.kind === "player-count") {
+      // The draw of the server after the organizer took a table out: every round has to/4 tables, and every player of
+      // the plan plays once a round. No slot above the new number is left in a table.
+      const rounds = new Map();
+      for (const data of check?.tablesByKey?.values() ?? []) {
+        const seats = SEATS.map((name) => Number(text(data.table[`player${name}Id`])));
+        const round = rounds.get(data.table.roundId) ?? [];
+        round.push(seats);
+        rounds.set(data.table.roundId, round);
+      }
+      const expected = Array.from({ length: item.to }, (_, index) => index + 1).join(",");
+      const wrong = [...rounds].filter(([, tables]) => tables.length !== item.to / 4
+        || tables.flat().sort((a, b) => a - b).join(",") !== expected).map(([round]) => round);
+      const ok = rounds.size === plan.rounds && wrong.length === 0;
+      add(ok,
+        `The tournament was created with ${item.from} players and the organizer took a table out before the first hand: the new draw has ${item.to / 4} tables in each of its ${rounds.size} rounds, with the ${item.to} players once each${wrong.length ? ` (wrong in round ${wrong.join(", ")})` : ""}.`);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);

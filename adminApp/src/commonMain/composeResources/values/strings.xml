@@ -1078,4 +1078,51 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="hands_not_done_text">These hands have a valid result, but Done is off.\nThey do not count until they are marked as done.\nIt can be on purpose. If not, go back and mark them.</string>
     <string name="hands_not_done_line">Round %1$d · Table %2$d · Hand %3$d</string>
     <string name="hands_not_done_save">Save anyway</string>
+    <string name="pc_title">Change the number of players</string>
+    <string name="pc_top_bar">Number of players</string>
+    <string name="pc_change">Change</string>
+    <string name="pc_now">Now: %1$d players, %2$d tables per round.</string>
+    <string name="pc_count">%1$d players · %2$d tables</string>
+    <string name="pc_less">One table less</string>
+    <string name="pc_more">One table more</string>
+    <string name="pc_hint">Use − or + to remove or add whole tables of 4 players.</string>
+    <string name="pc_choose_people">Who leaves? Choose %1$d.</string>
+    <string name="pc_choose_teams">Which teams leave? Choose %1$d.</string>
+    <string name="pc_chosen">%1$d of %2$d chosen</string>
+    <string name="pc_empty_slot">#%1$d · no player</string>
+    <string name="pc_new_slots">%1$d new places, empty until you assign them in Players.</string>
+    <string name="pc_new_teams">%1$d new teams, empty until you assign them in Teams.</string>
+    <string name="pc_waiting_title">Waiting list: up to %1$d people (optional)</string>
+    <string name="pc_waiting_none">Nobody is on the waiting list.</string>
+    <string name="pc_continue">Continue</string>
+    <string name="pc_confirm_title">Make a new draw?</string>
+    <string name="pc_from_to">From %1$d to %2$d players</string>
+    <string name="pc_removed_label">Deleted:</string>
+    <string name="pc_removed_tables">The tables of all %1$d rounds. They are drawn again.</string>
+    <string name="pc_removed_people">The people who leave: %1$s.</string>
+    <string name="pc_removed_teams">The teams that leave, with their players: %1$s.</string>
+    <string name="pc_removed_registrations">Their registrations. They get no email: tell them yourself.</string>
+    <string name="pc_added_label">Added:</string>
+    <string name="pc_added_slots">%1$d empty places, to assign afterwards.</string>
+    <string name="pc_added_teams">%1$d new teams.</string>
+    <string name="pc_added_waiting">From the waiting list, with a place now: %1$s.</string>
+    <string name="pc_kept_label">Kept:</string>
+    <string name="pc_kept_people">The other players, with their EMA player, account and email.</string>
+    <string name="pc_kept_teams">The other teams, with their names and players.</string>
+    <string name="pc_kept_rounds">The rounds, their times and their clocks.</string>
+    <string name="pc_note">The players see their new tables in the app.
+Nobody gets an email. The change is recorded in the activity.</string>
+    <string name="pc_confirm">Make the new draw</string>
+    <string name="pc_back">Back</string>
+    <string name="pc_loading">Loading the players…</string>
+    <string name="pc_saving">Saving the new draw…</string>
+    <string name="pc_done_title">Done</string>
+    <string name="pc_done_text">The tournament now has %1$d players and a new draw.</string>
+    <string name="pc_locked_title">The number of players cannot change</string>
+    <string name="pc_locked_started">The tournament already has data in its tables.
+The number of players can only change before the first hand.</string>
+    <string name="pc_locked_completed">The tournament is finished.</string>
+    <string name="pc_locked_pending">The tournament has no draw yet.
+Change the places in Registrations.</string>
+    <string name="activity_action_tournament_player_count">Changed the number of players</string>
 </resources>

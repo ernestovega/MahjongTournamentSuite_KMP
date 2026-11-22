@@ -81,6 +81,14 @@ class AdminActionTrackingTest {
             Logger.withTag("test"),
             telemetry,
         )
+        val playerCountPresenter = PlayerCountPresenter(
+            tournaments,
+            players,
+            RegistrationFakes.registrations(works),
+            GenerateTournamentScheduleBruteForceParallelUseCase(),
+            Logger.withTag("test"),
+            telemetry,
+        )
     }
 
     private object RegistrationFakes {
@@ -191,6 +199,9 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.REGISTRATION_SETTINGS_UPDATED) { it.registrationsPresenter.saveSettings("t1", RegistrationSettings()) },
         Case(TelemetryAction.REGISTRATIONS_IMPORTED) { it.registrationsPresenter.applyImport("t1", "form.csv", ByteArray(1)) },
         Case(TelemetryAction.DRAW_MADE) { it.registrationsPresenter.makeDraw(RegistrationFakes.DRAW_TOURNAMENT, RegistrationFakes.CONFIRMED) {} },
+        Case(TelemetryAction.PLAYER_COUNT_CHANGED) {
+            it.playerCountPresenter.change(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 16, numRounds = 1), 20, emptyList(), emptyList()) {}
+        },
     )
 
     private fun expected(action: String, outcome: String) = TelemetryEvent.ADMIN_ACTION to mapOf<String, Any>(TelemetryParam.ACTION to action, TelemetryParam.OUTCOME to outcome)

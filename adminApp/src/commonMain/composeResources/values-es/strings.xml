@@ -1078,4 +1078,51 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="hands_not_done_text">Estas manos tienen un resultado válido, pero Hecha está desmarcada.\nNo cuentan hasta que se marquen como hechas.\nPuede ser a propósito. Si no, vuelve y márcalas.</string>
     <string name="hands_not_done_line">Ronda %1$d · Mesa %2$d · Mano %3$d</string>
     <string name="hands_not_done_save">Guardar igualmente</string>
+    <string name="pc_title">Cambiar el número de jugadores</string>
+    <string name="pc_top_bar">Nº de jugadores</string>
+    <string name="pc_change">Cambiar</string>
+    <string name="pc_now">Ahora: %1$d jugadores, %2$d mesas por ronda.</string>
+    <string name="pc_count">%1$d jugadores · %2$d mesas</string>
+    <string name="pc_less">Una mesa menos</string>
+    <string name="pc_more">Una mesa más</string>
+    <string name="pc_hint">Usa − o + para quitar o añadir mesas enteras de 4 jugadores.</string>
+    <string name="pc_choose_people">¿Quién se va? Elige %1$d.</string>
+    <string name="pc_choose_teams">¿Qué equipos se van? Elige %1$d.</string>
+    <string name="pc_chosen">%1$d de %2$d elegidos</string>
+    <string name="pc_empty_slot">#%1$d · sin jugador</string>
+    <string name="pc_new_slots">%1$d huecos nuevos, vacíos hasta que los asignes en Jugadores.</string>
+    <string name="pc_new_teams">%1$d equipos nuevos, vacíos hasta que los asignes en Equipos.</string>
+    <string name="pc_waiting_title">Lista de espera: hasta %1$d personas (opcional)</string>
+    <string name="pc_waiting_none">No hay nadie en la lista de espera.</string>
+    <string name="pc_continue">Continuar</string>
+    <string name="pc_confirm_title">¿Hacer un sorteo nuevo?</string>
+    <string name="pc_from_to">De %1$d a %2$d jugadores</string>
+    <string name="pc_removed_label">Se borra:</string>
+    <string name="pc_removed_tables">Las mesas de las %1$d rondas. Se sortean de nuevo.</string>
+    <string name="pc_removed_people">Las personas que se van: %1$s.</string>
+    <string name="pc_removed_teams">Los equipos que se van, con sus jugadores: %1$s.</string>
+    <string name="pc_removed_registrations">Sus inscripciones. No reciben ningún correo: avísales tú.</string>
+    <string name="pc_added_label">Se añade:</string>
+    <string name="pc_added_slots">%1$d huecos vacíos, para asignarlos después.</string>
+    <string name="pc_added_teams">%1$d equipos nuevos.</string>
+    <string name="pc_added_waiting">De la lista de espera, que pasan a tener plaza: %1$s.</string>
+    <string name="pc_kept_label">Se mantiene:</string>
+    <string name="pc_kept_people">El resto de jugadores, con su jugador EMA, su cuenta y su email.</string>
+    <string name="pc_kept_teams">El resto de equipos, con su nombre y sus jugadores.</string>
+    <string name="pc_kept_rounds">Las rondas, sus horarios y sus relojes.</string>
+    <string name="pc_note">Los jugadores ven sus mesas nuevas en la app.
+No se envía ningún correo. El cambio queda registrado en la actividad.</string>
+    <string name="pc_confirm">Hacer el sorteo nuevo</string>
+    <string name="pc_back">Atrás</string>
+    <string name="pc_loading">Cargando los jugadores…</string>
+    <string name="pc_saving">Guardando el sorteo nuevo…</string>
+    <string name="pc_done_title">Hecho</string>
+    <string name="pc_done_text">El torneo tiene ahora %1$d jugadores y un sorteo nuevo.</string>
+    <string name="pc_locked_title">No se puede cambiar el número de jugadores</string>
+    <string name="pc_locked_started">El torneo ya tiene datos en sus mesas.
+El número de jugadores solo se puede cambiar antes de la primera mano.</string>
+    <string name="pc_locked_completed">El torneo ha terminado.</string>
+    <string name="pc_locked_pending">El torneo aún no tiene sorteo.
+Cambia las plazas en Inscripciones.</string>
+    <string name="activity_action_tournament_player_count">Cambió el número de jugadores</string>
 </resources>

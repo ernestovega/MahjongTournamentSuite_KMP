@@ -1078,4 +1078,51 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="hands_not_done_text">Diese Hände haben ein gültiges Ergebnis, aber Erledigt ist aus.\nSie zählen erst, wenn sie als erledigt markiert sind.\nDas kann Absicht sein. Wenn nicht, geh zurück und markiere sie.</string>
     <string name="hands_not_done_line">Runde %1$d · Tisch %2$d · Hand %3$d</string>
     <string name="hands_not_done_save">Trotzdem speichern</string>
+    <string name="pc_title">Spielerzahl ändern</string>
+    <string name="pc_top_bar">Spielerzahl</string>
+    <string name="pc_change">Ändern</string>
+    <string name="pc_now">Jetzt: %1$d Spieler, %2$d Tische pro Runde.</string>
+    <string name="pc_count">%1$d Spieler · %2$d Tische</string>
+    <string name="pc_less">Ein Tisch weniger</string>
+    <string name="pc_more">Ein Tisch mehr</string>
+    <string name="pc_hint">Mit − oder + entfernst oder ergänzt du ganze Tische mit 4 Spielern.</string>
+    <string name="pc_choose_people">Wer geht? Wähle %1$d.</string>
+    <string name="pc_choose_teams">Welche Teams gehen? Wähle %1$d.</string>
+    <string name="pc_chosen">%1$d von %2$d gewählt</string>
+    <string name="pc_empty_slot">#%1$d · kein Spieler</string>
+    <string name="pc_new_slots">%1$d neue Plätze, leer, bis du sie unter Spieler zuweist.</string>
+    <string name="pc_new_teams">%1$d neue Teams, leer, bis du sie unter Teams zuweist.</string>
+    <string name="pc_waiting_title">Warteliste: bis zu %1$d Personen (optional)</string>
+    <string name="pc_waiting_none">Niemand steht auf der Warteliste.</string>
+    <string name="pc_continue">Weiter</string>
+    <string name="pc_confirm_title">Neu auslosen?</string>
+    <string name="pc_from_to">Von %1$d auf %2$d Spieler</string>
+    <string name="pc_removed_label">Wird gelöscht:</string>
+    <string name="pc_removed_tables">Die Tische aller %1$d Runden. Sie werden neu ausgelost.</string>
+    <string name="pc_removed_people">Die Personen, die gehen: %1$s.</string>
+    <string name="pc_removed_teams">Die Teams, die gehen, mit ihren Spielern: %1$s.</string>
+    <string name="pc_removed_registrations">Ihre Anmeldungen. Sie bekommen keine E-Mail: sag es ihnen selbst.</string>
+    <string name="pc_added_label">Wird hinzugefügt:</string>
+    <string name="pc_added_slots">%1$d leere Plätze, die du danach zuweist.</string>
+    <string name="pc_added_teams">%1$d neue Teams.</string>
+    <string name="pc_added_waiting">Von der Warteliste, die jetzt einen Platz haben: %1$s.</string>
+    <string name="pc_kept_label">Bleibt:</string>
+    <string name="pc_kept_people">Die übrigen Spieler, mit EMA-Spieler, Konto und E-Mail.</string>
+    <string name="pc_kept_teams">Die übrigen Teams, mit Namen und Spielern.</string>
+    <string name="pc_kept_rounds">Die Runden, ihre Zeiten und ihre Uhren.</string>
+    <string name="pc_note">Die Spieler sehen ihre neuen Tische in der App.
+Niemand bekommt eine E-Mail. Die Änderung steht in der Aktivität.</string>
+    <string name="pc_confirm">Neu auslosen</string>
+    <string name="pc_back">Zurück</string>
+    <string name="pc_loading">Spieler werden geladen…</string>
+    <string name="pc_saving">Neue Auslosung wird gespeichert…</string>
+    <string name="pc_done_title">Erledigt</string>
+    <string name="pc_done_text">Das Turnier hat jetzt %1$d Spieler und eine neue Auslosung.</string>
+    <string name="pc_locked_title">Die Spielerzahl kann nicht geändert werden</string>
+    <string name="pc_locked_started">Das Turnier hat schon Daten an seinen Tischen.
+Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
+    <string name="pc_locked_completed">Das Turnier ist beendet.</string>
+    <string name="pc_locked_pending">Das Turnier hat noch keine Auslosung.
+Ändere die Plätze unter Anmeldungen.</string>
+    <string name="activity_action_tournament_player_count">Hat die Spielerzahl geändert</string>
 </resources>

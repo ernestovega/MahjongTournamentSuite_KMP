@@ -189,8 +189,9 @@ ROUTES = [
     ("delete", "/auth/me/photo", "Sesión", "auth", "Quitar mi foto", "", [], None, "UserProfile"),
     ("delete", "/auth/me", "Sesión", "auth", "Borrar mi cuenta",
      "Borra la cuenta y su perfil. El registro EMA y los resultados de los torneos se quedan.", [], None, OK),
-    ("get", "/me", "Sesión", "auth", "Mis huecos en los torneos",
-     "EMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio.",
+    ("get", "/me", "Sesión", "auth", "Mis huecos en los torneos y mis inscripciones",
+     "EMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio. "
+     "También da las inscripciones de la persona (con plaza o en lista de espera) en los torneos que esperan su sorteo.",
      [], None, "MyTournamentsResponse"),
 
     # ---- Public
@@ -246,6 +247,11 @@ ROUTES = [
     ("put", "/tournaments/{tournamentId}/settings", "Torneos", "admin", "Editar los ajustes del torneo",
      "Nombre, fechas, sede, colores, logo, horarios de rondas, agenda, público/privado, duración de partida…", [T],
      "UpdateTournamentSettingsRequest", "Tournament"),
+    ("post", "/tournaments/{tournamentId}/player-count", "Torneos", "tEditor", "Cambiar el número de jugadores",
+     "Antes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; "
+     "el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede "
+     "dar los huecos nuevos a la lista de espera. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. "
+     "Ver docs/player-count-change.md.", [T], "PlayerCountRequest", "Tournament"),
     ("delete", "/tournaments/{tournamentId}", "Torneos", "admin", "Borrar un torneo", "Borra el torneo y todas sus subcolecciones.", [T], None, OK),
     ("get", "/tournaments/{tournamentId}/sync/manifest", "Torneos", "tEditor", "Revisiones de los datos del torneo", "", [T], None,
      "DataVersionsManifest"),

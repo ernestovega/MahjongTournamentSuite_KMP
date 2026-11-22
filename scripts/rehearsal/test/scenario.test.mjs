@@ -57,6 +57,10 @@ test("the corners plan has every corner case in round 1, and the slow and abando
   // The editor never plays at the late table.
   assert.deepEqual([...at("delete"), ...at("edit")], ["1_2", "1_4", "1_5", "1_6"]);
   assert.deepEqual(plan.cornerCases.find((item) => item.kind === "penalty-draw").penalties, ["-10", "-5"]);
+  // Before the first round the organizer takes out a table: the tournament is created with 32 players.
+  assert.equal(plan.createWith, 32);
+  assert.deepEqual(plan.cornerCases.filter((item) => item.kind === "player-count").map(({ round, table, from, to }) => [round, table, from, to]), [[0, 0, 32, 28]]);
+  assert.equal(plan.slots.length, 28, "the slots of the plan are the players after the change");
 });
 
 test("every scenario plays the editor in round 2, the extra time and the abandoned table in its last round", async () => {
@@ -67,6 +71,8 @@ test("every scenario plays the editor in round 2, the extra time and the abandon
     for (const item of plan.cornerCases.filter((each) => each.kind === "delete" || each.kind === "edit")) assert.equal(item.round, 2);
     for (const kind of ["extra-time", "abandoned", "manual-totals", "offline"]) assert.equal(plan.cornerCases.find((item) => item.kind === kind).round, plan.rounds);
     assert.equal(plan.cornerCases.some((item) => item.kind === "tie"), false, "the tie is in corners only");
+    assert.equal(plan.cornerCases.some((item) => item.kind === "player-count"), false, "the change of the number of players is in corners only");
+    assert.equal(plan.createWith, undefined);
     assert.ok(plan.roundSchedules.every((round) => round.date === plan.roundSchedules[0].date), "every round on one day");
   }
 });

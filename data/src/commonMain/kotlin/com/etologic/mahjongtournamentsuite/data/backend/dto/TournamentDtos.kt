@@ -47,6 +47,8 @@ data class TournamentDto(
     val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
+    /** True when any table has data. The number of players cannot change then. */
+    val hasTableData: Boolean = false,
     /** False hides the tournament from everyone without an account in it. */
     val isPublic: Boolean = true,
     /** False hides the differences button on the table screen of the player app. */

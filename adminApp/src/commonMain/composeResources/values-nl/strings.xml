@@ -1078,4 +1078,51 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="hands_not_done_text">Deze handen hebben een geldig resultaat, maar Klaar staat uit.\nZe tellen pas mee als ze als klaar zijn gemarkeerd.\nDat kan de bedoeling zijn. Zo niet, ga terug en markeer ze.</string>
     <string name="hands_not_done_line">Ronde %1$d · Tafel %2$d · Hand %3$d</string>
     <string name="hands_not_done_save">Toch opslaan</string>
+    <string name="pc_title">Aantal spelers wijzigen</string>
+    <string name="pc_top_bar">Aantal spelers</string>
+    <string name="pc_change">Wijzigen</string>
+    <string name="pc_now">Nu: %1$d spelers, %2$d tafels per ronde.</string>
+    <string name="pc_count">%1$d spelers · %2$d tafels</string>
+    <string name="pc_less">Eén tafel minder</string>
+    <string name="pc_more">Eén tafel meer</string>
+    <string name="pc_hint">Gebruik − of + om hele tafels van 4 spelers te verwijderen of toe te voegen.</string>
+    <string name="pc_choose_people">Wie vertrekt er? Kies er %1$d.</string>
+    <string name="pc_choose_teams">Welke teams vertrekken? Kies er %1$d.</string>
+    <string name="pc_chosen">%1$d van %2$d gekozen</string>
+    <string name="pc_empty_slot">#%1$d · geen speler</string>
+    <string name="pc_new_slots">%1$d nieuwe plaatsen, leeg tot je ze toewijst bij Spelers.</string>
+    <string name="pc_new_teams">%1$d nieuwe teams, leeg tot je ze toewijst bij Teams.</string>
+    <string name="pc_waiting_title">Wachtlijst: tot %1$d personen (optioneel)</string>
+    <string name="pc_waiting_none">Er staat niemand op de wachtlijst.</string>
+    <string name="pc_continue">Doorgaan</string>
+    <string name="pc_confirm_title">Opnieuw loten?</string>
+    <string name="pc_from_to">Van %1$d naar %2$d spelers</string>
+    <string name="pc_removed_label">Wordt verwijderd:</string>
+    <string name="pc_removed_tables">De tafels van alle %1$d rondes. Ze worden opnieuw geloot.</string>
+    <string name="pc_removed_people">De personen die vertrekken: %1$s.</string>
+    <string name="pc_removed_teams">De teams die vertrekken, met hun spelers: %1$s.</string>
+    <string name="pc_removed_registrations">Hun inschrijvingen. Ze krijgen geen e-mail: laat het ze zelf weten.</string>
+    <string name="pc_added_label">Wordt toegevoegd:</string>
+    <string name="pc_added_slots">%1$d lege plaatsen, om daarna toe te wijzen.</string>
+    <string name="pc_added_teams">%1$d nieuwe teams.</string>
+    <string name="pc_added_waiting">Van de wachtlijst, die nu een plaats krijgen: %1$s.</string>
+    <string name="pc_kept_label">Blijft:</string>
+    <string name="pc_kept_people">De overige spelers, met hun EMA-speler, account en e-mail.</string>
+    <string name="pc_kept_teams">De overige teams, met hun naam en spelers.</string>
+    <string name="pc_kept_rounds">De rondes, hun tijden en hun klokken.</string>
+    <string name="pc_note">De spelers zien hun nieuwe tafels in de app.
+Niemand krijgt een e-mail. De wijziging staat in de activiteit.</string>
+    <string name="pc_confirm">Opnieuw loten</string>
+    <string name="pc_back">Terug</string>
+    <string name="pc_loading">Spelers laden…</string>
+    <string name="pc_saving">Nieuwe loting opslaan…</string>
+    <string name="pc_done_title">Klaar</string>
+    <string name="pc_done_text">Het toernooi heeft nu %1$d spelers en een nieuwe loting.</string>
+    <string name="pc_locked_title">Het aantal spelers kan niet wijzigen</string>
+    <string name="pc_locked_started">Het toernooi heeft al gegevens aan zijn tafels.
+Het aantal spelers kan alleen voor de eerste hand wijzigen.</string>
+    <string name="pc_locked_completed">Het toernooi is afgelopen.</string>
+    <string name="pc_locked_pending">Het toernooi heeft nog geen loting.
+Wijzig de plaatsen bij Inschrijvingen.</string>
+    <string name="activity_action_tournament_player_count">Wijzigde het aantal spelers</string>
 </resources>

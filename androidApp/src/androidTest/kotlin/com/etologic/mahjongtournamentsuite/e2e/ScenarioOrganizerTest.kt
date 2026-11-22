@@ -139,6 +139,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         ensureTheOrganization()
         if (plan.has("byHand")) registrationsByHand()
         createTheTournamentWithTheForm()
+        if (plan.has("createWith")) takeOutATable()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }
         sendTheInvitations()
@@ -522,7 +523,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Creates rounds, tables, and players automatically.")
         c.field("Name").performTextInput(plan.getString("name"))
         c.field("Short name").performTextInput(plan.getString("shortName"))
-        c.field("Players").performTextReplacement(plan.getInt("players").toString())
+        // Corners: the tournament starts with a table more, and the organizer takes it out before the first hand.
+        c.field("Players").performTextReplacement(plan.optInt("createWith", plan.getInt("players")).toString())
         c.field("Rounds").performTextReplacement(plan.getInt("rounds").toString())
         setSwitch("Teams", plan.getBoolean("isTeams"))
         setSwitch("Best hands", plan.getBoolean("countBestHands"))
@@ -558,6 +560,36 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The app computes the draw, and then it opens the players of the new tournament. A big draw takes a while.
         c.waitForText("Tournament players", timeoutMs = 600_000)
         log("tournament created")
+    }
+
+    /**
+     * Corners only (plan.createWith): last minute withdrawals. Before the first hand the organizer takes a table out in
+     * Players with Number of players, chooses the 4 empty slots at the end, and confirms the new draw
+     * (docs/player-count-change.md). The report checks the new draw of the server.
+     */
+    private fun takeOutATable() {
+        val from = plan.getInt("createWith")
+        val to = plan.getInt("players")
+        c.clickButton("Number of players")
+        c.waitForText("Change the number of players", timeoutMs = 60_000)
+        c.waitForText("$from players · ${from / 4} tables", timeoutMs = 60_000)
+        repeat((from - to) / 4) { c.clickButton("One table less") }
+        c.waitForText("$to players · ${to / 4} tables")
+        (to + 1..from).forEach { slot ->
+            val row = c.onNode(hasTestTag("playerCountSlot-$slot"))
+            runCatching { row.performScrollTo() }
+            row.tap()
+        }
+        c.waitForText("${from - to} of ${from - to} chosen")
+        c.clickButton("Continue")
+        c.waitForText("Make a new draw?", timeoutMs = 30_000)
+        c.waitForText("From $from to $to players")
+        c.clickButton("Make the new draw")
+        // The app computes the new draw, and the server saves it.
+        c.waitForText("The tournament now has $to players and a new draw.", timeoutMs = 600_000)
+        c.clickLastButton("Close")
+        c.waitForNoText("The tournament now has $to players and a new draw.")
+        log("a table taken out: $from to $to players, new draw")
     }
 
     private fun chooseCountry(name: String) {

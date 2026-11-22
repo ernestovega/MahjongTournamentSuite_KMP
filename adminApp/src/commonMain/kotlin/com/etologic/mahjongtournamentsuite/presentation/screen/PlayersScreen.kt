@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
@@ -478,6 +480,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     // A substitution matters only after the first table has data.
     val tournamentStarted = tables.any { it.hasProgress }
+    val currentTournament = tournaments.firstOrNull { it.id == tournamentId }
+    val canChangePlayerCount = currentTournament != null &&
+        adminStatus?.can(Permission.TOURNAMENT_CONFIGURE, currentTournament.permissions) == true
+    var playerCountOpen by remember { mutableStateOf(false) }
     val tournamentRounds = tables.map { it.roundId }.distinct().sorted()
 
     fun openClearAssignment(slotId: Int) {
@@ -1050,6 +1056,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 onImportPlayers = { importDialogOpen = true },
                 importLocked = tournamentStarted,
                 onExportPlayers = exportPlayers,
+                onPlayerCount = currentTournament?.takeIf { canChangePlayerCount }?.let { { playerCountOpen = true } },
+                playerCountLocked = currentTournament?.let { PlayerCountRules.blockerOf(it.copy(hasTableData = it.hasTableData || tournamentStarted)) } != null,
             )
         },
     ) {
@@ -1058,6 +1066,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
+                )
+            }
+            if (playerCountOpen && currentTournament != null) {
+                PlayerCountFlow(
+                    tournament = currentTournament.copy(hasTableData = currentTournament.hasTableData || tournamentStarted),
+                    onDismiss = { playerCountOpen = false },
+                    onChanged = { refresh(force = true) },
                 )
             }
             if (importDialogOpen) {

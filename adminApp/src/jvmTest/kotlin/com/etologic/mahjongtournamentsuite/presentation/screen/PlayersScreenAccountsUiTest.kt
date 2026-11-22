@@ -191,7 +191,7 @@ class PlayersScreenAccountsUiTest {
     }
 }
 
-private class NoImportRepository : PlayerImportRepository {
+internal class NoImportRepository : PlayerImportRepository {
     override suspend fun export(tournamentId: String) = error("Not used.")
     override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray) = error("Not used.")
     override suspend fun apply(tournamentId: String, fileName: String, bytes: ByteArray) = error("Not used.")

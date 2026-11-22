@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -101,6 +102,13 @@ interface TournamentRepository {
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<List<TournamentPlayer>>
+
+    /**
+     * Changes the number of players of a tournament before its first hand, with the new draw of the request.
+     * See docs/player-count-change.md.
+     */
+    suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<Tournament> =
+        AppResult.Failure(AppError.Unexpected("Changing the number of players is not available"))
 
     suspend fun listTournamentTeams(
         tournamentId: String,

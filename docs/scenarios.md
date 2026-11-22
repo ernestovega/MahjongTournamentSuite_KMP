@@ -142,6 +142,12 @@ read it, so each one knows its part.
   with no penalty, and so does every table of the next rounds with one of its players. The 4 players finish with the
   same table points and score. The checks want them level in the independent count, and the check of the places wants
   the server to give them the same place.
+- A table less before the first hand (last minute withdrawals).
+
+  Done (plan.cornerCases kind player-count and plan.createWith, corners only). The tablet creates the tournament with
+  32 players, a table more than the plan. In Players, before the import, the organizer opens Number of players, presses
+  One table less, chooses the 4 empty slots 29 to 32 and confirms the new draw (docs/player-count-change.md). The
+  checks want every round of the server with 7 tables and each of the 28 players once.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.
 
@@ -195,7 +201,8 @@ run. See docs/benchmark.md, "Cost".
 
 `corners` is a small tournament of 28 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
 the penalties and the draw are at table 1, the late table and its substitution at table 3, the seat change at table 4,
-the deleted and edited hands at tables 2, 4, 5 and 6, and the tie at table 7. The slow table of the extra time, the
+the deleted and edited hands at tables 2, 4, 5 and 6, and the tie at table 7. Before round 1 the organizer takes a
+table out (created with 32 players, played with 28). The slow table of the extra time, the
 abandoned table, the manual totals and the phone without network are at tables 1 to 4 of round 2, the last one. It takes about
 45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.

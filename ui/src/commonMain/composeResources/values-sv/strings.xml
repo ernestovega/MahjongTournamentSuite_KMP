@@ -613,4 +613,12 @@
     <string name="registration_error_team_name_taken">Ett annat lag har det namnet.</string>
     <string name="registration_error_too_many_rows">Filen är för stor: högst 500 rader.</string>
     <string name="registration_error_use_leave">Använd Lämna laget för att lämna ditt eget lag.</string>
+    <string name="registration_error_bad_removed_slots">Personerna som lämnar stämmer inte med det nya antalet spelare.</string>
+    <string name="registration_error_bad_waiting">Det finns fler personer från väntelistan än nya platser.</string>
+    <string name="registration_error_draw_pending">Turneringen har ingen lottning än.</string>
+    <string name="registration_error_not_waiting">Någon du valde står inte längre på väntelistan. Öppna dialogen igen.</string>
+    <string name="registration_error_partial_team">Ett lag lämnar helt: välj hela lag.</string>
+    <string name="registration_error_same_player_count">Turneringen har redan det antalet spelare.</string>
+    <string name="registration_error_tournament_completed">Turneringen är avslutad.</string>
+    <string name="registration_error_tournament_started">Turneringen har redan data vid sina bord. Lottningen kan inte längre ändras.</string>
 </resources>

@@ -141,3 +141,31 @@ test("the check leaves out the results of a substituted slot from the round of t
   assert.deepEqual(check.ranking.find((entry) => entry.playerId === "4"), { playerId: "4", points: 0, score: -18 });
   assert.deepEqual(check.ranking.find((entry) => entry.playerId === "1"), { playerId: "1", points: 8, score: 68 });
 });
+
+/** The tables of a draw as the server has them: [rounds] of [seats] lists. */
+function drawOf(rounds) {
+  const tables = {};
+  rounds.forEach((round, roundIndex) => round.forEach((seats, tableIndex) => {
+    const [East, South, West, North] = seats.map(String);
+    tables[`${roundIndex + 1}_${tableIndex + 1}`] = {
+      table: { roundId: roundIndex + 1, tableId: tableIndex + 1, playerEastId: East, playerSouthId: South, playerWestId: West, playerNorthId: North },
+      hands: [],
+    };
+  }));
+  return checkWith(tables);
+}
+
+test("a table taken out passes when every round has the new tables with each player once", () => {
+  const plan = { rounds: 2, cornerCases: [{ kind: "player-count", round: 0, table: 0, from: 12, to: 8 }] };
+  const good = cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8]], [[1, 5, 2, 6], [3, 7, 4, 8]]]));
+  assert.ok(ok(good), good.join("\n"));
+  assert.ok(good[0].includes("created with 12 players") && good[0].includes("2 tables in each of its 2 rounds"), good[0]);
+
+  // A slot above the new number left at a table, a round with the old number of tables, or a missing round fail.
+  const leftOver = cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 9]], [[1, 5, 2, 6], [3, 7, 4, 8]]]));
+  assert.ok(!ok(leftOver));
+  assert.ok(leftOver[0].includes("wrong in round 1"), leftOver[0]);
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], [[1, 5, 2, 6], [3, 7, 4, 8]]]))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8]]]))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), null)));
+});

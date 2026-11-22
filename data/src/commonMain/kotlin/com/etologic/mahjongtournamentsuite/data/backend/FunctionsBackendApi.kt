@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MakeDrawRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerCountRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
@@ -931,6 +932,15 @@ class FunctionsBackendApi(
 
     suspend fun makeDraw(idToken: String, tournamentId: String, request: MakeDrawRequestDto): TournamentDto {
         val response = httpClient.post(url("/tournaments/$tournamentId/draw")) {
+            bearer(idToken)
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
+        }
+        return response.requireSuccessBody()
+    }
+
+    suspend fun changePlayerCount(idToken: String, tournamentId: String, request: PlayerCountRequestDto): TournamentDto {
+        val response = httpClient.post(url("/tournaments/$tournamentId/player-count")) {
             bearer(idToken)
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)
