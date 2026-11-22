@@ -18,6 +18,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
@@ -32,7 +33,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.AccountPermission
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteOrganizationDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteRoleDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
