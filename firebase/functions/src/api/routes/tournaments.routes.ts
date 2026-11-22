@@ -72,6 +72,7 @@ import {
   updateRegistrationSettings,
 } from "../../services/registrationsService";
 import { makeDrawFromRegistrations } from "../../services/registrationDraw";
+import { changePlayerCount } from "../../services/playerCountChange";
 import { defaultSlug, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
@@ -1384,6 +1385,51 @@ export function tournamentsRouter(): Router {
         details: { numPlayers: tournament.numPlayers, numRounds: tournament.numRounds },
       });
       res.status(200).json(tournament);
+    }),
+  );
+
+  // Change of the number of players before the first hand: whole tables leave or come, and the draw is new.
+  // See docs/player-count-change.md.
+  router.post(
+    "/:tournamentId/player-count",
+    requireAuth,
+    requireTournamentPermission("tournament.configure"),
+    registrationRoute(async (req, res) => {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const tournamentId = pathParam(req, "tournamentId");
+      const list = (value: unknown, name: string) => {
+        if (!Array.isArray(value)) throw badRequest(`${name} must be an array`);
+        return value;
+      };
+      const row = (item: unknown) => (item != null && typeof item === "object" ? item as Record<string, unknown> : {});
+      const integer = (value: unknown, name: string) => {
+        const number = Number(value);
+        if (value === null || value === "" || !Number.isInteger(number)) throw badRequest(`Invalid ${name}`);
+        return number;
+      };
+      const result = await changePlayerCount({
+        tournamentId,
+        numTries: integer(body.numTries ?? 1, "numTries"),
+        players: list(body.players, "players").map(row).map((item) => ({ id: integer(item.id, "player id"), team: integer(item.team ?? 0, "player team") })),
+        tables: list(body.tables, "tables").map(row).map((item) => {
+          const ids = Array.isArray(item.playerIds) ? item.playerIds.map((id) => integer(id, "table playerIds")) : [];
+          if (ids.length !== 4) throw badRequest("Invalid table playerIds");
+          return { roundId: integer(item.roundId, "table roundId"), tableId: integer(item.tableId, "table tableId"), playerIds: ids };
+        }),
+        removedSlotIds: list(body.removedSlotIds ?? [], "removedSlotIds").map((id) => integer(id, "removed slot")),
+        waitingEmaIds: list(body.waitingEmaIds ?? [], "waitingEmaIds").map((emaId) => validateEmaId(emaId)),
+        uid: (res.locals.auth as { uid?: string } | undefined)?.uid ?? null,
+      });
+      await recordActivity({
+        action: "tournament.playerCount", actor: actorFromToken(res.locals.auth), tournamentId, target: result.tournament.name,
+        details: {
+          from: result.previousPlayers,
+          to: result.tournament.numPlayers,
+          removed: result.removed.map((person) => person.emaId ?? `#${person.slotId}`),
+          promoted: result.promoted,
+        },
+      });
+      res.status(200).json(result.tournament);
     }),
   );
 

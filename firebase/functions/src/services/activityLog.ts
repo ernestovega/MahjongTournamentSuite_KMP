@@ -20,7 +20,7 @@ export type ActivityAction =
   | "role.create" | "role.update" | "role.delete"
   | "registry.create" | "registry.update" | "registry.photo" | "registry.delete"
   | "organization.create" | "organization.update" | "organization.delete"
-  | "registration.update" | "registration.draw";
+  | "registration.update" | "registration.draw" | "tournament.playerCount";
 
 export type ActivityEntry = {
   action: ActivityAction;

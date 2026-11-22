@@ -74,7 +74,7 @@ export function drawAssignmentProblem(params: {
 }
 
 /** The emails that the slots can keep: not shared with another person of the list, and not owned by another account. */
-async function slotEmails(confirmed: StoredRegistration[]): Promise<Map<string, string | null>> {
+export async function slotEmails(confirmed: StoredRegistration[]): Promise<Map<string, string | null>> {
   const result = new Map<string, string | null>();
   const firstOwner = new Set<string>();
   for (const registration of [...confirmed].sort((left, right) => left.order - right.order)) {

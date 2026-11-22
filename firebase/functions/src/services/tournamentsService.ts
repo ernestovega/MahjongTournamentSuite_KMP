@@ -79,6 +79,8 @@ export type Tournament = {
   timeZone: string | null;
   numTries: number;
   isCompleted: boolean;
+  /** True when any table has data (a hand, totals or a completed mark). The draw cannot change then. */
+  hasTableData: boolean;
   /** Everyone sees a public tournament without signing in. An admin hides test tournaments. Old documents are public. */
   isPublic: boolean;
   /** The player app shows the differences button on the table screen. Old documents show it. */
@@ -171,6 +173,7 @@ export async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): P
     timeZone: readStoredTimeZone(d.get("timeZone")),
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
+    hasTableData: Number(d.get("tablesWithProgress") ?? 0) > 0,
     isPublic: d.get("isPublic") !== false,
     showTableDiffs: d.get("showTableDiffs") !== false,
     drawPending: d.get("drawPending") === true,

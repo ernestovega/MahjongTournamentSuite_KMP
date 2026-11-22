@@ -1064,4 +1064,37 @@ export async function importRegistrations(params: {
   return { rows, imported };
 }
 
+/**
+ * A change of the number of players after the draw (playerCountChange.ts). The people who leave the tournament lose
+ * their registration, without an email: the organizer tells them. The people of the waiting list who take a new
+ * slot get a place. When the registrations had a number of places, it becomes the new number of players.
+ */
+export async function applyPlayerCountToRegistrations(params: {
+  tournamentId: string;
+  removedEmaIds: string[];
+  promotedEmaIds: string[];
+  numPlayers: number;
+}): Promise<void> {
+  const tournament = await loadTournament(params.tournamentId);
+  for (const emaId of params.removedEmaIds) {
+    const doc = await tournament.ref.collection(REGISTRATIONS).doc(emaId).get();
+    if (!doc.exists) continue;
+    const registration = toStored(doc);
+    await leaveTeamOf(tournament, registration);
+    await doc.ref.delete();
+    if (registration.status !== "PENDING") await logChange(tournament, "removed", registration);
+  }
+  for (const emaId of params.promotedEmaIds) {
+    const doc = await tournament.ref.collection(REGISTRATIONS).doc(emaId).get();
+    if (!doc.exists) continue;
+    await doc.ref.update({ status: "CONFIRMED", updatedAt: FieldValue.serverTimestamp() });
+    await logChange(tournament, "promoted", toStored(doc));
+  }
+  if (tournament.settings.maxPlayers != null) {
+    await tournament.ref.update({ "registration.maxPlayers": params.numPlayers });
+    tournament.settings = { ...tournament.settings, maxPlayers: params.numPlayers };
+  }
+  await refreshCounters(tournament);
+}
+
 export { adminRegistrationsLink, listStored, toStored, REGISTRATIONS, TEAMS };

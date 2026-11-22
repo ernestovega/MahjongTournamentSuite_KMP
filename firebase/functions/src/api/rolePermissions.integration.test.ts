@@ -60,6 +60,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["DELETE", "/tournaments/:tournamentId/registrations/:emaId", "@tournament.playerEmails"],
   ["PUT", "/tournaments/:tournamentId/registration-settings", "@tournament.configure"],
   ["POST", "/tournaments/:tournamentId/draw", "@tournament.configure"],
+  ["POST", "/tournaments/:tournamentId/player-count", "@tournament.configure"],
   ["POST", "/auth/refresh", "PUBLIC"],
   ["GET", "/auth/me", "SIGNED_IN"],
   ["PUT", "/auth/me", "SIGNED_IN"],
