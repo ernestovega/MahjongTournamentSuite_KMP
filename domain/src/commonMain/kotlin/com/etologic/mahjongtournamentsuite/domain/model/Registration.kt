@@ -13,7 +13,7 @@ data class RegistrationSettings(
     val maxPlayers: Int? = null,
     /** The last day to register (yyyy-MM-dd, inclusive), a local date of the venue. Null: the organizer closes them. */
     val closesOn: String? = null,
-    /** The name of the public link, `/inscripcion/<slug>`. */
+    /** The name of the public link, `/<slug>`, such as `/6thmmc`. */
     val slug: String = "",
     /** Registrations with a place. */
     val confirmed: Int = 0,

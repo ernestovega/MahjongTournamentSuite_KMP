@@ -1027,7 +1027,7 @@
     <string name="reg_title">Регистрация</string>
     <string name="reg_import">Импорт Google Form</string>
     <string name="reg_settings">Настройки регистрации</string>
-    <string name="reg_link_copied">Публичная ссылка скопирована.\nОпубликуйте её в календаре EMA, по почте или в группах.</string>
+    <string name="reg_link_copied">Ссылка скопирована</string>
     <string name="reg_empty_title">Пока никто не зарегистрировался</string>
     <string name="reg_empty_message">Поделитесь публичной ссылкой, добавьте участников вручную или импортируйте ответы старой Google Form.</string>
     <string name="reg_no_matches">Никто не найден.</string>

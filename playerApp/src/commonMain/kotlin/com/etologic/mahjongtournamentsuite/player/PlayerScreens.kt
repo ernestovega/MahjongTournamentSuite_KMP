@@ -292,7 +292,7 @@ fun SplashScreen(
     openSignIn: Boolean = false,
     /** True when the address was `/support`, the link of the privacy policy. */
     openSupport: Boolean = false,
-    /** A registration link of the web, `/inscripcion/...`. */
+    /** A link of the web to a tournament, `/<slug>` or `/registration?...` (also the old `/inscripcion/...`). */
     openRegistration: RegistrationLink? = null,
 ) {
     val session = koinInject<PlayerSessionPresenter>()

@@ -121,11 +121,12 @@ function playerAppUrl(): string {
 
 /** The link of the emails: it confirms a pending registration and opens the page to manage it. */
 export function manageLink(tournamentId: string, token: string): string {
-  return `${playerAppUrl()}/inscripcion/gestionar?t=${encodeURIComponent(tournamentId)}&k=${encodeURIComponent(token)}`;
+  return `${playerAppUrl()}/registration?t=${encodeURIComponent(tournamentId)}&k=${encodeURIComponent(token)}`;
 }
 
+/** The public link of a tournament, `/<slug>`: the registrations while they last, the tournament after the draw. */
 export function publicRegistrationLink(slug: string): string {
-  return `${playerAppUrl()}/inscripcion/${encodeURIComponent(slug)}`;
+  return `${playerAppUrl()}/${encodeURIComponent(slug)}`;
 }
 
 function adminRegistrationsLink(tournamentId: string): string {
@@ -895,23 +896,28 @@ export async function updateRegistrationSettings(params: {
   return refreshCounters(await loadTournament(params.tournamentId));
 }
 
-/** Keeps the link name for one tournament. Another tournament cannot take it. */
 /**
- * A free link name from [base]: the base itself, or the base with "-2", "-3"... when another tournament uses it.
- * The organizer did not type one, so the tournament gets one that works (the claim checks it again).
+ * A free link name from [candidates] (shortest first): the first one that no other tournament uses, or the first one
+ * with "-2", "-3"... The organizer did not type one, so the tournament gets one that works (the claim checks it again).
  */
-export async function freeSlug(base: string): Promise<string> {
-  for (let n = 1; n <= 50; n++) {
-    const suffix = n === 1 ? "" : `-${n}`;
-    const candidate = `${base.slice(0, MAX_SLUG_LENGTH - suffix.length).replace(/-+$/g, "")}${suffix}`;
+export async function freeSlug(candidates: string[]): Promise<string> {
+  const isFree = async (candidate: string) => {
     const current = await db.collection(SLUGS).doc(candidate).get();
-    if (!current.exists) return candidate;
+    if (!current.exists) return true;
     const owner = await db.collection("tournaments").doc(String(current.get("tournamentId"))).get();
-    if (!owner.exists) return candidate;
+    return !owner.exists;
+  };
+  for (const candidate of candidates) if (await isFree(candidate)) return candidate;
+  const base = candidates[0] ?? "";
+  for (let n = 2; n <= 50 && base !== ""; n++) {
+    const suffix = `-${n}`;
+    const candidate = `${base.slice(0, MAX_SLUG_LENGTH - suffix.length).replace(/-+$/g, "")}${suffix}`;
+    if (await isFree(candidate)) return candidate;
   }
   throw conflict("Another tournament uses this link", { code: "SLUG_TAKEN" });
 }
 
+/** Keeps the link name for one tournament. Another tournament cannot take it. */
 export async function claimSlug(slug: string, tournamentId: string, previous: string | null): Promise<void> {
   await db.runTransaction(async (transaction) => {
     const ref = db.collection(SLUGS).doc(slug);

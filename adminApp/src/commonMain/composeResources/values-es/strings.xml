@@ -1013,7 +1013,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_title">Inscripciones</string>
     <string name="reg_import">Importar Google Form</string>
     <string name="reg_settings">Ajustes de inscripción</string>
-    <string name="reg_link_copied">El enlace público está copiado.\nCompártelo en el calendario de la EMA, por email o en tus grupos.</string>
+    <string name="reg_link_copied">Enlace copiado</string>
     <string name="reg_empty_title">Aún no hay inscritos</string>
     <string name="reg_empty_message">Comparte el enlace público, añade gente tú mismo o importa las respuestas de tu antiguo Google Form.</string>
     <string name="reg_no_matches">Nadie coincide con la búsqueda.</string>

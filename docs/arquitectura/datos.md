@@ -19,7 +19,7 @@ flowchart TB
     errors["errorGroups/{id}<br/>└ reports/{id}"]
     meta["_meta/dataVersions<br/>revisiones globales"]
     personPrivate["personPrivate/{emaId}<br/>restricciones alimentarias<br/>(privado, con consentimiento)"]
-    slugs["registrationSlugs/{slug}<br/>tournamentId del enlace /inscripcion"]
+    slugs["registrationSlugs/{slug}<br/>tournamentId del enlace corto /slug"]
     sync["emaPlayerRegistrySyncReports · …SyncState ·<br/>emaRankingTournamentResultIndex"]
   end
 

@@ -92,9 +92,10 @@ test("a registration team takes the four slots of one team of the draw", () => {
 });
 
 test("the token comes from the link of the registration email of that tournament", () => {
-  const email = { links: ["https://mts.example.test/", "https://mts.example.test/inscripcion/gestionar?t=t1&k=abc123"] };
+  const email = { links: ["https://mts.example.test/", "https://mts.example.test/registration?t=t1&k=abc123"] };
   assert.equal(manageToken(email, "t1"), "abc123");
   assert.equal(manageToken(email, "t2"), null);
+  assert.equal(manageToken({ links: ["https://mts.example.test/inscripcion/gestionar?t=t1&k=old"] }, "t1"), "old");
   assert.equal(hasEmail({ name: "Ana" }), false);
   assert.equal(hasEmail({ rows: [{ email: "ana@example.test" }] }), true);
   assert.match(formCsv(slots(2), true).split("\n")[0], /Team/);
@@ -171,7 +172,7 @@ class FakeServer {
       if (options.token) this.place(registration);
       else {
         Object.assign(registration, { status: "PENDING", position: 0 });
-        this.outbox.push({ to: body.email, links: [`https://mts.example.test/inscripcion/gestionar?t=t1&k=${registration.token}`] });
+        this.outbox.push({ to: body.email, links: [`https://mts.example.test/registration?t=t1&k=${registration.token}`] });
       }
       this.registrations.set(emaId, registration);
       return ok({ status: registration.status, position: registration.position, emailHint: "x***", manageToken: options.token ? registration.token : null });

@@ -26,7 +26,7 @@ interface RegistrationRepository {
     /** The public list: places, waiting list and teams, without emails. */
     suspend fun loadPublicList(tournamentId: String): AppResult<TournamentRegistrations>
 
-    /** The tournament of a public link, `/inscripcion/<slug>`. */
+    /** The tournament of a public link, `/<slug>` (or the old `/inscripcion/<slug>`). */
     suspend fun resolveLink(slug: String): AppResult<String>
 
     suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult>

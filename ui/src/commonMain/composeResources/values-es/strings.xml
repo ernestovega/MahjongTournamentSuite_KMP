@@ -612,7 +612,7 @@
     <string name="registration_error_closed">Las inscripciones de este torneo están cerradas.</string>
     <string name="registration_error_not_found">No se encontró la inscripción.\nPuede que se haya cancelado.</string>
     <string name="registration_error_open">Cierra las inscripciones antes del sorteo.</string>
-    <string name="registration_error_slug_taken">Otro torneo usa este nombre de enlace.\nElige otro.</string>
+    <string name="registration_error_slug_taken">Este nombre de enlace ya está en uso.\nElige otro.</string>
     <string name="registration_error_team_full">El equipo ya tiene 4 personas.</string>
     <string name="registration_error_team_name_taken">Otro equipo tiene este nombre.</string>
     <string name="registration_error_too_many_rows">El archivo es demasiado grande: como máximo 500 filas.</string>

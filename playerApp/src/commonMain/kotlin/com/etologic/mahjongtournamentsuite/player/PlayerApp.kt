@@ -127,7 +127,7 @@ fun PlayerApp(
     openSignIn: Boolean = false,
     /** True when the address was `/support`: the app opens the support form over the tournaments. */
     openSupport: Boolean = false,
-    /** The registration link of the address, `/inscripcion/...`: the app opens that tournament on its registrations. */
+    /** The registration link of the address, `/<slug>` or `/registration?...` (also the old `/inscripcion/...`): the app opens that tournament on its registrations. */
     openRegistration: RegistrationLink? = null,
     /** True on a phone or a tablet app: the score of a hand is typed on a numpad of the app, not on the system keyboard. */
     numpadEntry: Boolean = false,

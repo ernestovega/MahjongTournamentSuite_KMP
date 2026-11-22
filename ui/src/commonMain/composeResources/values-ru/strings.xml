@@ -608,7 +608,7 @@
     <string name="registration_error_closed">Регистрация на этот турнир закрыта.</string>
     <string name="registration_error_not_found">Регистрация не найдена.\nВозможно, она отменена.</string>
     <string name="registration_error_open">Закройте регистрацию перед жеребьёвкой.</string>
-    <string name="registration_error_slug_taken">Это имя ссылки занято другим турниром.\nВыберите другое.</string>
+    <string name="registration_error_slug_taken">Это имя ссылки уже занято.\nВыберите другое.</string>
     <string name="registration_error_team_full">В команде уже 4 человека.</string>
     <string name="registration_error_team_name_taken">Это название уже у другой команды.</string>
     <string name="registration_error_too_many_rows">Файл слишком большой: не более 500 строк.</string>
