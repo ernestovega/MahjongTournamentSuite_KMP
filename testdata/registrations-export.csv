@@ -1,0 +1,5 @@
+﻿Timestamp,Email,First name,Last name,EMA number,Country,Team,Food restrictions,Status,Paid
+2099-01-01T10:00:00Z,lucia@example.test,Lucía,Martín,04010001,ES,Red Dragons,,With a place,Yes
+2099-01-02T10:00:00Z,hugo@example.test,Hugo,García,04010002,ES,Red Dragons,,With a place,No
+2099-01-03T10:00:00Z,claire@example.test,Claire,Dubois,04010003,FR,East Wind,"Vegetarian, no ""spicy"" food",Waiting list,No
+2099-01-04T10:00:00Z,else@example.test,Somebody Else,,04010004,,,,Email not confirmed,No

@@ -51,13 +51,23 @@ class RegistrationsPresenter(
     suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.previewImport(tournamentId, fileName, bytes)
 
     /**
-     * The list as a CSV file that the import reads back (see [RegistrationsCsv]). The app builds it from the list
-     * that it already shows, so it needs no request.
+     * Saves the list as a CSV file that the import reads back (see [RegistrationsCsv]) with [save], which gets the
+     * name and the text of the file. The app builds it from the list that it already shows, so it needs no request.
      */
-    fun exportCsv(tournamentName: String, registrations: AdminRegistrations, registry: List<Player>): RegistrationsExport {
-        val file = RegistrationsExport(RegistrationsCsv.fileName(tournamentName), RegistrationsCsv.build(registrations, registry))
-        AppResult.Success(file).trackAction(telemetry, TelemetryAction.REGISTRATIONS_EXPORTED)
-        return file
+    fun exportCsv(
+        tournamentName: String,
+        registrations: AdminRegistrations,
+        registry: List<Player>,
+        save: (fileName: String, content: String) -> Unit,
+    ): AppResult<Unit> {
+        val result = try {
+            save(RegistrationsCsv.fileName(tournamentName), RegistrationsCsv.build(registrations, registry))
+            AppResult.Success(Unit)
+        } catch (exception: Exception) {
+            logger.w(exception) { "The CSV file of the registrations was not saved." }
+            AppResult.Failure(AppError.Unexpected(exception.message ?: "The file was not saved."))
+        }
+        return result.trackAction(telemetry, TelemetryAction.REGISTRATIONS_EXPORTED)
     }
 
     suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.applyImport(tournamentId, fileName, bytes).trackAction(telemetry, TelemetryAction.REGISTRATIONS_IMPORTED)
@@ -105,6 +115,3 @@ class RegistrationsPresenter(
             .trackAction(telemetry, TelemetryAction.DRAW_MADE)
     }
 }
-
-/** The CSV file of the registrations, ready to save. */
-data class RegistrationsExport(val fileName: String, val content: String)

@@ -66,6 +66,5 @@ object RegistrationsCsv {
         }
 
     /** Quotes a cell with a comma, a semicolon, a quote or a line break, and doubles its quotes. */
-    internal fun escape(value: String): String =
-        if (value.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + value.replace("\"", "\"\"") + "\"" else value
+    internal fun escape(value: String): String = if (value.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + value.replace("\"", "\"\"") + "\"" else value
 }

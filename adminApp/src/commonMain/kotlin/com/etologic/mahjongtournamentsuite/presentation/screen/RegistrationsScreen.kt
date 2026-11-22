@@ -313,12 +313,9 @@ fun RegistrationsScreen(
                 icon = Icons.Default.Download,
                 onClick = {
                     val ready = current ?: return@AppTopBarButton
-                    val file = presenter.exportCsv(tournament?.shortName?.ifBlank { null } ?: tournament?.name.orEmpty(), ready, registry)
-                    try {
-                        saveTextFile(file.fileName, file.content)
-                    } catch (exception: Throwable) {
-                        error = UiText.Plain(exception.message ?: exception.toString())
-                    }
+                    val name = tournament?.shortName?.ifBlank { null } ?: tournament?.name.orEmpty()
+                    val saved = presenter.exportCsv(name, ready, registry) { fileName, content -> saveTextFile(fileName, content) }
+                    if (saved is AppResult.Failure) error = saved.error.toUiText()
                 },
                 enabled = current != null && current.registrations.isNotEmpty(),
             )
@@ -646,17 +643,25 @@ private fun RegistrationSettingsPanel(
     val pending = data.registrations.count { it.status == RegistrationStatus.PENDING }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
         val statusTile: @Composable (Modifier) -> Unit = { tileModifier ->
+            val toggleText = stringResource(if (settings.isOpen) Res.string.reg_close_action else Res.string.reg_open_action)
+            val toggleIcon = if (settings.isOpen) Icons.Default.Lock else Icons.Default.LockOpen
+            val toggle = { onSave(settings.copy(status = if (settings.isOpen) RegistrationPhase.CLOSED else RegistrationPhase.OPEN)) }
             SettingTile(
                 label = stringResource(Res.string.reg_status_label),
                 modifier = tileModifier,
-                action = {
-                    LabeledIconButton(
-                        text = stringResource(if (settings.isOpen) Res.string.reg_close_action else Res.string.reg_open_action),
-                        icon = if (settings.isOpen) Icons.Default.Lock else Icons.Default.LockOpen,
-                        enabled = !busy,
-                        onClick = { onSave(settings.copy(status = if (settings.isOpen) RegistrationPhase.CLOSED else RegistrationPhase.OPEN)) },
-                        modifier = Modifier.testTag("registrations-toggle-status"),
-                    )
+                // A phone has the icon in the row of the title; a wide screen, the button with its text under the status.
+                action = if (compact) {
+                    {
+                        LabeledIconButton(
+                            text = toggleText,
+                            icon = toggleIcon,
+                            enabled = !busy,
+                            onClick = toggle,
+                            modifier = Modifier.testTag("registrations-toggle-status"),
+                        )
+                    }
+                } else {
+                    null
                 },
             ) {
                 val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -668,6 +673,12 @@ private fun RegistrationSettingsPanel(
                         color = color,
                     )
                 }
+                if (!compact) {
+                    OutlinedButton(onClick = toggle, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.sm).testTag("registrations-toggle-status")) {
+                        Icon(toggleIcon, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(toggleText, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                    }
+                }
             }
         }
         val placesTile: @Composable (Modifier) -> Unit = { tileModifier ->
@@ -677,7 +688,7 @@ private fun RegistrationSettingsPanel(
                 editing = editing == RegistrationSettingField.PLACES,
                 busy = busy,
                 onEdit = { onEdit(RegistrationSettingField.PLACES) },
-                editor = { done ->
+                editor = {
                     var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
                     OutlinedTextField(
                         value = places,
@@ -686,7 +697,7 @@ private fun RegistrationSettingsPanel(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag("registrations-places-field"),
                     )
-                    EditorButtons(onCancel = onCancel, onSave = { done(); onSave(settings.copy(maxPlayers = places.toIntOrNull())) })
+                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(maxPlayers = places.toIntOrNull())) })
                 },
             ) {
                 Text(
@@ -713,7 +724,7 @@ private fun RegistrationSettingsPanel(
                 editing = editing == RegistrationSettingField.CLOSES_ON,
                 busy = busy,
                 onEdit = { onEdit(RegistrationSettingField.CLOSES_ON) },
-                editor = { done ->
+                editor = {
                     var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
                     DateField(
                         label = stringResource(Res.string.reg_closes_on_optional),
@@ -721,7 +732,7 @@ private fun RegistrationSettingsPanel(
                         onChange = { closesOn = it },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    EditorButtons(onCancel = onCancel, onSave = { done(); onSave(settings.copy(closesOn = closesOn.ifBlank { null })) })
+                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(closesOn = closesOn.ifBlank { null })) })
                 },
             ) {
                 val closesOn = settings.closesOn
@@ -747,7 +758,7 @@ private fun RegistrationSettingsPanel(
                         modifier = Modifier.testTag("registrations-copy-link"),
                     )
                 },
-                editor = { done ->
+                editor = {
                     var slug by remember { mutableStateOf(settings.slug) }
                     OutlinedTextField(
                         value = slug,
@@ -756,7 +767,7 @@ private fun RegistrationSettingsPanel(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag("registrations-slug-field"),
                     )
-                    EditorButtons(onCancel = onCancel, saveEnabled = slug.isNotBlank(), onSave = { done(); onSave(settings.copy(slug = slug)) })
+                    EditorButtons(onCancel = onCancel, saveEnabled = slug.isNotBlank(), onSave = { onSave(settings.copy(slug = slug)) })
                 },
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
@@ -802,7 +813,7 @@ private fun SettingTile(
 ) {
     val body: @Composable (Modifier) -> Unit = { padding ->
         Column(padding, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     label,
                     style = MaterialTheme.typography.labelLarge,
@@ -824,7 +835,7 @@ private fun SettingTile(
     }
 }
 
-/** A [SettingTile] with a Change button that turns its content into [editor]. The editor calls `done` when it saves. */
+/** A [SettingTile] with a Change button that turns its content into [editor], with its own Cancel and Save. */
 @Composable
 private fun EditableSettingTile(
     label: String,
@@ -832,7 +843,7 @@ private fun EditableSettingTile(
     editing: Boolean,
     busy: Boolean,
     onEdit: () -> Unit,
-    editor: @Composable (done: () -> Unit) -> Unit,
+    editor: @Composable () -> Unit,
     extraAction: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -851,7 +862,7 @@ private fun EditableSettingTile(
         },
     ) {
         if (editing) {
-            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) { editor {} }
+            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) { editor() }
         } else {
             content()
         }

@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 /**
  * The export of the registrations. testdata/registrations-export.csv is the file of [SAMPLE]: the backend test
  * (registrationImport.test.ts) reads the same file with the import, so the export always goes back in.
- * Run with `-DwriteRegistrationsExport=true` to write the file again after a change of the format.
+ * After a change of the format, delete the file and run this test: it writes the file again.
  */
 class RegistrationsCsvTest {
     private val sampleFile: File = generateSequence(File("").absoluteFile) { it.parentFile }
@@ -25,7 +25,7 @@ class RegistrationsCsvTest {
     @Test
     fun theSampleIsTheSharedFileThatTheImportReads() {
         val text = RegistrationsCsv.build(SAMPLE, REGISTRY)
-        if (System.getProperty("writeRegistrationsExport") == "true") sampleFile.writeText(text)
+        if (!sampleFile.exists()) sampleFile.writeText(text)
         assertEquals(sampleFile.readText(), text)
     }
 
