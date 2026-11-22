@@ -1077,6 +1077,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_new_teams">%1$d nouvelles équipes, vides jusqu'à ce que tu les attribues dans Équipes.</string>
     <string name="pc_waiting_title">Liste d'attente : jusqu'à %1$d personnes (facultatif)</string>
     <string name="pc_waiting_none">Personne n'est sur la liste d'attente.</string>
+    <string name="pc_no_match">Personne ne correspond à la recherche.</string>
     <string name="pc_continue">Continuer</string>
     <string name="pc_confirm_title">Faire un nouveau tirage ?</string>
     <string name="pc_from_to">De %1$d à %2$d joueurs</string>

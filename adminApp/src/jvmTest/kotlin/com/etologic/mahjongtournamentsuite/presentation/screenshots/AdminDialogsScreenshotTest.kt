@@ -121,6 +121,20 @@ class AdminDialogsScreenshotTest {
         )
     }
 
+    /** The same choice with a search: only the people who match show, and the chosen ones stay chosen. */
+    @Test
+    fun playerCountSearch() = dialog("player-count-search") {
+        val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 20)
+        PlayerCountChooseDialog(
+            tournament = tournament,
+            data = playerCountData(20),
+            form = PlayerCountForm(target = 16, chosen = setOf(5, 11), query = "ma"),
+            onFormChange = {},
+            onContinue = {},
+            onDismiss = {},
+        )
+    }
+
     /** One table more in a tournament with registrations: the new places can take people of the waiting list. */
     @Test
     fun playerCountAdd() = dialog("player-count-add") {

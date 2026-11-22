@@ -1077,6 +1077,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_new_teams">%1$d equipos nuevos, vacíos hasta que los asignes en Equipos.</string>
     <string name="pc_waiting_title">Lista de espera: hasta %1$d personas (opcional)</string>
     <string name="pc_waiting_none">No hay nadie en la lista de espera.</string>
+    <string name="pc_no_match">Nadie coincide con la búsqueda.</string>
     <string name="pc_continue">Continuar</string>
     <string name="pc_confirm_title">¿Hacer un sorteo nuevo?</string>
     <string name="pc_from_to">De %1$d a %2$d jugadores</string>

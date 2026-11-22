@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TestTimeSource
@@ -233,6 +235,57 @@ class PlayerCountUiTest {
         onNodeWithContentDescription("One table less").performClick()
         onNodeWithTag("playerCountChosen").assertTextEquals("0 of 4 chosen")
         assertNull(world.server.playerCountRequest)
+    }
+
+    @Test
+    fun theSearchFindsPeopleByNameNumberOrEmaAndKeepsTheChoice() = runComposeUiTest {
+        val world = World(individual, slots(20))
+        showFlow(world, individual)
+        press()
+        onNodeWithContentDescription("One table less").performClick()
+        val shown = { (1..20).filter { onAllNodesWithTag("playerCountSlot-$it").fetchSemanticsNodes().isNotEmpty() } }
+
+        onNodeWithTag("playerCountSearch").performTextInput("náme 7")
+        waitForIdle()
+        assertEquals(listOf(7), shown())
+        click("playerCountSlot-7")
+
+        onNodeWithTag("playerCountSearch").performTextReplacement("#12")
+        waitForIdle()
+        assertEquals(listOf(12), shown())
+        onNodeWithTag("playerCountSearch").performTextReplacement("10000015")
+        waitForIdle()
+        assertEquals(listOf(15), shown())
+
+        onNodeWithTag("playerCountSearch").performTextReplacement("nobody here")
+        waitForIdle()
+        assertEquals(emptyList(), shown())
+        onNodeWithText("Nobody matches the search.").assertIsDisplayed()
+
+        // The choice stays while the search hides it, and the whole list comes back with an empty search.
+        onNodeWithTag("playerCountChosen").assertTextEquals("1 of 4 chosen")
+        onNodeWithTag("playerCountSearch").performTextReplacement("")
+        waitForIdle()
+        onNodeWithTag("playerCountSlot-7").assertIsOn()
+        assertTrue(onAllNodesWithText("Nobody matches the search.").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun theSearchFindsTeamsByTheirNameOrPlayersAndTheWaitingListByName() = runComposeUiTest {
+        val teamsTournament = individual.copy(isTeams = true)
+        val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
+        val world = World(teamsTournament, slots(20, isTeams = true), teams)
+        showFlow(world, teamsTournament)
+        press()
+        onNodeWithContentDescription("One table less").performClick()
+        val shownTeams = { (1..5).filter { onAllNodesWithTag("playerCountTeam-$it").fetchSemanticsNodes().isNotEmpty() } }
+        onNodeWithTag("playerCountSearch").performTextInput("team 4")
+        waitForIdle()
+        assertEquals(listOf(4), shownTeams())
+        // Name 10 plays in team 3.
+        onNodeWithTag("playerCountSearch").performTextReplacement("Name 10")
+        waitForIdle()
+        assertEquals(listOf(3), shownTeams())
     }
 
     @Test

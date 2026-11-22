@@ -16,6 +16,11 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.OutlinedTextField
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import mahjongtournamentsuite.adminapp.generated.resources.search
+import mahjongtournamentsuite.adminapp.generated.resources.pc_no_match
 import androidx.compose.material3.AlertDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import androidx.compose.material3.Checkbox
@@ -206,9 +211,11 @@ internal data class PlayerCountForm(
     val target: Int,
     val chosen: Set<Int> = emptySet(),
     val waiting: List<String> = emptyList(),
+    /** The search of the list: it only hides lines, the people chosen stay chosen. */
+    val query: String = "",
 ) {
-    /** A new number clears the choice that belonged to the old one. */
-    fun withTarget(value: Int): PlayerCountForm = PlayerCountForm(target = value)
+    /** A new number clears the choice that belonged to the old one, and keeps the search. */
+    fun withTarget(value: Int): PlayerCountForm = PlayerCountForm(target = value, query = query)
 
     fun toggleChosen(id: Int, max: Int): PlayerCountForm = when {
         id in chosen -> copy(chosen = chosen - id)
@@ -257,6 +264,34 @@ internal data class PlayerCountSummary(
 }
 
 private fun PlayerCountSlot.label(): String = "#$id · $name"
+
+/** The lines that match the search: by slot number, name or EMA number; a team also by its players. */
+internal fun PlayerCountSlot.matches(query: String): Boolean =
+    query.isBlank() || "#$id $name ${emaId.orEmpty()}".matchesSearch(query) || id.toString() == query.trim().removePrefix("#")
+
+internal fun TournamentTeam.matches(query: String, slots: List<PlayerCountSlot>): Boolean =
+    query.isBlank() || name.matchesSearch(query) || slots.filter { it.id in playerIds }.any { it.matches(query) }
+
+internal fun PlayerCountWaiting.matches(query: String): Boolean =
+    query.isBlank() || "$name $emaId".matchesSearch(query) || position.toString() == query.trim()
+
+/** The search field of the lists of the dialog, with the short hint of every search of the app. */
+@Composable
+private fun ChoiceSearch(form: PlayerCountForm, onFormChange: (PlayerCountForm) -> Unit) {
+    OutlinedTextField(
+        value = form.query,
+        onValueChange = { onFormChange(form.copy(query = it)) },
+        modifier = Modifier.fillMaxWidth().testTag("playerCountSearch"),
+        singleLine = true,
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        label = { Text(stringResource(Res.string.search)) },
+    )
+}
+
+@Composable
+private fun NoMatch(shown: Int, query: String) {
+    if (shown == 0 && query.isNotBlank()) MtsDialogText(stringResource(Res.string.pc_no_match))
+}
 
 @Composable
 internal fun PlayerCountChooseDialog(
@@ -313,7 +348,10 @@ internal fun PlayerCountChooseDialog(
                     when {
                         toRemove > 0 && tournament.isTeams -> {
                             ChoiceHeader(stringResource(Res.string.pc_choose_teams, teamsToRemove), form.chosen.size, teamsToRemove)
-                            data.teams.forEach { team ->
+                            ChoiceSearch(form, onFormChange)
+                            val shown = data.teams.filter { it.matches(form.query, data.slots) }
+                            NoMatch(shown.size, form.query)
+                            shown.forEach { team ->
                                 ChoiceRow(
                                     title = team.name,
                                     detail = team.memberNames(data.slots),
@@ -325,7 +363,10 @@ internal fun PlayerCountChooseDialog(
                         }
                         toRemove > 0 -> {
                             ChoiceHeader(stringResource(Res.string.pc_choose_people, toRemove), form.chosen.size, toRemove)
-                            data.slots.forEach { slot ->
+                            ChoiceSearch(form, onFormChange)
+                            val shown = data.slots.filter { it.matches(form.query) }
+                            NoMatch(shown.size, form.query)
+                            shown.forEach { slot ->
                                 ChoiceRow(
                                     title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
                                     detail = slot.emaId,
@@ -348,8 +389,12 @@ internal fun PlayerCountChooseDialog(
                                 ChoiceHeader(stringResource(Res.string.pc_waiting_title, newSlots), form.waiting.size, newSlots)
                                 if (data.waiting.isEmpty()) {
                                     MtsDialogText(stringResource(Res.string.pc_waiting_none))
+                                } else {
+                                    ChoiceSearch(form, onFormChange)
                                 }
-                                data.waiting.forEach { person ->
+                                val shown = data.waiting.filter { it.matches(form.query) }
+                                NoMatch(shown.size, form.query)
+                                shown.forEach { person ->
                                     ChoiceRow(
                                         title = "${person.position}. ${person.name}",
                                         detail = person.emaId,

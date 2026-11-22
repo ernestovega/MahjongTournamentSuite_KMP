@@ -1091,6 +1091,7 @@
     <string name="pc_new_teams">%1$d новых команд, пустых, пока ты не назначишь их в разделе «Команды».</string>
     <string name="pc_waiting_title">Лист ожидания: до %1$d человек (необязательно)</string>
     <string name="pc_waiting_none">В листе ожидания никого нет.</string>
+    <string name="pc_no_match">Никто не подходит под поиск.</string>
     <string name="pc_continue">Продолжить</string>
     <string name="pc_confirm_title">Провести новую жеребьёвку?</string>
     <string name="pc_from_to">С %1$d на %2$d игроков</string>

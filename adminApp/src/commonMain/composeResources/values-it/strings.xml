@@ -1077,6 +1077,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_new_teams">%1$d squadre nuove, vuote finché non le assegni in Squadre.</string>
     <string name="pc_waiting_title">Lista d'attesa: fino a %1$d persone (facoltativo)</string>
     <string name="pc_waiting_none">Nessuno è in lista d'attesa.</string>
+    <string name="pc_no_match">Nessuno corrisponde alla ricerca.</string>
     <string name="pc_continue">Continua</string>
     <string name="pc_confirm_title">Fare un nuovo sorteggio?</string>
     <string name="pc_from_to">Da %1$d a %2$d giocatori</string>

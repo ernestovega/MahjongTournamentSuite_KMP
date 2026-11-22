@@ -1077,6 +1077,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_new_teams">%1$d new teams, empty until you assign them in Teams.</string>
     <string name="pc_waiting_title">Waiting list: up to %1$d people (optional)</string>
     <string name="pc_waiting_none">Nobody is on the waiting list.</string>
+    <string name="pc_no_match">Nobody matches the search.</string>
     <string name="pc_continue">Continue</string>
     <string name="pc_confirm_title">Make a new draw?</string>
     <string name="pc_from_to">From %1$d to %2$d players</string>

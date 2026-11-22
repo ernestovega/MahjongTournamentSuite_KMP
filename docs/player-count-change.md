@@ -27,6 +27,8 @@ with no hand does not stop it. When it is not possible, the button looks off and
 
 1. **Choose.** The dialog opens on the current number. The − and + buttons move it by whole tables of 4, from 16 up to
    400.
+   - A search field above each list (people, teams, waiting list) finds them by name, slot number or EMA number. It
+     only hides lines: the people chosen stay chosen.
    - One table less or more: in an individual tournament the organizer chooses who leaves, 4 people for each table.
      In a team tournament, whole teams leave or come.
    - More tables: the new slots are empty, to assign afterwards in Players (or Teams). In a tournament with
@@ -63,6 +65,6 @@ text.
   permissions, activity) and the matrix of `rolePermissions.integration.test.ts`.
 - App: `PlayerCountRulesTest` (domain), `PlayerCountPresenterTest`, `PlayerCountUiTest` (the whole dialog, back, teams,
   waiting list, server errors, locked states, both entry points and permissions), `AdminActionTrackingTest`.
-- Screenshots: `dialogs/player-count-remove`, `player-count-add`, `player-count-confirm` and `player-count-locked`.
+- Screenshots: `dialogs/player-count-remove`, `player-count-search`, `player-count-add`, `player-count-confirm` and `player-count-locked`.
 - Game day: `corners` creates its tournament with 32 players and takes a table out before the first hand
   (docs/scenarios.md).

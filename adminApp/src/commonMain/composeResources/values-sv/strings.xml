@@ -1077,6 +1077,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_new_teams">%1$d nya lag, tomma tills du tilldelar dem under Lag.</string>
     <string name="pc_waiting_title">Väntelista: upp till %1$d personer (valfritt)</string>
     <string name="pc_waiting_none">Ingen står på väntelistan.</string>
+    <string name="pc_no_match">Ingen matchar sökningen.</string>
     <string name="pc_continue">Fortsätt</string>
     <string name="pc_confirm_title">Göra en ny lottning?</string>
     <string name="pc_from_to">Från %1$d till %2$d spelare</string>

@@ -1077,6 +1077,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_new_teams">%1$d nieuwe teams, leeg tot je ze toewijst bij Teams.</string>
     <string name="pc_waiting_title">Wachtlijst: tot %1$d personen (optioneel)</string>
     <string name="pc_waiting_none">Er staat niemand op de wachtlijst.</string>
+    <string name="pc_no_match">Niemand komt overeen met de zoekopdracht.</string>
     <string name="pc_continue">Doorgaan</string>
     <string name="pc_confirm_title">Opnieuw loten?</string>
     <string name="pc_from_to">Van %1$d naar %2$d spelers</string>

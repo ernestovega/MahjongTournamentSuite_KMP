@@ -1077,6 +1077,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_new_teams">%1$d neue Teams, leer, bis du sie unter Teams zuweist.</string>
     <string name="pc_waiting_title">Warteliste: bis zu %1$d Personen (optional)</string>
     <string name="pc_waiting_none">Niemand steht auf der Warteliste.</string>
+    <string name="pc_no_match">Niemand passt zur Suche.</string>
     <string name="pc_continue">Weiter</string>
     <string name="pc_confirm_title">Neu auslosen?</string>
     <string name="pc_from_to">Von %1$d auf %2$d Spieler</string>
