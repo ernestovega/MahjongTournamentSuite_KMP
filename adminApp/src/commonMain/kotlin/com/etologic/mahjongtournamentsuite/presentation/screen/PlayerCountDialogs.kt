@@ -197,7 +197,7 @@ fun PlayerCountFlow(
                 tries = 0
                 scope.launch {
                     val removed = PlayerCountRules.removedSlots(tournament.isTeams, form.chosen, loaded.teams)
-                    when (val changed = presenter.change(tournament, form.target, removed, form.waiting) {
+                    when (val changed = presenter.change(tournament, loaded.slots, form.target, removed, form.waiting) {
                         tries = it.tried
                         backup = it.backup
                     }) {

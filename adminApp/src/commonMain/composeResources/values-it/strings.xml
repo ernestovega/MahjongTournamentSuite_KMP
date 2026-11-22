@@ -1087,12 +1087,12 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_removed_teams">Le squadre che se ne vanno, con i loro giocatori: %1$s.</string>
     <string name="pc_removed_registrations">Le loro iscrizioni.</string>
     <string name="pc_added_label">Si aggiunge:</string>
-    <string name="pc_added_slots">%1$d posti vuoti, da assegnare dopo.</string>
+    <string name="pc_added_slots">%1$d posti vuoti, numerati dopo il più alto, da assegnare dopo.</string>
     <string name="pc_added_teams">%1$d squadre nuove.</string>
     <string name="pc_added_waiting">Dalla lista d'attesa, che ora hanno un posto: %1$s.</string>
     <string name="pc_kept_label">Si mantiene:</string>
-    <string name="pc_kept_people">Gli altri giocatori, con il loro giocatore EMA, l'account e l'email.</string>
-    <string name="pc_kept_teams">Le altre squadre, con il loro nome e i loro giocatori.</string>
+    <string name="pc_kept_people">Gli altri giocatori, con il loro numero, il giocatore EMA, l'account e l'email.</string>
+    <string name="pc_kept_teams">Le altre squadre, con il loro numero, il nome e i giocatori.</string>
     <string name="pc_kept_rounds">I turni, i loro orari e i loro orologi.</string>
     <string name="pc_note">Ogni persona coinvolta riceve un'email.
 La modifica resta registrata nell'attività.</string>

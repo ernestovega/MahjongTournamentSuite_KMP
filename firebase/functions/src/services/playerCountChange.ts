@@ -18,11 +18,11 @@ import { getTournament, tournamentContentWrites, type ContentWrite, type Tournam
  * withdrawals take whole tables away, or late people add whole tables. The tables of every round are computed
  * again by the admin app, as at the creation, and the server writes them. See docs/player-count-change.md.
  *
- * - The people who stay keep their slot data (EMA player, name, country, pending email). Only the slot number,
- *   and in a team tournament the team number, change.
+ * - The people who stay keep their slot data (EMA player, name, country, pending email) and their slot number, and
+ *   in a team tournament their team and its number.
  * - Fewer players: the organizer says which slots leave, a multiple of 4. With teams, whole teams leave.
- * - More players: the new slots are empty ("Player N"), or take people of the waiting list of the registrations.
- *   With teams, every new team is a new empty team ("Team N").
+ * - More players: the new slots, numbered after the highest one, are empty ("Player N"), or take people of the
+ *   waiting list of the registrations. With teams, every new team is a new empty team ("Team N").
  */
 
 export type CurrentSlot = { id: number; team: number; emaId: string | null };
@@ -44,9 +44,12 @@ const byId = (left: { id: number }, right: { id: number }) => left.id - right.id
 
 /**
  * Checks the change and maps the current slots to the slots of the new draw. Pure, so a unit test covers every
- * rule. The people who stay take the lowest slot numbers in their order, so "Player 9" after a removal of slots 5 to
- * 8 becomes slot 5. With teams, the teams that stay take the lowest team numbers in their order, and their people
- * keep their order inside the team.
+ * rule.
+ *
+ * The people who stay keep their slot numbers, and with teams their team numbers (Ernesto, 22-nov), when the new draw
+ * has them: the admin app since web 1.0.351 draws on them, and the new slots and teams take the numbers after the
+ * highest ones. A draw of an older app, on 1..N, still works the old way: the people who stay take the lowest slot
+ * numbers in their order, and the teams that stay the lowest team numbers, with their people in order.
  */
 export function planPlayerCountChange(params: {
   current: CurrentSlot[];
@@ -87,7 +90,41 @@ export function planPlayerCountChange(params: {
   const fills = new Map<number, string>();
   let newSlots: number[];
 
-  if (!params.isTeams) {
+  const newIds = new Set(newPlayers.map((player) => player.id));
+  const newTeamOf = new Map(newPlayers.map((player) => [player.id, player.team]));
+  // The new draw keeps the numbers when every slot that stays is in it, with its team, and no new slot takes the number
+  // of a slot that leaves.
+  const keepsNumbers = kept.every((slot) => newIds.has(slot.id) && (!params.isTeams || newTeamOf.get(slot.id) === slot.team)) &&
+    removed.every((id) => !newIds.has(id));
+
+  if (keepsNumbers) {
+    const keptIds = new Set(kept.map((slot) => slot.id));
+    newSlots = [];
+    newPlayers.forEach((player) => {
+      sourceOf.set(player.id, keptIds.has(player.id) ? player.id : null);
+      if (!keptIds.has(player.id)) newSlots.push(player.id);
+    });
+    if (params.isTeams) {
+      const currentTeamIds = new Set(current.map((slot) => slot.team));
+      const keptTeamIds = new Set(kept.map((slot) => slot.team));
+      const newTeams = new Map<number, number[]>();
+      newPlayers.forEach((player) => newTeams.set(player.team, [...(newTeams.get(player.team) ?? []), player.id]));
+      for (const [team, ids] of newTeams) {
+        if (team <= 0 || ids.length !== 4) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
+        if (keptTeamIds.has(team)) {
+          if (ids.some((id) => !keptIds.has(id))) return { problem: `Team ${team} gets a slot it did not have`, code: "BAD_DRAW" };
+          teamSourceOf.set(team, team);
+        } else {
+          if (currentTeamIds.has(team)) return { problem: `Team ${team} left and cannot come back`, code: "BAD_DRAW" };
+          teamSourceOf.set(team, null);
+        }
+      }
+      const removedTeams = new Set(current.filter((slot) => removedSet.has(slot.id)).map((slot) => slot.team));
+      for (const team of removedTeams) {
+        if (keptTeamIds.has(team)) return { problem: `Team ${team} must leave whole`, code: "PARTIAL_TEAM" };
+      }
+    }
+  } else if (!params.isTeams) {
     newPlayers.forEach((player, index) => sourceOf.set(player.id, kept[index]?.id ?? null));
     newSlots = newPlayers.slice(kept.length).map((player) => player.id);
   } else {

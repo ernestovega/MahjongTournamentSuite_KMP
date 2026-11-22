@@ -1087,12 +1087,12 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_removed_teams">Die Teams, die gehen, mit ihren Spielern: %1$s.</string>
     <string name="pc_removed_registrations">Ihre Anmeldungen.</string>
     <string name="pc_added_label">Wird hinzugefügt:</string>
-    <string name="pc_added_slots">%1$d leere Plätze, die du danach zuweist.</string>
+    <string name="pc_added_slots">%1$d leere Plätze, nach der höchsten Nummer nummeriert, zum späteren Zuweisen.</string>
     <string name="pc_added_teams">%1$d neue Teams.</string>
     <string name="pc_added_waiting">Von der Warteliste, die jetzt einen Platz haben: %1$s.</string>
     <string name="pc_kept_label">Bleibt:</string>
-    <string name="pc_kept_people">Die übrigen Spieler, mit EMA-Spieler, Konto und E-Mail.</string>
-    <string name="pc_kept_teams">Die übrigen Teams, mit Namen und Spielern.</string>
+    <string name="pc_kept_people">Die übrigen Spieler, mit Nummer, EMA-Spieler, Konto und E-Mail.</string>
+    <string name="pc_kept_teams">Die übrigen Teams, mit Nummer, Namen und Spielern.</string>
     <string name="pc_kept_rounds">Die Runden, ihre Zeiten und ihre Uhren.</string>
     <string name="pc_note">Jede betroffene Person bekommt eine E-Mail.
 Die Änderung steht in der Aktivität.</string>

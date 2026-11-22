@@ -217,6 +217,94 @@ describe("change of the number of players with teams", () => {
   });
 });
 
+/** A valid one round draw on the slots [ids] (any numbers), as the admin app sends it since it keeps the numbers. */
+function drawOn(ids: number[], teamOf: (id: number) => number = () => 0) {
+  const sorted = [...ids].sort((a, b) => a - b);
+  const players = sorted.map((id) => ({ id, team: teamOf(id) }));
+  const teams = new Map<number, number[]>();
+  players.forEach((player) => teams.set(player.team, [...(teams.get(player.team) ?? []), player.id]));
+  const tablesPerRound = sorted.length / 4;
+  const byTeam = [...teams.entries()].sort((a, b) => a[0] - b[0]).map(([, members]) => members);
+  const tables = Array.from({ length: tablesPerRound }, (_, j) => ({
+    roundId: 1,
+    tableId: j + 1,
+    // With teams, member k of team (j + k) mod T; without, four numbers in a row.
+    playerIds: teamOf(sorted[0]) > 0 ? [0, 1, 2, 3].map((k) => byTeam[(j + k) % tablesPerRound][k]) : sorted.slice(j * 4, j * 4 + 4),
+  }));
+  return { players, tables };
+}
+
+describe("change of the number of players that keeps the numbers of the people who stay", () => {
+  before(requireEmulator);
+  const teamOf = (id: number) => Math.floor((id - 1) / 4) + 1;
+  const change = (id: string, draw: ReturnType<typeof drawOn>, removed: number[] = [], waiting: string[] = []) => changePlayerCount({
+    tournamentId: id, numTries: 3, players: draw.players, tables: draw.tables, removedSlotIds: removed, waitingEmaIds: waiting, uid: "u-admin",
+  });
+
+  it("removes slots from the middle: everybody who stays keeps their slot, and a later table comes after the highest", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(20);
+    await assign(ref, 9, `5${tag}9`, { email: "nine@example.com" });
+    await assign(ref, 6, `5${tag}6`);
+    await assign(ref, 20, `5${tag}0`);
+    const kept = Array.from({ length: 20 }, (_, index) => index + 1).filter((slot) => ![3, 6, 11, 14].includes(slot));
+
+    const sent: OutgoingEmail[] = [];
+    setMailTransportForTests(async (email) => { sent.push(email); });
+    try {
+      await change(id, drawOn(kept), [3, 6, 11, 14]);
+    } finally {
+      setMailTransportForTests(null);
+    }
+
+    const slots = await slotsOf(ref);
+    assert.deepEqual([...slots.keys()].sort((a, b) => a - b), kept);
+    assert.equal(slots.get(9)?.assignedEmaId, `5${tag}9`);
+    assert.equal(slots.get(9)?.email, "nine@example.com");
+    assert.equal(slots.get(20)?.assignedEmaId, `5${tag}0`);
+    assert.equal(slots.get(10)?.name, "Player 10");
+    const assignments = await ref.collection("emaPlayerAssignments").get();
+    assert.deepEqual(Object.fromEntries(assignments.docs.map((doc) => [doc.id, doc.get("playerId")])), { [`5${tag}9`]: 9, [`5${tag}0`]: 20 });
+    assert.equal((await ref.get()).get("numPlayers"), 16);
+    // The email says the number stays.
+    assert.match(sent.find((email) => email.to === "nine@example.com")?.text ?? "", /sigue siendo el 9\./);
+
+    // A table more: slots 21 to 24, not the gaps.
+    await change(id, drawOn([...kept, 21, 22, 23, 24]));
+    const more = await slotsOf(ref);
+    assert.deepEqual([...more.keys()].sort((a, b) => a - b), [...kept, 21, 22, 23, 24]);
+    assert.equal(more.get(9)?.assignedEmaId, `5${tag}9`);
+    assert.equal(more.get(21)?.name, "Player 21");
+    assert.equal((await ref.get()).get("numPlayers"), 20);
+  });
+
+  it("removes a whole team: the others keep their team numbers, names and slots", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(24, { isTeams: true });
+    await ref.collection("teams").doc("3").update({ name: "Tigers" });
+    await assign(ref, 10, `6${tag}0`);
+    const kept = Array.from({ length: 24 }, (_, index) => index + 1).filter((slot) => slot < 5 || slot > 8);
+
+    await change(id, drawOn(kept, teamOf), [5, 6, 7, 8]);
+
+    const teams = await ref.collection("teams").get();
+    assert.deepEqual(Object.fromEntries(teams.docs.map((doc) => [doc.id, doc.get("name")])), {
+      1: "Team 1", 3: "Tigers", 4: "Team 4", 5: "Team 5", 6: "Team 6",
+    });
+    const slots = await slotsOf(ref);
+    assert.equal(slots.get(10)?.assignedEmaId, `6${tag}0`);
+    assert.equal(slots.get(10)?.team, 3);
+    assert.deepEqual([...slots.keys()].sort((a, b) => a - b), kept);
+
+    // A new team after the highest: team 7 with slots 25 to 28.
+    await change(id, drawOn([...kept, 25, 26, 27, 28], teamOf));
+    assert.equal((await ref.collection("teams").doc("7").get()).get("name"), "Team 7");
+    assert.equal((await ref.collection("teams").doc("2").get()).exists, false);
+    const more = await slotsOf(ref);
+    assert.deepEqual([25, 26, 27, 28].map((slot) => more.get(slot)?.team), [7, 7, 7, 7]);
+  });
+});
+
 describe("change of the number of players of a tournament with registrations", () => {
   before(requireEmulator);
 

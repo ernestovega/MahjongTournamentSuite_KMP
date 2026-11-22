@@ -117,20 +117,25 @@ class PlayerCountPresenterTest {
         assertEquals(AppError.Network, assertIs<AppResult.Failure>(failed).error)
     }
 
+    private fun countSlots(count: Int, isTeams: Boolean = false) = slots(count, isTeams).map { PlayerCountSlot(it.id, it.name, null, it.team) }
+
     @Test
     fun sendsAValidDrawForTheNewNumberWithTheChoiceOfTheOrganizer() = runTest {
         val tournaments = FakeTournamentRepository().apply { writesSucceed = true }
         var progressCalls = 0
-        val result = presenter(tournaments).change(individual, 16, listOf(5, 6, 7, 8), emptyList()) { progressCalls++ }
+        val result = presenter(tournaments).change(individual, countSlots(20), 16, listOf(5, 6, 7, 8), emptyList()) { progressCalls++ }
         assertEquals(16, assertIs<AppResult.Success<PlayerCountOutcome>>(result).value.tournament.numPlayers)
         val request = tournaments.playerCountRequest!!
         assertEquals("t1", request.tournamentId)
-        assertEquals((1..16).toList(), request.players.map { it.id }.sorted())
+        // The people who stay keep their numbers: 9 is still 9, and 5 to 8 are a gap.
+        val staying = (1..4).toList() + (9..20)
+        assertEquals(staying, request.players.map { it.id }.sorted())
         assertEquals(listOf(5, 6, 7, 8), request.removedSlotIds)
         assertEquals(3 * 4, request.tables.size)
         assertTrue(request.numTries > 0)
         request.tables.groupBy { it.roundId }.values.forEach { round ->
-            assertEquals((1..16).toList(), round.flatMap { it.playerIds }.sorted(), "Every player plays once per round")
+            assertEquals(staying, round.flatMap { it.playerIds }.sorted(), "Every player plays once per round")
+            assertEquals((1..4).toList(), round.map { it.tableId }.sorted(), "Tables 1 to 4 in each round")
         }
         val pairs = request.tables.flatMap { table -> table.playerIds.flatMap { a -> table.playerIds.filter { it > a }.map { a to it } } }
         assertEquals(pairs.size, pairs.toSet().size, "Two players never meet twice")
@@ -140,13 +145,32 @@ class PlayerCountPresenterTest {
     fun aTeamTournamentGetsADrawWithTeamsOfFour() = runTest {
         val tournaments = FakeTournamentRepository().apply { writesSucceed = true }
         val tournament = individual.copy(isTeams = true, numPlayers = 16, numRounds = 2)
-        presenter(tournaments).change(tournament, 20, emptyList(), listOf("30000001")) {}
+        presenter(tournaments).change(tournament, countSlots(16, isTeams = true), 20, emptyList(), listOf("30000001")) {}
         val request = tournaments.playerCountRequest!!
         assertEquals(listOf("30000001"), request.waitingEmaIds)
         assertEquals(List(5) { 4 }, request.players.groupBy { it.team }.values.map { it.size })
+        // The teams that stay keep their slots; the new team 5 gets the slots 17 to 20.
+        (1..16).forEach { id -> assertEquals((id - 1) / 4 + 1, request.players.first { it.id == id }.team) }
+        assertEquals((17..20).toList(), request.players.filter { it.team == 5 }.map { it.id })
         request.tables.forEach { table ->
             val teams = table.playerIds.map { id -> request.players.first { it.id == id }.team }
             assertEquals(4, teams.toSet().size, "Two players of one team never share a table")
+        }
+    }
+
+    /** Whole teams 2 and 4 leave: teams 1, 3 and 5 keep their numbers and their four slots. */
+    @Test
+    fun teamsThatStayKeepTheirNumbersAndSlots() = runTest {
+        val tournaments = FakeTournamentRepository().apply { writesSucceed = true }
+        val tournament = individual.copy(isTeams = true, numPlayers = 24, numRounds = 3)
+        val removed = (5..8).toList() + (13..16)
+        presenter(tournaments).change(tournament, countSlots(24, isTeams = true), 16, removed, emptyList()) {}
+        val request = tournaments.playerCountRequest!!
+        val expected = (1..4) + (9..12) + (17..24)
+        assertEquals(expected.toList(), request.players.map { it.id }.sorted())
+        request.players.forEach { assertEquals((it.id - 1) / 4 + 1, it.team) }
+        request.tables.forEach { table ->
+            assertEquals(4, table.playerIds.map { id -> (id - 1) / 4 }.toSet().size, "Four teams at each table")
         }
     }
 
@@ -154,7 +178,7 @@ class PlayerCountPresenterTest {
     fun refusesAnInvalidNumberWithoutCallingTheServer() = runTest {
         val tournaments = FakeTournamentRepository().apply { writesSucceed = true }
         listOf(20, 18, 12).forEach { target ->
-            val result = presenter(tournaments).change(individual, target, emptyList(), emptyList()) {}
+            val result = presenter(tournaments).change(individual, countSlots(20), target, emptyList(), emptyList()) {}
             assertEquals(RegistrationErrorCode.BAD_PLAYER_COUNT, (assertIs<AppResult.Failure>(result).error as AppError.Registration).code)
         }
         assertNull(tournaments.playerCountRequest)
@@ -164,7 +188,7 @@ class PlayerCountPresenterTest {
     fun givesTheErrorOfTheServer() = runTest {
         val refused = AppError.Registration(RegistrationErrorCode.TOURNAMENT_STARTED)
         val tournaments = FakeTournamentRepository().apply { playerCountError = refused }
-        val result = presenter(tournaments).change(individual, 16, listOf(1, 2, 3, 4), emptyList()) {}
+        val result = presenter(tournaments).change(individual, countSlots(20), 16, listOf(1, 2, 3, 4), emptyList()) {}
         assertEquals(refused, assertIs<AppResult.Failure>(result).error)
     }
 }

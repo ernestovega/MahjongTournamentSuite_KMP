@@ -1101,12 +1101,12 @@
     <string name="pc_removed_teams">Уходящие команды с их игроками: %1$s.</string>
     <string name="pc_removed_registrations">Их регистрации.</string>
     <string name="pc_added_label">Добавляется:</string>
-    <string name="pc_added_slots">%1$d пустых мест, которые назначишь потом.</string>
+    <string name="pc_added_slots">%1$d пустых мест с номерами после самого большого, чтобы назначить позже.</string>
     <string name="pc_added_teams">%1$d новых команд.</string>
     <string name="pc_added_waiting">Из листа ожидания, получают место: %1$s.</string>
     <string name="pc_kept_label">Сохраняется:</string>
-    <string name="pc_kept_people">Остальные игроки с их игроком EMA, аккаунтом и почтой.</string>
-    <string name="pc_kept_teams">Остальные команды с их названием и игроками.</string>
+    <string name="pc_kept_people">Остальные игроки с их номером, игроком EMA, аккаунтом и почтой.</string>
+    <string name="pc_kept_teams">Остальные команды с их номером, названием и игроками.</string>
     <string name="pc_kept_rounds">Раунды, их расписание и часы.</string>
     <string name="pc_note">Каждый, кого это касается, получит письмо.
 Изменение записывается в журнал действий.</string>

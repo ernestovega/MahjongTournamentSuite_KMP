@@ -22,7 +22,7 @@ function code(result: PlayerCountPlan | PlanProblem): string | null {
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => from + index);
 
-describe("plan of a change of the number of players", () => {
+describe("plan of a change of the number of players, from a draw of an older app on 1..N", () => {
   it("removes a table: the people who stay take the lowest slots in their order", () => {
     const result = plan(planPlayerCountChange({
       current: slots(20), isTeams: false, newPlayers: newPlayers(16), removedSlotIds: [5, 6, 7, 8], waitingEmaIds: [],
@@ -121,7 +121,7 @@ describe("plan of a change of the number of players", () => {
   });
 });
 
-describe("plan of a change of the number of players with teams", () => {
+describe("plan of a change of the number of players with teams, from a draw of an older app on 1..N", () => {
   it("removes a whole team: the teams that stay take the lowest numbers, the people keep their order", () => {
     const result = plan(planPlayerCountChange({
       current: slots(20, true), isTeams: true, newPlayers: newPlayers(16, true), removedSlotIds: [5, 6, 7, 8], waitingEmaIds: [],
@@ -166,6 +166,56 @@ describe("plan of a change of the number of players with teams", () => {
     assert.equal(code(planPlayerCountChange({ current: slots(16, true), isTeams: true, newPlayers: players, removedSlotIds: [], waitingEmaIds: [] })), "BAD_DRAW");
     const noTeam = newPlayers(20, false);
     assert.equal(code(planPlayerCountChange({ current: slots(16, true), isTeams: true, newPlayers: noTeam, removedSlotIds: [], waitingEmaIds: [] })), "BAD_DRAW");
+  });
+});
+
+describe("plan of a change that keeps the numbers of the people who stay", () => {
+  const players = (ids: number[], teamOf: (id: number) => number = () => 0) => ids.map((id) => ({ id, team: teamOf(id) }));
+  const teamOf = (id: number) => Math.floor((id - 1) / 4) + 1;
+
+  it("removes slots: everybody who stays keeps their number", () => {
+    const kept = range(1, 20).filter((id) => ![2, 7, 13, 19].includes(id));
+    const result = plan(planPlayerCountChange({ current: slots(20), isTeams: false, newPlayers: players(kept), removedSlotIds: [19, 2, 13, 7], waitingEmaIds: [] }));
+    assert.deepEqual([...result.sourceOf.entries()], kept.map((id) => [id, id]));
+    assert.deepEqual(result.removedSlotIds, [2, 7, 13, 19]);
+  });
+
+  it("adds a table after a gap: the new slots take the numbers after the highest one", () => {
+    const current = slots(20).filter((slot) => ![5, 6, 7, 8].includes(slot.id));
+    const ids = [...current.map((slot) => slot.id), 21, 22, 23, 24];
+    const result = plan(planPlayerCountChange({ current, isTeams: false, newPlayers: players(ids), removedSlotIds: [], waitingEmaIds: ["W1"] }));
+    assert.deepEqual([21, 22, 23, 24].map((id) => result.sourceOf.get(id)), [null, null, null, null]);
+    assert.equal(result.sourceOf.get(9), 9);
+    assert.deepEqual([...result.fills.entries()], [[21, "W1"]]);
+  });
+
+  it("never gives a new person the number of someone who left", () => {
+    // 16 of 20 stay, but the draw puts slot 5, which leaves, instead of 9: it is the old way, people move down.
+    const ids = range(1, 20).filter((id) => ![9, 10, 11, 12].includes(id));
+    const result = plan(planPlayerCountChange({ current: slots(20), isTeams: false, newPlayers: players(ids.slice(0, 16)), removedSlotIds: [5, 6, 7, 8], waitingEmaIds: [] }));
+    assert.equal(result.sourceOf.get(5), 9, "a draw that reuses a number that left is read the old way");
+  });
+
+  it("removes whole teams: the teams that stay keep their numbers and their four slots", () => {
+    const kept = range(1, 24).filter((id) => ![5, 6, 7, 8, 17, 18, 19, 20].includes(id));
+    const result = plan(planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: [...range(5, 8), ...range(17, 20)], waitingEmaIds: [] }));
+    assert.deepEqual([...result.teamSourceOf.entries()].sort((a, b) => a[0] - b[0]), [[1, 1], [3, 3], [4, 4], [6, 6]]);
+    kept.forEach((id) => assert.equal(result.sourceOf.get(id), id));
+  });
+
+  it("adds a team after the highest team number", () => {
+    const current = slots(24, true).filter((slot) => slot.team !== 2);
+    const ids = [...current.map((slot) => slot.id), 25, 26, 27, 28];
+    const result = plan(planPlayerCountChange({ current, isTeams: true, newPlayers: players(ids, teamOf), removedSlotIds: [], waitingEmaIds: [] }));
+    assert.equal(result.teamSourceOf.get(7), null);
+    assert.equal(result.teamSourceOf.get(6), 6);
+    assert.equal(result.teamSourceOf.has(2), false);
+  });
+
+  it("refuses a team that stays with a slot that is not its own", () => {
+    const current = slots(16, true);
+    const wrong = [...range(1, 16), 17, 18, 19, 20].map((id) => ({ id, team: id === 17 ? 1 : teamOf(id) }));
+    assert.equal(code(planPlayerCountChange({ current, isTeams: true, newPlayers: wrong, removedSlotIds: [], waitingEmaIds: [] })), "BAD_DRAW");
   });
 });
 

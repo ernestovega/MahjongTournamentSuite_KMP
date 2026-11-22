@@ -79,3 +79,29 @@ fun firstDrawLimit(tables: Int, rounds: Int): Duration =
 /** Time for the second way: 30 s, plus 0.5 s for each table of each round, up to 5 min. */
 fun secondDrawLimit(tables: Int, rounds: Int): Duration =
     (30.seconds + (500.0 * tables * rounds).roundToLong().milliseconds).coerceAtMost(300.seconds)
+
+/**
+ * The same draw on other slot numbers: both ways draw slots 1..N (with teams, 1-4 in team 1, 5-8 in team 2…), and the
+ * change of the number of players keeps the numbers of the people who stay (docs/player-count-change.md). Without
+ * history every renaming keeps the rules, so slot i of the draw becomes the i-th of [slots] in order; with teams, the
+ * k-th team of the draw becomes the k-th team of [slots], and its 4 players in order. Returns null when [slots] do not
+ * fit the draw: another count, a repeated number, or with teams a team without exactly 4 slots.
+ */
+fun TournamentScheduleCalcResult.onSlots(slots: List<TournamentPlayer>, isTeams: Boolean): TournamentScheduleCalcResult? {
+    if (slots.size != players.size || slots.map { it.id }.toSet().size != slots.size) return null
+    val mapping = HashMap<Int, Int>(slots.size)
+    if (!isTeams) {
+        val from = players.map { it.id }.sorted()
+        val to = slots.map { it.id }.sorted()
+        from.zip(to).forEach { (a, b) -> mapping[a] = b }
+    } else {
+        val fromTeams = players.groupBy { it.team }.entries.sortedBy { it.key }.map { (_, team) -> team.map { it.id }.sorted() }
+        val toTeams = slots.groupBy { it.team }.entries.sortedBy { it.key }.map { (_, team) -> team.map { it.id }.sorted() }
+        if (fromTeams.size != toTeams.size || toTeams.any { it.size != 4 } || fromTeams.any { it.size != 4 }) return null
+        fromTeams.zip(toTeams).forEach { (a, b) -> a.zip(b).forEach { (x, y) -> mapping[x] = y } }
+    }
+    return copy(
+        players = slots.sortedBy { it.id }.map { TournamentPlayer(id = it.id, name = "Player ${it.id}", team = if (isTeams) it.team else 0) },
+        tables = tables.map { table -> table.copy(playerIds = table.playerIds.map { mapping.getValue(it) }) },
+    )
+}

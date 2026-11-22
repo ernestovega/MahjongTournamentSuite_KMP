@@ -206,8 +206,10 @@ function checkPlayers(c: Collector, input: IntegrityInput, numPlayers: number): 
     if (Number(id) !== numeric) c.add("error", "players.id", `The slot document id ${id} differs from its id field ${text(data.id)}.`, where);
     if (ids.has(numeric)) c.add("error", "players.duplicateId", "Two slots have the same id.", where);
     ids.add(numeric);
-    if (Number.isInteger(numPlayers) && (numeric < 1 || numeric > numPlayers)) {
-      c.add("warning", "players.idRange", `The slot id ${numeric} is outside 1 to ${numPlayers}.`, where);
+    // A change of the number of players keeps the numbers of the people who stay, so the numbers can have gaps and go
+    // past numPlayers (docs/player-count-change.md). Only a number under 1 is wrong.
+    if (!Number.isInteger(numeric) || numeric < 1) {
+      c.add("warning", "players.idRange", `The slot id ${numeric} is not a number from 1.`, where);
     }
     const ema = text(data.assignedEmaId);
     if (ema === "") {
