@@ -111,8 +111,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     }
 
     /** The next time the app opens the file picker, the person picks this file. */
-    private fun pickNext(name: String) {
-        val uri = planFile(name)
+    private fun pickNext(name: String) = pickNext(planFile(name))
+
+    private fun pickNext(uri: Uri) {
         intending(hasAction(Intent.ACTION_OPEN_DOCUMENT))
             .respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, Intent().setData(uri)))
     }
@@ -213,6 +214,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         signOut()
         signInToTheAdmin(accountEmail("botclub"))
         createTheRegistrationTournament()
+        changeTheLinkName()
         importTheGoogleForm()
         addAPersonByHand(byHand.getString("added"))
         signOut()
@@ -220,8 +222,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         signOutOfThePlayerApp()
         signInToTheAdmin(accountEmail("botclub"))
         c.openTournament(byHand.getString("name"))
-        c.waitForText("Registration settings", timeoutMs = 60_000)
+        c.waitForText("Export CSV", timeoutMs = 60_000)
         removeAndGiveThePlace(byHand.getString("removed"), byHand.getString("added"))
+        exportAndImportAgain()
         closeAndMakeTheDraw()
         signOut()
         signInToTheAdmin(email)
@@ -338,7 +341,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun importTheGoogleForm() {
         val count = byHand.getJSONArray("form").length()
         pickNext("registrations-form.csv")
-        c.clickButton("Import Google Form")
+        c.clickButton("Import")
         c.waitForText("Import the Google Form", timeoutMs = 30_000)
         c.clickButton("Choose the file")
         c.waitForText("$count of $count rows can be imported.", timeoutMs = 60_000)
@@ -435,24 +438,29 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickButton("Back")
     }
 
-    /** The counts at the top of the registrations ("16 with a place of 16 · 1 on the waiting list"), for the log. */
-    private fun counts(): String = c.onAllNodes(hasText("with a place of", substring = true)).fetchSemanticsNodes()
-        .joinToString(" | ") { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text } ?: "" }
+    /** The text of a node of the registrations by its test tag, or "" while it is not on the screen. */
+    private fun textOf(tag: String): String = c.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes()
+        .joinToString(" ") { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text } ?: "" }
         .replace("\n", " ")
 
-    /** Waits for the counts at the top: the headers of the lazy list can be scrolled out of the screen. */
+    /** The counts of the tile of the places ("16 / 16", "1 on the waiting list · 0 to confirm"), for the log. */
+    private fun counts(): String = "${textOf("registrations-places-value")} | ${textOf("registrations-waiting-value")}"
+
+    /** Waits for the counts of the tile of the places, at the top of the list: it scrolls there first. */
     private fun waitForCounts(withAPlace: Int, waiting: Int) {
-        val text = "$withAPlace with a place of ${byHand.getInt("places")}"
+        val places = "$withAPlace / ${byHand.getInt("places")}"
         c.waitUntil(60_000) {
-            val now = counts()
-            now.contains(text) && now.contains("$waiting on the waiting list")
+            if (c.onAllNodes(hasTestTag("registrations-places-value"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()) {
+                runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("registrations-places-value")) }
+            }
+            textOf("registrations-places-value") == places && textOf("registrations-waiting-value").startsWith("$waiting on the waiting list")
         }
     }
 
     /** A person with a place leaves: the club admin removes it, and gives the place to the first of the waiting list. */
     private fun removeAndGiveThePlace(removed: String, added: String) {
         val count = byHand.getJSONArray("form").length()
-        c.waitUntil(60_000) { counts().contains("with a place of") }
+        c.waitUntil(60_000) { textOf("registrations-places-value").isNotEmpty() }
         log("the club admin opens the registrations again: ${counts()}")
         waitForCounts(count, 1)
         cardMenu(removed, "Remove")
@@ -464,12 +472,86 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         log("a person removed, and the place given to the waiting list: ${counts()}")
     }
 
+    /**
+     * The settings change on the screen: Change of the public link turns it into its field, and Save keeps the new
+     * name. The link of the tile ends with it.
+     */
+    private fun changeTheLinkName() {
+        val slug = byHand.getString("slug")
+        showSetting("registrations-edit-link")
+        c.onNode(hasTestTag("registrations-edit-link")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        c.waitUntil(10_000) { c.onAllNodes(hasTestTag("registrations-slug-field")).fetchSemanticsNodes().isNotEmpty() }
+        c.onNode(hasTestTag("registrations-slug-field")).performTextReplacement(slug)
+        c.onNode(hasTestTag("registrations-save-setting")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        c.waitUntil(60_000) { textOf("registrations-link-value").endsWith("/$slug") }
+        log("the public link changed on the screen: ${textOf("registrations-link-value").substringAfterLast('/')}")
+    }
+
+    /** The settings are the first items of the lazy list: it scrolls back to them. */
+    private fun showSetting(tag: String) {
+        c.waitUntil(30_000) {
+            if (c.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty()) {
+                runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag(tag)) }
+            }
+            c.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /**
+     * Export CSV saves the registrations in Downloads; the file goes back in the import as it is. Everybody is already
+     * registered, so the preview imports nobody, and the organizer cancels.
+     */
+    private fun exportAndImportAgain() {
+        // Downloads of MediaStore: Android 10 and later (the emulator of the game day is Android 14).
+        check(android.os.Build.VERSION.SDK_INT >= 29) { "Export CSV needs Android 10 or later on the tablet" }
+        val count = byHand.getJSONArray("form").length()
+        val fileName = "registrations-${byHand.getString("shortName").lowercase()}"
+        val before = exportedFiles(fileName).map { it.first }.toSet()
+        c.clickButton("Export CSV")
+        c.waitUntil(30_000) { exportedFiles(fileName).any { it.first !in before } }
+        val uri = exportedFiles(fileName).first { it.first !in before }.second
+        val text = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
+            .openInputStream(uri)!!.use { it.readBytes().toString(Charsets.UTF_8) }
+        val lines = text.removePrefix("\uFEFF").trimEnd().split("\r\n")
+        check(lines.first().startsWith("Timestamp,Email,First name,Last name,EMA number")) { "The header of the export is ${lines.first()}" }
+        val emaIds = lines.drop(1).map { it.split(",")[4] }
+        check(emaIds.size == count) { "The export has ${emaIds.size} rows, not $count" }
+        check(byHand.getString("added") in emaIds && byHand.getString("removed") !in emaIds) { "The export does not have the places of now" }
+        check(lines.drop(1).all { ",With a place," in it }) { "The export has people without a place" }
+        log("Export CSV: ${emaIds.size} people with a place in Downloads")
+        pickNext(uri)
+        c.clickButton("Import")
+        c.waitForText("Import the Google Form", timeoutMs = 30_000)
+        c.clickButton("Choose the file")
+        c.waitForText("0 of $count rows can be imported.", timeoutMs = 60_000)
+        c.waitForText("The person is already registered.", timeoutMs = 10_000)
+        check(!c.isOnScreen("Import $count")) { "The import offers to import the people again" }
+        c.clickLastButton("Cancel")
+        c.waitForNoText("Import the Google Form", timeoutMs = 10_000)
+        log("the exported file goes back in the import: 0 of $count rows, everybody is already registered")
+    }
+
+    /** The files of Downloads that the app saved with this name ("registrations-x.csv", "registrations-x (1).csv"). */
+    @androidx.annotation.RequiresApi(29)
+    private fun exportedFiles(fileName: String): List<Pair<Long, Uri>> {
+        val resolver = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
+        val collection = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        val columns = arrayOf(android.provider.MediaStore.MediaColumns._ID)
+        return resolver.query(collection, columns, "${android.provider.MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?", arrayOf("$fileName%"), null)
+            ?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getLong(0)
+                        add(id to android.content.ContentUris.withAppendedId(collection, id))
+                    }
+                }
+            }.orEmpty()
+    }
+
     private fun closeAndMakeTheDraw() {
-        c.clickButton("Registration settings")
-        c.waitForText("Name of the public link", timeoutMs = 30_000)
-        setSwitch("Registrations open", false)
-        c.clickLastButton("Save")
-        c.waitForText("Registrations closed", timeoutMs = 60_000)
+        showSetting("registrations-toggle-status")
+        c.onNode(hasTestTag("registrations-toggle-status")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        c.waitUntil(60_000) { textOf("registrations-status-value") == "Registrations closed" }
         c.clickLastButton("Make the draw")
         c.waitForText("Make the draw?", timeoutMs = 30_000)
         c.clickLastButton("Make the draw")

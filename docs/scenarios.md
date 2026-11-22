@@ -235,12 +235,20 @@ of the scenario, in the phase setup of `ScenarioOrganizerTest`):
   Admin of "Game day club".
 - The club admin signs in and creates a tournament with Open registrations: 16 places, 3 rounds, its club as main
   organizer (the form puts it) and "Game day co-club" as co-organizer. The tournament opens on its registrations.
-- Import Google Form with `registrations-form.csv` (the first 16 people of the plan): 16 with a place. Add a person
+- The settings change on the screen: Change of the public link, the name of the plan (`plan.byHand.slug`), Save, and
+  the link of the tile ends with it.
+- Import with `registrations-form.csv` (the first 16 people of the plan): 16 with a place. Add a person
   (the 17th) from the EMA registry: the waiting list.
 - A player (`+mts-cal01`) signs in to the player app, opens the tournament, registers (number 2 of the waiting list)
   and cancels in My registration.
-- The club admin removes the first person, gives the place to the person of the waiting list, closes the
-  registrations in Registration settings and makes the draw: the tournament opens on its players.
+- The club admin removes the first person and gives the place to the person of the waiting list.
+- Export CSV saves `registrations-<short name>.csv` in Downloads: the header of the import and the 16 people with a
+  place (the 17th in, the first one out). The same file goes back in Import: the preview says "0 of 16 rows can be
+  imported." and "The person is already registered.", without an Import button, and the club admin cancels.
+- Close registrations (the button of the status tile) and Make the draw: the tournament opens on its players.
+
+The tablet signs in as Club Admin and bot admin, who can change the settings. That an Editor sees them without
+Change, Close and Make the draw is checked by the screenshots (`registrationsEditor` in AdminScreensScreenshotTest).
 
 A step that fails stops the organizer, as any other step of the tablet.
 

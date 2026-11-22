@@ -288,11 +288,13 @@ export async function makePlan(args) {
   // Corners only: before the tournament, the tablet runs a tournament with registrations by hand, in the screens of the
   // apps (docs/scenarios.md). The club admin creates it with a co-organizer and imports the Google Form of 16 people,
   // adds a 17th by hand, a player registers and cancels in the player app, and the club admin removes a person, gives
-  // the place to the waiting list, closes and makes the draw.
+  // the place to the waiting list, closes and makes the draw. The settings change on the screen (the name of the public
+  // link becomes [slug]) and Export CSV goes back in the import (nobody new: everybody is already registered).
   if (size.byHand) {
     plan.byHand = {
       name: `${plan.name} registrations`,
       shortName: `GDR${stamp.date.slice(8)}`,
+      slug: `${tag}-reg`,
       places: 16,
       rounds: 3,
       form: slots.slice(0, 16).map((slot) => slot.emaId),

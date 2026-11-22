@@ -692,6 +692,7 @@ private fun RegistrationSettingsPanel(
                         stringResource(if (settings.isOpen) Res.string.reg_state_open else Res.string.reg_state_closed),
                         style = MaterialTheme.typography.titleMedium,
                         color = color,
+                        modifier = Modifier.testTag("registrations-status-value"),
                     )
                 }
                 if (!compact && canConfigure) {
@@ -710,6 +711,7 @@ private fun RegistrationSettingsPanel(
                 busy = busy,
                 canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.PLACES) },
+                editTag = "registrations-edit-places",
                 editor = {
                     var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
                     OutlinedTextField(
@@ -725,6 +727,7 @@ private fun RegistrationSettingsPanel(
                 Text(
                     stringResource(Res.string.reg_places_value, settings.confirmed, settings.maxPlayers?.toString() ?: stringResource(Res.string.reg_no_limit)),
                     style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.testTag("registrations-places-value"),
                 )
                 settings.maxPlayers?.takeIf { it > 0 }?.let { max ->
                     LinearProgressIndicator(
@@ -736,6 +739,7 @@ private fun RegistrationSettingsPanel(
                     stringResource(Res.string.reg_waiting_and_pending, settings.waiting, pending),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("registrations-waiting-value"),
                 )
             }
         }
@@ -747,6 +751,7 @@ private fun RegistrationSettingsPanel(
                 busy = busy,
                 canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.CLOSES_ON) },
+                editTag = "registrations-edit-closes",
                 editor = {
                     var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
                     DateField(
@@ -774,6 +779,7 @@ private fun RegistrationSettingsPanel(
                 busy = busy,
                 canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.LINK) },
+                editTag = "registrations-edit-link",
                 extraAction = {
                     LabeledIconButton(
                         text = stringResource(Res.string.reg_copy),
@@ -803,6 +809,7 @@ private fun RegistrationSettingsPanel(
                             color = MaterialTheme.colorScheme.primary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.testTag("registrations-link-value"),
                         )
                     }
                 }
@@ -868,6 +875,8 @@ private fun EditableSettingTile(
     busy: Boolean,
     canEdit: Boolean,
     onEdit: () -> Unit,
+    /** The test tag of Change: the tiles have the same text on it. */
+    editTag: String,
     editor: @Composable () -> Unit,
     extraAction: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -881,7 +890,15 @@ private fun EditableSettingTile(
             {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     extraAction?.invoke()
-                    if (canEdit) LabeledIconButton(text = stringResource(Res.string.reg_edit), icon = Icons.Default.Edit, enabled = !busy, onClick = onEdit)
+                    if (canEdit) {
+                        LabeledIconButton(
+                            text = stringResource(Res.string.reg_edit),
+                            icon = Icons.Default.Edit,
+                            enabled = !busy,
+                            onClick = onEdit,
+                            modifier = Modifier.testTag(editTag),
+                        )
+                    }
                 }
             }
         },
@@ -901,7 +918,7 @@ private fun EditorButtons(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled:
             Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
         }
-        FocusedButton(onClick = onSave, enabled = saveEnabled) {
+        FocusedButton(onClick = onSave, enabled = saveEnabled, modifier = Modifier.testTag("registrations-save-setting")) {
             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
         }

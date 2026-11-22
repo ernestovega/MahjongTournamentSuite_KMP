@@ -204,6 +204,7 @@ test("corners plans the registrations by hand: 16 people in the Google Form, a 1
   assert.deepEqual(plan.byHand.form, plan.slots.slice(0, 16).map((slot) => slot.emaId));
   assert.equal(plan.byHand.added, plan.slots[16].emaId);
   assert.equal(plan.byHand.removed, plan.slots[0].emaId);
+  assert.match(plan.byHand.slug, /^[a-z0-9-]{1,40}$/);
   const rows = files["registrations-form.csv"].trim().split("\n");
   assert.equal(rows.length, 17);
   assert.ok(rows[0].includes("EMA number"));
