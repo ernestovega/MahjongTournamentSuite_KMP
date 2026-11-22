@@ -6235,7 +6235,7 @@
      "Inscripciones"
     ],
     "summary": "Torneo de un enlace público",
-    "description": "🌐 Público: sin cuenta.\n\nEl enlace `/inscripcion/<slug>` abre este torneo.",
+    "description": "🌐 Público: sin cuenta.\n\nEl enlace corto `/<slug>` (y el antiguo `/inscripcion/<slug>`) abre este torneo.",
     "security": [],
     "responses": {
      "200": {

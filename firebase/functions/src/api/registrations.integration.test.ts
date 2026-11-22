@@ -35,7 +35,7 @@ async function newEma(firstName = "Ana", country = "ES"): Promise<string> {
 }
 
 const tokenOf = (link: string) => new URL(link.match(/https?:\/\/\S+/)?.[0] ?? link).searchParams.get("k") ?? "";
-const linkIn = (email: OutgoingEmail) => email.text.match(/https?:\/\/\S+inscripcion\/gestionar\S+/)?.[0] ?? "";
+const linkIn = (email: OutgoingEmail) => email.text.match(/https?:\/\/\S+\/registration\?\S+/)?.[0] ?? "";
 
 describe("registrations", () => {
   let server: TestServer;
@@ -138,10 +138,25 @@ describe("registrations", () => {
     assert.equal(first.status, 200, JSON.stringify(first.body));
     const second = await create();
     assert.equal(second.status, 200, JSON.stringify(second.body));
-    const base = `${shortName.toLowerCase()}-2027`;
+    const third = await create();
+    assert.equal(third.status, 200, JSON.stringify(third.body));
+    // The shortest link first (the short name without spaces), then with the year, then with a number.
+    const base = shortName.toLowerCase();
     const slugOf = async (id: string) => ((await server.request("GET", `/public/tournaments/${id}`)).body as { registration: Settings }).registration.slug;
     assert.equal(await slugOf((first.body as { id: string }).id), base);
-    assert.equal(await slugOf((second.body as { id: string }).id), `${base}-2`);
+    assert.equal(await slugOf((second.body as { id: string }).id), `${base}2027`);
+    assert.equal(await slugOf((third.body as { id: string }).id), `${base}-2`);
+    // The public link is the short one, at the root of the site.
+    const list = await server.request("GET", `/tournaments/${(first.body as { id: string }).id}/registrations`, { token: admin.token });
+    assert.match((list.body as { publicLink: string }).publicLink, new RegExp(`^https?://[^/]+/${base}$`));
+  });
+
+  it("refuses a link name that the site uses for its own pages", async () => {
+    const id = await createTournament();
+    for (const slug of ["admin", "api-docs", "green-book", "inscripcion"]) {
+      const response = await server.request("PUT", `/tournaments/${id}/registration-settings`, { token: admin.token, body: { status: "OPEN", slug } });
+      assert.equal(response.status, 409, slug);
+    }
   });
 
   it("refuses a link name that another tournament uses", async () => {

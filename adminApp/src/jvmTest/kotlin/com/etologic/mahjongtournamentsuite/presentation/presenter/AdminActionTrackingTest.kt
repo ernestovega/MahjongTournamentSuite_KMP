@@ -52,7 +52,7 @@ import kotlin.test.assertEquals
  * These tests run each write twice, once with a repository that works and once with one that fails.
  */
 class AdminActionTrackingTest {
-    private class World(works: Boolean) {
+    private class World(val works: Boolean) {
         val telemetry = RecordingTelemetry()
         val tournaments = FakeTournamentRepository().apply {
             writesSucceed = works
@@ -198,6 +198,9 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.REGISTRATION_REMOVED) { it.registrationsPresenter.remove("t1", "1234", notify = false) },
         Case(TelemetryAction.REGISTRATION_SETTINGS_UPDATED) { it.registrationsPresenter.saveSettings("t1", RegistrationSettings()) },
         Case(TelemetryAction.REGISTRATIONS_IMPORTED) { it.registrationsPresenter.applyImport("t1", "form.csv", ByteArray(1)) },
+        Case(TelemetryAction.REGISTRATIONS_EXPORTED) {
+            it.registrationsPresenter.exportCsv("Open", RegistrationFakes.CONFIRMED, emptyList()) { _, _ -> if (!it.works) error("Disk full") }
+        },
         Case(TelemetryAction.DRAW_MADE) { it.registrationsPresenter.makeDraw(RegistrationFakes.DRAW_TOURNAMENT, RegistrationFakes.CONFIRMED) {} },
         Case(TelemetryAction.PLAYER_COUNT_CHANGED) {
             it.playerCountPresenter.change(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 16, numRounds = 1), 20, emptyList(), emptyList()) {}

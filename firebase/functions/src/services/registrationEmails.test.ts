@@ -17,7 +17,7 @@ import {
 } from "./registrationEmails";
 
 describe("registration emails", () => {
-  const link = "https://mts.example/inscripcion/gestionar?t=t1&k=abc";
+  const link = "https://mts.example/registration?t=t1&k=abc";
   it("has every email in the eight languages, with the tournament and the link", () => {
     for (const language of LANGUAGES) {
       const emails = [

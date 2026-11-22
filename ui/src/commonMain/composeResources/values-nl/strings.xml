@@ -608,7 +608,7 @@
     <string name="registration_error_closed">De inschrijving voor dit toernooi is gesloten.</string>
     <string name="registration_error_not_found">De inschrijving is niet gevonden.\nMisschien is ze geannuleerd.</string>
     <string name="registration_error_open">Sluit de inschrijving vóór de loting.</string>
-    <string name="registration_error_slug_taken">Een ander toernooi gebruikt deze linknaam.\nKies een andere.</string>
+    <string name="registration_error_slug_taken">Deze linknaam is al in gebruik.\nKies een andere.</string>
     <string name="registration_error_team_full">Het team heeft al 4 personen.</string>
     <string name="registration_error_team_name_taken">Een ander team heeft deze naam.</string>
     <string name="registration_error_too_many_rows">Het bestand is te groot: hoogstens 500 rijen.</string>
@@ -621,4 +621,32 @@
     <string name="registration_error_same_player_count">Het toernooi heeft al dat aantal spelers.</string>
     <string name="registration_error_tournament_completed">Het toernooi is afgelopen.</string>
     <string name="registration_error_tournament_started">Het toernooi heeft al gegevens aan zijn tafels. De loting kan niet meer wijzigen.</string>
+    <string name="draw_help_button">Hoe werkt de loting?</string>
+    <string name="draw_help_title">Zo werkt de loting</string>
+    <string name="draw_help_intro">De tafels van alle rondes worden in één keer geloot, voordat het toernooi begint. Zo werkt het:</string>
+    <string name="draw_help_how_title">Hoe het werkt</string>
+    <string name="draw_help_how">• De app vult de tafels stoel voor stoel, ronde na ronde.\n• Voor elke stoel trekt ze willekeurig een speler die in die ronde nog geen tafel heeft.\n• Heeft die speler al tegen iemand aan de tafel gespeeld, of zit hij in hetzelfde team, dan probeert ze een ander.\n• Past er op een gegeven moment niemand, dan begint ze opnieuw vanaf het begin.\n• Ze probeert veel verdelingen tegelijk en houdt de eerste die lukt. Zwaar rekenwerk probeert er nog meer tegelijk, zodat grote toernooien sneller klaar zijn.</string>
+    <string name="draw_help_rules_title">Wat het garandeert</string>
+    <string name="draw_help_rules">• Niemand speelt in het hele toernooi twee keer tegen dezelfde persoon.\n• In een teamtoernooi zitten twee spelers van hetzelfde team nooit aan dezelfde tafel.\n• Ook de volgorde van de stoelen aan elke tafel is willekeurig.</string>
+    <string name="draw_help_random_title">100% willekeurig</string>
+    <string name="draw_help_random">• De tafels worden echt geloot. Er zitten geen formules, vaste tabellen of koppelsystemen achter.\n• Ranglijst, niveau of land van wie dan ook tellen niet mee. Alle tafels liggen vast voordat de eerste hand gespeeld wordt.\n• Elke vrije speler heeft evenveel kans op elke stoel, dus er herhalen zich geen patronen van toernooi tot toernooi.\n• Elk toernooi krijgt zijn eigen loting, en niemand kan vooraf weten hoe die uitvalt.\n• Tip: de loting werkt met spelersnummers (1, 2, 3…). Koppel de namen aan die nummers zonder eerst naar de tafels te kijken, bijvoorbeeld in volgorde van inschrijving. Zo kan niemand kiezen tegen wie hij speelt.</string>
+    <string name="draw_flow_description">Stroomdiagram van de loting</string>
+    <string name="draw_flow_start">Spelers, rondes en teams</string>
+    <string name="draw_flow_seed">Schudden</string>
+    <string name="draw_flow_attempt">Nieuwe verdeling</string>
+    <string name="draw_flow_parallel">Meerdere verdelingen tegelijk
+De eerste die lukt, wint</string>
+    <string name="draw_flow_next_seat">Volgende vrije stoel</string>
+    <string name="draw_flow_next_seat_note">Ronde, tafel en stoel</string>
+    <string name="draw_flow_pick">Willekeurige speler zonder tafel in deze ronde</string>
+    <string name="draw_flow_check">Herhaalde tegenstander of teamgenoot?</string>
+    <string name="draw_flow_seat">Gaat zitten</string>
+    <string name="draw_flow_more_seats">Nog stoelen vrij?</string>
+    <string name="draw_flow_done">Partijen klaar</string>
+    <string name="draw_flow_discard">Een ander proberen</string>
+    <string name="draw_flow_candidates">Nog anderen?</string>
+    <string name="draw_flow_failed">Verdeling mislukt</string>
+    <string name="draw_flow_yes">Ja</string>
+    <string name="draw_flow_no">Nee</string>
+    <string name="close">Sluiten</string>
 </resources>

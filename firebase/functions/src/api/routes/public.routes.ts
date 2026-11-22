@@ -136,7 +136,7 @@ export function publicRouter(): Router {
     res.status(200).json(await publicRegistrations(pathParam(req, "tournamentId")));
   }));
 
-  // The public link of the registrations, /inscripcion/<slug>, opens this tournament.
+  // The public link of a tournament, /<slug> (or the old /inscripcion/<slug>), opens it: its registrations before the draw.
   router.get("/registration-links/:slug", handle(async (req, res) => {
     const slug = pathParam(req, "slug").trim().toLowerCase();
     if (!/^[a-z0-9-]{1,40}$/.test(slug)) throw notFound("Registration link not found");

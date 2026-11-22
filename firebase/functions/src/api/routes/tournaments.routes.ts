@@ -73,7 +73,7 @@ import {
 } from "../../services/registrationsService";
 import { makeDrawFromRegistrations } from "../../services/registrationDraw";
 import { changePlayerCount } from "../../services/playerCountChange";
-import { defaultSlug, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
+import { defaultSlugs, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
 function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | undefined {
@@ -331,9 +331,9 @@ export function tournamentsRouter(): Router {
       let registration: Record<string, unknown> | undefined;
       if (registrationBody) {
         try {
-          // No link name typed (null or empty): the tournament gets one from its short name and year.
+          // No link name typed (null or empty): the tournament gets the shortest free one from its short name (and year).
           const typedSlug = String(registrationBody.slug ?? "").trim();
-          const slug = typedSlug === "" ? await freeSlug(parseSlug(defaultSlug(shortName, eventStartDate))) : parseSlug(typedSlug);
+          const slug = typedSlug === "" ? await freeSlug(defaultSlugs(shortName || name, eventStartDate).map(parseSlug)) : parseSlug(typedSlug);
           registration = {
             status: registrationBody.status === "CLOSED" ? "CLOSED" : "OPEN",
             maxPlayers: parseMaxPlayers(registrationBody.maxPlayers),

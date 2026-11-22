@@ -415,7 +415,7 @@ ROUTES = [
     ("get", "/public/tournaments/{tournamentId}/registrations", "Inscripciones", "public", "Lista pública de inscritos",
      "Plazas y lista de espera, sin emails, sin restricciones alimentarias y sin fecha de inscripción.", [T], None, "PublicRegistrations"),
     ("get", "/public/registration-links/{slug}", "Inscripciones", "public", "Torneo de un enlace público",
-     "El enlace `/inscripcion/<slug>` abre este torneo.",
+     "El enlace corto `/<slug>` (y el antiguo `/inscripcion/<slug>`) abre este torneo.",
      [{"name": "slug", "in": "path", "required": True, "schema": {"type": "string"}}], None, "RegistrationLink"),
     ("post", "/registrations/{tournamentId}", "Inscripciones", "public", "Inscribirse",
      "Sin cuenta: llega un email con el enlace para confirmar (estado PENDING). Con cuenta y EMA id: plaza o lista de espera al momento.",

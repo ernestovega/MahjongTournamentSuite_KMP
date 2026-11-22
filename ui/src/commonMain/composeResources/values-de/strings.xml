@@ -608,7 +608,7 @@
     <string name="registration_error_closed">Die Anmeldung zu diesem Turnier ist geschlossen.</string>
     <string name="registration_error_not_found">Die Anmeldung wurde nicht gefunden.\nSie wurde vielleicht storniert.</string>
     <string name="registration_error_open">Schließe die Anmeldung vor der Auslosung.</string>
-    <string name="registration_error_slug_taken">Ein anderes Turnier nutzt diesen Linknamen.\nWähle einen anderen.</string>
+    <string name="registration_error_slug_taken">Dieser Linkname ist schon vergeben.\nWähle einen anderen.</string>
     <string name="registration_error_team_full">Das Team hat schon 4 Personen.</string>
     <string name="registration_error_team_name_taken">Ein anderes Team hat diesen Namen.</string>
     <string name="registration_error_too_many_rows">Die Datei ist zu groß: höchstens 500 Zeilen.</string>
@@ -621,4 +621,32 @@
     <string name="registration_error_same_player_count">Das Turnier hat schon diese Spielerzahl.</string>
     <string name="registration_error_tournament_completed">Das Turnier ist beendet.</string>
     <string name="registration_error_tournament_started">Das Turnier hat schon Daten an seinen Tischen. Die Auslosung kann sich nicht mehr ändern.</string>
+    <string name="draw_help_button">Wie funktioniert die Auslosung?</string>
+    <string name="draw_help_title">So funktioniert die Auslosung</string>
+    <string name="draw_help_intro">Die Tische aller Runden werden auf einmal ausgelost, bevor das Turnier beginnt. So funktioniert es:</string>
+    <string name="draw_help_how_title">So funktioniert es</string>
+    <string name="draw_help_how">• Die App füllt die Tische Platz für Platz, Runde für Runde.\n• Für jeden Platz zieht sie zufällig einen Spieler, der in dieser Runde noch keinen Tisch hat.\n• Hat dieser Spieler schon gegen jemanden am Tisch gespielt oder ist im selben Team, probiert sie einen anderen.\n• Passt irgendwann niemand, fängt sie wieder von vorne an.\n• Sie probiert viele Verteilungen gleichzeitig und nimmt die erste, die klappt. Rechenintensiv probiert noch mehr gleichzeitig, damit große Turniere schneller fertig sind.</string>
+    <string name="draw_help_rules_title">Was garantiert ist</string>
+    <string name="draw_help_rules">• Niemand spielt im ganzen Turnier zweimal gegen dieselbe Person.\n• In einem Teamturnier sitzen zwei Spieler desselben Teams nie am selben Tisch.\n• Auch die Reihenfolge der Plätze an jedem Tisch ist zufällig.</string>
+    <string name="draw_help_random_title">100 % Zufall</string>
+    <string name="draw_help_random">• Die Tische werden wirklich ausgelost. Dahinter stecken keine Formeln, festen Tabellen oder Paarungssysteme.\n• Rang, Spielstärke oder Land zählen bei niemandem. Alle Tische stehen fest, bevor die erste Hand gespielt wird.\n• Jeder freie Spieler hat für jeden Platz die gleiche Chance, deshalb wiederholen sich keine Muster von Turnier zu Turnier.\n• Jedes Turnier bekommt seine eigene Auslosung, und niemand kann vorher wissen, wie sie ausgeht.\n• Tipp: Die Auslosung arbeitet mit Spielernummern (1, 2, 3…). Ordne die Namen diesen Nummern zu, ohne vorher die Tische anzusehen, zum Beispiel in der Reihenfolge der Anmeldung. So kann niemand aussuchen, gegen wen er spielt.</string>
+    <string name="draw_flow_description">Flussdiagramm der Auslosung</string>
+    <string name="draw_flow_start">Spieler, Runden und Teams</string>
+    <string name="draw_flow_seed">Mischen</string>
+    <string name="draw_flow_attempt">Neue Verteilung</string>
+    <string name="draw_flow_parallel">Mehrere Verteilungen gleichzeitig
+Die erste, die klappt, gewinnt</string>
+    <string name="draw_flow_next_seat">Nächster freier Platz</string>
+    <string name="draw_flow_next_seat_note">Runde, Tisch und Platz</string>
+    <string name="draw_flow_pick">Zufälliger Spieler ohne Tisch in dieser Runde</string>
+    <string name="draw_flow_check">Gegner wiederholt oder Teamkollege?</string>
+    <string name="draw_flow_seat">Setzt sich</string>
+    <string name="draw_flow_more_seats">Noch Sitze frei?</string>
+    <string name="draw_flow_done">Paarungen fertig</string>
+    <string name="draw_flow_discard">Anderen probieren</string>
+    <string name="draw_flow_candidates">Noch andere?</string>
+    <string name="draw_flow_failed">Verteilung gescheitert</string>
+    <string name="draw_flow_yes">Ja</string>
+    <string name="draw_flow_no">Nein</string>
+    <string name="close">Schließen</string>
 </resources>

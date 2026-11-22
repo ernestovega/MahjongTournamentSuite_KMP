@@ -1,4 +1,4 @@
-import { badRequest } from "../api/httpError";
+import { badRequest, conflict } from "../api/httpError";
 import { isValidIsoDate } from "./tournamentDates";
 
 /**
@@ -6,7 +6,8 @@ import { isValidIsoDate } from "./tournamentDates";
  * - OPEN: anyone can register. CLOSED: nobody can, and the organizer can make the draw or open them again.
  * - [maxPlayers] is the number of places. Who registers when they are full goes to the waiting list.
  * - [closesOn] is the last day to register (inclusive), a local date of the venue. The hourly job closes them after it.
- * - [slug] names the public link `/inscripcion/<slug>`, for example "mmc-2027".
+ * - [slug] names the public link `/<slug>`, for example "6thmmc". It opens the registrations while they last and the
+ *   tournament after the draw. The old links `/inscripcion/<slug>` still work.
  */
 export type RegistrationPhase = "OPEN" | "CLOSED";
 
@@ -60,10 +61,32 @@ export function slugify(value: string): string {
     .replace(/-+$/g, "");
 }
 
-/** The link name that the app proposes: the short name of the tournament and the year of its start. */
-export function defaultSlug(shortName: string, eventStartDate: string | null): string {
+/**
+ * The first segments of the addresses of the site, which a link name cannot take: the apps, the API, the static pages
+ * and the old links. A new top-level page of the site goes here too. See docs/registrations.md.
+ */
+export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
+  "admin", "api", "api-docs", "version", "privacy", "support", "green-book", "t", "r", "registration", "registrations",
+  "inscripcion", "inscripciones", "manage", "signin", "login", "logout", "help", "about", "terms", "contact", "static",
+  "assets", "index", "player", "tournament", "tournaments", "stats", "rules", "www",
+]);
+
+/** The link name without dashes or spaces: "6th MMC" gives "6thmmc". */
+function compactSlug(value: string): string {
+  return slugify(value).replace(/-/g, "");
+}
+
+/**
+ * The link names that the app proposes, shortest first: the short name of the tournament without spaces ("6thmmc"),
+ * then with the year of its start ("6thmmc2027") for a short name that another tournament already uses.
+ */
+export function defaultSlugs(shortName: string, eventStartDate: string | null): string[] {
+  const base = compactSlug(shortName);
   const year = eventStartDate != null && isValidIsoDate(eventStartDate) ? eventStartDate.slice(0, 4) : "";
-  return slugify([shortName, year].filter((part) => part !== "").join("-"));
+  const withYear = base.endsWith(year) ? base : `${base}${year}`.slice(0, MAX_SLUG_LENGTH);
+  const slugs = [...new Set([base, withYear])].filter((slug) => slug.length >= 3 && !RESERVED_SLUGS.has(slug));
+  // A very short name ("MO") without a date: a name that is still short and free of the reserved words.
+  return slugs.length > 0 ? slugs : [`${base}mahjong`.slice(0, MAX_SLUG_LENGTH)];
 }
 
 export function parseSlug(value: unknown): string {
@@ -72,6 +95,7 @@ export function parseSlug(value: unknown): string {
   if (slug.length < 3 || slug !== raw.toLowerCase()) {
     throw badRequest("The link name needs 3 to 40 lower case letters, digits or dashes", { code: "INVALID_SLUG", value: raw });
   }
+  if (RESERVED_SLUGS.has(slug)) throw conflict("The site uses this link name", { code: "SLUG_TAKEN", value: slug });
   return slug;
 }
 

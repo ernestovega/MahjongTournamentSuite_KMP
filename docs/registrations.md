@@ -7,17 +7,20 @@ a tournament.
 
 Decisions of the owner (19-nov-2026): the creation without players, the waiting list with promotions by hand, no
 accounts from the registrations, private food restrictions with consent, optional teams that must be complete before
-the draw, a public list without hidden people, a button to cancel, the link `/inscripcion/<slug>`, the Players tab of
+the draw, a public list without hidden people, a button to cancel, the public link of the tournament, the Players tab of
 the player app, and the import of the old Google Form.
 
 ## Life of a tournament with registrations
 
 1. **Creation** (admin, Create tournament > "Open registrations"). The organizer can set the number of places and the
    last day to register. The tournament has `drawPending: true` and `registration` (its settings), and no players,
-   tables or rounds. The public link uses the short name of the tournament, for example `/inscripcion/mmc-2027`.
+   tables or rounds. The public link is the short name of the tournament at the root of the site, in English and as short as
+   possible, for example `https://mts.mahjongmadrid.com/6thmmc` (owner, 22-nov-2026). It opens the registrations while
+   the tournament waits for its draw, and the tournament itself after the draw. The old links
+   `/inscripcion/<slug>` still work.
 2. **Open.** People register. Each one gets a place (`CONFIRMED`) while there are places, and then goes to the
    numbered waiting list (`WAITING`). Without a limit of places everyone gets a place.
-3. **Closed.** The organizer closes the registrations (Registration settings), or the hourly job closes them the day
+3. **Closed.** The organizer closes the registrations (Close registrations on the Registrations screen), or the hourly job closes them the day
    after the last day, in the time zone of the tournament. They can open again: nothing is lost.
 4. **Draw** (admin, Registrations > Make the draw, only when closed). The app checks the people with a place: a
    multiple of 4, at least 16, and in a tournament with teams every team with 4 people. Then it computes the rounds
@@ -29,7 +32,7 @@ the player app, and the import of the old Google Form.
 - **With an account that has an EMA number:** Register, and the place or the waiting list comes at once.
 - **Without an account:** the person finds itself in the EMA registry, writes an email, and gets a link to confirm.
   Until it opens the link the registration is `PENDING`: nobody else sees it, and it is deleted after 48 hours.
-  The link of the emails (`/inscripcion/gestionar?t=<tournament>&k=<token>`) confirms the email and keeps a token in
+  The link of the emails (`/registration?t=<tournament>&k=<token>`, the old `/inscripcion/gestionar?...` still works) confirms the email and keeps a token in
   the app (the web leaves it out of the address at once). With that token the person manages its registration without
   an account.
 - **No EMA number:** "I have no EMA number" sends a message to the organization, which creates the EMA player in the
@@ -61,14 +64,27 @@ Admins, club admins of the organizers, and editors assigned to the tournament (p
 
 Admin app, Registrations (opens from the tournament while `drawPending`):
 
-- Summary: state, places, last day, the public link with a copy button, Add a person and Make the draw.
-- The lists of places, waiting list and pending people, with search, paid, food restrictions, and a warning when two
-  people share an email (one account cannot share an email).
+- Settings on the screen itself, no settings dialog: a tile per setting with its own button. Status (Open or Close
+  registrations), Places, Last day to register and Public link have Change, which turns the tile into its field with
+  Cancel and Save. The public link also has Copy (a short message at the bottom, no dialog). On a phone the tiles are
+  the rows of one card, with icon buttons; wider screens show the text of every button.
+- Add a person and Make the draw. The draw needs the registrations closed: an info icon beside the buttons says so (a
+  line of text under them on a phone).
+- One list, without a big card around it: search, a chip per list with its count (All, With a place, Waiting list,
+  Email not confirmed) and how many with a place have paid. A wide screen shows a table (#, photo, player with flag
+  and EMA number, email, team, food, paid, menu); a phone shows each person in three lines. Names and photos come from
+  the EMA registry. Food restrictions are an icon with a tooltip, and a warning shows when two people share an email
+  (one account cannot share an email).
 - Each person: Change (email, team, food, paid), Give a place, Move to the waiting list, Remove (with or without an
   email to the person). The waiting list moves only by hand.
-- Import of the Google Form (CSV or Excel, up to 500 rows): first a preview with the problems of each row, then the
-  import. The name and the country come from the EMA registry, not from the file. A row with problems is not imported.
-  The import never sends emails.
+- Export CSV (top bar): the list as a CSV file with the columns of the import (Timestamp, Email, First name, Last
+  name, EMA number, Country, Team, Food restrictions), plus Status and Paid, which the import leaves out. The app makes
+  it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the
+  import and goes back in as it is (into another tournament: the people of this one are already registered). UTF-8
+  with BOM and CRLF, so Excel opens it well.
+- Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): first a preview with the
+  problems of each row, then the import. The name and the country come from the EMA registry, not from the file. A row
+  with problems is not imported. The import never sends emails.
 - Emails to the organization (the contact email of the tournament): each cancellation, and a weekly report on Sunday at
   21:00 of the tournament, until the draw.
 
@@ -82,9 +98,12 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
 | `tournaments/{id}/registrationLog` | the changes for the weekly report |
 | `registrationSlugs/{slug}` | the tournament of a public link |
 
-A new tournament from the app has no link name yet (the app sends an empty one). The API then makes it from the short
-name and the year (`gdr20-2026`), and adds `-2`, `-3`... when another tournament uses that one. The organizer can change
-it later in Registration settings.
+A new tournament from the app has no link name yet (the app sends an empty one). The API then makes the shortest free one:
+the short name without spaces (`6thmmc`), then with the year of its start (`6thmmc2027`), then with `-2`, `-3`...
+A link name cannot be a page of the site (`admin`, `api`, `api-docs`, `privacy`, `support`, `green-book`, `t`,
+`registration`, `inscripcion`...): `RESERVED_SLUGS` in `registrationSettings.ts` (the player web has the same list in
+`Registrations.kt`). A new top-level page of the site must go in both lists. The organizer can change
+it later in the Public link tile of the Registrations screen.
 | `personPrivate/{emaId}` | the food restrictions and their consent |
 
 The scheduled function `registrationsHourly` deletes the expired pending registrations, closes on the last day, sends
@@ -99,15 +118,17 @@ account of the functions can run it (`registrationHourRelay.ts`).
   `tournaments.routes.ts` (organizers and draw), `public.routes.ts` (public list and links).
 - Domain: `model/Registration.kt`, `RegistrationRepository`, `assignRegistrationsToDraw`.
 - Admin: `RegistrationsScreen`, `RegistrationsPresenter`, the switch in `CreateTournamentScreen`.
-- Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/inscripcion/...`).
+- Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/<slug>`, `/registration`, the old `/inscripcion/...`).
 - Analytics: the `registration` event with its actions, and the admin actions (docs/telemetry.md).
 
 ## Tests
 
+- Export and import share `testdata/registrations-export.csv`: `RegistrationsCsvTest` checks that the export writes it,
+  and `registrationImport.test.ts` that the import reads it.
 - Backend: `registrationSettings.test.ts`, `registrationImport.test.ts`, `registrationEmails.test.ts`,
   `registrations.integration.test.ts`
   (emulators), and the routes in `rolePermissions.integration.test.ts`.
-- Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), and the screenshots
-  `registrations` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
+- Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest` (admin)
+  and the screenshots `registrations` and `registrations-list` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
 - Game day: the job "Registrations before the tournament" of every scenario runs the whole process in staging
   (`scripts/rehearsal/registrations.mjs`, docs/scenarios.md).

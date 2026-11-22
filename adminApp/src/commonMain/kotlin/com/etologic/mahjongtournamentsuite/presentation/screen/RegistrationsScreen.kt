@@ -1,28 +1,39 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HowToReg
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Warning
@@ -32,12 +43,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,11 +62,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
@@ -76,24 +93,33 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DateField
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
+import com.etologic.mahjongtournamentsuite.presentation.platform.saveTextFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RegistrationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -108,11 +134,16 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.reg_add
 import mahjongtournamentsuite.adminapp.generated.resources.reg_add_title
-import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_on
+import mahjongtournamentsuite.adminapp.generated.resources.reg_close_action
+import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_on_optional
+import mahjongtournamentsuite.adminapp.generated.resources.reg_col_food
+import mahjongtournamentsuite.adminapp.generated.resources.reg_col_player
+import mahjongtournamentsuite.adminapp.generated.resources.reg_col_team
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_message
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirmed_section
+import mahjongtournamentsuite.adminapp.generated.resources.reg_copy
 import mahjongtournamentsuite.adminapp.generated.resources.reg_copy_link
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
@@ -126,6 +157,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_email
 import mahjongtournamentsuite.adminapp.generated.resources.reg_email_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_empty_message
 import mahjongtournamentsuite.adminapp.generated.resources.reg_empty_title
+import mahjongtournamentsuite.adminapp.generated.resources.reg_export
+import mahjongtournamentsuite.adminapp.generated.resources.reg_filter_all
 import mahjongtournamentsuite.adminapp.generated.resources.reg_food
 import mahjongtournamentsuite.adminapp.generated.resources.reg_food_of
 import mahjongtournamentsuite.adminapp.generated.resources.reg_give_place
@@ -136,20 +169,24 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_import_info
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_ready
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_result
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_title
-import mahjongtournamentsuite.adminapp.generated.resources.reg_link
 import mahjongtournamentsuite.adminapp.generated.resources.reg_link_copied
+import mahjongtournamentsuite.adminapp.generated.resources.reg_link_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_link_name
 import mahjongtournamentsuite.adminapp.generated.resources.reg_more_actions
 import mahjongtournamentsuite.adminapp.generated.resources.reg_move_to_waiting
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_account
+import mahjongtournamentsuite.adminapp.generated.resources.reg_no_close_date
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_limit
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_matches
 import mahjongtournamentsuite.adminapp.generated.resources.reg_notify
+import mahjongtournamentsuite.adminapp.generated.resources.reg_open_action
 import mahjongtournamentsuite.adminapp.generated.resources.reg_paid
+import mahjongtournamentsuite.adminapp.generated.resources.reg_paid_count
 import mahjongtournamentsuite.adminapp.generated.resources.reg_pending_section
 import mahjongtournamentsuite.adminapp.generated.resources.reg_pick_person
-import mahjongtournamentsuite.adminapp.generated.resources.reg_places
+import mahjongtournamentsuite.adminapp.generated.resources.reg_places_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_optional
+import mahjongtournamentsuite.adminapp.generated.resources.reg_places_value
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_already_registered
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_ema_not_found
@@ -157,28 +194,44 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_invalid_e
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_invalid_email
 import mahjongtournamentsuite.adminapp.generated.resources.reg_remove
 import mahjongtournamentsuite.adminapp.generated.resources.reg_save
-import mahjongtournamentsuite.adminapp.generated.resources.reg_settings
-import mahjongtournamentsuite.adminapp.generated.resources.reg_settings_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_shared_email
 import mahjongtournamentsuite.adminapp.generated.resources.reg_state_closed
 import mahjongtournamentsuite.adminapp.generated.resources.reg_state_open
-import mahjongtournamentsuite.adminapp.generated.resources.reg_status_open_switch
+import mahjongtournamentsuite.adminapp.generated.resources.reg_status_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_team_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_title
+import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_and_pending
 import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_section
 import mahjongtournamentsuite.adminapp.generated.resources.reg_without_team
 import mahjongtournamentsuite.adminapp.generated.resources.search
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
+/** The setting of the registrations that is open for a change on the screen, if any. */
+private enum class RegistrationSettingField { PLACES, CLOSES_ON, LINK }
+
+/** The lists of the registrations, in the order of the screen and of the export, with their titles and colors. */
+private val RegistrationSections = listOf(
+    RegistrationStatus.CONFIRMED to Res.string.reg_confirmed_section,
+    RegistrationStatus.WAITING to Res.string.reg_waiting_section,
+    RegistrationStatus.PENDING to Res.string.reg_pending_section,
+)
+
+private val PositionColumnWidth = 36.dp
+private val PhotoSize = 36.dp
+private val FoodColumnWidth = 48.dp
+private val PaidColumnWidth = 72.dp
+private val ActionsColumnWidth = 48.dp
+
 /**
  * The registrations of a tournament before its draw: places, waiting list and people who did not confirm the email
- * yet. The organizers add, change and remove people, open or close the registrations, import the old Google Form
+ * yet. The organizers change the settings (open or closed, places, last day, public link) on the screen itself, add,
+ * change and remove people, export the list as a CSV file that the import reads back, import the old Google Form
  * and make the draw with the confirmed people. See docs/registrations.md.
  */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 fun RegistrationsScreen(
     navController: NavHostController,
     tournamentId: String,
@@ -190,6 +243,7 @@ fun RegistrationsScreen(
     val tournament = tournaments.firstOrNull { it.id == tournamentId }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
+    val compact = LocalCompactLayout.current
     var data by remember { mutableStateOf<AdminRegistrations?>(null) }
     var registry by remember { mutableStateOf<List<Player>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -197,14 +251,17 @@ fun RegistrationsScreen(
     var error by remember { mutableStateOf<UiText?>(null) }
     var info by remember { mutableStateOf<UiText?>(null) }
     var query by remember { mutableStateOf("") }
+    var statusFilter by remember { mutableStateOf<RegistrationStatus?>(null) }
+    var editingSetting by remember { mutableStateOf<RegistrationSettingField?>(null) }
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<AdminRegistration?>(null) }
     var removing by remember { mutableStateOf<AdminRegistration?>(null) }
-    var settingsOpen by remember { mutableStateOf(false) }
     var importOpen by remember { mutableStateOf(false) }
     var drawConfirm by remember { mutableStateOf(false) }
     var drawTries by remember { mutableStateOf<Long?>(null) }
     val linkCopied = stringResource(Res.string.reg_link_copied)
+    // Copying the link shows a short message at the bottom, never a dialog.
+    val snackbar = remember { SnackbarHostState() }
 
     fun refresh() = scope.launch {
         loading = true
@@ -225,18 +282,25 @@ fun RegistrationsScreen(
         saving = false
     }
 
+    fun saveSettings(settings: RegistrationSettings) {
+        editingSetting = null
+        change { presenter.saveSettings(tournamentId, settings) }
+    }
+
     LaunchedEffect(tournamentId) {
         refresh()
         (presenter.loadRegistry() as? AppResult.Success)?.let { registry = it.value }
     }
 
     val current = data
+    val playersByEma = remember(registry) { registry.associateBy { it.emaId } }
     val normalizedQuery = normalizeSearchText(query.trim())
-    val shown = current?.registrations.orEmpty().filter { registration ->
+    val matching = current?.registrations.orEmpty().filter { registration ->
         normalizedQuery.isEmpty() ||
             normalizeSearchText("${registration.name} ${registration.emaId} ${registration.email} ${registration.country} ${current?.teamOf(registration)?.name.orEmpty()}")
                 .contains(normalizedQuery)
     }
+    val shown = matching.filter { statusFilter == null || it.status == statusFilter }
 
     AppScaffold(
         title = stringResource(Res.string.reg_title),
@@ -244,27 +308,30 @@ fun RegistrationsScreen(
         isLoading = loading || saving,
         showBackgroundLogo = loading && current == null,
         onBack = { navController.popBackStack() },
+        snackbarHost = { SnackbarHost(snackbar) },
         actions = {
+            AppTopBarButton(
+                text = stringResource(Res.string.reg_export),
+                icon = Icons.Default.Download,
+                onClick = {
+                    val ready = current ?: return@AppTopBarButton
+                    val name = tournament?.shortName?.ifBlank { null } ?: tournament?.name.orEmpty()
+                    val saved = presenter.exportCsv(name, ready, registry) { fileName, content -> saveTextFile(fileName, content) }
+                    if (saved is AppResult.Failure) error = saved.error.toUiText()
+                },
+                enabled = current != null && current.registrations.isNotEmpty(),
+            )
             AppTopBarButton(
                 text = stringResource(Res.string.reg_import),
                 icon = Icons.Default.UploadFile,
                 onClick = { importOpen = true },
                 enabled = current != null,
-                showLabel = false,
-            )
-            AppTopBarButton(
-                text = stringResource(Res.string.reg_settings),
-                icon = Icons.Default.Settings,
-                onClick = { settingsOpen = true },
-                enabled = current != null,
-                showLabel = false,
             )
         },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = MtsTheme.layout.screenGutter, vertical = 0.dp),
         ) {
             error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
             info?.let { message ->
@@ -277,79 +344,94 @@ fun RegistrationsScreen(
                 }
             }
             if (current != null) {
-                SummaryCard(
-                    data = current,
-                    onCopyLink = {
-                        clipboard.setText(AnnotatedString(current.publicLink))
-                        info = UiText.Plain(linkCopied)
-                    },
-                    onAdd = { adding = true },
-                    onDraw = { drawConfirm = true },
-                    busy = saving || drawTries != null,
-                )
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(Res.string.search)) },
-                    singleLine = true,
-                    trailingIcon = if (query.isNotEmpty()) {
-                        {
-                            FocusedIconButton(onClick = { query = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
-                            }
+                val busy = saving || drawTries != null
+                LazyColumnWithScrollbar(
+                    state = rememberLazyListState(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().testTag("registrations-list"),
+                    contentPadding = PaddingValues(vertical = MtsTheme.layout.screenGutter),
+                    scrollbar = MtsScrollbar.Margin,
+                ) {
+                    item(key = "settings") {
+                        RegistrationSettingsPanel(
+                            data = current,
+                            editing = editingSetting,
+                            busy = busy,
+                            onEdit = { editingSetting = it },
+                            onCancel = { editingSetting = null },
+                            onSave = ::saveSettings,
+                            onCopyLink = {
+                                clipboard.setText(AnnotatedString(current.publicLink))
+                                scope.launch {
+                                    snackbar.currentSnackbarData?.dismiss()
+                                    snackbar.showSnackbar(linkCopied)
+                                }
+                            },
+                        )
+                    }
+                    item(key = "actions") {
+                        RegistrationActions(
+                            canDraw = current.settings.status == RegistrationPhase.CLOSED,
+                            busy = busy,
+                            onAdd = { adding = true },
+                            onDraw = { drawConfirm = true },
+                        )
+                    }
+                    if (current.registrations.isEmpty()) {
+                        item(key = "empty") {
+                            AppEmptyState(
+                                icon = Icons.Default.HowToReg,
+                                title = stringResource(Res.string.reg_empty_title),
+                                message = stringResource(Res.string.reg_empty_message),
+                            )
                         }
                     } else {
-                        null
-                    },
-                    modifier = Modifier.fillMaxWidth().testTag("registrations-search"),
-                )
-                if (current.registrations.isEmpty()) {
-                    AppEmptyState(
-                        icon = Icons.Default.HowToReg,
-                        title = stringResource(Res.string.reg_empty_title),
-                        message = stringResource(Res.string.reg_empty_message),
-                    )
-                } else if (shown.isEmpty()) {
-                    Text(stringResource(Res.string.reg_no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    val listState = rememberLazyListState()
-                    val sections = listOf(
-                        RegistrationStatus.CONFIRMED to Res.string.reg_confirmed_section,
-                        RegistrationStatus.WAITING to Res.string.reg_waiting_section,
-                        RegistrationStatus.PENDING to Res.string.reg_pending_section,
-                    )
-                    val sectionTitles = sections.associate { (status, title) -> status to stringResource(title, shown.count { it.status == status }) }
-                    LazyColumnWithScrollbar(
-                        state = listState,
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        scrollbar = MtsScrollbar.Margin,
-                    ) {
-                        sections.forEach { (status, _) ->
-                            val rows = shown.filter { it.status == status }
-                            if (rows.isNotEmpty()) {
-                                item(key = "title-$status") {
-                                    Text(
-                                        sectionTitles.getValue(status),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(top = 8.dp),
-                                    )
-                                }
-                                items(rows, key = { "${it.status}-${it.emaId}" }) { registration ->
-                                    RegistrationRow(
-                                        registration = registration,
-                                        teamName = current.teamOf(registration)?.name,
-                                        isTeams = current.isTeams,
-                                        enabled = !saving,
-                                        onPaidChange = { paid ->
-                                            change { presenter.update(tournamentId, registration.emaId, RegistrationUpdate(paid = paid)) }
-                                        },
-                                        onEdit = { editing = registration },
-                                        onMove = { status ->
-                                            change { presenter.update(tournamentId, registration.emaId, RegistrationUpdate(status = status)) }
-                                        },
-                                        onRemove = { removing = registration },
-                                    )
+                        item(key = "filters") {
+                            RegistrationFilters(
+                                query = query,
+                                onQueryChange = { query = it },
+                                matching = matching,
+                                selected = statusFilter,
+                                onSelect = { statusFilter = it },
+                                paid = current.registrations.count { it.status == RegistrationStatus.CONFIRMED && it.paid },
+                                confirmed = current.registrations.count { it.status == RegistrationStatus.CONFIRMED },
+                            )
+                        }
+                        if (shown.isEmpty()) {
+                            item(key = "no-matches") {
+                                Text(
+                                    stringResource(Res.string.reg_no_matches),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(vertical = MtsTheme.spacing.lg),
+                                )
+                            }
+                        } else {
+                            if (!compact) {
+                                item(key = "header") { RegistrationsHeaderRow(isTeams = current.isTeams) }
+                            }
+                            RegistrationSections.forEach { (status, title) ->
+                                val rows = shown.filter { it.status == status }.sortedBy { it.position }
+                                if (rows.isNotEmpty()) {
+                                    item(key = "title-$status") { SectionTitle(status = status, title = title, count = rows.size) }
+                                    items(rows, key = { "${it.status}-${it.emaId}" }) { registration ->
+                                        val player = playersByEma[registration.emaId]
+                                        RegistrationRow(
+                                            registration = registration,
+                                            displayName = player?.let { "${it.firstName} ${it.lastName}".trim() }?.ifBlank { null } ?: registration.name.ifBlank { registration.emaId },
+                                            photoUrl = player?.photoUrl,
+                                            teamName = current.teamOf(registration)?.name,
+                                            isTeams = current.isTeams,
+                                            enabled = !busy,
+                                            onPaidChange = { paid ->
+                                                change { presenter.update(tournamentId, registration.emaId, RegistrationUpdate(paid = paid)) }
+                                            },
+                                            onEdit = { editing = registration },
+                                            onMove = { newStatus ->
+                                                change { presenter.update(tournamentId, registration.emaId, RegistrationUpdate(status = newStatus)) }
+                                            },
+                                            onRemove = { removing = registration },
+                                        )
+                                        DataTableDivider()
+                                    }
                                 }
                             }
                         }
@@ -434,16 +516,6 @@ fun RegistrationsScreen(
                 },
             )
         }
-    }
-    if (settingsOpen && current != null) {
-        RegistrationSettingsDialog(
-            settings = current.settings,
-            onSave = { settings ->
-                settingsOpen = false
-                change { presenter.saveSettings(tournamentId, settings) }
-            },
-            onDismiss = { settingsOpen = false },
-        )
     }
     if (importOpen) {
         RegistrationImportDialog(
@@ -535,66 +607,433 @@ internal fun MakeDrawDialog(
     }
 }
 
+/**
+ * A button with an icon and its text, or only the icon on a phone (the text stays as its description). Every button
+ * of the screen shows its text when there is room for it.
+ */
+@Composable
+private fun LabeledIconButton(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, enabled: Boolean = true, modifier: Modifier = Modifier) {
+    if (LocalCompactLayout.current) {
+        FocusedIconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+            Icon(icon, contentDescription = text)
+        }
+    } else {
+        FocusedTextButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(text, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+        }
+    }
+}
+
+/**
+ * The settings of the registrations as tiles: open or closed, places, last day and public link. Each one changes on
+ * the screen: the status with one button, the others with Change, which turns the tile into its field.
+ */
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun SummaryCard(
+private fun RegistrationSettingsPanel(
     data: AdminRegistrations,
-    onCopyLink: () -> Unit,
-    onAdd: () -> Unit,
-    onDraw: () -> Unit,
+    editing: RegistrationSettingField?,
     busy: Boolean,
+    onEdit: (RegistrationSettingField) -> Unit,
+    onCancel: () -> Unit,
+    onSave: (RegistrationSettings) -> Unit,
+    onCopyLink: () -> Unit,
 ) {
     val settings = data.settings
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                stringResource(if (settings.isOpen) Res.string.reg_state_open else Res.string.reg_state_closed),
-                style = MaterialTheme.typography.titleMedium,
-                color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                stringResource(
-                    Res.string.reg_places,
-                    settings.confirmed,
-                    settings.maxPlayers?.toString() ?: stringResource(Res.string.reg_no_limit),
-                    settings.waiting,
-                ),
-            )
-            settings.closesOn?.let { Text(stringResource(Res.string.reg_closes_on, formatLocalizedDate(it))) }
-            if (data.publicLink.isNotBlank()) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    val compact = LocalCompactLayout.current
+    val pending = data.registrations.count { it.status == RegistrationStatus.PENDING }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+        val statusTile: @Composable (Modifier) -> Unit = { tileModifier ->
+            val toggleText = stringResource(if (settings.isOpen) Res.string.reg_close_action else Res.string.reg_open_action)
+            val toggleIcon = if (settings.isOpen) Icons.Default.Lock else Icons.Default.LockOpen
+            val toggle = { onSave(settings.copy(status = if (settings.isOpen) RegistrationPhase.CLOSED else RegistrationPhase.OPEN)) }
+            SettingTile(
+                label = stringResource(Res.string.reg_status_label),
+                modifier = tileModifier,
+                // A phone has the icon in the row of the title; a wide screen, the button with its text under the status.
+                action = if (compact) {
+                    {
+                        LabeledIconButton(
+                            text = toggleText,
+                            icon = toggleIcon,
+                            enabled = !busy,
+                            onClick = toggle,
+                            modifier = Modifier.testTag("registrations-toggle-status"),
+                        )
+                    }
+                } else {
+                    null
+                },
+            ) {
+                val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(
-                        stringResource(Res.string.reg_link, data.publicLink),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                        stringResource(if (settings.isOpen) Res.string.reg_state_open else Res.string.reg_state_closed),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = color,
                     )
-                    FocusedIconButton(onClick = onCopyLink) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(Res.string.reg_copy_link))
+                }
+                if (!compact) {
+                    OutlinedButton(onClick = toggle, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.sm).testTag("registrations-toggle-status")) {
+                        Icon(toggleIcon, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(toggleText, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
                     }
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onAdd, enabled = !busy) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = 8.dp))
+        }
+        val placesTile: @Composable (Modifier) -> Unit = { tileModifier ->
+            EditableSettingTile(
+                label = stringResource(Res.string.reg_places_label),
+                modifier = tileModifier,
+                editing = editing == RegistrationSettingField.PLACES,
+                busy = busy,
+                onEdit = { onEdit(RegistrationSettingField.PLACES) },
+                editor = {
+                    var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
+                    OutlinedTextField(
+                        value = places,
+                        onValueChange = { typed -> places = typed.filter(Char::isDigit).take(4) },
+                        label = { Text(stringResource(Res.string.reg_places_optional)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("registrations-places-field"),
+                    )
+                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(maxPlayers = places.toIntOrNull())) })
+                },
+            ) {
+                Text(
+                    stringResource(Res.string.reg_places_value, settings.confirmed, settings.maxPlayers?.toString() ?: stringResource(Res.string.reg_no_limit)),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                settings.maxPlayers?.takeIf { it > 0 }?.let { max ->
+                    LinearProgressIndicator(
+                        progress = { (settings.confirmed.toFloat() / max).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.xs),
+                    )
                 }
-                FocusedButton(onClick = onDraw, enabled = !busy && settings.status == RegistrationPhase.CLOSED) {
-                    Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = 8.dp))
-                }
-                if (settings.isOpen) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
+                Text(
+                    stringResource(Res.string.reg_waiting_and_pending, settings.waiting, pending),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+        }
+        val closesTile: @Composable (Modifier) -> Unit = { tileModifier ->
+            EditableSettingTile(
+                label = stringResource(Res.string.reg_closes_label),
+                modifier = tileModifier,
+                editing = editing == RegistrationSettingField.CLOSES_ON,
+                busy = busy,
+                onEdit = { onEdit(RegistrationSettingField.CLOSES_ON) },
+                editor = {
+                    var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
+                    DateField(
+                        label = stringResource(Res.string.reg_closes_on_optional),
+                        value = closesOn,
+                        onChange = { closesOn = it },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(closesOn = closesOn.ifBlank { null })) })
+                },
+            ) {
+                val closesOn = settings.closesOn
+                if (closesOn == null) {
+                    Text(stringResource(Res.string.reg_no_close_date), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Text(formatLocalizedDate(closesOn), style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+        val linkTile: @Composable (Modifier) -> Unit = { tileModifier ->
+            EditableSettingTile(
+                label = stringResource(Res.string.reg_link_label),
+                modifier = tileModifier,
+                editing = editing == RegistrationSettingField.LINK,
+                busy = busy,
+                onEdit = { onEdit(RegistrationSettingField.LINK) },
+                extraAction = {
+                    LabeledIconButton(
+                        text = stringResource(Res.string.reg_copy),
+                        icon = Icons.Default.ContentCopy,
+                        onClick = onCopyLink,
+                        modifier = Modifier.testTag("registrations-copy-link"),
+                    )
+                },
+                editor = {
+                    var slug by remember { mutableStateOf(settings.slug) }
+                    OutlinedTextField(
+                        value = slug,
+                        onValueChange = { typed -> slug = typed.lowercase().filter { it in 'a'..'z' || it in '0'..'9' || it == '-' }.take(40) },
+                        label = { Text(stringResource(Res.string.reg_link_name)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("registrations-slug-field"),
+                    )
+                    EditorButtons(onCancel = onCancel, saveEnabled = slug.isNotBlank(), onSave = { onSave(settings.copy(slug = slug)) })
+                },
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Icon(Icons.Default.Link, contentDescription = stringResource(Res.string.reg_copy_link), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    SelectionContainer(Modifier.weight(1f, fill = false)) {
+                        Text(
+                            data.publicLink,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+        val showLink = data.publicLink.isNotBlank() || editing == RegistrationSettingField.LINK
+        if (compact) {
+            // A phone shows the settings as the rows of one card, so the list starts higher.
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(Modifier.padding(horizontal = MtsTheme.layout.cardPadding)) {
+                    listOfNotNull(statusTile, placesTile, closesTile, linkTile.takeIf { showLink }).forEachIndexed { index, tile ->
+                        if (index > 0) HorizontalDivider()
+                        tile(Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        } else {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                listOf(statusTile, placesTile, closesTile).forEach { tile -> tile(Modifier.weight(1f).fillMaxHeight()) }
+            }
+            if (showLink) linkTile(Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
+private fun SettingTile(
+    label: String,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val body: @Composable (Modifier) -> Unit = { padding ->
+        Column(padding, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                action?.invoke()
+            }
+            content()
+        }
+    }
+    if (LocalCompactLayout.current) {
+        // A row of the card of the settings (see RegistrationSettingsPanel).
+        body(modifier.padding(vertical = MtsTheme.spacing.sm))
+    } else {
+        Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+            body(Modifier.padding(MtsTheme.layout.cardPadding))
+        }
+    }
+}
+
+/** A [SettingTile] with a Change button that turns its content into [editor], with its own Cancel and Save. */
+@Composable
+private fun EditableSettingTile(
+    label: String,
+    modifier: Modifier,
+    editing: Boolean,
+    busy: Boolean,
+    onEdit: () -> Unit,
+    editor: @Composable () -> Unit,
+    extraAction: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    SettingTile(
+        label = label,
+        modifier = modifier,
+        action = if (editing) {
+            null
+        } else {
+            {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    extraAction?.invoke()
+                    LabeledIconButton(text = stringResource(Res.string.reg_edit), icon = Icons.Default.Edit, enabled = !busy, onClick = onEdit)
+                }
+            }
+        },
+    ) {
+        if (editing) {
+            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) { editor() }
+        } else {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun EditorButtons(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: Boolean = true) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+        FocusedTextButton(onClick = onCancel) {
+            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+        }
+        FocusedButton(onClick = onSave, enabled = saveEnabled) {
+            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+        }
+    }
+}
+
+/** Add a person and Make the draw. The info icon says why the draw waits, centered with the buttons. */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun RegistrationActions(canDraw: Boolean, busy: Boolean, onAdd: () -> Unit, onDraw: () -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            FocusedButton(onClick = onAdd, enabled = !busy) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            }
+            OutlinedButton(onClick = onDraw, enabled = !busy && canDraw) {
+                Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            }
+            if (!canDraw && !LocalCompactLayout.current) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
+        }
+        if (!canDraw && LocalCompactLayout.current) {
+            // A phone has no room for the icon beside the buttons: the reason goes under them.
+            Text(
+                stringResource(Res.string.reg_draw_needs_close),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = MtsTheme.spacing.xs),
+            )
+        }
+    }
+}
+
+/** The search and one chip per list, with the number of people that match the search. */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun RegistrationFilters(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    matching: List<AdminRegistration>,
+    selected: RegistrationStatus?,
+    onSelect: (RegistrationStatus?) -> Unit,
+    paid: Int,
+    confirmed: Int,
+) {
+    Column(Modifier.padding(top = MtsTheme.spacing.xl, bottom = MtsTheme.spacing.sm), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            label = { Text(stringResource(Res.string.search)) },
+            singleLine = true,
+            trailingIcon = if (query.isNotEmpty()) {
+                {
+                    FocusedIconButton(onClick = { onQueryChange("") }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
+                    }
+                }
+            } else {
+                null
+            },
+            modifier = Modifier.fillMaxWidth().testTag("registrations-search"),
+        )
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            FilterChip(
+                selected = selected == null,
+                onClick = { onSelect(null) },
+                label = { Text(stringResource(Res.string.reg_filter_all, matching.size)) },
+            )
+            RegistrationSections.forEach { (status, title) ->
+                FilterChip(
+                    selected = selected == status,
+                    onClick = { onSelect(if (selected == status) null else status) },
+                    label = { Text(stringResource(title, matching.count { it.status == status })) },
+                    leadingIcon = { Box(Modifier.size(8.dp).clip(CircleShape).background(statusColor(status))) },
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                stringResource(Res.string.reg_paid_count, paid, confirmed),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun statusColor(status: RegistrationStatus): Color = when (status) {
+    RegistrationStatus.CONFIRMED -> MaterialTheme.colorScheme.primary
+    RegistrationStatus.WAITING -> MtsTheme.colors.warning
+    RegistrationStatus.PENDING -> MaterialTheme.colorScheme.outline
+}
+
+@Composable
+private fun RegistrationsHeaderRow(isTeams: Boolean) {
+    Column {
+        DataTableHeaderRow {
+            HeaderText("#", Modifier.width(PositionColumnWidth), TextAlign.Center)
+            Spacer(Modifier.width(PhotoSize))
+            HeaderText(stringResource(Res.string.reg_col_player), Modifier.weight(0.34f))
+            HeaderText(stringResource(Res.string.reg_email), Modifier.weight(0.3f))
+            if (isTeams) HeaderText(stringResource(Res.string.reg_col_team), Modifier.weight(0.2f))
+            HeaderText(stringResource(Res.string.reg_col_food), Modifier.width(FoodColumnWidth), TextAlign.Center, maxLines = 1)
+            HeaderText(stringResource(Res.string.reg_paid), Modifier.width(PaidColumnWidth), TextAlign.Center)
+            Spacer(Modifier.width(ActionsColumnWidth))
+        }
+        DataTableDivider()
+    }
+}
+
+@Composable
+private fun HeaderText(text: String, modifier: Modifier, textAlign: TextAlign = TextAlign.Start, maxLines: Int = 2) {
+    Text(
+        text,
+        modifier = modifier,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+/** The title of one list: a colored mark, its name and how many people it has. */
+@Composable
+private fun SectionTitle(status: RegistrationStatus, title: StringResource, count: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg, bottom = MtsTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+    ) {
+        Box(Modifier.width(4.dp).height(20.dp).clip(MtsTheme.shapes.pill).background(statusColor(status)))
+        Text(stringResource(title, count), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/**
+ * One person. A wide screen shows a row of the table; a phone shows the name over the EMA number, the team and the
+ * email, with Paid and the menu at the end.
+ */
+@Composable
 private fun RegistrationRow(
     registration: AdminRegistration,
+    displayName: String,
+    photoUrl: String?,
     teamName: String?,
     isTeams: Boolean,
     enabled: Boolean,
@@ -603,88 +1042,170 @@ private fun RegistrationRow(
     onMove: (RegistrationStatus) -> Unit,
     onRemove: () -> Unit,
 ) {
-    var menu by remember { mutableStateOf(false) }
-    Card(Modifier.fillMaxWidth().testTag("registration-${registration.emaId}")) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                if (registration.status == RegistrationStatus.PENDING) "·" else registration.position.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.widthIn(min = 28.dp),
-            )
+    val compact = LocalCompactLayout.current
+    val team = if (isTeams) teamName ?: stringResource(Res.string.reg_without_team) else null
+    DataTableRow(
+        modifier = Modifier.testTag("registration-${registration.emaId}"),
+        onClick = if (enabled) onEdit else null,
+        contentPadding = PaddingValues(horizontal = if (compact) 0.dp else 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) MtsTheme.spacing.sm else MtsTheme.spacing.md),
+    ) {
+        Text(
+            if (registration.status == RegistrationStatus.PENDING) "—" else registration.position.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(if (compact) 24.dp else PositionColumnWidth),
+        )
+        PlayerPhoto(photoUrl = photoUrl, name = displayName, size = PhotoSize)
+        if (compact) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CountryFlag(code = registration.country, width = 20.dp)
-                    Text(registration.name.ifBlank { registration.emaId }, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                    Text(registration.emaId, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                val details = listOfNotNull(
-                    registration.email.ifBlank { null },
-                    if (isTeams) teamName ?: stringResource(Res.string.reg_without_team) else null,
-                    if (!registration.hasAccount) stringResource(Res.string.reg_no_account) else null,
+                NameLine(displayName, registration.country)
+                Text(
+                    listOfNotNull("EMA ${registration.emaId}", team).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                if (details.isNotEmpty()) {
-                    Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (registration.email.isNotBlank()) {
+                    Text(registration.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                if (registration.sharedEmail) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                        Text(stringResource(Res.string.reg_shared_email), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                    }
-                }
+                RowNotes(registration, showFood = true)
             }
-            if (registration.foodRestrictions.isNotBlank()) {
-                InfoTooltipIcon(
-                    description = stringResource(Res.string.reg_food_of, registration.foodRestrictions),
-                    contentDescription = stringResource(Res.string.reg_food),
+            PaidBox(registration, enabled, onPaidChange, compact = true)
+        } else {
+            Column(Modifier.weight(0.34f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                NameLine(displayName, registration.country)
+                Text("EMA ${registration.emaId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Column(Modifier.weight(0.3f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(registration.email.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                RowNotes(registration, showFood = false)
+            }
+            if (team != null) {
+                Text(
+                    team,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (teamName == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(0.2f),
                 )
             }
-            if (registration.status != RegistrationStatus.PENDING) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = registration.paid, onCheckedChange = onPaidChange, enabled = enabled)
-                    Text(stringResource(Res.string.reg_paid), style = MaterialTheme.typography.bodySmall)
+            Box(Modifier.width(FoodColumnWidth), contentAlignment = Alignment.Center) {
+                if (registration.foodRestrictions.isNotBlank()) {
+                    FoodIcon(registration.foodRestrictions)
+                } else {
+                    Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Column {
-                FocusedIconButton(onClick = { menu = true }, enabled = enabled) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.reg_more_actions, registration.name))
-                }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.reg_edit)) },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        onClick = {
-                            menu = false
-                            onEdit()
-                        },
-                    )
-                    if (registration.status != RegistrationStatus.CONFIRMED) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.reg_give_place)) },
-                            onClick = {
-                                menu = false
-                                onMove(RegistrationStatus.CONFIRMED)
-                            },
-                        )
-                    }
-                    if (registration.status == RegistrationStatus.CONFIRMED) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.reg_move_to_waiting)) },
-                            onClick = {
-                                menu = false
-                                onMove(RegistrationStatus.WAITING)
-                            },
-                        )
-                    }
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.reg_remove), color = MaterialTheme.colorScheme.error) },
-                        onClick = {
-                            menu = false
-                            onRemove()
-                        },
-                    )
-                }
+            PaidBox(registration, enabled, onPaidChange, compact = false)
+        }
+        RegistrationMenu(registration, displayName, enabled, onEdit, onMove, onRemove)
+    }
+}
+
+@Composable
+private fun NameLine(name: String, country: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        CountryFlag(code = country, width = 20.dp)
+        Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** No account, an email that another person shares and, on a phone, the food restrictions. */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun RowNotes(registration: AdminRegistration, showFood: Boolean) {
+    val food = showFood && registration.foodRestrictions.isNotBlank()
+    if (registration.hasAccount && !registration.sharedEmail && !food) return
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), itemVerticalAlignment = Alignment.CenterVertically) {
+        if (!registration.hasAccount) {
+            Text(stringResource(Res.string.reg_no_account), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (food) FoodIcon(registration.foodRestrictions, size = 18.dp)
+        if (registration.sharedEmail) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                Text(stringResource(Res.string.reg_shared_email), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
             }
+        }
+    }
+}
+
+/** The food restrictions are private: an icon with a tooltip, so the list stays short. */
+@Composable
+private fun FoodIcon(text: String, size: Dp = 22.dp) {
+    com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox(stringResource(Res.string.reg_food_of, text)) {
+        FocusedIconButton(onClick = { toggleTooltip() }, buttonModifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Restaurant, contentDescription = stringResource(Res.string.reg_food), tint = MtsTheme.colors.warning, modifier = Modifier.size(size))
+        }
+    }
+}
+
+@Composable
+private fun PaidBox(registration: AdminRegistration, enabled: Boolean, onPaidChange: (Boolean) -> Unit, compact: Boolean) {
+    Column(
+        Modifier.width(if (compact) 48.dp else PaidColumnWidth),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (registration.status != RegistrationStatus.PENDING) {
+            Checkbox(checked = registration.paid, onCheckedChange = onPaidChange, enabled = enabled, modifier = Modifier.testTag("registration-paid-${registration.emaId}"))
+            if (compact) Text(stringResource(Res.string.reg_paid), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun RegistrationMenu(
+    registration: AdminRegistration,
+    displayName: String,
+    enabled: Boolean,
+    onEdit: () -> Unit,
+    onMove: (RegistrationStatus) -> Unit,
+    onRemove: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Box(Modifier.width(ActionsColumnWidth), contentAlignment = Alignment.Center) {
+        FocusedIconButton(onClick = { menu = true }, enabled = enabled) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.reg_more_actions, displayName))
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.reg_edit)) },
+                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                onClick = {
+                    menu = false
+                    onEdit()
+                },
+            )
+            if (registration.status != RegistrationStatus.CONFIRMED) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.reg_give_place)) },
+                    onClick = {
+                        menu = false
+                        onMove(RegistrationStatus.CONFIRMED)
+                    },
+                )
+            }
+            if (registration.status == RegistrationStatus.CONFIRMED) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.reg_move_to_waiting)) },
+                    onClick = {
+                        menu = false
+                        onMove(RegistrationStatus.WAITING)
+                    },
+                )
+            }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.reg_remove), color = MaterialTheme.colorScheme.error) },
+                onClick = {
+                    menu = false
+                    onRemove()
+                },
+            )
         }
     }
 }
@@ -772,70 +1293,6 @@ private fun RegistrationEditDialog(
                     FocusedButton(
                         enabled = person != null,
                         onClick = { person?.let { onSave(it.emaId, email, team, food, paid, notify) } },
-                    ) { Text(stringResource(Res.string.reg_save)) }
-                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun RegistrationSettingsDialog(
-    settings: RegistrationSettings,
-    onSave: (RegistrationSettings) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var open by remember { mutableStateOf(settings.isOpen) }
-    var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
-    var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
-    var slug by remember { mutableStateOf(settings.slug) }
-    TrackedDialog("RegistrationSettings") {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { MtsDialogTitle(stringResource(Res.string.reg_settings_title)) },
-            text = {
-                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Switch(checked = open, onCheckedChange = { open = it })
-                        Text(stringResource(Res.string.reg_status_open_switch))
-                    }
-                    OutlinedTextField(
-                        value = places,
-                        onValueChange = { typed -> places = typed.filter(Char::isDigit).take(4) },
-                        label = { Text(stringResource(Res.string.reg_places_optional)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DateField(
-                        label = stringResource(Res.string.reg_closes_on_optional),
-                        value = closesOn,
-                        onChange = { closesOn = it },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = slug,
-                        onValueChange = { typed -> slug = typed.lowercase().filter { it.isLetterOrDigit() || it == '-' }.take(40) },
-                        label = { Text(stringResource(Res.string.reg_link_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-            confirmButton = {
-                MtsDialogButtons {
-                    FocusedButton(
-                        enabled = slug.isNotBlank(),
-                        onClick = {
-                            onSave(
-                                settings.copy(
-                                    status = if (open) RegistrationPhase.OPEN else RegistrationPhase.CLOSED,
-                                    maxPlayers = places.toIntOrNull(),
-                                    closesOn = closesOn.ifBlank { null },
-                                    slug = slug,
-                                ),
-                            )
-                        },
                     ) { Text(stringResource(Res.string.reg_save)) }
                     FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }

@@ -48,22 +48,16 @@ private fun supportFromUrl(): Boolean {
 }
 
 /**
- * A registration link: `/inscripcion/<slug>`, the public link of a tournament, or `/inscripcion/gestionar?t=&k=`, the
- * link of the emails. The token of the emails leaves the address at once, so it is not kept in the history of the
- * browser, and the address goes back to `/`.
+ * The public link of a tournament, `/<slug>` (such as `/6thmmc`), or the link of the emails, `/registration?t=&k=`
+ * (also the old `/inscripcion/...`). See registrationLinkOf. The token of the emails leaves the address at once, so it
+ * is not kept in the history of the browser, and the address goes back to `/`.
  */
 private fun registrationFromUrl(): RegistrationLink? {
-    val parts = window.location.pathname.trim('/').split('/')
-    if (parts.size != 2 || parts[0] != "inscripcion") return null
-    val link = if (parts[1] == "gestionar") {
-        val query = window.location.search.removePrefix("?").split('&')
-            .map { it.split('=', limit = 2) }
-            .associate { it[0] to decodeURIComponent(it.getOrElse(1) { "" }) }
-        val tournamentId = query["t"]?.takeIf { it.isNotBlank() } ?: return null
-        RegistrationLink(tournamentId = tournamentId, token = query["k"]?.takeIf { it.isNotBlank() })
-    } else {
-        RegistrationLink(slug = decodeURIComponent(parts[1]))
-    }
+    val query = window.location.search.removePrefix("?").split('&')
+        .filter { it.isNotEmpty() }
+        .map { it.split('=', limit = 2) }
+        .associate { it[0] to decodeURIComponent(it.getOrElse(1) { "" }) }
+    val link = registrationLinkOf(decodeURIComponent(window.location.pathname), query) ?: return null
     window.history.replaceState(null, "", "/" + window.location.hash)
     return link
 }

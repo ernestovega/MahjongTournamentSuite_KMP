@@ -612,7 +612,7 @@
     <string name="registration_error_closed">The registrations of this tournament are closed.</string>
     <string name="registration_error_not_found">The registration was not found.\nIt may have been cancelled.</string>
     <string name="registration_error_open">Close the registrations before the draw.</string>
-    <string name="registration_error_slug_taken">Another tournament uses this link name.\nChoose another one.</string>
+    <string name="registration_error_slug_taken">This link name is already in use.\nChoose another one.</string>
     <string name="registration_error_team_full">The team already has 4 people.</string>
     <string name="registration_error_team_name_taken">Another team has this name.</string>
     <string name="registration_error_too_many_rows">The file is too large: at most 500 rows.</string>
@@ -625,4 +625,32 @@
     <string name="registration_error_same_player_count">The tournament already has that number of players.</string>
     <string name="registration_error_tournament_completed">The tournament is finished.</string>
     <string name="registration_error_tournament_started">The tournament already has data in its tables. The draw can no longer change.</string>
+    <string name="draw_help_button">How does the draw work?</string>
+    <string name="draw_help_title">How the draw works</string>
+    <string name="draw_help_intro">The tables of every round are drawn in one go, before the tournament starts. This is how it works:</string>
+    <string name="draw_help_how_title">How it works</string>
+    <string name="draw_help_how">• The app fills the tables one seat at a time, round after round.\n• For each seat it picks, at random, a player who has no table yet in that round.\n• If that player has already played against someone at the table, or is on the same team, it tries another one.\n• If at some point nobody fits, it starts again from the beginning.\n• It tries many shares at once and keeps the first one that works. Heavy computing tries even more at once, so big tournaments are ready sooner.</string>
+    <string name="draw_help_rules_title">What it guarantees</string>
+    <string name="draw_help_rules">• Nobody plays against the same person twice in the whole tournament.\n• In a team tournament, two players of the same team never sit at the same table.\n• The order of the seats at each table is also random.</string>
+    <string name="draw_help_random_title">100% random</string>
+    <string name="draw_help_random">• The tables are really drawn by chance. There are no formulas, fixed tables or pairing systems behind them.\n• Nobody’s ranking, level or country counts. All the tables are decided before the first hand is played.\n• Every free player has the same chance of each seat, so no patterns repeat from one tournament to the next.\n• Each tournament gets its own draw, and nobody can know beforehand how it will turn out.\n• Tip: the draw uses player numbers (1, 2, 3…). Put the names on those numbers without looking at the tables first, for example in sign-up order. That way nobody can choose who they play against.</string>
+    <string name="draw_flow_description">Flowchart of the draw</string>
+    <string name="draw_flow_start">Players, rounds and teams</string>
+    <string name="draw_flow_seed">Shuffle</string>
+    <string name="draw_flow_attempt">New share</string>
+    <string name="draw_flow_parallel">Several shares at the same time
+The first one that works wins</string>
+    <string name="draw_flow_next_seat">Next free seat</string>
+    <string name="draw_flow_next_seat_note">Round, table and seat</string>
+    <string name="draw_flow_pick">Pick a random player without a table this round</string>
+    <string name="draw_flow_check">Repeated rival or teammate?</string>
+    <string name="draw_flow_seat">Takes the seat</string>
+    <string name="draw_flow_more_seats">Seats left?</string>
+    <string name="draw_flow_done">Pairings ready</string>
+    <string name="draw_flow_discard">Try another one</string>
+    <string name="draw_flow_candidates">Others left?</string>
+    <string name="draw_flow_failed">Share failed</string>
+    <string name="draw_flow_yes">Yes</string>
+    <string name="draw_flow_no">No</string>
+    <string name="close">Close</string>
 </resources>

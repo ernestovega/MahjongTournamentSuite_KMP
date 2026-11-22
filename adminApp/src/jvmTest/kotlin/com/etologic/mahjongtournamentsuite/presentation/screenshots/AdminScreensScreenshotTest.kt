@@ -6,9 +6,11 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeUp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -32,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
+import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthRepository
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
@@ -157,11 +160,29 @@ class AdminScreensScreenshotTest {
     @Test
     fun activity() = adminScreenshots("activity") { nav -> ActivityScreen(nav) }
 
-    /** The registrations of a tournament before its draw: places, waiting list, a person to confirm, paid and food. */
+    /**
+     * The registrations of a tournament before its draw: the settings, changed on the screen, and the list with
+     * places, waiting list, a person to confirm, paid and food. A phone shows the settings first.
+     */
     @Test
-    fun registrations() = adminScreenshots("registrations", ready = { waitForText("04010001", substring = true) }) { nav ->
+    fun registrations() = adminScreenshots("registrations", ready = { waitForText("bs99", substring = true) }) { nav ->
         RegistrationsScreen(nav, ScreenshotData.UPCOMING)
     }
+
+    /** The list of the registrations on a phone, scrolled past the settings. */
+    @Test
+    fun registrationsList() = adminScreenshots(
+        "registrations-list",
+        variants = componentVariants,
+        ready = {
+            waitForText("bs99", substring = true)
+            // A slow swipe of the height of the settings, so it does not fling to the end.
+            onNodeWithTag("registrations-list").performTouchInput {
+                swipeUp(startY = bottom - 60f, endY = bottom - 620f, durationMillis = 1_000)
+            }
+            waitForText("04010001", substring = true)
+        },
+    ) { nav -> RegistrationsScreen(nav, ScreenshotData.UPCOMING) }
 
     @Test
     fun roles() = adminScreenshots("roles", ready = { waitForText("Head referee") }) { nav -> RolesScreen(nav) }

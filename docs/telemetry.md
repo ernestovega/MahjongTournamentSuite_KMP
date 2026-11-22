@@ -77,7 +77,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_organizations`, `account_request_approved`, `account_request_rejected`, `account_permissions_updated` |
 | Roles | `role_created`, `role_updated`, `role_deleted` |
 | Organizations | `organization_created`, `organization_updated`, `organization_deleted` |
-| Registrations | `registration_added`, `registration_updated`, `registration_removed`, `registration_settings_updated`, `registrations_imported`, `draw_made` (the draw with the confirmed people), `player_count_changed` (whole tables leave or come before the first hand, with a new draw) |
+| Registrations | `registration_added`, `registration_updated`, `registration_removed`, `registration_settings_updated`, `registrations_imported`, `registrations_exported` (the CSV file of the list, made in the app), `draw_made` (the draw with the confirmed people), `player_count_changed` (whole tables leave or come before the first hand, with a new draw) |
 | EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated`, `registry_players_deleted` |
 
 Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.
