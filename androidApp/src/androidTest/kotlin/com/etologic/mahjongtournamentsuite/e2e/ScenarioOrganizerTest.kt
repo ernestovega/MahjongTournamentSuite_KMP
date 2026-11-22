@@ -663,23 +663,29 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val from = plan.getInt("createWith")
         val to = plan.getInt("players")
         c.clickButton("Number of players")
-        c.waitForText("Change the number of players", timeoutMs = 60_000)
-        c.waitForText("$from players · ${from / 4} tables", timeoutMs = 60_000)
-        repeat((from - to) / 4) { c.clickButton("One table less") }
-        c.waitForText("$to players · ${to / 4} tables")
+        // Its own screen, by steps: the organizer marks who leaves and the screen counts them in tables of 4.
+        c.waitForText("Who leaves or comes", timeoutMs = 60_000)
+        c.waitForText("Now: $from players, ${from / 4} tables per round.", timeoutMs = 60_000)
         (to + 1..from).forEach { slot ->
-            val row = c.onNode(hasTestTag("playerCountSlot-$slot"))
-            runCatching { row.performScrollTo() }
-            row.tap()
+            val tag = "playerCountSlot-$slot"
+            // The list composes only the lines in view: it scrolls to the line first.
+            runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag(tag)) }
+            c.onNode(hasTestTag(tag)).tap()
         }
-        c.waitForText("${from - to} of ${from - to} chosen")
+        // The count is above the list, out of view after the last lines.
+        runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("playerCountChosen")) }
+        c.waitForText("Marked: ${from - to}. Tables that leave: ${(from - to) / 4}.")
         c.clickButton("Continue")
         c.waitForText("Make a new draw?", timeoutMs = 30_000)
         c.waitForText("From $from to $to players")
         c.clickButton("Make the new draw")
+        // The last word, in a short red dialog: it cannot be undone.
+        c.waitForText("This cannot be undone.", substring = true)
+        c.clickLastButton("Make the new draw")
         // The app computes the new draw, and the server saves it.
         c.waitForText("The tournament now has $to players and a new draw.", timeoutMs = 600_000)
         c.clickLastButton("Close")
+        // Close goes back to Players.
         c.waitForNoText("The tournament now has $to players and a new draw.")
         log("a table taken out: $from to $to players, new draw")
     }
