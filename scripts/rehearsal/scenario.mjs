@@ -294,7 +294,8 @@ export async function makePlan(args) {
     plan.byHand = {
       name: `${plan.name} registrations`,
       shortName: `GDR${stamp.date.slice(8)}`,
-      slug: `${tag}-reg`,
+      // Not `${tag}-reg`: the tournament of the job Registrations before the tournament has that link.
+      slug: `${tag}-hand`,
       places: 16,
       rounds: 3,
       form: slots.slice(0, 16).map((slot) => slot.emaId),
