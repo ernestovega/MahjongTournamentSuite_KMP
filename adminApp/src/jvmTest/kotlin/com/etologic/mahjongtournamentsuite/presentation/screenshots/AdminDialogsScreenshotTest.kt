@@ -36,6 +36,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.DrawExplanationDi
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.HandNotDone
+import com.etologic.mahjongtournamentsuite.presentation.screen.HandsNotDoneDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.NewRoleNameDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.OpenTablesReviewDialog
@@ -164,6 +166,11 @@ class AdminDialogsScreenshotTest {
             table to hands.mapIndexed { index, hand -> hand.copy(isDone = index < done) }
         },
     )
+
+    @Test
+    fun handsNotDone() = dialog("hands-not-done") {
+        HandsNotDoneDialog(hands = listOf(HandNotDone(1, 5, 4), HandNotDone(1, 6, 3)), onSave = {}, onDismiss = {})
+    }
 
     @Test
     fun resetTable() = dialog("reset-table") { ResetTableDialog(roundId = 3, tableId = 2, busy = false, onConfirm = {}, onDismiss = {}) }
