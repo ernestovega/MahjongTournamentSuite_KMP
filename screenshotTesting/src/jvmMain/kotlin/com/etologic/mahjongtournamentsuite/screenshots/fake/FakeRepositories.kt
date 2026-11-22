@@ -359,7 +359,7 @@ open class ScreenshotRegistrationRepository(private val own: OwnRegistration? = 
             settings = settings,
             isTeams = true,
             drawPending = true,
-            publicLink = "https://mts.example.test/inscripcion/${settings.slug}",
+            publicLink = "https://mts.example.test/${settings.slug}",
             registrations = people.mapIndexed { index, player ->
                 AdminRegistration(
                     emaId = player.emaId,

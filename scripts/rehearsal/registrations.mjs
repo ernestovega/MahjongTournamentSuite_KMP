@@ -128,11 +128,11 @@ export function drawAssignments(confirmed, teams, isTeams, random = Math.random)
     .map((emaId, index) => ({ playerId: teamIndex * TEAM_SIZE + index + 1, emaId })));
 }
 
-/** The token of the link "/inscripcion/gestionar?t=&k=" of a registration email, or null. */
+/** The token of the link "/registration?t=&k=" (or the old "/inscripcion/gestionar?t=&k=") of a registration email, or null. */
 export function manageToken(email, tournamentId) {
   for (const link of email.links ?? []) {
-    if (!link.includes("/inscripcion/gestionar")) continue;
     const url = new URL(link);
+    if (url.pathname !== "/registration" && url.pathname !== "/inscripcion/gestionar") continue;
     if (url.searchParams.get("t") === tournamentId) return url.searchParams.get("k");
   }
   return null;
@@ -209,7 +209,7 @@ export async function runRegistrations({
     }, "POST tournament"), "Create the tournament with registrations");
     const tournamentId = created.json.id;
     report.tournamentId = tournamentId;
-    step("Create the tournament with registrations", created.json.drawPending === true, `${PLACES} places, link /inscripcion/${slug}`);
+    step("Create the tournament with registrations", created.json.drawPending === true, `${PLACES} places, link /${slug}`);
     const link = await api.call("GET", `/public/registration-links/${slug}`, { label: "registrations public GET link" });
     step("The public link opens the tournament", link.status === 200 && link.json?.tournamentId === tournamentId);
 

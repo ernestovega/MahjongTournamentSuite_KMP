@@ -149,10 +149,38 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutl
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
- * A link of the web that opens the registrations: `/inscripcion/<slug>` (the public link) or
- * `/inscripcion/gestionar?t=<tournament>&k=<token>` (the link of the emails, which also confirms the email).
+ * A link of the web that opens a tournament: `/<slug>` (the public link, the registrations before the draw) or
+ * `/registration?t=<tournament>&k=<token>` (the link of the emails, which also confirms the email).
+ * The old links `/inscripcion/<slug>` and `/inscripcion/gestionar?t=&k=` still work.
  */
 data class RegistrationLink(val slug: String? = null, val tournamentId: String? = null, val token: String? = null)
+
+/**
+ * The first segments of the addresses of the site that are not the link of a tournament. The backend refuses them as
+ * link names too (RESERVED_SLUGS of registrationSettings.ts).
+ */
+private val SitePaths = setOf("admin", "api", "api-docs", "version", "privacy", "support", "green-book", "t")
+
+private val SlugPattern = Regex("^[a-z0-9-]{3,40}$")
+
+/**
+ * The registration link of an address of the web, or null. [path] is the path without the query, such as `/6thmmc`,
+ * and [query] the decoded parameters of the address.
+ */
+fun registrationLinkOf(path: String, query: Map<String, String>): RegistrationLink? {
+    val parts = path.trim('/').split('/').filter { it.isNotEmpty() }
+    val manage = (parts.size == 1 && parts[0] == "registration") || (parts.size == 2 && parts[0] == "inscripcion" && parts[1] == "gestionar")
+    if (manage) {
+        val tournamentId = query["t"]?.takeIf { it.isNotBlank() } ?: return null
+        return RegistrationLink(tournamentId = tournamentId, token = query["k"]?.takeIf { it.isNotBlank() })
+    }
+    val slug = when {
+        parts.size == 2 && parts[0] == "inscripcion" -> parts[1]
+        parts.size == 1 && parts[0] !in SitePaths -> parts[0]
+        else -> return null
+    }.lowercase()
+    return if (SlugPattern.matches(slug)) RegistrationLink(slug = slug) else null
+}
 
 /** The registrations of the player app. Every change counts the `registration` event. See docs/registrations.md. */
 class PlayerRegistrationPresenter(

@@ -986,7 +986,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_title">Anmeldungen</string>
     <string name="reg_import">Google-Formular importieren</string>
     <string name="reg_settings">Anmeldeeinstellungen</string>
-    <string name="reg_link_copied">Der öffentliche Link ist kopiert.\nTeile ihn im EMA-Kalender, per E-Mail oder in deinen Gruppen.</string>
+    <string name="reg_link_copied">Link kopiert</string>
     <string name="reg_empty_title">Noch keine Anmeldungen</string>
     <string name="reg_empty_message">Teile den öffentlichen Link, füge selbst Leute hinzu oder importiere die Antworten deines alten Google-Formulars.</string>
     <string name="reg_no_matches">Niemand passt zur Suche.</string>

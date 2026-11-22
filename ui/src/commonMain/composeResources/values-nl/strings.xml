@@ -608,7 +608,7 @@
     <string name="registration_error_closed">De inschrijving voor dit toernooi is gesloten.</string>
     <string name="registration_error_not_found">De inschrijving is niet gevonden.\nMisschien is ze geannuleerd.</string>
     <string name="registration_error_open">Sluit de inschrijving vóór de loting.</string>
-    <string name="registration_error_slug_taken">Een ander toernooi gebruikt deze linknaam.\nKies een andere.</string>
+    <string name="registration_error_slug_taken">Deze linknaam is al in gebruik.\nKies een andere.</string>
     <string name="registration_error_team_full">Het team heeft al 4 personen.</string>
     <string name="registration_error_team_name_taken">Een ander team heeft deze naam.</string>
     <string name="registration_error_too_many_rows">Het bestand is te groot: hoogstens 500 rijen.</string>

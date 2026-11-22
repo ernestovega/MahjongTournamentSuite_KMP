@@ -612,7 +612,7 @@
     <string name="registration_error_closed">Les inscriptions de ce tournoi sont fermées.</string>
     <string name="registration_error_not_found">L'inscription est introuvable.\nElle a peut-être été annulée.</string>
     <string name="registration_error_open">Fermez les inscriptions avant le tirage.</string>
-    <string name="registration_error_slug_taken">Un autre tournoi utilise ce nom de lien.\nChoisissez-en un autre.</string>
+    <string name="registration_error_slug_taken">Ce nom de lien est déjà utilisé.\nChoisissez-en un autre.</string>
     <string name="registration_error_team_full">L'équipe a déjà 4 personnes.</string>
     <string name="registration_error_team_name_taken">Une autre équipe porte ce nom.</string>
     <string name="registration_error_too_many_rows">Le fichier est trop grand : 500 lignes au plus.</string>

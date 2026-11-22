@@ -37,6 +37,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -207,6 +209,8 @@ fun RegistrationsScreen(
     var drawConfirm by remember { mutableStateOf(false) }
     var drawTries by remember { mutableStateOf<Long?>(null) }
     val linkCopied = stringResource(Res.string.reg_link_copied)
+    // Copying the link shows a short message at the bottom, never a dialog.
+    val snackbar = remember { SnackbarHostState() }
 
     fun refresh() = scope.launch {
         loading = true
@@ -246,6 +250,7 @@ fun RegistrationsScreen(
         isLoading = loading || saving,
         showBackgroundLogo = loading && current == null,
         onBack = { navController.popBackStack() },
+        snackbarHost = { SnackbarHost(snackbar) },
         actions = {
             AppTopBarButton(
                 text = stringResource(Res.string.reg_import),
@@ -283,7 +288,10 @@ fun RegistrationsScreen(
                     data = current,
                     onCopyLink = {
                         clipboard.setText(AnnotatedString(current.publicLink))
-                        info = UiText.Plain(linkCopied)
+                        scope.launch {
+                            snackbar.currentSnackbarData?.dismiss()
+                            snackbar.showSnackbar(linkCopied)
+                        }
                     },
                     onAdd = { adding = true },
                     onDraw = { drawConfirm = true },

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   addDays,
-  defaultSlug,
+  defaultSlugs,
   hourlyDecision,
   localTime,
   normalizeFoodRestrictions,
@@ -20,8 +20,12 @@ describe("registration settings", () => {
   it("makes link names from the short name and the year", () => {
     assert.equal(slugify("MMC 2027!"), "mmc-2027");
     assert.equal(slugify("  Ñandú  Open  "), "nandu-open");
-    assert.equal(defaultSlug("6th MMC", "2027-02-20"), "6th-mmc-2027");
-    assert.equal(defaultSlug("MMC", null), "mmc");
+    assert.deepEqual(defaultSlugs("6th MMC", "2027-02-20"), ["6thmmc", "6thmmc2027"]);
+    assert.deepEqual(defaultSlugs("MMC", null), ["mmc"]);
+    assert.deepEqual(defaultSlugs("BMO 2027", "2027-01-23"), ["bmo2027"]);
+    assert.deepEqual(defaultSlugs("MO", null), ["momahjong"]);
+    // A short name that is a page of the site gets the year.
+    assert.deepEqual(defaultSlugs("Admin", "2027-05-01"), ["admin2027"]);
   });
 
   it("refuses link names with other characters or too short", () => {
@@ -29,6 +33,7 @@ describe("registration settings", () => {
     assert.throws(() => parseSlug("MMC 2027"));
     assert.throws(() => parseSlug("ab"));
     assert.throws(() => parseSlug("mmc_2027"));
+    for (const reserved of ["admin", "api", "privacy", "green-book", "inscripcion", "support"]) assert.throws(() => parseSlug(reserved), reserved);
   });
 
   it("reads the places, the close date and the team names", () => {

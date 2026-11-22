@@ -7,14 +7,17 @@ a tournament.
 
 Decisions of the owner (19-nov-2026): the creation without players, the waiting list with promotions by hand, no
 accounts from the registrations, private food restrictions with consent, optional teams that must be complete before
-the draw, a public list without hidden people, a button to cancel, the link `/inscripcion/<slug>`, the Players tab of
+the draw, a public list without hidden people, a button to cancel, the public link of the tournament, the Players tab of
 the player app, and the import of the old Google Form.
 
 ## Life of a tournament with registrations
 
 1. **Creation** (admin, Create tournament > "Open registrations"). The organizer can set the number of places and the
    last day to register. The tournament has `drawPending: true` and `registration` (its settings), and no players,
-   tables or rounds. The public link uses the short name of the tournament, for example `/inscripcion/mmc-2027`.
+   tables or rounds. The public link is the short name of the tournament at the root of the site, in English and as short as
+   possible, for example `https://mts.mahjongmadrid.com/6thmmc` (owner, 22-nov-2026). It opens the registrations while
+   the tournament waits for its draw, and the tournament itself after the draw. The old links
+   `/inscripcion/<slug>` still work.
 2. **Open.** People register. Each one gets a place (`CONFIRMED`) while there are places, and then goes to the
    numbered waiting list (`WAITING`). Without a limit of places everyone gets a place.
 3. **Closed.** The organizer closes the registrations (Registration settings), or the hourly job closes them the day
@@ -29,7 +32,7 @@ the player app, and the import of the old Google Form.
 - **With an account that has an EMA number:** Register, and the place or the waiting list comes at once.
 - **Without an account:** the person finds itself in the EMA registry, writes an email, and gets a link to confirm.
   Until it opens the link the registration is `PENDING`: nobody else sees it, and it is deleted after 48 hours.
-  The link of the emails (`/inscripcion/gestionar?t=<tournament>&k=<token>`) confirms the email and keeps a token in
+  The link of the emails (`/registration?t=<tournament>&k=<token>`, the old `/inscripcion/gestionar?...` still works) confirms the email and keeps a token in
   the app (the web leaves it out of the address at once). With that token the person manages its registration without
   an account.
 - **No EMA number:** "I have no EMA number" sends a message to the organization, which creates the EMA player in the
@@ -61,7 +64,8 @@ Admins, club admins of the organizers, and editors assigned to the tournament (p
 
 Admin app, Registrations (opens from the tournament while `drawPending`):
 
-- Summary: state, places, last day, the public link with a copy button, Add a person and Make the draw.
+- Summary: state, places, last day, the public link with a copy button (a short message at the bottom, no dialog),
+  Add a person and Make the draw.
 - The lists of places, waiting list and pending people, with search, paid, food restrictions, and a warning when two
   people share an email (one account cannot share an email).
 - Each person: Change (email, team, food, paid), Give a place, Move to the waiting list, Remove (with or without an
@@ -82,8 +86,11 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
 | `tournaments/{id}/registrationLog` | the changes for the weekly report |
 | `registrationSlugs/{slug}` | the tournament of a public link |
 
-A new tournament from the app has no link name yet (the app sends an empty one). The API then makes it from the short
-name and the year (`gdr20-2026`), and adds `-2`, `-3`... when another tournament uses that one. The organizer can change
+A new tournament from the app has no link name yet (the app sends an empty one). The API then makes the shortest free one:
+the short name without spaces (`6thmmc`), then with the year of its start (`6thmmc2027`), then with `-2`, `-3`...
+A link name cannot be a page of the site (`admin`, `api`, `api-docs`, `privacy`, `support`, `green-book`, `t`,
+`registration`, `inscripcion`...): `RESERVED_SLUGS` in `registrationSettings.ts` (the player web has the same list in
+`Registrations.kt`). A new top-level page of the site must go in both lists. The organizer can change
 it later in Registration settings.
 | `personPrivate/{emaId}` | the food restrictions and their consent |
 
@@ -99,7 +106,7 @@ account of the functions can run it (`registrationHourRelay.ts`).
   `tournaments.routes.ts` (organizers and draw), `public.routes.ts` (public list and links).
 - Domain: `model/Registration.kt`, `RegistrationRepository`, `assignRegistrationsToDraw`.
 - Admin: `RegistrationsScreen`, `RegistrationsPresenter`, the switch in `CreateTournamentScreen`.
-- Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/inscripcion/...`).
+- Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/<slug>`, `/registration`, the old `/inscripcion/...`).
 - Analytics: the `registration` event with its actions, and the admin actions (docs/telemetry.md).
 
 ## Tests

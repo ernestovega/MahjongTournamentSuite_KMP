@@ -612,7 +612,7 @@
     <string name="registration_error_closed">The registrations of this tournament are closed.</string>
     <string name="registration_error_not_found">The registration was not found.\nIt may have been cancelled.</string>
     <string name="registration_error_open">Close the registrations before the draw.</string>
-    <string name="registration_error_slug_taken">Another tournament uses this link name.\nChoose another one.</string>
+    <string name="registration_error_slug_taken">This link name is already in use.\nChoose another one.</string>
     <string name="registration_error_team_full">The team already has 4 people.</string>
     <string name="registration_error_team_name_taken">Another team has this name.</string>
     <string name="registration_error_too_many_rows">The file is too large: at most 500 rows.</string>

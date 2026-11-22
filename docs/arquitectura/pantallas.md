@@ -25,7 +25,7 @@ Empieza siempre en la lista de torneos. No hace falta cuenta para ver nada; la c
 flowchart TD
   S([Arranque]) --> T["Torneos<br/>🌐 todos"]
   T -- "abrir torneo / enlace /t/id" --> TT
-  T -- "torneo con inscripciones /<br/>enlace /inscripcion/slug" --> TP
+  T -- "torneo con inscripciones /<br/>enlace corto /slug" --> TP
   subgraph Torneo["Torneo (pestañas)"]
     TT["Mesas<br/>Yo · Equipo · Todas"]
     TR["Clasificación"]
@@ -53,7 +53,7 @@ flowchart TD
 | **Torneo › Mesas** | Todos | Pestañas Yo / Equipo / Todas. Mesas por ronda con resultados en vivo. | <img src="../../playerApp/screenshots/tournament-tables/phone-light.png" width="140" alt="Torneo › Mesas"> |
 | **Torneo › Clasificación** | Todos | Jugadores, equipos, manos pollo y mejor mano. | <img src="../../playerApp/screenshots/tournament-ranking/phone-light.png" width="140" alt="Torneo › Clasificación"> |
 | **Torneo › Jugadores** | Todos | Buscador; abre la ficha del jugador. | <img src="../../playerApp/screenshots/tournament-players/phone-light.png" width="140" alt="Torneo › Jugadores"> |
-| **Torneo › Jugadores (inscripciones)** | Todos ver · cualquiera se inscribe | Antes del sorteo solo hay Jugadores e Info. Plazas, lista de espera, Inscribirme, Mi inscripción (comida, equipo, baja) y «No tengo número EMA». Enlace `/inscripcion/<slug>` (docs/registrations.md). | <img src="../../playerApp/screenshots/tournament-registrations/phone-light.png" width="140" alt="Torneo › Jugadores (inscripciones)"> |
+| **Torneo › Jugadores (inscripciones)** | Todos ver · cualquiera se inscribe | Antes del sorteo solo hay Jugadores e Info. Plazas, lista de espera, Inscribirme, Mi inscripción (comida, equipo, baja) y «No tengo número EMA». Enlace corto `/<slug>`, p. ej. `/6thmmc` (docs/registrations.md). | <img src="../../playerApp/screenshots/tournament-registrations/phone-light.png" width="140" alt="Torneo › Jugadores (inscripciones)"> |
 | **Torneo › Equipos** | Todos | Solo en torneos por equipos. | <img src="../../playerApp/screenshots/tournament-teams/phone-light.png" width="140" alt="Torneo › Equipos"> |
 | **Torneo › Estadísticas** | Todos | Totales y reparto de manos, por ronda. | <img src="../../playerApp/screenshots/tournament-statistics/phone-light.png" width="140" alt="Torneo › Estadísticas"> |
 | **Torneo › Info** | Todos | Progreso, horario de rondas, sede, agenda y contacto. | <img src="../../playerApp/screenshots/tournament-info/phone-light.png" width="140" alt="Torneo › Info"> |
