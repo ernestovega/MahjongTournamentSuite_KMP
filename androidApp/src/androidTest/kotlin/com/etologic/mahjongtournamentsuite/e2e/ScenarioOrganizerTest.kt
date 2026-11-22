@@ -479,12 +479,22 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun changeTheLinkName() {
         val slug = byHand.getString("slug")
         showSetting("registrations-edit-link")
-        c.onNode(hasTestTag("registrations-edit-link")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        clickTagged("registrations-edit-link")
         c.waitUntil(10_000) { c.onAllNodes(hasTestTag("registrations-slug-field")).fetchSemanticsNodes().isNotEmpty() }
         c.onNode(hasTestTag("registrations-slug-field")).performTextReplacement(slug)
-        c.onNode(hasTestTag("registrations-save-setting")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        clickTagged("registrations-save-setting")
         c.waitUntil(60_000) { textOf("registrations-link-value").endsWith("/$slug") }
         log("the public link changed on the screen: ${textOf("registrations-link-value").substringAfterLast('/')}")
+    }
+
+    /**
+     * Presses the button of a test tag by its click action. The focused buttons of the app put the tag on the box
+     * around the button, so the click is the node with the tag or the first one inside it.
+     */
+    private fun clickTagged(tag: String) {
+        val own = c.onAllNodes(hasTestTag(tag) and hasClickAction())
+        val button = if (own.fetchSemanticsNodes().isNotEmpty()) own.onFirst() else c.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag(tag))).onFirst()
+        button.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
     }
 
     /** The settings are the first items of the lazy list: it scrolls back to them. */
@@ -550,7 +560,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun closeAndMakeTheDraw() {
         showSetting("registrations-toggle-status")
-        c.onNode(hasTestTag("registrations-toggle-status")).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        clickTagged("registrations-toggle-status")
         c.waitUntil(60_000) { textOf("registrations-status-value") == "Registrations closed" }
         c.clickLastButton("Make the draw")
         c.waitForText("Make the draw?", timeoutMs = 30_000)
