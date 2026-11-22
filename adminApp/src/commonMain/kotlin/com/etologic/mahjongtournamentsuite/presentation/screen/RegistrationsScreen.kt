@@ -79,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_FOOD_RESTRICTIONS_LENGTH
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_REGISTRATION_TEAM_NAME_LENGTH
 import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationImport
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
@@ -242,6 +243,10 @@ fun RegistrationsScreen(
     LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
     val tournament = tournaments.firstOrNull { it.id == tournamentId }
+    val adminStatus by store.adminStatus.collectAsState()
+    // Only who configures the tournament (super admins and club admins of its organizers, or a custom permission)
+    // changes the settings and makes the draw. An editor manages the people. The API checks the same permission.
+    val canConfigure = tournament != null && adminStatus?.can(Permission.TOURNAMENT_CONFIGURE, tournament.permissions) == true
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     val compact = LocalCompactLayout.current
@@ -358,6 +363,7 @@ fun RegistrationsScreen(
                             data = current,
                             editing = editingSetting,
                             busy = busy,
+                            canConfigure = canConfigure,
                             onEdit = { editingSetting = it },
                             onCancel = { editingSetting = null },
                             onSave = ::saveSettings,
@@ -373,6 +379,7 @@ fun RegistrationsScreen(
                     item(key = "actions") {
                         RegistrationActions(
                             canDraw = current.settings.status == RegistrationPhase.CLOSED,
+                            showDraw = canConfigure,
                             busy = busy,
                             onAdd = { adding = true },
                             onDraw = { drawConfirm = true },
@@ -646,6 +653,7 @@ private fun RegistrationSettingsPanel(
     data: AdminRegistrations,
     editing: RegistrationSettingField?,
     busy: Boolean,
+    canConfigure: Boolean,
     onEdit: (RegistrationSettingField) -> Unit,
     onCancel: () -> Unit,
     onSave: (RegistrationSettings) -> Unit,
@@ -663,7 +671,7 @@ private fun RegistrationSettingsPanel(
                 label = stringResource(Res.string.reg_status_label),
                 modifier = tileModifier,
                 // A phone has the icon in the row of the title; a wide screen, the button with its text under the status.
-                action = if (compact) {
+                action = if (compact && canConfigure) {
                     {
                         LabeledIconButton(
                             text = toggleText,
@@ -686,7 +694,7 @@ private fun RegistrationSettingsPanel(
                         color = color,
                     )
                 }
-                if (!compact) {
+                if (!compact && canConfigure) {
                     OutlinedButton(onClick = toggle, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.sm).testTag("registrations-toggle-status")) {
                         Icon(toggleIcon, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text(toggleText, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
@@ -700,6 +708,7 @@ private fun RegistrationSettingsPanel(
                 modifier = tileModifier,
                 editing = editing == RegistrationSettingField.PLACES,
                 busy = busy,
+                canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.PLACES) },
                 editor = {
                     var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
@@ -736,6 +745,7 @@ private fun RegistrationSettingsPanel(
                 modifier = tileModifier,
                 editing = editing == RegistrationSettingField.CLOSES_ON,
                 busy = busy,
+                canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.CLOSES_ON) },
                 editor = {
                     var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
@@ -762,6 +772,7 @@ private fun RegistrationSettingsPanel(
                 modifier = tileModifier,
                 editing = editing == RegistrationSettingField.LINK,
                 busy = busy,
+                canEdit = canConfigure,
                 onEdit = { onEdit(RegistrationSettingField.LINK) },
                 extraAction = {
                     LabeledIconButton(
@@ -855,6 +866,7 @@ private fun EditableSettingTile(
     modifier: Modifier,
     editing: Boolean,
     busy: Boolean,
+    canEdit: Boolean,
     onEdit: () -> Unit,
     editor: @Composable () -> Unit,
     extraAction: (@Composable () -> Unit)? = null,
@@ -869,12 +881,12 @@ private fun EditableSettingTile(
             {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     extraAction?.invoke()
-                    LabeledIconButton(text = stringResource(Res.string.reg_edit), icon = Icons.Default.Edit, enabled = !busy, onClick = onEdit)
+                    if (canEdit) LabeledIconButton(text = stringResource(Res.string.reg_edit), icon = Icons.Default.Edit, enabled = !busy, onClick = onEdit)
                 }
             }
         },
     ) {
-        if (editing) {
+        if (editing && canEdit) {
             Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) { editor() }
         } else {
             content()
@@ -899,7 +911,7 @@ private fun EditorButtons(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled:
 /** Add a person and Make the draw. The info icon says why the draw waits, centered with the buttons. */
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun RegistrationActions(canDraw: Boolean, busy: Boolean, onAdd: () -> Unit, onDraw: () -> Unit) {
+private fun RegistrationActions(canDraw: Boolean, showDraw: Boolean, busy: Boolean, onAdd: () -> Unit, onDraw: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         FlowRow(
             modifier = Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg),
@@ -911,13 +923,15 @@ private fun RegistrationActions(canDraw: Boolean, busy: Boolean, onAdd: () -> Un
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
             }
-            OutlinedButton(onClick = onDraw, enabled = !busy && canDraw) {
-                Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            if (showDraw) {
+                OutlinedButton(onClick = onDraw, enabled = !busy && canDraw) {
+                    Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                }
             }
-            if (!canDraw && !LocalCompactLayout.current) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
+            if (showDraw && !canDraw && !LocalCompactLayout.current) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
         }
-        if (!canDraw && LocalCompactLayout.current) {
+        if (showDraw && !canDraw && LocalCompactLayout.current) {
             // A phone has no room for the icon beside the buttons: the reason goes under them.
             Text(
                 stringResource(Res.string.reg_draw_needs_close),

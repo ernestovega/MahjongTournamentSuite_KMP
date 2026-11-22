@@ -60,7 +60,10 @@ food restrictions and no registration date. There are no hidden people in this l
 
 ## Organizers
 
-Admins, club admins of the organizers, and editors assigned to the tournament (permission `tournament.playerEmails`).
+Admins, club admins of the organizers, and editors assigned to the tournament (permission `tournament.playerEmails`)
+see the screen and manage the people. Only who configures the tournament (`tournament.configure`: super admins and
+club admins of the organizers, or a custom permission) changes the settings and makes the draw: an editor sees the
+settings without Change or Close registrations, and no Make the draw (screenshot `registrations-editor`).
 
 Admin app, Registrations (opens from the tournament while `drawPending`):
 
@@ -129,6 +132,6 @@ account of the functions can run it (`registrationHourRelay.ts`).
   `registrations.integration.test.ts`
   (emulators), and the routes in `rolePermissions.integration.test.ts`.
 - Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest` (admin)
-  and the screenshots `registrations` and `registrations-list` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
+  and the screenshots `registrations`, `registrations-list` and `registrations-editor` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
 - Game day: the job "Registrations before the tournament" of every scenario runs the whole process in staging
   (`scripts/rehearsal/registrations.mjs`, docs/scenarios.md).

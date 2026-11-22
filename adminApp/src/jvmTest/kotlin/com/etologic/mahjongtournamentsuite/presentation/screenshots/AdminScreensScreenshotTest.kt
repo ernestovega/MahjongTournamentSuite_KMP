@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
@@ -168,6 +169,21 @@ class AdminScreensScreenshotTest {
     fun registrations() = adminScreenshots("registrations", ready = { waitForText("bs99", substring = true) }) { nav ->
         RegistrationsScreen(nav, ScreenshotData.UPCOMING)
     }
+
+    /**
+     * The registrations as an editor sees them: the editor manages the people, but only who configures the tournament
+     * changes the settings and makes the draw, so the screen has no Change, no Close registrations and no draw.
+     */
+    @Test
+    fun registrationsEditor() = adminScreenshots(
+        "registrations-editor",
+        modules = { adminModules(role = GlobalUserRole.EDITOR) },
+        variants = listOf(Variant(ScreenSize.Desktop, false), Variant(ScreenSize.Phone, false)),
+        ready = {
+            waitForText("bs99", substring = true)
+            waitForIdle()
+        },
+    ) { nav -> RegistrationsScreen(nav, ScreenshotData.UPCOMING) }
 
     /** The list of the registrations on a phone, scrolled past the settings. */
     @Test
