@@ -5,11 +5,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -82,6 +85,23 @@ class CreateTournamentDialogUiTest {
         onNodeWithText("Schedule").performClick()
         waitForIdle()
         onAllNodesWithText(" *").assertCountEquals(ScheduleRequiredFieldCount)
+    }
+
+    /** With registrations open there is no draw now, so "How does the draw work?" is not shown until the switch is off again. */
+    @Test
+    fun theDrawButtonHidesWhenRegistrationsAreOpen() = runComposeUiTest {
+        showForm()
+        val registrationSwitch = onNode(isToggleable() and hasAnySibling(hasText("Open registrations")))
+
+        onNodeWithTag("drawExplanationButton").assertExists()
+
+        registrationSwitch.performClick()
+        waitForIdle()
+        onNodeWithTag("drawExplanationButton").assertDoesNotExist()
+
+        registrationSwitch.performClick()
+        waitForIdle()
+        onNodeWithTag("drawExplanationButton").assertExists()
     }
 
     @Test
