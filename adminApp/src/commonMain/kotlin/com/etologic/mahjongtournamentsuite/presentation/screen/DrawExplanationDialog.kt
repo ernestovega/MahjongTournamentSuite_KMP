@@ -3,14 +3,20 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawFlowDiagram
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
@@ -31,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
 import mahjongtournamentsuite.adminapp.generated.resources.draw_help_how
 import mahjongtournamentsuite.adminapp.generated.resources.draw_help_how_title
 import mahjongtournamentsuite.adminapp.generated.resources.draw_help_intro
@@ -102,5 +110,15 @@ private fun HelpSection(title: String, body: String) {
                 Text(line, style = MaterialTheme.typography.bodyMedium)
             }
         }
+    }
+}
+
+/** Opens [DrawExplanationDialog]: shown just above the buttons of every dialog that makes a draw. */
+@Composable
+fun DrawExplanationButton(onClick: () -> Unit) {
+    FocusedTextButton(onClick = onClick, modifier = Modifier.testTag("drawExplanationButton")) {
+        Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(Res.string.draw_help_button))
     }
 }

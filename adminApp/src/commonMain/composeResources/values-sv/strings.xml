@@ -1012,7 +1012,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="registration_closes_on_optional">Sista anmälningsdag (valfritt)</string>
     <string name="reg_title">Anmälningar</string>
     <string name="reg_import">Importera</string>
-    <string name="reg_link_copied">Den publika länken är kopierad.\nDela den i EMA-kalendern, via e-post eller i dina grupper.</string>
+    <string name="reg_link_copied">Länken är kopierad</string>
     <string name="reg_empty_title">Ingen har anmält sig än</string>
     <string name="reg_empty_message">Dela den publika länken, lägg till personer själv eller importera svaren från ditt gamla Google-formulär.</string>
     <string name="reg_no_matches">Ingen matchar sökningen.</string>

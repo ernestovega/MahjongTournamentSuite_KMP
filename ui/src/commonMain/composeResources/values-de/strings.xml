@@ -608,7 +608,7 @@
     <string name="registration_error_closed">Die Anmeldung zu diesem Turnier ist geschlossen.</string>
     <string name="registration_error_not_found">Die Anmeldung wurde nicht gefunden.\nSie wurde vielleicht storniert.</string>
     <string name="registration_error_open">Schließe die Anmeldung vor der Auslosung.</string>
-    <string name="registration_error_slug_taken">Ein anderes Turnier nutzt diesen Linknamen.\nWähle einen anderen.</string>
+    <string name="registration_error_slug_taken">Dieser Linkname ist schon vergeben.\nWähle einen anderen.</string>
     <string name="registration_error_team_full">Das Team hat schon 4 Personen.</string>
     <string name="registration_error_team_name_taken">Ein anderes Team hat diesen Namen.</string>
     <string name="registration_error_too_many_rows">Die Datei ist zu groß: höchstens 500 Zeilen.</string>

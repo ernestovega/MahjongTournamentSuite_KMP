@@ -1012,7 +1012,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="registration_closes_on_optional">Last day to register (optional)</string>
     <string name="reg_title">Registrations</string>
     <string name="reg_import">Import</string>
-    <string name="reg_link_copied">The public link is copied.\nShare it on the EMA calendar, by email or in your groups.</string>
+    <string name="reg_link_copied">Link copied</string>
     <string name="reg_empty_title">Nobody has registered yet</string>
     <string name="reg_empty_message">Share the public link, add people yourself, or import the answers of your old Google Form.</string>
     <string name="reg_no_matches">Nobody matches the search.</string>

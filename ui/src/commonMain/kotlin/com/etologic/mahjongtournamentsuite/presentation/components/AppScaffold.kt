@@ -94,6 +94,8 @@ fun AppScaffold(
     actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
+    /** A short message at the bottom, such as "Link copied", in place of a dialog. Usually a SnackbarHost. */
+    snackbarHost: @Composable () -> Unit = {},
     autoFocusFirst: Boolean = true,
     /** The faint app logo behind the content. By default it shows while the screen loads. The web never shows it. */
     showBackgroundLogo: Boolean = isLoading,
@@ -260,6 +262,7 @@ fun AppScaffold(
                 }
             },
             floatingActionButtonPosition = floatingActionButtonPosition,
+            snackbarHost = snackbarHost,
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             Box(modifier = Modifier.padding(padding)) {

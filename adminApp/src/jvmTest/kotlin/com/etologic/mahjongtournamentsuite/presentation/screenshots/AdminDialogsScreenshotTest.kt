@@ -38,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesR
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.HandNotDone
 import com.etologic.mahjongtournamentsuite.presentation.screen.HandsNotDoneDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.MakeDrawDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.NewRoleNameDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.OpenTablesReviewDialog
@@ -90,6 +91,12 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun drawExplanation() = dialog("draw-explanation") { DrawExplanationDialog(onDismiss = {}) }
+
+    /** Registrations closed: confirm the draw, with "How does the draw work?" above the buttons as in Create tournament. */
+    @Test
+    fun registrationsDraw() = dialog("registrations-draw") {
+        MakeDrawDialog(confirmed = 16, rounds = 7, tries = null, onConfirm = {}, onDismiss = {})
+    }
 
     @Test
     fun createProgress() = dialog("create-progress") {

@@ -608,7 +608,7 @@
     <string name="registration_error_closed">Anmälan till den här turneringen är stängd.</string>
     <string name="registration_error_not_found">Anmälan hittades inte.\nDen kan ha avbokats.</string>
     <string name="registration_error_open">Stäng anmälan före lottningen.</string>
-    <string name="registration_error_slug_taken">En annan turnering använder det länknamnet.\nVälj ett annat.</string>
+    <string name="registration_error_slug_taken">Det länknamnet används redan.\nVälj ett annat.</string>
     <string name="registration_error_team_full">Laget har redan 4 personer.</string>
     <string name="registration_error_team_name_taken">Ett annat lag har det namnet.</string>
     <string name="registration_error_too_many_rows">Filen är för stor: högst 500 rader.</string>

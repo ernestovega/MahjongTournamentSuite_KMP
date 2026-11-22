@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -18,13 +16,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.Icon
-import androidx.compose.ui.platform.testTag
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
@@ -53,18 +47,18 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
-import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COLOR
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOrganizersField
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
 import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.DateField
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_DURATION_MINUTES
@@ -76,8 +70,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DateField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOrganizersField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
@@ -113,15 +107,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.registration_closes_on_optional
-import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch
-import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch_info
-import mahjongtournamentsuite.adminapp.generated.resources.registration_places_error
-import mahjongtournamentsuite.adminapp.generated.resources.registration_places_optional
-import mahjongtournamentsuite.adminapp.generated.resources.registration_places_placeholder
-import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
-import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
-import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_need_yours
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -154,12 +139,21 @@ import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.registration_closes_on_optional
+import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch
+import mahjongtournamentsuite.adminapp.generated.resources.registration_open_switch_info
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_error
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_optional
+import mahjongtournamentsuite.adminapp.generated.resources.registration_places_placeholder
 import mahjongtournamentsuite.adminapp.generated.resources.rounds
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
+import mahjongtournamentsuite.adminapp.generated.resources.tab_organizers
 import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
 import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
 import mahjongtournamentsuite.adminapp.generated.resources.teams
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_main_organizer_needed
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_need_yours
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -901,15 +895,11 @@ fun CreateTournamentDialog(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     // How the tables of the rounds are drawn, with a flowchart. Centered just above Cancel and Create.
-                    AppTextButton(
-                        onClick = { showDrawExplanation = true },
-                        modifier = Modifier.testTag("drawExplanationButton"),
-                    ) {
-                        Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(Res.string.draw_help_button))
+                    // With registrations open there is no draw now: the button shows in the draw dialog of Registrations.
+                    if (!withRegistration) {
+                        DrawExplanationButton(onClick = { showDrawExplanation = true })
+                        Spacer(Modifier.height(8.dp))
                     }
-                    Spacer(Modifier.height(8.dp))
                     MtsDialogButtons {
                         Button(onClick = ::startCreate, enabled = !isLoading) {
                             Text(stringResource(Res.string.create))

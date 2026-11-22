@@ -1012,7 +1012,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="registration_closes_on_optional">Laatste inschrijfdag (optioneel)</string>
     <string name="reg_title">Inschrijvingen</string>
     <string name="reg_import">Importeren</string>
-    <string name="reg_link_copied">De openbare link is gekopieerd.\nDeel hem in de EMA-kalender, per e-mail of in je groepen.</string>
+    <string name="reg_link_copied">Link gekopieerd</string>
     <string name="reg_empty_title">Nog niemand ingeschreven</string>
     <string name="reg_empty_message">Deel de openbare link, voeg zelf mensen toe of importeer de antwoorden van je oude Google-formulier.</string>
     <string name="reg_no_matches">Niemand komt overeen met de zoekopdracht.</string>

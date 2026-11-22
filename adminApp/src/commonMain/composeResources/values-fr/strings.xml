@@ -1012,7 +1012,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="registration_closes_on_optional">Dernier jour d'inscription (facultatif)</string>
     <string name="reg_title">Inscriptions</string>
     <string name="reg_import">Importer</string>
-    <string name="reg_link_copied">Le lien public est copié.\nPartagez-le sur le calendrier de l'EMA, par e-mail ou dans vos groupes.</string>
+    <string name="reg_link_copied">Lien copié</string>
     <string name="reg_empty_title">Personne n'est encore inscrit</string>
     <string name="reg_empty_message">Partagez le lien public, ajoutez des personnes vous-même ou importez les réponses de votre ancien Google Form.</string>
     <string name="reg_no_matches">Personne ne correspond à la recherche.</string>

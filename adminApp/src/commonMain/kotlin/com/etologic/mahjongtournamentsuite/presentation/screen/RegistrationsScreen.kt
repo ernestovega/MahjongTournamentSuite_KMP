@@ -49,6 +49,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -256,6 +258,8 @@ fun RegistrationsScreen(
     var drawConfirm by remember { mutableStateOf(false) }
     var drawTries by remember { mutableStateOf<Long?>(null) }
     val linkCopied = stringResource(Res.string.reg_link_copied)
+    // Copying the link shows a short message at the bottom, never a dialog.
+    val snackbar = remember { SnackbarHostState() }
 
     fun refresh() = scope.launch {
         loading = true
@@ -302,6 +306,7 @@ fun RegistrationsScreen(
         isLoading = loading || saving,
         showBackgroundLogo = loading && current == null,
         onBack = { navController.popBackStack() },
+        snackbarHost = { SnackbarHost(snackbar) },
         actions = {
             AppTopBarButton(
                 text = stringResource(Res.string.reg_export),
@@ -357,7 +362,10 @@ fun RegistrationsScreen(
                             onSave = ::saveSettings,
                             onCopyLink = {
                                 clipboard.setText(AnnotatedString(current.publicLink))
-                                info = UiText.Plain(linkCopied)
+                                scope.launch {
+                                    snackbar.currentSnackbarData?.dismiss()
+                                    snackbar.showSnackbar(linkCopied)
+                                }
                             },
                         )
                     }
@@ -524,52 +532,79 @@ fun RegistrationsScreen(
         )
     }
     if (drawConfirm && current != null && tournament != null) {
-        TrackedDialog("MakeDraw") {
-            AlertDialog(
-                onDismissRequest = { if (drawTries == null) drawConfirm = false },
-                title = { MtsDialogTitle(stringResource(Res.string.reg_draw_title)) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        val tries = drawTries
-                        if (tries == null) {
-                            MtsDialogText(stringResource(Res.string.reg_draw_message, current.settings.confirmed, tournament.numRounds))
-                        } else {
-                            MtsDialogText(stringResource(Res.string.reg_draw_calculating, tries))
-                            LinearProgressIndicator(Modifier.fillMaxWidth())
-                        }
+        MakeDrawDialog(
+            confirmed = current.settings.confirmed,
+            rounds = tournament.numRounds,
+            tries = drawTries,
+            onConfirm = {
+                drawTries = 0
+                scope.launch {
+                    val result = presenter.makeDraw(tournament, current) { progress ->
+                        scope.launch(Dispatchers.Main) { if (drawTries != null) drawTries = progress.tried }
                     }
-                },
-                confirmButton = {
-                    MtsDialogButtons {
-                        FocusedButton(
-                            enabled = drawTries == null,
-                            onClick = {
-                                drawTries = 0
-                                scope.launch {
-                                    val result = presenter.makeDraw(tournament, current) { progress ->
-                                        scope.launch(Dispatchers.Main) { if (drawTries != null) drawTries = progress.tried }
-                                    }
-                                    drawTries = null
-                                    drawConfirm = false
-                                    when (result) {
-                                        is AppResult.Success -> {
-                                            store.addTournament(result.value)
-                                            withContext(Dispatchers.Main) {
-                                                navController.navigate(TournamentRoute(tournamentId = tournamentId)) {
-                                                    popUpTo(TournamentsRoute)
-                                                }
-                                            }
-                                        }
-                                        is AppResult.Failure -> error = result.error.toUiText()
-                                    }
+                    drawTries = null
+                    drawConfirm = false
+                    when (result) {
+                        is AppResult.Success -> {
+                            store.addTournament(result.value)
+                            withContext(Dispatchers.Main) {
+                                navController.navigate(TournamentRoute(tournamentId = tournamentId)) {
+                                    popUpTo(TournamentsRoute)
                                 }
-                            },
-                        ) { Text(stringResource(Res.string.reg_draw_confirm)) }
-                        if (drawTries == null) FocusedTextButton(onClick = { drawConfirm = false }) { Text(stringResource(Res.string.cancel)) }
+                            }
+                        }
+                        is AppResult.Failure -> error = result.error.toUiText()
                     }
-                },
-            )
-        }
+                }
+            },
+            onDismiss = { drawConfirm = false },
+        )
+    }
+}
+
+/**
+ * Confirms the draw of the confirmed people when the registrations are closed, then shows its progress ([tries] not null).
+ * As in Create tournament, "How does the draw work?" is centered just above the buttons.
+ */
+@Composable
+internal fun MakeDrawDialog(
+    confirmed: Int,
+    rounds: Int,
+    tries: Long?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var showDrawExplanation by remember { mutableStateOf(false) }
+    TrackedDialog("MakeDraw") {
+        AlertDialog(
+            onDismissRequest = { if (tries == null) onDismiss() },
+            title = { MtsDialogTitle(stringResource(Res.string.reg_draw_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (tries == null) {
+                        MtsDialogText(stringResource(Res.string.reg_draw_message, confirmed, rounds))
+                    } else {
+                        MtsDialogText(stringResource(Res.string.reg_draw_calculating, tries))
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
+                }
+            },
+            confirmButton = {
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (tries == null) {
+                        DrawExplanationButton(onClick = { showDrawExplanation = true })
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    MtsDialogButtons {
+                        FocusedButton(enabled = tries == null, onClick = onConfirm) { Text(stringResource(Res.string.reg_draw_confirm)) }
+                        if (tries == null) FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    }
+                }
+            },
+        )
+    }
+    if (showDrawExplanation) {
+        DrawExplanationDialog(onDismiss = { showDrawExplanation = false })
     }
 }
 
