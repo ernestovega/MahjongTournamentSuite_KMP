@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it } from "node:test";
 
+import { readSpreadsheetRecords } from "./playerImport";
 import { normalizeFormEmaId, parseCsv, parseFormTime, readFormRows } from "./registrationImport";
 
 const FORM = [
@@ -51,5 +54,21 @@ describe("import of the old Google Form", () => {
   it("needs the EMA column and at least one answer", () => {
     assert.throws(() => readFormRows("Name,Email\nA,a@b.c"), /EMA/);
     assert.throws(() => readFormRows("EMA number"), /no answers/);
+  });
+
+  it("reads the CSV that the admin app exports, the example of the import", async () => {
+    // The admin app writes this file (RegistrationsCsvTest): the export must always go back in.
+    const buffer = readFileSync(resolve(__dirname, "../../../../testdata/registrations-export.csv"));
+    const rows = readFormRows(await readSpreadsheetRecords("registrations.csv", buffer));
+    assert.deepEqual(rows.map((row) => row.emaId), ["04010001", "04010002", "04010003", "04010004"]);
+    assert.deepEqual(rows.map((row) => row.problems), [[], [], [], []]);
+    assert.equal(rows[0].registeredAt, Date.UTC(2099, 0, 1, 10, 0, 0));
+    assert.equal(rows[0].email, "lucia@example.test");
+    assert.equal(rows[0].firstName, "Lucía");
+    assert.equal(rows[0].lastName, "Martín");
+    assert.equal(rows[0].team, "Red Dragons");
+    assert.equal(rows[2].foodRestrictions, "Vegetarian, no \"spicy\" food");
+    assert.equal(rows[3].firstName, "Somebody Else");
+    assert.equal(rows[3].team, null);
   });
 });

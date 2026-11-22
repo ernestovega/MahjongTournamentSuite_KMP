@@ -50,6 +50,16 @@ class RegistrationsPresenter(
 
     suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.previewImport(tournamentId, fileName, bytes)
 
+    /**
+     * The list as a CSV file that the import reads back (see [RegistrationsCsv]). The app builds it from the list
+     * that it already shows, so it needs no request.
+     */
+    fun exportCsv(tournamentName: String, registrations: AdminRegistrations, registry: List<Player>): RegistrationsExport {
+        val file = RegistrationsExport(RegistrationsCsv.fileName(tournamentName), RegistrationsCsv.build(registrations, registry))
+        AppResult.Success(file).trackAction(telemetry, TelemetryAction.REGISTRATIONS_EXPORTED)
+        return file
+    }
+
     suspend fun applyImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = repository.applyImport(tournamentId, fileName, bytes).trackAction(telemetry, TelemetryAction.REGISTRATIONS_IMPORTED)
 
     /**
@@ -95,3 +105,6 @@ class RegistrationsPresenter(
             .trackAction(telemetry, TelemetryAction.DRAW_MADE)
     }
 }
+
+/** The CSV file of the registrations, ready to save. */
+data class RegistrationsExport(val fileName: String, val content: String)

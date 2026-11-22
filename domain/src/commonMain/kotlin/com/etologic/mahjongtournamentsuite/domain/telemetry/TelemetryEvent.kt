@@ -233,6 +233,9 @@ object TelemetryAction {
     const val REGISTRATION_SETTINGS_UPDATED = "registration_settings_updated"
     const val REGISTRATIONS_IMPORTED = "registrations_imported"
 
+    /** The list of the registrations went to a CSV file, the same format that the import reads. */
+    const val REGISTRATIONS_EXPORTED = "registrations_exported"
+
     /** The draw of a tournament with registrations, with the confirmed people. */
     const val DRAW_MADE = "draw_made"
 
@@ -279,6 +282,7 @@ object TelemetryAction {
         REGISTRATION_REMOVED,
         REGISTRATION_SETTINGS_UPDATED,
         REGISTRATIONS_IMPORTED,
+        REGISTRATIONS_EXPORTED,
         DRAW_MADE,
     )
 }
