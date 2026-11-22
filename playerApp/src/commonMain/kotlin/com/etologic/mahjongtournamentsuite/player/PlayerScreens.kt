@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.foundation.background
@@ -778,9 +777,9 @@ private fun InkStamp(text: String, modifier: Modifier = Modifier) {
                 rotationZ = -12f
                 alpha = 0.7f
             }
-            .border(3.dp, ink, RoundedCornerShape(8.dp))
+            .border(3.dp, ink, MaterialTheme.shapes.small)
             .padding(3.dp)
-            .border(1.dp, ink, RoundedCornerShape(5.dp))
+            .border(1.dp, ink, MaterialTheme.shapes.extraSmall)
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Text(
