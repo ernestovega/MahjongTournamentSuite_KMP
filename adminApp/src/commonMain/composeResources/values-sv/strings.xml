@@ -1085,7 +1085,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_removed_tables">Borden i alla %1$d omgångar. De lottas om.</string>
     <string name="pc_removed_people">Personerna som lämnar: %1$s.</string>
     <string name="pc_removed_teams">Lagen som lämnar, med sina spelare: %1$s.</string>
-    <string name="pc_removed_registrations">Deras anmälningar. De får inget mejl: meddela dem själv.</string>
+    <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
     <string name="pc_added_slots">%1$d tomma platser, att tilldela efteråt.</string>
     <string name="pc_added_teams">%1$d nya lag.</string>
@@ -1094,14 +1094,17 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_kept_people">Övriga spelare, med sin EMA-spelare, sitt konto och sin e-post.</string>
     <string name="pc_kept_teams">Övriga lag, med sitt namn och sina spelare.</string>
     <string name="pc_kept_rounds">Omgångarna, deras tider och deras klockor.</string>
-    <string name="pc_note">Spelarna ser sina nya bord i appen.
-Ingen får mejl. Ändringen registreras i aktiviteten.</string>
+    <string name="pc_note">Alla som berörs får ett mejl.
+Ändringen registreras i aktiviteten.</string>
     <string name="pc_confirm">Gör den nya lottningen</string>
     <string name="pc_back">Tillbaka</string>
     <string name="pc_loading">Laddar spelarna…</string>
     <string name="pc_saving">Sparar den nya lottningen…</string>
     <string name="pc_done_title">Klart</string>
     <string name="pc_done_text">Turneringen har nu %1$d spelare och en ny lottning.</string>
+    <string name="pc_emails_sent">%1$d personer har fått ett mejl.</string>
+    <string name="pc_emails_none">Utan mejl, meddela dem själv:</string>
+    <string name="pc_emails_failed">Mejlet misslyckades, meddela dem själv:</string>
     <string name="pc_locked_title">Antalet spelare kan inte ändras</string>
     <string name="pc_locked_started">Turneringen har redan data vid sina bord.
 Antalet spelare kan bara ändras före den första given.</string>

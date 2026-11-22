@@ -4,6 +4,7 @@ import { before, describe, it } from "node:test";
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { newTournamentId, requireEmulator } from "../testing/firestoreFixtures";
+import { setMailTransportForTests, type OutgoingEmail } from "./mailService";
 import { changePlayerCount } from "./playerCountChange";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import { createTournament } from "./tournamentsService";
@@ -291,5 +292,79 @@ describe("change of the number of players of a tournament with registrations", (
     const slots = await slotsOf(ref);
     assert.deepEqual([17, 18, 19, 20].map((slot) => slots.get(slot)?.assignedEmaId), people);
     assert.equal((await ref.get()).get("registration.maxPlayers") ?? null, null);
+  });
+});
+
+describe("the emails of a change of the number of players", () => {
+  before(requireEmulator);
+
+  it("tells every person affected: who stays, with the new number, who leaves and who gets a place", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(20, { registration: { status: "CLOSED", maxPlayers: 20, closesOn: null, slug: "", confirmed: 2, waiting: 0 } });
+    await ref.update({ contactEmail: "org@example.com" });
+    const stays = `7${tag}9`;
+    const moves = `7${tag}1`;
+    const leaves = `7${tag}5`;
+    const noAddress = `7${tag}6`;
+    await assign(ref, 2, stays, { email: "stays@example.com" });
+    await assign(ref, 9, moves, { email: "moves@example.com" });
+    await assign(ref, 5, leaves, { email: "leaves@example.com" });
+    await assign(ref, 6, noAddress);
+    // The organization is in Spain: Spanish, except for a person who registered in another language.
+    await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(moves).set({ firstName: "Reg", lastName: moves, country: "es" });
+    await ref.collection("registrations").doc(moves).set({
+      name: "Moves", country: "ES", email: "moves@example.com", status: "CONFIRMED", order: 1, paid: false, teamId: null, language: "en", source: "ADMIN", manageToken: "t",
+    });
+    const sent: OutgoingEmail[] = [];
+    setMailTransportForTests(async (email) => {
+      if (email.to === "fails@example.com") throw new Error("SMTP down");
+      sent.push(email);
+    });
+    try {
+      const result = await run(id, 16, { removed: [5, 6, 7, 8] });
+      const to = (address: string) => sent.find((email) => email.to === address);
+
+      // Slot 2 keeps its number; slot 9 is number 5 now (5 to 8 left).
+      assert.match(to("stays@example.com")?.subject ?? "", /^Mesas nuevas en /);
+      assert.match(to("stays@example.com")?.text ?? "", /de 20 a 16/);
+      assert.match(to("stays@example.com")?.text ?? "", /sigue siendo el 2\./);
+      assert.match(to("stays@example.com")?.text ?? "", /\/\?tournament=/);
+      assert.match(to("moves@example.com")?.subject ?? "", /^New tables in /);
+      assert.match(to("moves@example.com")?.text ?? "", /changes from 9 to 5/);
+      assert.match(to("leaves@example.com")?.subject ?? "", /^Ya no juegas en /);
+      assert.match(to("leaves@example.com")?.text ?? "", /org@example\.com/);
+      assert.equal(sent.every((email) => email.replyTo === "org@example.com"), true);
+      assert.equal(sent.length, 3);
+      assert.deepEqual(result.emails, { sent: 3, noEmail: [noAddress], failed: [] });
+    } finally {
+      setMailTransportForTests(null);
+    }
+  });
+
+  it("gives a place by email to the waiting list, and a failed email never undoes the change", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(16, { registration: { status: "CLOSED", maxPlayers: 16, closesOn: null, slug: "", confirmed: 0, waiting: 1 } });
+    const waiting = `8${tag}1`;
+    const failing = `8${tag}2`;
+    await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(waiting).set({ firstName: "Wait", lastName: waiting, country: "es" });
+    await ref.collection("registrations").doc(waiting).set({
+      name: "Wait", country: "ES", email: "waiting@example.com", status: "WAITING", order: 1, paid: false, teamId: null, language: "fr", source: "ADMIN", manageToken: "t",
+    });
+    await assign(ref, 3, failing, { email: "fails@example.com" });
+    const sent: OutgoingEmail[] = [];
+    setMailTransportForTests(async (email) => {
+      if (email.to === "fails@example.com") throw new Error("SMTP down");
+      sent.push(email);
+    });
+    try {
+      const result = await run(id, 20, { waiting: [waiting] });
+      assert.equal(result.tournament.numPlayers, 20);
+      assert.equal(sent.length, 1);
+      assert.match(sent[0].subject, /^Vous avez une place à /);
+      assert.match(sent[0].text, /numéro de joueur est le 17/);
+      assert.deepEqual(result.emails, { sent: 1, noEmail: [], failed: [failing] });
+    } finally {
+      setMailTransportForTests(null);
+    }
   });
 });

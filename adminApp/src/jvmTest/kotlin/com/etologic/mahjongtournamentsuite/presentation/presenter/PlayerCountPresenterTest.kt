@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
@@ -121,7 +122,7 @@ class PlayerCountPresenterTest {
         val tournaments = FakeTournamentRepository().apply { writesSucceed = true }
         var progressCalls = 0
         val result = presenter(tournaments).change(individual, 16, listOf(5, 6, 7, 8), emptyList()) { progressCalls++ }
-        assertEquals(16, assertIs<AppResult.Success<Tournament>>(result).value.numPlayers)
+        assertEquals(16, assertIs<AppResult.Success<PlayerCountOutcome>>(result).value.tournament.numPlayers)
         val request = tournaments.playerCountRequest!!
         assertEquals("t1", request.tournamentId)
         assertEquals((1..16).toList(), request.players.map { it.id }.sorted())

@@ -1085,7 +1085,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_removed_tables">De tafels van alle %1$d rondes. Ze worden opnieuw geloot.</string>
     <string name="pc_removed_people">De personen die vertrekken: %1$s.</string>
     <string name="pc_removed_teams">De teams die vertrekken, met hun spelers: %1$s.</string>
-    <string name="pc_removed_registrations">Hun inschrijvingen. Ze krijgen geen e-mail: laat het ze zelf weten.</string>
+    <string name="pc_removed_registrations">Hun inschrijvingen.</string>
     <string name="pc_added_label">Wordt toegevoegd:</string>
     <string name="pc_added_slots">%1$d lege plaatsen, om daarna toe te wijzen.</string>
     <string name="pc_added_teams">%1$d nieuwe teams.</string>
@@ -1094,14 +1094,17 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_kept_people">De overige spelers, met hun EMA-speler, account en e-mail.</string>
     <string name="pc_kept_teams">De overige teams, met hun naam en spelers.</string>
     <string name="pc_kept_rounds">De rondes, hun tijden en hun klokken.</string>
-    <string name="pc_note">De spelers zien hun nieuwe tafels in de app.
-Niemand krijgt een e-mail. De wijziging staat in de activiteit.</string>
+    <string name="pc_note">Iedereen die het raakt krijgt een e-mail.
+De wijziging staat in de activiteit.</string>
     <string name="pc_confirm">Opnieuw loten</string>
     <string name="pc_back">Terug</string>
     <string name="pc_loading">Spelers laden…</string>
     <string name="pc_saving">Nieuwe loting opslaan…</string>
     <string name="pc_done_title">Klaar</string>
     <string name="pc_done_text">Het toernooi heeft nu %1$d spelers en een nieuwe loting.</string>
+    <string name="pc_emails_sent">%1$d mensen hebben een e-mail gekregen.</string>
+    <string name="pc_emails_none">Zonder e-mail, laat het ze zelf weten:</string>
+    <string name="pc_emails_failed">De e-mail is mislukt, laat het ze zelf weten:</string>
     <string name="pc_locked_title">Het aantal spelers kan niet wijzigen</string>
     <string name="pc_locked_started">Het toernooi heeft al gegevens aan zijn tafels.
 Het aantal spelers kan alleen voor de eerste hand wijzigen.</string>

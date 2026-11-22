@@ -1099,7 +1099,7 @@
     <string name="pc_removed_tables">Столы всех %1$d раундов. Они разыгрываются заново.</string>
     <string name="pc_removed_people">Уходящие игроки: %1$s.</string>
     <string name="pc_removed_teams">Уходящие команды с их игроками: %1$s.</string>
-    <string name="pc_removed_registrations">Их регистрации. Писем они не получат: сообщи им сам.</string>
+    <string name="pc_removed_registrations">Их регистрации.</string>
     <string name="pc_added_label">Добавляется:</string>
     <string name="pc_added_slots">%1$d пустых мест, которые назначишь потом.</string>
     <string name="pc_added_teams">%1$d новых команд.</string>
@@ -1108,14 +1108,17 @@
     <string name="pc_kept_people">Остальные игроки с их игроком EMA, аккаунтом и почтой.</string>
     <string name="pc_kept_teams">Остальные команды с их названием и игроками.</string>
     <string name="pc_kept_rounds">Раунды, их расписание и часы.</string>
-    <string name="pc_note">Игроки увидят свои новые столы в приложении.
-Письма никому не отправляются. Изменение записывается в журнал действий.</string>
+    <string name="pc_note">Каждый, кого это касается, получит письмо.
+Изменение записывается в журнал действий.</string>
     <string name="pc_confirm">Провести жеребьёвку</string>
     <string name="pc_back">Назад</string>
     <string name="pc_loading">Загрузка игроков…</string>
     <string name="pc_saving">Сохранение новой жеребьёвки…</string>
     <string name="pc_done_title">Готово</string>
     <string name="pc_done_text">Теперь в турнире %1$d игроков и новая жеребьёвка.</string>
+    <string name="pc_emails_sent">Письмо получили: %1$d.</string>
+    <string name="pc_emails_none">Без адреса, сообщи им сам:</string>
+    <string name="pc_emails_failed">Письмо не ушло, сообщи им сам:</string>
     <string name="pc_locked_title">Число игроков изменить нельзя</string>
     <string name="pc_locked_started">В турнире уже есть данные за столами.
 Число игроков можно изменить только до первой раздачи.</string>

@@ -1085,7 +1085,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_removed_tables">The tables of all %1$d rounds. They are drawn again.</string>
     <string name="pc_removed_people">The people who leave: %1$s.</string>
     <string name="pc_removed_teams">The teams that leave, with their players: %1$s.</string>
-    <string name="pc_removed_registrations">Their registrations. They get no email: tell them yourself.</string>
+    <string name="pc_removed_registrations">Their registrations.</string>
     <string name="pc_added_label">Added:</string>
     <string name="pc_added_slots">%1$d empty places, to assign afterwards.</string>
     <string name="pc_added_teams">%1$d new teams.</string>
@@ -1094,14 +1094,17 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_kept_people">The other players, with their EMA player, account and email.</string>
     <string name="pc_kept_teams">The other teams, with their names and players.</string>
     <string name="pc_kept_rounds">The rounds, their times and their clocks.</string>
-    <string name="pc_note">The players see their new tables in the app.
-Nobody gets an email. The change is recorded in the activity.</string>
+    <string name="pc_note">Every person affected gets an email.
+The change is recorded in the activity.</string>
     <string name="pc_confirm">Make the new draw</string>
     <string name="pc_back">Back</string>
     <string name="pc_loading">Loading the players…</string>
     <string name="pc_saving">Saving the new draw…</string>
     <string name="pc_done_title">Done</string>
     <string name="pc_done_text">The tournament now has %1$d players and a new draw.</string>
+    <string name="pc_emails_sent">%1$d people got an email.</string>
+    <string name="pc_emails_none">Without an email, tell them yourself:</string>
+    <string name="pc_emails_failed">The email failed, tell them yourself:</string>
     <string name="pc_locked_title">The number of players cannot change</string>
     <string name="pc_locked_started">The tournament already has data in its tables.
 The number of players can only change before the first hand.</string>

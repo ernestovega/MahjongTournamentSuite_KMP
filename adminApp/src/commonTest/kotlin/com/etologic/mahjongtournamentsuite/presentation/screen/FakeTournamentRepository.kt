@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.*
 import com.etologic.mahjongtournamentsuite.domain.repository.*
 
@@ -340,11 +341,15 @@ internal class FakeTournamentRepository : TournamentRepository {
     /** Makes the change of the number of players fail with this error. */
     var playerCountError: AppError? = null
 
-    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<Tournament> {
+    /** The emails of the change: how many were sent, and who got none. */
+    var playerCountEmails: PlayerCountOutcome = PlayerCountOutcome(Tournament(id = "", name = "", isTeams = false, numPlayers = 0, numRounds = 0))
+
+    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<PlayerCountOutcome> {
         calls += "playerCount ${request.players.size}"
         playerCountError?.let { return AppResult.Failure(it) }
         playerCountRequest = request
-        return writeResult(Tournament(id = request.tournamentId, name = "Open", isTeams = false, numPlayers = request.players.size, numRounds = 1, numTries = request.numTries))
+        val tournament = Tournament(id = request.tournamentId, name = "Open", isTeams = false, numPlayers = request.players.size, numRounds = 1, numTries = request.numTries)
+        return writeResult(playerCountEmails.copy(tournament = tournament))
     }
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = writeResult(Unit)
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = AppResult.Success(countries)

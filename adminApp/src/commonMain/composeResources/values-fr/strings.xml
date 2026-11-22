@@ -1085,7 +1085,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_removed_tables">Les tables des %1$d manches. Elles sont tirées à nouveau.</string>
     <string name="pc_removed_people">Les personnes qui partent : %1$s.</string>
     <string name="pc_removed_teams">Les équipes qui partent, avec leurs joueurs : %1$s.</string>
-    <string name="pc_removed_registrations">Leurs inscriptions. Ils ne reçoivent aucun e-mail : préviens-les toi-même.</string>
+    <string name="pc_removed_registrations">Leurs inscriptions.</string>
     <string name="pc_added_label">Est ajouté :</string>
     <string name="pc_added_slots">%1$d places vides, à attribuer ensuite.</string>
     <string name="pc_added_teams">%1$d nouvelles équipes.</string>
@@ -1094,14 +1094,17 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_kept_people">Les autres joueurs, avec leur joueur EMA, leur compte et leur e-mail.</string>
     <string name="pc_kept_teams">Les autres équipes, avec leur nom et leurs joueurs.</string>
     <string name="pc_kept_rounds">Les manches, leurs horaires et leurs horloges.</string>
-    <string name="pc_note">Les joueurs voient leurs nouvelles tables dans l'app.
-Personne ne reçoit d'e-mail. Le changement est enregistré dans l'activité.</string>
+    <string name="pc_note">Chaque personne concernée reçoit un e-mail.
+Le changement est enregistré dans l'activité.</string>
     <string name="pc_confirm">Faire le nouveau tirage</string>
     <string name="pc_back">Retour</string>
     <string name="pc_loading">Chargement des joueurs…</string>
     <string name="pc_saving">Enregistrement du nouveau tirage…</string>
     <string name="pc_done_title">Terminé</string>
     <string name="pc_done_text">Le tournoi a maintenant %1$d joueurs et un nouveau tirage.</string>
+    <string name="pc_emails_sent">%1$d personnes ont reçu un e-mail.</string>
+    <string name="pc_emails_none">Sans e-mail, préviens-les toi-même :</string>
+    <string name="pc_emails_failed">L'e-mail a échoué, préviens-les toi-même :</string>
     <string name="pc_locked_title">Le nombre de joueurs ne peut pas changer</string>
     <string name="pc_locked_started">Le tournoi a déjà des données à ses tables.
 Le nombre de joueurs ne peut changer qu'avant la première main.</string>

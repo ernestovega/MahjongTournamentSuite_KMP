@@ -54,12 +54,15 @@ describe("change of the number of players through the API", () => {
     const id = await tournamentOf(20);
     const reply = await server.request("POST", `/tournaments/${id}/player-count`, { token: clubAdmin.token, body: body(16, [17, 18, 19, 20]) });
     assert.equal(reply.status, 200, JSON.stringify(reply.body));
-    assert.equal((reply.body as { numPlayers: number }).numPlayers, 16);
-    assert.equal((reply.body as { hasTableData: boolean }).hasTableData, false);
+    const answer = reply.body as { tournament: { numPlayers: number }; emails: { sent: number; noEmail: string[]; failed: string[] } };
+    assert.equal(answer.tournament.numPlayers, 16);
+    // The slots of this tournament have no people: nobody to tell.
+    assert.deepEqual(answer.emails, { sent: 0, noEmail: [], failed: [] });
+    assert.equal((reply.body as { tournament: { hasTableData: boolean } }).tournament.hasTableData, false);
 
     const again = await server.request("POST", `/tournaments/${id}/player-count`, { token: superAdmin.token, body: body(20) });
     assert.equal(again.status, 200, JSON.stringify(again.body));
-    assert.equal((again.body as { numPlayers: number }).numPlayers, 20);
+    assert.equal((again.body as { tournament: { numPlayers: number } }).tournament.numPlayers, 20);
 
     const activity = await db.collection(ACTIVITY_COLLECTION).where("tournamentId", "==", id).get();
     const entries = activity.docs.map((doc) => doc.data()).filter((entry) => entry.action === "tournament.playerCount");
@@ -67,6 +70,8 @@ describe("change of the number of players through the API", () => {
     assert.deepEqual(entries.map((entry) => [entry.details.from, entry.details.to]).sort(), [[16, 20], [20, 16]]);
     const removal = entries.find((entry) => entry.details.to === 16);
     assert.deepEqual(removal?.details.removed, ["#17", "#18", "#19", "#20"]);
+    assert.equal(removal?.details.notified, 0);
+    assert.deepEqual(removal?.details.notNotified, []);
   });
 
   it("refuses people without the permission in that tournament", async () => {

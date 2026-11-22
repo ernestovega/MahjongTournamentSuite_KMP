@@ -4,7 +4,10 @@ import { db } from "../firebase";
 import { badRequest, conflict, notFound } from "../api/httpError";
 import { bumpGlobalDataVersion, tableVersionKey, tournamentVersionUpdate } from "./dataVersionsService";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
+import { loadAccountsByEmaId } from "./playerAccountsService";
+import { leaveEmail, placeEmail, sendPlayerCountEmails, stayEmail, type PlayerCountEmailsResult, type PlayerCountRecipient } from "./playerCountEmails";
 import { slotEmails } from "./registrationDraw";
+import { organizationLanguage } from "./registrationEmails";
 import { applyPlayerCountToRegistrations, listStored, loadTournament, type StoredRegistration } from "./registrationsService";
 import { isValidPlayerCount } from "./tournamentContentRules";
 import { drawProblem, type DrawPlayer, type DrawTable } from "./tournamentDraw";
@@ -140,7 +143,13 @@ export type PlayerCountResult = {
   previousPlayers: number;
   removed: Array<{ slotId: number; emaId: string | null; name: string }>;
   promoted: string[];
+  /** The emails to the people affected: who got none, by EMA id, so the organizer tells them. */
+  emails: PlayerCountEmailsResult;
 };
+
+function playerAppUrl(): string {
+  return (process.env.PLAYER_APP_URL ?? "https://mts.mahjongmadrid.com").replace(/\/$/, "");
+}
 
 const WRITES_PER_BATCH = 400;
 
@@ -209,9 +218,11 @@ export async function changePlayerCount(params: {
   // The people of the waiting list must be waiting in the registrations of this tournament.
   const hasRegistrations = snapshot.get("registration") != null;
   let waitingByEma = new Map<string, StoredRegistration>();
+  if (params.waitingEmaIds.length > 0 && !hasRegistrations) throw conflict("This tournament has no registrations", { code: "NO_REGISTRATIONS" });
+  // The registrations give the language and the email of the people who registered, for the emails of the change.
+  const stored = hasRegistrations ? await listStored(await loadTournament(params.tournamentId)) : [];
+  const registrationByEma = new Map(stored.map((registration) => [registration.emaId, registration]));
   if (params.waitingEmaIds.length > 0) {
-    if (!hasRegistrations) throw conflict("This tournament has no registrations", { code: "NO_REGISTRATIONS" });
-    const stored = await listStored(await loadTournament(params.tournamentId));
     waitingByEma = new Map(stored.filter((registration) => registration.status === "WAITING").map((registration) => [registration.emaId, registration]));
     if (params.waitingEmaIds.some((emaId) => !waitingByEma.has(emaId))) {
       throw conflict("A person is not on the waiting list", { code: "NOT_WAITING" });
@@ -219,7 +230,7 @@ export async function changePlayerCount(params: {
   }
   const registry = await Promise.all(params.waitingEmaIds.map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
   const registryCountry = new Map(registry.filter((doc) => doc.exists).map((doc) => [doc.id, String(doc.get("country") ?? "").trim().toUpperCase()]));
-  const emails = await slotEmails([...waitingByEma.values()].filter((registration) => params.waitingEmaIds.includes(registration.emaId)));
+  const waitingEmails = await slotEmails([...waitingByEma.values()].filter((registration) => params.waitingEmaIds.includes(registration.emaId)));
 
   const now = FieldValue.serverTimestamp();
   const newOps: Op[] = [];
@@ -236,7 +247,7 @@ export async function changePlayerCount(params: {
     } else if (fill != null) {
       const registration = waitingByEma.get(fill);
       finalOwner.set(fill, player.id);
-      const email = emails.get(fill) ?? null;
+      const email = waitingEmails.get(fill) ?? null;
       newOps.push({ kind: "set", ref: slotRef, data: {
         id: player.id, team: player.team, name: registration?.name || `Player ${player.id}`, country: registration?.country ?? "",
         assignedEmaId: fill, assignedCountry: registryCountry.get(fill) ?? "", ...(email == null ? {} : { email }),
@@ -341,7 +352,44 @@ export async function changePlayerCount(params: {
   await bumpGlobalDataVersion("tournaments");
   const tournament = await getTournament(params.tournamentId);
   if (tournament == null) throw conflict("The tournament disappeared");
-  return { tournament, previousPlayers, removed: removedPeople, promoted: params.waitingEmaIds };
+
+  // Every person affected gets an email, in the language of the registration, or of the organization.
+  const staying = players.flatMap((player) => {
+    const source = plan.sourceOf.get(player.id);
+    const emaId = source == null ? null : current.find((slot) => slot.id === source)?.emaId ?? null;
+    return source == null || emaId == null ? [] : [{ emaId, oldNumber: source, number: player.id }];
+  });
+  const filled = [...plan.fills.entries()].map(([number, emaId]) => ({ emaId, number }));
+  const accounts = await loadAccountsByEmaId([
+    ...staying.map((person) => person.emaId), ...filled.map((person) => person.emaId),
+    ...removedPeople.flatMap((person) => (person.emaId == null ? [] : [person.emaId])),
+  ]);
+  const pendingEmail = (slotId: number) => {
+    const value = slotById.get(slotId)?.get("email");
+    return typeof value === "string" && value !== "" ? value : null;
+  };
+  const addressOf = (emaId: string, slotId: number | null) =>
+    accounts.get(emaId)?.email ?? (slotId == null ? null : pendingEmail(slotId)) ?? (registrationByEma.get(emaId)?.email || null);
+  const organization = organizationLanguage(String(snapshot.get("hostCountry") ?? ""));
+  const languageOf = (emaId: string) => registrationByEma.get(emaId)?.language ?? organization;
+  const name = tournament.name;
+  const change = { tournament: name, from: previousPlayers, to: target, link: `${playerAppUrl()}/?tournament=${encodeURIComponent(params.tournamentId)}` };
+  const contact = String(snapshot.get("contactEmail") ?? "").trim();
+  const recipients: PlayerCountRecipient[] = [
+    ...staying.map((person) => ({
+      emaId: person.emaId, to: addressOf(person.emaId, person.oldNumber),
+      email: stayEmail(languageOf(person.emaId), { ...change, oldNumber: person.oldNumber, number: person.number }),
+    })),
+    ...filled.map((person) => ({
+      emaId: person.emaId, to: addressOf(person.emaId, null), email: placeEmail(languageOf(person.emaId), { ...change, number: person.number }),
+    })),
+    ...removedPeople.flatMap((person) => (person.emaId == null ? [] : [{
+      emaId: person.emaId, to: addressOf(person.emaId, person.slotId),
+      email: leaveEmail(languageOf(person.emaId), { tournament: name, from: previousPlayers, to: target, contact }),
+    }])),
+  ];
+  const emails = await sendPlayerCountEmails(recipients, contact);
+  return { tournament, previousPlayers, removed: removedPeople, promoted: params.waitingEmaIds, emails };
 }
 
 /** Writes the documents of the old draw back and deletes the new ones that it did not have. Best effort. */

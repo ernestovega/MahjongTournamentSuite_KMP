@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
@@ -190,11 +191,14 @@ class PlayerCountUiTest {
         onNodeWithText("The people who leave: #5 · Name 5, #6 · Player 6, #7 · Name 7, #8 · Name 8.").assertIsDisplayed()
         onNodeWithText("How does the draw work?").assertIsDisplayed()
         // Without registrations, nothing is said about them.
-        assertTrue(onAllNodesWithText("Their registrations. They get no email: tell them yourself.").fetchSemanticsNodes().isEmpty())
+        assertTrue(onAllNodesWithText("Their registrations.").fetchSemanticsNodes().isEmpty())
+        onNodeWithText("Every person affected gets an email", substring = true).assertIsDisplayed()
 
         click("playerCountConfirmButton")
         waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
         onNodeWithText("The tournament now has 16 players and a new draw.").assertIsDisplayed()
+        onNodeWithText("0 people got an email.").assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountNoEmail").fetchSemanticsNodes().isEmpty())
 
         val request = world.server.playerCountRequest!!
         assertEquals(listOf(5, 6, 7, 8), request.removedSlotIds)
@@ -286,6 +290,24 @@ class PlayerCountUiTest {
         onNodeWithTag("playerCountSearch").performTextReplacement("Name 10")
         waitForIdle()
         assertEquals(listOf(3), shownTeams())
+    }
+
+    @Test
+    fun theResultSaysWhoGotNoEmailByName() = runComposeUiTest {
+        val world = World(individual, slots(20))
+        world.server.playerCountEmails = PlayerCountOutcome(Tournament(id = "", name = "", isTeams = false, numPlayers = 0, numRounds = 0), emailsSent = 14, noEmail = listOf("10000005"), emailFailed = listOf("10000007"))
+        showFlow(world, individual)
+        press()
+        onNodeWithContentDescription("One table less").performClick()
+        listOf(5, 6, 7, 8).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        click("playerCountConfirmButton")
+        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("14 people got an email.").assertIsDisplayed()
+        onNodeWithText("Without an email, tell them yourself:").assertIsDisplayed()
+        onNodeWithText("#5 · Name 5").assertIsDisplayed()
+        onNodeWithText("The email failed, tell them yourself:").assertIsDisplayed()
+        onNodeWithText("#7 · Name 7").assertIsDisplayed()
     }
 
     @Test

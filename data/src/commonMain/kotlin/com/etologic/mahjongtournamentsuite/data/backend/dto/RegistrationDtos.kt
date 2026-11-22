@@ -218,6 +218,20 @@ data class PlayerCountRequestDto(
     val waitingEmaIds: List<String>,
 )
 
+/** The answer of POST /tournaments/{id}/player-count: the tournament, and who got no email (EMA numbers). */
+@Serializable
+data class PlayerCountResponseDto(
+    val tournament: TournamentDto,
+    val emails: PlayerCountEmailsDto = PlayerCountEmailsDto(),
+)
+
+@Serializable
+data class PlayerCountEmailsDto(
+    val sent: Int = 0,
+    val noEmail: List<String> = emptyList(),
+    val failed: List<String> = emptyList(),
+)
+
 @Serializable
 data class RegistrationLinkDto(
     val tournamentId: String,

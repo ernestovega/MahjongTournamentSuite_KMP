@@ -1427,9 +1427,11 @@ export function tournamentsRouter(): Router {
           to: result.tournament.numPlayers,
           removed: result.removed.map((person) => person.emaId ?? `#${person.slotId}`),
           promoted: result.promoted,
+          notified: result.emails.sent,
+          notNotified: [...result.emails.noEmail, ...result.emails.failed],
         },
       });
-      res.status(200).json(result.tournament);
+      res.status(200).json({ tournament: result.tournament, emails: result.emails });
     }),
   );
 

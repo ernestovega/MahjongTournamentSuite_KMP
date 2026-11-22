@@ -48,10 +48,14 @@ with no hand does not stop it. When it is not possible, the button looks off and
   lowest team numbers. Default names ("Player N", "Team N") follow the new number; real names stay.
 - The removed slots and teams are deleted, and so are the old tables. The new tables are written with a higher version,
   so every phone and screen loads the new draw.
-- With registrations: the people who leave lose their registration, with no email. The people of the waiting list who
-  get a place are confirmed. A maximum of places, when there was one, becomes the new number.
-- The activity log records `tournament.playerCount` with the old and new number, who left and who came. Nobody gets an
-  email: the organizer tells the people.
+- With registrations: the people who leave lose their registration. The people of the waiting list who get a place
+  are confirmed. A maximum of places, when there was one, becomes the new number.
+- Every person affected gets an email (`playerCountEmails.ts`, in the language of the registration or of the
+  organization, with the contact email as reply-to): the players who stay (new tables, and their player number when it
+  changes), the people who leave, and the people of the waiting list who get a place. The answer of the server lists
+  who got none (no address, or the send failed), and the app shows them by name so the organizer tells them.
+- The activity log records `tournament.playerCount` with the old and new number, who left and who came, and how many
+  people were told.
 - Any failure while writing puts the old draw back.
 
 Other codes: `BAD_PLAYER_COUNT` (not a multiple of 4, under 16 or over 400), `SAME_PLAYER_COUNT`, `BAD_REMOVED_SLOTS`,

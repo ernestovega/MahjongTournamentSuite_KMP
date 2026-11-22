@@ -1085,7 +1085,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_removed_tables">Die Tische aller %1$d Runden. Sie werden neu ausgelost.</string>
     <string name="pc_removed_people">Die Personen, die gehen: %1$s.</string>
     <string name="pc_removed_teams">Die Teams, die gehen, mit ihren Spielern: %1$s.</string>
-    <string name="pc_removed_registrations">Ihre Anmeldungen. Sie bekommen keine E-Mail: sag es ihnen selbst.</string>
+    <string name="pc_removed_registrations">Ihre Anmeldungen.</string>
     <string name="pc_added_label">Wird hinzugefügt:</string>
     <string name="pc_added_slots">%1$d leere Plätze, die du danach zuweist.</string>
     <string name="pc_added_teams">%1$d neue Teams.</string>
@@ -1094,14 +1094,17 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_kept_people">Die übrigen Spieler, mit EMA-Spieler, Konto und E-Mail.</string>
     <string name="pc_kept_teams">Die übrigen Teams, mit Namen und Spielern.</string>
     <string name="pc_kept_rounds">Die Runden, ihre Zeiten und ihre Uhren.</string>
-    <string name="pc_note">Die Spieler sehen ihre neuen Tische in der App.
-Niemand bekommt eine E-Mail. Die Änderung steht in der Aktivität.</string>
+    <string name="pc_note">Jede betroffene Person bekommt eine E-Mail.
+Die Änderung steht in der Aktivität.</string>
     <string name="pc_confirm">Neu auslosen</string>
     <string name="pc_back">Zurück</string>
     <string name="pc_loading">Spieler werden geladen…</string>
     <string name="pc_saving">Neue Auslosung wird gespeichert…</string>
     <string name="pc_done_title">Erledigt</string>
     <string name="pc_done_text">Das Turnier hat jetzt %1$d Spieler und eine neue Auslosung.</string>
+    <string name="pc_emails_sent">%1$d Personen haben eine E-Mail bekommen.</string>
+    <string name="pc_emails_none">Ohne E-Mail, sag es ihnen selbst:</string>
+    <string name="pc_emails_failed">Die E-Mail ist fehlgeschlagen, sag es ihnen selbst:</string>
     <string name="pc_locked_title">Die Spielerzahl kann nicht geändert werden</string>
     <string name="pc_locked_started">Das Turnier hat schon Daten an seinen Tischen.
 Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>

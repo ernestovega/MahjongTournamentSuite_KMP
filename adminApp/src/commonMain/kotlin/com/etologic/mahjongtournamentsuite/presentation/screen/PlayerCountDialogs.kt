@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -84,6 +85,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_confirm_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_continue
 import mahjongtournamentsuite.adminapp.generated.resources.pc_count
 import mahjongtournamentsuite.adminapp.generated.resources.pc_done_text
+import mahjongtournamentsuite.adminapp.generated.resources.pc_emails_failed
+import mahjongtournamentsuite.adminapp.generated.resources.pc_emails_none
+import mahjongtournamentsuite.adminapp.generated.resources.pc_emails_sent
 import mahjongtournamentsuite.adminapp.generated.resources.pc_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_empty_slot
 import mahjongtournamentsuite.adminapp.generated.resources.pc_from_to
@@ -140,7 +144,7 @@ fun PlayerCountFlow(
     var form by remember(tournament.id) { mutableStateOf(PlayerCountForm(target = tournament.numPlayers)) }
     var step by remember { mutableStateOf(PlayerCountStep.CHOOSE) }
     var tries by remember { mutableStateOf<Long?>(null) }
-    var result by remember { mutableStateOf<Tournament?>(null) }
+    var result by remember { mutableStateOf<PlayerCountOutcome?>(null) }
 
     LaunchedEffect(tournament.id) {
         when (val loaded = presenter.load(tournament)) {
@@ -162,7 +166,17 @@ fun PlayerCountFlow(
         return
     }
     result?.let { changed ->
-        PlayerCountDoneDialog(previous = tournament.numPlayers, now = changed.numPlayers, onClose = onDismiss)
+        // The people without an email, by their names in the lists of the dialog.
+        val names = loaded.slots.filter { it.emaId != null }.associate { it.emaId!! to it.label() } +
+            loaded.waiting.associate { it.emaId to it.name }
+        PlayerCountDoneDialog(
+            previous = tournament.numPlayers,
+            now = changed.tournament.numPlayers,
+            emailsSent = changed.emailsSent,
+            noEmail = changed.noEmail.map { names[it] ?: it },
+            emailFailed = changed.emailFailed.map { names[it] ?: it },
+            onClose = onDismiss,
+        )
         return
     }
     when (step) {
@@ -183,8 +197,8 @@ fun PlayerCountFlow(
                     val removed = PlayerCountRules.removedSlots(tournament.isTeams, form.chosen, loaded.teams)
                     when (val changed = presenter.change(tournament, form.target, removed, form.waiting) { tries = it.tried }) {
                         is AppResult.Success -> {
-                            store.updateTournament(changed.value)
-                            onChanged(changed.value)
+                            store.updateTournament(changed.value.tournament)
+                            onChanged(changed.value.tournament)
                             result = changed.value
                         }
                         is AppResult.Failure -> {
@@ -565,8 +579,8 @@ internal fun PlayerCountConfirmDialog(
 
 /** A label and its bullet lines; each line hangs under its bullet. */
 @Composable
-private fun BulletGroup(label: String, items: List<String>) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun BulletGroup(label: String, items: List<String>, tag: String? = null) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = if (tag == null) Modifier else Modifier.testTag(tag)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
         items.forEach { item ->
             Row {
@@ -594,13 +608,32 @@ internal fun PlayerCountProgressDialog(text: String) {
 }
 
 @Composable
-internal fun PlayerCountDoneDialog(previous: Int, now: Int, onClose: () -> Unit) {
+internal fun PlayerCountDoneDialog(
+    previous: Int,
+    now: Int,
+    emailsSent: Int,
+    noEmail: List<String>,
+    emailFailed: List<String>,
+    onClose: () -> Unit,
+) {
     TrackedDialog("PlayerCountDone") {
         AlertDialog(
             modifier = Modifier.testTag("playerCountDone"),
             onDismissRequest = onClose,
             title = { MtsDialogTitle(stringResource(Res.string.pc_done_title), subtitle = stringResource(Res.string.pc_from_to, previous, now)) },
-            text = { MtsDialogText(stringResource(Res.string.pc_done_text, now)) },
+            text = {
+                ScrollableColumnWithScrollbar(
+                    state = rememberScrollState(),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    MtsDialogText(stringResource(Res.string.pc_done_text, now))
+                    MtsDialogText(stringResource(Res.string.pc_emails_sent, emailsSent), modifier = Modifier.testTag("playerCountEmailsSent"))
+                    // The organizer tells these people by hand: they have no email, or the email failed.
+                    if (noEmail.isNotEmpty()) BulletGroup(stringResource(Res.string.pc_emails_none), noEmail, "playerCountNoEmail")
+                    if (emailFailed.isNotEmpty()) BulletGroup(stringResource(Res.string.pc_emails_failed), emailFailed, "playerCountEmailFailed")
+                }
+            },
             confirmButton = {
                 MtsDialogButtons {
                     Button(onClick = onClose) { Text(stringResource(Res.string.close)) }

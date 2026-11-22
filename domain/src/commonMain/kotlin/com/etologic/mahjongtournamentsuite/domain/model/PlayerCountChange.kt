@@ -72,3 +72,14 @@ object PlayerCountRules {
 }
 
 enum class PlayerCountBlocker { DRAW_PENDING, COMPLETED, STARTED }
+
+/**
+ * The result of a change of the number of players: the tournament as it is now, and the emails to the people
+ * affected. [noEmail] and [emailFailed] hold the EMA numbers of the people who got none, so the organizer tells them.
+ */
+data class PlayerCountOutcome(
+    val tournament: Tournament,
+    val emailsSent: Int = 0,
+    val noEmail: List<String> = emptyList(),
+    val emailFailed: List<String> = emptyList(),
+)

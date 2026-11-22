@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
@@ -92,7 +93,7 @@ class PlayerCountPresenter(
         removedSlotIds: List<Int>,
         waitingEmaIds: List<String>,
         onProgress: (TournamentScheduleCalcProgress) -> Unit,
-    ): AppResult<Tournament> {
+    ): AppResult<PlayerCountOutcome> {
         if (!PlayerCountRules.isValidTarget(tournament.numPlayers, target)) {
             return AppResult.Failure(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, listOf(target.toString())))
         }

@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlo
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountChooseDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountDoneDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountLockedDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
@@ -166,6 +167,19 @@ class AdminDialogsScreenshotTest {
             onConfirm = {},
             onBack = {},
             onDismiss = {},
+        )
+    }
+
+    /** The result: how many people got an email, and who the organizer must tell by hand. */
+    @Test
+    fun playerCountDone() = dialog("player-count-done") {
+        PlayerCountDoneDialog(
+            previous = 20,
+            now = 16,
+            emailsSent = 17,
+            noEmail = listOf("#6 · " + nameOf(6), "#12 · " + nameOf(12)),
+            emailFailed = listOf("#14 · " + nameOf(14)),
+            onClose = {},
         )
     }
 

@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerCountRequestDt
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DrawPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DrawTableDto
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountChangeRequest
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
@@ -462,7 +463,7 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<Tournament> = runCatching {
+    override suspend fun changePlayerCount(request: PlayerCountChangeRequest): AppResult<PlayerCountOutcome> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.changePlayerCount(
                 idToken = idToken,
@@ -477,7 +478,12 @@ class DefaultTournamentRepository(
             )
             // The slots, the teams, the rounds and every table are new.
             cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY, "tournament:${request.tournamentId}:")
-            dto.toDomain()
+            PlayerCountOutcome(
+                tournament = dto.tournament.toDomain(),
+                emailsSent = dto.emails.sent,
+                noEmail = dto.emails.noEmail,
+                emailFailed = dto.emails.failed,
+            )
         }
     }.fold(
         onSuccess = { AppResult.Success(it) },

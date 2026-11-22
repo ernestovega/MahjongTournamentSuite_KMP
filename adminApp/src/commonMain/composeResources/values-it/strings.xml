@@ -1085,7 +1085,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_removed_tables">I tavoli di tutti i %1$d turni. Vengono sorteggiati di nuovo.</string>
     <string name="pc_removed_people">Le persone che se ne vanno: %1$s.</string>
     <string name="pc_removed_teams">Le squadre che se ne vanno, con i loro giocatori: %1$s.</string>
-    <string name="pc_removed_registrations">Le loro iscrizioni. Non ricevono nessuna email: avvisali tu.</string>
+    <string name="pc_removed_registrations">Le loro iscrizioni.</string>
     <string name="pc_added_label">Si aggiunge:</string>
     <string name="pc_added_slots">%1$d posti vuoti, da assegnare dopo.</string>
     <string name="pc_added_teams">%1$d squadre nuove.</string>
@@ -1094,14 +1094,17 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_kept_people">Gli altri giocatori, con il loro giocatore EMA, l'account e l'email.</string>
     <string name="pc_kept_teams">Le altre squadre, con il loro nome e i loro giocatori.</string>
     <string name="pc_kept_rounds">I turni, i loro orari e i loro orologi.</string>
-    <string name="pc_note">I giocatori vedono i nuovi tavoli nell'app.
-Nessuno riceve email. La modifica resta registrata nell'attività.</string>
+    <string name="pc_note">Ogni persona coinvolta riceve un'email.
+La modifica resta registrata nell'attività.</string>
     <string name="pc_confirm">Fai il nuovo sorteggio</string>
     <string name="pc_back">Indietro</string>
     <string name="pc_loading">Caricamento dei giocatori…</string>
     <string name="pc_saving">Salvataggio del nuovo sorteggio…</string>
     <string name="pc_done_title">Fatto</string>
     <string name="pc_done_text">Il torneo ora ha %1$d giocatori e un nuovo sorteggio.</string>
+    <string name="pc_emails_sent">%1$d persone hanno ricevuto un'email.</string>
+    <string name="pc_emails_none">Senza email, avvisali tu:</string>
+    <string name="pc_emails_failed">L'email non è partita, avvisali tu:</string>
     <string name="pc_locked_title">Il numero di giocatori non si può cambiare</string>
     <string name="pc_locked_started">Il torneo ha già dati nei suoi tavoli.
 Il numero di giocatori si può cambiare solo prima della prima mano.</string>

@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.40",
+  "version": "1.0.41",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -9663,6 +9663,27 @@
      "outcome"
     ]
    },
+   "PlayerCountEmails": {
+    "type": "object",
+    "properties": {
+     "sent": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "noEmail": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "failed": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
+   },
    "PlayerCountRequest": {
     "type": "object",
     "properties": {
@@ -9702,6 +9723,20 @@
      "tables",
      "removedSlotIds",
      "waitingEmaIds"
+    ]
+   },
+   "PlayerCountResponse": {
+    "type": "object",
+    "properties": {
+     "tournament": {
+      "$ref": "#/components/schemas/Tournament"
+     },
+     "emails": {
+      "$ref": "#/components/schemas/PlayerCountEmails"
+     }
+    },
+    "required": [
+     "tournament"
     ]
    },
    "PlayerEmailItem": {
