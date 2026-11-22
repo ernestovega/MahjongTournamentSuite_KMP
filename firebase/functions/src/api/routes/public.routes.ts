@@ -246,11 +246,9 @@ export function publicRouter(): Router {
     res.status(200).json({ standings: await loadStandings(emaId, ids.filter((id) => allowed.has(id))) });
   }));
 
-  // The EMA registry: name, country and number. The photos stay private.
+  // The EMA registry: name, country, number and photo (the photos come from the public EMA website).
   router.get("/players", handle(async (_req, res) => {
-    const players = (await listPlayers())
-      .filter((player) => !player.hiddenFromPublic)
-      .map((player) => ({ ...player, photoUrl: null }));
+    const players = (await listPlayers()).filter((player) => !player.hiddenFromPublic);
     cacheFor(res, PUBLIC_CACHE_SECONDS.registry);
     res.status(200).json({ players });
   }));

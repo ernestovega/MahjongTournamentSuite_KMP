@@ -76,12 +76,12 @@ describe("what anyone can read without an account", () => {
     assert.ok(seconds(done.cache) > seconds(live.cache));
   });
 
-  it("lists the EMA registry without photos", async () => {
+  it("lists the EMA registry with photos", async () => {
     const { body } = await get("/public/players");
     const ana = body.players.find((p: { emaId: string }) => p.emaId === "20000001");
 
     assert.equal(ana.lastName, "Public");
-    assert.equal(ana.photoUrl, null);
+    assert.equal(ana.photoUrl, "https://example.test/a.png");
   });
 
   it("reads the statistics of a person and the overview", async () => {
