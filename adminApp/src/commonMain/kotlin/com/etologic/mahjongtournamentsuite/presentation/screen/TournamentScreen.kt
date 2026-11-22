@@ -35,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
@@ -477,6 +478,10 @@ fun TournamentScreen(
         TournamentEditDialog(
             tournamentId = tournamentId,
             onDismiss = { editingTournament = false },
+            onPlayerCount = {
+                editingTournament = false
+                navController.navigate(PlayerCountRoute(tournamentId = it.id))
+            },
             onDeleted = {
                 editingTournament = false
                 navController.navigate(TournamentsRoute) {

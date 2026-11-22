@@ -83,6 +83,7 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -356,6 +357,10 @@ fun TournamentsScreen(
         EditTournamentDialog(
             tournament = tournament,
             onDismiss = { editDialogTournament = null },
+            onPlayerCount = {
+                editDialogTournament = null
+                navController.navigate(PlayerCountRoute(tournamentId = it.id))
+            },
         )
     }
 

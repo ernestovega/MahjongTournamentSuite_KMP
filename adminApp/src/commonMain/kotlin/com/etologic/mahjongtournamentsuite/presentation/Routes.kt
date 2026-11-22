@@ -34,6 +34,16 @@ data class RegistrationsRoute(
     val tournamentId: String,
 )
 
+/**
+ * The change of the number of players of a tournament before its first hand (docs/player-count-change.md).
+ * [started] is true when the screen that opens it already knows that a table has data: it then only explains why.
+ */
+@Serializable
+data class PlayerCountRoute(
+    val tournamentId: String,
+    val started: Boolean = false,
+)
+
 @Serializable
 data class UsersRoute(
     val editUid: String? = null,

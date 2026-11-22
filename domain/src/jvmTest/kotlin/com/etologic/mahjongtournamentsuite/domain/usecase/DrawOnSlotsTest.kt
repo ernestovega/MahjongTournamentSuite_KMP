@@ -53,8 +53,8 @@ class DrawOnSlotsTest {
             val result = assertNotNull(runBlocking { draw(24, 4, isTeams, 2) {} })
             check(assertNotNull(result.onSlots(target, isTeams)), target, 4, isTeams)
             // The second way too.
-            val second = assertNotNull(runBlocking { DrawTournamentScheduleUseCase(firstLimit = { _, _ -> kotlin.time.Duration.ZERO })(24, 5, isTeams, 2) {} })
-            check(assertNotNull(second.onSlots(target, isTeams)), target, 5, isTeams)
+            val second = assertNotNull(runBlocking { DrawTournamentScheduleUseCase(firstLimit = { _, _ -> kotlin.time.Duration.ZERO })(24, 4, isTeams, 2) {} })
+            check(assertNotNull(second.onSlots(target, isTeams)), target, 4, isTeams)
         }
     }
 

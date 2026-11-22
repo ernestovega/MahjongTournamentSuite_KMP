@@ -4,11 +4,15 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountChooseDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountDoneDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.ChooseContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.DoneContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.LockedContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountLockedDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
+import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
+import androidx.compose.foundation.layout.ColumnScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -80,6 +84,9 @@ import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import org.koin.compose.koinInject
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
+import org.jetbrains.compose.resources.stringResource
 import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
@@ -118,39 +125,39 @@ class AdminDialogsScreenshotTest {
         MakeDrawDialog(confirmed = 16, rounds = 7, tries = null, onConfirm = {}, onDismiss = {})
     }
 
-    /** Change of the number of players before the first hand: one table less, two of the four people chosen. */
+    /** Change of the number of players before the first hand, on its own screen: 3 marked, which do not fit in a table yet. */
     @Test
-    fun playerCountRemove() = dialog("player-count-remove") {
+    fun playerCountRemove() = playerCountScreen("player-count-remove") {
         val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 20)
-        PlayerCountChooseDialog(
+        ChooseContent(
             tournament = tournament,
             data = playerCountData(20),
-            form = PlayerCountForm(target = 16, chosen = setOf(5, 11)),
+            form = PlayerCountForm(chosen = setOf(5, 11, 17)),
             onFormChange = {},
             onContinue = {},
-            onDismiss = {},
+            onCancel = {},
         )
     }
 
-    /** The same choice with a search: only the people who match show, and the chosen ones stay chosen. */
+    /** A search: only the people who match show, and the marked ones stay marked; 4 marked fit in one table. */
     @Test
-    fun playerCountSearch() = dialog("player-count-search") {
+    fun playerCountSearch() = playerCountScreen("player-count-search") {
         val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 20)
-        PlayerCountChooseDialog(
+        ChooseContent(
             tournament = tournament,
             data = playerCountData(20),
-            form = PlayerCountForm(target = 16, chosen = setOf(5, 11), query = "ma"),
+            form = PlayerCountForm(chosen = setOf(5, 6, 11, 12), query = "ma"),
             onFormChange = {},
             onContinue = {},
-            onDismiss = {},
+            onCancel = {},
         )
     }
 
-    /** One table more in a tournament with registrations: the new places can take people of the waiting list. */
+    /** One table added in a tournament with registrations: the new places can take people of the waiting list. */
     @Test
-    fun playerCountAdd() = dialog("player-count-add") {
+    fun playerCountAdd() = playerCountScreen("player-count-add") {
         val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = false, numPlayers = 16, registration = ScreenshotData.registrationSettings)
-        PlayerCountChooseDialog(
+        ChooseContent(
             tournament = tournament,
             data = playerCountData(16).copy(
                 waiting = listOf(
@@ -158,17 +165,17 @@ class AdminDialogsScreenshotTest {
                     PlayerCountWaiting("10990137", nameOf(18), 2),
                 ),
             ),
-            form = PlayerCountForm(target = 20, waiting = listOf("10990136")),
+            form = PlayerCountForm(addedTables = 1, waiting = listOf("10990136")),
             onFormChange = {},
             onContinue = {},
-            onDismiss = {},
+            onCancel = {},
         )
     }
 
-    /** The red confirmation: what the new draw deletes, adds and keeps, with "How does the draw work?" above the buttons. */
+    /** The review: what the new draw deletes, adds and keeps, with "How does the draw work?". */
     @Test
-    fun playerCountConfirm() = dialog("player-count-confirm") {
-        PlayerCountConfirmDialog(
+    fun playerCountConfirm() = playerCountScreen("player-count-confirm", step = 1) {
+        ReviewContent(
             summary = PlayerCountSummary(
                 from = 20, to = 16, rounds = 7, isTeams = false, hasRegistrations = true,
                 leaving = listOf("#5 · " + nameOf(5), "#6 · " + nameOf(6), "#11 · " + nameOf(11), "#12 · " + nameOf(12)),
@@ -176,14 +183,23 @@ class AdminDialogsScreenshotTest {
             ),
             onConfirm = {},
             onBack = {},
-            onDismiss = {},
         )
+    }
+
+    /** The last word before the draw, in red: it cannot be undone. */
+    @Test
+    fun playerCountSure() = dialog("player-count-sure") { SureDialog(onConfirm = {}, onDismiss = {}) }
+
+    /** The draw running, after the first way took too long. */
+    @Test
+    fun playerCountWorking() = playerCountScreen("player-count-working", step = 1) {
+        WorkingContent(text = stringResource(Res.string.reg_draw_calculating, 1_234_567), backup = true)
     }
 
     /** The result: how many people got an email, and who the organizer must tell by hand. */
     @Test
-    fun playerCountDone() = dialog("player-count-done") {
-        PlayerCountDoneDialog(
+    fun playerCountDone() = playerCountScreen("player-count-done", step = 2) {
+        DoneContent(
             previous = 20,
             now = 16,
             emailsSent = 17,
@@ -194,7 +210,11 @@ class AdminDialogsScreenshotTest {
     }
 
     @Test
-    fun playerCountLocked() = dialog("player-count-locked") { PlayerCountLockedDialog(PlayerCountBlocker.STARTED, onDismiss = {}) }
+    fun playerCountLocked() = playerCountScreen("player-count-locked", step = null) { LockedContent(PlayerCountBlocker.STARTED, onClose = {}) }
+
+    /** A step of the screen of the change of the number of players, with its top bar and its steps. */
+    private fun playerCountScreen(name: String, step: Int? = 0, content: @Composable ColumnScope.() -> Unit) =
+        adminScreenshots(name) { PlayerCountFrame(subtitle = "Madrid Open 2026", step = step, onBack = {}, content = content) }
 
     private fun playerCountData(count: Int) = PlayerCountData(
         slots = (1..count).map { id -> PlayerCountSlot(id, nameOf(id), "1099${id.toString().padStart(4, '0')}", 0) },

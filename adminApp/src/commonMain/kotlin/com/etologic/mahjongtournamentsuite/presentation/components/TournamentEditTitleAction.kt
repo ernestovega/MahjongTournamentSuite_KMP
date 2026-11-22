@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament
@@ -40,6 +41,7 @@ fun TournamentEditDialog(
     tournamentId: String,
     onDismiss: () -> Unit,
     onDeleted: () -> Unit,
+    onPlayerCount: ((Tournament) -> Unit)? = null,
 ) {
     val store = koinInject<AppMemoryStore>()
     val tournaments by store.tournaments.collectAsState()
@@ -48,5 +50,6 @@ fun TournamentEditDialog(
         tournament = tournament,
         onDismiss = onDismiss,
         onDeleted = onDeleted,
+        onPlayerCount = onPlayerCount,
     )
 }

@@ -73,4 +73,31 @@ class PlayerCountRulesTest {
         assertFalse(PlayerCountRules.isChoiceComplete(16, 20, false, setOf(1), teams, emptyList()))
         assertFalse(PlayerCountRules.isChoiceComplete(16, 16, false, emptySet(), teams, emptyList()))
     }
+
+    @Test
+    fun theNumberAfterTheChangeCountsWhoLeavesAndTheTablesAdded() {
+        assertEquals(16, PlayerCountRules.targetOf(20, 4, 0))
+        assertEquals(28, PlayerCountRules.targetOf(20, 0, 2))
+        assertEquals(20, PlayerCountRules.targetOf(20, 0, 0))
+    }
+
+    @Test
+    fun atLeastTheMinimumStaysAndTheMaximumIsNeverPassed() {
+        assertEquals(0, PlayerCountRules.maxRemovable(16))
+        assertEquals(8, PlayerCountRules.maxRemovable(24))
+        assertTrue(PlayerCountRules.canAddTable(396, 0))
+        assertFalse(PlayerCountRules.canAddTable(396, 1))
+    }
+
+    @Test
+    fun theMarkedPeopleFitInWholeTablesOrSayWhatIsMissing() {
+        assertEquals(PlayerCountRules.MarkedFit(0, 0), PlayerCountRules.markedFit(40, 0))
+        assertTrue(PlayerCountRules.markedFit(40, 8).fits)
+        // 7 marked: one more or three less.
+        assertEquals(PlayerCountRules.MarkedFit(1, 3), PlayerCountRules.markedFit(40, 7))
+        assertEquals(PlayerCountRules.MarkedFit(3, 1), PlayerCountRules.markedFit(40, 1))
+        // With 24 players at most 8 leave: 9 marked can only drop 1.
+        assertEquals(PlayerCountRules.MarkedFit(0, 1), PlayerCountRules.markedFit(24, 9))
+        assertFalse(PlayerCountRules.markedFit(24, 9).fits)
+    }
 }

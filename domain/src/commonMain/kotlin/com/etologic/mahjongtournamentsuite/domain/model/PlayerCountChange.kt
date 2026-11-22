@@ -71,6 +71,30 @@ object PlayerCountRules {
         return keptSlots + newSlots
     }
 
+    /** The number after the change: the current one, less the slots that leave, plus the tables added. */
+    fun targetOf(current: Int, removed: Int, addedTables: Int): Int = current - removed + STEP * addedTables
+
+    /** How many slots can leave: the tournament keeps at least the minimum of players. */
+    fun maxRemovable(current: Int): Int = (current - TournamentPlayerCountValidator.MIN_PLAYERS).coerceAtLeast(0)
+
+    /** True when one more table fits under the maximum. */
+    fun canAddTable(current: Int, addedTables: Int): Boolean = current + STEP * (addedTables + 1) <= MAX_PLAYERS
+
+    /**
+     * How the people marked to leave fit in whole tables: [missing] more to mark, or [extra] to unmark. Both are 0 when
+     * they fit. [missing] is 0 too when marking more would leave fewer players than the minimum.
+     */
+    fun markedFit(current: Int, marked: Int): MarkedFit {
+        val extra = marked % STEP
+        if (extra == 0) return MarkedFit(0, 0)
+        val missing = STEP - extra
+        return MarkedFit(if (marked + missing <= maxRemovable(current)) missing else 0, extra)
+    }
+
+    data class MarkedFit(val missing: Int, val extra: Int) {
+        val fits: Boolean get() = missing == 0 && extra == 0
+    }
+
     /** True when the choice fits the new number: exactly the slots to remove, and no more waiting people than new slots. */
     fun isChoiceComplete(
         current: Int,

@@ -45,6 +45,7 @@ private val savedKinds: List<RouteKind<*>> = listOf(
     kind<OrganizationsRoute>(),
     kind<TournamentRoute>(),
     kind<RegistrationsRoute>(),
+    kind<PlayerCountRoute>(),
     kind<UsersRoute>(),
     kind<RolesRoute>(),
     kind<PlayersRoute>(),

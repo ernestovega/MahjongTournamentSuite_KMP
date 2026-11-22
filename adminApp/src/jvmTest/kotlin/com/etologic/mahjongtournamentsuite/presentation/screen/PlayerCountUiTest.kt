@@ -9,6 +9,7 @@ import kotlin.time.TestTimeSource
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -24,7 +25,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
@@ -67,7 +76,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The change of the number of players (docs/player-count-change.md): the dialog from its first step to the result,
+ * The change of the number of players (docs/player-count-change.md): the screen from its first step to the result,
  * with a server in memory, and the two places that open it.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -145,45 +154,58 @@ class PlayerCountUiTest {
         }
     }
 
-    private fun ComposeUiTest.showFlow(world: World, tournament: Tournament, onDismiss: () -> Unit = {}) {
-        show(world) { PlayerCountFlow(tournament = tournament, onDismiss = onDismiss) }
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountChoose").fetchSemanticsNodes().isNotEmpty() }
+    private fun ComposeUiTest.showScreen(world: World, started: Boolean = false, onBack: () -> Unit = {}) {
+        show(world) { PlayerCountScreen(tournamentId = "t1", started = started, onBack = onBack) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountList").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    /** The node of [tag], scrolled into view first when it is a line of the list. */
+    private fun ComposeUiTest.see(tag: String): SemanticsNodeInteraction {
+        runCatching { onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(tag)) }
+        return onNodeWithTag(tag)
     }
 
     private fun ComposeUiTest.click(tag: String) {
         press()
-        val node = onNodeWithTag(tag)
-        // Rows of the dialog scroll; its buttons do not.
-        runCatching { node.performScrollTo() }
-        node.performClick()
+        see(tag).performClick()
         waitForIdle()
     }
 
+    private fun ComposeUiTest.waitForDone() {
+        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    /** The red button of the review, then the red button of "cannot be undone". */
+    private fun ComposeUiTest.makeTheDraw() {
+        click("playerCountConfirmButton")
+        onNodeWithText("This cannot be undone.", substring = true).assertIsDisplayed()
+        click("playerCountSureButton")
+    }
+
     @Test
-    fun removesATableWithTheFourPeopleTheOrganizerChooses() = runComposeUiTest {
+    fun removesATableWithTheFourPeopleTheOrganizerMarks() = runComposeUiTest {
         val world = World(individual, slots(20))
-        var dismissed = false
-        showFlow(world, individual) { dismissed = true }
+        var back = false
+        showScreen(world) { back = true }
 
-        onNodeWithText("Now: 20 players, 5 tables per round.").assertIsDisplayed()
-        onNodeWithTag("playerCountTarget").assertTextEquals("20 players · 5 tables")
+        see("playerCountNow").assertTextEquals("Now: 20 players, 5 tables per round.")
+        see("playerCountTarget").assertTextEquals("After the change: 20 players, 5 tables per round.")
+        see("playerCountChosen").assertTextEquals("Mark the people who leave, in groups of 4.")
         onNodeWithTag("playerCountContinue").assertIsNotEnabled()
 
-        press()
-
-        onNodeWithContentDescription("One table less").performClick()
-        onNodeWithTag("playerCountTarget").assertTextEquals("16 players · 4 tables")
-        onNodeWithText("Who leaves? Choose 4.").assertIsDisplayed()
+        click("playerCountSlot-5")
+        see("playerCountChosen").assertTextEquals("Marked: 1. Mark 3 more or unmark 1.")
+        listOf(6, 7).forEach { click("playerCountSlot-$it") }
+        see("playerCountChosen").assertTextEquals("Marked: 3. Mark 1 more or unmark 3.")
         onNodeWithTag("playerCountContinue").assertIsNotEnabled()
-
-        listOf(5, 6, 7, 8).forEach { click("playerCountSlot-$it") }
-        onNodeWithTag("playerCountChosen").assertTextEquals("4 of 4 chosen")
-        // A fifth person cannot be chosen.
-        click("playerCountSlot-9")
-        onNodeWithTag("playerCountSlot-9").assertIsOff()
-        onNodeWithTag("playerCountSlot-5").assertIsOn()
-        onNodeWithTag("playerCountContinue").assertIsEnabled().performClick()
-        waitForIdle()
+        click("playerCountSlot-8")
+        see("playerCountChosen").assertTextEquals("Marked: 4. Tables that leave: 1.")
+        see("playerCountTarget").assertTextEquals("After the change: 16 players, 4 tables per round.")
+        // 16 is the minimum: a fifth person cannot be marked, and no table can be added while people leave.
+        see("playerCountSlot-9").assertIsNotEnabled()
+        see("playerCountMore").assertIsNotEnabled()
+        onNodeWithText("To add tables, first unmark the people who leave.").assertIsDisplayed()
+        click("playerCountContinue")
 
         onNodeWithText("Make a new draw?").assertIsDisplayed()
         onNodeWithText("From 20 to 16 players").assertIsDisplayed()
@@ -194,8 +216,8 @@ class PlayerCountUiTest {
         assertTrue(onAllNodesWithText("Their registrations.").fetchSemanticsNodes().isEmpty())
         onNodeWithText("Every person affected gets an email", substring = true).assertIsDisplayed()
 
-        click("playerCountConfirmButton")
-        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+        makeTheDraw()
+        waitForDone()
         onNodeWithText("The tournament now has 16 players and a new draw.").assertIsDisplayed()
         onNodeWithText("0 people got an email.").assertIsDisplayed()
         assertTrue(onAllNodesWithTag("playerCountNoEmail").fetchSemanticsNodes().isEmpty())
@@ -206,47 +228,65 @@ class PlayerCountUiTest {
         assertEquals(8, request.tables.size)
         assertEquals(16, world.store.tournaments.value.single().numPlayers)
 
-        press()
-
-        onNodeWithText("Close").performClick()
-        waitForIdle()
-        assertTrue(dismissed)
+        click("playerCountClose")
+        assertTrue(back)
     }
 
     @Test
-    fun backKeepsTheChoiceAndANewNumberClearsIt() = runComposeUiTest {
+    fun eightMarkedTakeAwayTwoTables() = runComposeUiTest {
+        val world = World(individual.copy(numPlayers = 28), slots(28))
+        world.store.upsertTournaments(listOf(individual.copy(numPlayers = 28)))
+        showScreen(world)
+        (1..8).forEach { click("playerCountSlot-$it") }
+        see("playerCountChosen").assertTextEquals("Marked: 8. Tables that leave: 2.")
+        see("playerCountTarget").assertTextEquals("After the change: 20 players, 5 tables per round.")
+        click("playerCountSlot-9")
+        // 9 marked: one more would leave 16 players, so both ways are offered.
+        see("playerCountChosen").assertTextEquals("Marked: 9. Mark 3 more or unmark 1.")
+        onNodeWithTag("playerCountContinue").assertIsNotEnabled()
+    }
+
+    @Test
+    fun theReviewCanGoBackAndTheChoiceStays() = runComposeUiTest {
         val world = World(individual, slots(20))
-        showFlow(world, individual)
-        press()
-        onNodeWithContentDescription("One table less").performClick()
+        showScreen(world)
         listOf(1, 2, 3, 4).forEach { click("playerCountSlot-$it") }
         click("playerCountContinue")
+        click("playerCountBack")
+        see("playerCountChosen").assertTextEquals("Marked: 4. Tables that leave: 1.")
+        see("playerCountSlot-1").assertIsOn()
+        // The cancel of "cannot be undone" changes nothing.
+        click("playerCountContinue")
+        click("playerCountConfirmButton")
         press()
-        onNodeWithText("Back").performClick()
+        onNodeWithText("Cancel").performClick()
         waitForIdle()
-        onNodeWithTag("playerCountChosen").assertTextEquals("4 of 4 chosen")
-
-        press()
-
-        onNodeWithContentDescription("One table more").performClick()
-        press()
-        onNodeWithContentDescription("One table more").performClick()
-        onNodeWithTag("playerCountTarget").assertTextEquals("24 players · 6 tables")
-        onNodeWithText("4 new places, empty until you assign them in Players.").assertIsDisplayed()
-        press()
-        onNodeWithContentDescription("One table less").performClick()
-        press()
-        onNodeWithContentDescription("One table less").performClick()
-        onNodeWithTag("playerCountChosen").assertTextEquals("0 of 4 chosen")
+        onNodeWithTag("playerCountConfirm").assertIsDisplayed()
         assertNull(world.server.playerCountRequest)
+    }
+
+    @Test
+    fun addedTablesLockTheListOfWhoLeaves() = runComposeUiTest {
+        val world = World(individual, slots(20))
+        showScreen(world)
+        click("playerCountMore")
+        click("playerCountMore")
+        see("playerCountAdded").assertTextEquals("Tables added: 2")
+        see("playerCountTarget").assertTextEquals("After the change: 28 players, 7 tables per round.")
+        onNodeWithText("8 new places, empty until you assign them in Players.").assertIsDisplayed()
+        onNodeWithText("To mark who leaves, first take away the tables added.").assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountSlot-1").fetchSemanticsNodes().isEmpty())
+        onNodeWithTag("playerCountContinue").assertIsEnabled()
+        click("playerCountLess")
+        click("playerCountLess")
+        onNodeWithTag("playerCountContinue").assertIsNotEnabled()
+        see("playerCountSlot-1").assertIsDisplayed()
     }
 
     @Test
     fun theSearchFindsPeopleByNameNumberOrEmaAndKeepsTheChoice() = runComposeUiTest {
         val world = World(individual, slots(20))
-        showFlow(world, individual)
-        press()
-        onNodeWithContentDescription("One table less").performClick()
+        showScreen(world)
         val shown = { (1..20).filter { onAllNodesWithTag("playerCountSlot-$it").fetchSemanticsNodes().isNotEmpty() } }
 
         onNodeWithTag("playerCountSearch").performTextInput("náme 7")
@@ -267,21 +307,19 @@ class PlayerCountUiTest {
         onNodeWithText("Nobody matches the search.").assertIsDisplayed()
 
         // The choice stays while the search hides it, and the whole list comes back with an empty search.
-        onNodeWithTag("playerCountChosen").assertTextEquals("1 of 4 chosen")
+        see("playerCountChosen").assertTextEquals("Marked: 1. Mark 3 more or unmark 1.")
         onNodeWithTag("playerCountSearch").performTextReplacement("")
         waitForIdle()
-        onNodeWithTag("playerCountSlot-7").assertIsOn()
+        see("playerCountSlot-7").assertIsOn()
         assertTrue(onAllNodesWithText("Nobody matches the search.").fetchSemanticsNodes().isEmpty())
     }
 
     @Test
-    fun theSearchFindsTeamsByTheirNameOrPlayersAndTheWaitingListByName() = runComposeUiTest {
+    fun theSearchFindsTeamsByTheirNameOrPlayers() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
-        showFlow(world, teamsTournament)
-        press()
-        onNodeWithContentDescription("One table less").performClick()
+        showScreen(world)
         val shownTeams = { (1..5).filter { onAllNodesWithTag("playerCountTeam-$it").fetchSemanticsNodes().isNotEmpty() } }
         onNodeWithTag("playerCountSearch").performTextInput("team 4")
         waitForIdle()
@@ -296,13 +334,11 @@ class PlayerCountUiTest {
     fun theResultSaysWhoGotNoEmailByName() = runComposeUiTest {
         val world = World(individual, slots(20))
         world.server.playerCountEmails = PlayerCountOutcome(Tournament(id = "", name = "", isTeams = false, numPlayers = 0, numRounds = 0), emailsSent = 14, noEmail = listOf("10000005"), emailFailed = listOf("10000007"))
-        showFlow(world, individual)
-        press()
-        onNodeWithContentDescription("One table less").performClick()
+        showScreen(world)
         listOf(5, 6, 7, 8).forEach { click("playerCountSlot-$it") }
         click("playerCountContinue")
-        click("playerCountConfirmButton")
-        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+        makeTheDraw()
+        waitForDone()
         onNodeWithText("14 people got an email.").assertIsDisplayed()
         onNodeWithText("Without an email, tell them yourself:").assertIsDisplayed()
         onNodeWithText("#5 · Name 5").assertIsDisplayed()
@@ -311,11 +347,12 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun theSmallestTournamentCannotLoseATable() = runComposeUiTest {
+    fun theSmallestTournamentCanOnlyAddTables() = runComposeUiTest {
         val small = individual.copy(numPlayers = 16)
-        showFlow(World(small, slots(16)), small)
-        onNodeWithContentDescription("One table less").assertIsNotEnabled()
-        onNodeWithText("Use − or + to remove or add whole tables of 4 players.").assertIsDisplayed()
+        showScreen(World(small, slots(16)))
+        onNodeWithText("With 16 players nobody can leave: a tournament needs at least 16.").assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountSlot-1").fetchSemanticsNodes().isEmpty())
+        see("playerCountMore").assertIsEnabled()
     }
 
     @Test
@@ -326,11 +363,9 @@ class PlayerCountUiTest {
             AdminRegistration("20000002", "Late Two", "ES", RegistrationStatus.WAITING, 2),
         )
         val world = World(withRegistrations, slots(16), waiting = waiting)
-        showFlow(world, withRegistrations)
+        showScreen(world)
 
-        press()
-
-        onNodeWithContentDescription("One table more").performClick()
+        click("playerCountMore")
         onNodeWithText("Waiting list: up to 4 people (optional)").assertIsDisplayed()
         onNodeWithTag("playerCountContinue").assertIsEnabled()
         click("playerCountWaiting-20000002")
@@ -339,8 +374,8 @@ class PlayerCountUiTest {
         onNodeWithText("From 16 to 20 players").assertIsDisplayed()
         onNodeWithText("3 empty places, numbered after the highest one, to assign afterwards.").assertIsDisplayed()
         onNodeWithText("From the waiting list, with a place now: Late Two.").assertIsDisplayed()
-        click("playerCountConfirmButton")
-        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+        makeTheDraw()
+        waitForDone()
         assertEquals(listOf("20000002"), world.server.playerCountRequest!!.waitingEmaIds)
         assertEquals(emptyList(), world.server.playerCountRequest!!.removedSlotIds)
     }
@@ -350,32 +385,30 @@ class PlayerCountUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
-        showFlow(world, teamsTournament)
+        showScreen(world)
 
-        press()
-
-        onNodeWithContentDescription("One table less").performClick()
-        onNodeWithText("Which teams leave? Choose 1.").assertIsDisplayed()
+        onNodeWithText("Which teams leave?").assertIsDisplayed()
         click("playerCountTeam-3")
+        see("playerCountChosen").assertTextEquals("Teams marked: 1.")
+        // 16 is the minimum: a second team cannot leave.
+        see("playerCountTeam-4").assertIsNotEnabled()
         click("playerCountContinue")
         onNodeWithText("The teams that leave, with their players: Team 3.").assertIsDisplayed()
         onNodeWithText("The other teams, with their number, name and players.").assertIsDisplayed()
-        click("playerCountConfirmButton")
-        waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
+        makeTheDraw()
+        waitForDone()
         assertEquals(listOf(9, 10, 11, 12), world.server.playerCountRequest!!.removedSlotIds)
         assertEquals(List(4) { 4 }, world.server.playerCountRequest!!.players.groupBy { it.team }.values.map { it.size })
     }
 
     @Test
-    fun aRefusalOfTheServerShowsItsReasonAndKeepsTheConfirmation() = runComposeUiTest {
+    fun aRefusalOfTheServerShowsItsReasonAndKeepsTheReview() = runComposeUiTest {
         val world = World(individual, slots(20))
         world.server.playerCountError = AppError.Registration(RegistrationErrorCode.TOURNAMENT_STARTED)
-        showFlow(world, individual)
-        press()
-        onNodeWithContentDescription("One table less").performClick()
+        showScreen(world)
         listOf(1, 2, 3, 4).forEach { click("playerCountSlot-$it") }
         click("playerCountContinue")
-        click("playerCountConfirmButton")
+        makeTheDraw()
         waitUntil(timeoutMillis = 30_000) {
             onAllNodesWithText("The tournament already has data in its tables. The draw can no longer change.").fetchSemanticsNodes().isNotEmpty()
         }
@@ -383,45 +416,62 @@ class PlayerCountUiTest {
         onNodeWithText("OK").performClick()
         waitForIdle()
         onNodeWithTag("playerCountConfirm").assertIsDisplayed()
+        assertEquals(20, world.store.tournaments.value.single().numPlayers)
     }
 
     @Test
     fun aTournamentWithTableDataExplainsWhyItCannotChange() = runComposeUiTest {
         val started = individual.copy(hasTableData = true)
-        show(World(started, slots(20))) { PlayerCountFlow(tournament = started, onDismiss = {}) }
-        onNodeWithTag("playerCountLocked").assertIsDisplayed()
+        show(World(started, slots(20))) { PlayerCountScreen(tournamentId = "t1", onBack = {}) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountLocked").fetchSemanticsNodes().isNotEmpty() }
         onNodeWithText("The number of players cannot change").assertIsDisplayed()
         onNodeWithText("The tournament already has data in its tables.\nThe number of players can only change before the first hand.").assertIsDisplayed()
     }
 
     @Test
+    fun playersPassesThatATableHasData() = runComposeUiTest {
+        show(World(individual, slots(20))) { PlayerCountScreen(tournamentId = "t1", started = true, onBack = {}) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountLocked").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
     fun aFinishedTournamentExplainsWhyItCannotChange() = runComposeUiTest {
         val finished = individual.copy(isCompleted = true)
-        show(World(finished, slots(20))) { PlayerCountFlow(tournament = finished, onDismiss = {}) }
-        onNodeWithText("The tournament is finished.").assertIsDisplayed()
+        show(World(finished, slots(20))) { PlayerCountScreen(tournamentId = "t1", onBack = {}) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The tournament is finished.").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
     fun editTournamentOpensItFromTheDataTab() = runComposeUiTest {
         val world = World(individual, slots(20))
         world.store.adminStatus.value = AdminStatus("u1", GlobalUserRole.SUPER_ADMIN)
-        show(world) { EditTournamentDialog(tournament = individual, onDismiss = {}) }
+        var opened: Tournament? = null
+        show(world) { EditTournamentDialog(tournament = individual, onDismiss = {}, onPlayerCount = { opened = it }) }
         waitForIdle()
         press()
         onNodeWithText("Data").performClick()
         waitForIdle()
         click("changePlayerCount")
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountChoose").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals("t1", opened?.id)
     }
 
     @Test
-    fun playersOffersItToAnAdmin() = runComposeUiTest {
+    fun playersOpensTheScreenOfAnAdmin() = runComposeUiTest {
         val world = World(individual, slots(20))
-        show(world) { PlayersScreen(rememberNavController(), "t1") }
+        show(world) {
+            val navController = rememberNavController()
+            NavHost(navController, startDestination = PlayersRoute("t1")) {
+                composable<PlayersRoute> { PlayersScreen(navController, "t1") }
+                composable<PlayerCountRoute> { entry ->
+                    val args = entry.toRoute<PlayerCountRoute>()
+                    PlayerCountScreen(args.tournamentId, args.started, onBack = { navController.popBackStack() })
+                }
+            }
+        }
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Number of players").fetchSemanticsNodes().isNotEmpty() }
         press()
         onNodeWithText("Number of players").performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountChoose").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("playerCountList").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.ui.platform.testTag
 import mahjongtournamentsuite.adminapp.generated.resources.pc_title
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFlow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -142,6 +141,8 @@ fun EditTournamentDialog(
     tournament: Tournament,
     onDismiss: () -> Unit,
     onDeleted: () -> Unit = onDismiss,
+    /** Opens the screen of the change of the number of players. Without it, the button is not shown. */
+    onPlayerCount: ((Tournament) -> Unit)? = null,
 ) {
     val presenter = koinInject<TournamentsPresenter>()
     val store = koinInject<AppMemoryStore>()
@@ -153,7 +154,6 @@ fun EditTournamentDialog(
     // The data tab shows the tournament as the store has it, so a change of the number of players shows at once.
     val tournaments by store.tournaments.collectAsState()
     val liveTournament = tournaments.firstOrNull { it.id == tournament.id } ?: tournament
-    var playerCountOpen by remember { mutableStateOf(false) }
     // A super admin, or a club admin of the main organizer, changes the organizers. The club admin keeps one of its
     // organizations among them, so it cannot give the tournament away.
     val canChangeOrganizers = adminStatus?.canChangeOrganizersOf(tournament.organizerIds) == true
@@ -604,9 +604,9 @@ fun EditTournamentDialog(
                                     }
                                     // Last minute withdrawals or late people: whole tables leave or come before the
                                     // first hand, with a new draw (docs/player-count-change.md).
-                                    if (canChangePlayerCount && !liveTournament.inRegistration) {
+                                    if (onPlayerCount != null && canChangePlayerCount && !liveTournament.inRegistration) {
                                         FocusedOutlinedButton(
-                                            onClick = { playerCountOpen = true },
+                                            onClick = { onPlayerCount?.invoke(liveTournament) },
                                             modifier = Modifier.testTag("changePlayerCount"),
                                         ) { Text(stringResource(Res.string.pc_title)) }
                                     }
@@ -842,10 +842,6 @@ fun EditTournamentDialog(
                 showDateRangePicker = false
             },
         )
-    }
-
-    if (playerCountOpen) {
-        PlayerCountFlow(tournament = liveTournament, onDismiss = { playerCountOpen = false })
     }
 
     deleteDialogTournament?.let { deleting ->

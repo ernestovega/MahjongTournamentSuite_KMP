@@ -85,6 +85,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -483,7 +484,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val currentTournament = tournaments.firstOrNull { it.id == tournamentId }
     val canChangePlayerCount = currentTournament != null &&
         adminStatus?.can(Permission.TOURNAMENT_CONFIGURE, currentTournament.permissions) == true
-    var playerCountOpen by remember { mutableStateOf(false) }
     val tournamentRounds = tables.map { it.roundId }.distinct().sorted()
 
     fun openClearAssignment(slotId: Int) {
@@ -1056,7 +1056,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 onImportPlayers = { importDialogOpen = true },
                 importLocked = tournamentStarted,
                 onExportPlayers = exportPlayers,
-                onPlayerCount = currentTournament?.takeIf { canChangePlayerCount }?.let { { playerCountOpen = true } },
+                onPlayerCount = currentTournament?.takeIf { canChangePlayerCount }?.let {
+                    { navController.navigate(PlayerCountRoute(tournamentId = tournamentId, started = tournamentStarted)) }
+                },
                 playerCountLocked = currentTournament?.let { PlayerCountRules.blockerOf(it.copy(hasTableData = it.hasTableData || tournamentStarted)) } != null,
             )
         },
@@ -1066,13 +1068,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
-                )
-            }
-            if (playerCountOpen && currentTournament != null) {
-                PlayerCountFlow(
-                    tournament = currentTournament.copy(hasTableData = currentTournament.hasTableData || tournamentStarted),
-                    onDismiss = { playerCountOpen = false },
-                    onChanged = { refresh(force = true) },
                 )
             }
             if (importDialogOpen) {
