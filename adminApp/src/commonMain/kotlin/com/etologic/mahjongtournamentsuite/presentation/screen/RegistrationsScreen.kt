@@ -97,6 +97,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DateField
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawBackupRunningNote
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
@@ -259,6 +260,7 @@ fun RegistrationsScreen(
     var importOpen by remember { mutableStateOf(false) }
     var drawConfirm by remember { mutableStateOf(false) }
     var drawTries by remember { mutableStateOf<Long?>(null) }
+    var drawBackup by remember { mutableStateOf(false) }
     val linkCopied = stringResource(Res.string.reg_link_copied)
     // Copying the link shows a short message at the bottom, never a dialog.
     val snackbar = remember { SnackbarHostState() }
@@ -535,11 +537,18 @@ fun RegistrationsScreen(
             confirmed = current.settings.confirmed,
             rounds = tournament.numRounds,
             tries = drawTries,
+            backup = drawBackup,
             onConfirm = {
                 drawTries = 0
+                drawBackup = false
                 scope.launch {
                     val result = presenter.makeDraw(tournament, current) { progress ->
-                        scope.launch(Dispatchers.Main) { if (drawTries != null) drawTries = progress.tried }
+                        scope.launch(Dispatchers.Main) {
+                            if (drawTries != null) {
+                                drawTries = progress.tried
+                                drawBackup = progress.backup
+                            }
+                        }
                     }
                     drawTries = null
                     drawConfirm = false
@@ -572,6 +581,7 @@ internal fun MakeDrawDialog(
     tries: Long?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    backup: Boolean = false,
 ) {
     var showDrawExplanation by remember { mutableStateOf(false) }
     TrackedDialog("MakeDraw") {
@@ -584,6 +594,7 @@ internal fun MakeDrawDialog(
                         MtsDialogText(stringResource(Res.string.reg_draw_message, confirmed, rounds))
                     } else {
                         MtsDialogText(stringResource(Res.string.reg_draw_calculating, tries))
+                        if (backup) DrawBackupRunningNote()
                         LinearProgressIndicator(Modifier.fillMaxWidth())
                     }
                 }

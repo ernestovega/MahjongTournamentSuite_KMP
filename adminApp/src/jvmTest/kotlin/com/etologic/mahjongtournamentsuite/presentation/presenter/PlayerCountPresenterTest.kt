@@ -15,7 +15,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeTournamentRepository
 import kotlinx.coroutines.test.runTest
 import java.lang.reflect.Proxy
@@ -48,7 +48,7 @@ class PlayerCountPresenterTest {
         registry: List<Player> = emptyList(),
         list: AdminRegistrations? = null,
         calls: MutableList<String> = mutableListOf(),
-    ) = PlayerCountPresenter(tournaments, players(registry), registrations(list, calls), GenerateTournamentScheduleBruteForceParallelUseCase(), Logger.withTag("test"))
+    ) = PlayerCountPresenter(tournaments, players(registry), registrations(list, calls), DrawTournamentScheduleUseCase(), Logger.withTag("test"))
 
     private fun slots(count: Int, isTeams: Boolean = false) = (1..count).map { id ->
         TournamentPlayer(id = id, name = "Player $id", team = if (isTeams) (id - 1) / 4 + 1 else 0)

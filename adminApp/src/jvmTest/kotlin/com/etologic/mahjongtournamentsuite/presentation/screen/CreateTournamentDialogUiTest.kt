@@ -5,6 +5,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -17,7 +21,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -29,6 +33,7 @@ import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /** The form marks the required fields and the wrong fields. */
 @OptIn(ExperimentalTestApi::class)
@@ -50,7 +55,7 @@ class CreateTournamentDialogUiTest {
                             single { Logger.withTag("ui-test") }
                             single<TournamentRepository> { FakeTournamentRepository() }
                             single { AppMemoryStore() }
-                            factory { GenerateTournamentScheduleBruteForceParallelUseCase() }
+                            factory { DrawTournamentScheduleUseCase() }
                             factory { CreateTournamentPresenter(get(), get(), get(), adminRepository = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN)) }
                             factory { IdCardProofPresenter(get()) }
                         },
@@ -102,6 +107,22 @@ class CreateTournamentDialogUiTest {
         registrationSwitch.performClick()
         waitForIdle()
         onNodeWithTag("drawExplanationButton").assertExists()
+    }
+
+    /** The explanation shows the first way and, after all of it, the second way with its own diagram. */
+    @Test
+    fun theExplanationShowsBothWaysToDrawInOrder() = runComposeUiTest {
+        showForm()
+        onNodeWithTag("drawExplanationButton").performClick()
+        waitForIdle()
+        onNodeWithText("First way: seat by seat").assertExists()
+        onNodeWithContentDescription("Flowchart of the draw").assertExists()
+        onNodeWithTag("drawBackupTitle").performScrollTo().assertIsDisplayed().assertTextEquals("Second way: by swaps")
+        onNodeWithContentDescription("Flowchart of the second way to draw").performScrollTo().assertIsDisplayed()
+        onNodeWithText("How long each way waits").performScrollTo().assertIsDisplayed()
+        val first = onNodeWithText("First way: seat by seat").fetchSemanticsNode().positionInRoot.y
+        val second = onNodeWithTag("drawBackupTitle").fetchSemanticsNode().positionInRoot.y
+        assertTrue(second > first, "The second way comes after the first")
     }
 
     @Test

@@ -652,5 +652,23 @@ The first one that works wins</string>
     <string name="draw_flow_failed">Share failed</string>
     <string name="draw_flow_yes">Yes</string>
     <string name="draw_flow_no">No</string>
+    <string name="draw_help_first_title">First way: seat by seat</string>
+    <string name="draw_backup_title">Second way: by swaps</string>
+    <string name="draw_backup_intro">With many rounds for few players, or with teams, the first way can take a long time. If it does not finish in time, the app moves on by itself to this second way. It keeps the same rules and is just as random.</string>
+    <string name="draw_backup_how">• It deals every round at random at once, even if there are repeats.\n• It counts the repeats: two players who meet more than once, or two of the same team at one table.\n• It takes a player from a table with a repeat and swaps them, within the same round, with the player of another table that removes the most repeats.\n• It does not undo a swap it has just made, so it does not go round in circles. If a long time passes with no progress, it makes a few random swaps and goes on.\n• When no repeat is left, the draw is ready. At the end it shuffles the order of the tables and of the seats.</string>
+    <string name="draw_backup_time_title">How long each way waits</string>
+    <string name="draw_backup_time">• The time limit grows with the number of tables and rounds, because a big tournament needs more time even when it is easy.\n• The first way gets 15 seconds, plus 0.1 seconds for each table of each round, up to 1 minute. For example, 16 players and 4 rounds: about 17 seconds.\n• The second way gets 30 seconds, plus 0.5 seconds for each table of each round, up to 5 minutes.\n• If neither one makes it, the app says so and changes nothing. Taking out one round is usually enough.</string>
+    <string name="draw_backup_running">The first way was taking too long.\nNow the second way is trying, by swaps.</string>
+    <string name="draw_swap_flow_description">Flowchart of the second way to draw</string>
+    <string name="draw_swap_flow_start">The first way does not finish in time</string>
+    <string name="draw_swap_flow_deal">Deal every round at random</string>
+    <string name="draw_swap_flow_deal_note">Even with repeats</string>
+    <string name="draw_swap_flow_check">Any repeat left?</string>
+    <string name="draw_swap_flow_pick">Pick a player who repeats</string>
+    <string name="draw_swap_flow_swap">Swap them with whoever removes the most repeats</string>
+    <string name="draw_swap_flow_swap_note">In the same round</string>
+    <string name="draw_swap_flow_stuck">Long with no progress?</string>
+    <string name="draw_swap_flow_shake">A few random swaps</string>
+    <string name="draw_swap_flow_limit">Until the time limit</string>
     <string name="close">Close</string>
 </resources>

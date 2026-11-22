@@ -37,7 +37,8 @@ with no hand does not stop it. When it is not possible, the button looks off and
    registrations), what is added and what is kept (the other players with their EMA player, account and email, the
    rounds with their times and clocks). The button **How does the draw work?** explains the draw, as when a tournament
    is created.
-3. **Draw.** The app computes the new draw of every round, as at the creation (nobody meets twice; with teams, four
+3. **Draw.** The app computes the new draw of every round, as at the creation (docs/draw.md: the first way, and the
+   second one when the first takes too long; nobody meets twice; with teams, four
    teams at each table), and sends it. The server checks it again and saves it in one go.
 
 ## What the server does

@@ -34,7 +34,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryOutcome
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeAdminRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakePlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeSignedInAuthRepository
@@ -77,7 +77,7 @@ class AdminActionTrackingTest {
         val registrationsPresenter = RegistrationsPresenter(
             RegistrationFakes.registrations(works),
             players,
-            GenerateTournamentScheduleBruteForceParallelUseCase(),
+            DrawTournamentScheduleUseCase(),
             Logger.withTag("test"),
             telemetry,
         )
@@ -85,7 +85,7 @@ class AdminActionTrackingTest {
             tournaments,
             players,
             RegistrationFakes.registrations(works),
-            GenerateTournamentScheduleBruteForceParallelUseCase(),
+            DrawTournamentScheduleUseCase(),
             Logger.withTag("test"),
             telemetry,
         )

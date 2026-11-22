@@ -652,5 +652,23 @@ Vince la prima che riesce</string>
     <string name="draw_flow_failed">Distribuzione fallita</string>
     <string name="draw_flow_yes">Sì</string>
     <string name="draw_flow_no">No</string>
+    <string name="draw_help_first_title">Primo metodo: posto per posto</string>
+    <string name="draw_backup_title">Secondo metodo: per scambi</string>
+    <string name="draw_backup_intro">Con molti turni per pochi giocatori, o con le squadre, il primo metodo può metterci molto. Se non finisce in tempo, l’app passa da sola a questo secondo metodo. Rispetta le stesse regole ed è altrettanto casuale.</string>
+    <string name="draw_backup_how">• Distribuisce a caso tutti i turni in una volta, anche se ci sono ripetizioni.\n• Conta le ripetizioni: due giocatori che si incontrano più di una volta, o due della stessa squadra a un tavolo.\n• Prende un giocatore di un tavolo con una ripetizione e lo scambia, nello stesso turno, con il giocatore di un altro tavolo che toglie più ripetizioni.\n• Non annulla uno scambio appena fatto, per non girare in tondo. Se passa molto tempo senza migliorare, fa qualche scambio a caso e continua.\n• Quando non resta nessuna ripetizione, il sorteggio è pronto. Alla fine mescola l’ordine dei tavoli e dei posti.</string>
+    <string name="draw_backup_time_title">Quanto aspetta ogni metodo</string>
+    <string name="draw_backup_time">• Il tempo massimo cresce con il numero di tavoli e di turni, perché un torneo grande richiede più tempo anche quando è facile.\n• Il primo metodo ha 15 secondi, più 0,1 secondi per ogni tavolo di ogni turno, fino a 1 minuto. Per esempio, 16 giocatori e 4 turni: circa 17 secondi.\n• Il secondo metodo ha 30 secondi, più 0,5 secondi per ogni tavolo di ogni turno, fino a 5 minuti.\n• Se nessuno ci riesce, l’app lo dice e non cambia nulla. Di solito basta togliere un turno.</string>
+    <string name="draw_backup_running">Il primo metodo ci metteva troppo.\nOra prova il secondo, per scambi.</string>
+    <string name="draw_swap_flow_description">Diagramma di flusso del secondo metodo del sorteggio</string>
+    <string name="draw_swap_flow_start">Il primo metodo non finisce in tempo</string>
+    <string name="draw_swap_flow_deal">Distribuire a caso tutti i turni</string>
+    <string name="draw_swap_flow_deal_note">Anche con ripetizioni</string>
+    <string name="draw_swap_flow_check">Resta qualche ripetizione?</string>
+    <string name="draw_swap_flow_pick">Scegliere un giocatore che ripete</string>
+    <string name="draw_swap_flow_swap">Scambiarlo con chi toglie più ripetizioni</string>
+    <string name="draw_swap_flow_swap_note">Nello stesso turno</string>
+    <string name="draw_swap_flow_stuck">Molto tempo senza migliorare?</string>
+    <string name="draw_swap_flow_shake">Qualche scambio a caso</string>
+    <string name="draw_swap_flow_limit">Fino al tempo massimo</string>
     <string name="close">Chiudi</string>
 </resources>

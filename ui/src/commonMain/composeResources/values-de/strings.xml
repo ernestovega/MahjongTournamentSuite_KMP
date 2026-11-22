@@ -648,5 +648,23 @@ Die erste, die klappt, gewinnt</string>
     <string name="draw_flow_failed">Verteilung gescheitert</string>
     <string name="draw_flow_yes">Ja</string>
     <string name="draw_flow_no">Nein</string>
+    <string name="draw_help_first_title">Erste Methode: Platz für Platz</string>
+    <string name="draw_backup_title">Zweite Methode: durch Tauschen</string>
+    <string name="draw_backup_intro">Bei vielen Runden für wenige Spieler oder mit Teams kann die erste Methode lange dauern. Wird sie nicht rechtzeitig fertig, wechselt die App von selbst zu dieser zweiten Methode. Sie hält dieselben Regeln ein und ist genauso zufällig.</string>
+    <string name="draw_backup_how">• Sie verteilt alle Runden auf einmal zufällig, auch wenn es Wiederholungen gibt.\n• Sie zählt die Wiederholungen: zwei Spieler, die sich mehr als einmal treffen, oder zwei aus demselben Team an einem Tisch.\n• Sie nimmt einen Spieler von einem Tisch mit Wiederholung und tauscht ihn in derselben Runde mit dem Spieler eines anderen Tisches, der die meisten Wiederholungen beseitigt.\n• Einen gerade gemachten Tausch macht sie nicht sofort rückgängig, damit sie sich nicht im Kreis dreht. Geht es lange nicht voran, macht sie ein paar zufällige Tausche und macht weiter.\n• Wenn keine Wiederholung mehr bleibt, ist die Auslosung fertig. Am Ende mischt sie die Reihenfolge der Tische und der Plätze.</string>
+    <string name="draw_backup_time_title">Wie lange jede Methode wartet</string>
+    <string name="draw_backup_time">• Die Höchstzeit wächst mit der Zahl der Tische und Runden, denn ein großes Turnier braucht mehr Zeit, auch wenn es leicht ist.\n• Die erste Methode hat 15 Sekunden, plus 0,1 Sekunden für jeden Tisch jeder Runde, bis zu 1 Minute. Zum Beispiel 16 Spieler und 4 Runden: etwa 17 Sekunden.\n• Die zweite Methode hat 30 Sekunden, plus 0,5 Sekunden für jeden Tisch jeder Runde, bis zu 5 Minuten.\n• Schafft es keine, sagt die App das und ändert nichts. Meist reicht es, eine Runde wegzunehmen.</string>
+    <string name="draw_backup_running">Die erste Methode dauerte zu lange.\nJetzt probiert es die zweite, durch Tauschen.</string>
+    <string name="draw_swap_flow_description">Ablaufdiagramm der zweiten Methode der Auslosung</string>
+    <string name="draw_swap_flow_start">Die erste Methode wird nicht rechtzeitig fertig</string>
+    <string name="draw_swap_flow_deal">Alle Runden zufällig verteilen</string>
+    <string name="draw_swap_flow_deal_note">Auch mit Wiederholungen</string>
+    <string name="draw_swap_flow_check">Noch eine Wiederholung?</string>
+    <string name="draw_swap_flow_pick">Einen Spieler mit Wiederholung wählen</string>
+    <string name="draw_swap_flow_swap">Ihn mit dem tauschen, der die meisten Wiederholungen beseitigt</string>
+    <string name="draw_swap_flow_swap_note">In derselben Runde</string>
+    <string name="draw_swap_flow_stuck">Lange kein Fortschritt?</string>
+    <string name="draw_swap_flow_shake">Ein paar zufällige Tausche</string>
+    <string name="draw_swap_flow_limit">Bis zur Höchstzeit</string>
     <string name="close">Schließen</string>
 </resources>

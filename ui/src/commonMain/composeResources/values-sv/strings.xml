@@ -648,5 +648,23 @@ Den första som fungerar vinner</string>
     <string name="draw_flow_failed">Fördelningen misslyckades</string>
     <string name="draw_flow_yes">Ja</string>
     <string name="draw_flow_no">Nej</string>
+    <string name="draw_help_first_title">Första metoden: stol för stol</string>
+    <string name="draw_backup_title">Andra metoden: genom byten</string>
+    <string name="draw_backup_intro">Med många rundor för få spelare, eller med lag, kan den första metoden ta lång tid. Om den inte blir klar i tid går appen själv över till den här andra metoden. Den följer samma regler och är lika slumpmässig.</string>
+    <string name="draw_backup_how">• Den delar slumpvis ut alla rundor på en gång, även om det blir upprepningar.\n• Den räknar upprepningarna: två spelare som möts mer än en gång, eller två från samma lag vid ett bord.\n• Den tar en spelare från ett bord med en upprepning och byter, i samma runda, med spelaren från ett annat bord som tar bort flest upprepningar.\n• Ett byte den just har gjort ångrar den inte, så att den inte går runt i cirklar. Om det går lång tid utan förbättring gör den några slumpvisa byten och fortsätter.\n• När ingen upprepning är kvar är lottningen klar. Till sist blandar den ordningen på borden och stolarna.</string>
+    <string name="draw_backup_time_title">Hur länge varje metod väntar</string>
+    <string name="draw_backup_time">• Den längsta tiden växer med antalet bord och rundor, eftersom en stor turnering behöver mer tid även när den är lätt.\n• Den första metoden får 15 sekunder, plus 0,1 sekunder för varje bord i varje runda, upp till 1 minut. Till exempel 16 spelare och 4 rundor: ungefär 17 sekunder.\n• Den andra metoden får 30 sekunder, plus 0,5 sekunder för varje bord i varje runda, upp till 5 minuter.\n• Om ingen av dem lyckas säger appen det och ändrar ingenting. Oftast räcker det att ta bort en runda.</string>
+    <string name="draw_backup_running">Den första metoden tog för lång tid.\nNu provar den andra, genom byten.</string>
+    <string name="draw_swap_flow_description">Flödesschema för lottningens andra metod</string>
+    <string name="draw_swap_flow_start">Den första metoden blir inte klar i tid</string>
+    <string name="draw_swap_flow_deal">Dela slumpvis ut alla rundor</string>
+    <string name="draw_swap_flow_deal_note">Även med upprepningar</string>
+    <string name="draw_swap_flow_check">Någon upprepning kvar?</string>
+    <string name="draw_swap_flow_pick">Välj en spelare som upprepar</string>
+    <string name="draw_swap_flow_swap">Byt med den som tar bort flest upprepningar</string>
+    <string name="draw_swap_flow_swap_note">I samma runda</string>
+    <string name="draw_swap_flow_stuck">Länge utan förbättring?</string>
+    <string name="draw_swap_flow_shake">Några slumpvisa byten</string>
+    <string name="draw_swap_flow_limit">Tills den längsta tiden</string>
     <string name="close">Stäng</string>
 </resources>

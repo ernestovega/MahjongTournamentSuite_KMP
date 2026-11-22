@@ -46,7 +46,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportReposit
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
@@ -129,7 +129,7 @@ class PlayerCountUiTest {
                             factory { TournamentsPresenter(get(), get(), get()) }
                             factory { PlayersPresenter(get(), get(), get(), get()) }
                             factory { PlayerImportPresenter(get(), get()) }
-                            factory { PlayerCountPresenter(get(), get(), get(), GenerateTournamentScheduleBruteForceParallelUseCase(), get()) }
+                            factory { PlayerCountPresenter(get(), get(), get(), DrawTournamentScheduleUseCase(), get()) }
                         },
                     )
                 }.koin

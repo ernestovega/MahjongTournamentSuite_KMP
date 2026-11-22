@@ -652,5 +652,23 @@ Gana el primero que sale bien</string>
     <string name="draw_flow_failed">Reparto fallido</string>
     <string name="draw_flow_yes">Sí</string>
     <string name="draw_flow_no">No</string>
+    <string name="draw_help_first_title">Primer método: asiento a asiento</string>
+    <string name="draw_backup_title">Segundo método: por intercambios</string>
+    <string name="draw_backup_intro">Con muchas rondas para pocos jugadores, o con equipos, el primer método puede tardar mucho. Si no termina a tiempo, la app pasa sola a este segundo método. Cumple las mismas reglas y es igual de al azar.</string>
+    <string name="draw_backup_how">• Reparte al azar todas las rondas de una vez, aunque salgan repeticiones.\n• Cuenta las repeticiones: dos jugadores que se cruzan más de una vez, o dos del mismo equipo en una mesa.\n• Toma a un jugador de una mesa con repetición y lo cambia, dentro de la misma ronda, por el jugador de otra mesa que más repeticiones quite.\n• No deshace un cambio que acaba de hacer, para no dar vueltas en círculo. Si pasa mucho rato sin mejorar, hace unos cambios al azar y sigue.\n• Cuando no queda ninguna repetición, el sorteo está listo. Al final baraja el orden de las mesas y de los asientos.</string>
+    <string name="draw_backup_time_title">Cuánto espera cada método</string>
+    <string name="draw_backup_time">• El tiempo máximo crece con el número de mesas y de rondas, porque un torneo grande necesita más tiempo aunque sea fácil.\n• El primer método tiene 15 segundos, más 0,1 segundos por cada mesa de cada ronda, hasta 1 minuto. Por ejemplo, 16 jugadores y 4 rondas: unos 17 segundos.\n• El segundo método tiene 30 segundos, más 0,5 segundos por cada mesa de cada ronda, hasta 5 minutos.\n• Si ninguno lo consigue, la app lo dice y no cambia nada. Suele bastar con quitar una ronda.</string>
+    <string name="draw_backup_running">El primer método tardaba demasiado.\nAhora prueba el segundo, por intercambios.</string>
+    <string name="draw_swap_flow_description">Diagrama de flujo del segundo método del sorteo</string>
+    <string name="draw_swap_flow_start">El primer método no termina a tiempo</string>
+    <string name="draw_swap_flow_deal">Repartir al azar todas las rondas</string>
+    <string name="draw_swap_flow_deal_note">Aunque haya repeticiones</string>
+    <string name="draw_swap_flow_check">¿Queda alguna repetición?</string>
+    <string name="draw_swap_flow_pick">Elegir un jugador que repite</string>
+    <string name="draw_swap_flow_swap">Cambiarlo por quien más repeticiones quite</string>
+    <string name="draw_swap_flow_swap_note">En la misma ronda</string>
+    <string name="draw_swap_flow_stuck">¿Mucho rato sin mejorar?</string>
+    <string name="draw_swap_flow_shake">Unos cambios al azar</string>
+    <string name="draw_swap_flow_limit">Hasta el tiempo máximo</string>
     <string name="close">Cerrar</string>
 </resources>

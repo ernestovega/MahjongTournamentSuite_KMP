@@ -20,7 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
 
 /** One slot of the tournament as the dialog lists it: its number, the name to show and its team. */
@@ -44,7 +44,7 @@ class PlayerCountPresenter(
     private val tournamentRepository: TournamentRepository,
     private val playerRepository: PlayerRepository,
     private val registrationRepository: RegistrationRepository,
-    private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
+    private val generateSchedule: DrawTournamentScheduleUseCase,
     private val logger: Logger,
     private val telemetry: Telemetry = NoTelemetry,
 ) {

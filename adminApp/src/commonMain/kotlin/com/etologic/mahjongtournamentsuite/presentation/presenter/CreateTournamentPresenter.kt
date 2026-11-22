@@ -21,7 +21,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
 import kotlinx.coroutines.ensureActive
 import kotlin.math.roundToInt
@@ -30,7 +30,7 @@ import kotlin.coroutines.coroutineContext
 class CreateTournamentPresenter(
     private val tournamentRepository: TournamentRepository,
     private val logger: Logger,
-    private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
+    private val generateSchedule: DrawTournamentScheduleUseCase,
     private val telemetry: Telemetry = NoTelemetry,
     private val adminRepository: AdminRepository? = null,
 ) {
@@ -51,6 +51,8 @@ class CreateTournamentPresenter(
         val runningTries: Int,
         val tried: Long,
         val maxConcurrency: Int,
+        /** True while the second way to draw runs, after the first one took too long. */
+        val backup: Boolean = false,
     )
 
     enum class Phase {
@@ -134,6 +136,7 @@ class CreateTournamentPresenter(
                     runningTries = progress.runningTries,
                     tried = progress.tried,
                     maxConcurrency = progress.maxConcurrency,
+                    backup = progress.backup,
                 ),
             )
         }

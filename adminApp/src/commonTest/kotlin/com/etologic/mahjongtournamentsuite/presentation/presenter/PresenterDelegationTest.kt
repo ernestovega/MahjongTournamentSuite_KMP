@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.*
 import com.etologic.mahjongtournamentsuite.domain.repository.*
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -64,7 +64,7 @@ class PresenterDelegationTest {
         val presenter = CreateTournamentPresenter(
             tournamentRepository = repository,
             logger = Logger.withTag("CreateTournamentPresenterTest"),
-            generateSchedule = GenerateTournamentScheduleBruteForceParallelUseCase(),
+            generateSchedule = DrawTournamentScheduleUseCase(),
         )
 
         val result = presenter.createTournament(

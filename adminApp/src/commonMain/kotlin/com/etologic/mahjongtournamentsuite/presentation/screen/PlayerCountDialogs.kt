@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawBackupRunningNote
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import androidx.compose.foundation.layout.Arrangement
@@ -144,6 +145,7 @@ fun PlayerCountFlow(
     var form by remember(tournament.id) { mutableStateOf(PlayerCountForm(target = tournament.numPlayers)) }
     var step by remember { mutableStateOf(PlayerCountStep.CHOOSE) }
     var tries by remember { mutableStateOf<Long?>(null) }
+    var backup by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<PlayerCountOutcome?>(null) }
 
     LaunchedEffect(tournament.id) {
@@ -195,7 +197,10 @@ fun PlayerCountFlow(
                 tries = 0
                 scope.launch {
                     val removed = PlayerCountRules.removedSlots(tournament.isTeams, form.chosen, loaded.teams)
-                    when (val changed = presenter.change(tournament, form.target, removed, form.waiting) { tries = it.tried }) {
+                    when (val changed = presenter.change(tournament, form.target, removed, form.waiting) {
+                        tries = it.tried
+                        backup = it.backup
+                    }) {
                         is AppResult.Success -> {
                             store.updateTournament(changed.value.tournament)
                             onChanged(changed.value.tournament)
@@ -214,6 +219,7 @@ fun PlayerCountFlow(
         )
         PlayerCountStep.WORKING -> PlayerCountProgressDialog(
             text = tries?.let { stringResource(Res.string.reg_draw_calculating, it) } ?: stringResource(Res.string.pc_saving),
+            backup = tries != null && backup,
         )
     }
 }
@@ -592,13 +598,14 @@ private fun BulletGroup(label: String, items: List<String>, tag: String? = null)
 }
 
 @Composable
-internal fun PlayerCountProgressDialog(text: String) {
+internal fun PlayerCountProgressDialog(text: String, backup: Boolean = false) {
     TrackedDialog("PlayerCountProgress") {
         AlertDialog(
             onDismissRequest = {},
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     MtsDialogText(text)
+                    if (backup) DrawBackupRunningNote()
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
             },

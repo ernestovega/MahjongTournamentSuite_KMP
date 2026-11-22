@@ -19,7 +19,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresen
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
@@ -35,7 +35,7 @@ val presentationModule get() = module {
     single { AppMemoryStore() }
     factory { AuthPresenter(get(), get(), telemetry()) }
     factory { TournamentsPresenter(get(), get(), get(), telemetry()) }
-    factory { GenerateTournamentScheduleBruteForceParallelUseCase() }
+    factory { DrawTournamentScheduleUseCase() }
     factory { CreateTournamentPresenter(get(), get(), get(), telemetry(), get()) }
     factory { UsersPresenter(get(), get(), get(), get(), telemetry()) }
     factory { PlayersPresenter(get(), get(), get(), get(), telemetry()) }

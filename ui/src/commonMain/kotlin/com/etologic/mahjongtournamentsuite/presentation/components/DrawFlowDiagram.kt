@@ -76,9 +76,10 @@ import org.jetbrains.compose.resources.stringResource
  * - "Seats left? Yes" goes back to the next free seat, on the left side.
  */
 
-private enum class NodeKind { Initial, Final, Action, Decision, Failure }
+/** Merge is the small empty diamond of UML where two paths join. */
+internal enum class NodeKind { Initial, Final, Action, Decision, Failure, Merge }
 
-private data class FlowNode(val kind: NodeKind, val text: String, val note: String? = null)
+internal data class FlowNode(val kind: NodeKind, val text: String, val note: String? = null)
 
 // The rows of the main column, top to bottom.
 private const val INITIAL = 0
@@ -241,20 +242,23 @@ private class FlowGeometry(
     val note: TextLayoutResult,
 )
 
-private fun DrawScope.drawParallelRegion(g: FlowGeometry, color: Color) {
+private fun DrawScope.drawParallelRegion(g: FlowGeometry, color: Color) = drawDashedRegion(g.region, g.note, color)
+
+/** A dashed box around a part of a diagram, with [note] in its top right corner. */
+internal fun DrawScope.drawDashedRegion(region: Rect, note: TextLayoutResult, color: Color) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
     drawRoundRect(
         color = color.copy(alpha = 0.7f),
-        topLeft = g.region.topLeft,
-        size = g.region.size,
+        topLeft = region.topLeft,
+        size = region.size,
         cornerRadius = CornerRadius(12.dp.toPx()),
         style = Stroke(width = 1.dp.toPx(), pathEffect = dash),
     )
-    drawText(g.note, topLeft = Offset(g.region.right - 8.dp.toPx() - g.note.size.width, g.region.top + 4.dp.toPx()))
+    drawText(note, topLeft = Offset(region.right - 8.dp.toPx() - note.size.width, region.top + 4.dp.toPx()))
 }
 
 @Composable
-private fun FlowNodeBox(node: FlowNode, compact: Boolean) {
+internal fun FlowNodeBox(node: FlowNode, compact: Boolean) {
     val colors = MaterialTheme.colorScheme
     val textStyle = MaterialTheme.typography.bodySmall.copy(
         fontSize = if (compact) (if (node.kind == NodeKind.Decision) 10.sp else 11.sp) else MaterialTheme.typography.bodySmall.fontSize,
@@ -274,6 +278,24 @@ private fun FlowNodeBox(node: FlowNode, compact: Boolean) {
                 Modifier.size(24.dp).drawBehind {
                     drawCircle(color, radius = size.minDimension / 2f - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
                     drawCircle(color, radius = size.minDimension / 2f - 5.dp.toPx())
+                },
+            )
+        }
+        NodeKind.Merge -> {
+            // UML merge node: an empty diamond, where two paths join.
+            val fill = colors.secondaryContainer
+            val line = colors.secondary
+            Box(
+                Modifier.size(22.dp).drawBehind {
+                    val diamond = Path().apply {
+                        moveTo(size.width / 2f, 0f)
+                        lineTo(size.width, size.height / 2f)
+                        lineTo(size.width / 2f, size.height)
+                        lineTo(0f, size.height / 2f)
+                        close()
+                    }
+                    drawPath(diamond, fill)
+                    drawPath(diamond, line, style = Stroke(1.5.dp.toPx(), join = StrokeJoin.Round))
                 },
             )
         }
@@ -443,7 +465,7 @@ private fun DrawScope.drawArrows(
 }
 
 /** A line through [points] with an arrowhead at the last one. */
-private fun DrawScope.arrow(points: List<Offset>, color: Color, stroke: Float, effect: PathEffect? = null) {
+internal fun DrawScope.arrow(points: List<Offset>, color: Color, stroke: Float, effect: PathEffect? = null) {
     val head = 7.dp.toPx()
     val end = points.last()
     val before = points[points.size - 2]

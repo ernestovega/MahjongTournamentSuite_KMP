@@ -19,6 +19,8 @@ data class TournamentScheduleCalcProgress(
     val runningTries: Int,
     val tried: Long,
     val maxConcurrency: Int,
+    /** True while the second way to draw runs ([GenerateScheduleBySwapsUseCase]), after the first took too long. */
+    val backup: Boolean = false,
 )
 
 data class TournamentScheduleCalcResult(
@@ -27,6 +29,8 @@ data class TournamentScheduleCalcResult(
     val randomSeed: Long,
     val players: List<TournamentPlayer>,
     val tables: List<TournamentTable>,
+    /** True when the second way to draw found it ([DrawTournamentScheduleUseCase]). */
+    val usedBackup: Boolean = false,
 )
 
 /**

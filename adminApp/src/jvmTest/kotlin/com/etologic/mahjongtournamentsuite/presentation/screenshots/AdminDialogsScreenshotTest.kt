@@ -13,6 +13,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -101,6 +103,14 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun drawExplanation() = dialog("draw-explanation") { DrawExplanationDialog(onDismiss = {}) }
+
+    /** The same dialog scrolled to its end: the second way to draw, with its diagram and its time limits. */
+    @Test
+    fun drawExplanationSecondWay() = adminScreenshots(
+        "dialogs/draw-explanation-second-way",
+        variants = dialogVariants,
+        ready = { onNodeWithTag("drawExplanationEnd").performScrollTo() },
+    ) { DrawExplanationDialog(onDismiss = {}) }
 
     /** Registrations closed: confirm the draw, with "How does the draw work?" above the buttons as in Create tournament. */
     @Test
@@ -195,6 +205,16 @@ class AdminDialogsScreenshotTest {
     @Test
     fun createProgress() = dialog("create-progress") {
         CreateProgressDialog(CreateTournamentPresenter.Progress(CreateTournamentPresenter.Phase.CALCULATING, 4, 1200, 8), startMark = null, onCancel = {})
+    }
+
+    /** The first way took too long: the second way to draw is running. */
+    @Test
+    fun createProgressSecondWay() = dialog("create-progress-second-way") {
+        CreateProgressDialog(
+            CreateTournamentPresenter.Progress(CreateTournamentPresenter.Phase.CALCULATING, 4, 35_000, 4, backup = true),
+            startMark = null,
+            onCancel = {},
+        )
     }
 
     @Test

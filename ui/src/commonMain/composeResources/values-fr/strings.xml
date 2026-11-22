@@ -652,5 +652,23 @@ La première qui marche gagne</string>
     <string name="draw_flow_failed">Répartition ratée</string>
     <string name="draw_flow_yes">Oui</string>
     <string name="draw_flow_no">Non</string>
+    <string name="draw_help_first_title">Première méthode : siège par siège</string>
+    <string name="draw_backup_title">Deuxième méthode : par échanges</string>
+    <string name="draw_backup_intro">Avec beaucoup de manches pour peu de joueurs, ou avec des équipes, la première méthode peut être longue. Si elle ne finit pas à temps, l’app passe d’elle-même à cette deuxième méthode. Elle suit les mêmes règles et reste tout aussi au hasard.</string>
+    <string name="draw_backup_how">• Elle répartit au hasard toutes les manches d’un coup, même s’il y a des répétitions.\n• Elle compte les répétitions : deux joueurs qui se croisent plus d’une fois, ou deux de la même équipe à une table.\n• Elle prend un joueur d’une table avec une répétition et l’échange, dans la même manche, avec le joueur d’une autre table qui enlève le plus de répétitions.\n• Elle ne défait pas un échange qu’elle vient de faire, pour ne pas tourner en rond. Si elle reste longtemps sans progresser, elle fait quelques échanges au hasard et continue.\n• Quand il ne reste aucune répétition, le tirage est prêt. À la fin, elle mélange l’ordre des tables et des sièges.</string>
+    <string name="draw_backup_time_title">Combien de temps attend chaque méthode</string>
+    <string name="draw_backup_time">• Le temps maximum grandit avec le nombre de tables et de manches, car un grand tournoi demande plus de temps même s’il est facile.\n• La première méthode a 15 secondes, plus 0,1 seconde par table de chaque manche, jusqu’à 1 minute. Par exemple, 16 joueurs et 4 manches : environ 17 secondes.\n• La deuxième méthode a 30 secondes, plus 0,5 seconde par table de chaque manche, jusqu’à 5 minutes.\n• Si aucune n’y arrive, l’app le dit et ne change rien. Enlever une manche suffit en général.</string>
+    <string name="draw_backup_running">La première méthode prenait trop de temps.\nLa deuxième essaie maintenant, par échanges.</string>
+    <string name="draw_swap_flow_description">Organigramme de la deuxième méthode du tirage</string>
+    <string name="draw_swap_flow_start">La première méthode ne finit pas à temps</string>
+    <string name="draw_swap_flow_deal">Répartir au hasard toutes les manches</string>
+    <string name="draw_swap_flow_deal_note">Même avec des répétitions</string>
+    <string name="draw_swap_flow_check">Reste-t-il une répétition ?</string>
+    <string name="draw_swap_flow_pick">Choisir un joueur qui répète</string>
+    <string name="draw_swap_flow_swap">L’échanger avec celui qui enlève le plus de répétitions</string>
+    <string name="draw_swap_flow_swap_note">Dans la même manche</string>
+    <string name="draw_swap_flow_stuck">Longtemps sans progrès ?</string>
+    <string name="draw_swap_flow_shake">Quelques échanges au hasard</string>
+    <string name="draw_swap_flow_limit">Jusqu’au temps maximum</string>
     <string name="close">Fermer</string>
 </resources>

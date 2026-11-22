@@ -99,6 +99,7 @@ fun CreateProgressDialog(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         Text(stringResource(if (calculating) Res.string.create_calculating else Res.string.create_saving))
                     }
+                    if (calculating && progress?.backup == true) DrawBackupRunningNote()
                     Text(stringResource(Res.string.create_elapsed, formatElapsed(elapsedMillis)))
                     if (calculating && progress != null) {
                         Text(stringResource(Res.string.create_tried, formatCount(progress.tried)))

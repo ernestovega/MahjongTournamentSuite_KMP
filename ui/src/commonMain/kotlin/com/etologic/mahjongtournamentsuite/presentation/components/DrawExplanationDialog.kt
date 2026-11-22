@@ -31,6 +31,13 @@ import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.close
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_how
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_intro
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_running
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_time
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_time_title
+import mahjongtournamentsuite.ui.generated.resources.draw_backup_title
+import mahjongtournamentsuite.ui.generated.resources.draw_help_first_title
 import mahjongtournamentsuite.ui.generated.resources.draw_help_button
 import mahjongtournamentsuite.ui.generated.resources.draw_help_how
 import mahjongtournamentsuite.ui.generated.resources.draw_help_how_title
@@ -42,7 +49,10 @@ import mahjongtournamentsuite.ui.generated.resources.draw_help_rules_title
 import mahjongtournamentsuite.ui.generated.resources.draw_help_title
 import org.jetbrains.compose.resources.stringResource
 
-/** How the pairings of a tournament are drawn: a flowchart, the rules it keeps and how random it is. */
+/**
+ * How the pairings of a tournament are drawn: the first way (a flowchart, the rules it keeps and how random it is) and,
+ * after it, the second way that runs when the first takes too long, with its own flowchart and its time limits.
+ */
 @Composable
 fun DrawExplanationDialog(onDismiss: () -> Unit) {
     val scrollState = rememberScrollState()
@@ -71,11 +81,25 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        MethodTitle(stringResource(Res.string.draw_help_first_title))
                         DrawFlowDiagram(Modifier.fillMaxWidth().padding(vertical = 8.dp))
                         HorizontalDivider()
                         HelpSection(stringResource(Res.string.draw_help_how_title), stringResource(Res.string.draw_help_how))
                         HelpSection(stringResource(Res.string.draw_help_rules_title), stringResource(Res.string.draw_help_rules))
                         HelpSection(stringResource(Res.string.draw_help_random_title), stringResource(Res.string.draw_help_random))
+                        // The second way, after all of the first, so the two cases never mix (Ernesto, 22-nov).
+                        HorizontalDivider(Modifier.padding(top = 12.dp), thickness = 2.dp)
+                        MethodTitle(stringResource(Res.string.draw_backup_title), Modifier.testTag("drawBackupTitle"))
+                        Text(
+                            stringResource(Res.string.draw_backup_intro),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        DrawSwapFlowDiagram(Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                        HorizontalDivider()
+                        HelpSection(stringResource(Res.string.draw_help_how_title), stringResource(Res.string.draw_backup_how))
+                        HelpSection(stringResource(Res.string.draw_backup_time_title), stringResource(Res.string.draw_backup_time))
+                        Spacer(Modifier.testTag("drawExplanationEnd"))
                     }
                 }
             },
@@ -86,6 +110,23 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
             },
         )
     }
+}
+
+/** The name of one way to draw, above its diagram. */
+@Composable
+private fun MethodTitle(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.titleMedium, modifier = modifier.fillMaxWidth())
+}
+
+/** The line of a progress dialog while the second way to draw runs. */
+@Composable
+fun DrawBackupRunningNote() {
+    Text(
+        stringResource(Res.string.draw_backup_running),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.testTag("drawBackupRunning"),
+    )
 }
 
 @Composable

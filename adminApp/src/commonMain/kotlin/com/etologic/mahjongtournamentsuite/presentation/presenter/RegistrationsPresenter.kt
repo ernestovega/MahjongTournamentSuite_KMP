@@ -22,7 +22,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
-import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
 import com.etologic.mahjongtournamentsuite.domain.usecase.assignRegistrationsToDraw
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
@@ -31,7 +31,7 @@ import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCou
 class RegistrationsPresenter(
     private val repository: RegistrationRepository,
     private val playerRepository: PlayerRepository,
-    private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
+    private val generateSchedule: DrawTournamentScheduleUseCase,
     private val logger: Logger,
     private val telemetry: Telemetry = NoTelemetry,
 ) {

@@ -648,5 +648,23 @@ De eerste die lukt, wint</string>
     <string name="draw_flow_failed">Verdeling mislukt</string>
     <string name="draw_flow_yes">Ja</string>
     <string name="draw_flow_no">Nee</string>
+    <string name="draw_help_first_title">Eerste methode: stoel voor stoel</string>
+    <string name="draw_backup_title">Tweede methode: door ruilen</string>
+    <string name="draw_backup_intro">Met veel rondes voor weinig spelers, of met teams, kan de eerste methode lang duren. Als die niet op tijd klaar is, gaat de app vanzelf over op deze tweede methode. Die houdt zich aan dezelfde regels en is net zo willekeurig.</string>
+    <string name="draw_backup_how">• Ze verdeelt alle rondes in één keer willekeurig, ook als er herhalingen zijn.\n• Ze telt de herhalingen: twee spelers die elkaar meer dan eens treffen, of twee van hetzelfde team aan één tafel.\n• Ze neemt een speler van een tafel met een herhaling en ruilt die, in dezelfde ronde, met de speler van een andere tafel die de meeste herhalingen weghaalt.\n• Een ruil die ze net heeft gedaan, draait ze niet terug, zodat ze niet in kringetjes ronddraait. Gaat het lang niet vooruit, dan doet ze een paar willekeurige ruilen en gaat verder.\n• Als er geen herhaling meer over is, is de loting klaar. Aan het eind schudt ze de volgorde van de tafels en de stoelen.</string>
+    <string name="draw_backup_time_title">Hoe lang elke methode wacht</string>
+    <string name="draw_backup_time">• De maximale tijd groeit met het aantal tafels en rondes, want een groot toernooi heeft meer tijd nodig, ook als het makkelijk is.\n• De eerste methode krijgt 15 seconden, plus 0,1 seconde voor elke tafel van elke ronde, tot 1 minuut. Bijvoorbeeld 16 spelers en 4 rondes: ongeveer 17 seconden.\n• De tweede methode krijgt 30 seconden, plus 0,5 seconde voor elke tafel van elke ronde, tot 5 minuten.\n• Lukt het geen van beide, dan zegt de app dat en verandert niets. Meestal is één ronde minder genoeg.</string>
+    <string name="draw_backup_running">De eerste methode duurde te lang.\nNu probeert de tweede het, door ruilen.</string>
+    <string name="draw_swap_flow_description">Stroomdiagram van de tweede methode van de loting</string>
+    <string name="draw_swap_flow_start">De eerste methode is niet op tijd klaar</string>
+    <string name="draw_swap_flow_deal">Alle rondes willekeurig verdelen</string>
+    <string name="draw_swap_flow_deal_note">Ook met herhalingen</string>
+    <string name="draw_swap_flow_check">Nog een herhaling over?</string>
+    <string name="draw_swap_flow_pick">Een speler kiezen die herhaalt</string>
+    <string name="draw_swap_flow_swap">Ruilen met wie de meeste herhalingen weghaalt</string>
+    <string name="draw_swap_flow_swap_note">In dezelfde ronde</string>
+    <string name="draw_swap_flow_stuck">Lang geen vooruitgang?</string>
+    <string name="draw_swap_flow_shake">Een paar willekeurige ruilen</string>
+    <string name="draw_swap_flow_limit">Tot de maximale tijd</string>
     <string name="close">Sluiten</string>
 </resources>
