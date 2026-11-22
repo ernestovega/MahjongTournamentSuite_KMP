@@ -671,4 +671,12 @@ La première qui marche gagne</string>
     <string name="draw_swap_flow_shake">Quelques échanges au hasard</string>
     <string name="draw_swap_flow_limit">Jusqu’au temps maximum</string>
     <string name="close">Fermer</string>
+    <string name="summary_col_round">Tour</string>
+    <string name="summary_col_table">Table</string>
+    <string name="summary_col_seat">Siège</string>
+    <string name="summary_col_points">Points</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Total points</string>
+    <string name="summary_col_total_score">Total score</string>
+    <string name="summary_col_place">Place</string>
 </resources>

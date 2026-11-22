@@ -667,4 +667,12 @@ Den första som fungerar vinner</string>
     <string name="draw_swap_flow_shake">Några slumpvisa byten</string>
     <string name="draw_swap_flow_limit">Tills den längsta tiden</string>
     <string name="close">Stäng</string>
+    <string name="summary_col_round">Omgång</string>
+    <string name="summary_col_table">Bord</string>
+    <string name="summary_col_seat">Plats</string>
+    <string name="summary_col_points">Poäng</string>
+    <string name="summary_col_score">Resultat</string>
+    <string name="summary_col_total_points">Poäng totalt</string>
+    <string name="summary_col_total_score">Resultat totalt</string>
+    <string name="summary_col_place">Placering</string>
 </resources>

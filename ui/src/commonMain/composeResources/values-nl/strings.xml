@@ -667,4 +667,12 @@ De eerste die lukt, wint</string>
     <string name="draw_swap_flow_shake">Een paar willekeurige ruilen</string>
     <string name="draw_swap_flow_limit">Tot de maximale tijd</string>
     <string name="close">Sluiten</string>
+    <string name="summary_col_round">Ronde</string>
+    <string name="summary_col_table">Tafel</string>
+    <string name="summary_col_seat">Stoel</string>
+    <string name="summary_col_points">Punten</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Totaal punten</string>
+    <string name="summary_col_total_score">Totaal score</string>
+    <string name="summary_col_place">Plaats</string>
 </resources>

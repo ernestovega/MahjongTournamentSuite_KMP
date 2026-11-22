@@ -88,6 +88,9 @@ object TelemetryEvent {
      */
     const val REGISTRATION = "registration"
 
+    /** The player app shared the summary of the results of a player as an image (Summary tab of a player). */
+    const val RESULTS_SHARED = "results_shared"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         REGISTRATION,
@@ -119,6 +122,7 @@ object TelemetryEvent {
         LINK_OPENED,
         PROFILE_UPDATED,
         PREFERENCE_CHANGED,
+        RESULTS_SHARED,
     )
 }
 

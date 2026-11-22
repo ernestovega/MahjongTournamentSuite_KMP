@@ -671,4 +671,12 @@ The first one that works wins</string>
     <string name="draw_swap_flow_shake">A few random swaps</string>
     <string name="draw_swap_flow_limit">Until the time limit</string>
     <string name="close">Close</string>
+    <string name="summary_col_round">Round</string>
+    <string name="summary_col_table">Table</string>
+    <string name="summary_col_seat">Seat</string>
+    <string name="summary_col_points">Points</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Total points</string>
+    <string name="summary_col_total_score">Total score</string>
+    <string name="summary_col_place">Place</string>
 </resources>

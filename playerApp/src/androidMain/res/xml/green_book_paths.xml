@@ -4,4 +4,6 @@
     <files-path name="greenbook-kept" path="greenbook/" />
     <!-- The copy of the English edition inside the app. -->
     <cache-path name="greenbook" path="greenbook/" />
+    <!-- The image of the summary of a player, shared with another app. See ImageShare.android.kt. -->
+    <cache-path name="shared" path="shared/" />
 </paths>

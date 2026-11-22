@@ -272,6 +272,12 @@ class PlayerScreensScreenshotTest {
     ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
 
     @Test
+    fun tournamentPlayerSummary() = playerScreenshots(
+        "tournament-player-summary",
+        ready = { waitForText("EMA 04010001", substring = true) },
+    ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.SUMMARY)) }
+
+    @Test
     fun tournamentPlayerAllTournaments() = playerScreenshots(
         "tournament-player-all-tournaments",
         ready = {

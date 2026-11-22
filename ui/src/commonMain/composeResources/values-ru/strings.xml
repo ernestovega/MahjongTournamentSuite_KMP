@@ -667,4 +667,12 @@
     <string name="draw_swap_flow_shake">Несколько случайных обменов</string>
     <string name="draw_swap_flow_limit">До предельного времени</string>
     <string name="close">Закрыть</string>
+    <string name="summary_col_round">Раунд</string>
+    <string name="summary_col_table">Стол</string>
+    <string name="summary_col_seat">Место</string>
+    <string name="summary_col_points">Очки</string>
+    <string name="summary_col_score">Счёт</string>
+    <string name="summary_col_total_points">Всего очков</string>
+    <string name="summary_col_total_score">Итоговый счёт</string>
+    <string name="summary_col_place">Позиция</string>
 </resources>

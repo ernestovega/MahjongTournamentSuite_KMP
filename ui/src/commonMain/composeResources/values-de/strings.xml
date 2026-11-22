@@ -667,4 +667,12 @@ Die erste, die klappt, gewinnt</string>
     <string name="draw_swap_flow_shake">Ein paar zufällige Tausche</string>
     <string name="draw_swap_flow_limit">Bis zur Höchstzeit</string>
     <string name="close">Schließen</string>
+    <string name="summary_col_round">Runde</string>
+    <string name="summary_col_table">Tisch</string>
+    <string name="summary_col_seat">Sitz</string>
+    <string name="summary_col_points">Punkte</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Punkte gesamt</string>
+    <string name="summary_col_total_score">Score gesamt</string>
+    <string name="summary_col_place">Platz</string>
 </resources>

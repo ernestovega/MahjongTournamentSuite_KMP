@@ -293,4 +293,7 @@
     <string name="preg_no_ema_country">Land</string>
     <string name="preg_message">Meddelande (valfritt)</string>
     <string name="preg_send">Skicka</string>
+    <string name="tab_summary">Sammanfattning</string>
+    <string name="summary_share">Dela</string>
+    <string name="summary_share_error">Bilden kunde inte delas.</string>
 </resources>

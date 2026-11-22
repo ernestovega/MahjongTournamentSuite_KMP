@@ -671,4 +671,12 @@ Gana el primero que sale bien</string>
     <string name="draw_swap_flow_shake">Unos cambios al azar</string>
     <string name="draw_swap_flow_limit">Hasta el tiempo máximo</string>
     <string name="close">Cerrar</string>
+    <string name="summary_col_round">Ronda</string>
+    <string name="summary_col_table">Mesa</string>
+    <string name="summary_col_seat">Asiento</string>
+    <string name="summary_col_points">Puntos</string>
+    <string name="summary_col_score">Puntuación</string>
+    <string name="summary_col_total_points">Total puntos</string>
+    <string name="summary_col_total_score">Total puntuación</string>
+    <string name="summary_col_place">Puesto</string>
 </resources>
