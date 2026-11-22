@@ -9,8 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,7 +39,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContactSupport
-import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -59,13 +56,14 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -89,11 +87,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -133,6 +133,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -230,6 +232,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
 import mahjongtournamentsuite.playerapp.generated.resources.schedule_hide
 import mahjongtournamentsuite.playerapp.generated.resources.scope_me
+import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
@@ -237,7 +240,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
-import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.status_finished
 import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
@@ -552,10 +554,12 @@ fun TournamentsScreen(navController: NavHostController) {
     val hideOnScroll = rememberHideOnScrollState()
     val account = rememberAccountActions(navController)
     account.Dialogs()
+    val drawExplanation = rememberDrawExplanationState()
+    drawExplanation.Dialog()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),
-        actions = { InfoTopBarButtons(navController) },
+        actions = { InfoTopBarButtons(navController, drawExplanation) },
         isLoading = (items == null && message == null) || (tab == StartTab.STATS && statisticsLoading),
         autoFocusFirst = false,
     ) {
@@ -1110,6 +1114,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
 
     val account = rememberAccountActions(navController)
     account.Dialogs()
+    val drawExplanation = rememberDrawExplanationState()
+    drawExplanation.Dialog()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         // An open team names the screen.
@@ -1122,7 +1128,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },
         // The same buttons as the list of tournaments. On a phone they go into the menu.
-        actions = { InfoTopBarButtons(navController) },
+        actions = { InfoTopBarButtons(navController, drawExplanation) },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
@@ -2352,17 +2358,19 @@ internal fun formatClock(ms: Long): String {
 }
 
 /**
- * The Rules button and the three-dots menu with Contact and Privacy, in the top bar.
+ * The Rules button and the three-dots menu with How does the draw work?, Contact and Privacy, in the top bar.
  * The list of tournaments and the screen of a tournament show them.
  *
  * On a phone the buttons are already inside the three-dots menu of the top bar, and a menu inside a menu is awkward.
- * There Contact and Privacy show directly in that menu, under the Rules group.
+ * There the draw, Contact and Privacy show directly in that menu, under the Rules group.
  */
 @Composable
-fun InfoTopBarButtons(navController: NavHostController) {
+fun InfoTopBarButtons(navController: NavHostController, drawExplanation: DrawExplanationState) {
     // Out of the menus, so it lives on while a menu closes.
     val openPrivacyPolicy = rememberOpenPrivacyPolicy()
     val options: @Composable () -> Unit = {
+        // The same explanation of the draw as in the admin app, with its flowchart: public for every player.
+        DrawExplanationTopBarButton(onClick = drawExplanation::open)
         ContactTopBarButton(navController)
         AppTopBarButton(
             text = stringResource(Res.string.menu_privacy),
@@ -2388,6 +2396,26 @@ fun InfoTopBarButtons(navController: NavHostController) {
         }
     }
 }
+
+/**
+ * Whether "How does the draw work?" is open. It lives in the screen, out of the top bar: on a phone the button is in the
+ * three-dots menu, which leaves the screen when it closes. The screen shows the dialog with [Dialog].
+ */
+class DrawExplanationState {
+    private var visible by mutableStateOf(false)
+
+    fun open() {
+        visible = true
+    }
+
+    @Composable
+    fun Dialog() {
+        if (visible) DrawExplanationDialog(onDismiss = { visible = false })
+    }
+}
+
+@Composable
+fun rememberDrawExplanationState() = remember { DrawExplanationState() }
 
 /** Opens the contact form. The landing page has the contact button. The privacy policy also links the form at /support. */
 @Composable

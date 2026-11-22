@@ -613,4 +613,32 @@
     <string name="registration_error_team_name_taken">Это название уже у другой команды.</string>
     <string name="registration_error_too_many_rows">Файл слишком большой: не более 500 строк.</string>
     <string name="registration_error_use_leave">Чтобы выйти из своей команды, нажмите «Выйти из команды».</string>
+    <string name="draw_help_button">Как работает жеребьёвка?</string>
+    <string name="draw_help_title">Как работает жеребьёвка</string>
+    <string name="draw_help_intro">Столы всех раундов разыгрываются сразу, до начала турнира. Вот как это работает:</string>
+    <string name="draw_help_how_title">Как это работает</string>
+    <string name="draw_help_how">• Приложение заполняет столы по одному месту, раунд за раундом.\n• Для каждого места оно наугад вытягивает игрока, у которого в этом раунде ещё нет стола.\n• Если этот игрок уже играл с кем-то за этим столом или он из той же команды, пробуется другой.\n• Если в какой-то момент никто не подходит, всё начинается заново.\n• Пробуется много рассадок сразу, и берётся первая удачная. Интенсивные вычисления пробуют ещё больше сразу, и большие турниры готовы быстрее.</string>
+    <string name="draw_help_rules_title">Что гарантируется</string>
+    <string name="draw_help_rules">• Никто не играет дважды против одного и того же человека за весь турнир.\n• В командном турнире два игрока одной команды никогда не сидят за одним столом.\n• Порядок мест за каждым столом тоже случайный.</string>
+    <string name="draw_help_random_title">100 % случайно</string>
+    <string name="draw_help_random">• Столы действительно разыгрываются случайно. За этим нет формул, готовых таблиц или систем подбора пар.\n• Рейтинг, уровень и страна игроков не учитываются. Все столы определены ещё до первой раздачи.\n• У каждого свободного игрока одинаковый шанс на любое место, поэтому от турнира к турниру не повторяются никакие закономерности.\n• У каждого турнира своя жеребьёвка, и никто не может заранее знать, какой она будет.\n• Совет: жеребьёвка идёт по номерам игроков (1, 2, 3…). Привязывайте имена к этим номерам, не глядя заранее на столы, например в порядке регистрации. Тогда никто не сможет выбрать, с кем играть.</string>
+    <string name="draw_flow_description">Блок-схема жеребьёвки</string>
+    <string name="draw_flow_start">Игроки, раунды и команды</string>
+    <string name="draw_flow_seed">Перемешать</string>
+    <string name="draw_flow_attempt">Новая рассадка</string>
+    <string name="draw_flow_parallel">Несколько рассадок одновременно
+Побеждает первая удачная</string>
+    <string name="draw_flow_next_seat">Следующее свободное место</string>
+    <string name="draw_flow_next_seat_note">Раунд, стол и место</string>
+    <string name="draw_flow_pick">Случайный игрок без стола в этом раунде</string>
+    <string name="draw_flow_check">Повтор соперника или партнёр?</string>
+    <string name="draw_flow_seat">Садится</string>
+    <string name="draw_flow_more_seats">Остались места?</string>
+    <string name="draw_flow_done">Пары готовы</string>
+    <string name="draw_flow_discard">Взять другого</string>
+    <string name="draw_flow_candidates">Есть другие?</string>
+    <string name="draw_flow_failed">Рассадка не удалась</string>
+    <string name="draw_flow_yes">Да</string>
+    <string name="draw_flow_no">Нет</string>
+    <string name="close">Закрыть</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.etologic.mahjongtournamentsuite.presentation.screen
+package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,25 +28,18 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.etologic.mahjongtournamentsuite.presentation.components.DrawFlowDiagram
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
-import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.close
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_button
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_how
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_how_title
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_intro
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_random
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_random_title
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_rules
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_rules_title
-import mahjongtournamentsuite.adminapp.generated.resources.draw_help_title
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.close
+import mahjongtournamentsuite.ui.generated.resources.draw_help_button
+import mahjongtournamentsuite.ui.generated.resources.draw_help_how
+import mahjongtournamentsuite.ui.generated.resources.draw_help_how_title
+import mahjongtournamentsuite.ui.generated.resources.draw_help_intro
+import mahjongtournamentsuite.ui.generated.resources.draw_help_random
+import mahjongtournamentsuite.ui.generated.resources.draw_help_random_title
+import mahjongtournamentsuite.ui.generated.resources.draw_help_rules
+import mahjongtournamentsuite.ui.generated.resources.draw_help_rules_title
+import mahjongtournamentsuite.ui.generated.resources.draw_help_title
 import org.jetbrains.compose.resources.stringResource
 
 /** How the pairings of a tournament are drawn: a flowchart, the rules it keeps and how random it is. */
@@ -121,4 +114,14 @@ fun DrawExplanationButton(onClick: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text(stringResource(Res.string.draw_help_button))
     }
+}
+
+/** "How does the draw work?" as a top bar button or menu item: the Player app has it in its three-dots menu. */
+@Composable
+fun DrawExplanationTopBarButton(onClick: () -> Unit) {
+    AppTopBarButton(
+        text = stringResource(Res.string.draw_help_button),
+        icon = Icons.Default.School,
+        onClick = onClick,
+    )
 }

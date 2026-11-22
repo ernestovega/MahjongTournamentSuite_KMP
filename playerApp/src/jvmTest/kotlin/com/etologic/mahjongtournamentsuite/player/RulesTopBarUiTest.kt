@@ -52,6 +52,14 @@ class RulesTopBarUiTest {
         }
     }
 
+    /** A screen with the info buttons, as the list of tournaments: the draw explanation is a dialog of the screen. */
+    @Composable
+    private fun InfoScreen(nav: NavHostController) {
+        val drawExplanation = rememberDrawExplanationState()
+        drawExplanation.Dialog()
+        AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav, drawExplanation) }) {}
+    }
+
     private fun ComposeUiTest.button(label: String) = onNode(hasText(label) or hasContentDescription(label))
 
     private fun ComposeUiTest.openMenu() = onNodeWithContentDescription("Menu").performClick()
@@ -103,7 +111,7 @@ class RulesTopBarUiTest {
 
     @Test
     fun onAWideScreenTheBarShowsRulesAndAThreeDotsMenuWithContactAndPrivacy() = runDesktopComposeUiTest(width = 1200, height = 800) {
-        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        show { nav -> InfoScreen(nav) }
         button("Rules").assertExists()
         listOf("Green Book", "Support", "Privacy", "Version").forEach { button(it).assertDoesNotExist() }
         onNodeWithContentDescription("Menu").assertDoesNotExist()
@@ -116,7 +124,7 @@ class RulesTopBarUiTest {
 
     @Test
     fun onAWideScreenRulesOpensAMenuWithItsThreeOptions() = runDesktopComposeUiTest(width = 1200, height = 800) {
-        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        show { nav -> InfoScreen(nav) }
         button("Rules").performClick()
         listOf("Green Book", "Combinations", "Penalties overview").forEach { button(it).assertExists() }
         button("Penalties overview").performClick()
@@ -126,11 +134,13 @@ class RulesTopBarUiTest {
 
     @Test
     fun onAPhoneTheRulesOptionsAreInTheMenuUnderAHeadingWithoutASecondMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
-        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        show { nav -> InfoScreen(nav) }
         button("Support").assertDoesNotExist()
         openMenu()
         // The heading Rules and its options, one level only, then Support and Privacy, without a second three-dots menu.
-        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Support", "Privacy").forEach { button(it).assertExists() }
+        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "How does the draw work?", "Support", "Privacy").forEach {
+            button(it).assertExists()
+        }
         listOf("Version", "More").forEach { button(it).assertDoesNotExist() }
         button("Combinations").performClick()
         onNodeWithText("Combinations screen").assertExists()
@@ -138,9 +148,29 @@ class RulesTopBarUiTest {
 
     @Test
     fun onAPhoneTheContactOfTheInfoButtonsOpensTheForm() = runDesktopComposeUiTest(width = 400, height = 800) {
-        show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
+        show { nav -> InfoScreen(nav) }
         openMenu()
         button("Support").performClick()
         onNodeWithText("Support form").assertExists()
+    }
+
+    /** The explanation of the draw, with its flowchart, is public: any player opens it from the three-dots menu. */
+    @Test
+    fun onAWideScreenTheMenuOpensHowTheDrawWorks() = runDesktopComposeUiTest(width = 1200, height = 800) {
+        show { nav -> InfoScreen(nav) }
+        button("More").performClick()
+        button("How does the draw work?").performClick()
+        waitForIdle()
+        onNodeWithText("How the draw works").assertExists()
+        button("How does the draw work?").assertDoesNotExist()
+    }
+
+    @Test
+    fun onAPhoneTheMenuOpensHowTheDrawWorks() = runDesktopComposeUiTest(width = 400, height = 800) {
+        show { nav -> InfoScreen(nav) }
+        openMenu()
+        button("How does the draw work?").performClick()
+        waitForIdle()
+        onNodeWithText("How the draw works").assertExists()
     }
 }
