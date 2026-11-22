@@ -99,6 +99,10 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
     ) {
         if (!view.tournament.inRegistration) ProgressCard(view.progress)
         if (tournament.organizers.isNotEmpty()) OrganizersCard(tournament.organizers)
+        // The venue and the contact come before the schedule (Ernesto, 22-nov).
+        // An email alone gives no venue card. It has its own card.
+        if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
+        if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
         if (hasSchedule(tournament)) {
             InfoCard(stringResource(Res.string.info_schedule), Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
         }
@@ -109,9 +113,6 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
                 modifier = Modifier.padding(vertical = 12.dp),
             )
         }
-        // An email alone gives no venue card. It has its own card.
-        if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
-        if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
     }
 }
 

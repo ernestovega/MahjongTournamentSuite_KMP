@@ -78,7 +78,7 @@ class RulesTopBarUiTest {
     @Test
     fun theContactButtonOfCombinationsOpensTheForm() = runDesktopComposeUiTest(width = 1200, height = 800) {
         show { CombinationsScreen(it) }
-        button("Contact").performClick()
+        button("Support").performClick()
         onNodeWithText("Support form").assertExists()
     }
 
@@ -88,16 +88,16 @@ class RulesTopBarUiTest {
         onNodeWithText("Warning and progressive penalty").assertExists()
         onNodeWithText("Dead hand").assertExists()
         onNodeWithText("Point penalties and severe penalties").assertExists()
-        button("Contact").performClick()
+        button("Support").performClick()
         onNodeWithText("Support form").assertExists()
     }
 
     @Test
     fun onAPhoneTheContactOfPenaltiesIsInTheMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
         show { PenaltiesScreen(it) }
-        button("Contact").assertDoesNotExist()
+        button("Support").assertDoesNotExist()
         openMenu()
-        button("Contact").performClick()
+        button("Support").performClick()
         onNodeWithText("Support form").assertExists()
     }
 
@@ -105,12 +105,12 @@ class RulesTopBarUiTest {
     fun onAWideScreenTheBarShowsRulesAndAThreeDotsMenuWithContactAndPrivacy() = runDesktopComposeUiTest(width = 1200, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
         button("Rules").assertExists()
-        listOf("Green Book", "Contact", "Privacy", "Version").forEach { button(it).assertDoesNotExist() }
+        listOf("Green Book", "Support", "Privacy", "Version").forEach { button(it).assertDoesNotExist() }
         onNodeWithContentDescription("Menu").assertDoesNotExist()
         button("More").performClick()
-        listOf("Contact", "Privacy").forEach { button(it).assertExists() }
+        listOf("Support", "Privacy").forEach { button(it).assertExists() }
         button("Version").assertDoesNotExist()
-        button("Contact").performClick()
+        button("Support").performClick()
         onNodeWithText("Support form").assertExists()
     }
 
@@ -127,10 +127,10 @@ class RulesTopBarUiTest {
     @Test
     fun onAPhoneTheRulesOptionsAreInTheMenuUnderAHeadingWithoutASecondMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
-        button("Contact").assertDoesNotExist()
+        button("Support").assertDoesNotExist()
         openMenu()
-        // The heading Rules and its options, one level only, then Contact and Privacy, without a second three-dots menu.
-        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Contact", "Privacy").forEach { button(it).assertExists() }
+        // The heading Rules and its options, one level only, then Support and Privacy, without a second three-dots menu.
+        listOf("Rules", "Green Book", "Combinations", "Penalties overview", "Support", "Privacy").forEach { button(it).assertExists() }
         listOf("Version", "More").forEach { button(it).assertDoesNotExist() }
         button("Combinations").performClick()
         onNodeWithText("Combinations screen").assertExists()
@@ -140,7 +140,7 @@ class RulesTopBarUiTest {
     fun onAPhoneTheContactOfTheInfoButtonsOpensTheForm() = runDesktopComposeUiTest(width = 400, height = 800) {
         show { nav -> AppScaffold(title = "Tournaments", actions = { InfoTopBarButtons(nav) }) {} }
         openMenu()
-        button("Contact").performClick()
+        button("Support").performClick()
         onNodeWithText("Support form").assertExists()
     }
 }

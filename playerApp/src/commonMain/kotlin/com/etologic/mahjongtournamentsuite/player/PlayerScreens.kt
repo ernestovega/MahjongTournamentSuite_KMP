@@ -42,7 +42,7 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContactSupport
-import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -281,7 +281,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
@@ -911,14 +910,21 @@ internal fun TournamentCard(
                             if (tournament.hostCountry.isNotBlank()) {
                                 CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
                             }
-                            // Directions is the usual map icon, right after the place (Ernesto, 21-nov).
+                            // Directions is the usual map icon, right after the place (Ernesto, 21-nov): an outlined
+                            // round button with only the outlined icon, in the color of the text (white in the dark
+                            // theme, dark in the light one, where white would not show), as the other link buttons.
                             if (mapLink != null) {
-                                IconButton(onClick = { openDirections(mapLink) }, modifier = Modifier.size(36.dp)) {
+                                OutlinedButton(
+                                    onClick = { openDirections(mapLink) },
+                                    modifier = Modifier.size(36.dp),
+                                    shape = CircleShape,
+                                    contentPadding = PaddingValues(0.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                                ) {
                                     Icon(
-                                        Icons.Default.Directions,
+                                        Icons.Outlined.Directions,
                                         contentDescription = stringResource(Res.string.info_open_directions),
-                                        Modifier.size(24.dp),
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        Modifier.size(20.dp),
                                     )
                                 }
                             }

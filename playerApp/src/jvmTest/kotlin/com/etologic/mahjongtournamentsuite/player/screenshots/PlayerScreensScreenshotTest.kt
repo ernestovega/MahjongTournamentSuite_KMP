@@ -230,7 +230,7 @@ class PlayerScreensScreenshotTest {
     ) { nav -> TournamentsScreen(nav) }
 
     /**
-     * The More menu of the top bar, open: Contact, Privacy and the rules. On a phone they are entries of the three-dots
+     * The More menu of the top bar, open: Support, Privacy and the rules. On a phone they are entries of the three-dots
      * menu of the bar, so the test opens the menus until Privacy shows.
      */
     @Test
