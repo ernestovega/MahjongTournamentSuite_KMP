@@ -1087,12 +1087,12 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_removed_teams">Lagen som lämnar, med sina spelare: %1$s.</string>
     <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
-    <string name="pc_added_slots">%1$d tomma platser, att tilldela efteråt.</string>
+    <string name="pc_added_slots">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</string>
     <string name="pc_added_teams">%1$d nya lag.</string>
     <string name="pc_added_waiting">Från väntelistan, som nu får en plats: %1$s.</string>
     <string name="pc_kept_label">Behålls:</string>
-    <string name="pc_kept_people">Övriga spelare, med sin EMA-spelare, sitt konto och sin e-post.</string>
-    <string name="pc_kept_teams">Övriga lag, med sitt namn och sina spelare.</string>
+    <string name="pc_kept_people">Övriga spelare, med sitt nummer, sin EMA-spelare, sitt konto och sin e-post.</string>
+    <string name="pc_kept_teams">Övriga lag, med sitt nummer, sitt namn och sina spelare.</string>
     <string name="pc_kept_rounds">Omgångarna, deras tider och deras klockor.</string>
     <string name="pc_note">Alla som berörs får ett mejl.
 Ändringen registreras i aktiviteten.</string>

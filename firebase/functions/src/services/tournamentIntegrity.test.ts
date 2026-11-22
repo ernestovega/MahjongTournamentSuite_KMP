@@ -56,6 +56,18 @@ test("a clean tournament has no errors or warnings", () => {
   assert.equal(report.counts.warnings, 0);
 });
 
+test("slot numbers with gaps, after tables left, are not a finding", () => {
+  // Slot 3 left and slot 17 came: a change of the number of players keeps the numbers of the people who stay.
+  const input = valid();
+  const renumber = (id: number) => (id === 3 ? 17 : id);
+  input.players = input.players.map(({ id, data }) => (Number(id) === 3 ? { id: "17", data: { ...data, id: 17 } } : { id, data }));
+  input.tables.forEach((table) => { table.data.playerIds = (table.data.playerIds as number[]).map(renumber); });
+  input.registry.set(ema(3), { country: "ES" });
+  assert.deepEqual(codes(input).filter((code) => code.startsWith("players.") || code.startsWith("tables.")), []);
+  input.players[0] = { id: "0", data: { ...input.players[0].data, id: 0 } };
+  assert.ok(codes(input).includes("players.idRange"));
+});
+
 test("an assigned player that is not in the registry is an error", () => {
   const input = valid();
   input.registry.set("00000002", null);

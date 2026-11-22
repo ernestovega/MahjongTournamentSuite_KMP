@@ -52,6 +52,25 @@ object PlayerCountRules {
     fun removedSlots(isTeams: Boolean, chosen: Set<Int>, teams: List<TournamentTeam>): List<Int> =
         if (isTeams) teams.filter { it.id in chosen }.flatMap { it.playerIds }.sorted() else chosen.sorted()
 
+    /**
+     * The slots of the new draw: the slots that stay keep their number and their team, and the new ones take the
+     * numbers after the highest one (and with teams, the team numbers after the highest team), in groups of 4.
+     * Nobody who stays changes number (Ernesto, 22-nov), so the numbers can have gaps after a removal.
+     */
+    fun targetSlots(current: List<TournamentPlayer>, removedSlotIds: Collection<Int>, target: Int, isTeams: Boolean): List<TournamentPlayer> {
+        val removed = removedSlotIds.toSet()
+        val kept = current.filter { it.id !in removed }.sortedBy { it.id }
+        val added = (target - kept.size).coerceAtLeast(0)
+        val firstId = (current.maxOfOrNull { it.id } ?: 0) + 1
+        val firstTeam = (current.maxOfOrNull { it.team } ?: 0) + 1
+        val keptSlots = kept.map { TournamentPlayer(id = it.id, name = "Player ${it.id}", team = if (isTeams) it.team else 0) }
+        val newSlots = (0 until added).map { index ->
+            val id = firstId + index
+            TournamentPlayer(id = id, name = "Player $id", team = if (isTeams) firstTeam + index / STEP else 0)
+        }
+        return keptSlots + newSlots
+    }
+
     /** True when the choice fits the new number: exactly the slots to remove, and no more waiting people than new slots. */
     fun isChoiceComplete(
         current: Int,

@@ -203,7 +203,12 @@ class AdminActionTrackingTest {
         },
         Case(TelemetryAction.DRAW_MADE) { it.registrationsPresenter.makeDraw(RegistrationFakes.DRAW_TOURNAMENT, RegistrationFakes.CONFIRMED) {} },
         Case(TelemetryAction.PLAYER_COUNT_CHANGED) {
-            it.playerCountPresenter.change(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 16, numRounds = 1), 20, emptyList(), emptyList()) {}
+            it.playerCountPresenter.change(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 16, numRounds = 1),
+                (1..16).map { id -> PlayerCountSlot(id, "Player $id", null, 0) },
+                20,
+                emptyList(),
+                emptyList(),
+            ) {}
         },
     )
 

@@ -337,7 +337,7 @@ class PlayerCountUiTest {
         click("playerCountContinue")
 
         onNodeWithText("From 16 to 20 players").assertIsDisplayed()
-        onNodeWithText("3 empty places, to assign afterwards.").assertIsDisplayed()
+        onNodeWithText("3 empty places, numbered after the highest one, to assign afterwards.").assertIsDisplayed()
         onNodeWithText("From the waiting list, with a place now: Late Two.").assertIsDisplayed()
         click("playerCountConfirmButton")
         waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
@@ -359,7 +359,7 @@ class PlayerCountUiTest {
         click("playerCountTeam-3")
         click("playerCountContinue")
         onNodeWithText("The teams that leave, with their players: Team 3.").assertIsDisplayed()
-        onNodeWithText("The other teams, with their names and players.").assertIsDisplayed()
+        onNodeWithText("The other teams, with their number, name and players.").assertIsDisplayed()
         click("playerCountConfirmButton")
         waitUntil(timeoutMillis = 30_000) { onAllNodesWithTag("playerCountDone").fetchSemanticsNodes().isNotEmpty() }
         assertEquals(listOf(9, 10, 11, 12), world.server.playerCountRequest!!.removedSlotIds)

@@ -31,8 +31,9 @@ with no hand does not stop it. When it is not possible, the button looks off and
      only hides lines: the people chosen stay chosen.
    - One table less or more: in an individual tournament the organizer chooses who leaves, 4 people for each table.
      In a team tournament, whole teams leave or come.
-   - More tables: the new slots are empty, to assign afterwards in Players (or Teams). In a tournament with
-     registrations, the new places can go to people of the waiting list, in its order, up to the number of new places.
+   - More tables: the new slots are empty, numbered after the highest one, to assign afterwards in Players (or
+     Teams). In a tournament with registrations, the new places can go to people of the waiting list, in its order, up
+     to the number of new places.
 2. **Confirm.** A red dialog says what is deleted (the tables of every round, the people who leave, their
    registrations), what is added and what is kept (the other players with their EMA player, account and email, the
    rounds with their times and clocks). The button **How does the draw work?** explains the draw, as when a tournament
@@ -45,8 +46,11 @@ with no hand does not stop it. When it is not possible, the button looks off and
 
 `POST /tournaments/{tournamentId}/player-count` (`firebase/functions/src/services/playerCountChange.ts`):
 
-- The people who stay keep their data and take the lowest slot numbers, in their order. Teams that stay take the
-  lowest team numbers. Default names ("Player N", "Team N") follow the new number; real names stay.
+- The people who stay keep their data and their slot number, and teams that stay keep their team number and their
+  slots (Ernesto, 22-nov): after a removal the numbers have gaps, and the new slots and teams take the numbers after
+  the highest ones, never a gap. The app draws on 1..N as always and puts that draw on the real numbers
+  (`onSlots` in `DrawTournamentScheduleUseCase.kt`: without history any renaming keeps every rule). A draw of an older
+  app, on 1..N, is still accepted: then the people who stay take the lowest numbers in their order, as before.
 - The removed slots and teams are deleted, and so are the old tables. The new tables are written with a higher version,
   so every phone and screen loads the new draw.
 - With registrations: the people who leave lose their registration. The people of the waiting list who get a place
@@ -65,10 +69,10 @@ text.
 
 ## Tests
 
-- Backend: `playerCountChange.test.ts` (the plan of the change), `playerCountChange.integration.test.ts` (Firestore
+- Backend: `playerCountChange.test.ts` (the plan of the change, with kept numbers and with the 1..N draws of older apps), `playerCountChange.integration.test.ts` (Firestore
   emulator: data kept, teams, registrations, rollback, blocked states), `api/playerCount.integration.test.ts` (route,
   permissions, activity) and the matrix of `rolePermissions.integration.test.ts`.
-- App: `PlayerCountRulesTest` (domain), `PlayerCountPresenterTest`, `PlayerCountUiTest` (the whole dialog, back, teams,
+- App: `PlayerCountRulesTest` and `DrawOnSlotsTest` (domain), `PlayerCountPresenterTest`, `PlayerCountUiTest` (the whole dialog, back, teams,
   waiting list, server errors, locked states, both entry points and permissions), `AdminActionTrackingTest`.
 - Screenshots: `dialogs/player-count-remove`, `player-count-search`, `player-count-add`, `player-count-confirm` and `player-count-locked`.
 - Game day: `corners` creates its tournament with 32 players and takes a table out before the first hand

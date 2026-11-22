@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
@@ -22,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
+import com.etologic.mahjongtournamentsuite.domain.usecase.onSlots
 
 /** One slot of the tournament as the dialog lists it: its number, the name to show and its team. */
 data class PlayerCountSlot(val id: Int, val name: String, val emaId: String?, val team: Int)
@@ -38,7 +40,8 @@ data class PlayerCountData(
 
 /**
  * Changes the number of players of a tournament before its first hand (docs/player-count-change.md). The app computes
- * the tables of every round for the new number, as Create tournament does, and the server keeps the people who stay.
+ * the tables of every round for the new number, as Create tournament does, and the server keeps the people who stay,
+ * with their numbers.
  */
 class PlayerCountPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -86,9 +89,13 @@ class PlayerCountPresenter(
         )
     }
 
-    /** Computes the new draw for [target] players and sends it with the choice of the organizer. */
+    /**
+     * Computes the new draw for [target] players and sends it with the choice of the organizer. The people who stay keep
+     * their numbers ([slots] are the current ones), and the new places take the numbers after the highest one.
+     */
     suspend fun change(
         tournament: Tournament,
+        slots: List<PlayerCountSlot>,
         target: Int,
         removedSlotIds: List<Int>,
         waitingEmaIds: List<String>,
@@ -98,13 +105,21 @@ class PlayerCountPresenter(
             return AppResult.Failure(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, listOf(target.toString())))
         }
         logger.i { "Calculating a new draw for $target players instead of ${tournament.numPlayers}." }
-        val schedule = generateSchedule(
+        val targets = PlayerCountRules.targetSlots(
+            current = slots.map { TournamentPlayer(id = it.id, name = "", team = it.team) },
+            removedSlotIds = removedSlotIds,
+            target = target,
+            isTeams = tournament.isTeams,
+        )
+        val drawn = generateSchedule(
             numPlayers = target,
             numRounds = tournament.numRounds,
             isTeams = tournament.isTeams,
             maxConcurrency = (platformCpuCount() / 2).coerceIn(1, 32),
             onProgress = onProgress,
         ) ?: return AppResult.Failure(AppError.Unexpected("Unable to generate rounds/tables locally with the current constraints."))
+        val schedule = drawn.onSlots(targets, tournament.isTeams)
+            ?: return AppResult.Failure(AppError.Unexpected("The draw does not fit the slots of the tournament."))
         return tournamentRepository.changePlayerCount(
             PlayerCountChangeRequest(
                 tournamentId = tournament.id,
