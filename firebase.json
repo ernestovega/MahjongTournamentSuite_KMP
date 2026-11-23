@@ -54,6 +54,10 @@
           }
         },
         {
+          "source": "/.well-known/assetlinks.json",
+          "destination": "/assetlinks.json"
+        },
+        {
           "source": "/admin/**",
           "destination": "/admin/index.html"
         },

@@ -24,6 +24,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- The QR of a physical table opens the app when it is installed (App Links). docs/table-qr.md. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="mts.mahjongmadrid.com" />
+                <data android:pathPattern="/.*/table/.*" />
+                <data android:pathPattern="/.*/mesa/.*" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".TimerActivity"
