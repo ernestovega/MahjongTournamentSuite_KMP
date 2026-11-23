@@ -667,4 +667,21 @@ De eerste die lukt, wint</string>
     <string name="draw_swap_flow_shake">Een paar willekeurige ruilen</string>
     <string name="draw_swap_flow_limit">Tot de maximale tijd</string>
     <string name="close">Sluiten</string>
+    <string name="draw_blocks_title">Derde geval: meer rondes dan er zonder herhaling passen</string>
+    <string name="draw_blocks_intro">Elke ronde treft een speler 3 nieuwe tegenstanders, dus de nieuwe tegenstanders raken op: met 16 spelers passen bijvoorbeeld 5 rondes zonder dat iemand een tegenstander twee keer treft. Met meer rondes loot de app in blokken.</string>
+    <string name="draw_blocks_how">• Een blok heeft zoveel rondes als er bij dat aantal spelers zonder herhaling passen. Met teams één ronde minder.
+• In het eerste blok treft niemand een tegenstander twee keer. In het tweede treft niemand iemand een derde keer, enzovoort. Het laatste blok volgt dezelfde regel, ook als het korter is.
+• Met 16, 28, 40 of 64 spelers bestaat er een perfect patroon: in elk blok treft elke speler elke tegenstander precies één keer. Het patroon heeft altijd dezelfde vorm, maar wie waar zit wordt geloot, in elk blok opnieuw.
+• Met andere aantallen spelers wordt elk blok door ruilen geloot, zoals bij de tweede manier, rekening houdend met de tafels van de vorige blokken.
+• Met 16, 28, 40 of 64 spelers wordt het patroon ook gebruikt als de eerste manier niet op tijd klaar is, in plaats van de tweede, omdat het meteen klaar is.</string>
+    <string name="draw_blocks_flow_description">Stroomdiagram van de loting in blokken</string>
+    <string name="draw_blocks_flow_start">Meer rondes dan er zonder herhaling passen</string>
+    <string name="draw_blocks_flow_block">Volgend blok</string>
+    <string name="draw_blocks_flow_block_note">Zoveel rondes als er passen</string>
+    <string name="draw_blocks_flow_pattern_check">Perfect patroon?</string>
+    <string name="draw_blocks_flow_pattern">Patroon met de spelers willekeurig</string>
+    <string name="draw_blocks_flow_pattern_note">Elke tegenstander één keer</string>
+    <string name="draw_blocks_flow_swaps">Loting door ruilen</string>
+    <string name="draw_blocks_flow_swaps_note">Niemand treft een tegenstander vaker dan het aantal blokken tot nu toe</string>
+    <string name="draw_blocks_flow_left">Rondes over?</string>
 </resources>

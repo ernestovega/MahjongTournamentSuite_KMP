@@ -671,4 +671,21 @@ Gana el primero que sale bien</string>
     <string name="draw_swap_flow_shake">Unos cambios al azar</string>
     <string name="draw_swap_flow_limit">Hasta el tiempo máximo</string>
     <string name="close">Cerrar</string>
+    <string name="draw_blocks_title">Tercer caso: más rondas de las que caben sin repetir</string>
+    <string name="draw_blocks_intro">En cada ronda un jugador se enfrenta a 3 rivales nuevos, así que los rivales nuevos se acaban: con 16 jugadores, por ejemplo, caben 5 rondas sin que nadie repita rival. Con más rondas, la app sortea por bloques.</string>
+    <string name="draw_blocks_how">• Un bloque tiene tantas rondas como caben sin repetir con ese número de jugadores. Con equipos, una ronda menos.
+• En el primer bloque nadie repite rival. En el segundo, nadie se enfrenta a nadie por tercera vez, y así sucesivamente. El último bloque, aunque sea más corto, sigue la misma regla.
+• Con 16, 28, 40 o 64 jugadores hay un patrón perfecto: en cada bloque cada jugador se enfrenta a cada rival exactamente una vez. El patrón tiene siempre la misma forma, pero quién se sienta en cada sitio se sortea, y en cada bloque de nuevo.
+• Con otros números de jugadores, cada bloque se sortea por intercambios, como el segundo método, contando las mesas de los bloques anteriores.
+• Con 16, 28, 40 o 64 jugadores el patrón también se usa cuando el primer método no termina a tiempo, en lugar del segundo, porque es instantáneo.</string>
+    <string name="draw_blocks_flow_description">Diagrama de flujo del sorteo por bloques</string>
+    <string name="draw_blocks_flow_start">Más rondas de las que caben sin repetir</string>
+    <string name="draw_blocks_flow_block">Siguiente bloque</string>
+    <string name="draw_blocks_flow_block_note">Tantas rondas como caben</string>
+    <string name="draw_blocks_flow_pattern_check">¿Patrón perfecto?</string>
+    <string name="draw_blocks_flow_pattern">Patrón con los jugadores al azar</string>
+    <string name="draw_blocks_flow_pattern_note">Cada rival una vez</string>
+    <string name="draw_blocks_flow_swaps">Sorteo por intercambios</string>
+    <string name="draw_blocks_flow_swaps_note">Cada rival, como mucho, tantas veces como bloques</string>
+    <string name="draw_blocks_flow_left">¿Quedan rondas?</string>
 </resources>

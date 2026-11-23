@@ -671,4 +671,21 @@ Vince la prima che riesce</string>
     <string name="draw_swap_flow_shake">Qualche scambio a caso</string>
     <string name="draw_swap_flow_limit">Fino al tempo massimo</string>
     <string name="close">Chiudi</string>
+    <string name="draw_blocks_title">Terzo caso: più turni di quanti ne entrano senza ripetere</string>
+    <string name="draw_blocks_intro">A ogni turno un giocatore incontra 3 nuovi avversari, quindi i nuovi avversari finiscono: con 16 giocatori, per esempio, entrano 5 turni senza che nessuno ripeta un avversario. Con più turni, l’app sorteggia a blocchi.</string>
+    <string name="draw_blocks_how">• Un blocco ha tanti turni quanti ne entrano senza ripetere con quel numero di giocatori. Con le squadre, un turno in meno.
+• Nel primo blocco nessuno ripete un avversario. Nel secondo, nessuno incontra qualcuno una terza volta, e così via. L’ultimo blocco, anche se più corto, segue la stessa regola.
+• Con 16, 28, 40 o 64 giocatori esiste uno schema perfetto: in ogni blocco ogni giocatore incontra ogni avversario esattamente una volta. Lo schema ha sempre la stessa forma, ma chi si siede dove viene sorteggiato, di nuovo a ogni blocco.
+• Con altri numeri di giocatori, ogni blocco viene sorteggiato per scambi, come il secondo metodo, contando i tavoli dei blocchi precedenti.
+• Con 16, 28, 40 o 64 giocatori lo schema si usa anche quando il primo metodo non finisce in tempo, al posto del secondo, perché è istantaneo.</string>
+    <string name="draw_blocks_flow_description">Diagramma di flusso del sorteggio a blocchi</string>
+    <string name="draw_blocks_flow_start">Più turni di quanti ne entrano senza ripetere</string>
+    <string name="draw_blocks_flow_block">Blocco successivo</string>
+    <string name="draw_blocks_flow_block_note">Tanti turni quanti ne entrano</string>
+    <string name="draw_blocks_flow_pattern_check">Schema perfetto?</string>
+    <string name="draw_blocks_flow_pattern">Schema con i giocatori a caso</string>
+    <string name="draw_blocks_flow_pattern_note">Ogni avversario una volta</string>
+    <string name="draw_blocks_flow_swaps">Sorteggio per scambi</string>
+    <string name="draw_blocks_flow_swaps_note">Nessuno ripete un avversario più volte dei blocchi giocati</string>
+    <string name="draw_blocks_flow_left">Turni rimasti?</string>
 </resources>

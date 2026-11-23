@@ -37,8 +37,11 @@ import mahjongtournamentsuite.ui.generated.resources.draw_backup_running
 import mahjongtournamentsuite.ui.generated.resources.draw_backup_time
 import mahjongtournamentsuite.ui.generated.resources.draw_backup_time_title
 import mahjongtournamentsuite.ui.generated.resources.draw_backup_title
-import mahjongtournamentsuite.ui.generated.resources.draw_help_first_title
+import mahjongtournamentsuite.ui.generated.resources.draw_blocks_how
+import mahjongtournamentsuite.ui.generated.resources.draw_blocks_intro
+import mahjongtournamentsuite.ui.generated.resources.draw_blocks_title
 import mahjongtournamentsuite.ui.generated.resources.draw_help_button
+import mahjongtournamentsuite.ui.generated.resources.draw_help_first_title
 import mahjongtournamentsuite.ui.generated.resources.draw_help_how
 import mahjongtournamentsuite.ui.generated.resources.draw_help_how_title
 import mahjongtournamentsuite.ui.generated.resources.draw_help_intro
@@ -50,8 +53,9 @@ import mahjongtournamentsuite.ui.generated.resources.draw_help_title
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * How the pairings of a tournament are drawn: the first way (a flowchart, the rules it keeps and how random it is) and,
- * after it, the second way that runs when the first takes too long, with its own flowchart and its time limits.
+ * How the pairings of a tournament are drawn: the first way (a flowchart, the rules it keeps and how random it is);
+ * after it, the second way that runs when the first takes too long, with its own flowchart and its time limits; and
+ * last, the draw in blocks for more rounds than fit without repeats, with its flowchart.
  */
 @Composable
 fun DrawExplanationDialog(onDismiss: () -> Unit) {
@@ -99,6 +103,17 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
                         HorizontalDivider()
                         HelpSection(stringResource(Res.string.draw_help_how_title), stringResource(Res.string.draw_backup_how))
                         HelpSection(stringResource(Res.string.draw_backup_time_title), stringResource(Res.string.draw_backup_time))
+                        // The third case, more rounds than fit without repeats: the blocks (Ernesto, 22-nov and 23-nov).
+                        HorizontalDivider(Modifier.padding(top = 12.dp), thickness = 2.dp)
+                        MethodTitle(stringResource(Res.string.draw_blocks_title), Modifier.testTag("drawBlocksTitle"))
+                        Text(
+                            stringResource(Res.string.draw_blocks_intro),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        DrawBlocksFlowDiagram(Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("drawBlocksDiagram"))
+                        HorizontalDivider()
+                        HelpSection(stringResource(Res.string.draw_help_how_title), stringResource(Res.string.draw_blocks_how))
                         Spacer(Modifier.testTag("drawExplanationEnd"))
                     }
                 }

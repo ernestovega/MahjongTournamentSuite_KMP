@@ -1126,4 +1126,6 @@ El número de jugadores solo se puede cambiar antes de la primera mano.</string>
     <string name="pc_locked_pending">El torneo aún no tiene sorteo.
 Cambia las plazas en Inscripciones.</string>
     <string name="activity_action_tournament_player_count">Cambió el número de jugadores</string>
+    <string name="create_rounds_blocks">Con %1$d jugadores caben %2$d rondas sin que nadie repita rival. Con %3$d rondas el sorteo va por bloques, y algunos jugadores repetirán rival, pero nadie más de %4$d veces.</string>
+    <string name="create_rounds_maybe_blocks">Con %1$d jugadores el sorteo asegura %2$d rondas sin que nadie repita rival. Con %3$d lo intentará, y si no lo consigue a tiempo, algunos jugadores repetirán rival, pero nadie más de %4$d veces.</string>
 </resources>

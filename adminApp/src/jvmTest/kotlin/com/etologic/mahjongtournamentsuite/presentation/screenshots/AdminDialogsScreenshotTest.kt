@@ -111,10 +111,26 @@ class AdminDialogsScreenshotTest {
     @Test
     fun drawExplanation() = dialog("draw-explanation") { DrawExplanationDialog(onDismiss = {}) }
 
-    /** The same dialog scrolled to its end: the second way to draw, with its diagram and its time limits. */
+    /** The same dialog scrolled to the second way to draw, with its diagram and its time limits. */
     @Test
     fun drawExplanationSecondWay() = adminScreenshots(
         "dialogs/draw-explanation-second-way",
+        variants = dialogVariants,
+        ready = { onNodeWithTag("drawBlocksTitle").performScrollTo() },
+    ) { DrawExplanationDialog(onDismiss = {}) }
+
+    /** The same dialog scrolled to the diagram of the draw in blocks. */
+    @Test
+    fun drawExplanationBlocksDiagram() = adminScreenshots(
+        "dialogs/draw-explanation-blocks-diagram",
+        variants = dialogVariants,
+        ready = { onNodeWithTag("drawBlocksDiagram").performScrollTo() },
+    ) { DrawExplanationDialog(onDismiss = {}) }
+
+    /** The same dialog scrolled to its end: the draw in blocks, for more rounds than fit without repeats. */
+    @Test
+    fun drawExplanationBlocks() = adminScreenshots(
+        "dialogs/draw-explanation-blocks",
         variants = dialogVariants,
         ready = { onNodeWithTag("drawExplanationEnd").performScrollTo() },
     ) { DrawExplanationDialog(onDismiss = {}) }

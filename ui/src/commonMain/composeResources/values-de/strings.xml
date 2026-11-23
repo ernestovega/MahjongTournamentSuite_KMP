@@ -667,4 +667,21 @@ Die erste, die klappt, gewinnt</string>
     <string name="draw_swap_flow_shake">Ein paar zufällige Tausche</string>
     <string name="draw_swap_flow_limit">Bis zur Höchstzeit</string>
     <string name="close">Schließen</string>
+    <string name="draw_blocks_title">Dritter Fall: mehr Runden, als ohne Wiederholung passen</string>
+    <string name="draw_blocks_intro">In jeder Runde trifft ein Spieler auf 3 neue Gegner, daher gehen die neuen Gegner aus: Mit 16 Spielern passen zum Beispiel 5 Runden, ohne dass jemand einen Gegner zweimal trifft. Bei mehr Runden lost die App in Blöcken.</string>
+    <string name="draw_blocks_how">• Ein Block hat so viele Runden, wie bei dieser Spielerzahl ohne Wiederholung passen. Mit Teams eine Runde weniger.
+• Im ersten Block trifft niemand einen Gegner zweimal. Im zweiten trifft niemand jemanden ein drittes Mal, und so weiter. Der letzte Block folgt derselben Regel, auch wenn er kürzer ist.
+• Bei 16, 28, 40 oder 64 Spielern gibt es ein perfektes Muster: In jedem Block trifft jeder Spieler jeden Gegner genau einmal. Das Muster hat immer dieselbe Form, aber wer wo darin sitzt, wird ausgelost, in jedem Block neu.
+• Bei anderen Spielerzahlen wird jeder Block durch Tauschen ausgelost, wie beim zweiten Weg, unter Berücksichtigung der Tische der vorherigen Blöcke.
+• Bei 16, 28, 40 oder 64 Spielern wird das Muster auch verwendet, wenn der erste Weg nicht rechtzeitig fertig wird, anstelle des zweiten, weil es sofort fertig ist.</string>
+    <string name="draw_blocks_flow_description">Ablaufdiagramm der Auslosung in Blöcken</string>
+    <string name="draw_blocks_flow_start">Mehr Runden, als ohne Wiederholung passen</string>
+    <string name="draw_blocks_flow_block">Nächster Block</string>
+    <string name="draw_blocks_flow_block_note">So viele Runden, wie passen</string>
+    <string name="draw_blocks_flow_pattern_check">Perfektes Muster?</string>
+    <string name="draw_blocks_flow_pattern">Muster mit zufällig verteilten Spielern</string>
+    <string name="draw_blocks_flow_pattern_note">Jeder Gegner einmal</string>
+    <string name="draw_blocks_flow_swaps">Auslosung durch Tauschen</string>
+    <string name="draw_blocks_flow_swaps_note">Niemand trifft einen Gegner öfter, als Blöcke gespielt sind</string>
+    <string name="draw_blocks_flow_left">Runden übrig?</string>
 </resources>

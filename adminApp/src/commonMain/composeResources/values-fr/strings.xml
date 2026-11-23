@@ -1126,4 +1126,6 @@ Le nombre de joueurs ne peut changer qu'avant la première main.</string>
     <string name="pc_locked_pending">Le tournoi n'a pas encore de tirage.
 Change les places dans Inscriptions.</string>
     <string name="activity_action_tournament_player_count">A changé le nombre de joueurs</string>
+    <string name="create_rounds_blocks">Avec %1$d joueurs, %2$d manches tiennent sans que personne ne retrouve un adversaire. Avec %3$d manches, le tirage se fait par blocs : certains retrouveront un adversaire, mais personne plus de %4$d fois.</string>
+    <string name="create_rounds_maybe_blocks">Avec %1$d joueurs, le tirage trouve à coup sûr %2$d manches sans que personne ne retrouve un adversaire. Avec %3$d, il essaiera, et s’il n’y arrive pas à temps, certains retrouveront un adversaire, mais personne plus de %4$d fois.</string>
 </resources>

@@ -1126,4 +1126,6 @@ Het aantal spelers kan alleen voor de eerste hand wijzigen.</string>
     <string name="pc_locked_pending">Het toernooi heeft nog geen loting.
 Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="activity_action_tournament_player_count">Wijzigde het aantal spelers</string>
+    <string name="create_rounds_blocks">Met %1$d spelers passen %2$d rondes zonder dat iemand een tegenstander twee keer treft. Met %3$d rondes loot de app in blokken: sommigen treffen een tegenstander opnieuw, maar niemand vaker dan %4$d keer.</string>
+    <string name="create_rounds_maybe_blocks">Met %1$d spelers vindt de loting zeker %2$d rondes zonder dat iemand een tegenstander twee keer treft. Met %3$d probeert ze het, en lukt het niet op tijd, dan treffen sommigen een tegenstander opnieuw, maar niemand vaker dan %4$d keer.</string>
 </resources>

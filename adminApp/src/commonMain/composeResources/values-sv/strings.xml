@@ -1126,4 +1126,6 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="pc_locked_pending">Turneringen har ingen lottning än.
 Ändra platserna under Anmälningar.</string>
     <string name="activity_action_tournament_player_count">Ändrade antalet spelare</string>
+    <string name="create_rounds_blocks">Med %1$d spelare ryms %2$d omgångar utan att någon möter samma motståndare två gånger. Med %3$d omgångar lottas det i block: några möter en motståndare igen, men ingen fler än %4$d gånger.</string>
+    <string name="create_rounds_maybe_blocks">Med %1$d spelare hittar lottningen säkert %2$d omgångar utan att någon möter samma motståndare två gånger. Med %3$d försöker den, och hinner den inte, möter några en motståndare igen, men ingen fler än %4$d gånger.</string>
 </resources>
