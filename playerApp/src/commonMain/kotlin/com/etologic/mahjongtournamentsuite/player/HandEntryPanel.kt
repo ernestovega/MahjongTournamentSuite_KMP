@@ -682,7 +682,7 @@ private fun SavingRow(waitingForTable: Boolean, text: String) {
 private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>) {
     val slot = seats.getOrNull(penalty.seatIndex)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(view.numberedFirstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
         Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
             Text(stringResource(Res.string.entry_others_each, penalty.amount / 3), color = MtsTheme.colors.gain)
@@ -776,14 +776,14 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
     val slot = winner ?: return
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.gain)
-        Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        Text(view.numberedFirstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (selfDraw) {
             Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
             SelfDrawIcon(18.dp)
             Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
         } else if (loser != null) {
             Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Text(view.numberedFirstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         }
     }
 }
@@ -862,7 +862,7 @@ private fun PlayerChoices(
                                 PlayerFlag(view.players[slot]?.country, width = 22.dp)
                             }
                             Text(
-                                view.firstNameOf(slot),
+                                view.numberedFirstNameOf(slot),
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                             )
@@ -992,7 +992,7 @@ private fun ReviewHand(
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                    Text(view.numberedFirstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
@@ -1007,7 +1007,7 @@ private fun ReviewHand(
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                         Text(stringResource(Res.string.entry_from), style = MaterialTheme.typography.titleLarge.inTextFont())
-                        Text(view.firstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                        Text(view.numberedFirstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1031,7 +1031,7 @@ private fun ReviewHand(
             ) {
                 currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
                 PlayerFlag(view.players[slot]?.country, width = 22.dp)
-                Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(view.numberedFirstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(
                 signedText(change),
