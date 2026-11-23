@@ -67,13 +67,15 @@ settings without Change or Close registrations, and no Make the draw (screenshot
 
 Admin app, Registrations (opens from the tournament while `drawPending`):
 
-- Settings on the screen itself, no settings dialog: a tile per setting with its own button. Status (Open or Close
-  registrations), Places, Last day to register and Public link have Change, which turns the tile into its field with
-  Cancel and Save. The public link also has Copy (a short message at the bottom, no dialog). On a phone the tiles are
-  the rows of one card, with icon buttons; wider screens show the text of every button.
-- Add a person and Make the draw. The draw needs the registrations closed: an info icon beside the buttons says so (a
-  line of text under them on a phone).
-- One list, without a big card around it: search, a chip per list with its count (All, With a place, Waiting list,
+- Settings on the screen itself, no settings dialog: one card with a row per setting (title, value in words, buttons).
+  Status says what it means ("Anyone with the link can register. Close the registrations to make the draw." / "Nobody
+  can register now. The draw can be made.") and has Close or Open registrations; Make the draw shows in that row once
+  they are closed. Places ("14 of 16 places taken", waiting list and emails not confirmed), Last day ("Until ...,
+  included") and Link to register have Change, which turns the value into its field with Cancel and Save. The link
+  also has Copy (a short message at the bottom, no dialog). On a phone each row has the title and icon buttons in one
+  line and the value under it; wider screens show the text of every button.
+- Add a person is beside the search (an icon button on a phone; alone when nobody has registered yet).
+- One list, without a big card around it: search, a chip per list (one line that scrolls sideways on a phone) with its count (All, With a place, Waiting list,
   Email not confirmed) and how many with a place have paid. A wide screen shows a table (#, photo, player with flag
   and EMA number, email, team, food, paid, menu); a phone shows each person in three lines. Names and photos come from
   the EMA registry. Food restrictions are an icon with a tooltip, and a warning shows when two people share an email

@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -29,11 +27,12 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HowToReg
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Warning
@@ -104,7 +103,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanati
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -115,6 +113,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitl
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveTextFile
@@ -139,6 +138,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_add_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_close_action
 import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_on_optional
+import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_until
 import mahjongtournamentsuite.adminapp.generated.resources.reg_col_food
 import mahjongtournamentsuite.adminapp.generated.resources.reg_col_player
 import mahjongtournamentsuite.adminapp.generated.resources.reg_col_team
@@ -146,7 +146,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_me
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirmed_section
 import mahjongtournamentsuite.adminapp.generated.resources.reg_copy
-import mahjongtournamentsuite.adminapp.generated.resources.reg_copy_link
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_confirm
@@ -178,7 +177,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_more_actions
 import mahjongtournamentsuite.adminapp.generated.resources.reg_move_to_waiting
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_account
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_close_date
-import mahjongtournamentsuite.adminapp.generated.resources.reg_no_limit
 import mahjongtournamentsuite.adminapp.generated.resources.reg_no_matches
 import mahjongtournamentsuite.adminapp.generated.resources.reg_notify
 import mahjongtournamentsuite.adminapp.generated.resources.reg_open_action
@@ -189,6 +187,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_pick_person
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_value
+import mahjongtournamentsuite.adminapp.generated.resources.reg_places_value_no_limit
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_already_registered
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_ema_not_found
@@ -199,6 +198,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_save
 import mahjongtournamentsuite.adminapp.generated.resources.reg_shared_email
 import mahjongtournamentsuite.adminapp.generated.resources.reg_state_closed
 import mahjongtournamentsuite.adminapp.generated.resources.reg_state_open
+import mahjongtournamentsuite.adminapp.generated.resources.reg_status_closed_detail
 import mahjongtournamentsuite.adminapp.generated.resources.reg_status_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_team_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_title
@@ -374,18 +374,13 @@ fun RegistrationsScreen(
                                     snackbar.showSnackbar(linkCopied)
                                 }
                             },
-                        )
-                    }
-                    item(key = "actions") {
-                        RegistrationActions(
-                            canDraw = current.settings.status == RegistrationPhase.CLOSED,
-                            showDraw = canConfigure,
-                            busy = busy,
-                            onAdd = { adding = true },
                             onDraw = { drawConfirm = true },
                         )
                     }
                     if (current.registrations.isEmpty()) {
+                        item(key = "add") {
+                            AddPersonButton(busy = busy, onAdd = { adding = true }, modifier = Modifier.padding(top = MtsTheme.spacing.lg))
+                        }
                         item(key = "empty") {
                             AppEmptyState(
                                 icon = Icons.Default.HowToReg,
@@ -403,6 +398,8 @@ fun RegistrationsScreen(
                                 onSelect = { statusFilter = it },
                                 paid = current.registrations.count { it.status == RegistrationStatus.CONFIRMED && it.paid },
                                 confirmed = current.registrations.count { it.status == RegistrationStatus.CONFIRMED },
+                                busy = busy,
+                                onAdd = { adding = true },
                             )
                         }
                         if (shown.isEmpty()) {
@@ -644,11 +641,10 @@ private fun LabeledIconButton(text: String, icon: androidx.compose.ui.graphics.v
 }
 
 /**
- * The settings of the registrations as tiles: open or closed, places, last day and public link. Each one changes on
- * the screen: the status with one button, the others with Change, which turns the tile into its field.
+ * The settings of the registrations as the rows of one card: status (with Close/Open and Make the draw), places, last
+ * day and link. Each row says in words what its value means. Change turns the value of its row into its field.
  */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 private fun RegistrationSettingsPanel(
     data: AdminRegistrations,
     editing: RegistrationSettingField?,
@@ -658,31 +654,37 @@ private fun RegistrationSettingsPanel(
     onCancel: () -> Unit,
     onSave: (RegistrationSettings) -> Unit,
     onCopyLink: () -> Unit,
+    onDraw: () -> Unit,
 ) {
     val settings = data.settings
     val compact = LocalCompactLayout.current
     val pending = data.registrations.count { it.status == RegistrationStatus.PENDING }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-        val statusTile: @Composable (Modifier) -> Unit = { tileModifier ->
-            val toggleText = stringResource(if (settings.isOpen) Res.string.reg_close_action else Res.string.reg_open_action)
-            val toggleIcon = if (settings.isOpen) Icons.Default.Lock else Icons.Default.LockOpen
-            val toggle = { onSave(settings.copy(status = if (settings.isOpen) RegistrationPhase.CLOSED else RegistrationPhase.OPEN)) }
-            SettingTile(
+    val changeButton: @Composable (RegistrationSettingField, String) -> Unit = { field, tag ->
+        if (canConfigure && editing != field) {
+            LabeledIconButton(
+                text = stringResource(Res.string.reg_edit),
+                icon = Icons.Default.Edit,
+                enabled = !busy,
+                onClick = { onEdit(field) },
+                modifier = Modifier.testTag(tag),
+            )
+        }
+    }
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+        Column(Modifier.padding(horizontal = MtsTheme.layout.cardPadding, vertical = MtsTheme.spacing.xs)) {
+            // Status: open or closed, what that means, and the two steps that follow: close, and make the draw.
+            SettingRow(
                 label = stringResource(Res.string.reg_status_label),
-                modifier = tileModifier,
-                // A phone has the icon in the row of the title; a wide screen, the button with its text under the status.
-                action = if (compact && canConfigure) {
-                    {
+                actions = {
+                    if (canConfigure) {
                         LabeledIconButton(
-                            text = toggleText,
-                            icon = toggleIcon,
+                            text = stringResource(if (settings.isOpen) Res.string.reg_close_action else Res.string.reg_open_action),
+                            icon = if (settings.isOpen) Icons.Default.Lock else Icons.Default.LockOpen,
                             enabled = !busy,
-                            onClick = toggle,
+                            onClick = { onSave(settings.copy(status = if (settings.isOpen) RegistrationPhase.CLOSED else RegistrationPhase.OPEN)) },
                             modifier = Modifier.testTag("registrations-toggle-status"),
                         )
                     }
-                } else {
-                    null
                 },
             ) {
                 val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -690,279 +692,181 @@ private fun RegistrationSettingsPanel(
                     Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(
                         stringResource(if (settings.isOpen) Res.string.reg_state_open else Res.string.reg_state_closed),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
                         color = color,
                         modifier = Modifier.testTag("registrations-status-value"),
                     )
                 }
-                if (!compact && canConfigure) {
-                    OutlinedButton(onClick = toggle, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.sm).testTag("registrations-toggle-status")) {
-                        Icon(toggleIcon, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(toggleText, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                SettingDetail(stringResource(if (settings.isOpen) Res.string.reg_draw_needs_close else Res.string.reg_status_closed_detail))
+                if (canConfigure && !settings.isOpen) {
+                    OutlinedButton(onClick = onDraw, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.xs)) {
+                        Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
                     }
                 }
             }
-        }
-        val placesTile: @Composable (Modifier) -> Unit = { tileModifier ->
-            EditableSettingTile(
+            HorizontalDivider()
+            SettingRow(
                 label = stringResource(Res.string.reg_places_label),
-                modifier = tileModifier,
-                editing = editing == RegistrationSettingField.PLACES,
-                busy = busy,
-                canEdit = canConfigure,
-                onEdit = { onEdit(RegistrationSettingField.PLACES) },
-                editTag = "registrations-edit-places",
-                editor = {
+                actions = { changeButton(RegistrationSettingField.PLACES, "registrations-edit-places") },
+            ) {
+                if (editing == RegistrationSettingField.PLACES && canConfigure) {
                     var places by remember { mutableStateOf(settings.maxPlayers?.toString().orEmpty()) }
-                    OutlinedTextField(
-                        value = places,
-                        onValueChange = { typed -> places = typed.filter(Char::isDigit).take(4) },
-                        label = { Text(stringResource(Res.string.reg_places_optional)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("registrations-places-field"),
-                    )
-                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(maxPlayers = places.toIntOrNull())) })
-                },
-            ) {
-                Text(
-                    stringResource(Res.string.reg_places_value, settings.confirmed, settings.maxPlayers?.toString() ?: stringResource(Res.string.reg_no_limit)),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.testTag("registrations-places-value"),
-                )
-                settings.maxPlayers?.takeIf { it > 0 }?.let { max ->
-                    LinearProgressIndicator(
-                        progress = { (settings.confirmed.toFloat() / max).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.xs),
-                    )
-                }
-                Text(
-                    stringResource(Res.string.reg_waiting_and_pending, settings.waiting, pending),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.testTag("registrations-waiting-value"),
-                )
-            }
-        }
-        val closesTile: @Composable (Modifier) -> Unit = { tileModifier ->
-            EditableSettingTile(
-                label = stringResource(Res.string.reg_closes_label),
-                modifier = tileModifier,
-                editing = editing == RegistrationSettingField.CLOSES_ON,
-                busy = busy,
-                canEdit = canConfigure,
-                onEdit = { onEdit(RegistrationSettingField.CLOSES_ON) },
-                editTag = "registrations-edit-closes",
-                editor = {
-                    var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
-                    DateField(
-                        label = stringResource(Res.string.reg_closes_on_optional),
-                        value = closesOn,
-                        onChange = { closesOn = it },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    EditorButtons(onCancel = onCancel, onSave = { onSave(settings.copy(closesOn = closesOn.ifBlank { null })) })
-                },
-            ) {
-                val closesOn = settings.closesOn
-                if (closesOn == null) {
-                    Text(stringResource(Res.string.reg_no_close_date), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    Text(formatLocalizedDate(closesOn), style = MaterialTheme.typography.titleMedium)
-                }
-            }
-        }
-        val linkTile: @Composable (Modifier) -> Unit = { tileModifier ->
-            EditableSettingTile(
-                label = stringResource(Res.string.reg_link_label),
-                modifier = tileModifier,
-                editing = editing == RegistrationSettingField.LINK,
-                busy = busy,
-                canEdit = canConfigure,
-                onEdit = { onEdit(RegistrationSettingField.LINK) },
-                editTag = "registrations-edit-link",
-                extraAction = {
-                    LabeledIconButton(
-                        text = stringResource(Res.string.reg_copy),
-                        icon = Icons.Default.ContentCopy,
-                        onClick = onCopyLink,
-                        modifier = Modifier.testTag("registrations-copy-link"),
-                    )
-                },
-                editor = {
-                    var slug by remember { mutableStateOf(settings.slug) }
-                    OutlinedTextField(
-                        value = slug,
-                        onValueChange = { typed -> slug = typed.lowercase().filter { it in 'a'..'z' || it in '0'..'9' || it == '-' }.take(40) },
-                        label = { Text(stringResource(Res.string.reg_link_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("registrations-slug-field"),
-                    )
-                    EditorButtons(onCancel = onCancel, saveEnabled = slug.isNotBlank(), onSave = { onSave(settings.copy(slug = slug)) })
-                },
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                    Icon(Icons.Default.Link, contentDescription = stringResource(Res.string.reg_copy_link), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                    SelectionContainer(Modifier.weight(1f, fill = false)) {
-                        Text(
-                            data.publicLink,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.testTag("registrations-link-value"),
+                    InlineEditor(onCancel = onCancel, onSave = { onSave(settings.copy(maxPlayers = places.toIntOrNull())) }) {
+                        OutlinedTextField(
+                            value = places,
+                            onValueChange = { typed -> places = typed.filter(Char::isDigit).take(4) },
+                            label = { Text(stringResource(Res.string.reg_places_optional)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth().testTag("registrations-places-field"),
                         )
                     }
+                } else {
+                    val max = settings.maxPlayers
+                    Text(
+                        if (max == null) {
+                            stringResource(Res.string.reg_places_value_no_limit, settings.confirmed)
+                        } else {
+                            stringResource(Res.string.reg_places_value, settings.confirmed, max)
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.testTag("registrations-places-value"),
+                    )
+                    SettingDetail(stringResource(Res.string.reg_waiting_and_pending, settings.waiting, pending), Modifier.testTag("registrations-waiting-value"))
                 }
             }
-        }
-        val showLink = data.publicLink.isNotBlank() || editing == RegistrationSettingField.LINK
-        if (compact) {
-            // A phone shows the settings as the rows of one card, so the list starts higher.
-            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                Column(Modifier.padding(horizontal = MtsTheme.layout.cardPadding)) {
-                    listOfNotNull(statusTile, placesTile, closesTile, linkTile.takeIf { showLink }).forEachIndexed { index, tile ->
-                        if (index > 0) HorizontalDivider()
-                        tile(Modifier.fillMaxWidth())
+            HorizontalDivider()
+            SettingRow(
+                label = stringResource(Res.string.reg_closes_label),
+                actions = { changeButton(RegistrationSettingField.CLOSES_ON, "registrations-edit-closes") },
+            ) {
+                if (editing == RegistrationSettingField.CLOSES_ON && canConfigure) {
+                    var closesOn by remember { mutableStateOf(settings.closesOn.orEmpty()) }
+                    InlineEditor(onCancel = onCancel, onSave = { onSave(settings.copy(closesOn = closesOn.ifBlank { null })) }) {
+                        DateField(
+                            label = stringResource(Res.string.reg_closes_on_optional),
+                            value = closesOn,
+                            onChange = { closesOn = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                } else {
+                    val closesOn = settings.closesOn
+                    Text(
+                        if (closesOn == null) stringResource(Res.string.reg_no_close_date) else stringResource(Res.string.reg_closes_until, formatLocalizedDate(closesOn)),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+            if (data.publicLink.isNotBlank() || editing == RegistrationSettingField.LINK) {
+                HorizontalDivider()
+                SettingRow(
+                    label = stringResource(Res.string.reg_link_label),
+                    actions = {
+                        if (editing != RegistrationSettingField.LINK) {
+                            LabeledIconButton(
+                                text = stringResource(Res.string.reg_copy),
+                                icon = Icons.Default.ContentCopy,
+                                onClick = onCopyLink,
+                                modifier = Modifier.testTag("registrations-copy-link"),
+                            )
+                        }
+                        changeButton(RegistrationSettingField.LINK, "registrations-edit-link")
+                    },
+                ) {
+                    if (editing == RegistrationSettingField.LINK && canConfigure) {
+                        var slug by remember { mutableStateOf(settings.slug) }
+                        InlineEditor(onCancel = onCancel, saveEnabled = slug.isNotBlank(), onSave = { onSave(settings.copy(slug = slug)) }) {
+                            OutlinedTextField(
+                                value = slug,
+                                onValueChange = { typed -> slug = typed.lowercase().filter { it in 'a'..'z' || it in '0'..'9' || it == '-' }.take(40) },
+                                label = { Text(stringResource(Res.string.reg_link_name)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth().testTag("registrations-slug-field"),
+                            )
+                        }
+                    } else {
+                        SelectionContainer {
+                            Text(
+                                data.publicLink,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = if (compact) 2 else 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.testTag("registrations-link-value"),
+                            )
+                        }
                     }
                 }
             }
-        } else {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-                listOf(statusTile, placesTile, closesTile).forEach { tile -> tile(Modifier.weight(1f).fillMaxHeight()) }
-            }
-            if (showLink) linkTile(Modifier.fillMaxWidth())
         }
     }
 }
 
+/**
+ * One row of the settings. A wide screen has the title in a column of its own, the value beside it and the buttons at
+ * the end; a phone has the title and the buttons in one line and the value under them.
+ */
 @Composable
-private fun SettingTile(
-    label: String,
-    modifier: Modifier = Modifier,
-    action: (@Composable () -> Unit)? = null,
-    content: @Composable () -> Unit,
-) {
-    val body: @Composable (Modifier) -> Unit = { padding ->
-        Column(padding, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                action?.invoke()
-            }
-            content()
-        }
+private fun SettingRow(label: String, actions: @Composable () -> Unit, value: @Composable () -> Unit) {
+    val title: @Composable (Modifier) -> Unit = { modifier ->
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
     }
     if (LocalCompactLayout.current) {
-        // A row of the card of the settings (see RegistrationSettingsPanel).
-        body(modifier.padding(vertical = MtsTheme.spacing.sm))
+        Column(Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.xs)) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+                title(Modifier.weight(1f))
+                actions()
+            }
+            Column(Modifier.fillMaxWidth().padding(bottom = MtsTheme.spacing.xs)) { value() }
+        }
     } else {
-        Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-            body(Modifier.padding(MtsTheme.layout.cardPadding))
+        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+            title(Modifier.width(200.dp))
+            Column(Modifier.weight(1f)) { value() }
+            Row(verticalAlignment = Alignment.CenterVertically) { actions() }
         }
     }
 }
 
-/** A [SettingTile] with a Change button that turns its content into [editor], with its own Cancel and Save. */
 @Composable
-private fun EditableSettingTile(
-    label: String,
-    modifier: Modifier,
-    editing: Boolean,
-    busy: Boolean,
-    canEdit: Boolean,
-    onEdit: () -> Unit,
-    /** The test tag of Change: the tiles have the same text on it. */
-    editTag: String,
-    editor: @Composable () -> Unit,
-    extraAction: (@Composable () -> Unit)? = null,
-    content: @Composable () -> Unit,
-) {
-    SettingTile(
-        label = label,
-        modifier = modifier,
-        action = if (editing) {
-            null
-        } else {
-            {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    extraAction?.invoke()
-                    if (canEdit) {
-                        LabeledIconButton(
-                            text = stringResource(Res.string.reg_edit),
-                            icon = Icons.Default.Edit,
-                            enabled = !busy,
-                            onClick = onEdit,
-                            modifier = Modifier.testTag(editTag),
-                        )
-                    }
-                }
+private fun SettingDetail(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
+}
+
+/** The field of a setting with its own Cancel and Save. */
+@Composable
+private fun InlineEditor(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: Boolean = true, field: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.xs), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        field()
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+            FocusedTextButton(onClick = onCancel) {
+                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
             }
-        },
-    ) {
-        if (editing && canEdit) {
-            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) { editor() }
-        } else {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun EditorButtons(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: Boolean = true) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-        FocusedTextButton(onClick = onCancel) {
-            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
-        }
-        FocusedButton(onClick = onSave, enabled = saveEnabled, modifier = Modifier.testTag("registrations-save-setting")) {
-            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
-        }
-    }
-}
-
-/** Add a person and Make the draw. The info icon says why the draw waits, centered with the buttons. */
-@Composable
-@OptIn(ExperimentalLayoutApi::class)
-private fun RegistrationActions(canDraw: Boolean, showDraw: Boolean, busy: Boolean, onAdd: () -> Unit, onDraw: () -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            FocusedButton(onClick = onAdd, enabled = !busy) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            FocusedButton(onClick = onSave, enabled = saveEnabled, modifier = Modifier.testTag("registrations-save-setting")) {
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
             }
-            if (showDraw) {
-                OutlinedButton(onClick = onDraw, enabled = !busy && canDraw) {
-                    Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
-                }
-            }
-            if (showDraw && !canDraw && !LocalCompactLayout.current) InfoTooltipIcon(stringResource(Res.string.reg_draw_needs_close))
-        }
-        if (showDraw && !canDraw && LocalCompactLayout.current) {
-            // A phone has no room for the icon beside the buttons: the reason goes under them.
-            Text(
-                stringResource(Res.string.reg_draw_needs_close),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = MtsTheme.spacing.xs),
-            )
         }
     }
 }
 
-/** The search and one chip per list, with the number of people that match the search. */
+/** Add a person, alone: the list is empty, so there is no search beside it. */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+private fun AddPersonButton(busy: Boolean, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    FocusedButton(onClick = onAdd, enabled = !busy, modifier = modifier) {
+        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+        Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+    }
+}
+
+/**
+ * The search with Add a person beside it, and one chip per list with the number of people that match the search. On a
+ * phone the chips go in one line that scrolls sideways, and the paid count under them.
+ */
+@Composable
 private fun RegistrationFilters(
     query: String,
     onQueryChange: (String) -> Unit,
@@ -971,46 +875,73 @@ private fun RegistrationFilters(
     onSelect: (RegistrationStatus?) -> Unit,
     paid: Int,
     confirmed: Int,
+    busy: Boolean,
+    onAdd: () -> Unit,
 ) {
-    Column(Modifier.padding(top = MtsTheme.spacing.xl, bottom = MtsTheme.spacing.sm), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            label = { Text(stringResource(Res.string.search)) },
-            singleLine = true,
-            trailingIcon = if (query.isNotEmpty()) {
-                {
-                    FocusedIconButton(onClick = { onQueryChange("") }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
+    val compact = LocalCompactLayout.current
+    Column(Modifier.padding(top = MtsTheme.spacing.lg, bottom = MtsTheme.spacing.xs), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                placeholder = { Text(stringResource(Res.string.search)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                singleLine = true,
+                trailingIcon = if (query.isNotEmpty()) {
+                    {
+                        FocusedIconButton(onClick = { onQueryChange("") }) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
+                        }
                     }
+                } else {
+                    null
+                },
+                modifier = Modifier.weight(1f).testTag("registrations-search"),
+            )
+            if (compact) {
+                FocusedIconButton(onClick = onAdd, enabled = !busy) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = stringResource(Res.string.reg_add))
                 }
             } else {
-                null
-            },
-            modifier = Modifier.fillMaxWidth().testTag("registrations-search"),
-        )
-        FlowRow(
+                AddPersonButton(busy = busy, onAdd = onAdd)
+            }
+        }
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-            itemVerticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterChip(
-                selected = selected == null,
-                onClick = { onSelect(null) },
-                label = { Text(stringResource(Res.string.reg_filter_all, matching.size)) },
-            )
-            RegistrationSections.forEach { (status, title) ->
+            Row(
+                modifier = if (compact) Modifier.fillMaxWidth().horizontalScrollWithIndicators().padding(bottom = MtsTheme.spacing.sm) else Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 FilterChip(
-                    selected = selected == status,
-                    onClick = { onSelect(if (selected == status) null else status) },
-                    label = { Text(stringResource(title, matching.count { it.status == status })) },
-                    leadingIcon = { Box(Modifier.size(8.dp).clip(CircleShape).background(statusColor(status))) },
+                    selected = selected == null,
+                    onClick = { onSelect(null) },
+                    label = { Text(stringResource(Res.string.reg_filter_all, matching.size)) },
+                )
+                RegistrationSections.forEach { (status, title) ->
+                    FilterChip(
+                        selected = selected == status,
+                        onClick = { onSelect(if (selected == status) null else status) },
+                        label = { Text(stringResource(title, matching.count { it.status == status }), maxLines = 1) },
+                        leadingIcon = { Box(Modifier.size(8.dp).clip(CircleShape).background(statusColor(status))) },
+                    )
+                }
+            }
+            if (!compact) {
+                Text(
+                    stringResource(Res.string.reg_paid_count, paid, confirmed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.weight(1f))
+        }
+        if (compact) {
             Text(
                 stringResource(Res.string.reg_paid_count, paid, confirmed),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
