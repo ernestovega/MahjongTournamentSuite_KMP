@@ -1,267 +1,265 @@
-# Mahjong Tournament Suite: catálogo de funcionalidades
+# Mahjong Tournament Suite: feature catalogue
 
-*Estado a 23 de noviembre de 2026 (web 1.0.36x, backend 1.0.4x). Sacado del código de `main` y de `docs/`.*
+*State on 23 November 2026, taken from the code on `main` and from `docs/`.*
 
-## Índice
+## Contents
 
-1. [Qué es](#1-qué-es)
-2. [Plataformas y cómo encajan las dos partes](#2-plataformas-y-cómo-encajan-las-dos-partes)
-3. [Roles y permisos](#3-roles-y-permisos)
-4. [Player: la app del jugador y del público](#4-player-la-app-del-jugador-y-del-público)
-5. [Admin: la app de gestión](#5-admin-la-app-de-gestión)
-6. [Compartido por las dos apps](#6-compartido-por-las-dos-apps)
-7. [Un torneo de principio a fin](#7-un-torneo-de-principio-a-fin)
-8. [Debajo del capó](#8-debajo-del-capó)
-9. [Calidad, pruebas y ensayos](#9-calidad-pruebas-y-ensayos)
+1. [What it is](#1-what-it-is)
+2. [Platforms and how the two parts fit](#2-platforms-and-how-the-two-parts-fit)
+3. [Roles and permissions](#3-roles-and-permissions)
+4. [Player: the app for players and the public](#4-player-the-app-for-players-and-the-public)
+5. [Admin: the management app](#5-admin-the-management-app)
+6. [Shared by both apps](#6-shared-by-both-apps)
+7. [A tournament from start to finish](#7-a-tournament-from-start-to-finish)
+8. [Under the hood](#8-under-the-hood)
+9. [Quality, tests and rehearsals](#9-quality-tests-and-rehearsals)
 
 ---
 
-## 1. Qué es
+## 1. What it is
 
-Mahjong Tournament Suite (MTS) organiza torneos de Mahjong de reglas MCR (Mahjong Competition Rules, las de la EMA). Cubre todo el ciclo:
+Mahjong Tournament Suite (MTS) runs Mahjong tournaments with MCR rules (Mahjong Competition Rules, the EMA rules). It covers the whole cycle:
 
-> **Inscripciones → sorteo → rondas con reloj → manos apuntadas en la mesa → clasificación en vivo → informe para la EMA → estadísticas históricas.**
+> **Registrations → draw → rounds with a clock → hands entered at the table → live ranking → report for the EMA → historical statistics.**
 
-Tiene dos partes:
+It has two parts:
 
-| Parte | Para quién | Idea clave |
+| Part | For whom | Key idea |
 |---|---|---|
-| **Player** | Jugadores y cualquier persona interesada | Todo es público. La cuenta solo sirve para saber «quién soy yo» y apuntar manos en tu mesa. |
-| **Admin (Gestión)** | Organizadores, Club Admins y editores de mesa | Montar y llevar el torneo, desde las inscripciones hasta el informe final. |
-
-Objetivo actual: estreno real en un torneo de unos 60 jugadores en febrero de 2027.
+| **Player** | Players and anyone interested | Everything is public. An account only says «who I am» and lets you enter hands at your own table. |
+| **Admin (Management)** | Organizers, Club Admins and table editors | Set up and run the tournament, from the registrations to the final report. |
 
 ---
 
-## 2. Plataformas y cómo encajan las dos partes
+## 2. Platforms and how the two parts fit
 
-| Plataforma | Player | Admin |
+| Platform | Player | Admin |
 |---|:-:|:-:|
-| **Android** (app única «MTS») | ✅ arranca aquí | ✅ botón «Gestión» para staff |
+| **Android** (one «MTS» app) | ✅ starts here | ✅ «Management» button for staff |
 | **Web** (Wasm) `mts.mahjongmadrid.com` | ✅ `/` | ✅ `/admin/` |
-| **Escritorio** (JVM) | | ✅ |
+| **Desktop** (JVM) | | ✅ |
 
-- **Una sola app Android**: arranca en Player; si la cuenta es de staff, el botón «Gestión» lleva a la parte Admin y «Vista jugador» vuelve.
-- **En web**, tras iniciar sesión, el staff elige «Vista jugador» o «Gestión».
-- **Enlaces directos**: `/t/<id>` abre un torneo, `/<nombre-corto>` (p. ej. `/6thmmc`) abre sus inscripciones o el torneo tras el sorteo, `/<nombre-corto>/my-table` abre tu mesa. En Android son App Links: abren la app.
-- **Atrás/adelante del navegador** funcionan como el atrás de la app, en las dos webs.
+- **One Android app**: it starts in Player. If the account is staff, the «Management» button opens the Admin part and «Player view» goes back.
+- **On the web**, after signing in, staff choose «Player view» or «Management».
+- **Direct links**: `/t/<id>` opens a tournament, `/<short-name>` (for example `/6thmmc`) opens its registrations, or the tournament after the draw, and `/<short-name>/my-table` opens your table. On Android they are App Links and open the app.
+- **Browser back/forward** work like the app's back button on both web apps.
 
 ---
 
-## 3. Roles y permisos
+## 3. Roles and permissions
 
-| Rol | Qué puede hacer |
+| Role | What it can do |
 |---|---|
-| **Sin cuenta** | Ver todos los torneos públicos: mesas, clasificaciones, estadísticas, inscritos. Inscribirse confirmando el email. |
-| **Jugador** | Lo anterior + «Mis torneos», marcar «yo», elegir asientos y apuntar manos y penalizaciones en su mesa con la ronda abierta. |
-| **Editor** | Gestionar los torneos que tiene asignados: jugadores, mesas, manos, reloj, control de ronda, exportar. |
-| **Club Admin** | Gestionar los torneos de sus organizaciones (clubs o federaciones) y las cuentas de su staff; crear jugadores EMA; editar la ficha de su club. |
-| **Super Admin** | Todo: organizaciones, cuentas, registro EMA completo, roles a medida, actividad global, errores, menú DEV. |
-| **Roles a medida** | El Super Admin crea roles que parten de Editor o Club Admin con las casillas de permisos que quiera, y puede añadir o quitar permisos sueltos a una persona. |
+| **No account** | See every public tournament: tables, rankings, statistics, registered people. Register by confirming an email. |
+| **Player** | The above, plus «My tournaments», marking «me», and setting seats and entering hands and penalties at their own table while the round is open. |
+| **Editor** | Run the tournaments assigned to them: players, tables, hands, clock, round control, export. |
+| **Club Admin** | Run the tournaments of their organizations (clubs or federations) and the accounts of their staff; create EMA players; edit their club's page. |
+| **Super Admin** | Everything: organizations, accounts, the full EMA registry, custom roles, global activity, errors, DEV menu. |
+| **Custom roles** | The Super Admin creates roles based on Editor or Club Admin with the permission boxes they choose, and can add or remove single permissions for one person. |
 
-Organizaciones: cada torneo tiene un organizador principal y coorganizadores. El logo y el color del torneo salen del organizador principal.
-
----
-
-## 4. Player: la app del jugador y del público
-
-### 4.1 Lista de torneos
-
-- **Pestañas En juego · Todos · Estadísticas.**
-  - *En juego* aparece solo si hay torneos en curso, y se abre sola una vez si juegas uno ahora. Chip «Mis torneos» activado por defecto.
-  - *Todos*: arriba los torneos en curso donde juegas; el resto por fecha, del más reciente o futuro al más antiguo.
-- **Filtros combinables**: estado, país, año, «Mis torneos».
-- **Sello de tinta** en tus torneos: *Jugando*, *Jugado*, *Inscrito* o *En espera*.
-- **Puestos** en los torneos jugados: podio, equipo, mejor mano y mano pollo, con colores de medalla y tooltip.
-- Botón de mapa junto a la ciudad para ir a la sede.
-
-### 4.2 Inscripciones (antes del sorteo)
-
-- Solo se ven las pestañas Jugadores e Info.
-- **Plazas y lista de espera numerada**, visibles para todos: nombre, bandera, número EMA, estado y equipo.
-- **Inscribirme**
-  - Con cuenta EMA: plaza o lista de espera al momento.
-  - Sin cuenta: te buscas en el registro EMA, pones tu email y confirmas con un enlace. Con ese enlace gestionas tu inscripción sin cuenta.
-  - «No tengo número EMA»: envía un mensaje a la organización.
-- **Mi inscripción**: restricciones alimentarias (privadas, con consentimiento explícito), equipo y baja (la organización recibe un email).
-- **Equipos**: un capitán crea el equipo y añade hasta 3 inscritos por su número EMA, así una persona puede apuntar a todo el equipo. Recordatorio una semana antes del cierre a quien no tenga equipo completo.
-
-### 4.3 Dentro de un torneo
-
-Pestañas: **Mesas · Clasificación · Jugadores · Equipos** (solo por equipos) **· Estadísticas · Info**. La pestaña elegida se recuerda.
-
-- **Mesas**: filtros Yo / Equipo / Todas, mesas por ronda con resultados en vivo.
-- **Clasificación**: jugadores (con foto), equipos, manos pollo y mejor mano.
-- **Jugadores**: buscador; abre la ficha del jugador.
-- **Equipos**: ranking de equipos y detalle con miembros, mesas y estadísticas del equipo.
-- **Estadísticas** del torneo, por ronda o del torneo entero.
-- **Info**: progreso, horario de rondas, sede, agenda, contacto y organizadores con su logo.
-
-### 4.4 Ficha de jugador
-
-- Cabecera con foto, nombre, bandera y número EMA.
-- **Mesas** del jugador en el torneo.
-- **Resultados** («Mis resultados» si eres tú): tabla con Ronda, Mesa, Asiento (viento), Puntos, Puntuación, totales acumulados y Puesto tras cada ronda. **Botón Compartir** que la convierte en imagen PNG (menú de compartir en Android, compartir o descargar en web).
-- **Estadísticas** del jugador.
-
-### 4.5 La mesa
-
-- **Asientos**: los jugadores de la mesa eligen Este, Sur y Oeste desde 10 minutos antes de la ronda hasta la primera mano; el que queda es Norte.
-- **Apuntar manos**: ganador, quién descarta (o autopick), valor, y **penalizaciones**. Cada jugador aparece con bandera y «#N», su número en el torneo.
-- **En vivo**: animación de mano nueva, corrección o borrado; totales que cuentan con «+N». Se ve igual en el móvil que guarda y en los demás.
-- **Diferencias** entre jugadores (se puede ocultar por torneo).
-- **Tiempo restante** de la ronda, con la hora del servidor (no importa si el reloj del móvil va mal).
-- **Mesa terminada**: resultado final y detalle de todas las manos.
-- Desde la barra superior: **Combinaciones**, **Penalizaciones** y **Green Book**.
-
-### 4.6 Llegar a tu mesa
-
-- **Aviso «Mesa N · Ronda R»** al abrir la app, desde 10 minutos antes de la ronda: «Ir a mi mesa» o «Más tarde». Dice cuánto falta o cuánto lleva la ronda, o «Esperando el gong inicial».
-- **Botón flotante «Ir a mi mesa»** en todas las pantallas mientras tu ronda está en juego.
-- **QR del torneo**: un único QR, en la sala o en las mesas, que abre «Mis mesas» y tu mesa en juego, o la próxima.
-
-### 4.7 Estadísticas (todas públicas)
-
-- **Una pantalla con fila de filtros**: jugador, rival, torneo, país de los torneos, país de los jugadores (o «Sin país») y años desde/hasta. Los filtros se mantienen al recargar.
-- **Jugador**
-  - Radar de **habilidades**: tasa de victoria, de autopick, de dar mano y valor medio de mano.
-  - **Puestos**: anillo, puesto medio y gráfica de las últimas 10/20/50/todas las mesas, coloreada por torneo.
-  - **Totales**, con anillo de manos ganadas, perdidas y empatadas.
-  - **Récords**: mejor mesa, mejor mano, rachas, mesas sin dar mano, manos pollo, mayor penalización.
-  - **Mejores rivales**: los 3 rivales más duros, con un tooltip que explica el criterio.
-  - **Por ronda**: puesto, puntuación, habilidades y manos de cada ronda.
-  - **Por torneo**: una tarjeta por torneo, con búsqueda y rango de fechas.
-- **Torneo**: resumen, top de puntos, victoria, dar mano y autopick; manos por ronda; tiempo medio por mano; récords.
-- **Equipo**: lo mismo que un jugador, con sumas del equipo y detalle por persona.
-
-### 4.8 Reglas y ayuda
-
-- **Combinaciones**: las 81 combinaciones MCR con dibujos de fichas y descripción, traducidas.
-- **Penalizaciones**: tabla de referencia.
-- **Green Book**: el reglamento en PDF en inglés y español (en Android se descarga y queda guardado) y enlace a la edición rusa.
-- **Contacto** (formulario a la organización), **Privacidad** y **Reglas** en el menú ⋮.
-
-### 4.9 Cuenta y preferencias
-
-- Iniciar sesión es opcional; recuperar contraseña con confirmación del email.
-- **Perfil**: foto, alias, tema (claro, oscuro o sistema), idioma, cerrar sesión, borrar cuenta y retirar el consentimiento de analíticas.
-- **8 idiomas**: inglés, español, francés, italiano, alemán, sueco, neerlandés y ruso. Sigue el idioma del dispositivo hasta que eliges uno. Un aviso único indica que las traducciones son de IA, con un botón para escribir.
-- **Refresco automático**: cada 15 s en un torneo en curso, cada 5 s para sus jugadores con la ronda en juego y cada 2 s en tu propia mesa.
+Organizations: each tournament has a main organizer and co-organizers. The tournament's logo and color come from the main organizer.
 
 ---
 
-## 5. Admin: la app de gestión
+## 4. Player: the app for players and the public
 
-### 5.1 Torneos y organizaciones
+### 4.1 Tournament list
 
-- **Lista de torneos** según tu rol: todos, los de tus organizaciones o los asignados.
-- **Crear torneo**
-  - Individual o por equipos: jugadores, rondas, fechas, horario, sede (con Google Places), nombre corto, contacto, organizadores.
-  - O **«Abrir inscripciones»**: el torneo nace sin jugadores y se sortea al cerrar.
-- **Configuración**: torneo público o no, diferencias en las mesas, duración de la partida, horario y agenda.
-- **Organizaciones** (clubs y federaciones): cuadrícula de tarjetas con buscador y filtro por país, logo, color y local opcional.
+- **Tabs In play · All · Statistics.**
+  - *In play* shows only while tournaments are in progress, and opens by itself once if you are playing one now. The «My tournaments» chip is on by default.
+  - *All*: first the tournaments in progress where you play; then the rest by date, from the newest or upcoming to the oldest.
+- **Combinable filters**: status, country, year, «My tournaments».
+- **Ink stamp** on your tournaments: *Playing*, *Played*, *Registered* or *Waiting list*.
+- **Places** in played tournaments: podium, team, best hand and chicken hand, with medal colors and a tooltip.
+- A map button beside the city opens the way to the venue.
 
-### 5.2 Sorteo de enfrentamientos
+### 4.2 Registrations (before the draw)
 
-- Genera todas las rondas de una vez: nadie repite rival en todo el torneo y, por equipos, dos compañeros nunca comparten mesa. El orden de mesas y asientos también es al azar.
-- **Dos métodos**: asiento a asiento y, si el primero no termina a tiempo, un segundo método por intercambios. Resuelve casos difíciles como 28 o 40 jugadores a 7 rondas, o equipos densos.
-- **«¿Cómo funciona el sorteo?»**: diálogo con diagrama de flujo y textos sencillos (cómo funciona, qué garantiza y por qué es 100 % al azar). También está en el Player.
+- Only the Players and Info tabs show.
+- **Places and a numbered waiting list**, visible to everyone: name, flag, EMA number, status and team.
+- **Register**
+  - With an EMA account: a place or the waiting list at once.
+  - Without an account: find yourself in the EMA registry, enter your email and confirm with a link. That link manages your registration without an account.
+  - «I have no EMA number»: sends a message to the organization.
+- **My registration**: food restrictions (private, with explicit consent), team and cancellation (the organization gets an email).
+- **Teams**: a captain creates the team and adds up to 3 registered people by their EMA number, so one person can register the whole team. A reminder goes out one week before the close to anyone without a full team.
 
-### 5.3 Inscripciones
+### 4.3 Inside a tournament
 
-- **Ajustes en la propia pantalla**: estado (abrir o cerrar), plazas, último día y enlace público con botón Copiar.
-- **Lista** con buscador y chips (Todos, Con plaza, Lista de espera, Email sin confirmar) y cuántos han pagado.
-- **Por persona**: cambiar email, equipo, comida o pagado; dar plaza; pasar a la lista de espera; quitar (con o sin email).
-- **Importar** el Google Form o un fichero exportado (CSV o Excel, hasta 500 filas), con vista previa de errores por fila.
-- **Exportar CSV**, que se puede volver a importar.
-- **Correos automáticos**: confirmación al inscrito, aviso de bajas e informe semanal a la organización (domingo noche). Cierre automático el día después del último día.
-- **Hacer el sorteo**: comprueba que los jugadores con plaza son múltiplo de 4, al menos 16, y que los equipos están completos.
+Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Statistics · Info**. The chosen tab is remembered.
 
-### 5.4 Jugadores, equipos y cuentas
+- **Tables**: filters Me / Team / All, tables by round with live results.
+- **Ranking**: players (with photo), teams, chicken hands and best hand.
+- **Players**: search; opens the player page.
+- **Teams**: team ranking and a detail with members, tables and team statistics.
+- **Statistics** of the tournament, per round or for the whole tournament.
+- **Info**: progress, round times, venue, agenda, contact and organizers with their logo.
 
-- **Jugadores del torneo**: huecos con número fijo «#N», número EMA, importación, sustituciones y una tira con las mesas de cada ronda bajo cada jugador.
-- **Invitaciones** por email (en bloque) y recordatorios.
-- **Cambiar el número de jugadores** antes de la primera mano: marcas quién sale o añades mesas, revisas y se sortea de nuevo. Quien se queda mantiene su número y su equipo, y todos los afectados reciben un email.
-- **Equipos**: nombre y miembros.
-- **Registro EMA**: jugadores EMA con foto (pública), ocultar del público, crear, editar y borrar, y todos los países más «Sin país».
-- **Cuentas**: crear jugadores y staff, permisos, desactivar, borrar, email de contraseña. Cada pantalla borra solo lo suyo: borrar una cuenta no borra el jugador EMA, ni al revés.
-- **Roles**: estándar (solo lectura, se pueden duplicar) y a medida, con casillas de permisos y cuántas cuentas usan cada uno.
+### 4.4 Player page
 
-### 5.5 Durante el torneo
+- Header with photo, name, flag and EMA number.
+- **Tables** of the player in the tournament.
+- **Results** («My results» when it is you): a table with Round, Table, Seat (wind), Table points, Score, running totals and Place after each round. A **Share** button turns it into a PNG image (share sheet on Android, share or download on the web).
+- **Statistics** of the player.
 
-- **Editor de rondas**: ronda › mesa, con jugadores, asientos, puntos y las 16 manos (ganador, descarte, valor, «Hecha»), penalizaciones y totales manuales.
-- **Varios editores a la vez**: el servidor siempre gana. Si otro guardó antes, un diálogo lo dice y lista lo que habías escrito. Antes de guardar se avisa de las manos sin marcar como hechas.
-- **Mesas**: todas, con su estado y filtros.
-- **Reloj de ronda**
-  - Iniciar, pausar, reanudar, fijar el tiempo y «empezó hace N min».
-  - Al dar Play se abren las manos a los jugadores. Al acabar el tiempo, el servidor cierra las mesas solo.
-  - Funciona sin red: reintenta con la hora del pulsado. Rojo en los últimos 15 min.
-  - Hay también un reloj independiente, solo local, para cualquier uso.
-- **Control de ronda** (plan B)
-  - Abrir o cerrar a mano la entrada de manos y de asientos, por ronda o por mesa; marcar mesas como terminadas o en juego.
-  - Aviso de **mesas abiertas en rondas terminadas**, con badge por ronda y diálogo Revisar para cerrarlas en bloque.
-- **Clasificación a pantalla grande**: para proyectar en la sala; va pasando sola por jugadores, equipos, manos pollo y mejores manos.
-- **QR del torneo**: QR en grande en una ventana aparte para proyectar, y PDF de tarjetas por mesa (número grande + QR) con 1, 2 o 4 por A4.
-- **Estadísticas**: las mismas que el Player, con los mismos filtros.
+### 4.5 The table
 
-### 5.6 Impresión y exportación
+- **Seats**: the players of the table choose East, South and West from 10 minutes before the round until the first hand; the one left is North.
+- **Enter hands**: winner, who discarded (or self-draw), value, and **penalties**. Each player shows with their flag and «#N», their number in the tournament.
+- **Live**: animation of a new, corrected or deleted hand; totals that count up with «+N». It looks the same on the phone that saves and on the others.
+- **Differences** between players (can be hidden per tournament).
+- **Time left** in the round, using the server's time (a wrong phone clock does not matter).
+- **Completed table**: final result and every hand in detail.
+- From the top bar: **Combinations**, **Penalties** and **Green Book**.
 
-- **Tarjetas identificativas (PDF)** a doble cara con el nombre corto, el color y el logo del torneo.
-  - Parte trasera opcional, o repetir la delantera.
-  - **Hojas extra de sustitutos** (en blanco, para escribir a mano) y de **staff** (con nombres).
-- **Informe EMA**: la tabla de resultados en el formato de la EMA, que se guarda como CSV para Excel.
-- **CSV de inscripciones** (ver 5.3).
+### 4.6 Getting to your table
 
-### 5.7 Supervisión
+- **«Table N · Round R» reminder** when you open the app, from 10 minutes before the round: «Go to my table» or «Later». It says how long until the start or since the gong, or «Waiting for the starting gong».
+- **Floating «Go to my table» button** on every screen while your round is in play.
+- **Tournament QR code**: one QR code, in the venue or on the tables, that opens «My tables» and your table in play, or the next one.
 
-- **Actividad**: quién cambió qué y cuándo, con filtros y búsqueda, global o por torneo. Incluye las ejecuciones de scripts de mantenimiento.
-- **Errores de las apps**: errores agrupados de todas las plataformas.
-- **Menú DEV** (Super Admin): catálogo del design system y enlace a la documentación de arquitectura.
+### 4.7 Statistics (all public)
+
+- **One screen with a row of filters**: player, rival, tournament, country of the tournaments, country of the players (or «No country») and years from/to. The filters survive a reload.
+- **Player**
+  - **Skills** radar: win rate, self-draw rate, deal-in rate and average hand value.
+  - **Places**: ring, average place and a chart of the last 10/20/50/all tables, colored by tournament.
+  - **Totals**, with a ring of hands won, lost and drawn.
+  - **Records**: best table, best hand, streaks, tables without dealing in, chicken hands, highest penalty.
+  - **Best rivals**: the 3 toughest rivals, with a tooltip that explains the criteria.
+  - **By round**: place, score, skills and hands of each round.
+  - **By tournament**: one card per tournament, with search and a date range.
+- **Tournament**: summary; tops for points, win rate, deal-in rate and self-draws; hands per round; average time per hand; records.
+- **Team**: the same as a player, with team sums and a breakdown per person.
+
+### 4.8 Rules and help
+
+- **Combinations**: the 81 MCR combinations with tile pictures and descriptions, translated.
+- **Penalties**: reference table.
+- **Green Book**: the rulebook as a PDF in English and Spanish (on Android it downloads and stays saved), and a link to the Russian edition.
+- **Contact** (a form to the organization), **Privacy** and **Rules** in the ⋮ menu.
+
+### 4.9 Account and preferences
+
+- Signing in is optional; password recovery with a confirmation of the email.
+- **Profile**: photo, alias, theme (light, dark or system), language, sign out, delete the account and withdraw the analytics consent.
+- **8 languages**: English, Spanish, French, Italian, German, Swedish, Dutch and Russian. The app follows the device language until you choose one. A one-time notice says the translations are made by AI, with a button to write in.
+- **Automatic refresh**: every 15 s in a tournament in progress, every 5 s for its players while their round is in play, and every 2 s at your own table.
 
 ---
 
-## 6. Compartido por las dos apps
+## 5. Admin: the management app
 
-- **Diseño**: design system propio (`:designsystem`), tema claro y oscuro, versión móvil y escritorio de cada pantalla, sombras y scrollbars en todas las listas, botones con texto salvo en pantallas estrechas.
-- **Inicio de sesión** común, con Contacto, Privacidad y «¿Olvidaste la contraseña?».
-- **Perfil** común (foto, tema, idioma).
-- **Analíticas** (GA4) con consentimiento, y registro de errores propio.
-- **Accesibilidad de teclado** en el escritorio: Tab, flechas, Enter y Enter del teclado numérico.
+### 5.1 Tournaments and organizations
+
+- **Tournament list** by role: all, those of your organizations, or those assigned to you.
+- **Create a tournament**
+  - Individual or teams: players, rounds, dates, schedule, venue (with Google Places), short name, contact, organizers.
+  - Or **«Open registrations»**: the tournament starts with no players and the draw happens at the close.
+- **Settings**: public or not, differences at the tables, match length, schedule and agenda.
+- **Organizations** (clubs and federations): a grid of cards with search and a country filter, logo, color and an optional club venue.
+
+### 5.2 Draw of the pairings
+
+- It draws every round at once: nobody meets the same rival twice in the whole tournament and, in team tournaments, two teammates never share a table. The order of the tables and seats is random too.
+- **Two methods**: seat by seat and, when the first one does not finish in time, a second method by swaps. It solves hard cases such as 28 or 40 players over 7 rounds, or dense teams.
+- **«How does the draw work?»**: a dialog with a flowchart and plain words (how it works, what it guarantees, and why it is 100 % random). It is in the Player too.
+
+### 5.3 Registrations
+
+- **Settings on the screen itself**: status (open or close), places, last day and public link with a Copy button.
+- **List** with search, chips (All, With a place, Waiting list, Email not confirmed) and how many have paid.
+- **Per person**: change email, team, food or paid; give a place; move to the waiting list; remove (with or without an email).
+- **Import** the Google Form or an exported file (CSV or Excel, up to 500 rows), with a preview of the problems of each row.
+- **Export CSV**, which can be imported again.
+- **Automatic emails**: confirmation to the person, cancellations and a weekly report to the organization (Sunday evening). The registrations close by themselves the day after the last day.
+- **Make the draw**: checks that the people with a place are a multiple of 4, at least 16, and that the teams are complete.
+
+### 5.4 Players, teams and accounts
+
+- **Tournament players**: slots with a fixed number «#N», EMA number, import, substitutions, and a strip with each round's tables under each player.
+- **Invitations** by email (in bulk) and reminders.
+- **Change the number of players** before the first hand: mark who leaves or add tables, review, and a new draw. Those who stay keep their number and team, and everyone affected gets an email.
+- **Teams**: name and members.
+- **EMA registry**: EMA players with photo (public), hide from the public, create, edit and delete, and every country plus «No country».
+- **Accounts**: create players and staff, permissions, deactivate, delete, password email. Each screen deletes only its own: deleting an account does not delete the EMA player, nor the other way round.
+- **Roles**: standard (read only, can be duplicated) and custom, with permission boxes and how many accounts use each one.
+
+### 5.5 During the tournament
+
+- **Round editor**: round › table, with players, seats, points and the 16 hands (winner, discard, value, «Done»), penalties and manual totals.
+- **Several editors at once**: the server always wins. If someone else saved first, a dialog says so and lists what you had typed. Before saving, it warns about hands not marked as done.
+- **Tables**: all of them, with their status and filters.
+- **Round clock**
+  - Start, pause, resume, set the time and «started N min ago».
+  - Play opens hand entry to the players. When the time ends, the server closes the tables by itself.
+  - It works without network: it retries with the time of the press. It turns red in the last 15 min.
+  - There is also an independent, local-only clock for any use.
+- **Round control** (plan B)
+  - Open or close hand entry and seats by hand, per round or per table; mark tables as completed or in play.
+  - A warning for **open tables in finished rounds**, with a badge per round and a Review dialog to close them in bulk.
+- **Big-screen ranking**: to project in the venue; it pages by itself through players, teams, chicken hands and best hands.
+- **Tournament QR code**: a big QR code in a separate window to project, and a PDF of cards per table (big number + QR code) with 1, 2 or 4 per A4 sheet.
+- **Statistics**: the same as the Player, with the same filters.
+
+### 5.6 Printing and export
+
+- **ID cards (PDF)**, two-sided, with the tournament's short name, color and logo.
+  - Optional back side, or repeat the front.
+  - **Extra sheets of substitutes** (blank, to write by hand) and of **staff** (with names).
+- **EMA report**: the results table in the EMA's format, saved as a CSV for Excel.
+- **Registrations CSV** (see 5.3).
+
+### 5.7 Oversight
+
+- **Activity**: who changed what and when, with filters and search, global or per tournament. It includes the runs of maintenance scripts.
+- **App errors**: errors grouped from every platform.
+- **DEV menu** (Super Admin): design system catalogue and a link to the architecture docs.
 
 ---
 
-## 7. Un torneo de principio a fin
+## 6. Shared by both apps
+
+- **Design**: own design system (`:designsystem`), light and dark theme, phone and desktop layout of each screen, fading edges and scrollbars on every list, buttons with text except on narrow screens.
+- **Sign-in** shared, with Contact, Privacy and «Forgot password?».
+- **Profile** shared (photo, theme, language).
+- **Analytics** (GA4) with consent, and an own error log.
+- **Keyboard support** on desktop: Tab, arrows, Enter and the numeric keypad Enter.
+
+---
+
+## 7. A tournament from start to finish
 
 ```mermaid
 flowchart LR
-  A["Crear torneo<br/>con inscripciones"] --> B["Inscripciones<br/>Player + import Google Form"]
-  B --> C["Cerrar y<br/>Hacer el sorteo"]
-  C --> D["Imprimir tarjetas ID<br/>y QR de mesas"]
-  D --> E["Ronda: asientos,<br/>Play en el reloj"]
-  E --> F["Jugadores apuntan manos<br/>· clasificación en vivo"]
-  F --> G["Fin de tiempo:<br/>mesas se cierran solas"]
+  A["Create tournament<br/>with registrations"] --> B["Registrations<br/>Player + Google Form import"]
+  B --> C["Close and<br/>Make the draw"]
+  C --> D["Print ID cards<br/>and table QR cards"]
+  D --> E["Round: seats,<br/>Play on the clock"]
+  E --> F["Players enter hands<br/>· live ranking"]
+  F --> G["Time over:<br/>tables close by themselves"]
   G --> E
-  G --> H["Informe EMA<br/>· resultados compartibles"]
-  H --> I["Estadísticas<br/>históricas públicas"]
+  G --> H["EMA report<br/>· shareable results"]
+  H --> I["Public historical<br/>statistics"]
 ```
 
 ---
 
-## 8. Debajo del capó
+## 8. Under the hood
 
-- **Cliente**: Kotlin Multiplatform + Compose Multiplatform (Android, Wasm, JVM). Módulos `domain`, `data`, `ui`, `designsystem`, `playerApp`, `adminApp`, `androidApp`. Koin, Ktor, kotlinx.serialization y Navigation Compose.
-- **Backend**: una Cloud Function HTTP `api` (Node 22 + Express, TypeScript) en Madrid, más tareas en Bélgica (cierre de rondas con Cloud Tasks y job horario de inscripciones).
-- **Datos**: Firestore y Storage con reglas que lo deniegan todo; solo el backend escribe. Firebase Auth con *custom claims*. App Check en modo monitor.
-- **API pública** `/public/...` con caché CDN para el Player; API documentada con Swagger en `/api-docs/`.
-- **Entornos**: producción y staging (`mts---staging.web.app`, APK «MTS Staging»).
-- **Despliegue**: GitHub Actions (Firebase, web y Google Play), con versiones separadas de web, app y backend.
+- **Client**: Kotlin Multiplatform + Compose Multiplatform (Android, Wasm, JVM). Modules `domain`, `data`, `ui`, `designsystem`, `playerApp`, `adminApp`, `androidApp`. Koin, Ktor, kotlinx.serialization and Navigation Compose.
+- **Backend**: one HTTP Cloud Function `api` (Node 22 + Express, TypeScript) in Madrid, plus jobs in Belgium (round close with Cloud Tasks and the hourly registrations job).
+- **Data**: Firestore and Storage with rules that deny everything; only the backend writes. Firebase Auth with custom claims. App Check in monitor mode.
+- **Public API** `/public/...` with CDN caching for the Player; API documented with Swagger at `/api-docs/`.
+- **Environments**: production and staging (`mts---staging.web.app`, «MTS Staging» APK).
+- **Deploys**: GitHub Actions (Firebase, web and Google Play), with separate versions for web, app and backend.
 
 ---
 
-## 9. Calidad, pruebas y ensayos
+## 9. Quality, tests and rehearsals
 
-- **Tests unitarios y multiplataforma** de dominio, datos y backend, más tests de integración con emuladores de Firebase.
-- **Tests E2E** en emuladores Android: torneos completos (journey), en paralelo en 3 emuladores.
-- **Capturas automáticas** (Roborazzi) de todas las pantallas y diálogos, en los 8 idiomas, con una galería web que guarda el historial de 30 versiones para comparar.
-- **Cobertura de analíticas**: un test falla si una pantalla o acción no tiene su evento.
-- **Game day**: bots que simulan torneos reales (pequeño, mediano y grande) contra staging, incluidos casos límite como sustituciones, caídas de red, empates, inscripciones por la UI y cambio de número de jugadores. Todos en verde.
+- **Unit and multiplatform tests** of domain, data and backend, plus integration tests on the Firebase emulators.
+- **E2E tests** on Android emulators: whole tournaments (journey tests), in parallel on 3 emulators.
+- **Automatic screenshots** (Roborazzi) of every screen and dialog, in all 8 languages, with a web gallery that keeps the history of 30 versions to compare.
+- **Analytics coverage**: a test fails when a screen or action has no event.
+- **Game day**: bots that simulate real tournaments (small, medium and large) against staging, including edge cases such as substitutions, network loss, ties, registrations through the UI and changing the number of players. All green.
