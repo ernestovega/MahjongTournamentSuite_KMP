@@ -68,6 +68,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_card_size
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_download
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_hint
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_no_tables
@@ -82,7 +83,18 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 
 /** The cards per A4 sheet that the PDF offers. */
-private val CARDS_PER_SHEET = listOf(1, 2, 4)
+private val CARDS_PER_SHEET = listOf(1, 2, 4, 6, 8)
+
+/** How the PDF puts the cards on an A4 sheet (sheetGrid of tableQrService.ts). Every card is landscape. */
+private class SheetLayout(val columns: Int, val rows: Int, val landscape: Boolean, val cardSize: String)
+
+private fun sheetLayout(perSheet: Int): SheetLayout = when (perSheet) {
+    1 -> SheetLayout(1, 1, landscape = true, cardSize = "297 × 210 mm")
+    2 -> SheetLayout(1, 2, landscape = false, cardSize = "210 × 148.5 mm")
+    6 -> SheetLayout(2, 3, landscape = true, cardSize = "148.5 × 70 mm")
+    8 -> SheetLayout(2, 4, landscape = false, cardSize = "105 × 74 mm")
+    else -> SheetLayout(2, 2, landscape = true, cardSize = "148.5 × 105 mm")
+}
 
 /**
  * The QR code of a tournament (docs/table-qr.md). One code for all the tables: it opens the tables of the player in
@@ -141,9 +153,11 @@ internal fun TableQrContent(
     onBack: () -> Unit,
     onDownload: (Tournament, perSheet: Int) -> Unit,
     onProject: (tournamentName: String, link: String, logoUrl: String?) -> Unit,
+    /** The cards per sheet chosen at first. The screenshots use it. */
+    initialPerSheet: Int = 4,
 ) {
     val tableCount = tournament?.takeUnless { it.drawPending }?.physicalTableCount ?: 0
-    var perSheet by rememberSaveable(tournament?.id) { mutableIntStateOf(4) }
+    var perSheet by rememberSaveable(tournament?.id) { mutableIntStateOf(initialPerSheet) }
     val compact = LocalCompactLayout.current
     AppScaffold(
         title = stringResource(Res.string.table_qr_top_bar),
@@ -184,13 +198,25 @@ internal fun TableQrContent(
                             )
                         }
                     }
+                    val layout = sheetLayout(perSheet)
+                    Text(
+                        stringResource(Res.string.table_qr_card_size, layout.cardSize),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("table_qr_card_size"),
+                    )
                     SheetPreview(
-                        tournamentName = tournament.name,
-                        logoUrl = tournament.associationLogoUrl,
+                        tournament = tournament,
                         link = link,
-                        perSheet = perSheet,
+                        layout = layout,
                         tableCount = tableCount,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).width(if (perSheet == 2) (if (compact) 220.dp else 280.dp) else (if (compact) 320.dp else 440.dp)),
+                        modifier = Modifier.align(Alignment.CenterHorizontally).width(
+                            when {
+                                !layout.landscape && compact -> 220.dp
+                                !layout.landscape -> 300.dp
+                                compact -> 320.dp
+                                else -> 440.dp
+                            },
+                        ),
                     )
                     FocusedOutlinedButton(
                         onClick = { onDownload(tournament, perSheet) },
@@ -208,13 +234,13 @@ internal fun TableQrContent(
 
 /** The first sheet of the PDF, drawn like tableQrService.ts draws it: an A4 with 1, 2 or 4 cards. */
 @Composable
-private fun SheetPreview(tournamentName: String, logoUrl: String?, link: String, perSheet: Int, tableCount: Int, modifier: Modifier) {
-    val columns = if (perSheet == 4) 2 else 1
-    val rows = if (perSheet == 1) 1 else 2
+private fun SheetPreview(tournament: Tournament, link: String, layout: SheetLayout, tableCount: Int, modifier: Modifier) {
+    val columns = layout.columns
+    val rows = layout.rows
     Column(
         modifier
             // One and four cards go on a landscape sheet, two on a portrait one: every card is landscape.
-            .aspectRatio(if (perSheet == 2) A4_RATIO else 1f / A4_RATIO)
+            .aspectRatio(if (layout.landscape) 1f / A4_RATIO else A4_RATIO)
             .shadow(4.dp, RectangleShape)
             .background(Color.White)
             .testTag("table_qr_preview"),
@@ -229,7 +255,7 @@ private fun SheetPreview(tournamentName: String, logoUrl: String?, link: String,
                             .fillMaxSize()
                             .border(Dp.Hairline, Color.LightGray),
                     ) {
-                        if (tableId <= tableCount) PreviewCard(tournamentName, logoUrl, link, tableId)
+                        if (tableId <= tableCount) PreviewCard(tournament, link, tableId)
                     }
                 }
             }
@@ -239,7 +265,8 @@ private fun SheetPreview(tournamentName: String, logoUrl: String?, link: String,
 
 /** One card of the preview: the logo and the name, "Table" and its number (always in English), and the code. */
 @Composable
-private fun PreviewCard(tournamentName: String, logoUrl: String?, link: String, tableId: Int) {
+private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
+    val tournamentName = tournament.name
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val unit = minOf(maxWidth, maxHeight) / 20
         val wide = maxWidth > maxHeight * 1.2f
@@ -265,9 +292,14 @@ private fun PreviewCard(tournamentName: String, logoUrl: String?, link: String, 
         }
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxWidth().height(unit * 2.4f).padding(horizontal = unit * 0.6f), contentAlignment = Alignment.Center) {
-                if (!logoUrl.isNullOrBlank()) {
-                    OrganizationLogo(tournamentName, logoUrl, "#FFFFFF", size = unit * 1.9f, modifier = Modifier.align(Alignment.CenterStart))
-                }
+                // Without a logo, the circle of the color of the organizer with its first letter, like the PDF.
+                OrganizationLogo(
+                    name = tournament.organizers.firstOrNull()?.name ?: tournamentName,
+                    logoUrl = tournament.associationLogoUrl,
+                    primaryColor = tournament.primaryColor,
+                    size = unit * 1.9f,
+                    modifier = Modifier.align(Alignment.CenterStart).testTag("table_qr_preview_logo"),
+                )
                 Text(
                     tournamentName,
                     color = Color.Black,

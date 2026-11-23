@@ -224,6 +224,17 @@ class AdminDialogsScreenshotTest {
     @Test
     fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }) }
 
+    /** Six and eight cards per sheet: the small cards. */
+    @Test
+    fun tableQrSixPerSheet() = adminScreenshots("table-qr-6") {
+        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }, initialPerSheet = 6)
+    }
+
+    @Test
+    fun tableQrEightPerSheet() = adminScreenshots("table-qr-8") {
+        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }, initialPerSheet = 8)
+    }
+
     /** The code in a window of its own, to project it. */
     @Test
     fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table") }

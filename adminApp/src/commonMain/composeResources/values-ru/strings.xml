@@ -1171,5 +1171,6 @@
     <string name="table_qr_download">Скачать PDF для печати</string>
     <string name="table_qr_save">Сохранить карточки столов</string>
     <string name="table_qr_no_tables">В турнире ещё нет столов.\nКарточки можно напечатать после жеребьёвки.</string>
+    <string name="table_qr_card_size">Размер каждой карточки: %1$s</string>
     <string name="table_qr_hint">Отсканируйте код, чтобы перейти к своему столу.</string>
 </resources>

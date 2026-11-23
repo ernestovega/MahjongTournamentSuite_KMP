@@ -1157,5 +1157,6 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
     <string name="table_qr_download">PDF zum Drucken herunterladen</string>
     <string name="table_qr_save">Karten der Tische speichern</string>
     <string name="table_qr_no_tables">Das Turnier hat noch keine Tische.\nDie Karten können nach der Auslosung gedruckt werden.</string>
+    <string name="table_qr_card_size">Größe jeder Karte: %1$s</string>
     <string name="table_qr_hint">Scanne den Code, um zu deinem Tisch zu gelangen.</string>
 </resources>

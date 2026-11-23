@@ -1157,5 +1157,6 @@ Change les places dans Inscriptions.</string>
     <string name="table_qr_download">Télécharger le PDF à imprimer</string>
     <string name="table_qr_save">Enregistrer les cartes des tables</string>
     <string name="table_qr_no_tables">Le tournoi n'a pas encore de tables.\nLes cartes peuvent être imprimées après le tirage.</string>
+    <string name="table_qr_card_size">Taille de chaque carte : %1$s</string>
     <string name="table_qr_hint">Scanne le code pour aller à ta table.</string>
 </resources>

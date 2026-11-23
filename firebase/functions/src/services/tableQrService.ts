@@ -4,7 +4,7 @@ import { notFound, conflict } from "../api/httpError";
 import { db, storage } from "../firebase";
 import { type Language } from "./i18n";
 import { pdfKit } from "./lazyModules";
-import { mainOrganizerLogoPath, readOrganizerIds } from "./organizationsService";
+import { mainOrganizerLogoPath, organizersOf, readOrganizerIds } from "./organizationsService";
 
 /**
  * The cards of the tables of a tournament, to print and put on each table: the number of the table, big, so it names
@@ -15,24 +15,28 @@ import { mainOrganizerLogoPath, readOrganizerIds } from "./organizationsService"
 /** The last segment of the link, as in the player app (MY_TABLE_PATH_WORD). */
 export const MY_TABLE_PATH_WORD = "my-table";
 
+const DEFAULT_ORGANIZER_COLOR = "#02B16B";
 const A4_WIDTH = 595.28;
 const A4_HEIGHT = 841.89;
 
 /**
- * Cards on each A4 sheet: one (the whole sheet), two (A5 halves) or four (A6 quarters). Every card is landscape, with
- * the number on the left and the code on the right: the sheet is landscape for one and four, portrait for two.
+ * Cards on each A4 sheet. Every card is landscape, with the number on the left and the code on the right:
+ * 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm, 6 = 148.5 x 70 mm, 8 = 105 x 74.25 mm. The sheet is
+ * landscape for 1, 4 and 6 cards and portrait for 2 and 8.
  */
-export type CardsPerSheet = 1 | 2 | 4;
+export type CardsPerSheet = 1 | 2 | 4 | 6 | 8;
 
 export function readCardsPerSheet(value: unknown): CardsPerSheet {
   const number = Number(value);
-  return number === 1 || number === 2 ? number : 4;
+  return number === 1 || number === 2 || number === 6 || number === 8 ? number : 4;
 }
 
 /** The size of a card and the grid of the sheet. */
 export function sheetGrid(perSheet: CardsPerSheet): SheetGrid {
   if (perSheet === 1) return { pageWidth: A4_HEIGHT, pageHeight: A4_WIDTH, columns: 1, rows: 1, width: A4_HEIGHT, height: A4_WIDTH };
   if (perSheet === 2) return { pageWidth: A4_WIDTH, pageHeight: A4_HEIGHT, columns: 1, rows: 2, width: A4_WIDTH, height: A4_HEIGHT / 2 };
+  if (perSheet === 6) return { pageWidth: A4_HEIGHT, pageHeight: A4_WIDTH, columns: 2, rows: 3, width: A4_HEIGHT / 2, height: A4_WIDTH / 3 };
+  if (perSheet === 8) return { pageWidth: A4_WIDTH, pageHeight: A4_HEIGHT, columns: 2, rows: 4, width: A4_WIDTH / 2, height: A4_HEIGHT / 4 };
   return { pageWidth: A4_HEIGHT, pageHeight: A4_WIDTH, columns: 2, rows: 2, width: A4_HEIGHT / 2, height: A4_WIDTH / 2 };
 }
 
@@ -81,6 +85,9 @@ export type TableQrDocument = {
   tournamentName: string;
   /** The logo of the main organizer (PNG or JPEG), in a corner of each card, or null. */
   logo: Buffer | null;
+  /** Without a logo the corner shows a circle of this color with the first letter of [organizerName], like the app. */
+  organizerName: string;
+  organizerColor: string;
   /** The same code on every card: it is the code of the tournament. */
   link: string;
   tableCount: number;
@@ -95,11 +102,17 @@ export async function loadTableQrDocument(tournamentId: string, perSheet: CardsP
   const tableCount = Math.floor(Number(tournament.get("numPlayers") ?? 0) / 4);
   if (tableCount < 1) throw conflict("The tournament has no tables yet");
   const slug = String((tournament.get("registration") as Record<string, unknown> | undefined)?.slug ?? "");
-  const logoPath = await mainOrganizerLogoPath(readOrganizerIds(tournament.get("organizerIds")));
+  const organizerIds = readOrganizerIds(tournament.get("organizerIds"));
+  const mainOrganizer = (await organizersOf(organizerIds))[0];
+  const logoPath = await mainOrganizerLogoPath(organizerIds);
   const logo = logoPath.length > 0 ? await storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null) : null;
+  const tournamentName = String(tournament.get("name") ?? "").trim();
+  const color = String(mainOrganizer?.primaryColor ?? DEFAULT_ORGANIZER_COLOR).trim().toUpperCase();
   return {
-    tournamentName: String(tournament.get("name") ?? "").trim(),
+    tournamentName,
     logo,
+    organizerName: mainOrganizer?.name ?? tournamentName,
+    organizerColor: /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_ORGANIZER_COLOR,
     link: myTableQrLink(playerAppUrl(), tournamentId, slug),
     tableCount,
     texts: tableQrTexts("en"),
@@ -163,17 +176,28 @@ function drawCard(
   const bandHeight = 40 * scale;
   // The logo of the organizer in the top left corner, and the name of the tournament centred, clear of the logo.
   const logoSize = bandHeight * 0.8;
-  if (model.logo != null) {
+  const logoX = left + padding * 0.6;
+  const logoY = top + padding * 0.6;
+  const drawInitial = () => {
+    doc.save().circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).fill(model.organizerColor).restore();
+    const initial = model.organizerName.trim().slice(0, 1).toUpperCase();
+    if (initial.length > 0) {
+      doc.font(sentenceFont(initial)).fontSize(logoSize * 0.5).fillColor("#FFFFFF");
+      centeredLine(doc, initial, logoX, logoY + logoSize * 0.27, logoSize);
+    }
+  };
+  if (model.logo == null) {
+    drawInitial();
+  } else {
     try {
-      const logoX = left + padding * 0.6;
-      const logoY = top + padding * 0.6;
       doc.save();
       doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).clip();
       doc.image(model.logo, logoX, logoY, { cover: [logoSize, logoSize], align: "center", valign: "center" });
       doc.restore();
     } catch {
-      // A logo in a format pdfkit cannot read leaves the corner empty.
+      // A logo in a format pdfkit cannot read shows the initial instead.
       doc.restore();
+      drawInitial();
     }
   }
   doc.font("CardApp").fillColor("#000000");

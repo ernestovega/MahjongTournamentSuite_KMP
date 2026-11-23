@@ -19,7 +19,11 @@ test("the cards per sheet are 1, 2 or 4, and 4 by default", () => {
   assert.equal(readCardsPerSheet("4"), 4);
   assert.equal(readCardsPerSheet(undefined), 4);
   assert.equal(readCardsPerSheet("3"), 4);
-  assert.deepEqual([1, 2, 4].map((n) => { const g = sheetGrid(n as CardsPerSheet); return g.columns * g.rows; }), [1, 2, 4]);
+  assert.equal(readCardsPerSheet("6"), 6);
+  assert.equal(readCardsPerSheet(8), 8);
+  assert.deepEqual([1, 2, 4, 6, 8].map((n) => { const g = sheetGrid(n as CardsPerSheet); return g.columns * g.rows; }), [1, 2, 4, 6, 8]);
+  // Every card is landscape.
+  [1, 2, 4, 6, 8].forEach((n) => { const g = sheetGrid(n as CardsPerSheet); assert.ok(g.width > g.height, `${n} per sheet`); });
 });
 
 test("the QR code is a square of modules with the finder pattern in the corner", () => {
@@ -31,9 +35,9 @@ test("the QR code is a square of modules with the finder pattern in the corner",
 });
 
 test("the PDF has one page for each group of cards", async () => {
-  for (const [perSheet, pages] of [[1, 15], [2, 8], [4, 4]] as const) {
+  for (const [perSheet, pages] of [[1, 15], [2, 8], [4, 4], [6, 3], [8, 2]] as const) {
     const pdf = await buildTableQrPdf({
-      tournamentName: "Madrid Open 2027", logo: null, link: "https://x.test/open/my-table", tableCount: 15,
+      tournamentName: "Madrid Open 2027", logo: null, organizerName: "Madrid Riichi Club", organizerColor: "#02B16B", link: "https://x.test/open/my-table", tableCount: 15,
       texts: tableQrTexts("es"), perSheet,
     });
     assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");

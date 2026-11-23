@@ -1157,5 +1157,6 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="table_qr_download">Ladda ner PDF för utskrift</string>
     <string name="table_qr_save">Spara bordens kort</string>
     <string name="table_qr_no_tables">Turneringen har inga bord än.\nKorten kan skrivas ut efter lottningen.</string>
+    <string name="table_qr_card_size">Storlek på varje kort: %1$s</string>
     <string name="table_qr_hint">Skanna koden för att komma till ditt bord.</string>
 </resources>

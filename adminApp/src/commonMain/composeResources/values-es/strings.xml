@@ -1157,5 +1157,6 @@ Cambia las plazas en Inscripciones.</string>
     <string name="table_qr_download">Descargar PDF para imprimir</string>
     <string name="table_qr_save">Guardar las tarjetas de las mesas</string>
     <string name="table_qr_no_tables">El torneo aún no tiene mesas.\nLas tarjetas se pueden imprimir después del sorteo.</string>
+    <string name="table_qr_card_size">Tamaño de cada tarjeta: %1$s</string>
     <string name="table_qr_hint">Escanea el código para ir a tu mesa.</string>
 </resources>
