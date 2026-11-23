@@ -210,7 +210,7 @@ class PlayerCountUiTest {
         onNodeWithText("Make a new draw?").assertIsDisplayed()
         onNodeWithText("From 20 to 16 players").assertIsDisplayed()
         onNodeWithText("The tables of all 2 rounds. They are drawn again.").assertIsDisplayed()
-        onNodeWithText("The people who leave: #05 · Name 5, #06 · Player 6, #07 · Name 7, #08 · Name 8.").assertIsDisplayed()
+        onNodeWithText("The people who leave: #5 · Name 5, #6 · Player 6, #7 · Name 7, #8 · Name 8.").assertIsDisplayed()
         onNodeWithText("How does the draw work?").assertIsDisplayed()
         // Without registrations, nothing is said about them.
         assertTrue(onAllNodesWithText("Their registrations.").fetchSemanticsNodes().isEmpty())
@@ -341,9 +341,9 @@ class PlayerCountUiTest {
         waitForDone()
         onNodeWithText("14 people got an email.").assertIsDisplayed()
         onNodeWithText("Without an email, tell them yourself:").assertIsDisplayed()
-        onNodeWithText("#05 · Name 5").assertIsDisplayed()
+        onNodeWithText("#5 · Name 5").assertIsDisplayed()
         onNodeWithText("The email failed, tell them yourself:").assertIsDisplayed()
-        onNodeWithText("#07 · Name 7").assertIsDisplayed()
+        onNodeWithText("#7 · Name 7").assertIsDisplayed()
     }
 
     @Test

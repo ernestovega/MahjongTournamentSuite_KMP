@@ -267,7 +267,7 @@ private fun filterChips(filters: StatisticsFilters, players: List<Player>, tourn
             add(Chip(stringResource(Res.string.stats_chip_rival, name), { CountryFlag(rival?.country.orEmpty(), width = 20.dp) }) { it.copy(rivalEmaId = null) })
         }
         if (filters.emaId == null && filters.slotId != null) {
-            add(Chip(slotName ?: playerNumber(filters.slotId), { CountryFlag("", width = 20.dp) }) { it.copy(slotId = null) })
+            add(Chip(slotName ?: "#${filters.slotId}", { CountryFlag("", width = 20.dp) }) { it.copy(slotId = null) })
         }
         filters.tournamentId?.let { id ->
             val name = tournaments.firstOrNull { it.id == id }?.name ?: id

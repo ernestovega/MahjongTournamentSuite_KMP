@@ -428,7 +428,7 @@ class PlayerScreensScreenshotTest {
 }
 
 /** The tournaments of the screenshots, with [UPCOMING] before its draw and taking registrations. */
-private class RegistrationTournamentRepository :
+internal class RegistrationTournamentRepository :
     ScreenshotTournamentRepository(
         tournaments = ScreenshotData.tournaments.map { if (it.id == UPCOMING) ScreenshotData.registrationTournament else it },
     )
@@ -437,7 +437,7 @@ private class RegistrationTournamentRepository :
  * The tournaments of an account: it plays now in [ONGOING] (in play until 2099), played [COMPLETED] and has a place
  * in [UPCOMING] before its draw.
  */
-private class MineTournamentRepository :
+internal open class MineTournamentRepository :
     ScreenshotTournamentRepository(
         tournaments = ScreenshotData.tournaments.map {
             when (it.id) {

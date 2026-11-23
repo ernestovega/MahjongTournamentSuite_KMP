@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalPlayerNumberDigits
-import com.etologic.mahjongtournamentsuite.presentation.components.formatPlayerNumber
-import com.etologic.mahjongtournamentsuite.presentation.components.playerNumberDigits
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -173,7 +170,6 @@ fun PlayerCountScreen(
     val store = koinInject<AppMemoryStore>()
     LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
-    val numberDigits = LocalPlayerNumberDigits.current
     val stored = tournaments.firstOrNull { it.id == tournamentId }
     val scope = rememberCoroutineScope()
     var data by remember(tournamentId) { mutableStateOf<PlayerCountData?>(null) }
@@ -227,7 +223,7 @@ fun PlayerCountScreen(
             result != null -> {
                 val changed = result!!
                 // The people without an email, by their names in the lists of the screen.
-                val names = loaded?.slots.orEmpty().filter { it.emaId != null }.associate { it.emaId!! to it.label(numberDigits) } +
+                val names = loaded?.slots.orEmpty().filter { it.emaId != null }.associate { it.emaId!! to it.label() } +
                     loaded?.waiting.orEmpty().associate { it.emaId to it.name }
                 DoneContent(
                     previous = tournament.numPlayers,
@@ -358,7 +354,7 @@ internal data class PlayerCountSummary(
             val leaving = if (tournament.isTeams) {
                 data.teams.filter { it.id in form.chosen }.map { it.name }
             } else {
-                data.slots.filter { it.id in form.chosen }.map { it.label(playerNumberDigits(tournament.numPlayers)) }
+                data.slots.filter { it.id in form.chosen }.map { it.label() }
             }
             val waitingNames = data.waiting.associate { it.emaId to it.name }
             val target = form.targetOf(tournament, data)
@@ -376,12 +372,11 @@ internal data class PlayerCountSummary(
     }
 }
 
-/** The number and the name of a slot: "#07 · Ana García". [digits] is the length of the numbers of the tournament. */
-internal fun PlayerCountSlot.label(digits: Int = playerNumberDigits(0)): String = "${formatPlayerNumber(id, digits)} · $name"
+internal fun PlayerCountSlot.label(): String = "#$id · $name"
 
 /** The lines that match the search: by slot number, name or EMA number; a team also by its players. */
 internal fun PlayerCountSlot.matches(query: String): Boolean =
-    query.isBlank() || "#$id ${formatPlayerNumber(id)} $name ${emaId.orEmpty()}".matchesSearch(query) || id == query.trim().removePrefix("#").toIntOrNull()
+    query.isBlank() || "#$id $name ${emaId.orEmpty()}".matchesSearch(query) || id.toString() == query.trim().removePrefix("#")
 
 internal fun TournamentTeam.matches(query: String, slots: List<PlayerCountSlot>): Boolean =
     query.isBlank() || name.matchesSearch(query) || slots.filter { it.id in playerIds }.any { it.matches(query) }
@@ -550,7 +545,7 @@ internal fun ColumnScope.ChooseContent(
                     val checked = team.id in form.chosen
                     ChoiceRow(
                         title = team.name,
-                        detail = team.memberNames(data.slots, LocalPlayerNumberDigits.current),
+                        detail = team.memberNames(data.slots),
                         checked = checked,
                         enabled = checked || !full,
                         tag = "playerCountTeam-${team.id}",
@@ -563,7 +558,7 @@ internal fun ColumnScope.ChooseContent(
                 items(shown, key = { "slot-${it.id}" }) { slot ->
                     val checked = slot.id in form.chosen
                     ChoiceRow(
-                        title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, formatPlayerNumber(slot.id, LocalPlayerNumberDigits.current)) else slot.label(LocalPlayerNumberDigits.current),
+                        title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
                         detail = slot.emaId,
                         checked = checked,
                         enabled = checked || !full,
@@ -680,9 +675,9 @@ private fun ChoiceSearch(form: PlayerCountForm, onFormChange: (PlayerCountForm) 
     )
 }
 
-internal fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>, digits: Int): String {
+internal fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>): String {
     val byId = slots.associateBy { it.id }
-    return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) formatPlayerNumber(it.id, digits) else it.name }
+    return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) "#${it.id}" else it.name }
 }
 
 @Composable

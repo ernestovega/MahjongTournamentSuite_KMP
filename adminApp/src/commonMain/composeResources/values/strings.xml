@@ -1108,7 +1108,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_sure_text">The tables of every round are drawn again.\nThis cannot be undone.</string>
     <string name="pc_change">Change</string>
     <string name="pc_now">Now: %1$d players, %2$d tables per round.</string>
-    <string name="pc_empty_slot">%1$s · no player</string>
+    <string name="pc_empty_slot">#%1$d · no player</string>
     <string name="pc_new_slots">%1$d new places, empty until you assign them in Players.</string>
     <string name="pc_new_teams">%1$d new teams, empty until you assign them in Teams.</string>
     <string name="pc_waiting_title">Waiting list: up to %1$d people (optional)</string>

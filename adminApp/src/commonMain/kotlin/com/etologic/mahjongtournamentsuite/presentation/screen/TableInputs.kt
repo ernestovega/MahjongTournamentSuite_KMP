@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalPlayerNumberDigits
-import com.etologic.mahjongtournamentsuite.presentation.components.formatPlayerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
@@ -209,10 +207,9 @@ internal fun PlayerDropdown(
     val trimmed = value.trim()
     val selectedId = trimmed.toIntOrNull()
     val playerN = rememberTemplate(Res.string.player_n)
-    val numberDigits = LocalPlayerNumberDigits.current
     fun playerLabel(id: Int): String {
         val name = playerNamesById[id] ?: playerN(id)
-        return if (showPlayerId) "${formatPlayerNumber(id, numberDigits)} - $name" else name
+        return if (showPlayerId) "$id - $name" else name
     }
     val displayValue = when {
         trimmed.isBlank() || selectedId == null && trimmed == "-" -> emptyOptionLabel.orEmpty()
