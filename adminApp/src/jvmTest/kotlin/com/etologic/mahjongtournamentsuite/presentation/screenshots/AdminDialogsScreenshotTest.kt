@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
@@ -11,6 +12,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import androidx.compose.foundation.layout.ColumnScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
@@ -90,6 +92,8 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
+private const val QR_SITE = "https://mts.mahjongmadrid.com"
+
 @OptIn(ExperimentalTestApi::class)
 class AdminDialogsScreenshotTest {
     private fun dialog(name: String, content: @Composable () -> Unit) = adminScreenshots("dialogs/$name", variants = dialogVariants) { content() }
@@ -213,6 +217,16 @@ class AdminDialogsScreenshotTest {
     fun playerCountLocked() = playerCountScreen("player-count-locked", step = null) { LockedContent(PlayerCountBlocker.STARTED, onClose = {}) }
 
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
+    /** The QR codes of the tables: the grid of all the tables. */
+    @Test
+    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = {}) }
+
+    /** One code in big, to show it on a screen. */
+    @Test
+    fun tableQrBig() = adminScreenshots("table-qr-big") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = {}, initialTable = 3) }
+
+    private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
+
     private fun playerCountScreen(name: String, step: Int? = 0, content: @Composable ColumnScope.() -> Unit) =
         adminScreenshots(name) { PlayerCountFrame(subtitle = "Madrid Open 2026", step = step, onBack = {}, content = content) }
 

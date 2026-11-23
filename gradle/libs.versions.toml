@@ -1,15 +1,16 @@
 [versions]
 kover = "0.9.11"
 ktlintGradle = "13.1.0"
+qrose = "1.3.1"
 agp = "9.4.1"
 # Versions of the three products. Each one goes up on its own, see docs/versioning.md.
 # Bump the patch with: python3 scripts/versions.py bump <web|admin|backend>
 # See the published ones with: python3 scripts/versions.py status
 # MAJOR and MINOR only change by hand, when the owner decides.
-web-versionName = "1.0.355"
-admin-versionName = "1.0.290"
-admin-versionCode = "290"
-backend-versionName = "1.0.42"
+web-versionName = "1.0.356"
+admin-versionName = "1.0.291"
+admin-versionCode = "291"
+backend-versionName = "1.0.43"
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "36"
@@ -31,6 +32,7 @@ roborazzi = "1.79.0"
 google-services = "4.5.0"
 
 [libraries]
+qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 androidx-test-runner = { module = "androidx.test:runner", version = "1.7.0" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version = "3.7.0" }
 androidx-test-espresso-intents = { module = "androidx.test.espresso:espresso-intents", version = "3.7.0" }

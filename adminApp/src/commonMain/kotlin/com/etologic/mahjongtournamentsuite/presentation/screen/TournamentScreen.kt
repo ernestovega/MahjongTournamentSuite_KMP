@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.TableQrRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -89,6 +91,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
 import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_button
 import mahjongtournamentsuite.adminapp.generated.resources.teams
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -108,6 +111,7 @@ private sealed class RoundEditorAction {
     data object Activity : RoundEditorAction()
     data object RoundControl : RoundEditorAction()
     data object Export : RoundEditorAction()
+    data object TableQr : RoundEditorAction()
 }
 
 @Composable
@@ -375,6 +379,7 @@ fun TournamentScreen(
                 },
             )?.takeIf { it in tableEditors } ?: selectedTableId
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
+            RoundEditorAction.TableQr -> navController.navigate(TableQrRoute(tournamentId))
             RoundEditorAction.Teams -> navController.navigate(TeamsRoute(tournamentId))
             RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
             RoundEditorAction.Statistics -> {
@@ -541,6 +546,12 @@ fun TournamentScreen(
                 text = stringResource(Res.string.players),
                 icon = Icons.Default.People,
                 onClick = { requestAction(RoundEditorAction.Players) },
+                enabled = !isLoading,
+            )
+            AppTopBarButton(
+                text = stringResource(Res.string.table_qr_button),
+                icon = Icons.Default.QrCode2,
+                onClick = { requestAction(RoundEditorAction.TableQr) },
                 enabled = !isLoading,
             )
             AppTopBarButton(

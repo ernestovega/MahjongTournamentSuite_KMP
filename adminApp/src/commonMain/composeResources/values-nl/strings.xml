@@ -1126,4 +1126,14 @@ Het aantal spelers kan alleen voor de eerste hand wijzigen.</string>
     <string name="pc_locked_pending">Het toernooi heeft nog geen loting.
 Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="activity_action_tournament_player_count">Wijzigde het aantal spelers</string>
+    <string name="table_qr_top_bar">QR-codes van de tafels</string>
+    <string name="table_qr_button">Tafel-QR</string>
+    <string name="table_qr_info">Leg de code van elke tafel op die tafel. Wie hem scant, ziet de tafel in de ronde die gespeeld wordt, met de handen en de uitslagen.\nTik op een code om hem groot op een scherm te tonen, of download de PDF om de kaarten van alle tafels te printen.</string>
+    <string name="table_qr_download">PDF downloaden om te printen</string>
+    <string name="table_qr_save">QR-codes van de tafels opslaan</string>
+    <string name="table_qr_all">Alle tafels</string>
+    <string name="table_qr_previous">Vorige tafel</string>
+    <string name="table_qr_next">Volgende tafel</string>
+    <string name="table_qr_no_tables">Het toernooi heeft nog geen tafels.\nDe codes verschijnen na de loting.</string>
+    <string name="table_qr_table">Tafel %1$d</string>
 </resources>

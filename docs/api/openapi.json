@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.41",
+  "version": "1.0.43",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -4112,6 +4112,62 @@
       "description": "OK",
       "content": {
        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/table-qr-codes": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "PDF con los códigos QR de las mesas",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCuatro tarjetas por A4, en el idioma de Accept-Language. Ver docs/table-qr.md.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
         "schema": {
          "type": "string",
          "format": "binary"

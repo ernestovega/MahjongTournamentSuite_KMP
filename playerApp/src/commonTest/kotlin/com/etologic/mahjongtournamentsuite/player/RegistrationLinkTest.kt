@@ -34,4 +34,14 @@ class RegistrationLinkTest {
             assertNull(registrationLinkOf(path, emptyMap()), path)
         }
     }
+
+    @Test
+    fun theQrOfATableNamesTheTournamentAndTheTable() {
+        assertEquals(RegistrationLink(slug = "6thmmc", tableId = 5), registrationLinkOf("/6thmmc/table/5", emptyMap()))
+        assertEquals(RegistrationLink(slug = "6thmmc", tableId = 12), registrationLinkOf("/6thMMC/mesa/12/", emptyMap()))
+        assertEquals(RegistrationLink(tournamentId = "AbC123", tableId = 3), registrationLinkOf("/t/AbC123/table/3", emptyMap()))
+        for (path in listOf("/6thmmc/table/0", "/6thmmc/table/x", "/admin/table/2", "/t/table/2", "/a/b/table/2", "/ab/table/2")) {
+            assertNull(registrationLinkOf(path, emptyMap()), path)
+        }
+    }
 }

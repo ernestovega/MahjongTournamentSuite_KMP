@@ -26,7 +26,9 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.presentation.TableQrRoute
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrScreen
 import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
@@ -208,6 +210,9 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<PlayerCountRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<PlayerCountRoute>()
                         PlayerCountScreen(tournamentId = args.tournamentId, started = args.started, onBack = { navController.popBackStack() })
+                    }
+                    screen<TableQrRoute> { backStackEntry ->
+                        TableQrScreen(tournamentId = backStackEntry.toRoute<TableQrRoute>().tournamentId, onBack = { navController.popBackStack() })
                     }
                     screen<UsersRoute> { backStackEntry ->
                         GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)

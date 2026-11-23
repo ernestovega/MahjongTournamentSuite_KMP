@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.data.cache.tournamentManifest
+import com.etologic.mahjongtournamentsuite.data.network.currentLanguageTag
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -268,6 +269,14 @@ class DefaultTournamentRepository(
         cacheSuffix = "id-list",
         action = "Generating tournament ID list",
         load = { token -> backendApi.generateTournamentIdList(token, tournamentId) },
+    )
+
+    override suspend fun generateTableQrCodes(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        // The texts of the cards follow the language of the app.
+        cacheSuffix = "table-qr-${currentLanguageTag().orEmpty()}",
+        action = "Generating the QR codes of the tables",
+        load = { token -> backendApi.generateTableQrCodes(token, tournamentId) },
     )
 
     private suspend fun cachedGeneratedFile(

@@ -26,6 +26,7 @@ import {
   type IdCardSheetOptions,
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
+import { generateTableQrCodes } from "../../services/tableQrService";
 import { generateEmaReport } from "../../services/emaReportService";
 import { readSubstitution } from "../../services/playerSubstitution";
 import {
@@ -506,6 +507,18 @@ export function tournamentsRouter(): Router {
       const pdf = await generateTournamentIdCards(pathParam(req, "tournamentId"), readIdCardSheetOptions(req.query));
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-id-cards.pdf"`);
+      res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The QR codes of the physical tables, to print: they open each table in the player app. See docs/table-qr.md.
+  router.get("/:tournamentId/table-qr-codes", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      const pdf = await generateTableQrCodes(pathParam(req, "tournamentId"), parseAcceptLanguage(req.headers["accept-language"]));
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-table-qr-codes.pdf"`);
       res.status(200).send(pdf);
     } catch (e) {
       next(e);

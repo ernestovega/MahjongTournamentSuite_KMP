@@ -74,7 +74,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Tournament | `tournament_renamed`, `tournament_settings_updated`, `table_reset` |
 | Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
-| Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
+| Exports | `id_cards_exported`, `id_list_exported`, `table_qr_exported`, `id_card_proof_created`, `ema_report_exported` |
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_organizations`, `account_request_approved`, `account_request_rejected`, `account_permissions_updated` |
 | Roles | `role_created`, `role_updated`, `role_deleted` |
 | Organizations | `organization_created`, `organization_updated`, `organization_deleted` |

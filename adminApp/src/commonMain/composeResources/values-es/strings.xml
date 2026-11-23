@@ -1126,4 +1126,14 @@ El número de jugadores solo se puede cambiar antes de la primera mano.</string>
     <string name="pc_locked_pending">El torneo aún no tiene sorteo.
 Cambia las plazas en Inscripciones.</string>
     <string name="activity_action_tournament_player_count">Cambió el número de jugadores</string>
+    <string name="table_qr_top_bar">Códigos QR de las mesas</string>
+    <string name="table_qr_button">QR de mesas</string>
+    <string name="table_qr_info">Pon el código de cada mesa en esa mesa. Quien lo escanea ve la mesa en la ronda en juego, con sus manos y resultados.\nToca un código para mostrarlo en grande en una pantalla, o descarga el PDF para imprimir las tarjetas de todas las mesas.</string>
+    <string name="table_qr_download">Descargar PDF para imprimir</string>
+    <string name="table_qr_save">Guardar los códigos QR de las mesas</string>
+    <string name="table_qr_all">Todas las mesas</string>
+    <string name="table_qr_previous">Mesa anterior</string>
+    <string name="table_qr_next">Mesa siguiente</string>
+    <string name="table_qr_no_tables">El torneo aún no tiene mesas.\nLos códigos aparecen después del sorteo.</string>
+    <string name="table_qr_table">Mesa %1$d</string>
 </resources>

@@ -195,6 +195,7 @@ object TelemetryAction {
     const val EMAILS_SAVED = "emails_saved"
     const val ID_CARDS_EXPORTED = "id_cards_exported"
     const val ID_LIST_EXPORTED = "id_list_exported"
+    const val TABLE_QR_EXPORTED = "table_qr_exported"
     const val ID_CARD_PROOF_CREATED = "id_card_proof_created"
     const val EMA_REPORT_EXPORTED = "ema_report_exported"
     const val ACCOUNT_CREATED = "account_created"
@@ -258,6 +259,7 @@ object TelemetryAction {
         EMAILS_SAVED,
         ID_CARDS_EXPORTED,
         ID_LIST_EXPORTED,
+        TABLE_QR_EXPORTED,
         ID_CARD_PROOF_CREATED,
         EMA_REPORT_EXPORTED,
         ACCOUNT_CREATED,
