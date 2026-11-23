@@ -4,3 +4,6 @@
 
 # The CSV that the admin app exports and the import reads (RegistrationsCsvTest, registrationImport.test.ts): CRLF as is.
 testdata/registrations-export.csv -text
+
+# Google Play store images (docs/play-store/README.md), also in Git LFS.
+docs/play-store/**/*.png filter=lfs diff=lfs merge=lfs -text

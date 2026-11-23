@@ -9,7 +9,7 @@ One codebase (Kotlin Multiplatform + Compose) that ships an Android app, a web a
 
 Web: https://mts.mahjongmadrid.com · Management: `/admin/` · Android: the «MTS» app (Player and Management in one app).
 
-📘 **Detailed feature catalogue:** [docs/features.md](docs/features.md) · Google Play listing texts: [docs/play-store-listing.md](docs/play-store-listing.md)
+📘 **Detailed feature catalogue:** [docs/features.md](docs/features.md) · Google Play listing texts: [docs/play-store/listing.md](docs/play-store/listing.md)
 
 ---
 
