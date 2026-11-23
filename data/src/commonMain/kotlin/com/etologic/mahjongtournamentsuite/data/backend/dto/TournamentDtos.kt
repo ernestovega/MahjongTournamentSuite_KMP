@@ -147,6 +147,12 @@ data class TournamentAgendaItemDto(
     val startTime: String? = null,
 )
 
+/** The names of the staff ID cards of a tournament, in order. */
+@Serializable
+data class IdCardStaffNamesDto(
+    val names: List<String> = emptyList(),
+)
+
 @Serializable
 data class IdCardProofRequestDto(
     val shortName: String,

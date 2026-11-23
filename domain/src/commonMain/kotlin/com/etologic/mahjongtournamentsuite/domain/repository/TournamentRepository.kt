@@ -75,6 +75,12 @@ interface TournamentRepository {
 
     suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray>
 
+    /** The names of the staff ID cards that were saved for the tournament, in order. */
+    suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>>
+
+    /** Keeps the names of the staff ID cards, so the next ID cards of the tournament start with them. */
+    suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>>
+
     suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray>
 
     /** A PDF with a card for each physical table (its number and the QR of the tournament), [perSheet] cards per A4. See docs/table-qr.md. */

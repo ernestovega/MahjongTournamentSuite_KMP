@@ -4030,6 +4030,124 @@
     ]
    }
   },
+  "/tournaments/{tournamentId}/id-cards/staff-names": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Nombres guardados del staff para las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffNames"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   },
+   "put": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Guardar los nombres del staff para las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nQuita los nombres vacíos. Máximo 200 nombres de 60 caracteres.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffNames"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/IdCardStaffNames"
+       }
+      }
+     }
+    }
+   }
+  },
   "/tournaments/id-card-proof": {
    "post": {
     "tags": [
@@ -9028,6 +9146,17 @@
      "year",
      "primaryColor"
     ]
+   },
+   "IdCardStaffNames": {
+    "type": "object",
+    "properties": {
+     "names": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
    },
    "ImportFileValues": {
     "type": "object",

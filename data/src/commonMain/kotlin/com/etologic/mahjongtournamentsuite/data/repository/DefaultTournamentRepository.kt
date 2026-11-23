@@ -259,7 +259,11 @@ class DefaultTournamentRepository(
         sheet: IdCardSheetLayout?,
     ): AppResult<ByteArray> = cachedGeneratedFile(
         tournamentId = tournamentId,
-        cacheSuffix = sheet?.let { "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" } ?: "id-cards",
+        // Every option of the sheet is in the key, so a PDF with other options is never taken from the cache.
+        cacheSuffix = sheet?.let {
+            "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" +
+                "-${it.backs}-${it.backSameAsFront}-${it.substituteSheets}-${it.staffSheets}-${it.cleanStaffNames().hashCode()}"
+        } ?: "id-cards",
         action = "Generating tournament ID cards",
         load = { token -> backendApi.generateTournamentIdCards(token, tournamentId, sheet) },
     )
@@ -1073,6 +1077,26 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Listing the own tournaments failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = runCatching {
+        withFreshIdToken { idToken -> backendApi.getIdCardStaffNames(idToken, tournamentId).names }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the staff names of the ID cards failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = runCatching {
+        withFreshIdToken { idToken -> backendApi.saveIdCardStaffNames(idToken, tournamentId, names).names }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Saving the staff names of the ID cards failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

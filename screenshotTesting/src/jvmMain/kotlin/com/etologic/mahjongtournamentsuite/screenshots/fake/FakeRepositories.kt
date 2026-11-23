@@ -117,6 +117,8 @@ open class ScreenshotTournamentRepository(
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?): AppResult<ByteArray> = noWrite()
     override suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray> = noWrite()
+    override suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = AppResult.Success(emptyList())
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = noWrite()
     override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = noWrite()
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>): AppResult<ByteArray> = noWrite()
     override suspend fun deleteTournament(tournamentId: String): AppResult<Unit> = noWrite()
