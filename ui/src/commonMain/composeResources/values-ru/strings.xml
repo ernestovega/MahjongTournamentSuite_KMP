@@ -668,6 +668,23 @@
     <string name="draw_swap_flow_shake">Несколько случайных обменов</string>
     <string name="draw_swap_flow_limit">До предельного времени</string>
     <string name="close">Закрыть</string>
+    <string name="draw_blocks_title">Третий случай: туров больше, чем помещается без повторов</string>
+    <string name="draw_blocks_intro">В каждом туре игрок встречает 3 новых соперников, поэтому новые соперники заканчиваются: например, 16 игроков могут сыграть 5 туров, и никто не встретит соперника дважды. Если туров больше, приложение проводит жеребьёвку блоками.</string>
+    <string name="draw_blocks_how">• В блоке столько туров, сколько помещается без повторов при таком числе игроков. С командами на один тур меньше.
+• В первом блоке никто не встречает соперника дважды. Во втором никто не встречает кого-то в третий раз, и так далее. Последний блок, даже если он короче, следует тому же правилу.
+• Для 16, 28, 40 или 64 игроков есть идеальная схема: в каждом блоке каждый игрок встречает каждого соперника ровно один раз. Форма схемы всегда одна и та же, но кто где сидит, решает жребий, заново в каждом блоке.
+• При другом числе игроков каждый блок разыгрывается обменами, как во втором способе, с учётом столов предыдущих блоков.
+• Для 16, 28, 40 или 64 игроков схема также используется, когда первый способ не успевает, вместо второго, потому что она готова мгновенно.</string>
+    <string name="draw_blocks_flow_description">Блок-схема жеребьёвки блоками</string>
+    <string name="draw_blocks_flow_start">Туров больше, чем помещается без повторов</string>
+    <string name="draw_blocks_flow_block">Следующий блок</string>
+    <string name="draw_blocks_flow_block_note">Столько туров, сколько помещается</string>
+    <string name="draw_blocks_flow_pattern_check">Идеальная схема?</string>
+    <string name="draw_blocks_flow_pattern">Схема со случайной рассадкой игроков</string>
+    <string name="draw_blocks_flow_pattern_note">Каждый соперник один раз</string>
+    <string name="draw_blocks_flow_swaps">Жеребьёвка обменами</string>
+    <string name="draw_blocks_flow_swaps_note">Никто не встречает соперника чаще, чем сыграно блоков</string>
+    <string name="draw_blocks_flow_left">Остались туры?</string>
     <string name="summary_col_round">Раунд</string>
     <string name="summary_col_table">Стол</string>
     <string name="summary_col_seat">Место</string>

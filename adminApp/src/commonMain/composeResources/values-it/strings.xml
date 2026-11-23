@@ -1148,6 +1148,8 @@ Il numero di giocatori si può cambiare solo prima della prima mano.</string>
     <string name="pc_locked_pending">Il torneo non ha ancora un sorteggio.
 Cambia i posti in Iscrizioni.</string>
     <string name="activity_action_tournament_player_count">Ha cambiato il numero di giocatori</string>
+    <string name="create_rounds_blocks">Con %1$d giocatori entrano %2$d turni senza che nessuno ripeta un avversario. Con %3$d turni il sorteggio va a blocchi: alcuni ripeteranno un avversario, ma nessuno più di %4$d volte.</string>
+    <string name="create_rounds_maybe_blocks">Con %1$d giocatori il sorteggio trova di sicuro %2$d turni senza che nessuno ripeta un avversario. Con %3$d ci proverà, e se non ci riesce in tempo, alcuni ripeteranno un avversario, ma nessuno più di %4$d volte.</string>
     <string name="table_qr_top_bar">QR e ID dei tavoli</string>
     <string name="table_qr_button">QR e ID dei tavoli</string>
     <string name="table_qr_project">Mostra in una finestra a parte</string>

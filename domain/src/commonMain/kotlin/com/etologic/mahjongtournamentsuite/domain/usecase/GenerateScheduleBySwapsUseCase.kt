@@ -35,29 +35,36 @@ class GenerateScheduleBySwapsUseCase {
         roundIds: List<Int>,
         /** The team of each slot in a team tournament; empty without teams. */
         teamOf: Map<Int, Int> = emptyMap(),
-        /** The pairs of slots that already met, from tables already played. */
+        /** The pairs of slots that already met, from tables already played: once for each time they met. */
         alreadyMet: Collection<Pair<Int, Int>> = emptyList(),
+        /**
+         * How many times two players may meet in all, counting [alreadyMet]: 1 for a draw without repeats. The rounds
+         * beyond the ones that fit without repeats are drawn in blocks, each one allowing one more time
+         * ([PlanRoundBlocksUseCase]). Teammates never meet, whatever the limit.
+         */
+        meetLimit: Int = 1,
         maxConcurrency: Int = 1,
         seed: Long = Random.Default.nextLong(),
         onProgress: (TournamentScheduleCalcProgress) -> Unit = {},
     ): BySwapsResult? = coroutineScope {
         val count = playerIds.size
-        if (count == 0 || count % 4 != 0 || playerIds.toSet().size != count || roundIds.isEmpty()) return@coroutineScope null
+        if (count == 0 || count % 4 != 0 || playerIds.toSet().size != count || roundIds.isEmpty() || meetLimit < 1) return@coroutineScope null
         val workers = maxConcurrency.coerceAtLeast(1)
         val index = playerIds.withIndex().associate { (position, id) -> id to position }
-        // base[a * count + b] = 1 when a and b may never share a table: same team, or they met before.
+        // base[a * count + b]: the times a and b met before, up to meetLimit. At meetLimit they may not share a table
+        // again: teammates, or a pair that met as often as it may.
         val base = IntArray(count * count)
-        for (a in 0 until count) {
-            val teamA = teamOf[playerIds[a]]
-            if (teamA == null || teamA == 0) continue
-            for (b in 0 until count) if (a != b && teamOf[playerIds[b]] == teamA) base[a * count + b] = 1
-        }
         for ((first, second) in alreadyMet) {
             val a = index[first] ?: continue
             val b = index[second] ?: continue
             if (a == b) continue
-            base[a * count + b] = 1
-            base[b * count + a] = 1
+            base[a * count + b] = minOf(base[a * count + b] + 1, meetLimit)
+            base[b * count + a] = base[a * count + b]
+        }
+        for (a in 0 until count) {
+            val teamA = teamOf[playerIds[a]]
+            if (teamA == null || teamA == 0) continue
+            for (b in 0 until count) if (a != b && teamOf[playerIds[b]] == teamA) base[a * count + b] = meetLimit
         }
 
         val found = CompletableDeferred<BySwapsResult>()
@@ -67,7 +74,7 @@ class GenerateScheduleBySwapsUseCase {
             launch(Dispatchers.Default) {
                 val random = Random(seed + worker * 7_919L)
                 while (isActive && !found.isCompleted) {
-                    val search = SwapSearch(count, roundIds.size, base, random)
+                    val search = SwapSearch(count, roundIds.size, base, meetLimit, random)
                     val rounds = search.run { steps ->
                         swaps[worker] += steps
                         // A pause every few thousand swaps, so a time limit or a cancel stops it also on one thread (web).
@@ -119,12 +126,14 @@ private fun toTables(rounds: List<List<IntArray>>, roundIds: List<Int>, playerId
 
 /**
  * One search by swaps over positions 0 until [count]. meets[a * count + b] counts how often a and b share a table, plus
- * [base]: a pair with 2 or more is a repeat, and the search ends when there is none.
+ * [base]: a pair above [limit] is a repeat (with the limit 1, a pair that meets twice), and the search ends when there
+ * is none.
  */
 private class SwapSearch(
     private val count: Int,
     private val numRounds: Int,
     private val base: IntArray,
+    private val limit: Int,
     private val random: Random,
 ) {
     private val tablesPerRound = count / 4
@@ -194,7 +203,7 @@ private class SwapSearch(
         val after = before + sign
         meets[a * count + b] = after
         meets[b * count + a] = after
-        repeats += maxOf(0, after - 1) - maxOf(0, before - 1)
+        repeats += maxOf(0, after - limit) - maxOf(0, before - limit)
     }
 
     /** The change of repeats if [p] left its table, whose seats start at [at]. */
@@ -203,7 +212,7 @@ private class SwapSearch(
         for (s in 0 until 4) {
             val o = seat[at + s]
             if (o == p) continue
-            if (meets[p * count + o] >= 2) d--
+            if (meets[p * count + o] > limit) d--
         }
         return d
     }
@@ -214,7 +223,7 @@ private class SwapSearch(
         for (s in 0 until 4) {
             val o = seat[at + s]
             if (o == skip) continue
-            if (meets[p * count + o] >= 1) d++
+            if (meets[p * count + o] >= limit) d++
         }
         return d
     }
@@ -290,7 +299,7 @@ private class SwapSearch(
                     var conflicted = false
                     for (j in 0 until 4) {
                         val o = seat[at + j]
-                        if (o != p && meets[p * count + o] >= 2) {
+                        if (o != p && meets[p * count + o] > limit) {
                             conflicted = true
                             break
                         }

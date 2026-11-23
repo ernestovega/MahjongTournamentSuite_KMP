@@ -672,6 +672,23 @@ La première qui marche gagne</string>
     <string name="draw_swap_flow_shake">Quelques échanges au hasard</string>
     <string name="draw_swap_flow_limit">Jusqu’au temps maximum</string>
     <string name="close">Fermer</string>
+    <string name="draw_blocks_title">Troisième cas : plus de manches qu’il n’en tient sans répétition</string>
+    <string name="draw_blocks_intro">À chaque manche, un joueur rencontre 3 nouveaux adversaires, donc les nouveaux adversaires s’épuisent : avec 16 joueurs, par exemple, 5 manches tiennent sans que personne ne retrouve un adversaire. Avec plus de manches, l’app tire au sort par blocs.</string>
+    <string name="draw_blocks_how">• Un bloc a autant de manches qu’il en tient sans répétition avec ce nombre de joueurs. Avec des équipes, une manche de moins.
+• Dans le premier bloc, personne ne retrouve un adversaire. Dans le deuxième, personne ne rencontre quelqu’un une troisième fois, et ainsi de suite. Le dernier bloc, même plus court, suit la même règle.
+• Avec 16, 28, 40 ou 64 joueurs, il existe un schéma parfait : dans chaque bloc, chaque joueur rencontre chaque adversaire exactement une fois. Le schéma a toujours la même forme, mais qui s’assoit où est tiré au sort, à nouveau pour chaque bloc.
+• Avec d’autres nombres de joueurs, chaque bloc est tiré par échanges, comme la deuxième méthode, en comptant les tables des blocs précédents.
+• Avec 16, 28, 40 ou 64 joueurs, le schéma sert aussi quand la première méthode ne finit pas à temps, à la place de la deuxième, car il est instantané.</string>
+    <string name="draw_blocks_flow_description">Diagramme du tirage par blocs</string>
+    <string name="draw_blocks_flow_start">Plus de manches qu’il n’en tient sans répétition</string>
+    <string name="draw_blocks_flow_block">Bloc suivant</string>
+    <string name="draw_blocks_flow_block_note">Autant de manches qu’il en tient</string>
+    <string name="draw_blocks_flow_pattern_check">Schéma parfait ?</string>
+    <string name="draw_blocks_flow_pattern">Schéma avec les joueurs au hasard</string>
+    <string name="draw_blocks_flow_pattern_note">Chaque adversaire une fois</string>
+    <string name="draw_blocks_flow_swaps">Tirage par échanges</string>
+    <string name="draw_blocks_flow_swaps_note">Personne ne retrouve un adversaire plus de fois qu’il n’y a de blocs</string>
+    <string name="draw_blocks_flow_left">Manches restantes ?</string>
     <string name="summary_col_round">Tour</string>
     <string name="summary_col_table">Table</string>
     <string name="summary_col_seat">Siège</string>

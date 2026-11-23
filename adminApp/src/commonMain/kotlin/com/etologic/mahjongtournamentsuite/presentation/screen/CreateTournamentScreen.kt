@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
@@ -51,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COL
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
+import com.etologic.mahjongtournamentsuite.domain.model.RepeatFreeRounds
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
@@ -120,6 +122,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.create
 import mahjongtournamentsuite.adminapp.generated.resources.create_heavy_info
 import mahjongtournamentsuite.adminapp.generated.resources.create_intro
 import mahjongtournamentsuite.adminapp.generated.resources.create_players_placeholder
+import mahjongtournamentsuite.adminapp.generated.resources.create_rounds_blocks
+import mahjongtournamentsuite.adminapp.generated.resources.create_rounds_maybe_blocks
 import mahjongtournamentsuite.adminapp.generated.resources.create_required_note
 import mahjongtournamentsuite.adminapp.generated.resources.create_teams_info
 import mahjongtournamentsuite.adminapp.generated.resources.date_to
@@ -637,6 +641,13 @@ fun CreateTournamentDialog(
                                         )
                                     }
 
+                                    if (!withRegistration) {
+                                        RepeatRoundsNotice(
+                                            players = numPlayersText.trim().toIntOrNull(),
+                                            rounds = numRoundsText.trim().toIntOrNull(),
+                                            isTeams = isTeams,
+                                        )
+                                    }
                                     if (withRegistration) {
                                         DateField(
                                             label = stringResource(Res.string.registration_closes_on_optional),
@@ -942,4 +953,28 @@ fun CreateTournamentDialog(
     if (showDrawExplanation) {
         DrawExplanationDialog(onDismiss = { showDrawExplanation = false })
     }
+}
+
+/**
+ * Under the players and rounds: with more rounds than the draw finds without repeats, says how many fit and that some
+ * players will meet a rival again, at most how many times (docs/draw.md). Nothing when they fit.
+ */
+@Composable
+internal fun RepeatRoundsNotice(players: Int?, rounds: Int?, isTeams: Boolean) {
+    if (players == null || rounds == null || !TournamentPlayerCountValidator.isValid(players) || rounds <= 0) return
+    val max = RepeatFreeRounds.max(players, isTeams)
+    val sure = RepeatFreeRounds.sure(players, isTeams)
+    if (rounds <= sure || sure < 1) return
+    val times = RepeatFreeRounds.timesAtMost(players, rounds, isTeams)
+    val text = if (rounds > max) {
+        stringResource(Res.string.create_rounds_blocks, players, max, rounds, times)
+    } else {
+        stringResource(Res.string.create_rounds_maybe_blocks, players, sure, rounds, times)
+    }
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.fillMaxWidth().testTag("createRoundsNotice"),
+    )
 }

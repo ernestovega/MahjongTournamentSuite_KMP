@@ -1,11 +1,12 @@
 package com.etologic.mahjongtournamentsuite.domain.usecase
 
+import com.etologic.mahjongtournamentsuite.domain.model.RepeatFreeRounds
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
-import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToLong
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -19,13 +20,24 @@ import kotlin.time.Duration.Companion.seconds
  *    for at most [secondLimit].
  * 3. When neither finds one, null: the app says that it could not draw and the organizer tries fewer rounds.
  *
+ * With many rounds for the players (docs/draw.md, "More rounds than fit without repeats"):
+ * - With more rounds than fit without repeats ([RepeatFreeRounds.max]), neither way can find one: the rounds go in
+ *   blocks at once ([DrawRoundsInBlocksUseCase]), for at most [blocksLimit].
+ * - For a size with a perfect pattern ([PerfectPattern]: 16, 28, 40, 64, 256 players), when the first way is not in
+ *   time the pattern takes the place of the second: it is instant, also with teams.
+ * - With more rounds than the draw finds for sure ([RepeatFreeRounds.sure]) but not more than fit, both ways try, and
+ *   when neither finds one, the rounds go in blocks instead of no draw.
+ *
  * The limits grow with the tables and rounds: a big tournament needs more time to draw, even when it is easy.
  */
 class DrawTournamentScheduleUseCase(
     private val first: GenerateTournamentScheduleBruteForceParallelUseCase = GenerateTournamentScheduleBruteForceParallelUseCase(),
     private val second: GenerateScheduleBySwapsUseCase = GenerateScheduleBySwapsUseCase(),
+    private val blocks: DrawRoundsInBlocksUseCase = DrawRoundsInBlocksUseCase(second),
     private val firstLimit: (tables: Int, rounds: Int) -> Duration = ::firstDrawLimit,
     private val secondLimit: (tables: Int, rounds: Int) -> Duration = ::secondDrawLimit,
+    /** Time for the draw in blocks: the same as the second way. */
+    private val blocksLimit: (tables: Int, rounds: Int) -> Duration = ::secondDrawLimit,
 ) {
     suspend operator fun invoke(
         numPlayers: Int,
@@ -36,12 +48,14 @@ class DrawTournamentScheduleUseCase(
     ): TournamentScheduleCalcResult? {
         if (numPlayers <= 0 || numPlayers % 4 != 0 || numRounds <= 0) return null
         val tables = numPlayers / 4
+        if (numRounds > RepeatFreeRounds.max(numPlayers, isTeams)) return inBlocks(numPlayers, numRounds, isTeams, maxConcurrency, backup = false, onProgress)
         // The limits count real time, on Dispatchers.Default, whatever clock the caller runs on (a test's virtual time).
         withContext(Dispatchers.Default) {
             withTimeoutOrNull(firstLimit(tables, numRounds)) {
                 first(numPlayers, numRounds, isTeams, maxConcurrency, onProgress)
             }
         }?.let { return it }
+        if (PerfectPattern.of(numPlayers) != null) return inBlocks(numPlayers, numRounds, isTeams, maxConcurrency, backup = true, onProgress)
 
         // The same slots that the first way makes: 1..N, named by number, and teams of 4 by number with teams.
         val players = (1..numPlayers).map { id -> TournamentPlayer(id = id, name = "Player $id", team = if (isTeams) (id - 1) / 4 + 1 else 0) }
@@ -57,13 +71,53 @@ class DrawTournamentScheduleUseCase(
                     onProgress = onProgress,
                 )
             }
-        } ?: return null
+        } ?: return if (numRounds > RepeatFreeRounds.sure(numPlayers, isTeams)) {
+            inBlocks(numPlayers, numRounds, isTeams, maxConcurrency, backup = false, onProgress)
+        } else {
+            null
+        }
         return TournamentScheduleCalcResult(
             triesUsed = found.swaps,
             randomSeed = seed,
             players = players,
             tables = found.tables,
             usedBackup = true,
+        )
+    }
+
+    private suspend fun inBlocks(
+        numPlayers: Int,
+        numRounds: Int,
+        isTeams: Boolean,
+        maxConcurrency: Int,
+        /** True when it takes the place of the second way, after the first one ran out of time. */
+        backup: Boolean,
+        onProgress: (TournamentScheduleCalcProgress) -> Unit,
+    ): TournamentScheduleCalcResult? {
+        val players = (1..numPlayers).map { id -> TournamentPlayer(id = id, name = "Player $id", team = if (isTeams) (id - 1) / 4 + 1 else 0) }
+        val seed = Random.Default.nextLong()
+        val found = withContext(Dispatchers.Default) {
+            withTimeoutOrNull(blocksLimit(numPlayers / 4, numRounds)) {
+                blocks(
+                    playerIds = players.map { it.id },
+                    roundIds = (1..numRounds).toList(),
+                    teamOf = if (isTeams) players.associate { it.id to it.team } else emptyMap(),
+                    maxConcurrency = maxConcurrency,
+                    seed = seed,
+                    onProgress = { onProgress(it.copy(backup = backup)) },
+                )
+            }
+        } ?: return null
+        onProgress(TournamentScheduleCalcProgress(runningTries = 0, tried = found.swaps, maxConcurrency = maxConcurrency, backup = backup))
+        return TournamentScheduleCalcResult(
+            // A pattern is one try, with no swaps.
+            triesUsed = found.swaps.coerceAtLeast(1),
+            randomSeed = seed,
+            players = players,
+            tables = found.tables,
+            // Within the rounds that fit, it is a draw without repeats that took the place of the second way.
+            usedBackup = backup,
+            perBlock = if (numRounds > found.perBlock) found.perBlock else 0,
         )
     }
 }

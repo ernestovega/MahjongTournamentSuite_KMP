@@ -672,6 +672,23 @@ The first one that works wins</string>
     <string name="draw_swap_flow_shake">A few random swaps</string>
     <string name="draw_swap_flow_limit">Until the time limit</string>
     <string name="close">Close</string>
+    <string name="draw_blocks_title">Third case: more rounds than fit without repeats</string>
+    <string name="draw_blocks_intro">Each round a player meets 3 new rivals, so the new rivals run out: 16 players, for example, can play 5 rounds without anyone meeting the same rival twice. With more rounds, the app draws in blocks.</string>
+    <string name="draw_blocks_how">• A block has as many rounds as fit without repeats for that number of players. With teams, one round less.
+• In the first block nobody meets the same rival twice. In the second, nobody meets them a third time, and so on. The last block, even if it is shorter, keeps the same rule.
+• With 16, 28, 40 or 64 players there is a perfect pattern: in each block every player meets each rival exactly once. The pattern is always the same shape, but who sits where in it is drawn at random, with a new draw for each block.
+• With other numbers of players, each block is drawn by swaps, like the second way, counting the tables of the blocks before.
+• With 16, 28, 40 or 64 players the pattern is also used when the first way does not finish in time, instead of the second way, because it is instant.</string>
+    <string name="draw_blocks_flow_description">Flowchart of the draw in blocks</string>
+    <string name="draw_blocks_flow_start">More rounds than fit without repeats</string>
+    <string name="draw_blocks_flow_block">Next block</string>
+    <string name="draw_blocks_flow_block_note">As many rounds as fit</string>
+    <string name="draw_blocks_flow_pattern_check">Perfect pattern?</string>
+    <string name="draw_blocks_flow_pattern">Pattern with the players at random</string>
+    <string name="draw_blocks_flow_pattern_note">Each rival once</string>
+    <string name="draw_blocks_flow_swaps">Draw by swaps</string>
+    <string name="draw_blocks_flow_swaps_note">Nobody meets a rival more times than blocks so far</string>
+    <string name="draw_blocks_flow_left">Rounds left?</string>
     <string name="summary_col_round">Round</string>
     <string name="summary_col_table">Table</string>
     <string name="summary_col_seat">Seat</string>

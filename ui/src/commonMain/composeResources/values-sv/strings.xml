@@ -668,6 +668,23 @@ Den första som fungerar vinner</string>
     <string name="draw_swap_flow_shake">Några slumpvisa byten</string>
     <string name="draw_swap_flow_limit">Tills den längsta tiden</string>
     <string name="close">Stäng</string>
+    <string name="draw_blocks_title">Tredje fallet: fler omgångar än som ryms utan upprepning</string>
+    <string name="draw_blocks_intro">Varje omgång möter en spelare 3 nya motståndare, så de nya motståndarna tar slut: med 16 spelare ryms till exempel 5 omgångar utan att någon möter samma motståndare två gånger. Med fler omgångar lottar appen i block.</string>
+    <string name="draw_blocks_how">• Ett block har så många omgångar som ryms utan upprepning med det antalet spelare. Med lag en omgång mindre.
+• I första blocket möter ingen samma motståndare två gånger. I det andra möter ingen någon en tredje gång, och så vidare. Det sista blocket följer samma regel, även om det är kortare.
+• Med 16, 28, 40 eller 64 spelare finns ett perfekt mönster: i varje block möter varje spelare varje motståndare exakt en gång. Mönstret har alltid samma form, men vem som sitter var lottas, på nytt i varje block.
+• Med andra antal spelare lottas varje block genom byten, som det andra sättet, med hänsyn till borden i tidigare block.
+• Med 16, 28, 40 eller 64 spelare används mönstret också när det första sättet inte blir klart i tid, i stället för det andra, eftersom det går direkt.</string>
+    <string name="draw_blocks_flow_description">Flödesschema för lottning i block</string>
+    <string name="draw_blocks_flow_start">Fler omgångar än som ryms utan upprepning</string>
+    <string name="draw_blocks_flow_block">Nästa block</string>
+    <string name="draw_blocks_flow_block_note">Så många omgångar som ryms</string>
+    <string name="draw_blocks_flow_pattern_check">Perfekt mönster?</string>
+    <string name="draw_blocks_flow_pattern">Mönster med spelarna slumpvis</string>
+    <string name="draw_blocks_flow_pattern_note">Varje motståndare en gång</string>
+    <string name="draw_blocks_flow_swaps">Lottning genom byten</string>
+    <string name="draw_blocks_flow_swaps_note">Ingen möter en motståndare fler gånger än antalet block hittills</string>
+    <string name="draw_blocks_flow_left">Omgångar kvar?</string>
     <string name="summary_col_round">Omgång</string>
     <string name="summary_col_table">Bord</string>
     <string name="summary_col_seat">Plats</string>

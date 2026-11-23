@@ -103,6 +103,34 @@ class GenerateScheduleBySwapsTest {
     }
 
     @Test
+    fun withALimitOfTwoNobodyMeetsAnyoneThreeTimes() {
+        // 16 players, 5 rounds played (everyone met everyone once), and 5 more with the limit 2: possible only with
+        // every pair exactly once more. Teammates still never meet.
+        val ids = (1..16).toList()
+        val played = check(ids, (1..5).toList()).tables
+        val more = assertNotNull(
+            runBlocking { withTimeoutOrNull(60.seconds) { draw(ids, (6..10).toList(), alreadyMet = pairsOf(played), meetLimit = 2, maxConcurrency = 4) } },
+        ).tables
+        val met = pairsOf(played + more).map { (a, b) -> minOf(a, b) to maxOf(a, b) }.groupingBy { it }.eachCount()
+        assertEquals(120, met.size)
+        assertTrue(met.values.all { it == 2 }, "$met")
+        assertNull(runBlocking { draw(ids, listOf(1), meetLimit = 0) })
+    }
+
+    @Test
+    fun aPairThatAlreadyMetAsOftenAsItMayDoesNotMeetAgain() {
+        // 1 and 2 met twice already: with the limit 2 they may not share a table; the others may meet twice.
+        val ids = (1..16).toList()
+        val history = listOf(1 to 2, 2 to 1)
+        repeat(5) { seed ->
+            val result = assertNotNull(runBlocking { draw(ids, (1..6).toList(), alreadyMet = history, meetLimit = 2, seed = seed.toLong()) })
+            assertTrue(result.tables.none { 1 in it.playerIds && 2 in it.playerIds })
+            val met = pairsOf(result.tables).map { (a, b) -> minOf(a, b) to maxOf(a, b) }.groupingBy { it }.eachCount()
+            assertTrue(met.values.all { it <= 2 })
+        }
+    }
+
+    @Test
     fun manyDrawsAreAllValidAndNotTheSame() {
         val ids = (1..24).toList()
         val seen = (1L..10L).map { seed -> check(ids, (1..4).toList(), seed = seed).tables.map { it.playerIds } }.toSet()

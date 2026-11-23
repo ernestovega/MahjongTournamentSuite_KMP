@@ -7,16 +7,18 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -123,6 +125,64 @@ class CreateTournamentDialogUiTest {
         val first = onNodeWithText("First way: seat by seat").fetchSemanticsNode().positionInRoot.y
         val second = onNodeWithTag("drawBackupTitle").fetchSemanticsNode().positionInRoot.y
         assertTrue(second > first, "The second way comes after the first")
+    }
+
+    /** After the second way, the third case: more rounds than fit, in blocks, with its own diagram. */
+    @Test
+    fun theExplanationEndsWithTheBlocks() = runComposeUiTest {
+        showForm()
+        onNodeWithTag("drawExplanationButton").performClick()
+        waitForIdle()
+        onNodeWithTag("drawBlocksTitle").performScrollTo().assertIsDisplayed()
+            .assertTextEquals("Third case: more rounds than fit without repeats")
+        onNodeWithContentDescription("Flowchart of the draw in blocks").performScrollTo().assertIsDisplayed()
+        val second = onNodeWithTag("drawBackupTitle").fetchSemanticsNode().positionInRoot.y
+        val third = onNodeWithTag("drawBlocksTitle").fetchSemanticsNode().positionInRoot.y
+        assertTrue(third > second, "The blocks come after the second way")
+    }
+
+    /** Under the players and rounds: nothing while the rounds fit, a notice with how many fit when they do not. */
+    @Test
+    fun moreRoundsThanFitShowANotice() = runComposeUiTest {
+        showForm()
+        val players = onNode(hasSetTextAction() and hasText("Players", substring = true))
+        val rounds = onNode(hasSetTextAction() and hasText("Rounds", substring = true))
+        // Teams are on by default: 16 players in teams fit 4 rounds.
+        players.performTextReplacement("16")
+        rounds.performTextReplacement("4")
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertDoesNotExist()
+
+        rounds.performTextReplacement("5")
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertTextEquals(
+            "With 16 players, 4 rounds fit without anyone meeting the same rival twice. With 5 rounds the draw goes in " +
+                "blocks, and some players will meet a rival again, but nobody more than 2 times.",
+        )
+
+        // Without teams they fit 5 rounds; 8 are a block of 5 and one of 3.
+        onNode(isToggleable() and hasText("Teams")).performScrollTo().performClick()
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertDoesNotExist()
+        rounds.performTextReplacement("8")
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertTextEquals(
+            "With 16 players, 5 rounds fit without anyone meeting the same rival twice. With 8 rounds the draw goes in " +
+                "blocks, and some players will meet a rival again, but nobody more than 2 times.",
+        )
+
+        // 32 players fit 10 rounds, but the draw is sure of 7.
+        players.performTextReplacement("32")
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertTextEquals(
+            "With 32 players, the draw is sure to find 7 rounds without anyone meeting the same rival twice. With 8 it " +
+                "will try, and if it does not make it in time, some players will meet a rival again, but nobody more than 2 times.",
+        )
+
+        // With registrations open there is no draw now.
+        onNode(isToggleable() and hasAnySibling(hasText("Open registrations"))).performClick()
+        waitForIdle()
+        onNodeWithTag("createRoundsNotice").assertDoesNotExist()
     }
 
     @Test

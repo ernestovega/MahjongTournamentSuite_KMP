@@ -31,6 +31,11 @@ data class TournamentScheduleCalcResult(
     val tables: List<TournamentTable>,
     /** True when the second way to draw found it ([DrawTournamentScheduleUseCase]). */
     val usedBackup: Boolean = false,
+    /**
+     * With more rounds than fit without repeats, the rounds of each block ([DrawRoundsInBlocksUseCase]): nobody meets
+     * anyone a second time before the second block, a third time before the third… 0 for a draw without repeats.
+     */
+    val perBlock: Int = 0,
 )
 
 /**

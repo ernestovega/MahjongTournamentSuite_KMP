@@ -8,12 +8,14 @@ Every draw keeps the same rules, whatever way finds it:
 
 - Each player sits once in each round, at a table of 4.
 - Nobody plays against the same person twice in the whole tournament (counting the tables already played, when there
-  are some).
+  are some), unless there are more rounds than fit without repeats: then nobody meets anyone more times than the
+  blocks begun (below).
 - In a team tournament, two players of one team never share a table.
 - The order of the tables and of the seats is random too.
 
 There are two ways to draw. The app always starts with the first one, exactly as it always was. Only when the first
-does not finish in its time does the second one run. The button **How does the draw work?** shows both, one after the
+does not finish in its time does the second one run. With more rounds than fit without repeats, the draw goes in
+blocks (below). The button **How does the draw work?** shows both, one after the
 other, with a diagram each (`DrawExplanationDialog` in the `ui` module, shared by the admin app and the Player app).
 
 ## First way: seat by seat
@@ -126,6 +128,88 @@ Every draw found passed the checks of `DrawInvariants`. The cases still not foun
 (each player meets 3 rivals a round, so N players without teams can play (N - 1) / 3 rounds at most, and with teams
 (N - 4) / 3).
 
+## More rounds than fit without repeats
+
+Asked by Ernesto on 22-nov and 23-nov. Each round a player meets 3 new rivals, so the new rivals run out:
+
+| | Rounds without repeats |
+| --- | --- |
+| Ceiling (`RepeatFreeRounds.ceiling`) | (N - 1) / 3, with teams (N - 4) / 3 |
+| Known maximum (`RepeatFreeRounds.max`) | the ceiling, except where it is known to be lower (20 players: 5, not 6) |
+| Sure (`RepeatFreeRounds.sure`) | what the draw finds every time in seconds (below) |
+
+The exact maximum is the "social golfer problem", open for many sizes. Teams and individual are one problem: the teams
+are a round where everyone sits with their team, so a team tournament fits exactly one round less.
+
+### The perfect pattern
+
+When N = 16, 28, 40, 52, 64… (N - 4 a multiple of 12), there is a pattern of (N - 1) / 3 rounds where every pair meets
+exactly once (a resolvable design). `PerfectPattern` keeps it for 16, 28, 40, 64 and 256:
+
+- 16, 64 and 256: by formula, the lines of the 4 × 4 grid (and its 3D and 4D versions) over the field of 4 numbers.
+  Each round is a direction.
+- 28 and 40: found once by an exact search (`scripts/draw/resolvable_designs.py`, under a second) on the 28 points of
+  the Hermitian curve over the field of 9 numbers and on the 40 points of the projective space PG(3, 3), and kept.
+
+With teams, one round of the pattern is the teams and the others are the draw: (N - 4) / 3 rounds.
+
+The pattern is a fixed shape; the chance is in who takes each place: the players are placed at random, the rounds,
+tables and seats are shuffled, and each block places them again. For these sizes the pattern also takes the place of
+the second way when the first is not in time, because it is instant (28 x 7 with teams, for example, was not found by
+either way before).
+
+### Blocks
+
+`DrawRoundsInBlocksUseCase`. Diagram in the app: `DrawBlocksFlowDiagram`.
+
+```mermaid
+flowchart TD
+    start((" ")) --> many["More rounds than fit without repeats"]
+    many --> merge{" "}
+    merge --> block["Next block<br/>as many rounds as fit"]
+    block --> pattern{"Perfect pattern?"}
+    pattern -- "[Yes]" --> placed["Pattern with the players at random<br/>each rival once"]
+    pattern -- "[No]" --> swaps["Draw by swaps<br/>nobody meets a rival more times than blocks so far"]
+    placed --> joined{" "}
+    swaps --> joined
+    joined --> left{"Rounds left?"}
+    left -- "[Yes]" --> merge
+    left -- "[No]" --> done["Pairings ready"]
+    done --> stop(((" ")))
+```
+
+- The rounds go in blocks of `sure` rounds. In the first block nobody meets the same rival twice; in the second, nobody
+  meets them a third time, and so on (the second way with `meetLimit` = the block). So after k blocks nobody has met
+  anyone more than k times. The last block, even when shorter, keeps the rule.
+- With a perfect pattern every complete block is the pattern, so after k blocks every pair has met exactly k times.
+- With tables already played (a tournament in play), every block is drawn by swaps, counting those tables.
+
+`DrawTournamentScheduleUseCase` uses the blocks:
+
+- at once, with more rounds than the known maximum;
+- after both ways, with more rounds than `sure` but not more than the maximum, when neither found a draw.
+
+Create tournament says it under the players and rounds (`RepeatRoundsNotice`), with the rounds that fit and the most
+times two players will meet.
+
+### What the draw finds for sure
+
+Measured on 23-nov (JVM, 4 threads; the most rounds found twice in under 20 s each). The draw by swaps either finds
+them in milliseconds or not in 20 s; 24 x 6 took 1 and 12 s, so 5 is kept as sure.
+
+| Players | Ceiling | Sure | Ceiling, teams | Sure, teams |
+| --- | --- | --- | --- | --- |
+| 16 | 5 | 5 (pattern) | 4 | 4 (pattern) |
+| 20 | 6 (max 5) | 5 | 5 (max 4) | 4 |
+| 24 | 7 | 5 | 6 | 4 |
+| 28 | 9 | 9 (pattern) | 8 | 8 (pattern) |
+| 32 | 10 | 7 | 9 | 6 |
+| 36 | 11 | 8 | 10 | 7 |
+| 40 | 13 | 13 (pattern) | 12 | 12 (pattern) |
+| 44 | 14 | 10 | 13 | 9 |
+| 48 | 15 | 11 | 14 | 10 |
+| others | (N - 1) / 3 | 70 % of the ceiling | (N - 4) / 3 | 70 % of the ceiling |
+
 ## Tests
 
 - `GenerateTournamentScheduleInvariantsTest`: the first way, as it is, at the sizes it finds in seconds. Written before
@@ -135,3 +219,7 @@ Every draw found passed the checks of `DrawInvariants`. The cases still not foun
 - `DrawTournamentScheduleUseCaseTest`: the first way when it is in time, the second one when it is not, no draw when
   neither, and the time limits.
 - `DrawInvariants` (commonTest): the rules above as a list of problems, shared by all of them.
+- `RepeatFreeRoundsTest`, `PerfectPatternTest` (commonTest): the ceilings, the sure rounds, and every pattern with
+  every pair exactly once (and with teams, any round of it as the teams).
+- `DrawRoundsInBlocksTest`: blocks after blocks, never more meetings than blocks begun, with and without teams, with
+  tables already played and slots that are not 1..N.
