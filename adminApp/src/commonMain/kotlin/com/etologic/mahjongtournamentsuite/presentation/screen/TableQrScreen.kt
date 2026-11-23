@@ -190,7 +190,7 @@ internal fun TableQrContent(
                         link = link,
                         perSheet = perSheet,
                         tableCount = tableCount,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).width(if (compact) 220.dp else 280.dp),
+                        modifier = Modifier.align(Alignment.CenterHorizontally).width(if (perSheet == 2) (if (compact) 220.dp else 280.dp) else (if (compact) 320.dp else 440.dp)),
                     )
                     FocusedOutlinedButton(
                         onClick = { onDownload(tournament, perSheet) },
@@ -213,7 +213,8 @@ private fun SheetPreview(tournamentName: String, logoUrl: String?, link: String,
     val rows = if (perSheet == 1) 1 else 2
     Column(
         modifier
-            .aspectRatio(A4_RATIO)
+            // One and four cards go on a landscape sheet, two on a portrait one: every card is landscape.
+            .aspectRatio(if (perSheet == 2) A4_RATIO else 1f / A4_RATIO)
             .shadow(4.dp, RectangleShape)
             .background(Color.White)
             .testTag("table_qr_preview"),
@@ -256,8 +257,8 @@ private fun PreviewCard(tournamentName: String, logoUrl: String?, link: String, 
                     tableId.toString(),
                     color = Color.Black,
                     fontWeight = FontWeight.Black,
-                    fontSize = (unit.value * (if (wide) 7f else 5.5f)).sp,
-                    lineHeight = (unit.value * (if (wide) 7.2f else 5.7f)).sp,
+                    fontSize = (unit.value * (if (wide) 10f else 5.5f)).sp,
+                    lineHeight = (unit.value * (if (wide) 10.2f else 5.7f)).sp,
                     maxLines = 1,
                 )
             }
@@ -281,7 +282,18 @@ private fun PreviewCard(tournamentName: String, logoUrl: String?, link: String, 
             if (wide) {
                 Row(Modifier.weight(1f).fillMaxWidth().padding(unit), verticalAlignment = Alignment.CenterVertically) {
                     number(Modifier.weight(1f))
-                    Image(painter, contentDescription = null, Modifier.weight(1f).aspectRatio(1f))
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(HINT_TEXT, color = Color.Black, fontSize = (unit.value * 0.7f).sp, lineHeight = (unit.value * 0.8f).sp, textAlign = TextAlign.Center)
+                        Text(
+                            link.substringAfter("://"),
+                            color = Color.DarkGray,
+                            fontSize = (unit.value * 0.5f).sp,
+                            lineHeight = (unit.value * 0.6f).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Image(painter, contentDescription = null, Modifier.padding(top = unit * 0.3f).aspectRatio(1f))
+                    }
                 }
             } else {
                 Column(Modifier.weight(1f).fillMaxWidth().padding(unit), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -297,6 +309,7 @@ private const val A4_RATIO = 210f / 297f
 
 /** The cards of the tables are always in English, like the PDF (tableQrService.ts). */
 private const val TABLE_WORD = "TABLE"
+private const val HINT_TEXT = "Scan the code to go to your table."
 
 /**
  * The code of the tournament as big as the window allows, to project it (docs/table-qr.md). Always black on white,

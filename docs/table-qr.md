@@ -47,6 +47,7 @@ Tournament screen > "QR & Tables IDs" (top bar) opens `TableQrScreen`:
 - "Print the cards of the tables": 1, 2 or 4 cards per A4 sheet, a preview of the first sheet, and "Download PDF to
   print", which makes `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4` (permission `tournament.view`). Each card
   (the table ID) has the logo of the main organizer in the top left corner, the name of the tournament, the word
-  "TABLE" and its number as big as the card allows, the code, one sentence and the link; dashed lines show where to
-  cut. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
+  "TABLE" and its number as big as the card allows on the left, and on the right one sentence and the link over the
+  code; dashed lines show where to cut. Every card is landscape: the sheet is landscape for 1 and 4 cards and portrait
+  for 2. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
   tables and the PDF is not offered. The export counts `table_qr_exported`.

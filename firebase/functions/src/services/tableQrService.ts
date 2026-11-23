@@ -18,7 +18,10 @@ export const MY_TABLE_PATH_WORD = "my-table";
 const A4_WIDTH = 595.28;
 const A4_HEIGHT = 841.89;
 
-/** Cards on each A4 sheet: one (the whole sheet), two (A5 halves, landscape) or four (A6 quarters). */
+/**
+ * Cards on each A4 sheet: one (the whole sheet), two (A5 halves) or four (A6 quarters). Every card is landscape, with
+ * the number on the left and the code on the right: the sheet is landscape for one and four, portrait for two.
+ */
 export type CardsPerSheet = 1 | 2 | 4;
 
 export function readCardsPerSheet(value: unknown): CardsPerSheet {
@@ -27,11 +30,13 @@ export function readCardsPerSheet(value: unknown): CardsPerSheet {
 }
 
 /** The size of a card and the grid of the sheet. */
-export function sheetGrid(perSheet: CardsPerSheet): { columns: number; rows: number; width: number; height: number } {
-  if (perSheet === 1) return { columns: 1, rows: 1, width: A4_WIDTH, height: A4_HEIGHT };
-  if (perSheet === 2) return { columns: 1, rows: 2, width: A4_WIDTH, height: A4_HEIGHT / 2 };
-  return { columns: 2, rows: 2, width: A4_WIDTH / 2, height: A4_HEIGHT / 2 };
+export function sheetGrid(perSheet: CardsPerSheet): SheetGrid {
+  if (perSheet === 1) return { pageWidth: A4_HEIGHT, pageHeight: A4_WIDTH, columns: 1, rows: 1, width: A4_HEIGHT, height: A4_WIDTH };
+  if (perSheet === 2) return { pageWidth: A4_WIDTH, pageHeight: A4_HEIGHT, columns: 1, rows: 2, width: A4_WIDTH, height: A4_HEIGHT / 2 };
+  return { pageWidth: A4_HEIGHT, pageHeight: A4_WIDTH, columns: 2, rows: 2, width: A4_HEIGHT / 2, height: A4_WIDTH / 2 };
 }
+
+export type SheetGrid = { pageWidth: number; pageHeight: number; columns: number; rows: number; width: number; height: number };
 
 const appFontPath = resolve(__dirname, "../assets/go3v2.ttf");
 
@@ -210,23 +215,24 @@ function drawCard(
   const codeBox = wide
     ? { x: left + padding * 2 + numberBox.w, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight }
     : { x: left + padding, y: bodyTop + numberBox.h, w: width - padding * 2, h: bodyHeight - numberBox.h };
+  // The sentence and the link go over the code.
   const hintSize = Math.max(8, 10.5 * scale);
   const linkSize = Math.max(6, 8 * scale);
-  const textHeight = hintSize * 2.6 + linkSize * 1.6;
+  const hintHeight = doc.font(sentenceFont(model.texts.hint)).fontSize(hintSize).heightOfString(model.texts.hint, { width: codeBox.w });
+  const textHeight = hintHeight + linkSize * 1.3 + hintSize * 0.7;
   const qrSize = Math.max(60, Math.min(codeBox.w, codeBox.h - textHeight));
-  const qrTop = codeBox.y + Math.max(0, (codeBox.h - qrSize - textHeight) / 2);
-  drawQr(doc, modules, codeBox.x + (codeBox.w - qrSize) / 2, qrTop, qrSize);
-  doc.font(sentenceFont(model.texts.hint)).fontSize(hintSize).fillColor("#000000")
-    .text(model.texts.hint, codeBox.x, qrTop + qrSize + hintSize * 0.6, { width: codeBox.w, align: "center", height: 100000 });
+  const codeTop = codeBox.y + Math.max(0, (codeBox.h - qrSize - textHeight) / 2);
+  doc.fillColor("#000000").text(model.texts.hint, codeBox.x, codeTop, { width: codeBox.w, align: "center", height: 100000 });
   doc.font("Helvetica").fontSize(fitFontSize(doc.font("Helvetica"), linkText, codeBox.w, linkSize, 5)).fillColor("#555555");
-  centeredLine(doc, linkText, codeBox.x, qrTop + qrSize + hintSize * 3, codeBox.w);
+  centeredLine(doc, linkText, codeBox.x, codeTop + hintHeight + linkSize * 0.2, codeBox.w);
+  drawQr(doc, modules, codeBox.x + (codeBox.w - qrSize) / 2, codeTop + textHeight, qrSize);
 }
 
 /** Dashed lines between the cards, to cut them. */
 function drawCutLines(doc: PDFKit.PDFDocument, grid: ReturnType<typeof sheetGrid>): void {
   doc.save().lineWidth(0.5).strokeColor("#999999").dash(4, { space: 4 });
-  for (let column = 1; column < grid.columns; column += 1) doc.moveTo(grid.width * column, 0).lineTo(grid.width * column, A4_HEIGHT).stroke();
-  for (let row = 1; row < grid.rows; row += 1) doc.moveTo(0, grid.height * row).lineTo(A4_WIDTH, grid.height * row).stroke();
+  for (let column = 1; column < grid.columns; column += 1) doc.moveTo(grid.width * column, 0).lineTo(grid.width * column, grid.pageHeight).stroke();
+  for (let row = 1; row < grid.rows; row += 1) doc.moveTo(0, grid.height * row).lineTo(grid.pageWidth, grid.height * row).stroke();
   doc.undash().restore();
 }
 
@@ -246,7 +252,7 @@ export function buildTableQrPdf(model: TableQrDocument): Promise<Buffer> {
     const grid = sheetGrid(model.perSheet);
     const modules = qrModules(model.link);
     for (let first = 1; first <= model.tableCount; first += model.perSheet) {
-      doc.addPage({ size: [A4_WIDTH, A4_HEIGHT], margin: 0 });
+      doc.addPage({ size: [grid.pageWidth, grid.pageHeight], margin: 0 });
       for (let index = 0; index < model.perSheet && first + index <= model.tableCount; index += 1) {
         const column = index % grid.columns;
         const row = Math.floor(index / grid.columns);
