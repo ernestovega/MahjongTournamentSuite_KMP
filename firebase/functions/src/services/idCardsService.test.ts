@@ -173,6 +173,11 @@ test("without backs the PDF only has the front sheets", async () => {
   assert.equal(pageCount(await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, backs: false, substituteSheets: 2, staffSheets: 1 })), 4);
 });
 
+test("a back that repeats the front keeps one back sheet for each front sheet", async () => {
+  const pdf = await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, backSameAsFront: true, substituteSheets: 1, staffSheets: 1 });
+  assert.equal(pageCount(pdf), 6);
+});
+
 test("the sheets of substitutes and of staff start on new sheets after the players", async () => {
   const pdf = await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, substituteSheets: 2, staffSheets: 1, staffNames: ["Lucía Gómez"] });
   // 1 sheet of players, 2 of substitutes and 1 of staff, each with its front and its back.

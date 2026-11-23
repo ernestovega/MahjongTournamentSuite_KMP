@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Stampa i segni di taglio intorno ai cartellini.</string>
     <string name="arrange_the_cards_for_printing_on">Disponi i cartellini per la stampa su entrambi i lati del foglio.</string>
     <string name="print_the_back_of_the_cards_too">Stampa anche il retro dei cartellini.</string>
+    <string name="repeat_the_front_on_the_back">Ripeti il fronte sul retro.</string>
+    <string name="repeat_the_front_on_the_back_help">Giocatori e staff hanno lo stesso lato su entrambe le facce, invece della tabella dei turni.\nI sostituti mantengono la tabella, per scrivere i loro tavoli a mano.</string>
     <string name="extra_sheets">Fogli extra</string>
     <string name="substitute_sheets">Fogli per i sostituti</string>
     <string name="substitute_sheets_help">Cartellini senza nome né numero, da scrivere a mano.</string>

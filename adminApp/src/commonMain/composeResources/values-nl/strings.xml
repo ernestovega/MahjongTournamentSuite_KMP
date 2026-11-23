@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Snijtekens rond de kaarten afdrukken.</string>
     <string name="arrange_the_cards_for_printing_on">Schik de kaarten om dubbelzijdig af te drukken.</string>
     <string name="print_the_back_of_the_cards_too">Ook de achterkant van de kaarten afdrukken.</string>
+    <string name="repeat_the_front_on_the_back">De voorkant op de achterkant herhalen.</string>
+    <string name="repeat_the_front_on_the_back_help">Spelers en staf krijgen aan beide kanten hetzelfde, in plaats van de rondetabel.\nInvallers houden de tabel, om hun tafels met de hand in te vullen.</string>
     <string name="extra_sheets">Extra vellen</string>
     <string name="substitute_sheets">Vellen voor invallers</string>
     <string name="substitute_sheets_help">Kaarten zonder naam en zonder nummer, om met de hand in te vullen.</string>

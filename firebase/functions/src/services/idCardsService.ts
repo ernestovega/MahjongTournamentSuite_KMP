@@ -502,6 +502,8 @@ export type IdCardSheetOptions = {
   doubleSided: boolean;
   /** Adds a back sheet after each front sheet. Without it the PDF only has the fronts. */
   backs?: boolean;
+  /** The back of the players and the staff repeats the front instead of the table of rounds. Substitutes keep the table. */
+  backSameAsFront?: boolean;
   /** Full sheets of blank cards for substitutes, after the cards of the players. */
   substituteSheets?: number;
   /** Full sheets of staff cards, after the cards of the substitutes. */
@@ -645,7 +647,11 @@ export async function buildIdCardsPdf(model: IdCardsDocument, sheet?: IdCardShee
           doc.addPage(pageOptions);
           group.forEach((player, index) => {
             const { x, y } = idCardSheetCardOrigin(sheet, grid, index, true);
-            drawCardOnSheet(doc, x, y, grid.scale, () => drawBack(doc, model, player));
+            const repeatFront = sheet.backSameAsFront === true && player.kind !== "substitute";
+            drawCardOnSheet(doc, x, y, grid.scale, () => {
+              if (repeatFront) drawFront(doc, model, player, reusableLogo);
+              else drawBack(doc, model, player);
+            });
           });
         }
       });

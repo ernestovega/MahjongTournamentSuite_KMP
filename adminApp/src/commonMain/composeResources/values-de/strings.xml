@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Schnittmarken um die Ausweise drucken.</string>
     <string name="arrange_the_cards_for_printing_on">Die Ausweise für beidseitigen Druck anordnen.</string>
     <string name="print_the_back_of_the_cards_too">Auch die Rückseite der Karten drucken.</string>
+    <string name="repeat_the_front_on_the_back">Die Vorderseite auf der Rückseite wiederholen.</string>
+    <string name="repeat_the_front_on_the_back_help">Spieler und Personal haben auf beiden Seiten dasselbe, statt der Rundentabelle.\nErsatzspieler behalten die Tabelle, um ihre Tische von Hand einzutragen.</string>
     <string name="extra_sheets">Zusätzliche Blätter</string>
     <string name="substitute_sheets">Blätter für Ersatzspieler</string>
     <string name="substitute_sheets_help">Karten ohne Namen und ohne Nummer, zum Ausfüllen von Hand.</string>

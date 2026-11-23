@@ -106,11 +106,12 @@ class FunctionsBackendApiTest {
         api.generateTournamentIdCards(
             "token-123",
             "tournament-1",
-            IdCardSheetLayout(backs = false, substituteSheets = 2, staffSheets = 1, staffNames = listOf(" Ana ", "", "Luis")),
+            IdCardSheetLayout(backs = false, backSameAsFront = true, substituteSheets = 2, staffSheets = 1, staffNames = listOf(" Ana ", "", "Luis")),
         )
 
         val parameters = request!!.url.parameters
         assertEquals("false", parameters["backs"])
+        assertEquals("true", parameters["backSameAsFront"])
         assertEquals("2", parameters["substituteSheets"])
         assertEquals("1", parameters["staffSheets"])
         assertEquals(listOf("Ana", "Luis"), parameters.getAll("staffName"))

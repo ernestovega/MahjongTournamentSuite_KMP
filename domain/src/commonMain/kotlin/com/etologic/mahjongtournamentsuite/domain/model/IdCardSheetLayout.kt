@@ -15,6 +15,8 @@ data class IdCardSheetLayout(
     val doubleSided: Boolean = true,
     /** Adds a back sheet after each front sheet. Without it the PDF only has the fronts. */
     val backs: Boolean = true,
+    /** The back of the players and the staff repeats the front instead of the table of rounds. Substitutes keep the table. */
+    val backSameAsFront: Boolean = false,
     /** Full sheets of blank cards for substitutes: no name and no number, both written by hand. */
     val substituteSheets: Int = 0,
     /** Full sheets of staff cards: STAFF instead of the number. */
