@@ -24,7 +24,11 @@ fun main() {
         when (parameters["standalone"]) {
             "timer" -> TimerApp(parameters["tournamentId"]?.ifEmpty { null }, parameters["initialRound"]?.toIntOrNull() ?: 1)
             "rankings" -> RankingApp(parameters["tournamentId"].orEmpty())
-            "table-qr" -> TableQrApp(decodeURIComponent(parameters["name"].orEmpty()), decodeURIComponent(parameters["link"].orEmpty()))
+            "table-qr" -> TableQrApp(
+                tournamentName = decodeURIComponent(parameters["name"].orEmpty()),
+                link = decodeURIComponent(parameters["link"].orEmpty()),
+                logoUrl = parameters["logo"]?.let(::decodeURIComponent)?.ifBlank { null },
+            )
             else -> App(remember { BrowserSessionStorage("adminApp") }, appVersion = AppVersion.web)
         }
     }

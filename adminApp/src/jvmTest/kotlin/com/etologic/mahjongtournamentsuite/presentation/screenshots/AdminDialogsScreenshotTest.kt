@@ -222,7 +222,7 @@ class AdminDialogsScreenshotTest {
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
     /** The QR code of the tournament, with the window to project it and the PDF of the cards of the tables. */
     @Test
-    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _ -> }) }
+    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }) }
 
     /** The code in a window of its own, to project it. */
     @Test

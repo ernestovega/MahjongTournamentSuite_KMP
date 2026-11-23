@@ -1148,9 +1148,8 @@ Het aantal spelers kan alleen voor de eerste hand wijzigen.</string>
     <string name="pc_locked_pending">Het toernooi heeft nog geen loting.
 Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="activity_action_tournament_player_count">Wijzigde het aantal spelers</string>
-    <string name="table_qr_top_bar">Toernooi-QR</string>
-    <string name="table_qr_button">Toernooi-QR</string>
-    <string name="table_qr_info">Eén code voor het hele toernooi. Wie hem scant, ziet zijn tafels in de app, met zijn tafel in spel, of de volgende, geopend.\nDruk een kaart af voor elke tafel, met het nummer groot, of toon de code op een scherm.</string>
+    <string name="table_qr_top_bar">QR &amp; tafel-ID's</string>
+    <string name="table_qr_button">QR &amp; tafel-ID's</string>
     <string name="table_qr_project">In een apart venster tonen</string>
     <string name="table_qr_print_title">Kaarten van de tafels afdrukken</string>
     <string name="table_qr_per_sheet">Kaarten per vel</string>

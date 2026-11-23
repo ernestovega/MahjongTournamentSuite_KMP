@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.47",
+  "version": "1.0.49",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -4375,7 +4375,7 @@
      "Exportaciones"
     ],
     "summary": "PDF con las tarjetas de las mesas",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nUna tarjeta por mesa con su número en grande y el QR del torneo; `?perSheet=1|2|4` tarjetas por A4 (4 por defecto), en el idioma de Accept-Language. Ver docs/table-qr.md.",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nUna tarjeta por mesa con su número en grande y el QR del torneo; `?perSheet=1|2|4` tarjetas por A4 (4 por defecto), siempre en inglés. Ver docs/table-qr.md.",
     "security": [
      {
       "bearer": []

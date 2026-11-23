@@ -1148,9 +1148,8 @@ Le nombre de joueurs ne peut changer qu'avant la première main.</string>
     <string name="pc_locked_pending">Le tournoi n'a pas encore de tirage.
 Change les places dans Inscriptions.</string>
     <string name="activity_action_tournament_player_count">A changé le nombre de joueurs</string>
-    <string name="table_qr_top_bar">QR du tournoi</string>
-    <string name="table_qr_button">QR du tournoi</string>
-    <string name="table_qr_info">Un seul code pour tout le tournoi. Qui le scanne voit ses tables dans l'app, avec sa table en cours, ou la suivante, ouverte.\nImprime une carte pour chaque table, avec son numéro en grand, ou affiche le code sur un écran.</string>
+    <string name="table_qr_top_bar">QR &amp; IDs de table</string>
+    <string name="table_qr_button">QR &amp; IDs de table</string>
     <string name="table_qr_project">Afficher dans une fenêtre à part</string>
     <string name="table_qr_print_title">Imprimer les cartes des tables</string>
     <string name="table_qr_per_sheet">Cartes par feuille</string>

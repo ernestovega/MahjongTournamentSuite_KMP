@@ -128,11 +128,11 @@ fun RankingApp(tournamentId: String) {
 
 /** The QR code of a tournament in a window of its own, to project it. It needs no data: the window gets the link. */
 @Composable
-fun TableQrApp(tournamentName: String, link: String) {
+fun TableQrApp(tournamentName: String, link: String, logoUrl: String? = null) {
     AppWithModules {
         ProvideAppLanguage {
             MtsTheme(useDarkTheme = false) {
-                TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link) }
+                TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl) }
             }
         }
     }

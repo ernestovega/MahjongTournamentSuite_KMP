@@ -15,6 +15,7 @@ class TableQrActivity : ComponentActivity() {
             TableQrApp(
                 tournamentName = intent.getStringExtra(EXTRA_TOURNAMENT_NAME).orEmpty(),
                 link = intent.getStringExtra(EXTRA_LINK).orEmpty(),
+                logoUrl = intent.getStringExtra(EXTRA_LOGO_URL),
             )
         }
     }
@@ -22,5 +23,6 @@ class TableQrActivity : ComponentActivity() {
     private companion object {
         const val EXTRA_TOURNAMENT_NAME = "tournamentName"
         const val EXTRA_LINK = "link"
+        const val EXTRA_LOGO_URL = "logoUrl"
     }
 }

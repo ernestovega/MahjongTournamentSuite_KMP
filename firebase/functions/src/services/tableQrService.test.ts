@@ -33,7 +33,7 @@ test("the QR code is a square of modules with the finder pattern in the corner",
 test("the PDF has one page for each group of cards", async () => {
   for (const [perSheet, pages] of [[1, 15], [2, 8], [4, 4]] as const) {
     const pdf = await buildTableQrPdf({
-      tournamentName: "Madrid Open 2027", primaryColor: "#02B16B", link: "https://x.test/open/my-table", tableCount: 15,
+      tournamentName: "Madrid Open 2027", logo: null, link: "https://x.test/open/my-table", tableCount: 15,
       texts: tableQrTexts("es"), perSheet,
     });
     assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");

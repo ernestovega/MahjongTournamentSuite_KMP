@@ -1148,9 +1148,8 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="pc_locked_pending">Turneringen har ingen lottning än.
 Ändra platserna under Anmälningar.</string>
     <string name="activity_action_tournament_player_count">Ändrade antalet spelare</string>
-    <string name="table_qr_top_bar">Turnerings-QR</string>
-    <string name="table_qr_button">Turnerings-QR</string>
-    <string name="table_qr_info">En enda kod för hela turneringen. Den som skannar den ser sina bord i appen, med sitt pågående eller nästa bord öppet.\nSkriv ut ett kort för varje bord, med numret stort, eller visa koden på en skärm.</string>
+    <string name="table_qr_top_bar">QR &amp; bord-ID</string>
+    <string name="table_qr_button">QR &amp; bord-ID</string>
     <string name="table_qr_project">Visa i ett eget fönster</string>
     <string name="table_qr_print_title">Skriv ut bordens kort</string>
     <string name="table_qr_per_sheet">Kort per ark</string>
