@@ -191,6 +191,26 @@ fun ComposeTestRule.clickButton(text: String) {
 }
 
 /**
+ * Presses an option of the "More" menu of the top bar of a tournament (Teams, Players, Stats, EMA report, Activity).
+ * It opens the menu first: "More" on a wide screen, or the three-dots menu of the top bar on a phone.
+ */
+fun ComposeTestRule.clickMoreMenuButton(text: String) {
+    openMoreMenu()
+    clickButton(text)
+}
+
+/** Opens the "More" menu of the top bar of a tournament, so that its options are on screen. */
+fun ComposeTestRule.openMoreMenu() {
+    if (onAllNodes(hasLabel("More") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
+        clickButton("More")
+    } else {
+        clickButton("Menu")
+        if (onAllNodes(hasLabel("More") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) clickButton("More")
+    }
+    waitForIdle()
+}
+
+/**
  * A tap, or the click action of the node when the system refuses the touch ("Failed to inject touch input"): after
  * another activity (the Timer) the window can lose the focus for a while.
  */

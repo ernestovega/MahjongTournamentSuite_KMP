@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Wat wil je openen?</string>
     <string name="app_chooser_hint">Je kunt altijd tussen de apps wisselen met de knop in de bovenbalk.</string>
     <string name="top_bar_activity">Activiteit</string>
+    <string name="top_bar_more">Meer</string>
     <string name="design_system">Ontwerpsysteem</string>
     <string name="rounds_title">Per ronde</string>
     <string name="rounds_view_place">Plaats in het klassement</string>

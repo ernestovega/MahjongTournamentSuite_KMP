@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarMoreMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
@@ -518,11 +519,6 @@ fun TournamentScreen(
             AppTopBarLeadingActions(
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
-                onActivity = if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
-                    { requestAction(RoundEditorAction.Activity) }
-                } else {
-                    null
-                },
             )
         },
         actions = {
@@ -534,38 +530,44 @@ fun TournamentScreen(
                     enabled = !isLoading,
                 )
             }
-            if (tournament?.isTeams == true) {
-                AppTopBarButton(
-                    text = stringResource(Res.string.teams),
-                    icon = Icons.Default.Groups,
-                    onClick = { requestAction(RoundEditorAction.Teams) },
-                    enabled = !isLoading,
-                )
-            }
-            AppTopBarButton(
-                text = stringResource(Res.string.players),
-                icon = Icons.Default.People,
-                onClick = { requestAction(RoundEditorAction.Players) },
-                enabled = !isLoading,
-            )
             AppTopBarButton(
                 text = stringResource(Res.string.table_qr_button),
                 icon = Icons.Default.QrCode2,
                 onClick = { requestAction(RoundEditorAction.TableQr) },
                 enabled = !isLoading,
             )
-            AppTopBarButton(
-                text = stringResource(Res.string.statistics),
-                icon = StatisticsIcon,
-                onClick = { requestAction(RoundEditorAction.Statistics) },
-                enabled = !isLoading,
-            )
-            AppTopBarButton(
-                text = stringResource(Res.string.ema_report),
-                icon = Icons.Outlined.Assessment,
-                onClick = { requestAction(RoundEditorAction.Export) },
-                enabled = !isLoading && !isLoadingRest,
-            )
+            // The screens that are not used during the rounds, in one menu so that the top bar stays light.
+            AppTopBarMoreMenu {
+                if (tournament?.isTeams == true) {
+                    AppTopBarButton(
+                        text = stringResource(Res.string.teams),
+                        icon = Icons.Default.Groups,
+                        onClick = { requestAction(RoundEditorAction.Teams) },
+                        enabled = !isLoading,
+                    )
+                }
+                AppTopBarButton(
+                    text = stringResource(Res.string.players),
+                    icon = Icons.Default.People,
+                    onClick = { requestAction(RoundEditorAction.Players) },
+                    enabled = !isLoading,
+                )
+                AppTopBarButton(
+                    text = stringResource(Res.string.statistics),
+                    icon = StatisticsIcon,
+                    onClick = { requestAction(RoundEditorAction.Statistics) },
+                    enabled = !isLoading,
+                )
+                AppTopBarButton(
+                    text = stringResource(Res.string.ema_report),
+                    icon = Icons.Outlined.Assessment,
+                    onClick = { requestAction(RoundEditorAction.Export) },
+                    enabled = !isLoading && !isLoadingRest,
+                )
+                if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
+                    AppTopBarLeadingActions(onActivity = { requestAction(RoundEditorAction.Activity) })
+                }
+            }
         },
     ) {
         CompositionLocalProvider(

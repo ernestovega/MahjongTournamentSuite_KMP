@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Vad vill du öppna?</string>
     <string name="app_chooser_hint">Du kan när som helst byta mellan apparna med knappen i den övre raden.</string>
     <string name="top_bar_activity">Aktivitet</string>
+    <string name="top_bar_more">Mer</string>
     <string name="design_system">Designsystem</string>
     <string name="rounds_title">Per omgång</string>
     <string name="rounds_view_place">Rankingplacering</string>

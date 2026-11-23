@@ -528,6 +528,7 @@
     <string name="app_chooser_title">What do you want to open?</string>
     <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
     <string name="top_bar_activity">Activity</string>
+    <string name="top_bar_more">More</string>
     <string name="design_system">Design system</string>
     <string name="rounds_title">By round</string>
     <string name="rounds_view_place">Ranking place</string>
