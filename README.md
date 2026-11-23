@@ -1,98 +1,98 @@
 # Mahjong Tournament Suite
 
-**Torneos de Mahjong (reglas MCR) de principio a fin: inscripciones, sorteo, mesas en vivo, clasificación y estadísticas.**
+**Mahjong tournaments (MCR rules) from start to finish: registrations, draw, live tables, rankings and statistics.**
 
-Una sola base de código (Kotlin Multiplatform + Compose) que da una app Android, una web y una app de escritorio, con dos partes:
+One codebase (Kotlin Multiplatform + Compose) that ships an Android app, a web app and a desktop app, in two parts:
 
-- **Player**: para jugadores y público. Todo es público y no hace falta cuenta para mirar.
-- **Admin (Gestión)**: para organizadores, Club Admins y editores de mesa.
+- **Player**: for players and the public. Everything is public, and nobody needs an account to look.
+- **Admin (Management)**: for organizers, Club Admins and table editors.
 
-Web: https://mts.mahjongmadrid.com · Gestión: `/admin/` · Android: app «MTS» (Player y Gestión en una sola app).
+Web: https://mts.mahjongmadrid.com · Management: `/admin/` · Android: the «MTS» app (Player and Management in one app).
 
-📘 **Catálogo detallado de funcionalidades:** [docs/features.md](docs/features.md)
+📘 **Detailed feature catalogue:** [docs/features.md](docs/features.md)
 
 ---
 
 ## Player
 
-- 🏆 **Torneos**: pestañas En juego · Todos · Estadísticas, con filtros (estado, país, año) y sellos «Jugando / Jugado / Inscrito / En espera».
-- 📝 **Inscripciones**: Inscribirme con o sin cuenta, plazas y lista de espera, equipos, restricciones alimentarias y baja. Enlace corto por torneo (p. ej. `/6thmmc`).
-- 🀄 **Mesas en vivo**: el jugador elige asientos y apunta sus manos y penalizaciones desde el móvil; todo se ve al momento, con animaciones de mano nueva o corregida.
-- ⏰ **Mi mesa**: aviso «Mesa N · Ronda R» al llegar la ronda, botón flotante «Ir a mi mesa», tiempo de ronda restante y QR del torneo que abre tu mesa.
-- 📊 **Clasificación** de jugadores y equipos, mano pollo y mejor mano, con fotos.
-- 👤 **Ficha de jugador**: Mesas · Mis resultados (tabla de rondas compartible como imagen) · Estadísticas.
-- 📈 **Estadísticas públicas** con filtros (jugador, rival, torneo, países, años): habilidades, puestos, récords, rivales y gráficas por ronda.
-- 📖 **Reglas a mano**: las 81 combinaciones MCR con fichas, penalizaciones y Green Book (EN/ES/RU).
-- 🌍 **8 idiomas** (EN, ES, FR, IT, DE, SV, NL, RU), tema claro/oscuro y perfil con foto.
+- 🏆 **Tournaments**: tabs In play · All · Statistics, with filters (status, country, year) and stamps «Playing / Played / Registered / Waiting list».
+- 📝 **Registrations**: register with or without an account, places and waiting list, teams, food restrictions and cancellation. A short link per tournament (for example `/6thmmc`).
+- 🀄 **Live tables**: players set their seats and enter their own hands and penalties from the phone. Everyone sees them at once, with animations for a new or corrected hand.
+- ⏰ **My table**: a «Table N · Round R» reminder when the round comes, a floating «Go to my table» button, the time left in the round, and a tournament QR code that opens your table.
+- 📊 **Rankings** of players and teams, chicken hands and best hand, with photos.
+- 👤 **Player page**: Tables · My results (a table of every round, shareable as an image) · Statistics.
+- 📈 **Public statistics** with filters (player, rival, tournament, countries, years): skills, places, records, rivals and charts per round.
+- 📖 **Rules at hand**: the 81 MCR combinations with tile pictures, penalties and the Green Book (EN/ES/RU).
+- 🌍 **8 languages** (EN, ES, FR, IT, DE, SV, NL, RU), light and dark theme, and a profile with photo.
 
 ## Admin
 
-- 🗂️ **Torneos**: crear (individual o por equipos), configurar, hacer público, organizaciones dueñas con logo y color.
-- 🎲 **Sorteo** de enfrentamientos sin repeticiones, explicado con un diagrama para que cualquiera lo entienda.
-- 📝 **Inscripciones**: plazas, lista de espera, pagado, importar el Google Form, exportar CSV, correos y «Hacer el sorteo».
-- 👥 **Jugadores y equipos**: registro EMA, importación, invitaciones por email, sustituciones y cambio del número de jugadores antes de empezar.
-- ✍️ **Editor de rondas y mesas**: 16 manos por mesa, totales manuales, penalizaciones y varios editores a la vez sin pisarse.
-- ⏱️ **Reloj de ronda** que abre y cierra las mesas solo, con control de ronda para cerrar mesas olvidadas.
-- 📺 **Para la sala**: clasificación a pantalla grande que pasa páginas sola, QR del torneo para proyectar o imprimir en tarjetas por mesa.
-- 🖨️ **Impresión y exportación**: tarjetas identificativas en PDF (sustitutos y staff incluidos) e informe de resultados para la EMA.
-- 🔐 **Roles**: Super Admin, Club Admin, Editor y roles a medida con permisos uno a uno.
-- 🕵️ **Control**: registro de actividad (quién cambió qué), errores de las apps y estadísticas iguales a las del Player.
+- 🗂️ **Tournaments**: create (individual or teams), configure, make public, organizations that own them with logo and color.
+- 🎲 **Draw** of the pairings with no repeated rivals, explained with a diagram anyone can follow.
+- 📝 **Registrations**: places, waiting list, paid, import of the Google Form, CSV export, emails and «Make the draw».
+- 👥 **Players and teams**: EMA registry, import, email invitations, substitutions, and changing the number of players before the start.
+- ✍️ **Round and table editor**: 16 hands per table, manual totals, penalties, and several editors at once without overwriting each other.
+- ⏱️ **Round clock** that opens and closes the tables by itself, plus a round control to close forgotten tables.
+- 📺 **For the venue**: a big-screen ranking that pages by itself, and a tournament QR code to project or print on cards for each table.
+- 🖨️ **Printing and export**: ID cards in PDF (with substitutes and staff) and the results report for the EMA.
+- 🔐 **Roles**: Super Admin, Club Admin, Editor, and custom roles with permissions one by one.
+- 🕵️ **Oversight**: activity log (who changed what), app errors, and the same statistics as the Player.
 
 ---
 
-## Tecnologías
+## Technologies
 
-### Apps (cliente)
+### Apps (client)
 
-| Pieza | Tecnología |
+| Part | Technology |
 |---|---|
-| Lenguaje | Kotlin 2.4 (Kotlin Multiplatform) |
-| UI | Compose Multiplatform 1.12 + Material 3, design system propio (`:designsystem`) |
-| Plataformas | Android (minSdk 24, targetSdk 36), web con Kotlin/Wasm, escritorio JVM |
-| Inyección de dependencias | Koin 4 |
-| Red | Ktor client 3 (OkHttp en Android, CIO en escritorio, JS en web) + kotlinx.serialization |
-| Concurrencia y fechas | Kotlin Coroutines, kotlinx-datetime |
-| Navegación | Navigation Compose (JetBrains) |
-| Imágenes y QR | Coil 3, QRose |
-| Logs | Kermit |
-| Firebase en Android | App Check (Play Integrity), Analytics (GA4) |
+| Language | Kotlin 2.4 (Kotlin Multiplatform) |
+| UI | Compose Multiplatform 1.12 + Material 3, own design system (`:designsystem`) |
+| Platforms | Android (minSdk 24, targetSdk 36), web with Kotlin/Wasm, JVM desktop |
+| Dependency injection | Koin 4 |
+| Networking | Ktor client 3 (OkHttp on Android, CIO on desktop, JS on web) + kotlinx.serialization |
+| Concurrency and dates | Kotlin Coroutines, kotlinx-datetime |
+| Navigation | Navigation Compose (JetBrains) |
+| Images and QR | Coil 3, QRose |
+| Logging | Kermit |
+| Firebase on Android | App Check (Play Integrity), Analytics (GA4) |
 | Build | Gradle 9 + AGP 9, version catalog (`gradle/libs.versions.toml`) |
 
-Módulos: `domain` (modelos y reglas, sin dependencias de plataforma), `data` (cliente de la API, DTOs, cachés), `ui` (componentes y pantallas compartidas), `designsystem`, `playerApp`, `adminApp` y `androidApp` (la app Android que junta las dos partes).
+Modules: `domain` (models and rules, no platform dependencies), `data` (API client, DTOs, caches), `ui` (shared components and screens), `designsystem`, `playerApp`, `adminApp` and `androidApp` (the Android app that holds both parts).
 
 ### Backend
 
-| Pieza | Tecnología |
+| Part | Technology |
 |---|---|
-| API | Una Cloud Function HTTP `api` (2ª gen) en `europe-southwest1` (Madrid): Node 22 + Express 5 + TypeScript |
-| Tareas | Cloud Tasks (cierre de rondas al acabar el tiempo) y Cloud Scheduler (job horario de inscripciones), en `europe-west1` |
-| Base de datos | Cloud Firestore (`eur3`). Reglas *deny all*: solo la función lee y escribe |
-| Ficheros | Cloud Storage (fotos de jugadores y cuentas, logos de organizaciones) |
-| Autenticación | Firebase Auth con *custom claims* para los roles y permisos con nombre |
-| Seguridad | App Check, límites de peticiones, secretos en Secret Manager |
-| Hosting | Firebase Hosting: las dos webs, `/api-docs/` y reenvío de `/api/**` a la función |
-| PDF, Excel y correo | PDFKit (tarjetas ID y QR), ExcelJS (importar el Google Form), Nodemailer (SMTP), sharp (imágenes) |
-| Externos | Google Places API (sedes), registro y rankings de la EMA |
+| API | One HTTP Cloud Function `api` (2nd gen) in `europe-southwest1` (Madrid): Node 22 + Express 5 + TypeScript |
+| Jobs | Cloud Tasks (closes rounds when their time ends) and Cloud Scheduler (hourly registrations job), in `europe-west1` |
+| Database | Cloud Firestore (`eur3`). Rules deny everything: only the function reads and writes |
+| Files | Cloud Storage (player and account photos, organization logos) |
+| Authentication | Firebase Auth with custom claims for roles, plus named permissions |
+| Security | App Check, rate limits, secrets in Secret Manager |
+| Hosting | Firebase Hosting: both web apps, `/api-docs/`, and `/api/**` forwarded to the function |
+| PDF, Excel and email | PDFKit (ID cards and QR cards), ExcelJS (Google Form import), Nodemailer (SMTP), sharp (images) |
+| External | Google Places API (venues), EMA registry and rankings |
 
-Documentación de la API (OpenAPI / Swagger UI): https://mts.mahjongmadrid.com/api-docs/ (fuente [docs/api/openapi.json](docs/api/openapi.json), generada con `python3 scripts/generate-openapi.py`).
+API reference (OpenAPI / Swagger UI): https://mts.mahjongmadrid.com/api-docs/ (source [docs/api/openapi.json](docs/api/openapi.json), written by `python3 scripts/generate-openapi.py`).
 
-### Calidad y despliegue
+### Quality and delivery
 
-- **CI/CD con GitHub Actions**: deploy de Firebase y web, subida a Google Play, staging, galería de capturas y ensayos.
-- **Entornos**: producción y staging (`mts---staging.web.app`).
-- **Versiones** separadas de web, app Android y backend (`python3 scripts/versions.py status`).
-- **Tests**: unitarios y multiplataforma (kotlin.test, Koin verify), backend con `node --test` y emuladores de Firebase, E2E en emuladores Android, capturas con Roborazzi (Git LFS) de todas las pantallas en los 8 idiomas, ktlint y Kover.
-- **Game day**: bots que juegan torneos enteros contra staging para probar carga y casos límite.
+- **CI/CD with GitHub Actions**: Firebase and web deploys, Google Play uploads, staging, screenshot gallery and rehearsals.
+- **Environments**: production and staging (`mts---staging.web.app`).
+- **Versions**: separate for web, the Android app and the backend (`python3 scripts/versions.py status`).
+- **Tests**: unit and multiplatform tests (kotlin.test, Koin verify), backend tests with `node --test` and the Firebase emulators, E2E tests on Android emulators, Roborazzi screenshots (Git LFS) of every screen in all 8 languages, ktlint and Kover.
+- **Game day**: bots that play whole tournaments against staging to test load and edge cases.
 
-Más detalle en [docs/arquitectura/](docs/arquitectura/README.md): diagramas del sistema, modelo de datos, despliegues y versiones, y mapa de pantallas.
+More in [docs/arquitectura/](docs/arquitectura/README.md) (in Spanish): system diagrams, data model, deploys and versions, and the screen map.
 
-## Compilar y ejecutar
+## Build and run
 
 ```bash
 # Android
 ./gradlew :androidApp:assembleDebug
 
-# Escritorio (gestión)
+# Desktop (management)
 ./gradlew :adminApp:run
 
 # Web (Wasm)
@@ -100,20 +100,21 @@ Más detalle en [docs/arquitectura/](docs/arquitectura/README.md): diagramas del
 ./gradlew :playerApp:wasmJsBrowserDevelopmentRun
 ```
 
-Las webs usan el backend de producción por defecto. Para un backend local con datos de prueba, ver [docs/test-environment.md](docs/test-environment.md).
+The web apps use the production backend by default. For a local backend with test data, see [docs/test-environment.md](docs/test-environment.md).
 
 ## Tests
 
 ```bash
 # Kotlin
-./gradlew :domain:allTests :data:allTests :adminApp:jvmTest
+./gradlew :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
 
 # Backend
-cd firebase/functions && npm test
+cd firebase/functions && npm test                 # unit tests
+cd firebase/functions && npm run test:integration # on the Firebase emulators
 ```
 
-Capturas: [docs/screenshot-tests.md](docs/screenshot-tests.md) · Tests de interfaz: [docs/instrumented-ui-tests.md](docs/instrumented-ui-tests.md).
+Screenshots: [docs/screenshot-tests.md](docs/screenshot-tests.md) · UI tests: [docs/instrumented-ui-tests.md](docs/instrumented-ui-tests.md).
 
-## Licencia
+## License
 
-Apache 2.0. Ver [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).
