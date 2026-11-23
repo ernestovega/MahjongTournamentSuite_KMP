@@ -32,7 +32,7 @@ The create request accepts these fields. It can also contain a JPEG or PNG logo 
 
 `PUT /tournaments/:tournamentId/settings` updates the name, short name, color, and logo.
 
-`GET /tournaments/:tournamentId/id-cards` returns a two-sided PDF. Each assigned player gets one front page and one back page. The endpoint rejects tournaments with unassigned player slots.
+`GET /tournaments/:tournamentId/id-cards` returns a two-sided PDF. Each assigned player gets one front page and one back page. The endpoint rejects tournaments with unassigned player slots. With `layout=sheet` it places the cards on A4 sheets; `backs=false` leaves out the back sheets, and `substituteSheets`, `staffSheets` and the repeated `staffName` add whole sheets of blank substitute cards (no name, no number) and of staff cards (STAFF instead of the number) after the players.
 
 ## Auth
 

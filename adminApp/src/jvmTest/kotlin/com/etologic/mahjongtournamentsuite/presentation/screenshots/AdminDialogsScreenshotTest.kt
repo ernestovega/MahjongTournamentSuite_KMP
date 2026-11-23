@@ -38,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
@@ -267,6 +268,22 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun idCardsExport() = dialog("id-cards-export") { IdCardsExportDialog(onExport = {}, onDismiss = {}) }
+
+    /** Without backs, with sheets for substitutes and for the staff, and more staff names than fit on one sheet. */
+    @Test
+    fun idCardsExportExtras() = dialog("id-cards-export-extras") {
+        IdCardsExportDialog(
+            onExport = {},
+            onDismiss = {},
+            initialLayout = IdCardSheetLayout(
+                cardsPerSheet = 2,
+                backs = false,
+                substituteSheets = 2,
+                staffSheets = 1,
+                staffNames = listOf("Lucía Gómez", "Pedro Martín", "Ana Ruiz"),
+            ),
+        )
+    }
 
     @Test
     fun unsavedChanges() = dialog("unsaved-changes") { UnsavedChangesDialog(isSaving = false, onSave = {}, onDiscard = {}, onCancel = {}) }

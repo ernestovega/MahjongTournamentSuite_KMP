@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -3981,6 +3981,42 @@
        "type": "string"
       },
       "description": "true/false"
+     },
+     {
+      "name": "backs",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false. Con false el PDF solo tiene las caras delanteras."
+     },
+     {
+      "name": "substituteSheets",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Hojas de tarjetas sin nombre ni número para sustitutos (0-20)."
+     },
+     {
+      "name": "staffSheets",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Hojas de tarjetas con STAFF en lugar del número (0-20)."
+     },
+     {
+      "name": "staffName",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Nombre de una tarjeta de staff. Se repite una vez por nombre, en orden (máx. 200)."
      }
     ]
    }
