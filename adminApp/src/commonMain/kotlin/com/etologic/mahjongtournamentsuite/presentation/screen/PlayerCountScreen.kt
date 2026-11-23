@@ -550,7 +550,7 @@ internal fun ColumnScope.ChooseContent(
                     val checked = team.id in form.chosen
                     ChoiceRow(
                         title = team.name,
-                        detail = team.memberNames(data.slots),
+                        detail = team.memberNames(data.slots, LocalPlayerNumberDigits.current),
                         checked = checked,
                         enabled = checked || !full,
                         tag = "playerCountTeam-${team.id}",
@@ -563,7 +563,7 @@ internal fun ColumnScope.ChooseContent(
                 items(shown, key = { "slot-${it.id}" }) { slot ->
                     val checked = slot.id in form.chosen
                     ChoiceRow(
-                        title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(LocalPlayerNumberDigits.current),
+                        title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, formatPlayerNumber(slot.id, LocalPlayerNumberDigits.current)) else slot.label(LocalPlayerNumberDigits.current),
                         detail = slot.emaId,
                         checked = checked,
                         enabled = checked || !full,
@@ -680,9 +680,9 @@ private fun ChoiceSearch(form: PlayerCountForm, onFormChange: (PlayerCountForm) 
     )
 }
 
-private fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>): String {
+internal fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>, digits: Int): String {
     val byId = slots.associateBy { it.id }
-    return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) formatPlayerNumber(it.id) else it.name }
+    return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) formatPlayerNumber(it.id, digits) else it.name }
 }
 
 @Composable

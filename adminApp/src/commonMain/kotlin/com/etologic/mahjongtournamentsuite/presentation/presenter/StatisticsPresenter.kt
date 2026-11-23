@@ -70,11 +70,15 @@ class StatisticsPresenter(
 
     suspend fun registry(): AppResult<List<Player>> = playerRepository.listPlayers(RefreshMode.IF_CHANGED)
 
-    private var isStaff: Boolean? = null
+    private var isSuperAdmin: Boolean? = null
 
-    /** True for a staff account, which also reads the not public tournaments that it manages with the account. */
-    private suspend fun readsWithAccount(): Boolean = isStaff
-        ?: ((adminRepository.whoAmI() as? AppResult.Success)?.value?.canManageUsers == true).also { isStaff = it }
+    /**
+     * True for a super admin, whose account reads every tournament. An editor or a club admin reads with the account
+     * only the tournaments that it manages, so the others come from the public routes. (It was any account that sees
+     * accounts, editors too, so an editor saw the statistics of its own tournaments only.)
+     */
+    private suspend fun readsWithAccount(): Boolean = isSuperAdmin
+        ?: ((adminRepository.whoAmI() as? AppResult.Success)?.value?.isSuperAdmin == true).also { isSuperAdmin = it }
 
     private suspend fun ownTournamentIds(): Set<String> = (tournamentRepository.listTournaments(RefreshMode.IF_CHANGED) as? AppResult.Success)?.value.orEmpty().map { it.id }.toSet()
 

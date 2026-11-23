@@ -1108,7 +1108,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_sure_text">Borden i alla ronder lottas om.\nDet går inte att ångra.</string>
     <string name="pc_change">Ändra</string>
     <string name="pc_now">Nu: %1$d spelare, %2$d bord per omgång.</string>
-    <string name="pc_empty_slot">#%1$d · ingen spelare</string>
+    <string name="pc_empty_slot">%1$s · ingen spelare</string>
     <string name="pc_new_slots">%1$d nya platser, tomma tills du tilldelar dem under Spelare.</string>
     <string name="pc_new_teams">%1$d nya lag, tomma tills du tilldelar dem under Lag.</string>
     <string name="pc_waiting_title">Väntelista: upp till %1$d personer (valfritt)</string>

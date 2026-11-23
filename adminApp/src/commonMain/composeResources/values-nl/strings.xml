@@ -1108,7 +1108,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_sure_text">De tafels van alle rondes worden opnieuw geloot.\nDit kan niet ongedaan worden gemaakt.</string>
     <string name="pc_change">Wijzigen</string>
     <string name="pc_now">Nu: %1$d spelers, %2$d tafels per ronde.</string>
-    <string name="pc_empty_slot">#%1$d · geen speler</string>
+    <string name="pc_empty_slot">%1$s · geen speler</string>
     <string name="pc_new_slots">%1$d nieuwe plaatsen, leeg tot je ze toewijst bij Spelers.</string>
     <string name="pc_new_teams">%1$d nieuwe teams, leeg tot je ze toewijst bij Teams.</string>
     <string name="pc_waiting_title">Wachtlijst: tot %1$d personen (optioneel)</string>

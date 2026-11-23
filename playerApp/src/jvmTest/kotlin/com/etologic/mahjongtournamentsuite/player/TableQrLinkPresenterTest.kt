@@ -8,6 +8,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
+import com.etologic.mahjongtournamentsuite.domain.model.physicalTableCount
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import kotlinx.coroutines.test.runTest
 import java.lang.reflect.Proxy
@@ -103,5 +104,37 @@ class TableQrLinkPresenterTest {
         assertEquals("https://mts.mahjongmadrid.com/6thmmc/my-table", withSlug.myTableQrLink(site))
         // The link of the QR goes back through the parser of the player app.
         assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf(withSlug.myTableQrLink(""), emptyMap()))
+    }
+    @Test
+    fun aTableAlreadyClosedInTheRoundInPlayOpensTheNextOne() = runTest {
+        // Round 2 is in play, but the table of player 6 in round 2 already closed: the QR opens round 3.
+        val tables = allTables.map { if (it.roundId == 2 && it.tableId == 1) it.copy(isCompleted = true) else it }
+        val presenter = TableQrLinkPresenter(repository(tournament(), listOf(startedMinutesAgo(1, 200), startedMinutesAgo(2, 20)), tables = tables))
+
+        assertEquals(TableRoute("t", 3, 2), presenter.find("t"))
+    }
+
+    @Test
+    fun aFinishedTournamentOrOneWhereTheAccountHasNoSlotStaysOnMyTables() = runTest {
+        val finished = tournament().copy(isCompleted = true)
+        assertNull(TableQrLinkPresenter(repository(finished, emptyList())).find("t"))
+        // A slot of another tournament is not a slot of this one.
+        assertNull(TableQrLinkPresenter(repository(tournament(), emptyList(), slots = listOf(MyTournamentSlot("other", 6, 0)))).find("t"))
+        // A player without tables in this tournament (a substitute not seated yet).
+        val presenter = TableQrLinkPresenter(repository(tournament(), emptyList(), slots = listOf(MyTournamentSlot("t", 9, 0))))
+        assertNull(presenter.find("t"))
+    }
+
+    @Test
+    fun theTablesOfTheTournamentAreItsPlayersByFour() {
+        assertEquals(2, tournament().physicalTableCount)
+        assertEquals(15, tournament().copy(numPlayers = 60).physicalTableCount)
+    }
+
+    @Test
+    fun theLinkWithoutSlugUsesTheIdAndIgnoresABlankSlugAndTheSlashesOfTheSite() {
+        val blankSlug = tournament().copy(registration = RegistrationSettings(slug = "   "))
+        assertEquals("https://mts.example/t/t/my-table", blankSlug.myTableQrLink("https://mts.example///"))
+        assertEquals("https://mts.example/bcn27/my-table", tournament().copy(registration = RegistrationSettings(slug = " bcn27 ")).myTableQrLink("https://mts.example"))
     }
 }

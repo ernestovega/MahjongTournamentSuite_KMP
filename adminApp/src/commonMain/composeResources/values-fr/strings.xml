@@ -1108,7 +1108,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_sure_text">Les tables de toutes les rondes sont tirées à nouveau.\nCela ne peut pas être annulé.</string>
     <string name="pc_change">Changer</string>
     <string name="pc_now">Actuellement : %1$d joueurs, %2$d tables par manche.</string>
-    <string name="pc_empty_slot">#%1$d · sans joueur</string>
+    <string name="pc_empty_slot">%1$s · sans joueur</string>
     <string name="pc_new_slots">%1$d nouvelles places, vides jusqu'à ce que tu les attribues dans Joueurs.</string>
     <string name="pc_new_teams">%1$d nouvelles équipes, vides jusqu'à ce que tu les attribues dans Équipes.</string>
     <string name="pc_waiting_title">Liste d'attente : jusqu'à %1$d personnes (facultatif)</string>

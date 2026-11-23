@@ -1122,7 +1122,7 @@
     <string name="pc_sure_text">Столы всех раундов будут разыграны заново.\nЭто нельзя отменить.</string>
     <string name="pc_change">Изменить</string>
     <string name="pc_now">Сейчас: %1$d игроков, %2$d столов в раунде.</string>
-    <string name="pc_empty_slot">#%1$d · без игрока</string>
+    <string name="pc_empty_slot">%1$s · без игрока</string>
     <string name="pc_new_slots">%1$d новых мест, пустых, пока ты не назначишь их в разделе «Игроки».</string>
     <string name="pc_new_teams">%1$d новых команд, пустых, пока ты не назначишь их в разделе «Команды».</string>
     <string name="pc_waiting_title">Лист ожидания: до %1$d человек (необязательно)</string>
