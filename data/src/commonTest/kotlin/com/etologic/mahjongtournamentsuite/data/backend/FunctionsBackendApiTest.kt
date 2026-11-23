@@ -8,9 +8,11 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 class FunctionsBackendApiTest {
@@ -92,5 +94,44 @@ class FunctionsBackendApiTest {
         }
 
         assertEquals(expected.toList(), api.generateTournamentIdCards("tournament-1", "token-123").toList())
+    }
+
+    @Test
+    fun idCardsSendTheBacksTheExtraSheetsAndTheStaffNames() = runTest {
+        var request: HttpRequestData? = null
+        val api = mockBackendApi { received ->
+            request = received
+            respond(content = byteArrayOf(1), status = HttpStatusCode.OK, headers = headersOf(HttpHeaders.ContentType, "application/pdf"))
+        }
+
+        api.generateTournamentIdCards(
+            "token-123",
+            "tournament-1",
+            IdCardSheetLayout(backs = false, backSameAsFront = true, substituteSheets = 2, staffSheets = 1, staffNames = listOf(" Ana ", "", "Luis")),
+        )
+
+        val parameters = request!!.url.parameters
+        assertEquals("false", parameters["backs"])
+        assertEquals("true", parameters["backSameAsFront"])
+        assertEquals("2", parameters["substituteSheets"])
+        assertEquals("1", parameters["staffSheets"])
+        assertEquals(listOf("Ana", "Luis"), parameters.getAll("staffName"))
+    }
+
+    @Test
+    fun staffNamesAreSavedWithAPutOnTheTournament() = runTest {
+        var request: HttpRequestData? = null
+        val api = mockBackendApi { received ->
+            request = received
+            respond(
+                content = ByteReadChannel("{\"names\":[\"Ana\"]}"),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        assertEquals(listOf("Ana"), api.saveIdCardStaffNames("token-123", "tournament-1", listOf("Ana")).names)
+        assertEquals(HttpMethod.Put, request?.method)
+        assertTrue(request?.url?.encodedPath.orEmpty().endsWith("/tournaments/tournament-1/id-cards/staff-names"))
     }
 }

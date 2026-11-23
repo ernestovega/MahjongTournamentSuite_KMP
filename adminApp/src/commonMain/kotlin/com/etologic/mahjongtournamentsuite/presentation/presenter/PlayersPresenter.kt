@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
@@ -44,11 +45,25 @@ class PlayersPresenter(
 
     suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> = tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
-    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> = tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
-        .trackAction(telemetry, TelemetryAction.ID_CARDS_EXPORTED)
+    /** The names of the staff ID cards saved the last time, to start the dialog with them. */
+    suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = tournamentRepository.loadIdCardStaffNames(tournamentId)
+
+    /** The accounts of the app, by name, to choose the staff of the ID cards. */
+    suspend fun loadIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>> = tournamentRepository.listIdCardStaffCandidates(tournamentId)
+
+    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> {
+        // The names of the staff are kept for the next time. When keeping them fails, the PDF is still created.
+        if (sheet != null && sheet.staffSheets > 0) tournamentRepository.saveIdCardStaffNames(tournamentId, sheet.cleanStaffNames())
+        return tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
+            .trackAction(telemetry, TelemetryAction.ID_CARDS_EXPORTED)
+    }
 
     suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> = tournamentRepository.generateTournamentIdList(tournamentId)
         .trackAction(telemetry, TelemetryAction.ID_LIST_EXPORTED)
+
+    /** The PDF with the QR codes of the physical tables (docs/table-qr.md). */
+    suspend fun generateTableQr(tournamentId: String, perSheet: Int): AppResult<ByteArray> = tournamentRepository.generateTableQrCodes(tournamentId, perSheet)
+        .trackAction(telemetry, TelemetryAction.TABLE_QR_EXPORTED)
 
     /** Invites the players with no account and resets the password of the others. */
     /** Sets or clears the pending email of slots. */

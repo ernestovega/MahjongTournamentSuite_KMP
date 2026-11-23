@@ -28,7 +28,7 @@ class InvitationsTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
-        c.clickButton("Players")
+        c.clickMoreMenuButton("Players")
         c.waitForText("Tournament players")
         c.clickButton("Invitations")
         c.waitForText("Invitations and reminders")

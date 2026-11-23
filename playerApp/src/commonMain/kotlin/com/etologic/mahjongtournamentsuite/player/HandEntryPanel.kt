@@ -62,7 +62,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlagAndNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
@@ -682,6 +682,7 @@ private fun SavingRow(waitingForTable: Boolean, text: String) {
 private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>) {
     val slot = seats.getOrNull(penalty.seatIndex)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PlayerFlagAndNumber(view.players[slot]?.country, slot)
         Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
         Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
@@ -776,6 +777,7 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
     val slot = winner ?: return
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.gain)
+        PlayerFlagAndNumber(view.players[slot]?.country, slot)
         Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (selfDraw) {
             Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -783,6 +785,7 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
             Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
         } else if (loser != null) {
             Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PlayerFlagAndNumber(view.players[loser]?.country, loser)
             Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         }
     }
@@ -856,11 +859,12 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            // The wind of the player in this hand and the flag before the name, as on the table.
+                            // The wind of the player in this hand, then the flag with the number of the player and the
+                            // name, as on the table.
                             if (seats != null) {
                                 currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 20.dp) }
-                                PlayerFlag(view.players[slot]?.country, width = 22.dp)
                             }
+                            PlayerFlagAndNumber(view.players[slot]?.country, slot)
                             Text(
                                 view.firstNameOf(slot),
                                 fontWeight = FontWeight.Bold,
@@ -903,7 +907,8 @@ private fun PenaltyCard(
             }
             SectionLabel(stringResource(Res.string.entry_penalized_player))
             val slots = seats.filterNotNull()
-            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view) { slot ->
+            // One player per row, so the flag and the number leave the whole name visible.
+            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view, columns = 1) { slot ->
                 onChange(draft.copy(seat = seats.indexOf(slot)))
             }
             OutlinedTextField(
@@ -992,6 +997,7 @@ private fun ReviewHand(
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PlayerFlagAndNumber(view.players[winner]?.country, winner, flagWidth = 26.dp, style = MaterialTheme.typography.titleMedium.inTextFont())
                     Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
@@ -1007,6 +1013,7 @@ private fun ReviewHand(
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                         Text(stringResource(Res.string.entry_from), style = MaterialTheme.typography.titleLarge.inTextFont())
+                        PlayerFlagAndNumber(view.players[loser]?.country, loser, flagWidth = 26.dp, style = MaterialTheme.typography.titleMedium.inTextFont())
                         Text(view.firstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -1014,7 +1021,7 @@ private fun ReviewHand(
         }
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Spacer(Modifier.weight(1.4f))
+        Spacer(Modifier.weight(1.8f))
         HeaderText(stringResource(Res.string.details_col_hand), Modifier.weight(1f))
         HeaderText(stringResource(Res.string.scope_table), Modifier.weight(1f))
         if (showPoints) HeaderText(stringResource(Res.string.entry_points), Modifier.weight(0.9f))
@@ -1025,12 +1032,12 @@ private fun ReviewHand(
         val change = preview.handScores.getOrNull(index) ?: 0
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
-                Modifier.weight(1.4f),
+                Modifier.weight(1.8f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
                 currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
-                PlayerFlag(view.players[slot]?.country, width = 22.dp)
+                PlayerFlagAndNumber(view.players[slot]?.country, slot)
                 Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(

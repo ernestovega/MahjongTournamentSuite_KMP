@@ -8,7 +8,7 @@ class PlayersScreenTest : AdminE2eTest() {
         c.openTournament(tournament)
         // A tournament with open slots opens on the players screen, so that the slots get filled first.
         c.waitForAnyText("Players & results", "Tournament players")
-        if (c.isOnScreen("Players & results")) c.clickButton("Players")
+        if (c.isOnScreen("Players & results")) c.clickMoreMenuButton("Players")
         c.waitForText("Tournament players")
     }
 

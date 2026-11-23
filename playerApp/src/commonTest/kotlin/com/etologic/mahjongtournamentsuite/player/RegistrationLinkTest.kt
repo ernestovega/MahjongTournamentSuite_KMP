@@ -34,4 +34,17 @@ class RegistrationLinkTest {
             assertNull(registrationLinkOf(path, emptyMap()), path)
         }
     }
+
+    @Test
+    fun theQrOfATournamentOpensMyTable() {
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thmmc/my-table", emptyMap()))
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thMMC/mesa/", emptyMap()))
+        assertEquals(RegistrationLink(tournamentId = "AbC123", myTable = true), registrationLinkOf("/t/AbC123/my-table", emptyMap()))
+        // The first links had the number of a table. They open the same.
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thmmc/table/5", emptyMap()))
+        assertEquals(RegistrationLink(tournamentId = "AbC123", myTable = true), registrationLinkOf("/t/AbC123/table/3", emptyMap()))
+        for (path in listOf("/admin/my-table", "/t/my-table", "/a/b/my-table", "/ab/my-table", "/6thmmc/other")) {
+            assertNull(registrationLinkOf(path, emptyMap()), path)
+        }
+    }
 }

@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.41",
+  "version": "1.0.50",
   "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
  },
  "servers": [
@@ -3981,6 +3981,224 @@
        "type": "string"
       },
       "description": "true/false"
+     },
+     {
+      "name": "backs",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false. Con false el PDF solo tiene las caras delanteras."
+     },
+     {
+      "name": "backSameAsFront",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false. La trasera de jugadores y staff repite la delantera; los sustitutos mantienen la tabla."
+     },
+     {
+      "name": "substituteSheets",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Hojas de tarjetas sin nombre ni número para sustitutos (0-20)."
+     },
+     {
+      "name": "staffSheets",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Hojas de tarjetas con STAFF en lugar del número (0-20)."
+     },
+     {
+      "name": "staffName",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Nombre de una tarjeta de staff. Se repite una vez por nombre, en orden (máx. 200)."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/id-cards/staff-names": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Nombres guardados del staff para las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffNames"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   },
+   "put": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Guardar los nombres del staff para las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nQuita los nombres vacíos. Máximo 200 nombres de 60 caracteres.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffNames"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/IdCardStaffNames"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/tournaments/{tournamentId}/id-cards/staff-candidates": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Cuentas de la app para elegir el staff de las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nSolo nombre (jugador EMA o alias) y rol, nunca el email. Primero el staff del torneo, luego editores y admins, luego jugadores.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffCandidates"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
      }
     ]
    }
@@ -4112,6 +4330,62 @@
       "description": "OK",
       "content": {
        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/table-qr-codes": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "PDF con las tarjetas de las mesas",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nUna tarjeta por mesa con su número en grande y el QR del torneo; `?perSheet=1|2|4` tarjetas por A4 (4 por defecto), siempre en inglés. Ver docs/table-qr.md.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
         "schema": {
          "type": "string",
          "format": "binary"
@@ -8927,6 +9201,50 @@
      "year",
      "primaryColor"
     ]
+   },
+   "IdCardStaffCandidate": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "role": {
+      "type": "string"
+     },
+     "inTournament": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "uid",
+     "name",
+     "role"
+    ]
+   },
+   "IdCardStaffCandidates": {
+    "type": "object",
+    "properties": {
+     "candidates": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/IdCardStaffCandidate"
+      }
+     }
+    }
+   },
+   "IdCardStaffNames": {
+    "type": "object",
+    "properties": {
+     "names": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
    },
    "ImportFileValues": {
     "type": "object",

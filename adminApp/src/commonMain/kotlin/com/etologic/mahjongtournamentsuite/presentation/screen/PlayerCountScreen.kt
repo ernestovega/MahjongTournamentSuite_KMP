@@ -675,7 +675,7 @@ private fun ChoiceSearch(form: PlayerCountForm, onFormChange: (PlayerCountForm) 
     )
 }
 
-private fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>): String {
+internal fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>): String {
     val byId = slots.associateBy { it.id }
     return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) "#${it.id}" else it.name }
 }

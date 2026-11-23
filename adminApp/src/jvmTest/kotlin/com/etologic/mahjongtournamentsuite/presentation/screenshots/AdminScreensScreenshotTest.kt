@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -73,6 +74,24 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun tournament() = adminScreenshots("tournament", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentScreen(nav, ONGOING) }
+
+    /** The "More" menu of the top bar of a tournament: Teams, Players, Stats, EMA report and Activity. */
+    @Test
+    fun tournamentMoreMenu() = adminScreenshots(
+        "tournament-more-menu",
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        ready = {
+            waitForText("Madrid Open 2026")
+            // On a phone the options are in the three-dots menu of the top bar; on a wide screen in "More".
+            if (onAllNodesWithText("More").fetchSemanticsNodes().isNotEmpty()) {
+                onAllNodesWithText("More").onFirst().performClick()
+            } else {
+                onAllNodes(hasContentDescription("Menu") and hasClickAction()).onLast().performClick()
+            }
+            waitForIdle()
+            waitForText("EMA report")
+        },
+    ) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
     fun players() = adminScreenshots("players", ready = { waitForText("04010001", substring = true) }) { nav -> PlayersScreen(nav, ONGOING) }

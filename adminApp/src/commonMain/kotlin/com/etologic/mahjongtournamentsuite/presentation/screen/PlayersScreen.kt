@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -1079,7 +1080,18 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 )
             }
             if (idCardsDialogOpen) {
+                // The names of the staff saved the last time fill the dialog when they arrive.
+                var savedStaffNames by remember { mutableStateOf(emptyList<String>()) }
+                var staffCandidates by remember { mutableStateOf(emptyList<IdCardStaffCandidate>()) }
+                LaunchedEffect(tournamentId) {
+                    (presenter.loadIdCardStaffNames(tournamentId) as? AppResult.Success)?.let { savedStaffNames = it.value }
+                }
+                LaunchedEffect(tournamentId) {
+                    (presenter.loadIdCardStaffCandidates(tournamentId) as? AppResult.Success)?.let { staffCandidates = it.value }
+                }
                 IdCardsExportDialog(
+                    savedStaffNames = savedStaffNames,
+                    staffCandidates = staffCandidates,
                     onExport = { sheet ->
                         idCardsDialogOpen = false
                         exportIdCards(sheet)

@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Vad vill du öppna?</string>
     <string name="app_chooser_hint">Du kan när som helst byta mellan apparna med knappen i den övre raden.</string>
     <string name="top_bar_activity">Aktivitet</string>
+    <string name="top_bar_more">Mer</string>
     <string name="design_system">Designsystem</string>
     <string name="rounds_title">Per omgång</string>
     <string name="rounds_view_place">Rankingplacering</string>
@@ -684,4 +685,12 @@ Den första som fungerar vinner</string>
     <string name="draw_blocks_flow_swaps">Lottning genom byten</string>
     <string name="draw_blocks_flow_swaps_note">Ingen möter en motståndare fler gånger än antalet block hittills</string>
     <string name="draw_blocks_flow_left">Omgångar kvar?</string>
+    <string name="summary_col_round">Omgång</string>
+    <string name="summary_col_table">Bord</string>
+    <string name="summary_col_seat">Plats</string>
+    <string name="summary_col_points">Poäng</string>
+    <string name="summary_col_score">Resultat</string>
+    <string name="summary_col_total_points">Poäng totalt</string>
+    <string name="summary_col_total_score">Resultat totalt</string>
+    <string name="summary_col_place">Placering</string>
 </resources>

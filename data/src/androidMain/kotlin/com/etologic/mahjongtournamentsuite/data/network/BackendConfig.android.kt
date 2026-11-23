@@ -28,3 +28,5 @@ object BackendUrlOverride {
 }
 
 actual fun functionsBaseUrlPlatform(): String = BackendUrlOverride.functionsBaseUrl ?: "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api"
+
+actual fun publicSiteUrlPlatform(): String = PublicSite.ofBackend(functionsBaseUrlPlatform())

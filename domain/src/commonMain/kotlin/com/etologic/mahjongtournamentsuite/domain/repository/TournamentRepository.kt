@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
@@ -75,7 +76,20 @@ interface TournamentRepository {
 
     suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray>
 
+    /** The names of the staff ID cards that were saved for the tournament, in order. */
+    suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>>
+
+    /** The accounts of the app, by name, to choose the staff of the ID cards. */
+    suspend fun listIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>>
+
+    /** Keeps the names of the staff ID cards, so the next ID cards of the tournament start with them. */
+    suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>>
+
     suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray>
+
+    /** A PDF with a card for each physical table (its number and the QR of the tournament), [perSheet] cards per A4. See docs/table-qr.md. */
+    suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> =
+        AppResult.Failure(AppError.Unexpected("The QR codes of the tables are not available"))
 
     suspend fun generateEmaReport(
         tournamentId: String,

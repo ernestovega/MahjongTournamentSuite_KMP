@@ -44,6 +44,12 @@ data class PlayerCountRoute(
     val started: Boolean = false,
 )
 
+/** The QR codes of the physical tables of a tournament, to show on a screen or print. See docs/table-qr.md. */
+@Serializable
+data class TableQrRoute(
+    val tournamentId: String,
+)
+
 @Serializable
 data class UsersRoute(
     val editUid: String? = null,

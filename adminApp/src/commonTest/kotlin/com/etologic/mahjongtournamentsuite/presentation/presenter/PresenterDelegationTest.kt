@@ -161,6 +161,9 @@ private class RecordingTournamentRepository(
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedResult<ByteArray>()
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedResult<ByteArray>()
+    override suspend fun listIdCardStaffCandidates(tournamentId: String) = unusedResult<List<IdCardStaffCandidate>>()
+    override suspend fun loadIdCardStaffNames(tournamentId: String) = unusedResult<List<String>>()
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>) = unusedResult<List<String>>()
     override suspend fun generateTournamentIdList(tournamentId: String) = unusedResult<ByteArray>()
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = unusedResult<ByteArray>()
     override suspend fun deleteTournament(tournamentId: String) = unusedResult<Unit>()

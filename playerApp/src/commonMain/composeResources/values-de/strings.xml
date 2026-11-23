@@ -293,4 +293,8 @@
     <string name="preg_no_ema_country">Land</string>
     <string name="preg_message">Nachricht (optional)</string>
     <string name="preg_send">Senden</string>
+    <string name="tab_results">Ergebnisse</string>
+    <string name="tab_my_results">Meine Ergebnisse</string>
+    <string name="summary_share">Teilen</string>
+    <string name="summary_share_error">Das Bild konnte nicht geteilt werden.</string>
 </resources>

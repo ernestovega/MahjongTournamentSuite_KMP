@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.data.cache.tournamentManifest
+import com.etologic.mahjongtournamentsuite.data.network.currentLanguageTag
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -51,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
@@ -258,7 +260,11 @@ class DefaultTournamentRepository(
         sheet: IdCardSheetLayout?,
     ): AppResult<ByteArray> = cachedGeneratedFile(
         tournamentId = tournamentId,
-        cacheSuffix = sheet?.let { "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" } ?: "id-cards",
+        // Every option of the sheet is in the key, so a PDF with other options is never taken from the cache.
+        cacheSuffix = sheet?.let {
+            "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" +
+                "-${it.backs}-${it.backSameAsFront}-${it.substituteSheets}-${it.staffSheets}-${it.cleanStaffNames().hashCode()}"
+        } ?: "id-cards",
         action = "Generating tournament ID cards",
         load = { token -> backendApi.generateTournamentIdCards(token, tournamentId, sheet) },
     )
@@ -268,6 +274,14 @@ class DefaultTournamentRepository(
         cacheSuffix = "id-list",
         action = "Generating tournament ID list",
         load = { token -> backendApi.generateTournamentIdList(token, tournamentId) },
+    )
+
+    override suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        // The texts of the cards follow the language of the app.
+        cacheSuffix = "table-qr-$perSheet-${currentLanguageTag().orEmpty()}",
+        action = "Generating the QR codes of the tables",
+        load = { token -> backendApi.generateTableQrCodes(token, tournamentId, perSheet) },
     )
 
     private suspend fun cachedGeneratedFile(
@@ -1064,6 +1078,45 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Listing the own tournaments failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = runCatching {
+        withFreshIdToken { idToken -> backendApi.getIdCardStaffNames(idToken, tournamentId).names }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the staff names of the ID cards failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun listIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.getIdCardStaffCandidates(idToken, tournamentId).candidates.map { candidate ->
+                IdCardStaffCandidate(
+                    uid = candidate.uid,
+                    name = candidate.name,
+                    role = GlobalUserRole.entries.firstOrNull { it.name == candidate.role } ?: GlobalUserRole.PLAYER,
+                    inTournament = candidate.inTournament,
+                )
+            }
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the staff candidates of the ID cards failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = runCatching {
+        withFreshIdToken { idToken -> backendApi.saveIdCardStaffNames(idToken, tournamentId, names).names }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Saving the staff names of the ID cards failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

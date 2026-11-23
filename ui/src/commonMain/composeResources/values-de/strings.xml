@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Was möchtest du öffnen?</string>
     <string name="app_chooser_hint">Du kannst jederzeit mit der Schaltfläche in der oberen Leiste zwischen den Apps wechseln.</string>
     <string name="top_bar_activity">Aktivität</string>
+    <string name="top_bar_more">Mehr</string>
     <string name="design_system">Designsystem</string>
     <string name="rounds_title">Nach Runde</string>
     <string name="rounds_view_place">Ranglistenplatz</string>
@@ -684,4 +685,12 @@ Die erste, die klappt, gewinnt</string>
     <string name="draw_blocks_flow_swaps">Auslosung durch Tauschen</string>
     <string name="draw_blocks_flow_swaps_note">Niemand trifft einen Gegner öfter, als Blöcke gespielt sind</string>
     <string name="draw_blocks_flow_left">Runden übrig?</string>
+    <string name="summary_col_round">Runde</string>
+    <string name="summary_col_table">Tisch</string>
+    <string name="summary_col_seat">Sitz</string>
+    <string name="summary_col_points">Punkte</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Punkte gesamt</string>
+    <string name="summary_col_total_score">Score gesamt</string>
+    <string name="summary_col_place">Platz</string>
 </resources>

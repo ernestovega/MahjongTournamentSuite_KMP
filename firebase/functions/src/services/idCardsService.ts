@@ -47,7 +47,14 @@ const svgToPdf = require("svg-to-pdfkit") as (
   options: { width: number; height: number; preserveAspectRatio: string },
 ) => void;
 
+/**
+ * A player card, a blank card for a substitute (no name and no number, both written by hand) or a card for a member
+ * of the staff (STAFF instead of the number, with or without name).
+ */
+export type IdCardKind = "player" | "substitute" | "staff";
+
 export type IdCardPlayer = {
+  kind?: IdCardKind;
   playerId: number;
   name: string;
   country: string;
@@ -252,7 +259,9 @@ function drawFront(
   associationLogo: PDFKit.Mixins.ImageSrc | null,
 ): void {
   const primary = normalizeHexColor(model.primaryColor);
-  const { givenName, surname } = splitPlayerName(player.name);
+  const kind = player.kind ?? "player";
+  const hasName = player.name.trim().length > 0;
+  const { givenName, surname } = hasName ? splitPlayerName(player.name) : { givenName: "", surname: "" };
 
   doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
   doc.rect(0, 0, CARD_WIDTH, 76).fill(primary);
@@ -313,26 +322,44 @@ function drawFront(
     });
   }
 
-  doc.font("CardApp").fontSize(33.75).text(
-    String(player.playerId),
-    PLAYER_DETAILS_CENTER_X - 38,
-    49 + 0.5 * POINTS_PER_MILLIMETER - (33.75 - 27) / 2,
-    {
-      width: 76,
-      align: "center",
-      lineBreak: false,
-    },
-  );
+  if (kind === "substitute") {
+    // The number of the substitute is the one of the player who leaves, so it is written by hand on this line.
+    drawWritingLine(doc, PLAYER_DETAILS_CENTER_X - 30, 66, 60, "#FFFFFF");
+  } else {
+    const numberText = kind === "staff" ? "STAFF" : String(player.playerId);
+    // STAFF is wider than a number, so it is smaller and keeps the same vertical center inside the band.
+    const numberSize = kind === "staff" ? fitText(doc.font("CardApp"), numberText, 90, 24, 16) : 33.75;
+    doc.font("CardApp").fontSize(numberSize).text(
+      numberText,
+      PLAYER_DETAILS_CENTER_X - 47,
+      49 + 0.5 * POINTS_PER_MILLIMETER - (33.75 - 27) / 2 + (33.75 - numberSize) / 2,
+      {
+        width: 94,
+        align: "center",
+        lineBreak: false,
+      },
+    );
+  }
 
-  doc.font("CardApp").fillColor("#000000");
-  const givenSize = fitText(doc, givenName, 118, 29, 15);
-  doc.fontSize(givenSize).text(givenName, 116, 86, { width: 120, align: "center", lineBreak: false });
+  if (hasName) {
+    doc.font("CardApp").fillColor("#000000");
+    const givenSize = fitText(doc, givenName, 118, 29, 15);
+    doc.fontSize(givenSize).text(givenName, 116, 86, { width: 120, align: "center", lineBreak: false });
 
-  doc.font("CardApp");
-  const surnameSize = fitText(doc, surname, 116, 9, 6);
-  doc.fontSize(surnameSize).text(surname, 118, 126, { width: 116, align: "center", lineBreak: false });
+    doc.font("CardApp");
+    const surnameSize = fitText(doc, surname, 116, 9, 6);
+    doc.fontSize(surnameSize).text(surname, 118, 126, { width: 116, align: "center", lineBreak: false });
+  } else {
+    // A card without name has two lines to write the name and the surname by hand.
+    drawWritingLine(doc, 124, 114, 104, "#9E9E9E");
+    drawWritingLine(doc, 124, 136, 104, "#9E9E9E");
+  }
 
-  drawCountryFlag(doc, player.countryCode);
+  if (kind === "player") drawCountryFlag(doc, player.countryCode);
+}
+
+function drawWritingLine(doc: PDFKit.PDFDocument, x: number, y: number, width: number, color: string): void {
+  doc.save().lineWidth(0.6).strokeColor(color).moveTo(x, y).lineTo(x + width, y).stroke().restore();
 }
 
 function drawCellText(
@@ -388,12 +415,17 @@ function drawBack(doc: PDFKit.PDFDocument, model: IdCardsDocument, player: IdCar
   const primary = normalizeHexColor(model.primaryColor);
   doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
 
-  doc.save();
-  const backgroundNumber = String(player.playerId);
-  const backgroundNumberSize = fitText(doc.font("CardApp"), backgroundNumber, 190, 132, 88);
-  doc.opacity(0.28).fontSize(backgroundNumberSize).fillColor(primary);
-  drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT, backgroundNumberSize);
-  doc.restore();
+  const kind = player.kind ?? "player";
+  if (kind !== "substitute") {
+    doc.save();
+    const backgroundNumber = kind === "staff" ? "STAFF" : String(player.playerId);
+    const backgroundNumberSize = fitText(doc.font("CardApp"), backgroundNumber, 190, 132, kind === "staff" ? 40 : 88);
+    doc.opacity(0.28).fontSize(backgroundNumberSize).fillColor(primary);
+    drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT, backgroundNumberSize);
+    doc.restore();
+  }
+  // The staff does not play, so its back has no table of rounds.
+  if (kind === "staff") return;
 
   const x = 14;
   const y = 10;
@@ -443,7 +475,7 @@ function drawBack(doc: PDFKit.PDFDocument, model: IdCardsDocument, player: IdCar
     drawCellText(doc, displayStart(row), x + columns[0], rowY, columns[1], rowHeight);
     drawCellText(
       doc,
-      row.tableNumber > 0 ? String(row.tableNumber) : "-",
+      row.tableNumber > 0 ? String(row.tableNumber) : kind === "substitute" ? "" : "-",
       x + columns[0] + columns[1],
       rowY,
       columns[2],
@@ -468,7 +500,41 @@ export type IdCardSheetOptions = {
   landscape: boolean;
   /** Mirrors the back sheet so each back is behind its front when printing on both sides. */
   doubleSided: boolean;
+  /** Adds a back sheet after each front sheet. Without it the PDF only has the fronts. */
+  backs?: boolean;
+  /** The back of the players and the staff repeats the front instead of the table of rounds. Substitutes keep the table. */
+  backSameAsFront?: boolean;
+  /** Full sheets of blank cards for substitutes, after the cards of the players. */
+  substituteSheets?: number;
+  /** Full sheets of staff cards, after the cards of the substitutes. */
+  staffSheets?: number;
+  /** The names of the staff cards, in order. The other staff cards have no name. */
+  staffNames?: string[];
 };
+
+export const MAX_EXTRA_SHEETS = 20;
+export const MAX_STAFF_NAMES = 200;
+export const MAX_STAFF_NAME_LENGTH = 60;
+
+/**
+ * The blank substitute cards and the staff cards of the options. Each kind fills whole sheets: the staff gets more
+ * sheets when its names do not fit on the chosen ones.
+ */
+export function idCardExtraCards(options: IdCardSheetOptions, perSheet: number): IdCardPlayer[][] {
+  const blank = (kind: IdCardKind, name: string): IdCardPlayer => ({
+    kind,
+    playerId: 0,
+    name,
+    country: "",
+    teamName: null,
+    tableNumbers: [],
+  });
+  const substitutes = Array.from({ length: (options.substituteSheets ?? 0) * perSheet }, () => blank("substitute", ""));
+  const names = (options.staffNames ?? []).map((name) => name.trim()).filter((name) => name.length > 0);
+  const staffSheets = Math.max(options.staffSheets ?? 0, Math.ceil(names.length / perSheet));
+  const staff = Array.from({ length: staffSheets * perSheet }, (_, index) => blank("staff", names[index] ?? ""));
+  return [substitutes, staff].filter((cards) => cards.length > 0);
+}
 
 export function sheetPageSize(landscape: boolean): { width: number; height: number } {
   return landscape ? { width: A4_HEIGHT, height: A4_WIDTH } : { width: A4_WIDTH, height: A4_HEIGHT };
@@ -565,21 +631,30 @@ export async function buildIdCardsPdf(model: IdCardsDocument, sheet?: IdCardShee
       const pageOptions = { size: [page.width, page.height] as [number, number], margin: 0 };
       const left = (page.width - CARD_WIDTH * grid.scale * grid.columns) / 2;
       const top = (page.height - CARD_HEIGHT * grid.scale * grid.rows) / 2;
-      for (let start = 0; start < model.players.length; start += perSheet) {
-        const group = model.players.slice(start, start + perSheet);
-        doc.addPage(pageOptions);
-        group.forEach((player, index) => {
-          const { x, y } = idCardSheetCardOrigin(sheet, grid, index, false);
-          drawCardOnSheet(doc, x, y, grid.scale, () => drawFront(doc, model, player, reusableLogo));
-        });
-        if (sheet.cutMarks) drawSheetCutMarks(doc, left, top, grid);
+      // Each kind of card starts on a new sheet, so the sheets of substitutes and of staff are kept apart.
+      const kinds = [model.players, ...idCardExtraCards(sheet, perSheet)];
+      kinds.forEach((cards) => {
+        for (let start = 0; start < cards.length; start += perSheet) {
+          const group = cards.slice(start, start + perSheet);
+          doc.addPage(pageOptions);
+          group.forEach((player, index) => {
+            const { x, y } = idCardSheetCardOrigin(sheet, grid, index, false);
+            drawCardOnSheet(doc, x, y, grid.scale, () => drawFront(doc, model, player, reusableLogo));
+          });
+          if (sheet.cutMarks) drawSheetCutMarks(doc, left, top, grid);
 
-        doc.addPage(pageOptions);
-        group.forEach((player, index) => {
-          const { x, y } = idCardSheetCardOrigin(sheet, grid, index, true);
-          drawCardOnSheet(doc, x, y, grid.scale, () => drawBack(doc, model, player));
-        });
-      }
+          if (sheet.backs === false) continue;
+          doc.addPage(pageOptions);
+          group.forEach((player, index) => {
+            const { x, y } = idCardSheetCardOrigin(sheet, grid, index, true);
+            const repeatFront = sheet.backSameAsFront === true && player.kind !== "substitute";
+            drawCardOnSheet(doc, x, y, grid.scale, () => {
+              if (repeatFront) drawFront(doc, model, player, reusableLogo);
+              else drawBack(doc, model, player);
+            });
+          });
+        }
+      });
     } else {
       model.players.forEach((player) => {
         doc.addPage({ size: [CARD_WIDTH, CARD_HEIGHT], margin: 0 });
@@ -740,6 +815,27 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     ),
     players,
   };
+}
+
+function idCardStaffRef(tournamentId: string) {
+  // A document of its own, so saving the names never touches the tournament or its revisions.
+  return db.collection("tournaments").doc(tournamentId).collection("idCards").doc("staff");
+}
+
+/** The names of the staff cards that the admins saved for the tournament, in order. */
+export async function readIdCardStaffNames(tournamentId: string): Promise<string[]> {
+  const snapshot = await idCardStaffRef(tournamentId).get();
+  const names = snapshot.get("names");
+  return Array.isArray(names) ? names.filter((name): name is string => typeof name === "string") : [];
+}
+
+/** Keeps the names of the staff cards, so the next ID cards of the tournament start with them. */
+export async function saveIdCardStaffNames(tournamentId: string, names: string[]): Promise<string[]> {
+  const tournament = await db.collection("tournaments").doc(tournamentId).get();
+  if (!tournament.exists) throw notFound("Tournament not found");
+  const clean = names.map((name) => name.trim()).filter((name) => name.length > 0);
+  await idCardStaffRef(tournamentId).set({ names: clean, updatedAt: new Date().toISOString() });
+  return clean;
 }
 
 export async function generateTournamentIdCards(tournamentId: string, sheet?: IdCardSheetOptions): Promise<Buffer> {

@@ -16,3 +16,6 @@ expect fun openRankings(
     navController: NavHostController,
     tournamentId: String,
 )
+
+/** Opens the QR code of a tournament in a window of its own, as big as it fits, to project it (docs/table-qr.md). */
+expect fun openTableQrWindow(tournamentName: String, link: String, logoUrl: String?)

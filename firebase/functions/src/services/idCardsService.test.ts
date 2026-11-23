@@ -9,6 +9,7 @@ import {
   CARD_WIDTH,
   flagOrPlaceholderSvg,
   GUEST_FLAG_SVG,
+  idCardExtraCards,
   idCardSheetCardOrigin,
   idCardSheetGrid,
   type IdCardSheetOptions,
@@ -145,6 +146,51 @@ test("builds A4 sheets with one front page and one back page for each group of c
   );
   const pages = pdf.toString("latin1").match(/\/Type \/Page\b/g) ?? [];
   assert.equal(pages.length, 4);
+});
+
+function pageCount(pdf: Buffer): number {
+  return (pdf.toString("latin1").match(/\/Type \/Page\b/g) ?? []).length;
+}
+
+const twoPlayers = {
+  tournamentShortName: "6th MMC",
+  year: "2026",
+  primaryColor: "#7C3AED",
+  numberOfRounds: 2,
+  players: [1, 2].map((playerId) => ({
+    playerId,
+    name: "Ana Pérez",
+    country: "Spain",
+    countryCode: "ESP",
+    teamName: null,
+    tableNumbers: [1, 2],
+  })),
+};
+const fourPerSheet: IdCardSheetOptions = { cardsPerSheet: 4, scalePercent: 100, cutMarks: true, landscape: false, doubleSided: true };
+
+test("without backs the PDF only has the front sheets", async () => {
+  assert.equal(pageCount(await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, backs: false })), 1);
+  assert.equal(pageCount(await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, backs: false, substituteSheets: 2, staffSheets: 1 })), 4);
+});
+
+test("a back that repeats the front keeps one back sheet for each front sheet", async () => {
+  const pdf = await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, backSameAsFront: true, substituteSheets: 1, staffSheets: 1 });
+  assert.equal(pageCount(pdf), 6);
+});
+
+test("the sheets of substitutes and of staff start on new sheets after the players", async () => {
+  const pdf = await buildIdCardsPdf(twoPlayers, { ...fourPerSheet, substituteSheets: 2, staffSheets: 1, staffNames: ["Lucía Gómez"] });
+  // 1 sheet of players, 2 of substitutes and 1 of staff, each with its front and its back.
+  assert.equal(pageCount(pdf), 8);
+});
+
+test("substitute cards fill whole sheets and staff names add sheets when they do not fit", () => {
+  const [substitutes, staff] = idCardExtraCards({ ...fourPerSheet, substituteSheets: 2, staffSheets: 1, staffNames: [" Ana ", "", "Luis", "Eva", "Rosa", "Juan"] }, 4);
+  assert.equal(substitutes.length, 8);
+  assert.ok(substitutes.every((card) => card.kind === "substitute" && card.name === ""));
+  assert.deepEqual(staff.map((card) => card.name), ["Ana", "Luis", "Eva", "Rosa", "Juan", "", "", ""]);
+  assert.ok(staff.every((card) => card.kind === "staff"));
+  assert.deepEqual(idCardExtraCards(fourPerSheet, 4), []);
 });
 
 const EPSILON = 1e-6;

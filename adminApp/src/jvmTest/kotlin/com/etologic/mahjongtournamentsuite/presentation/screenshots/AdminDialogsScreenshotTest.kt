@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
@@ -11,6 +12,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import androidx.compose.foundation.layout.ColumnScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
@@ -36,6 +39,8 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
@@ -90,6 +95,8 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
+private const val QR_SITE = "https://mts.mahjongmadrid.com"
+
 @OptIn(ExperimentalTestApi::class)
 class AdminDialogsScreenshotTest {
     private fun dialog(name: String, content: @Composable () -> Unit) = adminScreenshots("dialogs/$name", variants = dialogVariants) { content() }
@@ -229,6 +236,16 @@ class AdminDialogsScreenshotTest {
     fun playerCountLocked() = playerCountScreen("player-count-locked", step = null) { LockedContent(PlayerCountBlocker.STARTED, onClose = {}) }
 
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
+    /** The QR code of the tournament, with the window to project it and the PDF of the cards of the tables. */
+    @Test
+    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }) }
+
+    /** The code in a window of its own, to project it. */
+    @Test
+    fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table") }
+
+    private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
+
     private fun playerCountScreen(name: String, step: Int? = 0, content: @Composable ColumnScope.() -> Unit) =
         adminScreenshots(name) { PlayerCountFrame(subtitle = "Madrid Open 2026", step = step, onBack = {}, content = content) }
 
@@ -269,6 +286,23 @@ class AdminDialogsScreenshotTest {
 
     @Test
     fun idCardsExport() = dialog("id-cards-export") { IdCardsExportDialog(onExport = {}, onDismiss = {}) }
+
+    /** Without backs, with sheets for substitutes and for the staff, and more staff names than fit on one sheet. */
+    @Test
+    fun idCardsExportExtras() = dialog("id-cards-export-extras") {
+        IdCardsExportDialog(
+            onExport = {},
+            onDismiss = {},
+            initialLayout = IdCardSheetLayout(
+                cardsPerSheet = 2,
+                backs = false,
+                substituteSheets = 2,
+                staffSheets = 1,
+                staffNames = listOf("Lucía Gómez", "Pedro Martín", "Ana Ruiz"),
+            ),
+            staffCandidates = listOf(IdCardStaffCandidate("u1", "Lucía Gómez", GlobalUserRole.EDITOR, inTournament = true)),
+        )
+    }
 
     @Test
     fun unsavedChanges() = dialog("unsaved-changes") { UnsavedChangesDialog(isSaving = false, onSave = {}, onDiscard = {}, onCancel = {}) }

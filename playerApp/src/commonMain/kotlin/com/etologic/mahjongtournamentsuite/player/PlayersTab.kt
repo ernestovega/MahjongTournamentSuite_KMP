@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -84,7 +85,9 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.tab_info
+import mahjongtournamentsuite.playerapp.generated.resources.tab_my_results
 import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
+import mahjongtournamentsuite.playerapp.generated.resources.tab_results
 import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
@@ -226,6 +229,10 @@ internal fun PlayerListCard(row: PlayerListRow, onClick: () -> Unit) {
 internal object PlayerTab {
     const val TABLES = 0
     const val STATISTICS = 1
+    const val SUMMARY = 2
+
+    /** The tabs in the order of the tab row. */
+    val order: List<Int> = listOf(TABLES, SUMMARY, STATISTICS)
 }
 
 /** The photo in the top bar is as tall as the name and the line under it. */
@@ -271,15 +278,27 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                 }
                 HideOnScrollTabs(tab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        MtsTabRow(selectedTabIndex = tab, modifier = Modifier.widthIn(max = TournamentColumnWidth)) {
-                            listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
+                        MtsTabRow(selectedTabIndex = PlayerTab.order.indexOf(tab).coerceAtLeast(0), modifier = Modifier.widthIn(max = TournamentColumnWidth)) {
+                            PlayerTab.order.forEach { id ->
                                 CompactTab(
-                                    selected = tab == index,
-                                    onClick = { tab = index },
-                                    title = title,
-                                    trackingName = if (index == PlayerTab.TABLES) "PlayerTables" else "PlayerStatistics",
+                                    selected = tab == id,
+                                    onClick = { tab = id },
+                                    title = when (id) {
+                                        PlayerTab.TABLES -> stringResource(Res.string.tab_tables)
+                                        PlayerTab.SUMMARY -> stringResource(if (slotId == view.mySlotId) Res.string.tab_my_results else Res.string.tab_results)
+                                        else -> stringResource(Res.string.tab_stats)
+                                    },
+                                    trackingName = when (id) {
+                                        PlayerTab.TABLES -> "PlayerTables"
+                                        PlayerTab.SUMMARY -> "PlayerResults"
+                                        else -> "PlayerStatistics"
+                                    },
                                     icon = {
-                                        val icon = if (index == PlayerTab.TABLES) Icons.Default.TableRestaurant else StatisticsIcon
+                                        val icon = when (id) {
+                                            PlayerTab.TABLES -> Icons.Default.TableRestaurant
+                                            PlayerTab.SUMMARY -> Icons.Default.TableChart
+                                            else -> StatisticsIcon
+                                        }
                                         Icon(icon, contentDescription = null, Modifier.size(20.dp))
                                     },
                                 )
@@ -325,8 +344,12 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                         }
                     }
                     val allOf = profile?.emaId?.takeIf { allTournaments == 1 && it.isNotBlank() }
-                    PlayerContent(view, slotId, tab, allOf, { statisticsLoading = it }, selector) { table ->
-                        navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))
+                    if (tab == PlayerTab.SUMMARY && view.tables.any { slotId in it.playerSlots() }) {
+                        PlayerSummaryTab(view, slotId, emaId = profile?.emaId, top = selector)
+                    } else {
+                        PlayerContent(view, slotId, tab, allOf, { statisticsLoading = it }, selector) { table ->
+                            navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))
+                        }
                     }
                 }
             }

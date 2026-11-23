@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Wat wil je openen?</string>
     <string name="app_chooser_hint">Je kunt altijd tussen de apps wisselen met de knop in de bovenbalk.</string>
     <string name="top_bar_activity">Activiteit</string>
+    <string name="top_bar_more">Meer</string>
     <string name="design_system">Ontwerpsysteem</string>
     <string name="rounds_title">Per ronde</string>
     <string name="rounds_view_place">Plaats in het klassement</string>
@@ -684,4 +685,12 @@ De eerste die lukt, wint</string>
     <string name="draw_blocks_flow_swaps">Loting door ruilen</string>
     <string name="draw_blocks_flow_swaps_note">Niemand treft een tegenstander vaker dan het aantal blokken tot nu toe</string>
     <string name="draw_blocks_flow_left">Rondes over?</string>
+    <string name="summary_col_round">Ronde</string>
+    <string name="summary_col_table">Tafel</string>
+    <string name="summary_col_seat">Stoel</string>
+    <string name="summary_col_points">Punten</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Totaal punten</string>
+    <string name="summary_col_total_score">Totaal score</string>
+    <string name="summary_col_place">Plaats</string>
 </resources>

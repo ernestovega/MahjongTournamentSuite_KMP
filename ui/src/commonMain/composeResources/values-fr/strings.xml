@@ -528,6 +528,7 @@
     <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
     <string name="app_chooser_hint">Vous pourrez ensuite passer d'une app à l'autre à tout moment avec le bouton de la barre du haut.</string>
     <string name="top_bar_activity">Activité</string>
+    <string name="top_bar_more">Plus</string>
     <string name="design_system">Design system</string>
     <string name="rounds_title">Par tour</string>
     <string name="rounds_view_place">Classement</string>
@@ -688,4 +689,12 @@ La première qui marche gagne</string>
     <string name="draw_blocks_flow_swaps">Tirage par échanges</string>
     <string name="draw_blocks_flow_swaps_note">Personne ne retrouve un adversaire plus de fois qu’il n’y a de blocs</string>
     <string name="draw_blocks_flow_left">Manches restantes ?</string>
+    <string name="summary_col_round">Tour</string>
+    <string name="summary_col_table">Table</string>
+    <string name="summary_col_seat">Siège</string>
+    <string name="summary_col_points">Points</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Total points</string>
+    <string name="summary_col_total_score">Total score</string>
+    <string name="summary_col_place">Place</string>
 </resources>

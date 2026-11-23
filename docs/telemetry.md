@@ -37,7 +37,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 | Event | When | Parameters |
 | --- | --- | --- |
-| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer`. The Timer without a tournament is `IndependentTimer` |
+| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer`. The Timer without a tournament is `IndependentTimer`; the window that projects the QR of a tournament is `TableQrProjection` |
 | `dialog_view` | A dialog opens | `dialog`, `screen` |
 | `tab_view` | A tab is selected | `tab`, `screen` |
 | `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |
@@ -55,6 +55,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
 | `round_clock` | A button of the Timer (admin app) | `action`: `started` (the gong), `paused`, `resumed`, `started_ago` ("The round started N minutes ago"), `time_set`, `reset`, `stopped` (the round ends before its time). `kind`: `tournament` or `independent`. The confirmation of a reset of a round with hands is not counted again |
 | `table_reminder` | The reminder of the own table (player app) | `action`: `shown` (once for each round), `opened` (the button to the table), `closed`, `button` (the floating "Go to my table" button while the round plays). `kind`: `starts_soon`, `awaiting_gong` or `playing` |
+| `results_shared` | The results of a player are shared as an image: Results tab of a player (My results for the own player) (player app). Android opens the share sheet, the web the share sheet of the browser or a download, the desktop a save dialog | none |
 | `support_sent` | The support form sent a message (sign-in of both apps) | none |
 | `link_opened` | A page, a map or an email outside the app opens (both apps) | `kind`: `privacy_policy`, `versions`, `screenshot_gallery`, `api_docs`, `architecture_docs`, `staging` (DEV menu), `green_book`, `venue_map`, `venue_directions`, `organizer_email`, `combinations_source`. The address is never sent |
 | `profile_updated` | The user changed the own profile (both apps). Only a change that worked | `action`: `alias`, `photo_updated`, `photo_removed`, `account_deleted` |
@@ -73,7 +74,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | Tournament | `tournament_renamed`, `tournament_settings_updated`, `table_reset` |
 | Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
-| Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
+| Exports | `id_cards_exported`, `id_list_exported`, `table_qr_exported`, `id_card_proof_created`, `ema_report_exported` |
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_deleted`, `account_photo_updated`, `account_photo_removed`, `account_removed_from_organizations`, `account_request_approved`, `account_request_rejected`, `account_permissions_updated` |
 | Roles | `role_created`, `role_updated`, `role_deleted` |
 | Organizations | `organization_created`, `organization_updated`, `organization_deleted` |

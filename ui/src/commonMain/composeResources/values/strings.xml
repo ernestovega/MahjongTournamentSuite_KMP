@@ -528,6 +528,7 @@
     <string name="app_chooser_title">What do you want to open?</string>
     <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
     <string name="top_bar_activity">Activity</string>
+    <string name="top_bar_more">More</string>
     <string name="design_system">Design system</string>
     <string name="rounds_title">By round</string>
     <string name="rounds_view_place">Ranking place</string>
@@ -688,4 +689,12 @@ The first one that works wins</string>
     <string name="draw_blocks_flow_swaps">Draw by swaps</string>
     <string name="draw_blocks_flow_swaps_note">Nobody meets a rival more times than blocks so far</string>
     <string name="draw_blocks_flow_left">Rounds left?</string>
+    <string name="summary_col_round">Round</string>
+    <string name="summary_col_table">Table</string>
+    <string name="summary_col_seat">Seat</string>
+    <string name="summary_col_points">Points</string>
+    <string name="summary_col_score">Score</string>
+    <string name="summary_col_total_points">Total points</string>
+    <string name="summary_col_total_score">Total score</string>
+    <string name="summary_col_place">Rank</string>
 </resources>

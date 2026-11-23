@@ -24,12 +24,30 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- The QR of a tournament opens the app when it is installed (App Links). docs/table-qr.md. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="mts.mahjongmadrid.com" />
+                <data android:pathPattern="/.*/my-table" />
+                <data android:pathPattern="/.*/table/.*" />
+                <data android:pathPattern="/.*/mesa/.*" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".TimerActivity"
             android:documentLaunchMode="always"
             android:exported="false"
             android:taskAffinity="com.etologic.mahjongtournamentsuite.timer" />
+        <activity
+            android:name=".TableQrActivity"
+            android:documentLaunchMode="always"
+            android:exported="false"
+            android:taskAffinity="com.etologic.mahjongtournamentsuite.tableqr" />
         <activity
             android:name=".RankingsActivity"
             android:documentLaunchMode="always"

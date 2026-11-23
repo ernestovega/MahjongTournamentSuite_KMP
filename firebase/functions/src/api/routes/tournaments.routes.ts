@@ -22,10 +22,17 @@ import {
 import {
   buildIdCardProofPdf,
   generateTournamentIdCards,
+  readIdCardStaffNames,
+  saveIdCardStaffNames,
   idCardSheetGrid,
+  MAX_EXTRA_SHEETS,
+  MAX_STAFF_NAME_LENGTH,
+  MAX_STAFF_NAMES,
   type IdCardSheetOptions,
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
+import { listIdCardStaffCandidates } from "../../services/idCardStaffCandidates";
+import { generateTableQrCodes, readCardsPerSheet } from "../../services/tableQrService";
 import { generateEmaReport } from "../../services/emaReportService";
 import { readSubstitution } from "../../services/playerSubstitution";
 import {
@@ -76,6 +83,25 @@ import { changePlayerCount } from "../../services/playerCountChange";
 import { defaultSlugs, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
+function readExtraSheets(value: unknown, kind: string): number {
+  const sheets = Number(value ?? 0);
+  if (!Number.isInteger(sheets) || sheets < 0 || sheets > MAX_EXTRA_SHEETS) {
+    throw badRequest(`Invalid number of ${kind} sheets`, { value });
+  }
+  return sheets;
+}
+
+function readStaffNames(value: unknown): string[] {
+  const values = value == null ? [] : Array.isArray(value) ? value : [value];
+  if (values.length > MAX_STAFF_NAMES) throw badRequest("Too many staff names", { count: values.length });
+  return values.map((name) => {
+    if (typeof name !== "string" || name.trim().length > MAX_STAFF_NAME_LENGTH) {
+      throw badRequest("Invalid staff name", { value: name });
+    }
+    return name.trim();
+  });
+}
+
 function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | undefined {
   if (query.layout !== "sheet") return undefined;
   const cardsPerSheet = Number(query.cardsPerSheet ?? 10);
@@ -93,6 +119,11 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
     landscape,
     doubleSided: query.doubleSided !== "false",
     cutMarks: query.cutMarks !== "false",
+    backs: query.backs !== "false",
+    backSameAsFront: query.backSameAsFront === "true",
+    substituteSheets: readExtraSheets(query.substituteSheets, "substitute"),
+    staffSheets: readExtraSheets(query.staffSheets, "staff"),
+    staffNames: readStaffNames(query.staffName),
   };
   if (idCardSheetGrid(options) == null) throw badRequest("The card size does not fit on an A4 sheet", { scalePercent });
   return options;
@@ -507,6 +538,48 @@ export function tournamentsRouter(): Router {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-id-cards.pdf"`);
       res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The cards of the tables with the QR code of the tournament, to print: 1, 2 or 4 per sheet (perSheet). See docs/table-qr.md.
+  router.get("/:tournamentId/table-qr-codes", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      const pdf = await generateTableQrCodes(
+        pathParam(req, "tournamentId"),
+        readCardsPerSheet(req.query.perSheet),
+      );
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-table-qr-codes.pdf"`);
+      res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.get("/:tournamentId/id-cards/staff-names", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      res.status(200).json({ names: await readIdCardStaffNames(pathParam(req, "tournamentId")) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The accounts of the app, by name only, to choose the staff of the ID cards.
+  router.get("/:tournamentId/id-cards/staff-candidates", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      res.status(200).json({ candidates: await listIdCardStaffCandidates(pathParam(req, "tournamentId")) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // Whoever creates the ID cards keeps the names of the staff for the next time.
+  router.put("/:tournamentId/id-cards/staff-names", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      const names = readStaffNames(Array.isArray(req.body?.names) ? req.body.names : null);
+      res.status(200).json({ names: await saveIdCardStaffNames(pathParam(req, "tournamentId"), names) });
     } catch (e) {
       next(e);
     }

@@ -98,4 +98,13 @@ class IdCardSheetLayoutTest {
             assertEquals(count, backCells.size, "back overlap $layout")
         }
     }
+
+    @Test
+    fun staffNamesThatDoNotFitAddSheets() {
+        val layout = IdCardSheetLayout(staffSheets = 1, staffNames = listOf(" Ana ", "", "Luis", "Eva"))
+        assertEquals(listOf("Ana", "Luis", "Eva"), layout.cleanStaffNames())
+        assertEquals(1, layout.printedStaffSheets(4))
+        assertEquals(2, layout.printedStaffSheets(2))
+        assertEquals(0, IdCardSheetLayout().printedStaffSheets(10))
+    }
 }

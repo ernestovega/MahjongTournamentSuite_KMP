@@ -2,16 +2,22 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.Dp
@@ -103,6 +109,33 @@ private fun FlagBox(
 fun PlayerFlag(country: String?, modifier: Modifier = Modifier, width: Dp = 24.dp) {
     Box(modifier.width(width), contentAlignment = Alignment.Center) {
         if (country != null) CountryFlag(code = country, width = width - 4.dp)
+    }
+}
+
+/**
+ * The flag of a player with the number of the player in the tournament on its right, as "#11". The number goes beside
+ * the flag and not before the name, so the name keeps its space.
+ */
+@Composable
+fun PlayerFlagAndNumber(
+    country: String?,
+    number: Int?,
+    modifier: Modifier = Modifier,
+    flagWidth: Dp = 22.dp,
+    style: TextStyle = MaterialTheme.typography.labelLarge,
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        PlayerFlag(country, width = flagWidth)
+        if (number != null) {
+            Text(
+                playerNumber(number),
+                style = style,
+                fontWeight = FontWeight.Bold,
+                // The color of the text around it, a little softer, so it reads on a card and on a colored choice.
+                color = LocalContentColor.current.copy(alpha = 0.75f),
+                maxLines = 1,
+            )
+        }
     }
 }
 

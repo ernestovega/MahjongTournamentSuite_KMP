@@ -580,6 +580,13 @@ class TournamentScreenUiTest {
             loadScreen()
             server.calls.clear()
 
+            // EMA report is in the "More" menu of the top bar, or in the three-dots menu on a narrow window.
+            if (onAllNodes(hasText("More") or hasContentDescription("More")).fetchSemanticsNodes().isNotEmpty()) {
+                onNode(hasText("More") or hasContentDescription("More")).performClick()
+            } else {
+                onNode(hasContentDescription("Menu")).performClick()
+            }
+            waitForIdle()
             onNodeWithText("EMA report").performClick()
             waitForIdle()
 
