@@ -1141,14 +1141,15 @@ El número de jugadores solo se puede cambiar antes de la primera mano.</string>
     <string name="pc_locked_pending">El torneo aún no tiene sorteo.
 Cambia las plazas en Inscripciones.</string>
     <string name="activity_action_tournament_player_count">Cambió el número de jugadores</string>
-    <string name="table_qr_top_bar">Códigos QR de las mesas</string>
-    <string name="table_qr_button">QR de mesas</string>
-    <string name="table_qr_info">Pon el código de cada mesa en esa mesa. Quien lo escanea ve la mesa en la ronda en juego, con sus manos y resultados.\nToca un código para mostrarlo en grande en una pantalla, o descarga el PDF para imprimir las tarjetas de todas las mesas.</string>
+    <string name="table_qr_top_bar">QR del torneo</string>
+    <string name="table_qr_button">QR del torneo</string>
+    <string name="table_qr_info">Un solo código para todo el torneo. Quien lo escanea ve sus mesas en la app, con su mesa en juego, o la próxima, abierta.\nImprime una tarjeta para cada mesa, con su número en grande, o muestra el código en una pantalla.</string>
+    <string name="table_qr_project">Mostrar en ventana aparte</string>
+    <string name="table_qr_print_title">Imprimir las tarjetas de las mesas</string>
+    <string name="table_qr_per_sheet">Tarjetas por folio</string>
+    <string name="table_qr_print_info">Una tarjeta por mesa (%1$d mesas): el número de la mesa en grande y el código del torneo.</string>
     <string name="table_qr_download">Descargar PDF para imprimir</string>
-    <string name="table_qr_save">Guardar los códigos QR de las mesas</string>
-    <string name="table_qr_all">Todas las mesas</string>
-    <string name="table_qr_previous">Mesa anterior</string>
-    <string name="table_qr_next">Mesa siguiente</string>
-    <string name="table_qr_no_tables">El torneo aún no tiene mesas.\nLos códigos aparecen después del sorteo.</string>
-    <string name="table_qr_table">Mesa %1$d</string>
+    <string name="table_qr_save">Guardar las tarjetas de las mesas</string>
+    <string name="table_qr_no_tables">El torneo aún no tiene mesas.\nLas tarjetas se pueden imprimir después del sorteo.</string>
+    <string name="table_qr_hint">Escanea el código para ir a tu mesa.</string>
 </resources>

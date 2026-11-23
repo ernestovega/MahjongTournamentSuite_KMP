@@ -23,6 +23,12 @@ sealed class StandaloneWindow {
         override val id: String = UUID.randomUUID().toString(),
     ) : StandaloneWindow()
 
+    data class TableQr(
+        val tournamentName: String,
+        val link: String,
+        override val id: String = UUID.randomUUID().toString(),
+    ) : StandaloneWindow()
+
     data class Rankings(
         val tournamentId: String,
         override val id: String = UUID.randomUUID().toString(),
@@ -35,6 +41,10 @@ object StandaloneWindows {
 
     fun openTimer(tournamentId: String?, initialRound: Int) {
         windows.add(StandaloneWindow.Timer(tournamentId = tournamentId, initialRound = initialRound))
+    }
+
+    fun openTableQr(tournamentName: String, link: String) {
+        windows.add(StandaloneWindow.TableQr(tournamentName = tournamentName, link = link))
     }
 
     fun openRankings(
@@ -59,6 +69,17 @@ object StandaloneWindows {
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
                         TimerApp(tournamentId = w.tournamentId, initialRound = w.initialRound)
+                    }
+                }
+
+                is StandaloneWindow.TableQr -> {
+                    Window(
+                        title = w.tournamentName,
+                        icon = painterResource(Res.drawable.app_logo),
+                        onCloseRequest = { windows.removeAll { it.id == w.id } },
+                        state = rememberWindowState(placement = WindowPlacement.Maximized),
+                    ) {
+                        TableQrApp(tournamentName = w.tournamentName, link = w.link)
                     }
                 }
 

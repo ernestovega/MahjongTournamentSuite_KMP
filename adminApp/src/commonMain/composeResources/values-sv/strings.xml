@@ -1141,14 +1141,15 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="pc_locked_pending">Turneringen har ingen lottning än.
 Ändra platserna under Anmälningar.</string>
     <string name="activity_action_tournament_player_count">Ändrade antalet spelare</string>
-    <string name="table_qr_top_bar">QR-koder för borden</string>
-    <string name="table_qr_button">Bords-QR</string>
-    <string name="table_qr_info">Lägg koden för varje bord på det bordet. Den som skannar den ser bordet i rundan som spelas, med dess händer och resultat.\nTryck på en kod för att visa den stort på en skärm, eller ladda ner PDF:en för att skriva ut korten för alla bord.</string>
+    <string name="table_qr_top_bar">Turnerings-QR</string>
+    <string name="table_qr_button">Turnerings-QR</string>
+    <string name="table_qr_info">En enda kod för hela turneringen. Den som skannar den ser sina bord i appen, med sitt pågående eller nästa bord öppet.\nSkriv ut ett kort för varje bord, med numret stort, eller visa koden på en skärm.</string>
+    <string name="table_qr_project">Visa i ett eget fönster</string>
+    <string name="table_qr_print_title">Skriv ut bordens kort</string>
+    <string name="table_qr_per_sheet">Kort per ark</string>
+    <string name="table_qr_print_info">Ett kort per bord (%1$d bord): bordets nummer stort och turneringens kod.</string>
     <string name="table_qr_download">Ladda ner PDF för utskrift</string>
-    <string name="table_qr_save">Spara QR-koderna för borden</string>
-    <string name="table_qr_all">Alla bord</string>
-    <string name="table_qr_previous">Föregående bord</string>
-    <string name="table_qr_next">Nästa bord</string>
-    <string name="table_qr_no_tables">Turneringen har inga bord än.\nKoderna visas efter lottningen.</string>
-    <string name="table_qr_table">Bord %1$d</string>
+    <string name="table_qr_save">Spara bordens kort</string>
+    <string name="table_qr_no_tables">Turneringen har inga bord än.\nKorten kan skrivas ut efter lottningen.</string>
+    <string name="table_qr_hint">Skanna koden för att komma till ditt bord.</string>
 </resources>

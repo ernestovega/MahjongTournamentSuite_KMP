@@ -24,6 +24,13 @@ actual fun openRankings(
     }
 }
 
+actual fun openTableQrWindow(tournamentName: String, link: String) {
+    startStandaloneActivity(TABLE_QR_ACTIVITY) {
+        putExtra(EXTRA_TOURNAMENT_NAME, tournamentName)
+        putExtra(EXTRA_LINK, link)
+    }
+}
+
 private fun startStandaloneActivity(
     className: String,
     configure: Intent.() -> Unit = {},
@@ -40,5 +47,8 @@ private fun startStandaloneActivity(
 
 private const val TIMER_ACTIVITY = "com.etologic.mahjongtournamentsuite.TimerActivity"
 private const val RANKINGS_ACTIVITY = "com.etologic.mahjongtournamentsuite.RankingsActivity"
+private const val TABLE_QR_ACTIVITY = "com.etologic.mahjongtournamentsuite.TableQrActivity"
+private const val EXTRA_TOURNAMENT_NAME = "tournamentName"
+private const val EXTRA_LINK = "link"
 private const val EXTRA_INITIAL_ROUND = "initialRound"
 private const val EXTRA_TOURNAMENT_ID = "tournamentId"

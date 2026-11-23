@@ -335,8 +335,8 @@ ROUTES = [
     ("post", "/tournaments/id-card-preview", "Exportaciones", "editor", "Vista previa de una acreditación", "Igual que id-card-proof.", [],
      "IdCardProofRequest", PDF),
     ("get", "/tournaments/{tournamentId}/id-list", "Exportaciones", "tEditor", "Excel con la lista de jugadores", "", [T], None, XLSX),
-    ("get", "/tournaments/{tournamentId}/table-qr-codes", "Exportaciones", "tEditor", "PDF con los códigos QR de las mesas",
-     "Cuatro tarjetas por A4, en el idioma de Accept-Language. Ver docs/table-qr.md.", [T], None, PDF),
+    ("get", "/tournaments/{tournamentId}/table-qr-codes", "Exportaciones", "tEditor", "PDF con las tarjetas de las mesas",
+     "Una tarjeta por mesa con su número en grande y el QR del torneo; `?perSheet=1|2|4` tarjetas por A4 (4 por defecto), en el idioma de Accept-Language. Ver docs/table-qr.md.", [T], None, PDF),
     ("post", "/tournaments/{tournamentId}/ema-report", "Exportaciones", "tEditor", "Excel de resultados para la EMA",
      "La app envía la clasificación final.", [T], "EmaReportRequest", XLSX),
 

@@ -468,9 +468,9 @@ class FunctionsBackendApi(
         return response.body()
     }
 
-    /** The PDF with the QR codes of the tables, in the language of the app (Accept-Language). */
-    suspend fun generateTableQrCodes(idToken: String, tournamentId: String): ByteArray {
-        val response = httpClient.get(url("/tournaments/$tournamentId/table-qr-codes")) {
+    /** The PDF with the cards of the tables, [perSheet] per A4, in the language of the app (Accept-Language). */
+    suspend fun generateTableQrCodes(idToken: String, tournamentId: String, perSheet: Int): ByteArray {
+        val response = httpClient.get(url("/tournaments/$tournamentId/table-qr-codes?perSheet=$perSheet")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 180_000 }

@@ -28,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.TableQrRoute
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrScreen
 import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
@@ -116,6 +117,18 @@ fun RankingApp(tournamentId: String) {
                 MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                     TrackedScreen("Rankings") { RankingStandaloneScreen(tournamentId) }
                 }
+            }
+        }
+    }
+}
+
+/** The QR code of a tournament in a window of its own, to project it. It needs no data: the window gets the link. */
+@Composable
+fun TableQrApp(tournamentName: String, link: String) {
+    AppWithModules {
+        ProvideAppLanguage {
+            MtsTheme(useDarkTheme = false) {
+                TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link) }
             }
         }
     }

@@ -1078,7 +1078,7 @@ private fun Duration.toAgeText(): UiText {
 internal val TournamentColumnWidth = 720.dp
 
 @Composable
-fun TournamentScreen(navController: NavHostController, tournamentId: String) {
+fun TournamentScreen(navController: NavHostController, tournamentId: String, myTables: Boolean = false) {
     val (view, message) = rememberTournamentView(tournamentId)
     val session = koinInject<PlayerSessionPresenter>()
     // Null until the session is known, so a guest never sees the empty texts of an account for a moment.
@@ -1103,6 +1103,15 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val teamOpen = shownTab == MainTab.TEAMS && selectedTeam != null
     PlatformBackHandler(enabled = teamOpen) { selectedTeam = null }
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
+    // The QR of the tournament opens My tables one time. Later the player moves freely.
+    var myTablesOpened by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(myTables) {
+        if (myTables && !myTablesOpened) {
+            tab = MainTab.TABLES
+            chosenTablesTab = 0
+            myTablesOpened = true
+        }
+    }
     // The values are ids: 0 is My tables, 1 is All tables and 2 is Team tables (only in a tournament with teams).
     val tablesTabs = if (view?.tournament?.isTeams == true) listOf(0, 2, 1) else listOf(0, 1)
     val tablesTabId = chosenTablesTab.takeIf { it in tablesTabs } ?: if (view?.mySlotId == null) 1 else 0

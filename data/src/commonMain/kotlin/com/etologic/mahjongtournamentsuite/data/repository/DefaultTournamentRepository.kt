@@ -271,12 +271,12 @@ class DefaultTournamentRepository(
         load = { token -> backendApi.generateTournamentIdList(token, tournamentId) },
     )
 
-    override suspend fun generateTableQrCodes(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
+    override suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> = cachedGeneratedFile(
         tournamentId = tournamentId,
         // The texts of the cards follow the language of the app.
-        cacheSuffix = "table-qr-${currentLanguageTag().orEmpty()}",
+        cacheSuffix = "table-qr-$perSheet-${currentLanguageTag().orEmpty()}",
         action = "Generating the QR codes of the tables",
-        load = { token -> backendApi.generateTableQrCodes(token, tournamentId) },
+        load = { token -> backendApi.generateTableQrCodes(token, tournamentId, perSheet) },
     )
 
     private suspend fun cachedGeneratedFile(

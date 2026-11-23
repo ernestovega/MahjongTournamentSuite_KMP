@@ -1155,14 +1155,15 @@
     <string name="pc_locked_pending">У турнира ещё нет жеребьёвки.
 Измени число мест в разделе «Регистрация».</string>
     <string name="activity_action_tournament_player_count">Изменил число игроков</string>
-    <string name="table_qr_top_bar">QR-коды столов</string>
-    <string name="table_qr_button">QR столов</string>
-    <string name="table_qr_info">Положите код каждого стола на этот стол. Игрок, который его сканирует, видит стол в текущем раунде, с его руками и результатами.\nНажмите на код, чтобы показать его крупно на экране, или скачайте PDF, чтобы напечатать карточки всех столов.</string>
+    <string name="table_qr_top_bar">QR турнира</string>
+    <string name="table_qr_button">QR турнира</string>
+    <string name="table_qr_info">Один код на весь турнир. Отсканировав его, игрок видит свои столы в приложении, и сразу открывается его текущий или следующий стол.\nНапечатайте карточку для каждого стола с крупным номером или покажите код на экране.</string>
+    <string name="table_qr_project">Показать в отдельном окне</string>
+    <string name="table_qr_print_title">Печать карточек столов</string>
+    <string name="table_qr_per_sheet">Карточек на лист</string>
+    <string name="table_qr_print_info">Одна карточка на стол (столов: %1$d): крупный номер стола и код турнира.</string>
     <string name="table_qr_download">Скачать PDF для печати</string>
-    <string name="table_qr_save">Сохранить QR-коды столов</string>
-    <string name="table_qr_all">Все столы</string>
-    <string name="table_qr_previous">Предыдущий стол</string>
-    <string name="table_qr_next">Следующий стол</string>
-    <string name="table_qr_no_tables">У турнира ещё нет столов.\nКоды появятся после жеребьёвки.</string>
-    <string name="table_qr_table">Стол %1$d</string>
+    <string name="table_qr_save">Сохранить карточки столов</string>
+    <string name="table_qr_no_tables">В турнире ещё нет столов.\nКарточки можно напечатать после жеребьёвки.</string>
+    <string name="table_qr_hint">Отсканируйте код, чтобы перейти к своему столу.</string>
 </resources>

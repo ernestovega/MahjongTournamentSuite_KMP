@@ -77,8 +77,8 @@ interface TournamentRepository {
 
     suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray>
 
-    /** A PDF with the QR codes of the physical tables, to print. See docs/table-qr.md. */
-    suspend fun generateTableQrCodes(tournamentId: String): AppResult<ByteArray> =
+    /** A PDF with a card for each physical table (its number and the QR of the tournament), [perSheet] cards per A4. See docs/table-qr.md. */
+    suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> =
         AppResult.Failure(AppError.Unexpected("The QR codes of the tables are not available"))
 
     suspend fun generateEmaReport(

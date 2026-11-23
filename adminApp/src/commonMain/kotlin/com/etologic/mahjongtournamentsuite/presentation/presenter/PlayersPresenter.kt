@@ -51,7 +51,7 @@ class PlayersPresenter(
         .trackAction(telemetry, TelemetryAction.ID_LIST_EXPORTED)
 
     /** The PDF with the QR codes of the physical tables (docs/table-qr.md). */
-    suspend fun generateTableQr(tournamentId: String): AppResult<ByteArray> = tournamentRepository.generateTableQrCodes(tournamentId)
+    suspend fun generateTableQr(tournamentId: String, perSheet: Int): AppResult<ByteArray> = tournamentRepository.generateTableQrCodes(tournamentId, perSheet)
         .trackAction(telemetry, TelemetryAction.TABLE_QR_EXPORTED)
 
     /** Invites the players with no account and resets the password of the others. */

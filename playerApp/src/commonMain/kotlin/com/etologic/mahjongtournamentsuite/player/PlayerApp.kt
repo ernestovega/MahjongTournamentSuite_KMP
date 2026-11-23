@@ -66,7 +66,11 @@ data class SupportRoute(val email: String = "")
 data object TournamentsRoute
 
 @Serializable
-data class TournamentRoute(val tournamentId: String)
+data class TournamentRoute(
+    val tournamentId: String,
+    /** True opens the tables of the player (My tables), as the QR of the tournament does. */
+    val myTables: Boolean = false,
+)
 
 /** The screen of one player of a tournament. [tab] is a [PlayerTab]: the tables or the statistics of the player. */
 @Serializable
@@ -218,7 +222,10 @@ private fun PlayerNavHost(
             )
         }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
-        screen<TournamentRoute> { entry -> TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId) }
+        screen<TournamentRoute> { entry ->
+            val route = entry.toRoute<TournamentRoute>()
+            TournamentScreen(navController, route.tournamentId, myTables = route.myTables)
+        }
         screen<TournamentPlayerRoute> { entry -> TournamentPlayerScreen(navController, entry.toRoute<TournamentPlayerRoute>()) }
         screen<TableRoute> { entry ->
             val route = entry.toRoute<TableRoute>()

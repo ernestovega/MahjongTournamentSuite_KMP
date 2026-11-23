@@ -1141,14 +1141,15 @@ The number of players can only change before the first hand.</string>
     <string name="pc_locked_pending">The tournament has no draw yet.
 Change the places in Registrations.</string>
     <string name="activity_action_tournament_player_count">Changed the number of players</string>
-    <string name="table_qr_top_bar">Table QR codes</string>
-    <string name="table_qr_button">Table QR</string>
-    <string name="table_qr_info">Put the code of each table on that table. A player who scans it sees the table in the round in play, with its hands and results.\nTouch a code to show it in big on a screen, or download the PDF to print the cards of all the tables.</string>
+    <string name="table_qr_top_bar">Tournament QR</string>
+    <string name="table_qr_button">Tournament QR</string>
+    <string name="table_qr_info">One code for the whole tournament. A player who scans it sees their tables in the app, with their table in play, or the next one, open.\nPrint a card for each table, with its number in big, or show the code on a screen.</string>
+    <string name="table_qr_project">Show in a separate window</string>
+    <string name="table_qr_print_title">Print the cards of the tables</string>
+    <string name="table_qr_per_sheet">Cards per sheet</string>
+    <string name="table_qr_print_info">One card for each table (%1$d tables): the number of the table in big and the code of the tournament.</string>
     <string name="table_qr_download">Download PDF to print</string>
-    <string name="table_qr_save">Save the QR codes of the tables</string>
-    <string name="table_qr_all">All tables</string>
-    <string name="table_qr_previous">Previous table</string>
-    <string name="table_qr_next">Next table</string>
-    <string name="table_qr_no_tables">The tournament has no tables yet.\nThe codes appear after the draw.</string>
-    <string name="table_qr_table">Table %1$d</string>
+    <string name="table_qr_save">Save the cards of the tables</string>
+    <string name="table_qr_no_tables">The tournament has no tables yet.\nThe cards can be printed after the draw.</string>
+    <string name="table_qr_hint">Scan the code to go to your table.</string>
 </resources>

@@ -1141,14 +1141,15 @@ Le nombre de joueurs ne peut changer qu'avant la première main.</string>
     <string name="pc_locked_pending">Le tournoi n'a pas encore de tirage.
 Change les places dans Inscriptions.</string>
     <string name="activity_action_tournament_player_count">A changé le nombre de joueurs</string>
-    <string name="table_qr_top_bar">Codes QR des tables</string>
-    <string name="table_qr_button">QR des tables</string>
-    <string name="table_qr_info">Posez le code de chaque table sur cette table. Le joueur qui le scanne voit la table dans le tour en cours, avec ses mains et ses résultats.\nTouchez un code pour l'afficher en grand sur un écran, ou téléchargez le PDF pour imprimer les cartes de toutes les tables.</string>
+    <string name="table_qr_top_bar">QR du tournoi</string>
+    <string name="table_qr_button">QR du tournoi</string>
+    <string name="table_qr_info">Un seul code pour tout le tournoi. Qui le scanne voit ses tables dans l'app, avec sa table en cours, ou la suivante, ouverte.\nImprime une carte pour chaque table, avec son numéro en grand, ou affiche le code sur un écran.</string>
+    <string name="table_qr_project">Afficher dans une fenêtre à part</string>
+    <string name="table_qr_print_title">Imprimer les cartes des tables</string>
+    <string name="table_qr_per_sheet">Cartes par feuille</string>
+    <string name="table_qr_print_info">Une carte par table (%1$d tables) : le numéro de la table en grand et le code du tournoi.</string>
     <string name="table_qr_download">Télécharger le PDF à imprimer</string>
-    <string name="table_qr_save">Enregistrer les codes QR des tables</string>
-    <string name="table_qr_all">Toutes les tables</string>
-    <string name="table_qr_previous">Table précédente</string>
-    <string name="table_qr_next">Table suivante</string>
-    <string name="table_qr_no_tables">Le tournoi n'a pas encore de tables.\nLes codes apparaissent après le tirage.</string>
-    <string name="table_qr_table">Table %1$d</string>
+    <string name="table_qr_save">Enregistrer les cartes des tables</string>
+    <string name="table_qr_no_tables">Le tournoi n'a pas encore de tables.\nLes cartes peuvent être imprimées après le tirage.</string>
+    <string name="table_qr_hint">Scanne le code pour aller à ta table.</string>
 </resources>

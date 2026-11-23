@@ -21,3 +21,12 @@ actual fun openRankings(
         "_blank",
     )
 }
+
+private external fun encodeURIComponent(value: String): String
+
+actual fun openTableQrWindow(tournamentName: String, link: String) {
+    window.open(
+        "${window.location.pathname}?standalone=table-qr&name=${encodeURIComponent(tournamentName)}&link=${encodeURIComponent(link)}",
+        "_blank",
+    )
+}

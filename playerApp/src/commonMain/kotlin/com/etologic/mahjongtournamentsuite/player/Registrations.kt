@@ -56,7 +56,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.REGISTRATION_TEAM_SIZE
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterRequest
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterResult
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
-import com.etologic.mahjongtournamentsuite.domain.model.TABLE_PATH_WORD
+import com.etologic.mahjongtournamentsuite.domain.model.MY_TABLE_PATH_WORD
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
@@ -153,14 +153,14 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedText
  * A link of the web that opens a tournament: `/<slug>` (the public link, the registrations before the draw) or
  * `/registration?t=<tournament>&k=<token>` (the link of the emails, which also confirms the email).
  * The old links `/inscripcion/<slug>` and `/inscripcion/gestionar?t=&k=` still work.
- * The QR of a physical table adds `/table/<n>`: `/<slug>/table/5`, or `/t/<id>/table/5` for a tournament without a
- * public link. Its [tableId] opens that table in the round in play. See tableQrLink and docs/table-qr.md.
+ * The QR of a tournament adds `/my-table`: `/<slug>/my-table`, or `/t/<id>/my-table` for a tournament without a
+ * public link. With [myTable] the app opens My tables and the table of the player in play or next. See docs/table-qr.md.
  */
 data class RegistrationLink(
     val slug: String? = null,
     val tournamentId: String? = null,
     val token: String? = null,
-    val tableId: Int? = null,
+    val myTable: Boolean = false,
 )
 
 /**
@@ -171,21 +171,28 @@ private val SitePaths = setOf("admin", "api", "api-docs", "version", "privacy", 
 
 private val SlugPattern = Regex("^[a-z0-9-]{3,40}$")
 
-/** The word before the number of a table in its QR link. `mesa` also works, for a link typed by hand. */
-private val TablePathWords = setOf(TABLE_PATH_WORD, "mesa")
+/** The last segment of the QR link of a tournament. `mesa` also works, for a link typed by hand. */
+private val MyTableWords = setOf(MY_TABLE_PATH_WORD, "mesa")
 
-/** The link of a QR of a physical table, from the segments of its path: `<slug>/table/<n>` or `t/<id>/table/<n>`. */
-private fun tableLinkOf(parts: List<String>): RegistrationLink? {
-    val tableId = parts.last().toIntOrNull()?.takeIf { it in 1..MAX_TABLE_NUMBER } ?: return null
+/**
+ * The QR link of a tournament, from the segments of its path: `<slug>/my-table` or `t/<id>/my-table`. The first links
+ * had a table number, `<slug>/table/<n>`: they open the same, without the number.
+ */
+private fun myTableLinkOf(parts: List<String>): RegistrationLink? {
+    val withNumber = parts.size >= 3 && parts[parts.size - 2].lowercase() in setOf("table", "mesa") && parts.last().toIntOrNull() != null
+    val tournamentParts = when {
+        withNumber -> parts.dropLast(2)
+        parts.last().lowercase() in MyTableWords -> parts.dropLast(1)
+        else -> return null
+    }
     return when {
-        parts.size == 4 && parts[0] == "t" && parts[1].isNotBlank() -> RegistrationLink(tournamentId = parts[1], tableId = tableId)
-        parts.size == 3 && parts[0] !in SitePaths -> parts[0].lowercase().takeIf { SlugPattern.matches(it) }
-            ?.let { RegistrationLink(slug = it, tableId = tableId) }
+        tournamentParts.size == 2 && tournamentParts[0] == "t" && tournamentParts[1].isNotBlank() ->
+            RegistrationLink(tournamentId = tournamentParts[1], myTable = true)
+        tournamentParts.size == 1 && tournamentParts[0] !in SitePaths ->
+            tournamentParts[0].lowercase().takeIf { SlugPattern.matches(it) }?.let { RegistrationLink(slug = it, myTable = true) }
         else -> null
     }
 }
-
-private const val MAX_TABLE_NUMBER = 999
 
 /**
  * The registration link of an address of the web, or null. [path] is the path without the query, such as `/6thmmc`,
@@ -193,7 +200,7 @@ private const val MAX_TABLE_NUMBER = 999
  */
 fun registrationLinkOf(path: String, query: Map<String, String>): RegistrationLink? {
     val parts = path.trim('/').split('/').filter { it.isNotEmpty() }
-    if (parts.size >= 3 && parts[parts.size - 2].lowercase() in TablePathWords) return tableLinkOf(parts)
+    if (parts.size >= 2) myTableLinkOf(parts)?.let { return it }
     val manage = (parts.size == 1 && parts[0] == "registration") || (parts.size == 2 && parts[0] == "inscripcion" && parts[1] == "gestionar")
     if (manage) {
         val tournamentId = query["t"]?.takeIf { it.isNotBlank() } ?: return null
@@ -793,9 +800,9 @@ internal fun rememberRegistrationLinkOpener(navController: NavHostController): s
             is AppResult.Failure -> link.tournamentId
         }
         if (tournamentId != null) {
-            navController.navigate(TournamentRoute(tournamentId))
-            // The QR of a physical table opens that table over the tournament, so Back shows the tournament.
-            link.tableId?.let { tables.find(tournamentId, it) }?.let { navController.navigate(it) }
+            navController.navigate(TournamentRoute(tournamentId, myTables = link.myTable))
+            // The QR of the tournament opens the table of the player over My tables, so Back shows them.
+            if (link.myTable) tables.find(tournamentId)?.let { navController.navigate(it) }
         }
     }
 }

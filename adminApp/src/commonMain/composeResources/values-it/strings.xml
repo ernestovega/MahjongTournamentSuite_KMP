@@ -1141,14 +1141,15 @@ Il numero di giocatori si può cambiare solo prima della prima mano.</string>
     <string name="pc_locked_pending">Il torneo non ha ancora un sorteggio.
 Cambia i posti in Iscrizioni.</string>
     <string name="activity_action_tournament_player_count">Ha cambiato il numero di giocatori</string>
-    <string name="table_qr_top_bar">Codici QR dei tavoli</string>
-    <string name="table_qr_button">QR dei tavoli</string>
-    <string name="table_qr_info">Metti il codice di ogni tavolo su quel tavolo. Chi lo scansiona vede il tavolo nel turno in corso, con le sue mani e i risultati.\nTocca un codice per mostrarlo in grande su uno schermo, oppure scarica il PDF per stampare le schede di tutti i tavoli.</string>
+    <string name="table_qr_top_bar">QR del torneo</string>
+    <string name="table_qr_button">QR del torneo</string>
+    <string name="table_qr_info">Un solo codice per tutto il torneo. Chi lo scansiona vede i suoi tavoli nell'app, con il tavolo in gioco, o il prossimo, aperto.\nStampa una scheda per ogni tavolo, con il suo numero in grande, o mostra il codice su uno schermo.</string>
+    <string name="table_qr_project">Mostra in una finestra a parte</string>
+    <string name="table_qr_print_title">Stampa le schede dei tavoli</string>
+    <string name="table_qr_per_sheet">Schede per foglio</string>
+    <string name="table_qr_print_info">Una scheda per tavolo (%1$d tavoli): il numero del tavolo in grande e il codice del torneo.</string>
     <string name="table_qr_download">Scarica il PDF da stampare</string>
-    <string name="table_qr_save">Salva i codici QR dei tavoli</string>
-    <string name="table_qr_all">Tutti i tavoli</string>
-    <string name="table_qr_previous">Tavolo precedente</string>
-    <string name="table_qr_next">Tavolo successivo</string>
-    <string name="table_qr_no_tables">Il torneo non ha ancora tavoli.\nI codici compaiono dopo il sorteggio.</string>
-    <string name="table_qr_table">Tavolo %1$d</string>
+    <string name="table_qr_save">Salva le schede dei tavoli</string>
+    <string name="table_qr_no_tables">Il torneo non ha ancora tavoli.\nLe schede si possono stampare dopo il sorteggio.</string>
+    <string name="table_qr_hint">Scansiona il codice per andare al tuo tavolo.</string>
 </resources>
