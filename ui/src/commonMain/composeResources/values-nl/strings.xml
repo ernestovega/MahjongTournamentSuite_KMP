@@ -693,4 +693,5 @@ De eerste die lukt, wint</string>
     <string name="summary_col_total_points">Totaal punten</string>
     <string name="summary_col_total_score">Totaal score</string>
     <string name="summary_col_place">Plaats</string>
+    <string name="summary_place_chart">Plaats na elke ronde</string>
 </resources>

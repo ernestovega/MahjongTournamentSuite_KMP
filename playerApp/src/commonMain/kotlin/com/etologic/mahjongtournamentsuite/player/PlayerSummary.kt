@@ -132,6 +132,7 @@ internal fun ColumnScope.PlayerSummaryTab(
                             rows = rows,
                             modifier = Modifier.width(cardWidth),
                             headerEndSpace = if (labelled) 112.dp else 40.dp,
+                            playerCount = view.players.size,
                         )
                     }
                     // Over the card, outside the drawing that becomes the image.
@@ -157,22 +158,9 @@ private val LabelledShareMinWidth = 480.dp
  */
 @Composable
 private fun ShareSummaryButton(layer: GraphicsLayer, fileName: String, showLabel: Boolean, onError: () -> Unit, modifier: Modifier = Modifier) {
-    val scope = rememberCoroutineScope()
-    val telemetry = LocalTelemetry.current
     val title = stringResource(Res.string.summary_share)
-    val share = rememberShareImage(onError)
     val color = MaterialTheme.colorScheme.onPrimary
-    val onClick: () -> Unit = {
-        scope.launch {
-            val png = runCatching { layer.toImageBitmap().encodePng() }.getOrNull()
-            if (png == null) {
-                onError()
-                return@launch
-            }
-            telemetry.event(TelemetryEvent.RESULTS_SHARED)
-            share(fileName, png, title)
-        }
-    }
+    val onClick = rememberShareLayer(layer, fileName, title, TelemetryEvent.RESULTS_SHARED, onError)
     if (showLabel) {
         TextButton(onClick = onClick, modifier = modifier.testTag(SHARE_RESULTS_TAG), colors = ButtonDefaults.textButtonColors(contentColor = color)) {
             Icon(Icons.Default.Share, contentDescription = null, Modifier.size(18.dp))
@@ -182,6 +170,35 @@ private fun ShareSummaryButton(layer: GraphicsLayer, fileName: String, showLabel
     } else {
         IconButton(onClick = onClick, modifier = modifier.testTag(SHARE_RESULTS_TAG)) {
             Icon(Icons.Default.Share, contentDescription = title, tint = color)
+        }
+    }
+}
+
+/**
+ * Turns what [layer] recorded into a PNG and shares it with [rememberShareImage], counting [event] in the analytics.
+ * The returned function does it; [onError] runs when the image cannot be made or shared.
+ */
+@Composable
+internal fun rememberShareLayer(
+    layer: GraphicsLayer,
+    fileName: String,
+    title: String,
+    event: String,
+    onError: () -> Unit,
+    params: Map<String, Any> = emptyMap(),
+): () -> Unit {
+    val scope = rememberCoroutineScope()
+    val telemetry = LocalTelemetry.current
+    val share = rememberShareImage(onError)
+    return {
+        scope.launch {
+            val png = runCatching { layer.toImageBitmap().encodePng() }.getOrNull()
+            if (png == null) {
+                onError()
+                return@launch
+            }
+            telemetry.event(event, params)
+            share(fileName, png, title)
         }
     }
 }

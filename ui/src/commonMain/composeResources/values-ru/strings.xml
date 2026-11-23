@@ -693,4 +693,5 @@
     <string name="summary_col_total_points">Всего очков</string>
     <string name="summary_col_total_score">Итоговый счёт</string>
     <string name="summary_col_place">Позиция</string>
+    <string name="summary_place_chart">Позиция после каждого раунда</string>
 </resources>

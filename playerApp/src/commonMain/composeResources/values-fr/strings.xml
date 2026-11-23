@@ -297,4 +297,10 @@
     <string name="tab_my_results">Mes résultats</string>
     <string name="summary_share">Partager</string>
     <string name="summary_share_error">Impossible de partager l'image.</string>
+    <string name="ranking_now">Maintenant</string>
+    <string name="ranking_after_round">Après le tour %1$d</string>
+    <string name="ranking_share_title">Partager le classement</string>
+    <string name="ranking_close">Fermer</string>
+    <string name="ranking_title_now">Classement actuel</string>
+    <string name="ranking_title_after_round">Classement après le tour %1$d</string>
 </resources>

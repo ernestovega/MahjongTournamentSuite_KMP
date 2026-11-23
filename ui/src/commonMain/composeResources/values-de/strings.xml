@@ -693,4 +693,5 @@ Die erste, die klappt, gewinnt</string>
     <string name="summary_col_total_points">Punkte gesamt</string>
     <string name="summary_col_total_score">Score gesamt</string>
     <string name="summary_col_place">Platz</string>
+    <string name="summary_place_chart">Platz nach jeder Runde</string>
 </resources>

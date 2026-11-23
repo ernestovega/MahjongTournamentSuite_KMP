@@ -297,4 +297,10 @@
     <string name="tab_my_results">Mina resultat</string>
     <string name="summary_share">Dela</string>
     <string name="summary_share_error">Bilden kunde inte delas.</string>
+    <string name="ranking_now">Nu</string>
+    <string name="ranking_after_round">Efter omgång %1$d</string>
+    <string name="ranking_share_title">Dela rankingen</string>
+    <string name="ranking_close">Stäng</string>
+    <string name="ranking_title_now">Aktuell ranking</string>
+    <string name="ranking_title_after_round">Ranking efter omgång %1$d</string>
 </resources>

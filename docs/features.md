@@ -89,7 +89,7 @@ Organizations: each tournament has a main organizer and co-organizers. The tourn
 Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Statistics · Info**. The chosen tab is remembered.
 
 - **Tables**: filters Me / Team / All, tables by round with live results.
-- **Ranking**: players (with photo), teams, chicken hands and best hand.
+- **Ranking**: players (with photo), teams, chicken hands and best hand. A round button next to the search shows the ranking of **now** or as it was **after a past round**, and **Share** opens a preview of the ranking on screen and shares it as a PNG image.
 - **Players**: search; opens the player page.
 - **Teams**: team ranking and a detail with members, tables and team statistics.
 - **Statistics** of the tournament, per round or for the whole tournament.
@@ -99,7 +99,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 
 - Header with photo, name, flag and EMA number.
 - **Tables** of the player in the tournament.
-- **Results** («My results» when it is you): a table with Round, Table, Seat (wind), Table points, Score, running totals and Place after each round. A **Share** button turns it into a PNG image (share sheet on Android, share or download on the web).
+- **Results** («My results» when it is you): a table with Round, Table, Seat (wind), Table points, Score, running totals and Place after each round, with a small chart of the place after each round under it. A **Share** button turns it into a PNG image (share sheet on Android, share or download on the web).
 - **Statistics** of the player.
 
 ### 4.5 The table

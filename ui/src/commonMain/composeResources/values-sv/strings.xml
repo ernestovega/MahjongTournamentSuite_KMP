@@ -693,4 +693,5 @@ Den första som fungerar vinner</string>
     <string name="summary_col_total_points">Poäng totalt</string>
     <string name="summary_col_total_score">Resultat totalt</string>
     <string name="summary_col_place">Placering</string>
+    <string name="summary_place_chart">Placering efter varje runda</string>
 </resources>

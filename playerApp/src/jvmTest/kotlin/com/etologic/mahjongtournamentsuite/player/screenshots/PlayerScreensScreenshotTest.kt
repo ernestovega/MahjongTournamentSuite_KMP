@@ -15,6 +15,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
@@ -29,6 +30,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
+import com.etologic.mahjongtournamentsuite.player.RANKING_ROUND_BUTTON_TAG
+import com.etologic.mahjongtournamentsuite.player.RankingShareDialog
+import com.etologic.mahjongtournamentsuite.player.SharedRankingLine
 import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
 import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
@@ -256,6 +260,40 @@ class PlayerScreensScreenshotTest {
 
     @Test
     fun tournamentRanking() = playerScreenshots("tournament-ranking", ready = { openTab(MainTab.RANKING) }) { nav -> TournamentScreen(nav, ONGOING) }
+
+    /** The ranking as it was at the end of round 1, chosen with the round button next to the search. */
+    @Test
+    fun tournamentRankingAfterRound() = playerScreenshots(
+        "tournament-ranking-after-round",
+        ready = {
+            openTab(MainTab.RANKING)
+            onNodeWithTag(RANKING_ROUND_BUTTON_TAG).performClick()
+            waitForIdle()
+            val option = playerText("ranking_after_round").replace("%1\$d", "1")
+            waitForText(option)
+            onAllNodesWithText(option).onFirst().performClick()
+            waitForIdle()
+        },
+    ) { nav -> TournamentScreen(nav, ONGOING) }
+
+    /** The preview of a ranking that is shared as an image. */
+    @Test
+    fun rankingShare() = playerScreenshots(
+        "dialogs/ranking-share",
+        variants = dialogVariants,
+        ready = { waitForText("LUCÍA MARTÍN") },
+    ) {
+        val names = listOf("LUCÍA MARTÍN" to "ES", "JONAS BERG" to "SE", "MARIE DUBOIS" to "FR", "LUCA ROSSI" to "IT", "ANNA KOWALSKA" to "PL", "TOM JANSEN" to "NL")
+        RankingShareDialog(
+            tournament = "Madrid Open 2026",
+            subtitle = "Ranking after round 3",
+            lines = names.mapIndexed { index, (name, country) ->
+                SharedRankingLine(index + 1, name, country, main = "${10 - index}", second = "${120 - index * 45}", mine = index == 0)
+            },
+            pastRound = true,
+            onDismiss = {},
+        )
+    }
 
     @Test
     fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab(MainTab.PLAYERS) }) { nav -> TournamentScreen(nav, ONGOING) }

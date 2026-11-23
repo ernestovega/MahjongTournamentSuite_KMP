@@ -297,4 +297,10 @@
     <string name="tab_my_results">Mijn resultaten</string>
     <string name="summary_share">Delen</string>
     <string name="summary_share_error">De afbeelding kon niet worden gedeeld.</string>
+    <string name="ranking_now">Nu</string>
+    <string name="ranking_after_round">Na ronde %1$d</string>
+    <string name="ranking_share_title">Klassement delen</string>
+    <string name="ranking_close">Sluiten</string>
+    <string name="ranking_title_now">Huidig klassement</string>
+    <string name="ranking_title_after_round">Klassement na ronde %1$d</string>
 </resources>

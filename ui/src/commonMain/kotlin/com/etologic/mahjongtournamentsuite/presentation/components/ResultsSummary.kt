@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +20,16 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +49,7 @@ import mahjongtournamentsuite.ui.generated.resources.summary_col_seat
 import mahjongtournamentsuite.ui.generated.resources.summary_col_table
 import mahjongtournamentsuite.ui.generated.resources.summary_col_total_points
 import mahjongtournamentsuite.ui.generated.resources.summary_col_total_score
+import mahjongtournamentsuite.ui.generated.resources.summary_place_chart
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -93,6 +102,8 @@ fun ResultsSummaryCard(
     modifier: Modifier = Modifier,
     /** Room at the right of the header for a button that the screen puts over the card, such as Share. */
     headerEndSpace: Dp = 0.dp,
+    /** The players of the tournament: the bottom of the chart of the places. 0 leaves the chart out. */
+    playerCount: Int = 0,
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
@@ -134,6 +145,10 @@ fun ResultsSummaryCard(
                 }
             }
             ResultsTable(rows)
+            // Two places or more make a line: how the player went up and down the ranking, round by round.
+            if (playerCount > 1 && rows.count { it.place != null } >= 2) {
+                PlaceChart(rows, playerCount, Modifier.fillMaxWidth().padding(start = MtsTheme.spacing.md, top = MtsTheme.spacing.md, end = MtsTheme.spacing.md))
+            }
             Text(
                 "Mahjong Tournament Suite",
                 Modifier.fillMaxWidth().padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
@@ -248,3 +263,64 @@ private fun RowScope.Cell(weight: Float, text: String?, style: TextStyle, align:
 private fun scoreColor(value: Int): Color = if (value < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
 private const val PENDING = "–"
+
+/** The test tag of the chart of the places under the table. */
+const val RESULTS_PLACE_CHART_TAG = "results-place-chart"
+
+private val PlaceChartHeight = 112.dp
+
+/**
+ * A small line of the place in the ranking after each round: the first place at the top, the last one at the bottom.
+ * Each round of the table has its spot, so the dots sit under their rows' order; a round without a place is a gap.
+ * The place is written next to each dot, or, when they are too close, next to the first, the best and the last.
+ */
+@Composable
+private fun PlaceChart(rows: List<ResultsSummaryRow>, playerCount: Int, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val measurer = rememberTextMeasurer()
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colors.onSurfaceVariant, fontFeatureSettings = "tnum")
+    val valueStyle = MaterialTheme.typography.labelMedium.copy(color = colors.onSurface, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum")
+    val lastStyle = valueStyle.copy(color = colors.primary, fontWeight = FontWeight.ExtraBold)
+    val title = stringResource(Res.string.summary_place_chart)
+    Column(modifier.testTag(RESULTS_PLACE_CHART_TAG), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        Text(title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = colors.onSurfaceVariant)
+        Canvas(Modifier.fillMaxWidth().height(PlaceChartHeight)) {
+            val axis = 28.dp.toPx()
+            val vertical = 14.dp.toPx()
+            val side = 10.dp.toPx()
+            val plotWidth = size.width - axis - side * 2
+            val plotHeight = size.height - vertical * 2
+            fun x(index: Int) = axis + side + if (rows.size == 1) plotWidth / 2f else plotWidth * index / (rows.size - 1)
+            fun y(place: Int) = vertical + plotHeight * (place - 1) / (playerCount - 1).toFloat()
+            // The first and the last place of the tournament, as two guide lines with their numbers.
+            listOf(1, playerCount).forEach { place ->
+                drawLine(colors.outlineVariant, Offset(axis, y(place)), Offset(size.width, y(place)), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
+                val layout = measurer.measure("$place", labelStyle)
+                drawText(layout, topLeft = Offset(axis - layout.size.width - 4.dp.toPx(), y(place) - layout.size.height / 2f))
+            }
+            val points = rows.mapIndexedNotNull { index, row -> row.place?.let { index to it } }
+            // A gap of rounds without a place breaks the line.
+            val path = Path()
+            points.forEachIndexed { i, (index, place) ->
+                if (i == 0 || points[i - 1].first != index - 1) path.moveTo(x(index), y(place)) else path.lineTo(x(index), y(place))
+            }
+            drawPath(path, colors.primary.copy(alpha = 0.7f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+            val last = points.last().first
+            val best = points.minBy { it.second }.first
+            val spacing = if (rows.size > 1) plotWidth / (rows.size - 1) else plotWidth
+            val crowded = spacing < 26.dp.toPx()
+            points.forEach { (index, place) ->
+                val isLast = index == last
+                drawCircle(colors.surface, (if (isLast) 6f else 4.5f).dp.toPx(), Offset(x(index), y(place)))
+                drawCircle(colors.primary, (if (isLast) 5f else 3.5f).dp.toPx(), Offset(x(index), y(place)))
+                if (crowded && index != points.first().first && index != best && !isLast) return@forEach
+                val layout = measurer.measure("$place", if (isLast) lastStyle else valueStyle)
+                // The number goes above the dot, or below it near the top of the chart.
+                val above = y(place) - layout.size.height - 5.dp.toPx()
+                val top = if (above < 0f) y(place) + 5.dp.toPx() else above
+                val left = (x(index) - layout.size.width / 2f).coerceIn(axis, size.width - layout.size.width)
+                drawText(layout, topLeft = Offset(left, top))
+            }
+        }
+    }
+}

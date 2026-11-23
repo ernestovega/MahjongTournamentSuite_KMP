@@ -697,4 +697,5 @@ The first one that works wins</string>
     <string name="summary_col_total_points">Total points</string>
     <string name="summary_col_total_score">Total score</string>
     <string name="summary_col_place">Rank</string>
+    <string name="summary_place_chart">Rank after each round</string>
 </resources>

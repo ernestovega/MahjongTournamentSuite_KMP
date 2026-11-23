@@ -303,4 +303,10 @@
     <string name="tab_my_results">Мои результаты</string>
     <string name="summary_share">Поделиться</string>
     <string name="summary_share_error">Не удалось поделиться изображением.</string>
+    <string name="ranking_now">Сейчас</string>
+    <string name="ranking_after_round">После раунда %1$d</string>
+    <string name="ranking_share_title">Поделиться рейтингом</string>
+    <string name="ranking_close">Закрыть</string>
+    <string name="ranking_title_now">Текущий рейтинг</string>
+    <string name="ranking_title_after_round">Рейтинг после раунда %1$d</string>
 </resources>

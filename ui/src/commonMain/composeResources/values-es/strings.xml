@@ -697,4 +697,5 @@ Gana el primero que sale bien</string>
     <string name="summary_col_total_points">Total puntos</string>
     <string name="summary_col_total_score">Total puntuación</string>
     <string name="summary_col_place">Puesto</string>
+    <string name="summary_place_chart">Puesto tras cada ronda</string>
 </resources>

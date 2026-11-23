@@ -91,6 +91,12 @@ object TelemetryEvent {
     /** The player app shared the summary of the results of a player as an image (Summary tab of a player). */
     const val RESULTS_SHARED = "results_shared"
 
+    /**
+     * The player app shared a ranking as an image (Ranking tab of a tournament). [TelemetryParam.SCOPE] is `now` for
+     * the ranking of now, or `round` for the ranking after a past round.
+     */
+    const val RANKING_SHARED = "ranking_shared"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         REGISTRATION,
@@ -123,6 +129,7 @@ object TelemetryEvent {
         PROFILE_UPDATED,
         PREFERENCE_CHANGED,
         RESULTS_SHARED,
+        RANKING_SHARED,
     )
 }
 

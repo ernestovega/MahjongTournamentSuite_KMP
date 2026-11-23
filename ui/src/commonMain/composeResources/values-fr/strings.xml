@@ -697,4 +697,5 @@ La première qui marche gagne</string>
     <string name="summary_col_total_points">Total points</string>
     <string name="summary_col_total_score">Total score</string>
     <string name="summary_col_place">Place</string>
+    <string name="summary_place_chart">Place après chaque tour</string>
 </resources>

@@ -228,6 +228,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_points_score
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_title_after_round
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_title_now
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
@@ -1631,7 +1633,13 @@ private data class RankingRow(
 /** The ranking tab. A second row of tabs shows the rankings that the tournament has. */
 @Composable
 internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit) {
-    val rankings = view.rankings
+    // The ranking of now, or the one at the end of a past round, like it was then.
+    val byRound = remember(view) { view.rankingsByRound() }
+    val playedRounds = remember(byRound) { byRound.keys.sorted() }
+    var afterRound by rememberSaveable { mutableStateOf<Int?>(null) }
+    val round = afterRound?.takeIf { it in byRound }
+    val rankings = round?.let(byRound::getValue) ?: view.rankings
+    var sharing by remember { mutableStateOf(false) }
     val kinds = buildList {
         add(RankingKind.PLAYERS)
         if (view.tournament.isTeams && rankings.teams.isNotEmpty()) add(RankingKind.TEAMS)
@@ -1718,10 +1726,25 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
         }
     }
 
+    if (sharing) {
+        val which = if (round == null) stringResource(Res.string.ranking_title_now) else stringResource(Res.string.ranking_title_after_round, round)
+        val subtitle = if (kind == RankingKind.PLAYERS) which else "$which · ${stringResource(kind.title)}"
+        RankingShareDialog(
+            tournament = view.tournament.name,
+            subtitle = subtitle,
+            lines = rows.map { SharedRankingLine(it.position, it.title, it.country.orEmpty().takeIf { _ -> it.playerId != null }, it.chip, it.score, it.mine, it.excluded) },
+            pastRound = round != null,
+            onDismiss = { sharing = false },
+        )
+    }
+
     RankingRows(
         rows,
         emptyText = stringResource(Res.string.ranking_empty),
         onPlayerClick = onPlayerClick,
+        // The choice of the round shows once a round has a ranking. Share needs lines to share.
+        roundButton = if (playedRounds.isEmpty()) null else ({ RankingRoundButton(playedRounds, round, { afterRound = it }) }),
+        onShare = { sharing = true },
         tabs = {
             if (kinds.size > 1) {
                 val selectedIndex = kinds.indexOf(kind)
@@ -1760,6 +1783,9 @@ private fun RankingRows(
     emptyText: String,
     onPlayerClick: (Int) -> Unit,
     tabs: @Composable () -> Unit,
+    /** The button that chooses the ranking of now or of a past round. Null before any round has a ranking. */
+    roundButton: (@Composable () -> Unit)? = null,
+    onShare: (() -> Unit)? = null,
 ) {
     if (rows.isEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1813,6 +1839,8 @@ private fun RankingRows(
                             modifier = Modifier.weight(1f),
                             compact = true,
                         )
+                        roundButton?.invoke()
+                        onShare?.let { RankingShareButton(showLabel = !narrow, onClick = it) }
                     }
                 }
                 items(visible, key = { it.key }) { row ->
