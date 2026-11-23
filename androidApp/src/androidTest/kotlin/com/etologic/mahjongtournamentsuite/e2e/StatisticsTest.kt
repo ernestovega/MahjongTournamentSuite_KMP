@@ -7,7 +7,7 @@ class StatisticsTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         c.waitForText("Players & results")
-        c.clickButton("Stats")
+        c.clickMoreMenuButton("Stats")
     }
 
     @Test

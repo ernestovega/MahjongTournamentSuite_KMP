@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Что вы хотите открыть?</string>
     <string name="app_chooser_hint">Переключаться между приложениями можно в любой момент кнопкой на верхней панели.</string>
     <string name="top_bar_activity">Активность</string>
+    <string name="top_bar_more">Ещё</string>
     <string name="design_system">Дизайн-система</string>
     <string name="rounds_title">По раундам</string>
     <string name="rounds_view_place">Место в рейтинге</string>

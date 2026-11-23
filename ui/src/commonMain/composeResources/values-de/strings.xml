@@ -273,6 +273,7 @@
     <string name="app_chooser_title">Was möchtest du öffnen?</string>
     <string name="app_chooser_hint">Du kannst jederzeit mit der Schaltfläche in der oberen Leiste zwischen den Apps wechseln.</string>
     <string name="top_bar_activity">Aktivität</string>
+    <string name="top_bar_more">Mehr</string>
     <string name="design_system">Designsystem</string>
     <string name="rounds_title">Nach Runde</string>
     <string name="rounds_view_place">Ranglistenplatz</string>

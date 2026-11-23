@@ -10,7 +10,7 @@ class TeamsScreenTest : AdminE2eTest() {
         // A tournament with open slots opens on the players screen. Back leads to the tournament screen.
         if (c.isOnScreen("Tournament players")) c.clickButton("Back")
         c.waitForText("Players & results")
-        c.clickButton("Teams")
+        c.clickMoreMenuButton("Teams")
         c.waitForText("Tournament teams")
     }
 

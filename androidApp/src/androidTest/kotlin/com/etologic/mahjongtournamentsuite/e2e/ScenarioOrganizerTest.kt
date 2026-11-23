@@ -1030,7 +1030,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             }
             idle(15_000)
         }
-        c.clickButton("Players")
+        c.clickMoreMenuButton("Players")
         c.waitForText("Tournament players", timeoutMs = 60_000)
         // The search finds the slot by its EMA number. The email of the slot is the other key that only it has: it is
         // tried when the EMA number shows no single row.
