@@ -1080,7 +1080,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 )
             }
             if (idCardsDialogOpen) {
+                // The names of the staff saved the last time fill the dialog when they arrive.
+                var savedStaffNames by remember { mutableStateOf(emptyList<String>()) }
+                LaunchedEffect(tournamentId) {
+                    (presenter.loadIdCardStaffNames(tournamentId) as? AppResult.Success)?.let { savedStaffNames = it.value }
+                }
                 IdCardsExportDialog(
+                    savedStaffNames = savedStaffNames,
                     onExport = { sheet ->
                         idCardsDialogOpen = false
                         exportIdCards(sheet)
