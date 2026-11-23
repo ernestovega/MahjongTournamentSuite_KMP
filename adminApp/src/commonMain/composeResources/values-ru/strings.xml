@@ -1162,9 +1162,8 @@
     <string name="pc_locked_pending">У турнира ещё нет жеребьёвки.
 Измени число мест в разделе «Регистрация».</string>
     <string name="activity_action_tournament_player_count">Изменил число игроков</string>
-    <string name="table_qr_top_bar">QR турнира</string>
-    <string name="table_qr_button">QR турнира</string>
-    <string name="table_qr_info">Один код на весь турнир. Отсканировав его, игрок видит свои столы в приложении, и сразу открывается его текущий или следующий стол.\nНапечатайте карточку для каждого стола с крупным номером или покажите код на экране.</string>
+    <string name="table_qr_top_bar">QR и ID столов</string>
+    <string name="table_qr_button">QR и ID столов</string>
     <string name="table_qr_project">Показать в отдельном окне</string>
     <string name="table_qr_print_title">Печать карточек столов</string>
     <string name="table_qr_per_sheet">Карточек на лист</string>

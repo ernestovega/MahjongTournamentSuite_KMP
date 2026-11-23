@@ -20,6 +20,6 @@ actual fun openRankings(
     )
 }
 
-actual fun openTableQrWindow(tournamentName: String, link: String) {
-    StandaloneWindows.openTableQr(tournamentName, link)
+actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: String?) {
+    StandaloneWindows.openTableQr(tournamentName, link, logoUrl)
 }

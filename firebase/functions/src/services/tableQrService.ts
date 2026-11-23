@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 
 import { notFound, conflict } from "../api/httpError";
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import { type Language } from "./i18n";
 import { pdfKit } from "./lazyModules";
-import { organizersOf, readOrganizerIds } from "./organizationsService";
+import { mainOrganizerLogoPath, readOrganizerIds } from "./organizationsService";
 
 /**
  * The cards of the tables of a tournament, to print and put on each table: the number of the table, big, so it names
@@ -15,7 +15,6 @@ import { organizersOf, readOrganizerIds } from "./organizationsService";
 /** The last segment of the link, as in the player app (MY_TABLE_PATH_WORD). */
 export const MY_TABLE_PATH_WORD = "my-table";
 
-const DEFAULT_PRIMARY_COLOR = "#02B16B";
 const A4_WIDTH = 595.28;
 const A4_HEIGHT = 841.89;
 
@@ -75,7 +74,8 @@ export function myTableQrLink(site: string, tournamentId: string, slug: string):
 
 export type TableQrDocument = {
   tournamentName: string;
-  primaryColor: string;
+  /** The logo of the main organizer (PNG or JPEG), in a corner of each card, or null. */
+  logo: Buffer | null;
   /** The same code on every card: it is the code of the tournament. */
   link: string;
   tableCount: number;
@@ -83,20 +83,21 @@ export type TableQrDocument = {
   perSheet: CardsPerSheet;
 };
 
-export async function loadTableQrDocument(tournamentId: string, language: Language, perSheet: CardsPerSheet): Promise<TableQrDocument> {
+/** The cards are always in English: the tables of a tournament are the same for players of every language. */
+export async function loadTableQrDocument(tournamentId: string, perSheet: CardsPerSheet): Promise<TableQrDocument> {
   const tournament = await db.collection("tournaments").doc(tournamentId).get();
   if (!tournament.exists) throw notFound("Tournament not found");
   const tableCount = Math.floor(Number(tournament.get("numPlayers") ?? 0) / 4);
   if (tableCount < 1) throw conflict("The tournament has no tables yet");
   const slug = String((tournament.get("registration") as Record<string, unknown> | undefined)?.slug ?? "");
-  const mainOrganizer = (await organizersOf(readOrganizerIds(tournament.get("organizerIds"))))[0];
-  const color = String(mainOrganizer?.primaryColor ?? DEFAULT_PRIMARY_COLOR).trim().toUpperCase();
+  const logoPath = await mainOrganizerLogoPath(readOrganizerIds(tournament.get("organizerIds")));
+  const logo = logoPath.length > 0 ? await storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null) : null;
   return {
     tournamentName: String(tournament.get("name") ?? "").trim(),
-    primaryColor: /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_PRIMARY_COLOR,
+    logo,
     link: myTableQrLink(playerAppUrl(), tournamentId, slug),
     tableCount,
-    texts: tableQrTexts(language),
+    texts: tableQrTexts("en"),
     perSheet,
   };
 }
@@ -155,11 +156,26 @@ function drawCard(
   const scale = Math.min(width, height) / (A4_WIDTH / 2);
   const padding = 20 * scale;
   const bandHeight = 40 * scale;
-  doc.save().rect(left, top, width, bandHeight).fill(model.primaryColor).restore();
-  doc.font("CardApp").fillColor("#FFFFFF");
-  const nameSize = fitFontSize(doc, model.tournamentName, width - padding * 2, 15 * scale, 7);
+  // The logo of the organizer in the top left corner, and the name of the tournament centred, clear of the logo.
+  const logoSize = bandHeight * 0.8;
+  if (model.logo != null) {
+    try {
+      const logoX = left + padding * 0.6;
+      const logoY = top + padding * 0.6;
+      doc.save();
+      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).clip();
+      doc.image(model.logo, logoX, logoY, { cover: [logoSize, logoSize], align: "center", valign: "center" });
+      doc.restore();
+    } catch {
+      // A logo in a format pdfkit cannot read leaves the corner empty.
+      doc.restore();
+    }
+  }
+  doc.font("CardApp").fillColor("#000000");
+  const nameRoom = width - (padding + logoSize) * 2;
+  const nameSize = fitFontSize(doc, model.tournamentName, nameRoom, 15 * scale, 7);
   doc.fontSize(nameSize);
-  centeredLine(doc, model.tournamentName, left + padding, top + (bandHeight - nameSize) / 2 - 1, width - padding * 2);
+  centeredLine(doc, model.tournamentName, left + padding + logoSize, top + padding * 0.6 + (logoSize - nameSize) / 2, nameRoom);
 
   const bodyTop = top + bandHeight + padding * 0.6;
   const bodyHeight = height - bandHeight - padding * 1.6;
@@ -242,6 +258,6 @@ export function buildTableQrPdf(model: TableQrDocument): Promise<Buffer> {
   });
 }
 
-export async function generateTableQrCodes(tournamentId: string, language: Language, perSheet: CardsPerSheet): Promise<Buffer> {
-  return buildTableQrPdf(await loadTableQrDocument(tournamentId, language, perSheet));
+export async function generateTableQrCodes(tournamentId: string, perSheet: CardsPerSheet): Promise<Buffer> {
+  return buildTableQrPdf(await loadTableQrDocument(tournamentId, perSheet));
 }

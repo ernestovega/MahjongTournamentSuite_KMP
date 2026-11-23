@@ -548,7 +548,6 @@ export function tournamentsRouter(): Router {
     try {
       const pdf = await generateTableQrCodes(
         pathParam(req, "tournamentId"),
-        parseAcceptLanguage(req.headers["accept-language"]),
         readCardsPerSheet(req.query.perSheet),
       );
       res.setHeader("Content-Type", "application/pdf");

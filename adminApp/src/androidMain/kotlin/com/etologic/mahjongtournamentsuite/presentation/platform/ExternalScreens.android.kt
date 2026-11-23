@@ -24,10 +24,11 @@ actual fun openRankings(
     }
 }
 
-actual fun openTableQrWindow(tournamentName: String, link: String) {
+actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: String?) {
     startStandaloneActivity(TABLE_QR_ACTIVITY) {
         putExtra(EXTRA_TOURNAMENT_NAME, tournamentName)
         putExtra(EXTRA_LINK, link)
+        logoUrl?.let { putExtra(EXTRA_LOGO_URL, it) }
     }
 }
 
@@ -50,5 +51,6 @@ private const val RANKINGS_ACTIVITY = "com.etologic.mahjongtournamentsuite.Ranki
 private const val TABLE_QR_ACTIVITY = "com.etologic.mahjongtournamentsuite.TableQrActivity"
 private const val EXTRA_TOURNAMENT_NAME = "tournamentName"
 private const val EXTRA_LINK = "link"
+private const val EXTRA_LOGO_URL = "logoUrl"
 private const val EXTRA_INITIAL_ROUND = "initialRound"
 private const val EXTRA_TOURNAMENT_ID = "tournamentId"

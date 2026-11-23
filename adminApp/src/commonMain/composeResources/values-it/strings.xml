@@ -1148,9 +1148,8 @@ Il numero di giocatori si può cambiare solo prima della prima mano.</string>
     <string name="pc_locked_pending">Il torneo non ha ancora un sorteggio.
 Cambia i posti in Iscrizioni.</string>
     <string name="activity_action_tournament_player_count">Ha cambiato il numero di giocatori</string>
-    <string name="table_qr_top_bar">QR del torneo</string>
-    <string name="table_qr_button">QR del torneo</string>
-    <string name="table_qr_info">Un solo codice per tutto il torneo. Chi lo scansiona vede i suoi tavoli nell'app, con il tavolo in gioco, o il prossimo, aperto.\nStampa una scheda per ogni tavolo, con il suo numero in grande, o mostra il codice su uno schermo.</string>
+    <string name="table_qr_top_bar">QR e ID dei tavoli</string>
+    <string name="table_qr_button">QR e ID dei tavoli</string>
     <string name="table_qr_project">Mostra in una finestra a parte</string>
     <string name="table_qr_print_title">Stampa le schede dei tavoli</string>
     <string name="table_qr_per_sheet">Schede per foglio</string>

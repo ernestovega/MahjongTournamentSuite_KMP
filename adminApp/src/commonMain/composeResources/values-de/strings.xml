@@ -1148,9 +1148,8 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
     <string name="pc_locked_pending">Das Turnier hat noch keine Auslosung.
 Ändere die Plätze unter Anmeldungen.</string>
     <string name="activity_action_tournament_player_count">Hat die Spielerzahl geändert</string>
-    <string name="table_qr_top_bar">Turnier-QR</string>
-    <string name="table_qr_button">Turnier-QR</string>
-    <string name="table_qr_info">Ein einziger Code für das ganze Turnier. Wer ihn scannt, sieht seine Tische in der App, mit seinem laufenden oder nächsten Tisch geöffnet.\nDrucke eine Karte für jeden Tisch mit seiner Nummer in groß, oder zeige den Code auf einem Bildschirm.</string>
+    <string name="table_qr_top_bar">QR &amp; Tisch-IDs</string>
+    <string name="table_qr_button">QR &amp; Tisch-IDs</string>
     <string name="table_qr_project">In eigenem Fenster zeigen</string>
     <string name="table_qr_print_title">Karten der Tische drucken</string>
     <string name="table_qr_per_sheet">Karten pro Blatt</string>

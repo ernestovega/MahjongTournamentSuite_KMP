@@ -38,14 +38,15 @@ browser. The staging app does not take the links.
 
 ## Admin
 
-Tournament screen > "Tournament QR" (top bar) opens `TableQrScreen`:
+Tournament screen > "QR & Tables IDs" (top bar) opens `TableQrScreen`:
 
-- the code with its link, and "Show in a separate window": a window of its own (a browser tab on the web, a window on
-  the desktop, an activity on Android) with the code as big as it fits, black on white, the name of the tournament and
-  one sentence, to project it (`TableQrProjectionScreen`, screen `TableQrProjection`). The window gets the name and the
-  link, so it loads nothing and needs no session;
-- "Print the cards of the tables": 1, 2 or 4 cards per A4 sheet and "Download PDF to print", which makes
-  `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4` (permission `tournament.view`). Each card has the name of the
-  tournament on the color of the main organizer, the word "Table" and its number as big as the card allows, the code,
-  one sentence in the language of the app (Accept-Language) and the link; dashed lines show where to cut. Before the
-  draw the tournament has no tables and the PDF is not offered. The export counts `table_qr_exported`.
+- "Show in a separate window": a window of its own (a browser tab on the web, a window on the desktop, an activity on
+  Android) with the code as big as it fits, black on white, the logo of the main organizer over the name of the
+  tournament and one sentence, all centred, to project it (`TableQrProjectionScreen`, screen `TableQrProjection`). The
+  window gets the name, the link and the logo address, so it loads nothing and needs no session;
+- "Print the cards of the tables": 1, 2 or 4 cards per A4 sheet, a preview of the first sheet, and "Download PDF to
+  print", which makes `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4` (permission `tournament.view`). Each card
+  (the table ID) has the logo of the main organizer in the top left corner, the name of the tournament, the word
+  "TABLE" and its number as big as the card allows, the code, one sentence and the link; dashed lines show where to
+  cut. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
+  tables and the PDF is not offered. The export counts `table_qr_exported`.
