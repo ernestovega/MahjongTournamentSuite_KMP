@@ -17,6 +17,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
 import com.etologic.mahjongtournamentsuite.data.session.storedSessionUid
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.player.PlayerApp
+import com.etologic.mahjongtournamentsuite.player.RegistrationLink
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteAppHost
@@ -27,8 +28,11 @@ enum class SuiteSection {
     ADMIN,
 }
 
-/** Where the app starts. [signIn] opens the sign-in form of the player part. */
-data class SuiteStart(val section: SuiteSection, val signIn: Boolean = false)
+/**
+ * Where the app starts. [signIn] opens the sign-in form of the player part. [link] is a link of the web that the
+ * player part opens, such as the QR of a table.
+ */
+data class SuiteStart(val section: SuiteSection, val signIn: Boolean = false, val link: RegistrationLink? = null)
 
 /**
  * Holds the player application and the admin application, one at a time, like the two apps of the web site.
@@ -54,13 +58,16 @@ fun SuiteRoot(
     // The first part is known before the first frame, so the other part never starts for nothing.
     var section by rememberSaveable { mutableStateOf(initial?.section ?: SuiteSection.PLAYER) }
     var playerSignIn by remember { mutableStateOf(initial?.signIn == true) }
+    // A link that the player part opens when it starts. It is used once.
+    var playerLink by remember { mutableStateOf(initial?.link) }
     // A new number starts the player part again, without the screens of the old session.
     var playerRun by rememberSaveable { mutableIntStateOf(0) }
     // The account whose screens the admin part keeps.
     var adminAccount by rememberSaveable { mutableStateOf(if (initial?.section == SuiteSection.ADMIN) storedSessionUid() else null) }
     val savedParts = rememberSaveableStateHolder()
 
-    fun show(target: SuiteSection, signIn: Boolean, fresh: Boolean) {
+    fun show(target: SuiteSection, signIn: Boolean, fresh: Boolean, link: RegistrationLink? = null) {
+        playerLink = link
         if (target == SuiteSection.PLAYER && (fresh || signIn)) {
             savedParts.removeState(SuiteSection.PLAYER.name + playerRun)
             playerRun++
@@ -78,7 +85,8 @@ fun SuiteRoot(
 
     LaunchedEffect(startRequest) {
         val request = startRequest ?: return@LaunchedEffect
-        show(request.section, request.signIn, fresh = request.signIn)
+        // A link starts the player part again, so it opens the link over the tournaments, like the web.
+        show(request.section, request.signIn, fresh = request.signIn || request.link != null, link = request.link)
         onStartHandled()
     }
 
@@ -105,7 +113,13 @@ fun SuiteRoot(
                     AndroidPlatformContext.currentApp = "player"
                     // The app has one version for both parts: the admin version. See docs/versioning.md.
                     // Phones and tablets type the score of a hand on the numpad of the app, not on the system keyboard.
-                    PlayerApp(appVersion = AppVersion.admin, openSignIn = playerSignIn, numpadEntry = true, isolatedKoin = true)
+                    PlayerApp(
+                        appVersion = AppVersion.admin,
+                        openSignIn = playerSignIn,
+                        openRegistration = playerLink,
+                        numpadEntry = true,
+                        isolatedKoin = true,
+                    )
                 }
             }
             SuiteSection.ADMIN -> key(adminAccount) {

@@ -36,11 +36,14 @@ class RegistrationLinkTest {
     }
 
     @Test
-    fun theQrOfATableNamesTheTournamentAndTheTable() {
-        assertEquals(RegistrationLink(slug = "6thmmc", tableId = 5), registrationLinkOf("/6thmmc/table/5", emptyMap()))
-        assertEquals(RegistrationLink(slug = "6thmmc", tableId = 12), registrationLinkOf("/6thMMC/mesa/12/", emptyMap()))
-        assertEquals(RegistrationLink(tournamentId = "AbC123", tableId = 3), registrationLinkOf("/t/AbC123/table/3", emptyMap()))
-        for (path in listOf("/6thmmc/table/0", "/6thmmc/table/x", "/admin/table/2", "/t/table/2", "/a/b/table/2", "/ab/table/2")) {
+    fun theQrOfATournamentOpensMyTable() {
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thmmc/my-table", emptyMap()))
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thMMC/mesa/", emptyMap()))
+        assertEquals(RegistrationLink(tournamentId = "AbC123", myTable = true), registrationLinkOf("/t/AbC123/my-table", emptyMap()))
+        // The first links had the number of a table. They open the same.
+        assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf("/6thmmc/table/5", emptyMap()))
+        assertEquals(RegistrationLink(tournamentId = "AbC123", myTable = true), registrationLinkOf("/t/AbC123/table/3", emptyMap()))
+        for (path in listOf("/admin/my-table", "/t/my-table", "/a/b/my-table", "/ab/my-table", "/6thmmc/other")) {
             assertNull(registrationLinkOf(path, emptyMap()), path)
         }
     }

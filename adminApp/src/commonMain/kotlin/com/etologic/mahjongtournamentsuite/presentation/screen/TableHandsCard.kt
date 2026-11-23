@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -358,7 +359,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
                 Text("$score", style = MaterialTheme.typography.titleLarge)
                 winnerId?.let {
                     Text(
-                        "#$it",
+                        playerNumber(it),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

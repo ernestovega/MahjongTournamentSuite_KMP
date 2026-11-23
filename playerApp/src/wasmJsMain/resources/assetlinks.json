@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.etologic.mahjongtournamentsuite",
+      "sha256_cert_fingerprints": [
+        "99:60:71:76:62:6A:62:4B:B2:BB:35:29:3B:17:D5:D0:7D:B7:38:DC:03:83:77:9F:8A:F5:0C:41:5F:72:BD:54",
+        "E7:DB:E9:2F:12:53:38:F4:88:7C:55:52:82:79:8F:E7:62:CC:8D:AF:DD:99:E0:18:56:6C:1C:20:BF:61:35:A5"
+      ]
+    }
+  }
+]

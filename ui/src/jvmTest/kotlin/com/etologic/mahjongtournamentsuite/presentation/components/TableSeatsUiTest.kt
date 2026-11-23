@@ -72,7 +72,7 @@ class TableSeatsUiTest {
         }
         onNodeWithText("Bruno Díaz").assertIsDisplayed()
         // The number of the player in the tournament is beside the flag, not before the name.
-        onNodeWithText("#2").assertIsDisplayed()
+        onNodeWithText("#02").assertIsDisplayed()
         onNodeWithText("David Moreno").assertIsDisplayed()
         onNodeWithText("Penalty -10").assertIsDisplayed()
         // The points of the table are hidden while the table is not complete.

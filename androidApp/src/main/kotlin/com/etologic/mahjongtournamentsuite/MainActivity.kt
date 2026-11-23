@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import com.etologic.mahjongtournamentsuite.player.registrationLinkOf
 
 /**
  * The one Android app of the suite. It opens the player part, which everyone uses. Admins and editors switch to the
@@ -47,8 +48,23 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun Intent.suiteStart(): SuiteStart? = when (getStringExtra(MainActivity.EXTRA_SECTION)) {
-    "admin" -> SuiteStart(SuiteSection.ADMIN)
-    "player" -> SuiteStart(SuiteSection.PLAYER)
-    else -> null
+private fun Intent.suiteStart(): SuiteStart? {
+    linkStart()?.let { return it }
+    return when (getStringExtra(MainActivity.EXTRA_SECTION)) {
+        "admin" -> SuiteStart(SuiteSection.ADMIN)
+        "player" -> SuiteStart(SuiteSection.PLAYER)
+        else -> null
+    }
+}
+
+/**
+ * A link of the web that the app opens (App Links, see docs/table-qr.md): the QR of a physical table,
+ * `https://mts.mahjongmadrid.com/<slug>/table/5`. The player part opens that table, as the web does.
+ */
+private fun Intent.linkStart(): SuiteStart? {
+    if (action != Intent.ACTION_VIEW) return null
+    val uri = data ?: return null
+    val query = uri.queryParameterNames.associateWith { uri.getQueryParameter(it).orEmpty() }
+    val link = registrationLinkOf(uri.path.orEmpty(), query) ?: return null
+    return SuiteStart(SuiteSection.PLAYER, link = link)
 }

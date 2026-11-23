@@ -22,6 +22,8 @@ import {
 import {
   buildIdCardProofPdf,
   generateTournamentIdCards,
+  readIdCardStaffNames,
+  saveIdCardStaffNames,
   idCardSheetGrid,
   MAX_EXTRA_SHEETS,
   MAX_STAFF_NAME_LENGTH,
@@ -29,7 +31,7 @@ import {
   type IdCardSheetOptions,
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
-import { generateTableQrCodes } from "../../services/tableQrService";
+import { generateTableQrCodes, readCardsPerSheet } from "../../services/tableQrService";
 import { generateEmaReport } from "../../services/emaReportService";
 import { readSubstitution } from "../../services/playerSubstitution";
 import {
@@ -540,13 +542,35 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  // The QR codes of the physical tables, to print: they open each table in the player app. See docs/table-qr.md.
+  // The cards of the tables with the QR code of the tournament, to print: 1, 2 or 4 per sheet (perSheet). See docs/table-qr.md.
   router.get("/:tournamentId/table-qr-codes", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
-      const pdf = await generateTableQrCodes(pathParam(req, "tournamentId"), parseAcceptLanguage(req.headers["accept-language"]));
+      const pdf = await generateTableQrCodes(
+        pathParam(req, "tournamentId"),
+        parseAcceptLanguage(req.headers["accept-language"]),
+        readCardsPerSheet(req.query.perSheet),
+      );
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-table-qr-codes.pdf"`);
       res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.get("/:tournamentId/id-cards/staff-names", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      res.status(200).json({ names: await readIdCardStaffNames(pathParam(req, "tournamentId")) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // Whoever creates the ID cards keeps the names of the staff for the next time.
+  router.put("/:tournamentId/id-cards/staff-names", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      const names = readStaffNames(Array.isArray(req.body?.names) ? req.body.names : null);
+      res.status(200).json({ names: await saveIdCardStaffNames(pathParam(req, "tournamentId"), names) });
     } catch (e) {
       next(e);
     }

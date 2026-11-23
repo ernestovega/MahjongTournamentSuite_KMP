@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import androidx.compose.foundation.layout.ColumnScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
@@ -218,13 +219,13 @@ class AdminDialogsScreenshotTest {
     fun playerCountLocked() = playerCountScreen("player-count-locked", step = null) { LockedContent(PlayerCountBlocker.STARTED, onClose = {}) }
 
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
-    /** The QR codes of the tables: the grid of all the tables. */
+    /** The QR code of the tournament, with the window to project it and the PDF of the cards of the tables. */
     @Test
-    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = {}) }
+    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _ -> }) }
 
-    /** One code in big, to show it on a screen. */
+    /** The code in a window of its own, to project it. */
     @Test
-    fun tableQrBig() = adminScreenshots("table-qr-big") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = {}, initialTable = 3) }
+    fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table") }
 
     private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
 

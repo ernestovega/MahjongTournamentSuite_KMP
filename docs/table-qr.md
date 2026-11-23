@@ -1,41 +1,51 @@
-# QR codes of the tables
+# QR code of a tournament
 
-Each physical table of a tournament has a QR code. A player who scans it with the phone camera opens that table in
-the player app, in the round in play, with its hands and its results. Nobody needs an account: the tables are public.
+A tournament has one QR code. A player who scans it with the phone camera opens the tournament in the player app, on
+its tables tab, and over it their own table: the table in play, or the next one. The same code goes on every physical
+table, on a card with the number of the table in big, so the card also tells the players which table is which.
 
 ## The link
 
-- A tournament with a public link (`registration.slug`, see registrations.md): `https://mts.mahjongmadrid.com/<slug>/table/<n>`,
-  for example `/6thmmc/table/5`.
-- Any other tournament: `https://mts.mahjongmadrid.com/t/<tournament id>/table/<n>`.
-- `mesa` works in place of `table`, for a link typed by hand.
+- A tournament with a public link (`registration.slug`, see registrations.md): `https://mts.mahjongmadrid.com/<slug>/my-table`,
+  for example `/6thmmc/my-table`.
+- Any other tournament: `https://mts.mahjongmadrid.com/t/<tournament id>/my-table`.
+- `mesa` works in place of `my-table`, for a link typed by hand. The old links of the cards of one table
+  (`/<slug>/table/<n>`) open the same as `my-table`.
 
-The admin app builds the link with `Tournament.tableQrLink` (domain) and the web of the players `PublicSite.url`
+The admin app builds the link with `Tournament.myTableQrLink` (domain) and the web of the players `PublicSite.url`
 (data): the address of the page on the web, production or the Firebase address of the project on Android. The backend
-builds the same link with `tableQrLink` of `tableQrService.ts` and `PLAYER_APP_URL`, so staging prints staging links.
+builds the same link with `myTableQrLink` of `tableQrService.ts` and `PLAYER_APP_URL`, so staging prints staging links.
 
-## Which round the player app opens
+## What the player app opens
 
-`registrationLinkOf` reads the link and `TableQrLinkPresenter` finds the round (`Tournament.tableQrRound`):
+`registrationLinkOf` reads the link (`RegistrationLink.myTable`). The app opens the tournament on the tables tab
+(`TournamentRoute.myTables`, "Me"), and `TableQrLinkPresenter` looks for the table of the signed-in account
+(`Tournament.myQrTable`):
 
-1. the round in play, or the round that starts within the seating time (the same round as the reminder of the own table);
-2. else the last round that started (between rounds: the round that just ended);
-3. else the last round with hands (rounds played without the Timer);
-4. else round 1.
+1. its table in the round in play, or in the round that starts within the seating time (the same round as the reminder
+   of the own table), when that table is not closed yet;
+2. else its table in the next round that has not started, the first one not closed.
 
-The app opens the tournament and the table over it, so Back shows the tournament. A tournament before its draw, or a
-table number above the last table, opens only the tournament.
+Without an account in the tournament, before the draw, in a finished tournament, or when the player has played all
+their tables, the app shows only the tables tab. Back from the table shows the tournament.
 
-The Android app does not open these links yet: the camera opens them in the browser. App Links would need
-`/.well-known/assetlinks.json` on the domain with the signing certificate of Google Play.
+The Android app opens these links when it is installed (App Links): `MainActivity` has an `autoVerify` intent filter
+for `https://mts.mahjongmadrid.com/.*/my-table` (and the old `/table/` and `/mesa/`), and passes the link to the player
+part (`SuiteStart.link`), which starts again and opens it like the web. The site serves `/.well-known/assetlinks.json`
+(a rewrite of firebase.json to `playerApp/src/wasmJsMain/resources/assetlinks.json`) with the SHA-256 fingerprints of the
+signing keys of the app. Without the app, or before Android verifies the site, the link opens in the
+browser. The staging app does not take the links.
 
 ## Admin
 
-Tournament screen > "Table QR" (top bar) opens `TableQrScreen`:
+Tournament screen > "Tournament QR" (top bar) opens `TableQrScreen`:
 
-- a grid with the code of every table; a touch shows one code as big as the screen, with the previous and next table,
-  to show it on a screen or a projector;
-- "Download PDF to print" makes `GET /tournaments/{id}/table-qr-codes` (permission `tournament.view`): an A4 PDF with
-  four cards per page (an A6 each, with dashed lines to cut). Each card has the name of the tournament on the color of
-  the main organizer, the number of the table, the code, one sentence in the language of the app (Accept-Language)
-  and the link. The export counts `table_qr_exported`.
+- the code with its link, and "Show in a separate window": a window of its own (a browser tab on the web, a window on
+  the desktop, an activity on Android) with the code as big as it fits, black on white, the name of the tournament and
+  one sentence, to project it (`TableQrProjectionScreen`, screen `TableQrProjection`). The window gets the name and the
+  link, so it loads nothing and needs no session;
+- "Print the cards of the tables": 1, 2 or 4 cards per A4 sheet and "Download PDF to print", which makes
+  `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4` (permission `tournament.view`). Each card has the name of the
+  tournament on the color of the main organizer, the word "Table" and its number as big as the card allows, the code,
+  one sentence in the language of the app (Accept-Language) and the link; dashed lines show where to cut. Before the
+  draw the tournament has no tables and the PDF is not offered. The export counts `table_qr_exported`.

@@ -817,6 +817,27 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
   };
 }
 
+function idCardStaffRef(tournamentId: string) {
+  // A document of its own, so saving the names never touches the tournament or its revisions.
+  return db.collection("tournaments").doc(tournamentId).collection("idCards").doc("staff");
+}
+
+/** The names of the staff cards that the admins saved for the tournament, in order. */
+export async function readIdCardStaffNames(tournamentId: string): Promise<string[]> {
+  const snapshot = await idCardStaffRef(tournamentId).get();
+  const names = snapshot.get("names");
+  return Array.isArray(names) ? names.filter((name): name is string => typeof name === "string") : [];
+}
+
+/** Keeps the names of the staff cards, so the next ID cards of the tournament start with them. */
+export async function saveIdCardStaffNames(tournamentId: string, names: string[]): Promise<string[]> {
+  const tournament = await db.collection("tournaments").doc(tournamentId).get();
+  if (!tournament.exists) throw notFound("Tournament not found");
+  const clean = names.map((name) => name.trim()).filter((name) => name.length > 0);
+  await idCardStaffRef(tournamentId).set({ names: clean, updatedAt: new Date().toISOString() });
+  return clean;
+}
+
 export async function generateTournamentIdCards(tournamentId: string, sheet?: IdCardSheetOptions): Promise<Buffer> {
   return buildIdCardsPdf(await loadIdCardsDocument(tournamentId), sheet);
 }

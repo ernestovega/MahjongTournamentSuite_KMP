@@ -37,7 +37,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 | Event | When | Parameters |
 | --- | --- | --- |
-| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer`. The Timer without a tournament is `IndependentTimer` |
+| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer`. The Timer without a tournament is `IndependentTimer`; the window that projects the QR of a tournament is `TableQrProjection` |
 | `dialog_view` | A dialog opens | `dialog`, `screen` |
 | `tab_view` | A tab is selected | `tab`, `screen` |
 | `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |

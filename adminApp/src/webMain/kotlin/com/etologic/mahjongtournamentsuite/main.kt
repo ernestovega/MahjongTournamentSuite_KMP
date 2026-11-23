@@ -7,6 +7,8 @@ import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.presentation.platform.BrowserSessionStorage
 import kotlinx.browser.window
 
+private external fun decodeURIComponent(value: String): String
+
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     loadTimeZones()
@@ -22,6 +24,7 @@ fun main() {
         when (parameters["standalone"]) {
             "timer" -> TimerApp(parameters["tournamentId"]?.ifEmpty { null }, parameters["initialRound"]?.toIntOrNull() ?: 1)
             "rankings" -> RankingApp(parameters["tournamentId"].orEmpty())
+            "table-qr" -> TableQrApp(decodeURIComponent(parameters["name"].orEmpty()), decodeURIComponent(parameters["link"].orEmpty()))
             else -> App(remember { BrowserSessionStorage("adminApp") }, appVersion = AppVersion.web)
         }
     }
