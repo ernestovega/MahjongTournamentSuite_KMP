@@ -9,6 +9,8 @@ Una sola base de código (Kotlin Multiplatform + Compose) que da una app Android
 
 Web: https://mts.mahjongmadrid.com · Gestión: `/admin/` · Android: app «MTS» (Player y Gestión en una sola app).
 
+📘 **Catálogo detallado de funcionalidades:** [docs/features.md](docs/features.md)
+
 ---
 
 ## Player
