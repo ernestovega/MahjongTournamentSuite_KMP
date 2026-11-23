@@ -45,9 +45,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -87,7 +84,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
-import mahjongtournamentsuite.playerapp.generated.resources.summary_share_error
 import mahjongtournamentsuite.playerapp.generated.resources.tab_info
 import mahjongtournamentsuite.playerapp.generated.resources.tab_my_results
 import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
@@ -263,10 +259,6 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab row hides when the content scrolls down and shows when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
-    // What the Summary tab draws, kept so the share button of the top bar turns it into an image.
-    val summaryLayer = rememberGraphicsLayer()
-    var shareError by remember { mutableStateOf<UiText?>(null) }
-    val canShare = tab == PlayerTab.SUMMARY && view?.let { v -> v.tables.any { slotId in it.playerSlots() } } == true
     // Back and the contact button: the profile stays on the screens of the tournaments and of the tournament.
     AppScaffold(
         title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: profile?.name ?: stringResource(Res.string.scope_player),
@@ -276,12 +268,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
         isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = {
-            if (canShare && view != null) {
-                ShareSummaryButton(summaryLayer, summaryFileName(view.tournament.name, view.nameOf(slotId))) { shareError = UiText.of(Res.string.summary_share_error) }
-            }
-            ContactTopBarButton(navController)
-        },
+        actions = { ContactTopBarButton(navController) },
     ) {
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
             ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
@@ -289,7 +276,6 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                     MessageDialog(message)
                     return@ScreenColumn
                 }
-                shareError?.let { error -> AppErrorDialog(error, onDismiss = { shareError = null }) }
                 HideOnScrollTabs(tab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         MtsTabRow(selectedTabIndex = PlayerTab.order.indexOf(tab).coerceAtLeast(0), modifier = Modifier.widthIn(max = TournamentColumnWidth)) {
@@ -359,7 +345,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                     }
                     val allOf = profile?.emaId?.takeIf { allTournaments == 1 && it.isNotBlank() }
                     if (tab == PlayerTab.SUMMARY && view.tables.any { slotId in it.playerSlots() }) {
-                        PlayerSummaryTab(view, slotId, emaId = profile?.emaId, layer = summaryLayer, top = selector)
+                        PlayerSummaryTab(view, slotId, emaId = profile?.emaId, top = selector)
                     } else {
                         PlayerContent(view, slotId, tab, allOf, { statisticsLoading = it }, selector) { table ->
                             navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))

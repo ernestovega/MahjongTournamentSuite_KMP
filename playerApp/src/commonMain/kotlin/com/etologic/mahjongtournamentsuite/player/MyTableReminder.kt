@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -273,6 +274,10 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
         )
     } else if (moment is RoundMoment.StartedAgo) {
         // While the round plays, a button on every screen goes back to the table.
+        DisposableEffect(Unit) {
+            MyTableButtonState.shown = true
+            onDispose { MyTableButtonState.shown = false }
+        }
         MyTableButton(
             onClick = {
                 track(TelemetryReminderAction.BUTTON)
@@ -281,6 +286,11 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
             modifier = Modifier.align(Alignment.BottomEnd),
         )
     }
+}
+
+/** Whether the button "Go to my table" is on the screen, so other floating buttons go above it. */
+internal object MyTableButtonState {
+    var shown by mutableStateOf(false)
 }
 
 /** The floating button that opens the table of the player while the round plays. */

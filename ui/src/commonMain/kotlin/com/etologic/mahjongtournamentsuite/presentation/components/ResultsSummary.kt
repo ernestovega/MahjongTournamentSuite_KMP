@@ -91,6 +91,8 @@ fun ResultsSummaryCard(
     emaId: String?,
     rows: List<ResultsSummaryRow>,
     modifier: Modifier = Modifier,
+    /** Room at the right of the header for a button that the screen puts over the card, such as Share. */
+    headerEndSpace: Dp = 0.dp,
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
@@ -103,7 +105,8 @@ fun ResultsSummaryCard(
         Column {
             // The header: the tournament, then the player with the flag and the EMA number.
             Column(
-                Modifier.fillMaxWidth().background(colors.primary).padding(horizontal = MtsTheme.spacing.lg, vertical = MtsTheme.spacing.md),
+                Modifier.fillMaxWidth().background(colors.primary)
+                    .padding(start = MtsTheme.spacing.lg, top = MtsTheme.spacing.md, end = MtsTheme.spacing.lg + headerEndSpace, bottom = MtsTheme.spacing.md),
                 verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
             ) {
                 Text(
@@ -218,10 +221,10 @@ private fun ResultRow(row: ResultsSummaryRow, weights: List<Float>, striped: Boo
         Box(Modifier.weight(weights[2]), contentAlignment = Alignment.Center) {
             row.wind?.let { WindIcon(it, size = 20.dp) } ?: Text(PENDING, style = style, color = colors.onSurfaceVariant)
         }
-        Cell(weights[3], row.points?.let(::formatPoints), style, TextAlign.End)
-        Cell(weights[4], row.score?.let(::signedText), style, TextAlign.End, color = row.score?.let { scoreColor(it) })
-        Cell(weights[5], row.totalPoints?.let(::formatPoints), style.copy(fontWeight = FontWeight.SemiBold), TextAlign.End)
-        Cell(weights[6], row.totalScore?.let(::signedText), style.copy(fontWeight = FontWeight.SemiBold), TextAlign.End, color = row.totalScore?.let { scoreColor(it) })
+        Cell(weights[3], row.points?.let(::formatPoints), style, TextAlign.Center)
+        Cell(weights[4], row.score?.let(::signedText), style, TextAlign.Center, color = row.score?.let { scoreColor(it) })
+        Cell(weights[5], row.totalPoints?.let(::formatPoints), style.copy(fontWeight = FontWeight.SemiBold), TextAlign.Center)
+        Cell(weights[6], row.totalScore?.let(::signedText), style.copy(fontWeight = FontWeight.SemiBold), TextAlign.Center, color = row.totalScore?.let { scoreColor(it) })
         // The place after the last round is the one that matters most.
         Cell(weights[7], row.place?.let { "$it" }, style.copy(fontWeight = if (last) FontWeight.ExtraBold else FontWeight.SemiBold), TextAlign.Center)
     }

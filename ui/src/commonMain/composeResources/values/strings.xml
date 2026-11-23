@@ -678,5 +678,5 @@ The first one that works wins</string>
     <string name="summary_col_score">Score</string>
     <string name="summary_col_total_points">Total points</string>
     <string name="summary_col_total_score">Total score</string>
-    <string name="summary_col_place">Place</string>
+    <string name="summary_col_place">Rank</string>
 </resources>

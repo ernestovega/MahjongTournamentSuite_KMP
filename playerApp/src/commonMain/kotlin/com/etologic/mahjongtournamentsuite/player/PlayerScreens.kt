@@ -61,6 +61,7 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Directions
@@ -77,6 +78,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -244,6 +246,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.status_finished
 import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
 import mahjongtournamentsuite.playerapp.generated.resources.status_upcoming
+import mahjongtournamentsuite.playerapp.generated.resources.tab_my_results
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
@@ -282,6 +285,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
@@ -1092,6 +1096,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     fun openPlayer(slot: Int, statistics: Boolean = false) {
         navController.navigate(TournamentPlayerRoute(tournamentId, slot, if (statistics) PlayerTab.STATISTICS else PlayerTab.TABLES))
     }
+    // The own results: the Results tab of the screen of the signed-in player.
+    fun openMyResults(slot: Int) {
+        navController.navigate(TournamentPlayerRoute(tournamentId, slot, PlayerTab.SUMMARY))
+    }
     // The team open in the Teams tab, and the tab of that team: 0 is Players and 1 is Tables.
     var selectedTeam by rememberPersistentOptionalInt("selectedTeam")
     var teamTab by rememberPersistentInt("teamTab", 0)
@@ -1116,6 +1124,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     account.Dialogs()
     val drawExplanation = rememberDrawExplanationState()
     drawExplanation.Dialog()
+    // The slot of the signed-in player when the floating button of the own results shows: on Tables and Ranking.
+    val myResultsSlot = view?.mySlotId?.takeIf { shownTab == MainTab.TABLES || shownTab == MainTab.RANKING }
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         // An open team names the screen.
@@ -1128,11 +1138,18 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },
         // The same buttons as the list of tournaments. On a phone they go into the menu.
-        actions = { InfoTopBarButtons(navController, drawExplanation) },
+        // A signed-in player of the tournament also has a way to the own results.
+        actions = { InfoTopBarButtons(navController, drawExplanation, onMyResults = view?.mySlotId?.let { slot -> { openMyResults(slot) } }) },
+        // On Tables and Ranking a floating button opens the own results.
+        floatingActionButton = myResultsSlot?.let { slot ->
+            { MyResultsButton { openMyResults(slot) } }
+        },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
-        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
+        // The lists end above the floating buttons, so their last row never stays under them.
+        val fabClearance = if (myResultsSlot == null) 0.dp else FabClearance + if (MyTableButtonState.shown) MyTableButtonClearance else 0.dp
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll, LocalFabClearance provides fabClearance) {
             // The screen uses the full width. The tab rows and the other tabs keep a narrow column. The statistics use all the width.
             ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 if (view == null) {
@@ -1367,7 +1384,7 @@ internal fun TableList(
                 // The draggable scrollbar of the tables is the scrollbar of this list.
                 modifier = Modifier.fillMaxSize().scrollIndicators(state, scrollbar = MtsScrollbar.None),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp + LocalFabClearance.current),
             ) {
                 rounds.forEach { (roundId, roundTables) ->
                     // In the sticky case, the title of a round stays at the top while its tables scroll under it.
@@ -1755,7 +1772,7 @@ private fun RankingRows(
                 state = listState,
                 modifier = Modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp + LocalFabClearance.current),
             ) {
                 item(key = "controls") {
                     // One row that scrolls with the list: "Jump to me", then the search.
@@ -2364,10 +2381,16 @@ internal fun formatClock(ms: Long): String {
  * There the draw, Contact and Privacy show directly in that menu, under the Rules group.
  */
 @Composable
-fun InfoTopBarButtons(navController: NavHostController, drawExplanation: DrawExplanationState) {
+fun InfoTopBarButtons(
+    navController: NavHostController,
+    drawExplanation: DrawExplanationState,
+    /** Opens the results of the signed-in player in this tournament. Null when the player does not play it. */
+    onMyResults: (() -> Unit)? = null,
+) {
     // Out of the menus, so it lives on while a menu closes.
     val openPrivacyPolicy = rememberOpenPrivacyPolicy()
     val options: @Composable () -> Unit = {
+        onMyResults?.let { MyResultsTopBarButton(it) }
         // The same explanation of the draw as in the admin app, with its flowchart: public for every player.
         DrawExplanationTopBarButton(onClick = drawExplanation::open)
         ContactTopBarButton(navController)
@@ -2425,3 +2448,39 @@ fun ContactTopBarButton(navController: NavHostController) {
         onClick = { navController.navigate(SupportRoute()) },
     )
 }
+
+
+/** The option of the menu of a tournament that opens the results of the signed-in player. */
+@Composable
+private fun MyResultsTopBarButton(onClick: () -> Unit) {
+    AppTopBarButton(text = stringResource(Res.string.tab_my_results), icon = Icons.Default.TableChart, onClick = onClick)
+}
+
+/**
+ * The floating button of Tables and Ranking that opens the results of the signed-in player. While the button
+ * "Go to my table" shows, it goes above it.
+ */
+@Composable
+private fun MyResultsButton(onClick: () -> Unit) {
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier
+            .padding(bottom = if (MyTableButtonState.shown) MyTableButtonClearance else 0.dp)
+            .testTag(MY_RESULTS_BUTTON_TAG),
+    ) {
+        Icon(Icons.Default.TableChart, contentDescription = null)
+        Spacer(Modifier.width(MtsTheme.spacing.sm))
+        Text(stringResource(Res.string.tab_my_results))
+    }
+}
+
+/** The bottom space that a list leaves for the floating buttons over it. */
+internal val LocalFabClearance = compositionLocalOf { 0.dp }
+
+/** The space of the button "My results" over the bottom of a list. */
+private val FabClearance = 80.dp
+
+/** The height of the button "Go to my table" and a gap above it. */
+private val MyTableButtonClearance = 72.dp
+
+internal const val MY_RESULTS_BUTTON_TAG = "myResultsButton"
