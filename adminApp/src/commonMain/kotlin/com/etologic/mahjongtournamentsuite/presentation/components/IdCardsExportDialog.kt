@@ -60,14 +60,22 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.add_a_sheet
-import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
 import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.card_back
+import mahjongtournamentsuite.adminapp.generated.resources.card_back_help
+import mahjongtournamentsuite.adminapp.generated.resources.card_back_none
+import mahjongtournamentsuite.adminapp.generated.resources.card_back_rounds
+import mahjongtournamentsuite.adminapp.generated.resources.card_back_same_as_front
 import mahjongtournamentsuite.adminapp.generated.resources.card_orientation
 import mahjongtournamentsuite.adminapp.generated.resources.card_size
 import mahjongtournamentsuite.adminapp.generated.resources.cards_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.create_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
+import mahjongtournamentsuite.adminapp.generated.resources.cut_marks
+import mahjongtournamentsuite.adminapp.generated.resources.cut_marks_help
+import mahjongtournamentsuite.adminapp.generated.resources.double_sided_printing
+import mahjongtournamentsuite.adminapp.generated.resources.double_sided_printing_help
 import mahjongtournamentsuite.adminapp.generated.resources.each_staff_name_can_have_up_to
 import mahjongtournamentsuite.adminapp.generated.resources.extra_sheets
 import mahjongtournamentsuite.adminapp.generated.resources.front_sheet
@@ -75,11 +83,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.height_mm
 import mahjongtournamentsuite.adminapp.generated.resources.id_cards_proportion_info
 import mahjongtournamentsuite.adminapp.generated.resources.landscape
 import mahjongtournamentsuite.adminapp.generated.resources.portrait
-import mahjongtournamentsuite.adminapp.generated.resources.print_cut_marks_around_the_cards
-import mahjongtournamentsuite.adminapp.generated.resources.print_the_back_of_the_cards_too
 import mahjongtournamentsuite.adminapp.generated.resources.remove_a_sheet
-import mahjongtournamentsuite.adminapp.generated.resources.repeat_the_front_on_the_back
-import mahjongtournamentsuite.adminapp.generated.resources.repeat_the_front_on_the_back_help
 import mahjongtournamentsuite.adminapp.generated.resources.restore_settings
 import mahjongtournamentsuite.adminapp.generated.resources.staff_names
 import mahjongtournamentsuite.adminapp.generated.resources.staff_names_help
@@ -345,40 +349,38 @@ fun IdCardsExportDialog(
                         SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
                         if (layout.backs) SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
                     }
-                    // The checkboxes use a smaller touch target, so the two lines stay close to each other.
+                    // The back is one choice, so "no back" and "repeat the front" cannot be chosen together.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        SelectField(
+                            label = stringResource(Res.string.card_back),
+                            options = listOf(
+                                SelectOption(BackChoice.ROUNDS, stringResource(Res.string.card_back_rounds)),
+                                SelectOption(BackChoice.SAME_AS_FRONT, stringResource(Res.string.card_back_same_as_front)),
+                                SelectOption(BackChoice.NONE, stringResource(Res.string.card_back_none)),
+                            ),
+                            selected = layout.backChoice(),
+                            onSelect = { layout = layout.withBackChoice(it) },
+                            modifier = Modifier.weight(1f),
+                        )
+                        InfoTooltipIcon(stringResource(Res.string.card_back_help), iconSize = 18.dp)
+                    }
+                    // The checkboxes use a smaller touch target, so the lines stay close to each other.
                     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
                         Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = layout.cutMarks,
-                                    onCheckedChange = { layout = layout.copy(cutMarks = it) },
-                                )
-                                Text(stringResource(Res.string.print_cut_marks_around_the_cards))
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = layout.backs,
-                                    onCheckedChange = { layout = layout.copy(backs = it) },
-                                )
-                                Text(stringResource(Res.string.print_the_back_of_the_cards_too))
-                            }
+                            CheckboxLine(
+                                checked = layout.cutMarks,
+                                onCheckedChange = { layout = layout.copy(cutMarks = it) },
+                                label = stringResource(Res.string.cut_marks),
+                                help = stringResource(Res.string.cut_marks_help),
+                            )
                             // Without backs there is nothing to print on the other side of the paper.
                             if (layout.backs) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = layout.doubleSided,
-                                        onCheckedChange = { layout = layout.copy(doubleSided = it) },
-                                    )
-                                    Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = layout.backSameAsFront,
-                                        onCheckedChange = { layout = layout.copy(backSameAsFront = it) },
-                                    )
-                                    Text(stringResource(Res.string.repeat_the_front_on_the_back), modifier = Modifier.weight(1f, fill = false))
-                                    InfoTooltipIcon(stringResource(Res.string.repeat_the_front_on_the_back_help), iconSize = 18.dp)
-                                }
+                                CheckboxLine(
+                                    checked = layout.doubleSided,
+                                    onCheckedChange = { layout = layout.copy(doubleSided = it) },
+                                    label = stringResource(Res.string.double_sided_printing),
+                                    help = stringResource(Res.string.double_sided_printing_help),
+                                )
                             }
                         }
                     }
@@ -408,6 +410,30 @@ fun IdCardsExportDialog(
                 }
             },
         )
+    }
+}
+
+/** What the back of the cards shows. */
+private enum class BackChoice { ROUNDS, SAME_AS_FRONT, NONE }
+
+private fun IdCardSheetLayout.backChoice(): BackChoice = when {
+    !backs -> BackChoice.NONE
+    backSameAsFront -> BackChoice.SAME_AS_FRONT
+    else -> BackChoice.ROUNDS
+}
+
+private fun IdCardSheetLayout.withBackChoice(choice: BackChoice): IdCardSheetLayout = copy(
+    backs = choice != BackChoice.NONE,
+    backSameAsFront = choice == BackChoice.SAME_AS_FRONT,
+)
+
+/** A checkbox with a short label and its explanation in the tooltip of an info icon. */
+@Composable
+private fun CheckboxLine(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: String, help: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(label, modifier = Modifier.weight(1f, fill = false))
+        InfoTooltipIcon(help, iconSize = 18.dp)
     }
 }
 
