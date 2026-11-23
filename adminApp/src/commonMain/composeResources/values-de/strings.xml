@@ -86,10 +86,12 @@
     <string name="staff_sheets">Blätter für das Personal</string>
     <string name="staff_sheets_help">Karten mit STAFF statt der Nummer.</string>
     <string name="staff_names">Namen des Personals</string>
-    <string name="staff_names_help">Schreibe einen Namen pro Zeile.\nDie übrigen Karten haben keinen Namen, damit er von Hand geschrieben wird.</string>
+    <string name="staff_names_help">Jede Person bekommt eine Karte mit ihrem Namen.\nDie übrigen Karten haben keinen Namen, damit er von Hand geschrieben wird.\nDie Namen werden für die nächsten Karten dieses Turniers gespeichert.</string>
+    <string name="add_person">Person hinzufügen</string>
+    <string name="remove_person">Person entfernen</string>
+    <string name="staff_name_placeholder">Vor- und Nachname</string>
     <string name="the_staff_names_need_more_sheets">Nicht alle Namen passen auf diese Blätter.\nDas PDF hat %1$d Blätter für das Personal.</string>
     <string name="each_staff_name_can_have_up_to">Jeder Name darf höchstens %1$d Zeichen haben.</string>
-    <string name="write_up_to_staff_names">Schreibe höchstens %1$d Namen.</string>
     <string name="remove_a_sheet">Ein Blatt entfernen</string>
     <string name="add_a_sheet">Ein Blatt hinzufügen</string>
     <string name="create_pdf">PDF erstellen</string>

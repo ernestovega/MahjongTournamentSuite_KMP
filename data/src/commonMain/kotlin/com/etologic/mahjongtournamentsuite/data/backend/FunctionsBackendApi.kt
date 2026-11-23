@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardStaffNamesDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MakeDrawRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerCountRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerCountResponseDto
@@ -451,6 +452,15 @@ class FunctionsBackendApi(
         }
         return response.body()
     }
+
+    suspend fun getIdCardStaffNames(idToken: String, tournamentId: String): IdCardStaffNamesDto =
+        get(path = "/tournaments/$tournamentId/id-cards/staff-names", idToken = idToken)
+
+    suspend fun saveIdCardStaffNames(idToken: String, tournamentId: String, names: List<String>): IdCardStaffNamesDto = put(
+        path = "/tournaments/$tournamentId/id-cards/staff-names",
+        requestBody = IdCardStaffNamesDto(names),
+        idToken = idToken,
+    )
 
     suspend fun generateIdCardProof(
         idToken: String,

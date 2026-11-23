@@ -86,10 +86,12 @@
     <string name="staff_sheets">Feuilles pour le staff</string>
     <string name="staff_sheets_help">Cartes avec STAFF à la place du numéro.</string>
     <string name="staff_names">Noms du staff</string>
-    <string name="staff_names_help">Écrivez un nom par ligne.\nLes cartes en trop n'ont pas de nom, pour l'écrire à la main.</string>
+    <string name="staff_names_help">Chaque personne a une carte à son nom.\nLes cartes en trop n'ont pas de nom, pour l'écrire à la main.\nLes noms sont gardés pour les prochaines cartes de ce tournoi.</string>
+    <string name="add_person">Ajouter une personne</string>
+    <string name="remove_person">Retirer la personne</string>
+    <string name="staff_name_placeholder">Prénom et nom</string>
     <string name="the_staff_names_need_more_sheets">Tous les noms ne tiennent pas sur ces feuilles.\nLe PDF aura %1$d feuilles pour le staff.</string>
     <string name="each_staff_name_can_have_up_to">Chaque nom peut avoir au maximum %1$d caractères.</string>
-    <string name="write_up_to_staff_names">Écrivez au maximum %1$d noms.</string>
     <string name="remove_a_sheet">Retirer une feuille</string>
     <string name="add_a_sheet">Ajouter une feuille</string>
     <string name="create_pdf">Créer le PDF</string>

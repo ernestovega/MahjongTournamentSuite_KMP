@@ -143,6 +143,8 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedFakeResult<ByteArray>()
+    override suspend fun loadIdCardStaffNames(tournamentId: String) = unusedFakeResult<List<String>>()
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>) = unusedFakeResult<List<String>>()
     override suspend fun generateTournamentIdList(tournamentId: String) = unusedFakeResult<ByteArray>()
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = unusedFakeResult<ByteArray>()
     override suspend fun deleteTournament(tournamentId: String) = unusedFakeResult<Unit>()

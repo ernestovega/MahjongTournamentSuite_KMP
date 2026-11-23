@@ -317,6 +317,8 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = writeResult(ByteArray(0))
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = writeResult(ByteArray(0))
+    override suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = AppResult.Success(emptyList<String>())
+    override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = writeResult(names)
     override suspend fun generateTournamentIdList(tournamentId: String) = writeResult(ByteArray(0))
     override suspend fun generateTableQrCodes(tournamentId: String) = writeResult(ByteArray(0))
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = writeResult(ByteArray(0))

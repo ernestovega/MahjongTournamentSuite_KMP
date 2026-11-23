@@ -44,8 +44,15 @@ class PlayersPresenter(
 
     suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> = tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
-    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> = tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
-        .trackAction(telemetry, TelemetryAction.ID_CARDS_EXPORTED)
+    /** The names of the staff ID cards saved the last time, to start the dialog with them. */
+    suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = tournamentRepository.loadIdCardStaffNames(tournamentId)
+
+    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> {
+        // The names of the staff are kept for the next time. When keeping them fails, the PDF is still created.
+        if (sheet != null && sheet.staffSheets > 0) tournamentRepository.saveIdCardStaffNames(tournamentId, sheet.cleanStaffNames())
+        return tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
+            .trackAction(telemetry, TelemetryAction.ID_CARDS_EXPORTED)
+    }
 
     suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> = tournamentRepository.generateTournamentIdList(tournamentId)
         .trackAction(telemetry, TelemetryAction.ID_LIST_EXPORTED)

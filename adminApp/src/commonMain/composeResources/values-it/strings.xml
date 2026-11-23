@@ -86,10 +86,12 @@
     <string name="staff_sheets">Fogli per lo staff</string>
     <string name="staff_sheets_help">Cartellini con STAFF al posto del numero.</string>
     <string name="staff_names">Nomi dello staff</string>
-    <string name="staff_names_help">Scrivi un nome per riga.\nI cartellini in più non hanno nome, per scriverlo a mano.</string>
+    <string name="staff_names_help">Ogni persona ha un cartellino con il suo nome.\nI cartellini in più non hanno nome, per scriverlo a mano.\nI nomi restano salvati per i prossimi cartellini di questo torneo.</string>
+    <string name="add_person">Aggiungi persona</string>
+    <string name="remove_person">Togli persona</string>
+    <string name="staff_name_placeholder">Nome e cognome</string>
     <string name="the_staff_names_need_more_sheets">Non tutti i nomi entrano in questi fogli.\nIl PDF avrà %1$d fogli per lo staff.</string>
     <string name="each_staff_name_can_have_up_to">Ogni nome può avere al massimo %1$d caratteri.</string>
-    <string name="write_up_to_staff_names">Scrivi al massimo %1$d nomi.</string>
     <string name="remove_a_sheet">Togli un foglio</string>
     <string name="add_a_sheet">Aggiungi un foglio</string>
     <string name="create_pdf">Crea PDF</string>

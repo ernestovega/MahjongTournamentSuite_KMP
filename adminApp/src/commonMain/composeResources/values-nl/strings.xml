@@ -86,10 +86,12 @@
     <string name="staff_sheets">Vellen voor de staf</string>
     <string name="staff_sheets_help">Kaarten met STAFF in plaats van het nummer.</string>
     <string name="staff_names">Namen van de staf</string>
-    <string name="staff_names_help">Schrijf één naam per regel.\nDe kaarten die overblijven hebben geen naam, om die met de hand te schrijven.</string>
+    <string name="staff_names_help">Elke persoon krijgt een kaart met zijn naam.\nDe kaarten die overblijven hebben geen naam, om die met de hand te schrijven.\nDe namen worden bewaard voor de volgende kaarten van dit toernooi.</string>
+    <string name="add_person">Persoon toevoegen</string>
+    <string name="remove_person">Persoon verwijderen</string>
+    <string name="staff_name_placeholder">Voor- en achternaam</string>
     <string name="the_staff_names_need_more_sheets">Niet alle namen passen op deze vellen.\nDe pdf krijgt %1$d vellen voor de staf.</string>
     <string name="each_staff_name_can_have_up_to">Elke naam mag hoogstens %1$d tekens hebben.</string>
-    <string name="write_up_to_staff_names">Schrijf hoogstens %1$d namen.</string>
     <string name="remove_a_sheet">Een vel verwijderen</string>
     <string name="add_a_sheet">Een vel toevoegen</string>
     <string name="create_pdf">PDF maken</string>
