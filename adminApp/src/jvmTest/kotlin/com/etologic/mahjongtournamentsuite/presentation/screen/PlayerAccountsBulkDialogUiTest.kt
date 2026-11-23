@@ -153,7 +153,7 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("New accounts: 2 · Reminders: 0").assertIsDisplayed()
         onNodeWithText("Send (2)").performClick()
         onNodeWithText("Emails are missing").assertIsDisplayed()
-        onNodeWithText("#3 · P3").performTextInput("p3@example.test")
+        onNodeWithText("#03 · P3").performTextInput("p3@example.test")
         onNodeWithText("Send (1)").performClick()
 
         assertEquals(listOf(1, 3), sent)
@@ -173,7 +173,7 @@ class PlayerAccountsBulkDialogUiTest {
 
         onNodeWithText("Select all shown (3)").performClick()
         onNodeWithText("Send (3)").performClick()
-        onNodeWithText("#5 · P5").performTextInput("p5@example.test")
+        onNodeWithText("#05 · P5").performTextInput("p5@example.test")
         onNodeWithText("Send (1)").performClick()
 
         assertEquals(listOf(5, 1), sent)
@@ -188,7 +188,7 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("Select all shown (2)").performClick()
         onNodeWithText("Send (2)").performClick()
         onNodeWithText("Send (0)").assertIsNotEnabled()
-        onNodeWithText("#3 · P3").performTextInput("not-an-email")
+        onNodeWithText("#03 · P3").performTextInput("not-an-email")
         onNodeWithText("Send (1)").assertIsNotEnabled()
         onAllNodesWithText("Cancel").onLast().performClick()
         waitForIdle()
@@ -235,7 +235,7 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("Select all shown (4)").performClick()
         onNodeWithText("New accounts: 2 · Reminders: 2").assertIsDisplayed()
         onNodeWithText("Send (4)").performClick()
-        onNodeWithText("#3 · P3").performTextInput("p3@example.test")
+        onNodeWithText("#03 · P3").performTextInput("p3@example.test")
         onNodeWithText("Send (1)").performClick()
 
         assertEquals(listOf(1, 2, 3, 4), sent)
@@ -373,7 +373,7 @@ class PlayerAccountsBulkDialogUiTest {
         onAllNodesWithText("Invited").onLast().assertIsDisplayed()
         onAllNodesWithText("Reminded").onLast().assertIsDisplayed()
         onAllNodesWithText("Not sent").onLast().assertIsDisplayed()
-        onNodeWithText("#3 · P3").assertIsDisplayed()
+        onNodeWithText("#03 · P3").assertIsDisplayed()
         // The reason shows in the row of the list too.
         onAllNodesWithText("Another account or another player already uses this email.").onLast().assertIsDisplayed()
     }

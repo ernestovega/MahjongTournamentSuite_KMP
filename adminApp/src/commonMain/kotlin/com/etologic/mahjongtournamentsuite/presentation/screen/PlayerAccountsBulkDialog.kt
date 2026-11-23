@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPlayerNumberDigits
+import com.etologic.mahjongtournamentsuite.presentation.components.formatPlayerNumber
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -312,7 +314,17 @@ fun PlayerAccountsBulkDialog(
     }
     // These dialogs come after the main dialog, so they are drawn above it.
     if (busy) SendingDialog()
-    summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "#$id · ${nameOf(p)}" } ?: "#$id" }, onDismiss = { summary = null }) }
+    val numberDigits = LocalPlayerNumberDigits.current
+    summary?.let {
+        SendSummaryDialog(
+            it,
+            nameOf = { id ->
+                val number = formatPlayerNumber(id, numberDigits)
+                players.firstOrNull { p -> p.id == id }?.let { p -> "$number · ${nameOf(p)}" } ?: number
+            },
+            onDismiss = { summary = null },
+        )
+    }
 }
 
 private val CheckboxColumnWidth = 24.dp
