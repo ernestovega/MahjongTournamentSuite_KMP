@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Imprimir marcas de corte alrededor de las tarjetas.</string>
     <string name="arrange_the_cards_for_printing_on">Ordenar las tarjetas para imprimir por las dos caras del papel.</string>
     <string name="print_the_back_of_the_cards_too">Imprimir también la parte trasera de las tarjetas.</string>
+    <string name="repeat_the_front_on_the_back">Repetir la cara delantera en la trasera.</string>
+    <string name="repeat_the_front_on_the_back_help">Jugadores y staff llevan lo mismo por las dos caras, en lugar de la tabla de rondas.\nLos sustitutos mantienen la tabla, para escribir sus mesas a mano.</string>
     <string name="extra_sheets">Hojas extra</string>
     <string name="substitute_sheets">Hojas para sustitutos</string>
     <string name="substitute_sheets_help">Tarjetas sin nombre ni número, para escribirlos a mano.</string>

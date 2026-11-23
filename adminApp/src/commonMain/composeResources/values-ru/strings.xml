@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Печатать метки обрезки вокруг бейджей.</string>
     <string name="arrange_the_cards_for_printing_on">Расположить бейджи для двусторонней печати.</string>
     <string name="print_the_back_of_the_cards_too">Печатать также оборотную сторону бейджей.</string>
+    <string name="repeat_the_front_on_the_back">Повторять лицевую сторону на обороте.</string>
+    <string name="repeat_the_front_on_the_back_help">У игроков и персонала обе стороны одинаковые, вместо таблицы раундов.\nУ замен остаётся таблица, чтобы вписать столы от руки.</string>
     <string name="extra_sheets">Дополнительные листы</string>
     <string name="substitute_sheets">Листы для замен</string>
     <string name="substitute_sheets_help">Бейджи без имени и без номера, чтобы вписать их от руки.</string>

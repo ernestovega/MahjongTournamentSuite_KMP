@@ -3992,6 +3992,15 @@
       "description": "true/false. Con false el PDF solo tiene las caras delanteras."
      },
      {
+      "name": "backSameAsFront",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "true/false. La trasera de jugadores y staff repite la delantera; los sustitutos mantienen la tabla."
+     },
+     {
       "name": "substituteSheets",
       "in": "query",
       "required": false,

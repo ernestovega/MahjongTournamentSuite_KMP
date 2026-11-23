@@ -327,6 +327,7 @@ ROUTES = [
      [T, q("layout", "`sheet` para varias por hoja A4; sin valor, una por página."), q("cardsPerSheet", "1 a 40 (por defecto 10).", {"type": "integer"}),
       q("scalePercent", "Tamaño de la tarjeta.", {"type": "integer"}), q("landscape", "true/false"), q("doubleSided", "true/false"),
       q("cutMarks", "true/false"), q("backs", "true/false. Con false el PDF solo tiene las caras delanteras."),
+      q("backSameAsFront", "true/false. La trasera de jugadores y staff repite la delantera; los sustitutos mantienen la tabla."),
       q("substituteSheets", "Hojas de tarjetas sin nombre ni número para sustitutos (0-20).", {"type": "integer"}),
       q("staffSheets", "Hojas de tarjetas con STAFF en lugar del número (0-20).", {"type": "integer"}),
       q("staffName", "Nombre de una tarjeta de staff. Se repite una vez por nombre, en orden (máx. 200).")], None, PDF),

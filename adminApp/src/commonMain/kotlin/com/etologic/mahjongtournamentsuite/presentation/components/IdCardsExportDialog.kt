@@ -78,6 +78,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.portrait
 import mahjongtournamentsuite.adminapp.generated.resources.print_cut_marks_around_the_cards
 import mahjongtournamentsuite.adminapp.generated.resources.print_the_back_of_the_cards_too
 import mahjongtournamentsuite.adminapp.generated.resources.remove_a_sheet
+import mahjongtournamentsuite.adminapp.generated.resources.repeat_the_front_on_the_back
+import mahjongtournamentsuite.adminapp.generated.resources.repeat_the_front_on_the_back_help
 import mahjongtournamentsuite.adminapp.generated.resources.restore_settings
 import mahjongtournamentsuite.adminapp.generated.resources.staff_names
 import mahjongtournamentsuite.adminapp.generated.resources.staff_names_help
@@ -369,6 +371,14 @@ fun IdCardsExportDialog(
                                     )
                                     Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
                                 }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = layout.backSameAsFront,
+                                        onCheckedChange = { layout = layout.copy(backSameAsFront = it) },
+                                    )
+                                    Text(stringResource(Res.string.repeat_the_front_on_the_back), modifier = Modifier.weight(1f, fill = false))
+                                    InfoTooltipIcon(stringResource(Res.string.repeat_the_front_on_the_back_help), iconSize = 18.dp)
+                                }
                             }
                         }
                     }
@@ -439,14 +449,16 @@ private fun ExtraSheets(
                 minLines = 3,
                 maxLines = 6,
                 isError = staffNamesError != null,
-                supportingText = {
-                    Text(
-                        staffNamesError ?: if (printed > layout.staffSheets) {
-                            stringResource(Res.string.the_staff_names_need_more_sheets, printed)
-                        } else {
-                            stringResource(Res.string.staff_names_help)
-                        },
-                    )
+                trailingIcon = { InfoTooltipIcon(stringResource(Res.string.staff_names_help), iconSize = 18.dp) },
+                // Only an error or the warning about more sheets takes space under the field.
+                supportingText = when {
+                    staffNamesError != null -> {
+                        { Text(staffNamesError) }
+                    }
+                    printed > layout.staffSheets -> {
+                        { Text(stringResource(Res.string.the_staff_names_need_more_sheets, printed)) }
+                    }
+                    else -> null
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -466,9 +478,10 @@ private fun SheetCounter(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-        Column(modifier = Modifier.padding(start = 8.dp).weight(1f)) {
-            Text(label)
-            Text(help, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // The explanation lives in the tooltip of the info icon, so each counter takes one line.
+        Row(modifier = Modifier.padding(start = 8.dp).weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, modifier = Modifier.weight(1f, fill = false))
+            InfoTooltipIcon(help, iconSize = 18.dp)
         }
         val removeLabel = stringResource(Res.string.remove_a_sheet)
         AppTooltipBox(removeLabel) {
