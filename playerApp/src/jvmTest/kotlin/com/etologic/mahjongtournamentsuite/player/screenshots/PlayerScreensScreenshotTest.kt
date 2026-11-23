@@ -274,8 +274,19 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournamentPlayerSummary() = playerScreenshots(
         "tournament-player-summary",
-        ready = { waitForText("EMA 04010001", substring = true) },
+        // The own player: the tab is My results.
+        ready = {
+            waitForText("EMA 04010001", substring = true)
+            waitForText(playerText("tab_my_results"))
+        },
     ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.SUMMARY)) }
+
+    /** The results of another player: the tab is Results, not My results (23-nov). */
+    @Test
+    fun tournamentPlayerResultsOfAnotherPlayer() = playerScreenshots(
+        "tournament-player-results-other",
+        ready = { waitForText(playerText("tab_results")) },
+    ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 2, tab = PlayerTab.SUMMARY)) }
 
     @Test
     fun tournamentPlayerAllTournaments() = playerScreenshots(
