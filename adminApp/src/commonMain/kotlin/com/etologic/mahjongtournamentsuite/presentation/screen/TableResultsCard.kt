@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -163,7 +162,7 @@ internal fun TableResultsCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = playerNumber(id),
+                        text = "#${id.trim()}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -181,7 +180,7 @@ internal fun TableResultsCard(
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     Text(
-                        text = playerNumber(id),
+                        text = "#${id.trim()}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

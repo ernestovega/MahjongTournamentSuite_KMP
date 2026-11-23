@@ -1108,7 +1108,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_sure_text">Las mesas de todas las rondas se sortean de nuevo.\nNo se puede deshacer.</string>
     <string name="pc_change">Cambiar</string>
     <string name="pc_now">Ahora: %1$d jugadores, %2$d mesas por ronda.</string>
-    <string name="pc_empty_slot">%1$s · sin jugador</string>
+    <string name="pc_empty_slot">#%1$d · sin jugador</string>
     <string name="pc_new_slots">%1$d huecos nuevos, vacíos hasta que los asignes en Jugadores.</string>
     <string name="pc_new_teams">%1$d equipos nuevos, vacíos hasta que los asignes en Equipos.</string>
     <string name="pc_waiting_title">Lista de espera: hasta %1$d personas (opcional)</string>
