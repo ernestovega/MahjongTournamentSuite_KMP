@@ -1150,9 +1150,9 @@ Change the places in Registrations.</string>
     <string name="activity_action_tournament_player_count">Changed the number of players</string>
     <string name="create_rounds_blocks">With %1$d players, %2$d rounds fit without anyone meeting the same rival twice. With %3$d rounds the draw goes in blocks, and some players will meet a rival again, but nobody more than %4$d times.</string>
     <string name="create_rounds_maybe_blocks">With %1$d players, the draw is sure to find %2$d rounds without anyone meeting the same rival twice. With %3$d it will try, and if it does not make it in time, some players will meet a rival again, but nobody more than %4$d times.</string>
-    <string name="table_qr_top_bar">QR &amp; Tables IDs</string>
-    <string name="table_qr_button">QR &amp; Tables IDs</string>
-    <string name="table_qr_project">Show in a separate window</string>
+    <string name="table_qr_top_bar">Tables IDs</string>
+    <string name="table_qr_button">Tables IDs</string>
+    <string name="table_qr_show">QR</string>
     <string name="table_qr_print_title">Print the cards of the tables</string>
     <string name="table_qr_per_sheet">Cards per sheet</string>
     <string name="table_qr_print_info">One card for each table (%1$d tables): the number of the table in big and the code of the tournament.</string>

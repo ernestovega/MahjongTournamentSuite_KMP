@@ -199,7 +199,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
   - Open or close hand entry and seats by hand, per round or per table; mark tables as completed or in play.
   - A warning for **open tables in finished rounds**, with a badge per round and a Review dialog to close them in bulk.
 - **Big-screen ranking**: to project in the venue; it pages by itself through players, teams, chicken hands and best hands.
-- **Tournament QR code**: a big QR code in a separate window to project, and a PDF of cards per table (big number + QR code) with 1, 2 or 4 per A4 sheet.
+- **Tournament QR code**: a big QR code in a separate window to project ("QR" button), and a PDF ("Tables IDs") of cards per table (big number + QR code) with 1, 2 or 4 per A4 sheet.
 - **Statistics**: the same as the Player, with the same filters.
 
 ### 5.6 Printing and export

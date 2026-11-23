@@ -32,10 +32,10 @@ class TournamentScreenTest : AdminE2eTest() {
     @Test
     fun adminSeesTournamentActionsInTheTopBar() {
         open("Test - Live ongoing tournament")
-        listOf("Back", "Timer", "Ranking", "More").forEach { c.waitForText(it) }
+        listOf("Back", "Timer", "Ranking", "QR", "More").forEach { c.waitForText(it) }
         // The screens that are not used during the rounds are in the "More" menu.
         c.openMoreMenu()
-        listOf("Teams", "Players", "Stats", "EMA report").forEach { c.waitForText(it) }
+        listOf("Teams", "Players", "Tables IDs", "Stats", "EMA report").forEach { c.waitForText(it) }
     }
 
     @Test

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +51,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
 import com.etologic.mahjongtournamentsuite.domain.model.physicalTableCount
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -60,7 +58,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationL
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
-import com.etologic.mahjongtournamentsuite.presentation.platform.openTableQrWindow
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -75,7 +72,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_qr_no_tables
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_info
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_title
-import mahjongtournamentsuite.adminapp.generated.resources.table_qr_project
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_save
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_top_bar
 import org.jetbrains.compose.resources.stringResource
@@ -98,9 +94,9 @@ private fun sheetLayout(perSheet: Int): SheetLayout = when (perSheet) {
 
 /**
  * The QR code of a tournament (docs/table-qr.md). One code for all the tables: it opens the tables of the player in
- * the player app, with their table in play, or the next one, open. The screen shows it, opens it in a window of its
- * own to project it, and downloads a PDF with a card for each table (its number in big and the code), 1, 2 or 4 per
- * sheet.
+ * the player app, with their table in play, or the next one, open. This screen ("Tables IDs", in the "More" menu of the
+ * tournament) downloads a PDF with a card for each table (its number in big and the code). The "QR" button of the top
+ * bar of the tournament opens the code in a window of its own to project it.
  */
 @Composable
 fun TableQrScreen(
@@ -119,7 +115,6 @@ fun TableQrScreen(
         site = site,
         onBack = onBack,
         onDownload = rememberTableQrDownload(presenter),
-        onProject = { name, link, logoUrl -> openTableQrWindow(name, link, logoUrl) },
     )
 }
 
@@ -152,7 +147,6 @@ internal fun TableQrContent(
     site: String,
     onBack: () -> Unit,
     onDownload: (Tournament, perSheet: Int) -> Unit,
-    onProject: (tournamentName: String, link: String, logoUrl: String?) -> Unit,
     /** The cards per sheet chosen at first. The screenshots use it. */
     initialPerSheet: Int = 4,
 ) {
@@ -173,11 +167,6 @@ internal fun TableQrContent(
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            FocusedButton(onClick = { onProject(tournament.name, link, tournament.associationLogoUrl) }, modifier = Modifier.testTag("table_qr_project")) {
-                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, Modifier.size(18.dp))
-                Spacer(Modifier.width(MtsTheme.spacing.sm))
-                Text(stringResource(Res.string.table_qr_project))
-            }
             SectionCard(title = stringResource(Res.string.table_qr_print_title)) {
                 if (tableCount == 0) {
                     Text(stringResource(Res.string.table_qr_no_tables), style = MaterialTheme.typography.bodyMedium)

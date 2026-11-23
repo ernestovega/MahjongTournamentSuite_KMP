@@ -1150,9 +1150,9 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="activity_action_tournament_player_count">Ändrade antalet spelare</string>
     <string name="create_rounds_blocks">Med %1$d spelare ryms %2$d omgångar utan att någon möter samma motståndare två gånger. Med %3$d omgångar lottas det i block: några möter en motståndare igen, men ingen fler än %4$d gånger.</string>
     <string name="create_rounds_maybe_blocks">Med %1$d spelare hittar lottningen säkert %2$d omgångar utan att någon möter samma motståndare två gånger. Med %3$d försöker den, och hinner den inte, möter några en motståndare igen, men ingen fler än %4$d gånger.</string>
-    <string name="table_qr_top_bar">QR &amp; bord-ID</string>
-    <string name="table_qr_button">QR &amp; bord-ID</string>
-    <string name="table_qr_project">Visa i ett eget fönster</string>
+    <string name="table_qr_top_bar">Bord-ID</string>
+    <string name="table_qr_button">Bord-ID</string>
+    <string name="table_qr_show">QR</string>
     <string name="table_qr_print_title">Skriv ut bordens kort</string>
     <string name="table_qr_per_sheet">Kort per ark</string>
     <string name="table_qr_print_info">Ett kort per bord (%1$d bord): bordets nummer stort och turneringens kod.</string>

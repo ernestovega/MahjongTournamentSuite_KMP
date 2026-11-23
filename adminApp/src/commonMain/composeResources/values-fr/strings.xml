@@ -1150,9 +1150,9 @@ Change les places dans Inscriptions.</string>
     <string name="activity_action_tournament_player_count">A changé le nombre de joueurs</string>
     <string name="create_rounds_blocks">Avec %1$d joueurs, %2$d manches tiennent sans que personne ne retrouve un adversaire. Avec %3$d manches, le tirage se fait par blocs : certains retrouveront un adversaire, mais personne plus de %4$d fois.</string>
     <string name="create_rounds_maybe_blocks">Avec %1$d joueurs, le tirage trouve à coup sûr %2$d manches sans que personne ne retrouve un adversaire. Avec %3$d, il essaiera, et s’il n’y arrive pas à temps, certains retrouveront un adversaire, mais personne plus de %4$d fois.</string>
-    <string name="table_qr_top_bar">QR &amp; IDs de table</string>
-    <string name="table_qr_button">QR &amp; IDs de table</string>
-    <string name="table_qr_project">Afficher dans une fenêtre à part</string>
+    <string name="table_qr_top_bar">IDs de table</string>
+    <string name="table_qr_button">IDs de table</string>
+    <string name="table_qr_show">QR</string>
     <string name="table_qr_print_title">Imprimer les cartes des tables</string>
     <string name="table_qr_per_sheet">Cartes par feuille</string>
     <string name="table_qr_print_info">Une carte par table (%1$d tables) : le numéro de la table en grand et le code du tournoi.</string>

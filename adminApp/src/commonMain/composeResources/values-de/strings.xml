@@ -1150,9 +1150,9 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
     <string name="activity_action_tournament_player_count">Hat die Spielerzahl geändert</string>
     <string name="create_rounds_blocks">Mit %1$d Spielern passen %2$d Runden, ohne dass jemand einen Gegner zweimal trifft. Mit %3$d Runden lost die App in Blöcken, und manche treffen einen Gegner erneut, aber niemand öfter als %4$d Mal.</string>
     <string name="create_rounds_maybe_blocks">Mit %1$d Spielern findet die Auslosung sicher %2$d Runden, ohne dass jemand einen Gegner zweimal trifft. Mit %3$d versucht sie es, und wenn sie es nicht rechtzeitig schafft, treffen manche einen Gegner erneut, aber niemand öfter als %4$d Mal.</string>
-    <string name="table_qr_top_bar">QR &amp; Tisch-IDs</string>
-    <string name="table_qr_button">QR &amp; Tisch-IDs</string>
-    <string name="table_qr_project">In eigenem Fenster zeigen</string>
+    <string name="table_qr_top_bar">Tisch-IDs</string>
+    <string name="table_qr_button">Tisch-IDs</string>
+    <string name="table_qr_show">QR</string>
     <string name="table_qr_print_title">Karten der Tische drucken</string>
     <string name="table_qr_per_sheet">Karten pro Blatt</string>
     <string name="table_qr_print_info">Eine Karte pro Tisch (%1$d Tische): die Nummer des Tisches in groß und der Code des Turniers.</string>

@@ -97,6 +97,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.teams
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
+import androidx.compose.material.icons.filled.Badge
+import com.etologic.mahjongtournamentsuite.data.network.PublicSite
+import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
+import com.etologic.mahjongtournamentsuite.presentation.platform.openTableQrWindow
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_show
 
 private sealed class RoundEditorAction {
     data object Back : RoundEditorAction()
@@ -520,6 +525,16 @@ fun TournamentScreen(
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
             )
+            // The code of the tournament in a window of its own, to project it, as the Timer and the Ranking. It does not
+            // leave the table, so it opens also with changes not saved.
+            AppTopBarButton(
+                text = stringResource(Res.string.table_qr_show),
+                icon = Icons.Default.QrCode2,
+                onClick = {
+                    tournament?.let { openTableQrWindow(it.name, it.myTableQrLink(PublicSite.url), it.associationLogoUrl) }
+                },
+                enabled = tournament != null,
+            )
         },
         actions = {
             if (canHere(Permission.TOURNAMENT_ROUND_CONTROL)) {
@@ -530,12 +545,6 @@ fun TournamentScreen(
                     enabled = !isLoading,
                 )
             }
-            AppTopBarButton(
-                text = stringResource(Res.string.table_qr_button),
-                icon = Icons.Default.QrCode2,
-                onClick = { requestAction(RoundEditorAction.TableQr) },
-                enabled = !isLoading,
-            )
             // The screens that are not used during the rounds, in one menu so that the top bar stays light.
             AppTopBarMoreMenu {
                 if (tournament?.isTeams == true) {
@@ -550,6 +559,12 @@ fun TournamentScreen(
                     text = stringResource(Res.string.players),
                     icon = Icons.Default.People,
                     onClick = { requestAction(RoundEditorAction.Players) },
+                    enabled = !isLoading,
+                )
+                AppTopBarButton(
+                    text = stringResource(Res.string.table_qr_button),
+                    icon = Icons.Default.Badge,
+                    onClick = { requestAction(RoundEditorAction.TableQr) },
                     enabled = !isLoading,
                 )
                 AppTopBarButton(

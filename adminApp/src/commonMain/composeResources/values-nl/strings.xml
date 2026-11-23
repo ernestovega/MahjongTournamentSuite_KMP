@@ -1150,9 +1150,9 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="activity_action_tournament_player_count">Wijzigde het aantal spelers</string>
     <string name="create_rounds_blocks">Met %1$d spelers passen %2$d rondes zonder dat iemand een tegenstander twee keer treft. Met %3$d rondes loot de app in blokken: sommigen treffen een tegenstander opnieuw, maar niemand vaker dan %4$d keer.</string>
     <string name="create_rounds_maybe_blocks">Met %1$d spelers vindt de loting zeker %2$d rondes zonder dat iemand een tegenstander twee keer treft. Met %3$d probeert ze het, en lukt het niet op tijd, dan treffen sommigen een tegenstander opnieuw, maar niemand vaker dan %4$d keer.</string>
-    <string name="table_qr_top_bar">QR &amp; tafel-ID's</string>
-    <string name="table_qr_button">QR &amp; tafel-ID's</string>
-    <string name="table_qr_project">In een apart venster tonen</string>
+    <string name="table_qr_top_bar">Tafel-ID's</string>
+    <string name="table_qr_button">Tafel-ID's</string>
+    <string name="table_qr_show">QR</string>
     <string name="table_qr_print_title">Kaarten van de tafels afdrukken</string>
     <string name="table_qr_per_sheet">Kaarten per vel</string>
     <string name="table_qr_print_info">Eén kaart per tafel (%1$d tafels): het nummer van de tafel groot en de code van het toernooi.</string>
