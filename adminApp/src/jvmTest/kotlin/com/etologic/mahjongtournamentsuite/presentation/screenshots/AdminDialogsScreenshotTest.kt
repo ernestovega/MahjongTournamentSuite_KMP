@@ -238,17 +238,17 @@ class AdminDialogsScreenshotTest {
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
     /** The QR code of the tournament, with the window to project it and the PDF of the cards of the tables. */
     @Test
-    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }) }
+    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }) }
 
     /** Six and eight cards per sheet: the small cards. */
     @Test
     fun tableQrSixPerSheet() = adminScreenshots("table-qr-6") {
-        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }, initialPerSheet = 6)
+        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, initialPerSheet = 6)
     }
 
     @Test
     fun tableQrEightPerSheet() = adminScreenshots("table-qr-8") {
-        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, onProject = { _, _, _ -> }, initialPerSheet = 8)
+        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, initialPerSheet = 8)
     }
 
     /** The code in a window of its own, to project it. */

@@ -443,12 +443,12 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         .joinToString(" ") { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text } ?: "" }
         .replace("\n", " ")
 
-    /** The counts of the tile of the places ("16 / 16", "1 on the waiting list · 0 to confirm"), for the log. */
+    /** The counts of the tile of the places ("16 of 16 places taken", "1 on the waiting list · 0 with the email not confirmed yet"), for the log. */
     private fun counts(): String = "${textOf("registrations-places-value")} | ${textOf("registrations-waiting-value")}"
 
     /** Waits for the counts of the tile of the places, at the top of the list: it scrolls there first. */
     private fun waitForCounts(withAPlace: Int, waiting: Int) {
-        val places = "$withAPlace / ${byHand.getInt("places")}"
+        val places = "$withAPlace of ${byHand.getInt("places")} places taken"
         c.waitUntil(60_000) {
             if (c.onAllNodes(hasTestTag("registrations-places-value"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()) {
                 runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("registrations-places-value")) }
