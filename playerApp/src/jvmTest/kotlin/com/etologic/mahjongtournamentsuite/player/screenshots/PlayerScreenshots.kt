@@ -92,26 +92,35 @@ internal fun playerModules(
 )
 
 /** Screenshots of a player screen with the frame of the player app. The images go to playerApp/screenshots/<name>/. */
-@OptIn(ExperimentalTestApi::class, InternalComposeUiApi::class)
+@OptIn(ExperimentalTestApi::class)
 internal fun playerScreenshots(
     name: String,
     modules: () -> List<Module> = { playerModules() },
     variants: List<Variant> = allVariants,
     ready: ComposeUiTest.() -> Unit = {},
     content: @Composable (NavHostController) -> Unit,
-) = screenshots(name, variants, ready) { variant ->
+) = screenshots(name, variants, ready) { variant -> PlayerFrame(modules, variant.dark, content) }
+
+/** The frame of the player app around [content]: its Koin graph over [modules], its theme ([dark] or light) and logos. */
+@OptIn(InternalComposeUiApi::class)
+@Composable
+internal fun PlayerFrame(
+    modules: () -> List<Module>,
+    dark: Boolean,
+    content: @Composable (NavHostController) -> Unit,
+) {
     val koin = remember { koinApplication { modules(modules()) }.koin }
-    val preference = if (variant.dark) ThemePreference.Dark else ThemePreference.Light
+    val preference = if (dark) ThemePreference.Dark else ThemePreference.Light
     KoinContext(koin) {
         CompositionLocalProvider(
-            LocalThemeController provides ThemeController(preference, variant.dark, {}),
+            LocalThemeController provides ThemeController(preference, dark, {}),
             // The Timer and the rankings keep a theme of their own that starts from the system theme.
-            LocalSystemTheme provides if (variant.dark) SystemTheme.Dark else SystemTheme.Light,
+            LocalSystemTheme provides if (dark) SystemTheme.Dark else SystemTheme.Light,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
         ) {
-            MtsTheme(useDarkTheme = variant.dark) {
+            MtsTheme(useDarkTheme = dark) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
                     NavHost(navController, startDestination = "screen") {
