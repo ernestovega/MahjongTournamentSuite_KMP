@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import androidx.compose.foundation.background
@@ -1205,7 +1206,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             if (assigned != null) CountryFlag(code = playerCountry)
                                             Text(
                                                 text = listOfNotNull(
-                                                    "#${slot.id}",
+                                                    playerNumber(slot.id),
                                                     assigned?.emaId?.let { "EMA $it" },
                                                     if (isTeamsTournament) teamNamesById[slot.team] ?: teamLabel(slot.team) else null,
                                                 ).joinToString(" · "),
@@ -1218,7 +1219,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     }
                                 } else {
                                     Text(
-                                        text = "#${slot.id}",
+                                        text = playerNumber(slot.id),
                                         modifier = Modifier.width(TournamentPlayerIdColumnWidth),
                                         textAlign = TextAlign.Center,
                                     )

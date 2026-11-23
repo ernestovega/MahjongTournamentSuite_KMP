@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -196,7 +197,7 @@ internal fun HandDetailsTable(table: PlayerTable, change: HandListChange? = null
                     Row(Modifier.weight(SEAT_WEIGHT), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         windOf(seat)?.let { WindIcon(it, size = 16.dp) }
                         Text(
-                            "#$id",
+                            playerNumber(id),
                             Modifier.padding(start = 2.dp),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
@@ -290,8 +291,8 @@ private fun ResultLine(row: DetailRow.Result) {
         Column(Modifier.weight(HAND_WEIGHT), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("#${hand.handId}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
         }
-        Text(hand.playerWinnerId.numberLabel(), Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
-        Text(hand.playerLooserId.numberLabel(), Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
+        Text(playerNumber(hand.playerWinnerId), Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
+        Text(playerNumber(hand.playerLooserId), Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
         Text(hand.handScore.ifBlank { "-" }, Modifier.weight(POINTS_WEIGHT), style = bodyStyle, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         // The chicken has its own column, so it keeps its size and does not move the score.
         Box(Modifier.weight(CHICKEN_WEIGHT), contentAlignment = Alignment.Center) {
@@ -338,6 +339,3 @@ private fun SubtotalLine(row: DetailRow.Subtotal) {
         repeat(4) { seat -> NumberCell(row.totals[seat], MaterialTheme.colorScheme.onSurface, bold = true) }
     }
 }
-
-/** The number of a player as the hands store it, with "#" before it: "#11". A blank or "-" is "-". */
-private fun String.numberLabel(): String = trim().let { if (it.isEmpty() || it == "-") "-" else "#$it" }

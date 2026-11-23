@@ -128,7 +128,7 @@ fun PlayerFlagAndNumber(
         PlayerFlag(country, width = flagWidth)
         if (number != null) {
             Text(
-                "#$number",
+                playerNumber(number),
                 style = style,
                 fontWeight = FontWeight.Bold,
                 // The color of the text around it, a little softer, so it reads on a card and on a colored choice.

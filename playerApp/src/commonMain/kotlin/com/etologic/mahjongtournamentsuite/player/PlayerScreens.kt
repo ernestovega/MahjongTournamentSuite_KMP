@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayerNumberDigits
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -1955,71 +1956,74 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
 
     val account = rememberAccountActions(navController)
     account.Dialogs()
-    AppScaffold(
-        rootLeadingActions = { account.Buttons() },
-        // The round and the table are the title. The tournament is the subtitle.
-        title = stringResource(Res.string.stats_round_table, roundId, tableId),
-        subtitle = view?.tournament?.name,
-        isLoading = view == null && message == null,
-        autoFocusFirst = false,
-        onBack = { navController.popBackStack() },
-        // The rules at hand during the game. On a phone they go into the menu, after the account buttons.
-        actions = { RulesTopBarButton(navController, dividerAbove = true) },
-    ) {
-        ScreenColumn(
-            maxWidth = 720.dp,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            scrollable = true,
-            paddingInsideScroll = true,
+    // The numbers of the players have as many digits as the number of players of the tournament: "#07", or "#007".
+    ProvidePlayerNumberDigits(view?.tournament?.numPlayers ?: 0) {
+        AppScaffold(
+            rootLeadingActions = { account.Buttons() },
+            // The round and the table are the title. The tournament is the subtitle.
+            title = stringResource(Res.string.stats_round_table, roundId, tableId),
+            subtitle = view?.tournament?.name,
+            isLoading = view == null && message == null,
+            autoFocusFirst = false,
+            onBack = { navController.popBackStack() },
+            // The rules at hand during the game. On a phone they go into the menu, after the account buttons.
+            actions = { RulesTopBarButton(navController, dividerAbove = true) },
         ) {
-            MessageDialog(message)
-            if (view == null || table == null) return@ScreenColumn
-            val complete = view.isFinished(table, now)
-            val handNumber = minOf(table.doneHands + 1, 16)
-            TableSeatsView(
-                seats = table.seatsFor(view, withLevelChange = true),
-                handNumber = handNumber,
-                // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
-                centerLabel = when {
-                    complete -> ""
-                    view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
-                    else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
-                },
-                showPoints = complete,
-                windsKnown = table.seatsAssigned,
-                // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
-                diffsAvailable = view.tournament.showTableDiffs,
-                // The time left of the round is at the top left, above the seats.
-                leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
-                animateScoreChanges = change != null,
-                // On a table that takes hands, a tap on a player starts a hand won by that player.
-                onPlayerClick = { slot ->
-                    if (view.canAddHands(table, now)) {
-                        preselectWinner = slot
-                    } else {
-                        navController.navigate(TournamentPlayerRoute(tournamentId, slot))
+            ScreenColumn(
+                maxWidth = 720.dp,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                scrollable = true,
+                paddingInsideScroll = true,
+            ) {
+                MessageDialog(message)
+                if (view == null || table == null) return@ScreenColumn
+                val complete = view.isFinished(table, now)
+                val handNumber = minOf(table.doneHands + 1, 16)
+                TableSeatsView(
+                    seats = table.seatsFor(view, withLevelChange = true),
+                    handNumber = handNumber,
+                    // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
+                    centerLabel = when {
+                        complete -> ""
+                        view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
+                        else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
+                    },
+                    showPoints = complete,
+                    windsKnown = table.seatsAssigned,
+                    // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
+                    diffsAvailable = view.tournament.showTableDiffs,
+                    // The time left of the round is at the top left, above the seats.
+                    leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
+                    animateScoreChanges = change != null,
+                    // On a table that takes hands, a tap on a player starts a hand won by that player.
+                    onPlayerClick = { slot ->
+                        if (view.canAddHands(table, now)) {
+                            preselectWinner = slot
+                        } else {
+                            navController.navigate(TournamentPlayerRoute(tournamentId, slot))
+                        }
+                    },
+                )
+                HandEntryPanel(
+                    tournamentId = tournamentId,
+                    roundId = roundId,
+                    tableId = tableId,
+                    view = view,
+                    table = table,
+                    now = now,
+                    preselectWinner = preselectWinner,
+                    onPreselectHandled = { preselectWinner = null },
+                    onSaved = { reloadKey++ },
+                )
+                if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
+                    OutlinedButton(onClick = { navController.navigate(SignInRoute()) }, Modifier.fillMaxWidth()) {
+                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
+                        Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
                     }
-                },
-            )
-            HandEntryPanel(
-                tournamentId = tournamentId,
-                roundId = roundId,
-                tableId = tableId,
-                view = view,
-                table = table,
-                now = now,
-                preselectWinner = preselectWinner,
-                onPreselectHandled = { preselectWinner = null },
-                onSaved = { reloadKey++ },
-            )
-            if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
-                OutlinedButton(onClick = { navController.navigate(SignInRoute()) }, Modifier.fillMaxWidth()) {
-                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
-                    Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
                 }
+                HandHistory(view, table, details, change) { details = it }
             }
-            HandHistory(view, table, details, change) { details = it }
         }
     }
 }

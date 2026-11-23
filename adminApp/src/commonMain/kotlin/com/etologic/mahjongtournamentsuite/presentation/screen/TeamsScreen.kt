@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -434,7 +435,7 @@ fun TeamsScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
-                                                    Text("#${player.id}")
+                                                    Text(playerNumber(player.id))
                                                     CountryFlag(
                                                         code = player.country,
                                                         width = 16.dp,
@@ -469,7 +470,7 @@ fun TeamsScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
-                                                Text("#${player.id}")
+                                                Text(playerNumber(player.id))
                                                 CountryFlag(
                                                     code = player.country,
                                                     width = 16.dp,
@@ -654,7 +655,7 @@ private fun TeamEditorDialog(
                                     focusRequester = slotFocusRequesters[index],
                                     label = {
                                         Text(
-                                            text = "#${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
+                                            text = "${playerNumber(slot.id)} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )

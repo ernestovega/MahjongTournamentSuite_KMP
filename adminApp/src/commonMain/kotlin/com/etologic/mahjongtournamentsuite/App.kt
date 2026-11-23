@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayerNumberDigits
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -199,17 +203,21 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<OrganizationsRoute> { OrganizationsScreen(navController) }
                     screen<TournamentRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<TournamentRoute>()
-                        TournamentScreen(
-                            navController = navController,
-                            tournamentId = args.tournamentId,
-                        )
+                        TournamentNumbers(args.tournamentId) {
+                            TournamentScreen(
+                                navController = navController,
+                                tournamentId = args.tournamentId,
+                            )
+                        }
                     }
                     screen<RegistrationsRoute> { backStackEntry ->
                         RegistrationsScreen(navController = navController, tournamentId = backStackEntry.toRoute<RegistrationsRoute>().tournamentId)
                     }
                     screen<PlayerCountRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<PlayerCountRoute>()
-                        PlayerCountScreen(tournamentId = args.tournamentId, started = args.started, onBack = { navController.popBackStack() })
+                        TournamentNumbers(args.tournamentId) {
+                            PlayerCountScreen(tournamentId = args.tournamentId, started = args.started, onBack = { navController.popBackStack() })
+                        }
                     }
                     screen<TableQrRoute> { backStackEntry ->
                         TableQrScreen(tournamentId = backStackEntry.toRoute<TableQrRoute>().tournamentId, onBack = { navController.popBackStack() })
@@ -220,17 +228,21 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<RolesRoute> { RolesScreen(navController) }
                     screen<PlayersRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<PlayersRoute>()
-                        PlayersScreen(
-                            navController = navController,
-                            tournamentId = args.tournamentId,
-                        )
+                        TournamentNumbers(args.tournamentId) {
+                            PlayersScreen(
+                                navController = navController,
+                                tournamentId = args.tournamentId,
+                            )
+                        }
                     }
                     screen<TeamsRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<TeamsRoute>()
-                        TeamsScreen(
-                            navController = navController,
-                            tournamentId = args.tournamentId,
-                        )
+                        TournamentNumbers(args.tournamentId) {
+                            TeamsScreen(
+                                navController = navController,
+                                tournamentId = args.tournamentId,
+                            )
+                        }
                     }
                     screen<ErrorsRoute> { ErrorsScreen(navController) }
                     screen<ActivityRoute> { backStackEntry ->
@@ -248,4 +260,12 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
             }
         }
     }
+}
+
+/** The screens of a tournament show the numbers of its players with as many digits as it needs: "#07", or "#007". */
+@Composable
+private fun TournamentNumbers(tournamentId: String, content: @Composable () -> Unit) {
+    val store = koinInject<AppMemoryStore>()
+    val tournaments by store.tournaments.collectAsState()
+    ProvidePlayerNumberDigits(tournaments.firstOrNull { it.id == tournamentId }?.numPlayers ?: 0, content)
 }
