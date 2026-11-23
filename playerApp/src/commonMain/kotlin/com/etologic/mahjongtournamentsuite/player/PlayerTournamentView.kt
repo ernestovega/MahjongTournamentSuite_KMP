@@ -173,9 +173,6 @@ data class PlayerTournamentView(
     /** The first name of a player, without the surname. */
     fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName }?.let(PlaceholderNames::localize) ?: "-"
 
-    /** The number of the player in the tournament before the first name, as on the seats of the table: "12 Ana". */
-    fun numberedFirstNameOf(slotId: Int?): String = slotId?.let { "$it ${firstNameOf(it)}" } ?: "-"
-
     fun matchPhaseOf(roundId: Int, now: LocalDateTime, tableId: Int? = null): MatchPhase = tournament.matchPhase(roundId, now, tableId)
 
     /** True when the table is complete, or when its time is over and the players played hands. */

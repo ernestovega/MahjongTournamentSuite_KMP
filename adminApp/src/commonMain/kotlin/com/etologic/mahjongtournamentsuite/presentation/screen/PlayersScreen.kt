@@ -1218,7 +1218,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     }
                                 } else {
                                     Text(
-                                        text = slot.id.toString(),
+                                        text = "#${slot.id}",
                                         modifier = Modifier.width(TournamentPlayerIdColumnWidth),
                                         textAlign = TextAlign.Center,
                                     )

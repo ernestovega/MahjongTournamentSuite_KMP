@@ -209,7 +209,7 @@ internal fun PlayerDropdown(
     val playerN = rememberTemplate(Res.string.player_n)
     fun playerLabel(id: Int): String {
         val name = playerNamesById[id] ?: playerN(id)
-        return if (showPlayerId) "$id - $name" else name
+        return if (showPlayerId) "#$id - $name" else name
     }
     val displayValue = when {
         trimmed.isBlank() || selectedId == null && trimmed == "-" -> emptyOptionLabel.orEmpty()

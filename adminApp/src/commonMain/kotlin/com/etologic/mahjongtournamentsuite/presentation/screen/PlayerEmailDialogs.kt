@@ -150,7 +150,7 @@ internal fun MissingEmailsDialog(
                                 onValueChange = { emails = emails + (slot.id to it) },
                                 modifier = Modifier.fillMaxWidth().then(if (slot == players.first()) Modifier.focusRequester(firstFocus) else Modifier),
                                 singleLine = true,
-                                label = { Text("${slot.id} · ${nameOf(slot)}") },
+                                label = { Text("#${slot.id} · ${nameOf(slot)}") },
                                 isError = value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN),
                                 // Same message as the single email dialog, so the user knows why the field is red.
                                 supportingText = if (value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN)) {

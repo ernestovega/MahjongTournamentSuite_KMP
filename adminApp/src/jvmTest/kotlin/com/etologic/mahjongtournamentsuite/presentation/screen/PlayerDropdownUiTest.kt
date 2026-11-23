@@ -71,31 +71,31 @@ class PlayerDropdownUiTest {
     @Test
     fun theMenuListsTheEmptyOptionAndEveryPlayerWithItsNumber() = runComposeUiTest {
         show()
-        openField("1 - Ana")
-        listOf("2 - Beto", "3 - Carla", "4 - Dani").forEach { assertEquals(1, count(it), it) }
+        openField("#1 - Ana")
+        listOf("#2 - Beto", "#3 - Carla", "#4 - Dani").forEach { assertEquals(1, count(it), it) }
         assertTrue(count("-") >= 1)
     }
 
     @Test
     fun aPlayerInTheExcludedSetIsNotInTheMenu() = runComposeUiTest {
         show(excluded = setOf(2))
-        openField("1 - Ana")
-        assertEquals(0, count("2 - Beto"))
+        openField("#1 - Ana")
+        assertEquals(0, count("#2 - Beto"))
     }
 
     @Test
     fun aSuffixShowsAfterThePlayerName() = runComposeUiTest {
         show(suffixes = mapOf(3 to "seat 3"))
-        openField("1 - Ana")
-        assertEquals(1, count("3 - Carla (seat 3)"))
+        openField("#1 - Ana")
+        assertEquals(1, count("#3 - Carla (seat 3)"))
     }
 
     @Test
     fun theFieldShowsTheSelectedPlayerAndTheMenuStillListsEveryPlayer() = runComposeUiTest {
         show(value = "2")
-        assertEquals(1, count("2 - Beto"))
-        openField("1 - Ana")
-        assertEquals(2, count("2 - Beto"))
+        assertEquals(1, count("#2 - Beto"))
+        openField("#1 - Ana")
+        assertEquals(2, count("#2 - Beto"))
     }
 
     @Test
@@ -103,8 +103,8 @@ class PlayerDropdownUiTest {
         var value by mutableStateOf("")
         var dismissed = 0
         show(onChange = { value = it }, onDismiss = { dismissed++ })
-        openField("3 - Carla")
-        item("3 - Carla").performClick()
+        openField("#3 - Carla")
+        item("#3 - Carla").performClick()
         waitForIdle()
         assertEquals("3", value)
         assertEquals(1, dismissed)
@@ -114,7 +114,7 @@ class PlayerDropdownUiTest {
     fun choosingTheEmptyOptionGivesItsLabel() = runComposeUiTest {
         var value: String? = null
         show(value = "2", onChange = { value = it })
-        openField("1 - Ana")
+        openField("#1 - Ana")
         onAllNodesWithText("-")[0].performClick()
         waitForIdle()
         assertEquals("-", value)
@@ -125,7 +125,7 @@ class PlayerDropdownUiTest {
         var value: String? = null
         var dismissed = 0
         show(onChange = { value = it }, onDismiss = { dismissed++ })
-        openField("1 - Ana")
+        openField("#1 - Ana")
         onNodeWithTag(FIELD).performClick()
         waitForIdle()
         assertEquals(null, value)
@@ -142,7 +142,7 @@ class PlayerDropdownUiTest {
         waitForIdle()
         Thread.sleep(450)
         onNodeWithTag(FIELD).performKeyInput { pressKey(Key.Enter) }
-        waitUntil(timeoutMillis = 5_000) { count("1 - Ana") > 0 }
+        waitUntil(timeoutMillis = 5_000) { count("#1 - Ana") > 0 }
     }
 
     @Test
@@ -159,15 +159,15 @@ class PlayerDropdownUiTest {
         }
         waitForIdle()
         assertEquals(listOf(Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown), keys)
-        assertEquals(0, count("1 - Ana"))
+        assertEquals(0, count("#1 - Ana"))
     }
 
     @Test
     fun aDisabledFieldCanOpenToReadButChoosesNothing() = runComposeUiTest {
         var value: String? = null
         show(enabled = false, onChange = { value = it })
-        openField("1 - Ana")
-        item("1 - Ana").performClick()
+        openField("#1 - Ana")
+        item("#1 - Ana").performClick()
         waitForIdle()
         assertEquals(null, value)
     }
@@ -175,7 +175,7 @@ class PlayerDropdownUiTest {
     @Test
     fun withoutAnEmptyLabelTheMenuHasOnlyPlayers() = runComposeUiTest {
         show(emptyLabel = null)
-        openField("1 - Ana")
+        openField("#1 - Ana")
         assertEquals(0, count("-"))
     }
 
