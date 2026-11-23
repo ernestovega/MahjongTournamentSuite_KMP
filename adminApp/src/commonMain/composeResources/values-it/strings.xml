@@ -1108,7 +1108,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_sure_text">I tavoli di tutti i turni vengono sorteggiati di nuovo.\nNon si può annullare.</string>
     <string name="pc_change">Cambia</string>
     <string name="pc_now">Ora: %1$d giocatori, %2$d tavoli per turno.</string>
-    <string name="pc_empty_slot">%1$s · senza giocatore</string>
+    <string name="pc_empty_slot">#%1$d · senza giocatore</string>
     <string name="pc_new_slots">%1$d posti nuovi, vuoti finché non li assegni in Giocatori.</string>
     <string name="pc_new_teams">%1$d squadre nuove, vuote finché non le assegni in Squadre.</string>
     <string name="pc_waiting_title">Lista d'attesa: fino a %1$d persone (facoltativo)</string>
