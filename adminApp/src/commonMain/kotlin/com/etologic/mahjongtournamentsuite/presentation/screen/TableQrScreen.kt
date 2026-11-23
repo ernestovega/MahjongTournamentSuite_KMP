@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -299,7 +298,7 @@ private fun NavigationButton(
 private fun QrCode(link: String, modifier: Modifier) {
     val painter = rememberQrCodePainter(link)
     Box(
-        modifier.background(Color.White, RoundedCornerShape(8.dp)).padding(10.dp),
+        modifier.background(Color.White, MaterialTheme.shapes.small).padding(MtsTheme.spacing.sm),
         contentAlignment = Alignment.Center,
     ) {
         Image(painter, contentDescription = link, Modifier.fillMaxSize())
