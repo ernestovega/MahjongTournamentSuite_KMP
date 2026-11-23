@@ -26,8 +26,11 @@ builds the same link with `tableQrLink` of `tableQrService.ts` and `PLAYER_APP_U
 The app opens the tournament and the table over it, so Back shows the tournament. A tournament before its draw, or a
 table number above the last table, opens only the tournament.
 
-The Android app does not open these links yet: the camera opens them in the browser. App Links would need
-`/.well-known/assetlinks.json` on the domain with the signing certificate of Google Play.
+The Android app opens these links when it is installed (App Links): `MainActivity` has an `autoVerify` intent filter
+for `https://mts.mahjongmadrid.com/.*/table/.*` (and `/mesa/`), and passes the link to the player part (`SuiteStart.link`),
+which starts again and opens it like the web. The site serves `/.well-known/assetlinks.json` (a rewrite of firebase.json
+to `playerApp/src/wasmJsMain/resources/assetlinks.json`) with the SHA-256 of the Google Play app signing key. Without
+the app, or before Android verifies the site, the link opens in the browser. The staging app does not take the links.
 
 ## Admin
 
