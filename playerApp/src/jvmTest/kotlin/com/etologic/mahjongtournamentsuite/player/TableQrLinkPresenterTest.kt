@@ -105,6 +105,7 @@ class TableQrLinkPresenterTest {
         // The link of the QR goes back through the parser of the player app.
         assertEquals(RegistrationLink(slug = "6thmmc", myTable = true), registrationLinkOf(withSlug.myTableQrLink(""), emptyMap()))
     }
+
     @Test
     fun aTableAlreadyClosedInTheRoundInPlayOpensTheNextOne() = runTest {
         // Round 2 is in play, but the table of player 6 in round 2 already closed: the QR opens round 3.
