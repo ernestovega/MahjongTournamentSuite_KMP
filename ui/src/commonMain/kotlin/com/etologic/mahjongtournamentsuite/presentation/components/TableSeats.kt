@@ -494,8 +494,7 @@ private fun SeatCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 SeatLevelMedal(seat)
                 Text(
-                    // The number of the player in the tournament is always before the name, as in the hands and their dialogs.
-                    if (seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
+                    seat.name,
                     Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
@@ -505,8 +504,9 @@ private fun SeatCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            // The flag is under the name, so a long name has the whole width of the card.
-            PlayerFlag(seat.country, width = 22.dp)
+            // The flag is under the name, so a long name has the whole width of the card. The number of the player in the
+            // tournament is beside the flag, as in the hand dialogs.
+            PlayerFlagAndNumber(seat.country, seat.slotId)
             seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
             if (showDiffs) DiffsTable(diffs)
         }

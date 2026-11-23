@@ -117,6 +117,7 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
     doubleSided: query.doubleSided !== "false",
     cutMarks: query.cutMarks !== "false",
     backs: query.backs !== "false",
+    backSameAsFront: query.backSameAsFront === "true",
     substituteSheets: readExtraSheets(query.substituteSheets, "substitute"),
     staffSheets: readExtraSheets(query.staffSheets, "staff"),
     staffNames: readStaffNames(query.staffName),

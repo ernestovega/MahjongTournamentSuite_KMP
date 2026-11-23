@@ -354,7 +354,7 @@ class HandEntryPanelUiTest {
         // Step 1: a tap on the winner goes on, with no OK button.
         awaitText("Who won?")
         onNodeWithText("Who discarded?").assertDoesNotExist()
-        onAllNodesWithText("2 Player 2").onFirst().performClick()
+        onAllNodesWithText("Player 2").onFirst().performClick()
         // Step 2: Self-draw or one of the other three players.
         awaitText("Who discarded?")
         onNodeWithText("Self-draw").performClick()
@@ -363,7 +363,7 @@ class HandEntryPanelUiTest {
         onNodeWithText("Chicken hand").assertDoesNotExist()
         onNodeWithText("Back").performClick()
         awaitText("Who discarded?")
-        onAllNodesWithText("1 Player 1").onFirst().performClick()
+        onAllNodesWithText("Player 1").onFirst().performClick()
         awaitText("Hand score")
         onNodeWithText("Chicken hand").assertIsDisplayed()
     }
@@ -391,7 +391,7 @@ class HandEntryPanelUiTest {
         awaitText("Add win")
         onNodeWithText("Add win").performClick()
         awaitText("Who won?")
-        onAllNodesWithText("2 Player 2").onFirst().performClick()
+        onAllNodesWithText("Player 2").onFirst().performClick()
         awaitText("Who discarded?")
         onNodeWithText("Self-draw").performClick()
         awaitText("Hand score")

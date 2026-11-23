@@ -434,7 +434,7 @@ fun TeamsScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
-                                                    Text(player.id.toString())
+                                                    Text("#${player.id}")
                                                     CountryFlag(
                                                         code = player.country,
                                                         width = 16.dp,
@@ -469,7 +469,7 @@ fun TeamsScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
-                                                Text(player.id.toString())
+                                                Text("#${player.id}")
                                                 CountryFlag(
                                                     code = player.country,
                                                     width = 16.dp,
@@ -654,7 +654,7 @@ private fun TeamEditorDialog(
                                     focusRequester = slotFocusRequesters[index],
                                     label = {
                                         Text(
-                                            text = "${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
+                                            text = "#${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )

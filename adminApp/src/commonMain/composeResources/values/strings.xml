@@ -74,6 +74,8 @@
     <string name="print_cut_marks_around_the_cards">Print cut marks around the cards.</string>
     <string name="arrange_the_cards_for_printing_on">Arrange the cards for printing on both sides of the paper.</string>
     <string name="print_the_back_of_the_cards_too">Also print the back of the cards.</string>
+    <string name="repeat_the_front_on_the_back">Repeat the front on the back.</string>
+    <string name="repeat_the_front_on_the_back_help">Players and staff get the same face on both sides, instead of the table of rounds.\nSubstitutes keep the table, to write their tables by hand.</string>
     <string name="extra_sheets">Extra sheets</string>
     <string name="substitute_sheets">Sheets for substitutes</string>
     <string name="substitute_sheets_help">Cards without name and without number, to write them by hand.</string>

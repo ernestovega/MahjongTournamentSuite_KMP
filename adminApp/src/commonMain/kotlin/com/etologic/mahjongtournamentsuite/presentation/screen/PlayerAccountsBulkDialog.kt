@@ -312,7 +312,7 @@ fun PlayerAccountsBulkDialog(
     }
     // These dialogs come after the main dialog, so they are drawn above it.
     if (busy) SendingDialog()
-    summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "$id · ${nameOf(p)}" } ?: id.toString() }, onDismiss = { summary = null }) }
+    summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "#$id · ${nameOf(p)}" } ?: "#$id" }, onDismiss = { summary = null }) }
 }
 
 private val CheckboxColumnWidth = 24.dp

@@ -437,6 +437,7 @@ class FunctionsBackendApi(
                 parameter("landscape", it.landscape)
                 parameter("doubleSided", it.doubleSided)
                 parameter("backs", it.backs)
+                parameter("backSameAsFront", it.backSameAsFront)
                 parameter("substituteSheets", it.substituteSheets)
                 parameter("staffSheets", it.staffSheets)
                 it.cleanStaffNames().forEach { name -> parameter("staffName", name) }
