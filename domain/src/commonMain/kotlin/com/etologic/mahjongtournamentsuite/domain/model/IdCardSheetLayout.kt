@@ -13,7 +13,24 @@ data class IdCardSheetLayout(
     val landscape: Boolean = false,
     /** Mirrors the back sheet so each back is behind its front when printing on both sides. */
     val doubleSided: Boolean = true,
+    /** Adds a back sheet after each front sheet. Without it the PDF only has the fronts. */
+    val backs: Boolean = true,
+    /** Full sheets of blank cards for substitutes: no name and no number, both written by hand. */
+    val substituteSheets: Int = 0,
+    /** Full sheets of staff cards: STAFF instead of the number. */
+    val staffSheets: Int = 0,
+    /** The names of the staff cards, in order. The other staff cards have no name. */
+    val staffNames: List<String> = emptyList(),
 ) {
+    /** The staff names without the empty lines. */
+    fun cleanStaffNames(): List<String> = staffNames.map { it.trim() }.filter { it.isNotEmpty() }
+
+    /** The staff sheets that are printed: more than the chosen ones when the names do not fit on them. */
+    fun printedStaffSheets(cardsOnOneSheet: Int): Int {
+        val perSheet = cardsOnOneSheet.coerceAtLeast(1)
+        return maxOf(staffSheets, (cleanStaffNames().size + perSheet - 1) / perSheet)
+    }
+
     val pageWidthPt: Double get() = if (landscape) A4_HEIGHT_PT else A4_WIDTH_PT
     val pageHeightPt: Double get() = if (landscape) A4_WIDTH_PT else A4_HEIGHT_PT
 
@@ -71,6 +88,9 @@ data class IdCardSheetLayout(
         const val SHEET_MARGIN_PT = 14.0
         const val MIN_SCALE_PERCENT = 50.0
         const val MM_PER_PT = 25.4 / 72
+        const val MAX_EXTRA_SHEETS = 20
+        const val MAX_STAFF_NAMES = 200
+        const val MAX_STAFF_NAME_LENGTH = 60
     }
 }
 

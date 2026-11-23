@@ -23,6 +23,9 @@ import {
   buildIdCardProofPdf,
   generateTournamentIdCards,
   idCardSheetGrid,
+  MAX_EXTRA_SHEETS,
+  MAX_STAFF_NAME_LENGTH,
+  MAX_STAFF_NAMES,
   type IdCardSheetOptions,
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
@@ -76,6 +79,25 @@ import { changePlayerCount } from "../../services/playerCountChange";
 import { defaultSlugs, parseClosesOn, parseMaxPlayers, parsePhase, parseSlug } from "../../services/registrationSettings";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
+function readExtraSheets(value: unknown, kind: string): number {
+  const sheets = Number(value ?? 0);
+  if (!Number.isInteger(sheets) || sheets < 0 || sheets > MAX_EXTRA_SHEETS) {
+    throw badRequest(`Invalid number of ${kind} sheets`, { value });
+  }
+  return sheets;
+}
+
+function readStaffNames(value: unknown): string[] {
+  const values = value == null ? [] : Array.isArray(value) ? value : [value];
+  if (values.length > MAX_STAFF_NAMES) throw badRequest("Too many staff names", { count: values.length });
+  return values.map((name) => {
+    if (typeof name !== "string" || name.trim().length > MAX_STAFF_NAME_LENGTH) {
+      throw badRequest("Invalid staff name", { value: name });
+    }
+    return name.trim();
+  });
+}
+
 function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | undefined {
   if (query.layout !== "sheet") return undefined;
   const cardsPerSheet = Number(query.cardsPerSheet ?? 10);
@@ -93,6 +115,10 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
     landscape,
     doubleSided: query.doubleSided !== "false",
     cutMarks: query.cutMarks !== "false",
+    backs: query.backs !== "false",
+    substituteSheets: readExtraSheets(query.substituteSheets, "substitute"),
+    staffSheets: readExtraSheets(query.staffSheets, "staff"),
+    staffNames: readStaffNames(query.staffName),
   };
   if (idCardSheetGrid(options) == null) throw badRequest("The card size does not fit on an A4 sheet", { scalePercent });
   return options;

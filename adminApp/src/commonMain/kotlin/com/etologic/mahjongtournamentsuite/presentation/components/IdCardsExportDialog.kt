@@ -15,11 +15,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CropLandscape
 import androidx.compose.material.icons.filled.CropPortrait
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PersonOutline
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Straighten
@@ -49,11 +53,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.add_a_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
 import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -62,16 +68,28 @@ import mahjongtournamentsuite.adminapp.generated.resources.card_size
 import mahjongtournamentsuite.adminapp.generated.resources.cards_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.create_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
+import mahjongtournamentsuite.adminapp.generated.resources.each_staff_name_can_have_up_to
+import mahjongtournamentsuite.adminapp.generated.resources.extra_sheets
 import mahjongtournamentsuite.adminapp.generated.resources.front_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.height_mm
 import mahjongtournamentsuite.adminapp.generated.resources.id_cards_proportion_info
 import mahjongtournamentsuite.adminapp.generated.resources.landscape
 import mahjongtournamentsuite.adminapp.generated.resources.portrait
 import mahjongtournamentsuite.adminapp.generated.resources.print_cut_marks_around_the_cards
+import mahjongtournamentsuite.adminapp.generated.resources.print_the_back_of_the_cards_too
+import mahjongtournamentsuite.adminapp.generated.resources.remove_a_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.restore_settings
+import mahjongtournamentsuite.adminapp.generated.resources.staff_names
+import mahjongtournamentsuite.adminapp.generated.resources.staff_names_help
+import mahjongtournamentsuite.adminapp.generated.resources.staff_sheets
+import mahjongtournamentsuite.adminapp.generated.resources.staff_sheets_help
+import mahjongtournamentsuite.adminapp.generated.resources.substitute_sheets
+import mahjongtournamentsuite.adminapp.generated.resources.substitute_sheets_help
+import mahjongtournamentsuite.adminapp.generated.resources.the_staff_names_need_more_sheets
 import mahjongtournamentsuite.adminapp.generated.resources.the_width_and_the_height_keep
 import mahjongtournamentsuite.adminapp.generated.resources.use_range
 import mahjongtournamentsuite.adminapp.generated.resources.width_mm
+import mahjongtournamentsuite.adminapp.generated.resources.write_up_to_staff_names
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -146,10 +164,12 @@ private fun LabeledSlider(
 fun IdCardsExportDialog(
     onExport: (IdCardSheetLayout) -> Unit,
     onDismiss: () -> Unit,
+    initialLayout: IdCardSheetLayout = IdCardSheetLayout(),
 ) {
-    var layout by remember { mutableStateOf(IdCardSheetLayout()) }
+    var layout by remember { mutableStateOf(initialLayout) }
     var widthText by remember { mutableStateOf(layout.cardWidthMm().oneDecimal()) }
     var heightText by remember { mutableStateOf(layout.cardHeightMm().oneDecimal()) }
+    var staffNamesText by remember { mutableStateOf(initialLayout.staffNames.joinToString("\n")) }
     val maxScale = layout.maxScalePercent()
     val minScale = IdCardSheetLayout.MIN_SCALE_PERCENT
     val capacity = layout.capacity()
@@ -175,6 +195,18 @@ fun IdCardsExportDialog(
     val widthInvalid = widthValue == null || widthValue < minWidthMm - 0.05 || widthValue > maxWidthMm + 0.05
     val heightInvalid = heightValue == null || heightValue < minHeightMm - 0.05 || heightValue > maxHeightMm + 0.05
 
+    val staffNames = layout.cleanStaffNames()
+    val staffNamesError = when {
+        layout.staffSheets == 0 -> null
+        staffNames.any { it.length > IdCardSheetLayout.MAX_STAFF_NAME_LENGTH } ->
+            stringResource(Res.string.each_staff_name_can_have_up_to, IdCardSheetLayout.MAX_STAFF_NAME_LENGTH)
+        staffNames.size > IdCardSheetLayout.MAX_STAFF_NAMES ->
+            stringResource(Res.string.write_up_to_staff_names, IdCardSheetLayout.MAX_STAFF_NAMES)
+        else -> null
+    }
+    // Names written before the staff sheets went back to 0 are not printed.
+    val exported = if (effective.staffSheets == 0) effective.copy(staffNames = emptyList()) else effective
+
     val compact = LocalCompactLayout.current
 
     TrackedDialog("CreateIdCards") {
@@ -189,6 +221,7 @@ fun IdCardsExportDialog(
                     Text(stringResource(Res.string.create_id_cards), modifier = Modifier.weight(1f, fill = false))
                     val restore = {
                         layout = IdCardSheetLayout()
+                        staffNamesText = ""
                         widthText = layout.cardWidthMm().oneDecimal()
                         heightText = layout.cardHeightMm().oneDecimal()
                     }
@@ -308,7 +341,7 @@ fun IdCardsExportDialog(
                     orientation()
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
                         SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
-                        SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
+                        if (layout.backs) SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
                     }
                     // The checkboxes use a smaller touch target, so the two lines stay close to each other.
                     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
@@ -322,20 +355,41 @@ fun IdCardsExportDialog(
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(
-                                    checked = layout.doubleSided,
-                                    onCheckedChange = { layout = layout.copy(doubleSided = it) },
+                                    checked = layout.backs,
+                                    onCheckedChange = { layout = layout.copy(backs = it) },
                                 )
-                                Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
+                                Text(stringResource(Res.string.print_the_back_of_the_cards_too))
+                            }
+                            // Without backs there is nothing to print on the other side of the paper.
+                            if (layout.backs) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = layout.doubleSided,
+                                        onCheckedChange = { layout = layout.copy(doubleSided = it) },
+                                    )
+                                    Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
+                                }
                             }
                         }
                     }
+                    ExtraSheets(
+                        layout = layout,
+                        cardsOnOneSheet = effective.cardsPerSheet,
+                        staffNamesText = staffNamesText,
+                        staffNamesError = staffNamesError,
+                        onLayoutChange = { layout = it },
+                        onStaffNamesChange = { text ->
+                            staffNamesText = text
+                            layout = layout.copy(staffNames = text.lines())
+                        },
+                    )
                 }
             },
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(
-                        enabled = !widthInvalid && !heightInvalid,
-                        onClick = { onExport(effective) },
+                        enabled = !widthInvalid && !heightInvalid && staffNamesError == null,
+                        onClick = { onExport(exported) },
                     ) {
                         Text(stringResource(Res.string.create_pdf))
                     }
@@ -344,6 +398,96 @@ fun IdCardsExportDialog(
                 }
             },
         )
+    }
+}
+
+/**
+ * The sheets of blank cards printed after the cards of the players: for substitutes (no name and no number) and for
+ * the staff (STAFF instead of the number), with the names of the staff when the user writes them.
+ */
+@Composable
+private fun ExtraSheets(
+    layout: IdCardSheetLayout,
+    cardsOnOneSheet: Int,
+    staffNamesText: String,
+    staffNamesError: String?,
+    onLayoutChange: (IdCardSheetLayout) -> Unit,
+    onStaffNamesChange: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(Res.string.extra_sheets), style = MaterialTheme.typography.titleSmall)
+        SheetCounter(
+            icon = Icons.Default.PersonOutline,
+            label = stringResource(Res.string.substitute_sheets),
+            help = stringResource(Res.string.substitute_sheets_help),
+            value = layout.substituteSheets,
+            onValueChange = { onLayoutChange(layout.copy(substituteSheets = it)) },
+        )
+        SheetCounter(
+            icon = Icons.Default.Badge,
+            label = stringResource(Res.string.staff_sheets),
+            help = stringResource(Res.string.staff_sheets_help),
+            value = layout.staffSheets,
+            onValueChange = { onLayoutChange(layout.copy(staffSheets = it)) },
+        )
+        if (layout.staffSheets > 0) {
+            val printed = layout.printedStaffSheets(cardsOnOneSheet)
+            OutlinedTextField(
+                value = staffNamesText,
+                onValueChange = onStaffNamesChange,
+                label = { Text(stringResource(Res.string.staff_names)) },
+                minLines = 3,
+                maxLines = 6,
+                isError = staffNamesError != null,
+                supportingText = {
+                    Text(
+                        staffNamesError ?: if (printed > layout.staffSheets) {
+                            stringResource(Res.string.the_staff_names_need_more_sheets, printed)
+                        } else {
+                            stringResource(Res.string.staff_names_help)
+                        },
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** A number of sheets with buttons to remove and to add one. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SheetCounter(
+    icon: ImageVector,
+    label: String,
+    help: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+        Column(modifier = Modifier.padding(start = 8.dp).weight(1f)) {
+            Text(label)
+            Text(help, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        val removeLabel = stringResource(Res.string.remove_a_sheet)
+        AppTooltipBox(removeLabel) {
+            FocusedIconButton(onClick = { onValueChange(value - 1) }, enabled = value > 0) {
+                Icon(Icons.Default.Remove, contentDescription = removeLabel)
+            }
+        }
+        Text(
+            value.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 24.dp),
+        )
+        val addLabel = stringResource(Res.string.add_a_sheet)
+        AppTooltipBox(addLabel) {
+            FocusedIconButton(onClick = { onValueChange(value + 1) }, enabled = value < IdCardSheetLayout.MAX_EXTRA_SHEETS) {
+                Icon(Icons.Default.Add, contentDescription = addLabel)
+            }
+        }
     }
 }
 

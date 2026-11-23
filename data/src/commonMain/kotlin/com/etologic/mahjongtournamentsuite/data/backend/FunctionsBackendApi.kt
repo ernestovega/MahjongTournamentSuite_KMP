@@ -436,6 +436,10 @@ class FunctionsBackendApi(
                 parameter("cutMarks", it.cutMarks)
                 parameter("landscape", it.landscape)
                 parameter("doubleSided", it.doubleSided)
+                parameter("backs", it.backs)
+                parameter("substituteSheets", it.substituteSheets)
+                parameter("staffSheets", it.staffSheets)
+                it.cleanStaffNames().forEach { name -> parameter("staffName", name) }
             }
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
