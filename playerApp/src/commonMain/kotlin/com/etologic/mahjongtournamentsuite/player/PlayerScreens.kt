@@ -1936,7 +1936,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     val changes = remember { TableChangeTracker() }
     val change = remember(table?.hands) { table?.let { changes.update(it.hands, animate = !reduceMotion) } }
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
-    // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.
+    // The detailed list of hands is a switch under the seats.
     var details by rememberSaveable { mutableStateOf(false) }
     // The clock moves on, so a table whose time ends while the screen is open closes for hands. The Play of the
     // Timer comes with the next check of the server.
@@ -1988,7 +1988,6 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 },
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
-                showIds = details,
                 // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
                 diffsAvailable = view.tournament.showTableDiffs,
                 // The time left of the round is at the top left, above the seats.

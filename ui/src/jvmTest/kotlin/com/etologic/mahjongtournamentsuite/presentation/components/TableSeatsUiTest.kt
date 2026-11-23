@@ -70,14 +70,14 @@ class TableSeatsUiTest {
                 }
             }
         }
-        onNodeWithText("Bruno Díaz").assertIsDisplayed()
-        onNodeWithText("David Moreno").assertIsDisplayed()
+        onNodeWithText("2 Bruno Díaz").assertIsDisplayed()
+        onNodeWithText("4 David Moreno").assertIsDisplayed()
         onNodeWithText("Penalty -10").assertIsDisplayed()
         // The points of the table are hidden while the table is not complete.
         assertEquals(0, onAllNodesWithTextCount("1.0 pts"))
         snapshot("seats", onRoot().captureToImage())
 
-        onNodeWithText("David Moreno").performClick()
+        onNodeWithText("4 David Moreno").performClick()
         assertEquals(4, opened)
 
         onNodeWithText("Diffs").performClick()
@@ -97,7 +97,7 @@ class TableSeatsUiTest {
                 )
             }
         }
-        onNodeWithText("Bruno Díaz").assertIsDisplayed()
+        onNodeWithText("2 Bruno Díaz").assertIsDisplayed()
         assertEquals(0, onAllNodesWithTextCount("Diffs"))
     }
 

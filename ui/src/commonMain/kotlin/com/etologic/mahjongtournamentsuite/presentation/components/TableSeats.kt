@@ -307,8 +307,6 @@ fun TableSeatsView(
     showPoints: Boolean,
     modifier: Modifier = Modifier,
     windsKnown: Boolean = true,
-    /** When true, the id of the tournament player shows before the name, as in the detailed list of hands. */
-    showIds: Boolean = false,
     /** The Diffs switch needs a table in play. Without it, the switch is hidden and the differences are off. */
     diffsAvailable: Boolean = true,
     /** At the start of the row of the Diffs switch, above the seats, such as the time left of the round. */
@@ -355,7 +353,7 @@ fun TableSeatsView(
         } else if (leading != null) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { leading() }
         }
-        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, animateScoreChanges, onPlayerClick)
+        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, animateScoreChanges, onPlayerClick)
     }
 }
 
@@ -380,7 +378,6 @@ private fun SeatsCross(
     centerLabel: String,
     showPoints: Boolean,
     showDiffs: Boolean,
-    showIds: Boolean,
     animateChanges: Boolean,
     onPlayerClick: (Int) -> Unit,
 ) {
@@ -397,7 +394,7 @@ private fun SeatsCross(
         val item = at(position)
         val index = placed.indexOf(item)
         val place = if (showPoints) ranked.indexOf(index) + 1 else null
-        SeatCard(item, diffs[index], place, showPoints, showDiffs, showIds, modifier, onPlayerClick)
+        SeatCard(item, diffs[index], place, showPoints, showDiffs, modifier, onPlayerClick)
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -454,7 +451,6 @@ private fun SeatCard(
     place: Int?,
     showPoints: Boolean,
     showDiffs: Boolean,
-    showIds: Boolean,
     modifier: Modifier,
     onPlayerClick: (Int) -> Unit,
 ) {
@@ -498,7 +494,8 @@ private fun SeatCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 SeatLevelMedal(seat)
                 Text(
-                    if (showIds && seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
+                    // The number of the player in the tournament is always before the name, as in the hands and their dialogs.
+                    if (seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
                     Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
