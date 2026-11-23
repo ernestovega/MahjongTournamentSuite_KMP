@@ -147,6 +147,20 @@ data class TournamentAgendaItemDto(
     val startTime: String? = null,
 )
 
+/** An account of the app for the staff ID cards: name and role only. */
+@Serializable
+data class IdCardStaffCandidateDto(
+    val uid: String,
+    val name: String,
+    val role: String,
+    val inTournament: Boolean = false,
+)
+
+@Serializable
+data class IdCardStaffCandidatesDto(
+    val candidates: List<IdCardStaffCandidateDto> = emptyList(),
+)
+
 /** The names of the staff ID cards of a tournament, in order. */
 @Serializable
 data class IdCardStaffNamesDto(

@@ -4148,6 +4148,61 @@
     }
    }
   },
+  "/tournaments/{tournamentId}/id-cards/staff-candidates": {
+   "get": {
+    "tags": [
+     "Exportaciones"
+    ],
+    "summary": "Cuentas de la app para elegir el staff de las acreditaciones",
+    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nSolo nombre (jugador EMA o alias) y rol, nunca el email. Primero el staff del torneo, luego editores y admins, luego jugadores.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IdCardStaffCandidates"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id del torneo."
+     }
+    ]
+   }
+  },
   "/tournaments/id-card-proof": {
    "post": {
     "tags": [
@@ -9146,6 +9201,39 @@
      "year",
      "primaryColor"
     ]
+   },
+   "IdCardStaffCandidate": {
+    "type": "object",
+    "properties": {
+     "uid": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "role": {
+      "type": "string"
+     },
+     "inTournament": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "uid",
+     "name",
+     "role"
+    ]
+   },
+   "IdCardStaffCandidates": {
+    "type": "object",
+    "properties": {
+     "candidates": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/IdCardStaffCandidate"
+      }
+     }
+    }
    },
    "IdCardStaffNames": {
     "type": "object",

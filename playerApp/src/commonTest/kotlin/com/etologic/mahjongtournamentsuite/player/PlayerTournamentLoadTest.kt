@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
@@ -143,6 +144,7 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedFakeResult<ByteArray>()
+    override suspend fun listIdCardStaffCandidates(tournamentId: String) = unusedFakeResult<List<IdCardStaffCandidate>>()
     override suspend fun loadIdCardStaffNames(tournamentId: String) = unusedFakeResult<List<String>>()
     override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>) = unusedFakeResult<List<String>>()
     override suspend fun generateTournamentIdList(tournamentId: String) = unusedFakeResult<ByteArray>()

@@ -87,6 +87,7 @@
     <string name="staff_sheets_help">Tarjetas con STAFF en lugar del número.</string>
     <string name="staff_names">Nombres del staff</string>
     <string name="staff_names_help">Cada persona tiene una tarjeta con su nombre.\nLas tarjetas que sobren salen sin nombre, para escribirlo a mano.\nLos nombres se guardan para las próximas tarjetas de este torneo.</string>
+    <string name="choose_from_app_users">Elegir usuario</string>
     <string name="add_person">Añadir persona</string>
     <string name="remove_person">Quitar persona</string>
     <string name="staff_name_placeholder">Nombre y apellidos</string>

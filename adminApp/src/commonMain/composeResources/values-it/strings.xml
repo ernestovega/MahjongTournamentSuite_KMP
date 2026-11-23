@@ -87,6 +87,7 @@
     <string name="staff_sheets_help">Cartellini con STAFF al posto del numero.</string>
     <string name="staff_names">Nomi dello staff</string>
     <string name="staff_names_help">Ogni persona ha un cartellino con il suo nome.\nI cartellini in più non hanno nome, per scriverlo a mano.\nI nomi restano salvati per i prossimi cartellini di questo torneo.</string>
+    <string name="choose_from_app_users">Scegli un utente</string>
     <string name="add_person">Aggiungi persona</string>
     <string name="remove_person">Togli persona</string>
     <string name="staff_name_placeholder">Nome e cognome</string>

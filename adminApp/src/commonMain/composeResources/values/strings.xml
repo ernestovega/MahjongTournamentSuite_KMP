@@ -87,6 +87,7 @@
     <string name="staff_sheets_help">Cards with STAFF instead of the number.</string>
     <string name="staff_names">Staff names</string>
     <string name="staff_names_help">Each person gets a card with their name.\nThe cards left over have no name, to write it by hand.\nThe names are kept for the next ID cards of this tournament.</string>
+    <string name="choose_from_app_users">Choose a user</string>
     <string name="add_person">Add person</string>
     <string name="remove_person">Remove person</string>
     <string name="staff_name_placeholder">Name and surname</string>

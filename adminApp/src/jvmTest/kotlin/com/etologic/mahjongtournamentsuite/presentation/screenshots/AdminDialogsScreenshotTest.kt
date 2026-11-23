@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgres
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
@@ -283,6 +284,7 @@ class AdminDialogsScreenshotTest {
                 staffSheets = 1,
                 staffNames = listOf("Lucía Gómez", "Pedro Martín", "Ana Ruiz"),
             ),
+            staffCandidates = listOf(IdCardStaffCandidate("u1", "Lucía Gómez", GlobalUserRole.EDITOR, inTournament = true)),
         )
     }
 

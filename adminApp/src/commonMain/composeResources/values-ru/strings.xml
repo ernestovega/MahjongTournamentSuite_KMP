@@ -87,6 +87,7 @@
     <string name="staff_sheets_help">Бейджи с надписью STAFF вместо номера.</string>
     <string name="staff_names">Имена персонала</string>
     <string name="staff_names_help">Каждый человек получает бейдж со своим именем.\nЛишние бейджи будут без имени, чтобы вписать его от руки.\nИмена сохраняются для следующих бейджей этого турнира.</string>
+    <string name="choose_from_app_users">Выбрать пользователя</string>
     <string name="add_person">Добавить человека</string>
     <string name="remove_person">Убрать человека</string>
     <string name="staff_name_placeholder">Имя и фамилия</string>

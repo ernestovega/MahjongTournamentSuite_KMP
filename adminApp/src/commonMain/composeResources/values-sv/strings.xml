@@ -87,6 +87,7 @@
     <string name="staff_sheets_help">Kort med STAFF i stället för numret.</string>
     <string name="staff_names">Personalens namn</string>
     <string name="staff_names_help">Varje person får ett kort med sitt namn.\nKorten som blir över har inget namn, så det kan skrivas för hand.\nNamnen sparas till nästa gång korten för turneringen skapas.</string>
+    <string name="choose_from_app_users">Välj användare</string>
     <string name="add_person">Lägg till person</string>
     <string name="remove_person">Ta bort person</string>
     <string name="staff_name_placeholder">För- och efternamn</string>

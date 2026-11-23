@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
@@ -46,6 +47,9 @@ class PlayersPresenter(
 
     /** The names of the staff ID cards saved the last time, to start the dialog with them. */
     suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = tournamentRepository.loadIdCardStaffNames(tournamentId)
+
+    /** The accounts of the app, by name, to choose the staff of the ID cards. */
+    suspend fun loadIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>> = tournamentRepository.listIdCardStaffCandidates(tournamentId)
 
     suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> {
         // The names of the staff are kept for the next time. When keeping them fails, the PDF is still created.

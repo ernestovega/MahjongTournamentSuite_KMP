@@ -31,6 +31,7 @@ import {
   type IdCardSheetOptions,
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
+import { listIdCardStaffCandidates } from "../../services/idCardStaffCandidates";
 import { generateTableQrCodes, readCardsPerSheet } from "../../services/tableQrService";
 import { generateEmaReport } from "../../services/emaReportService";
 import { readSubstitution } from "../../services/playerSubstitution";
@@ -561,6 +562,15 @@ export function tournamentsRouter(): Router {
   router.get("/:tournamentId/id-cards/staff-names", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
     try {
       res.status(200).json({ names: await readIdCardStaffNames(pathParam(req, "tournamentId")) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The accounts of the app, by name only, to choose the staff of the ID cards.
+  router.get("/:tournamentId/id-cards/staff-candidates", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      res.status(200).json({ candidates: await listIdCardStaffCandidates(pathParam(req, "tournamentId")) });
     } catch (e) {
       next(e);
     }

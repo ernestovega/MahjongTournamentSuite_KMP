@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
@@ -117,6 +118,7 @@ open class ScreenshotTournamentRepository(
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?): AppResult<ByteArray> = noWrite()
     override suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray> = noWrite()
+    override suspend fun listIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>> = AppResult.Success(emptyList())
     override suspend fun loadIdCardStaffNames(tournamentId: String): AppResult<List<String>> = AppResult.Success(emptyList())
     override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = noWrite()
     override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = noWrite()

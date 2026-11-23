@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CropPortrait
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PersonOutline
+import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.ScreenRotation
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -75,6 +77,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.card_back_same_as_fro
 import mahjongtournamentsuite.adminapp.generated.resources.card_orientation
 import mahjongtournamentsuite.adminapp.generated.resources.card_size
 import mahjongtournamentsuite.adminapp.generated.resources.cards_per_sheet
+import mahjongtournamentsuite.adminapp.generated.resources.choose_from_app_users
 import mahjongtournamentsuite.adminapp.generated.resources.create_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
 import mahjongtournamentsuite.adminapp.generated.resources.cut_marks
@@ -179,6 +182,8 @@ fun IdCardsExportDialog(
     initialLayout: IdCardSheetLayout = IdCardSheetLayout(),
     /** The names of the staff saved the last time. They arrive after the dialog opens. */
     savedStaffNames: List<String> = emptyList(),
+    /** The accounts of the app to choose the staff from. Names can still be written by hand. */
+    staffCandidates: List<IdCardStaffCandidate> = emptyList(),
 ) {
     var layout by remember { mutableStateOf(initialLayout) }
     LaunchedEffect(savedStaffNames) {
@@ -390,6 +395,7 @@ fun IdCardsExportDialog(
                     ExtraSheets(
                         layout = layout,
                         cardsOnOneSheet = effective.cardsPerSheet,
+                        staffCandidates = staffCandidates,
                         onLayoutChange = { layout = it },
                     )
                 }
@@ -442,6 +448,7 @@ private fun CheckboxLine(checked: Boolean, onCheckedChange: (Boolean) -> Unit, l
 private fun ExtraSheets(
     layout: IdCardSheetLayout,
     cardsOnOneSheet: Int,
+    staffCandidates: List<IdCardStaffCandidate>,
     onLayoutChange: (IdCardSheetLayout) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -469,6 +476,7 @@ private fun ExtraSheets(
                 names = layout.staffNames,
                 printedSheets = layout.printedStaffSheets(cardsOnOneSheet),
                 chosenSheets = layout.staffSheets,
+                candidates = staffCandidates,
                 onNamesChange = { onLayoutChange(layout.copy(staffNames = it)) },
             )
         }
@@ -481,6 +489,7 @@ private fun StaffNames(
     names: List<String>,
     printedSheets: Int,
     chosenSheets: Int,
+    candidates: List<IdCardStaffCandidate>,
     onNamesChange: (List<String>) -> Unit,
 ) {
     var focusLast by remember { mutableStateOf(false) }
@@ -521,6 +530,33 @@ private fun StaffNames(
                     }
                 }
             }
+        }
+        if (candidates.isNotEmpty()) {
+            // A person of the app fills the empty last field, or comes after the others. Anyone else is written by hand.
+            val written = names.map { it.trim().lowercase() }.toSet()
+            SelectField(
+                label = stringResource(Res.string.choose_from_app_users),
+                options = candidates.map { candidate ->
+                    SelectOption(
+                        key = candidate.uid,
+                        label = candidate.name,
+                        enabled = candidate.name.trim().lowercase() !in written,
+                        trailingIcon = { Text(candidate.role.label(), style = MaterialTheme.typography.labelSmall) },
+                    )
+                },
+                selected = null,
+                valueText = "",
+                onSelect = { uid ->
+                    val name = candidates.firstOrNull { it.uid == uid }?.name ?: return@SelectField
+                    val withName = if (names.lastOrNull()?.isBlank() == true) names.dropLast(1) + name else names + name
+                    onNamesChange(withName.take(IdCardSheetLayout.MAX_STAFF_NAMES))
+                },
+                enabled = names.size < IdCardSheetLayout.MAX_STAFF_NAMES || names.lastOrNull()?.isBlank() == true,
+                searchable = true,
+                maxShown = SELECT_MAX_SHOWN,
+                leadingIcon = { Icon(Icons.Default.PersonSearch, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         FocusedTextButton(
             onClick = {

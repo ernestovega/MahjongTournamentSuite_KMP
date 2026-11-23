@@ -52,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
@@ -1087,6 +1088,25 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Loading the staff names of the ID cards failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun listIdCardStaffCandidates(tournamentId: String): AppResult<List<IdCardStaffCandidate>> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.getIdCardStaffCandidates(idToken, tournamentId).candidates.map { candidate ->
+                IdCardStaffCandidate(
+                    uid = candidate.uid,
+                    name = candidate.name,
+                    role = GlobalUserRole.entries.firstOrNull { it.name == candidate.role } ?: GlobalUserRole.PLAYER,
+                    inTournament = candidate.inTournament,
+                )
+            }
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the staff candidates of the ID cards failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
