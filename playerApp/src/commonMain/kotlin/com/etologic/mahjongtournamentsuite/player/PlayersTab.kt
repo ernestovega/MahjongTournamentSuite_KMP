@@ -87,11 +87,12 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
-import mahjongtournamentsuite.playerapp.generated.resources.tab_info
-import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
-import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
-import mahjongtournamentsuite.playerapp.generated.resources.tab_summary
 import mahjongtournamentsuite.playerapp.generated.resources.summary_share_error
+import mahjongtournamentsuite.playerapp.generated.resources.tab_info
+import mahjongtournamentsuite.playerapp.generated.resources.tab_my_results
+import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
+import mahjongtournamentsuite.playerapp.generated.resources.tab_results
+import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
@@ -298,12 +299,12 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                                     onClick = { tab = id },
                                     title = when (id) {
                                         PlayerTab.TABLES -> stringResource(Res.string.tab_tables)
-                                        PlayerTab.SUMMARY -> stringResource(Res.string.tab_summary)
+                                        PlayerTab.SUMMARY -> stringResource(if (slotId == view.mySlotId) Res.string.tab_my_results else Res.string.tab_results)
                                         else -> stringResource(Res.string.tab_stats)
                                     },
                                     trackingName = when (id) {
                                         PlayerTab.TABLES -> "PlayerTables"
-                                        PlayerTab.SUMMARY -> "PlayerSummary"
+                                        PlayerTab.SUMMARY -> "PlayerResults"
                                         else -> "PlayerStatistics"
                                     },
                                     icon = {

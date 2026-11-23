@@ -299,7 +299,8 @@
     <string name="preg_no_ema_country">Страна</string>
     <string name="preg_message">Сообщение (необязательно)</string>
     <string name="preg_send">Отправить</string>
-    <string name="tab_summary">Итоги</string>
+    <string name="tab_results">Результаты</string>
+    <string name="tab_my_results">Мои результаты</string>
     <string name="summary_share">Поделиться</string>
     <string name="summary_share_error">Не удалось поделиться изображением.</string>
 </resources>

@@ -293,7 +293,8 @@
     <string name="preg_no_ema_country">Country</string>
     <string name="preg_message">Message (optional)</string>
     <string name="preg_send">Send</string>
-    <string name="tab_summary">Summary</string>
+    <string name="tab_results">Results</string>
+    <string name="tab_my_results">My results</string>
     <string name="summary_share">Share</string>
     <string name="summary_share_error">The image could not be shared.</string>
 </resources>
