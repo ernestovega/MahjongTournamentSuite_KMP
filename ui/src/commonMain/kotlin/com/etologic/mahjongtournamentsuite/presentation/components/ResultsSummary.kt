@@ -147,7 +147,7 @@ fun ResultsSummaryCard(
             ResultsTable(rows)
             // Two places or more make a line: how the player went up and down the ranking, round by round.
             if (playerCount > 1 && rows.count { it.place != null } >= 2) {
-                PlaceChart(rows, playerCount, Modifier.fillMaxWidth().padding(start = MtsTheme.spacing.md, top = MtsTheme.spacing.md, end = MtsTheme.spacing.md))
+                PlaceChart(rows.map { it.place }, playerCount, Modifier.fillMaxWidth().padding(start = MtsTheme.spacing.md, top = MtsTheme.spacing.md, end = MtsTheme.spacing.md))
             }
             Text(
                 "Mahjong Tournament Suite",
@@ -271,11 +271,19 @@ private val PlaceChartHeight = 112.dp
 
 /**
  * A small line of the place in the ranking after each round: the first place at the top, the last one at the bottom.
- * Each round of the table has its spot, so the dots sit under their rows' order; a round without a place is a gap.
+ * Each round has its spot, in the order of the rounds; a round without a place is a gap.
  * The place is written next to each dot, or, when they are too close, next to the first, the best and the last.
  */
 @Composable
-private fun PlaceChart(rows: List<ResultsSummaryRow>, playerCount: Int, modifier: Modifier = Modifier) {
+internal fun PlaceChart(
+    /** The place after each round, the first round first; null for a round without a place. */
+    places: List<Int?>,
+    playerCount: Int,
+    modifier: Modifier = Modifier,
+    /** The rounds under their dots, for a chart without a table of the rounds above it. */
+    roundLabels: Boolean = false,
+) {
+    val rows = places
     val colors = MaterialTheme.colorScheme
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colors.onSurfaceVariant, fontFeatureSettings = "tnum")
@@ -284,12 +292,13 @@ private fun PlaceChart(rows: List<ResultsSummaryRow>, playerCount: Int, modifier
     val title = stringResource(Res.string.summary_place_chart)
     Column(modifier.testTag(RESULTS_PLACE_CHART_TAG), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
         Text(title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = colors.onSurfaceVariant)
-        Canvas(Modifier.fillMaxWidth().height(PlaceChartHeight)) {
+        Canvas(Modifier.fillMaxWidth().height(PlaceChartHeight + if (roundLabels) 16.dp else 0.dp)) {
             val axis = 28.dp.toPx()
             val vertical = 14.dp.toPx()
+            val bottomRoom = if (roundLabels) 16.dp.toPx() else 0f
             val side = 10.dp.toPx()
             val plotWidth = size.width - axis - side * 2
-            val plotHeight = size.height - vertical * 2
+            val plotHeight = size.height - vertical * 2 - bottomRoom
             fun x(index: Int) = axis + side + if (rows.size == 1) plotWidth / 2f else plotWidth * index / (rows.size - 1)
             fun y(place: Int) = vertical + plotHeight * (place - 1) / (playerCount - 1).toFloat()
             // The first and the last place of the tournament, as two guide lines with their numbers.
@@ -298,11 +307,21 @@ private fun PlaceChart(rows: List<ResultsSummaryRow>, playerCount: Int, modifier
                 val layout = measurer.measure("$place", labelStyle)
                 drawText(layout, topLeft = Offset(axis - layout.size.width - 4.dp.toPx(), y(place) - layout.size.height / 2f))
             }
-            val points = rows.mapIndexedNotNull { index, row -> row.place?.let { index to it } }
+            val points = rows.mapIndexedNotNull { index, place -> place?.let { index to it } }
             // A gap of rounds without a place breaks the line.
             val path = Path()
             points.forEachIndexed { i, (index, place) ->
                 if (i == 0 || points[i - 1].first != index - 1) path.moveTo(x(index), y(place)) else path.lineTo(x(index), y(place))
+            }
+            if (roundLabels) {
+                // Every round when they fit, else every second, third, ... and always the last one.
+                val step = kotlin.math.ceil(22.dp.toPx() / (if (rows.size > 1) plotWidth / (rows.size - 1) else plotWidth)).toInt().coerceAtLeast(1)
+                rows.indices.forEach { index ->
+                    if (index % step != 0 && index != rows.lastIndex) return@forEach
+                    if (index != rows.lastIndex && rows.lastIndex - index < step) return@forEach
+                    val layout = measurer.measure("${index + 1}", labelStyle)
+                    drawText(layout, topLeft = Offset(x(index) - layout.size.width / 2f, size.height - layout.size.height))
+                }
             }
             drawPath(path, colors.primary.copy(alpha = 0.7f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
             val last = points.last().first

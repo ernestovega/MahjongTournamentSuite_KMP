@@ -34,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
@@ -96,6 +97,8 @@ import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
 private const val QR_SITE = "https://mts.mahjongmadrid.com"
+
+private val TEAM_NAMES = listOf("Dragons", "Tigers", "Cranes", "Phoenix", "Turtles")
 
 @OptIn(ExperimentalTestApi::class)
 class AdminDialogsScreenshotTest {
@@ -176,6 +179,35 @@ class AdminDialogsScreenshotTest {
         )
     }
 
+    /** With teams the organizer also marks people, and sees the team of each one: teams that lose someone stay incomplete. */
+    @Test
+    fun playerCountRemoveTeams() = playerCountScreen("player-count-remove-teams") {
+        val tournament = ScreenshotData.tournament(ONGOING).copy(isTeams = true, numPlayers = 20)
+        ChooseContent(
+            tournament = tournament,
+            data = playerCountTeamsData(20),
+            form = PlayerCountForm(chosen = setOf(2, 6, 7, 11)),
+            onFormChange = {},
+            onContinue = {},
+            onCancel = {},
+        )
+    }
+
+    /** The review with teams: the teams that stay incomplete, to reorganize afterwards. */
+    @Test
+    fun playerCountConfirmTeams() = playerCountScreen("player-count-confirm-teams", step = 1) {
+        ReviewContent(
+            summary = PlayerCountSummary(
+                from = 20, to = 16, rounds = 7, isTeams = true, hasRegistrations = false,
+                leaving = listOf(2, 6, 7, 11).map { "#$it · " + nameOf(it) },
+                brokenTeams = listOf(TEAM_NAMES[0] + " (3)", TEAM_NAMES[1] + " (2)", TEAM_NAMES[2] + " (3)"),
+                newSlots = 0, fromWaiting = emptyList(),
+            ),
+            onConfirm = {},
+            onBack = {},
+        )
+    }
+
     /** One table added in a tournament with registrations: the new places can take people of the waiting list. */
     @Test
     fun playerCountAdd() = playerCountScreen("player-count-add") {
@@ -202,7 +234,7 @@ class AdminDialogsScreenshotTest {
             summary = PlayerCountSummary(
                 from = 20, to = 16, rounds = 7, isTeams = false, hasRegistrations = true,
                 leaving = listOf("#5 · " + nameOf(5), "#6 · " + nameOf(6), "#11 · " + nameOf(11), "#12 · " + nameOf(12)),
-                newSlots = 0, fromWaiting = emptyList(),
+                brokenTeams = emptyList(), newSlots = 0, fromWaiting = emptyList(),
             ),
             onConfirm = {},
             onBack = {},
@@ -263,6 +295,12 @@ class AdminDialogsScreenshotTest {
     private fun playerCountData(count: Int) = PlayerCountData(
         slots = (1..count).map { id -> PlayerCountSlot(id, nameOf(id), "1099${id.toString().padStart(4, '0')}", 0) },
         teams = emptyList(),
+        waiting = emptyList(),
+    )
+
+    private fun playerCountTeamsData(count: Int) = PlayerCountData(
+        slots = (1..count).map { id -> PlayerCountSlot(id, nameOf(id), "1099${id.toString().padStart(4, '0')}", (id - 1) / 4 + 1) },
+        teams = (1..count / 4).map { team -> TournamentTeam(team, TEAM_NAMES[team - 1], ((team - 1) * 4 + 1..team * 4).toList()) },
         waiting = emptyList(),
     )
 

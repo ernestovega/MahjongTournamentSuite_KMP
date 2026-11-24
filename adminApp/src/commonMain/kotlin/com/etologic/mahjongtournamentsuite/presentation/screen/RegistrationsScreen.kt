@@ -24,8 +24,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -34,7 +35,6 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -319,7 +319,7 @@ fun RegistrationsScreen(
         actions = {
             AppTopBarButton(
                 text = stringResource(Res.string.reg_export),
-                icon = Icons.Default.Download,
+                icon = Icons.Default.FileUpload,
                 onClick = {
                     val ready = current ?: return@AppTopBarButton
                     val name = tournament?.shortName?.ifBlank { null } ?: tournament?.name.orEmpty()
@@ -330,7 +330,7 @@ fun RegistrationsScreen(
             )
             AppTopBarButton(
                 text = stringResource(Res.string.reg_import),
-                icon = Icons.Default.UploadFile,
+                icon = Icons.Default.FileDownload,
                 onClick = { importOpen = true },
                 enabled = current != null,
             )

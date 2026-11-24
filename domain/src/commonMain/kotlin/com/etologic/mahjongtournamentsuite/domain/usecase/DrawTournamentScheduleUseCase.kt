@@ -85,6 +85,49 @@ class DrawTournamentScheduleUseCase(
         )
     }
 
+    /**
+     * The draw on the slots of a tournament that changes its number of players ([slots]: numbers and teams kept).
+     * With teams of 4, or without teams, it is the draw of the app moved onto the slots ([onSlots]). When a removal
+     * left some teams incomplete (Ernesto, 24-nov: the organizer marks people, and the teams are reorganized
+     * afterwards), the first way cannot draw it: the rounds are drawn by swaps on the slots themselves, with every
+     * team as it is (teammates never share a table), in blocks when they do not fit without repeats.
+     */
+    suspend fun onSlots(
+        slots: List<TournamentPlayer>,
+        numRounds: Int,
+        isTeams: Boolean,
+        maxConcurrency: Int,
+        onProgress: (TournamentScheduleCalcProgress) -> Unit,
+    ): TournamentScheduleCalcResult? {
+        val count = slots.size
+        if (count <= 0 || count % 4 != 0 || numRounds <= 0 || slots.map { it.id }.toSet().size != count) return null
+        val teamsOfFour = !isTeams || slots.groupBy { it.team }.values.all { it.size == 4 }
+        if (teamsOfFour) return invoke(count, numRounds, isTeams, maxConcurrency, onProgress)?.onSlots(slots, isTeams)
+        val players = slots.sortedBy { it.id }.map { TournamentPlayer(id = it.id, name = "Player ${it.id}", team = it.team) }
+        val seed = Random.Default.nextLong()
+        val found = withContext(Dispatchers.Default) {
+            withTimeoutOrNull(blocksLimit(count / 4, numRounds)) {
+                blocks(
+                    playerIds = players.map { it.id },
+                    roundIds = (1..numRounds).toList(),
+                    teamOf = players.associate { it.id to it.team },
+                    maxConcurrency = maxConcurrency,
+                    seed = seed,
+                    onProgress = { onProgress(it.copy(backup = true)) },
+                )
+            }
+        } ?: return null
+        onProgress(TournamentScheduleCalcProgress(runningTries = 0, tried = found.swaps, maxConcurrency = maxConcurrency, backup = true))
+        return TournamentScheduleCalcResult(
+            triesUsed = found.swaps.coerceAtLeast(1),
+            randomSeed = seed,
+            players = players,
+            tables = found.tables,
+            usedBackup = true,
+            perBlock = if (numRounds > found.perBlock) found.perBlock else 0,
+        )
+    }
+
     private suspend fun inBlocks(
         numPlayers: Int,
         numRounds: Int,

@@ -8,7 +8,6 @@ import kotlin.test.assertTrue
 
 class PlayerCountRulesTest {
     private val drawn = Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 20, numRounds = 7)
-    private val teams = (1..5).map { team -> TournamentTeam(team, "Team $team", (1..4).map { (team - 1) * 4 + it }) }
 
     @Test
     fun aDrawnTournamentWithoutDataCanChange() {
@@ -49,29 +48,37 @@ class PlayerCountRulesTest {
     }
 
     @Test
-    fun theRemovedSlotsAreTheChosenSlotsOrTheSlotsOfTheChosenTeams() {
-        assertEquals(listOf(3, 7, 9), PlayerCountRules.removedSlots(false, setOf(9, 3, 7), teams))
-        assertEquals(listOf(5, 6, 7, 8, 17, 18, 19, 20), PlayerCountRules.removedSlots(true, setOf(5, 2), teams))
-        assertEquals(emptyList(), PlayerCountRules.removedSlots(true, setOf(9), teams))
+    fun theRemovedSlotsAreThePeopleMarkedAlsoWithTeams() {
+        assertEquals(listOf(3, 7, 9), PlayerCountRules.removedSlots(setOf(9, 3, 7)))
+        assertEquals(emptyList(), PlayerCountRules.removedSlots(emptySet()))
+    }
+
+    @Test
+    fun theTeamsThatLoseSomeoneButNotAllAreIncomplete() {
+        // Teams of 4 by number: 3 of team 1 and 1 of team 2 leave, and team 3 leaves whole.
+        val slots = (1..16).map { TournamentPlayer(it, "Player $it", (it - 1) / 4 + 1) }
+        val broken = PlayerCountRules.brokenTeams(slots, listOf(1, 2, 3, 5, 9, 10, 11, 12))
+        assertEquals(mapOf(1 to listOf(4), 2 to listOf(6, 7, 8)), broken)
+        assertEquals(emptyMap(), PlayerCountRules.brokenTeams(slots, (5..8).toList()))
+        assertEquals(emptyMap(), PlayerCountRules.brokenTeams(slots.map { it.copy(team = 0) }, listOf(1, 2, 3, 5)))
     }
 
     @Test
     fun aChoiceIsCompleteWithExactlyTheSlotsToRemove() {
-        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, false, setOf(1, 2, 3), teams, emptyList()))
-        assertTrue(PlayerCountRules.isChoiceComplete(20, 16, false, setOf(1, 2, 3, 4), teams, emptyList()))
-        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, false, setOf(1, 2, 3, 4, 5), teams, emptyList()))
-        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, false, setOf(1, 2, 3, 4), teams, listOf("1")))
-        assertTrue(PlayerCountRules.isChoiceComplete(20, 16, true, setOf(3), teams, emptyList()))
-        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, true, emptySet(), teams, emptyList()))
+        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3), emptyList()))
+        assertTrue(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3, 4), emptyList()))
+        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3, 4, 5), emptyList()))
+        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3, 4), listOf("1")))
+        assertFalse(PlayerCountRules.isChoiceComplete(20, 16, emptySet(), emptyList()))
     }
 
     @Test
     fun moreTablesTakeUpToTheNewSlotsFromTheWaitingList() {
-        assertTrue(PlayerCountRules.isChoiceComplete(16, 20, false, emptySet(), teams, emptyList()))
-        assertTrue(PlayerCountRules.isChoiceComplete(16, 20, false, emptySet(), teams, listOf("1", "2", "3", "4")))
-        assertFalse(PlayerCountRules.isChoiceComplete(16, 20, false, emptySet(), teams, listOf("1", "2", "3", "4", "5")))
-        assertFalse(PlayerCountRules.isChoiceComplete(16, 20, false, setOf(1), teams, emptyList()))
-        assertFalse(PlayerCountRules.isChoiceComplete(16, 16, false, emptySet(), teams, emptyList()))
+        assertTrue(PlayerCountRules.isChoiceComplete(16, 20, emptySet(), emptyList()))
+        assertTrue(PlayerCountRules.isChoiceComplete(16, 20, emptySet(), listOf("1", "2", "3", "4")))
+        assertFalse(PlayerCountRules.isChoiceComplete(16, 20, emptySet(), listOf("1", "2", "3", "4", "5")))
+        assertFalse(PlayerCountRules.isChoiceComplete(16, 20, setOf(1), emptyList()))
+        assertFalse(PlayerCountRules.isChoiceComplete(16, 16, emptySet(), emptyList()))
     }
 
     @Test
