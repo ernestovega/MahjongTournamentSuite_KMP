@@ -3,6 +3,10 @@
 name: Test · Game day · Auto
 
 on:
+  # Every night at 03:15 UTC, after the other tests (Ernesto, 2026-11-24): small on even days of the year, corners on
+  # odd days, with teams, chicken and best hands, without phone emulators. It deploys main to staging first.
+  schedule:
+    - cron: "15 3 * * *"
   workflow_dispatch:
     inputs:
       scenario:
@@ -45,7 +49,7 @@ jobs:
   # Main goes to staging first: the app of the test and the backend it talks to are the same commit.
   staging:
     name: Deploy main to staging
-    if: github.ref == 'refs/heads/main' && inputs.deploy_staging
+    if: github.ref == 'refs/heads/main' && (inputs.deploy_staging || github.event_name == 'schedule')
     uses: ./.github/workflows/staging.yml
     with:
       action: deploy
@@ -109,8 +113,16 @@ jobs:
           REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project="$STAGING")"
           echo "::add-mask::$REHEARSAL_PASSWORD"
           export REHEARSAL_PASSWORD
-          node scripts/rehearsal/scenario.mjs plan --scenario="${{ inputs.scenario }}" \
-            --teams="${{ inputs.teams }}" --chicken="${{ inputs.chicken }}" --best="${{ inputs.best }}" \
+          SCENARIO="${{ inputs.scenario }}"
+          # The night run has no inputs: small and corners take turns.
+          if [ -z "$SCENARIO" ]; then
+            if [ $(( 10#$(date -u +%j) % 2 )) = 0 ]; then SCENARIO=small; else SCENARIO=corners; fi
+          fi
+          echo "Scenario: $SCENARIO"
+          node scripts/rehearsal/scenario.mjs plan --scenario="$SCENARIO" \
+            --teams="${{ inputs.teams || github.event_name == 'schedule' }}" \
+            --chicken="${{ inputs.chicken || github.event_name == 'schedule' }}" \
+            --best="${{ inputs.best || github.event_name == 'schedule' }}" \
             ${{ inputs.phone_emulators && '--phone-emulators' || '' }} \
             --api="https://europe-southwest1-$STAGING.cloudfunctions.net/api" --out=out/scenario
 
