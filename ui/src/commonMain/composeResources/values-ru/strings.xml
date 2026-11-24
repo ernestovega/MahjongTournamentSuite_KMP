@@ -207,9 +207,8 @@
     <string name="leader_best_win_rate">Лучшая доля побед</string>
     <string name="leader_lowest_deal_in">Меньше всего сбросов в руку</string>
     <string name="leader_most_self_draws">Больше всего побед со стены</string>
-    <string name="leaders_average">Среднее: %1$s</string>
-    <string name="leaders_legend_top">Лучший игрок</string>
-    <string name="leaders_legend_average">Средний игрок</string>
+    <string name="leader_best_average_place">Лучшее среднее место</string>
+    <string name="leaders_average_shape">Закрашенная фигура — средний игрок по сравнению с лучшим.</string>
     <string name="tables_completed_of">%1$d из %2$d</string>
     <string name="stat_players">Игроки</string>
     <string name="hands_won_by_discard">Победы на сбросе</string>

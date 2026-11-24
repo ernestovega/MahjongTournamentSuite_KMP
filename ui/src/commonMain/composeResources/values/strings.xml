@@ -204,9 +204,8 @@
     <string name="leader_best_win_rate">Best win rate</string>
     <string name="leader_lowest_deal_in">Lowest deal-in rate</string>
     <string name="leader_most_self_draws">Most self-draws</string>
-    <string name="leaders_average">Average: %1$s</string>
-    <string name="leaders_legend_top">Top player</string>
-    <string name="leaders_legend_average">Average player</string>
+    <string name="leader_best_average_place">Best average place</string>
+    <string name="leaders_average_shape">The shaded shape is the average player, next to the best one.</string>
     <string name="tables_completed_of">%1$d of %2$d</string>
     <string name="stat_players">Players</string>
     <string name="hands_won_by_discard">Won by discard</string>

@@ -203,9 +203,8 @@
     <string name="leader_best_win_rate">Bästa vinstandel</string>
     <string name="leader_lowest_deal_in">Lägsta inkastandel</string>
     <string name="leader_most_self_draws">Flest självdragna</string>
-    <string name="leaders_average">Snitt: %1$s</string>
-    <string name="leaders_legend_top">Bästa spelare</string>
-    <string name="leaders_legend_average">Genomsnittlig spelare</string>
+    <string name="leader_best_average_place">Bästa snittplacering</string>
+    <string name="leaders_average_shape">Den skuggade formen är snittspelaren, jämfört med den bästa.</string>
     <string name="tables_completed_of">%1$d av %2$d</string>
     <string name="stat_players">Spelare</string>
     <string name="hands_won_by_discard">Vunna på kast</string>
