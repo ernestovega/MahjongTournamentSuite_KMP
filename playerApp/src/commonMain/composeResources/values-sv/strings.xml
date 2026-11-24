@@ -224,6 +224,9 @@
     <string name="entry_seats_first">Bestäm bordets platser för att börja föra in händer.</string>
     <string name="round_starts_at">Börjar</string>
     <string name="round_clock_remaining">Tid kvar: %1$s</string>
+    <string name="table_hand_announce_new">Ny hand %1$d</string>
+    <string name="table_hand_announce_edited">Hand %1$d rättad</string>
+    <string name="table_hand_announce_deleted">Hand %1$d raderad</string>
     <string name="round_clock_paused">Pausad · Tid kvar: %1$s</string>
     <string name="round_clock_over">Matchtiden är slut.</string>
     <string name="filter_table_search">Bordsnummer eller spelare</string>
