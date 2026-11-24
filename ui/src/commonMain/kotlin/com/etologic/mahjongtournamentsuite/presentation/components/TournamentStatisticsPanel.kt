@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,16 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.GroupRecords
-import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
@@ -43,17 +36,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.forRound
 import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_discard
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_self_draw
-import mahjongtournamentsuite.ui.generated.resources.leader_best_hand_value
-import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
-import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
-import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
-import mahjongtournamentsuite.ui.generated.resources.open_player_statistics
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
@@ -77,7 +64,6 @@ import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
-import mahjongtournamentsuite.ui.generated.resources.stats_leaders
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
@@ -112,6 +98,8 @@ fun TournamentStatisticsPanel(
     onSelectRound: ((Int?) -> Unit)? = null,
     /** The best values of a group, whose players hold sums. Without it, the values of one table are not shown for sums. */
     records: GroupRecords? = null,
+    /** The photo of every player by player id, for the top players. */
+    photos: Map<Int, String?> = emptyMap(),
 ) {
     @Suppress("NAME_SHADOWING")
     val names = remember(names, PlaceholderNames.playerTemplate) { PlaceholderNames.localizeAll(names) }
@@ -133,7 +121,7 @@ fun TournamentStatisticsPanel(
                 trend = if (round == null && roundIds != null) remember(statistics, roundIds) { handsTrend(statistics, roundIds) } else null,
             )
             // Top players goes second, right after Hands, and takes one column like the other cards.
-            LeadersCard(shown, names, onOpenPlayer)
+            LeadersCard(shown, names, photos, onOpenPlayer)
             TournamentRecordsCard(shown, playersAreSums = playerCount != null, oneRound = round != null, groupRecords = records)
         }
         if (shown.tablesWithHands < shown.tablesCompleted) {
@@ -371,116 +359,6 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
                 BigNumber(stringResource(Res.string.stat_hands_won_row), streaks.mapNotNull { it.handsWon }.maxOrNull().text())
                 BigNumber(stringResource(Res.string.stat_hands_without_dealin), streaks.mapNotNull { it.handsWithoutDealIn }.maxOrNull().text())
             }
-        }
-    }
-}
-
-/** The best player of one leaderboard and the skill that the board is about, if it is one of the skills chart. */
-private class Leader(
-    val title: String,
-    val player: PlayerStatistics,
-    val value: String,
-    val calculation: String,
-    /** The index of the skill in [skillsOf], or null when the board is not about a skill. */
-    val skill: Int?,
-)
-
-/**
- * The leader of the best average hand value, the best win rate, the lowest deal-in rate and the most self-draws, each with the
- * skills chart of that player. The skill of the board stands out in the chart. With [roundIds], chips choose between
- * the whole tournament and one round. A tap on the chosen round goes back to the totals.
- */
-@Composable
-private fun LeadersCard(
-    statistics: TournamentStatistics,
-    names: Map<Int, String>,
-    onOpenPlayer: ((Int) -> Unit)?,
-) {
-    val players = statistics.players
-    val minimum = MIN_HANDS_FOR_LEADERBOARD
-    // The same boards as the leaderboards of the tournament statistics: the first of each one.
-    val eligible = players.filter { it.handsPlayed >= minimum }
-    val leaders = listOfNotNull(
-        eligible.filter { it.handsWon > 0 }.maxByOrNull { it.averageWinningScore ?: 0.0 }?.let {
-            Leader(
-                stringResource(Res.string.leader_best_hand_value),
-                it,
-                it.averageWinningScore.decimal(),
-                "(${it.handsWon})",
-                skill = 3,
-            )
-        },
-        eligible.maxByOrNull { it.winRate ?: 0.0 }?.let {
-            Leader(
-                stringResource(Res.string.leader_best_win_rate),
-                it,
-                it.winRate.percent(),
-                "(${it.handsWon}/${it.handsPlayed})",
-                skill = 0,
-            )
-        },
-        eligible.minByOrNull { it.dealInRate ?: 1.0 }?.let {
-            Leader(
-                stringResource(Res.string.leader_lowest_deal_in),
-                it,
-                it.dealInRate.percent(),
-                "(${it.dealIns}/${it.handsPlayed})",
-                skill = 2,
-            )
-        },
-        players.filter { it.selfDraws > 0 }.maxByOrNull { it.selfDraws }?.let {
-            Leader(
-                stringResource(Res.string.leader_most_self_draws),
-                it,
-                it.selfDraws.toString(),
-                "(${it.handsPlayed})",
-                skill = 1,
-            )
-        },
-    )
-    if (leaders.isEmpty()) return
-    StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
-        // At most two charts side by side, so a wide card shows them two by two.
-        StaggeredColumns(minColumnWidth = 280.dp, spacing = MtsTheme.spacing.md, maxColumns = 2) {
-            leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
-        }
-    }
-}
-
-/** One leader: the board, the name and the value of the player, and the skills chart of the player. */
-@Composable
-private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
-    val playerId = leader.player.playerId
-    val openLabel = stringResource(Res.string.open_player_statistics)
-    // A subcard, like the small stats of Hands and Records.
-    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
-        Column(Modifier.fillMaxWidth().padding(MtsTheme.spacing.md), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-            Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(
-                Modifier.then(
-                    if (onOpenPlayer != null) {
-                        Modifier.clickable(onClickLabel = openLabel) { onOpenPlayer(playerId) }
-                    } else {
-                        Modifier
-                    },
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-            ) {
-                Text(
-                    names[playerId] ?: "Player $playerId",
-                    Modifier.weight(1f, fill = false),
-                    style = MaterialTheme.typography.bodyLarge.inTextFont(),
-                    fontWeight = FontWeight.Bold,
-                    // A name in the color of the links shows that the player opens.
-                    color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(leader.value, style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
-                Text(leader.calculation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            RadarChart(skillsOf(leader.player), Modifier.fillMaxWidth().height(240.dp), highlight = leader.skill)
         }
     }
 }

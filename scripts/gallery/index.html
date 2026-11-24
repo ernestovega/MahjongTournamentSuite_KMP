@@ -247,9 +247,11 @@ const store = {
 };
 
 const DEVICES = [["phone", "Phone"], ["narrow", "Small phone"], ["tablet", "Tablet"], ["desktop", "Desktop"]];
-// The language is the third part of a variant ("phone-light-de"); without it the image is in English.
+// The language is the third part of a variant ("phone-light-de"); without it the image is in English. A last part
+// "font150" or "font200" is the large text of the accessibility settings ("phone-light-font150").
 const LANGUAGES = [["en", "EN", "English"], ["de", "DE", "Deutsch"], ["es", "ES", "Español"], ["fr", "FR", "Français"], ["it", "IT", "Italiano"], ["nl", "NL", "Nederlands"], ["ru", "RU", "Русский"], ["sv", "SV", "Svenska"]];
-const languageOf = (variant) => variant.split("-")[2] || "en";
+const languageOf = (variant) => variant.split("-").slice(2).find((p) => !p.startsWith("font")) || "en";
+const fontOf = (variant) => { const p = variant.split("-").find((x) => /^font\d+$/.test(x)); return p ? Number(p.slice(4)) : 100; };
 const THEMES = [["light", "Light"], ["dark", "Dark"]];
 const SIZES = [["s", "S", 220], ["m", "M", 380], ["l", "L", 600], ["fit", "Fit", 0]];
 const VARIANT_ORDER = ["phone-light", "phone-dark", "narrow-light", "tablet-light", "tablet-dark", "desktop-light", "desktop-dark"];
@@ -287,17 +289,19 @@ const moduleOf = (key) => key.split("/")[0];
 const screenOf = (key) => key.slice(key.indexOf("/") + 1, key.lastIndexOf("/"));
 const variantOf = (key) => key.slice(key.lastIndexOf("/") + 1);
 function variantName(variant) {
-  const [device, theme, language] = variant.split("-");
+  const [device, theme] = variant.split("-");
+  const language = languageOf(variant) === "en" ? null : languageOf(variant);
   const d = { phone: "Phone", narrow: "Small phone", tablet: "Tablet", desktop: "Desktop" }[device] || device;
   const l = language ? LANGUAGES.find((x) => x[0] === language) : null;
-  return [d, theme, language ? (l ? l[2] : language) : null].filter(Boolean).join(" · ");
+  const font = fontOf(variant) === 100 ? null : `Text ${fontOf(variant)} %`;
+  return [d, theme, language ? (l ? l[2] : language) : null, font].filter(Boolean).join(" · ");
 }
 /** English first, in the order of VARIANT_ORDER, then the other languages in the order of LANGUAGES. */
 function variantRank(key) {
   const variant = variantOf(key);
   const i = VARIANT_ORDER.indexOf(variant.split("-").slice(0, 2).join("-"));
   const l = LANGUAGES.findIndex((x) => x[0] === languageOf(variant));
-  return (l < 0 ? 99 : l) * 100 + (i < 0 ? 99 : i);
+  return (l < 0 ? 99 : l) * 100 + (i < 0 ? 99 : i) + fontOf(variant) / 1000;
 }
 
 // An image's entries are [version index, id or null], newest first. At version k it is the first entry with index >= k.

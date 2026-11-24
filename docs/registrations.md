@@ -147,7 +147,7 @@ it is done once. An account keeps its food restrictions in its profile.
 ## Code
 
 - Backend: `firebase/functions/src/services/registration*.ts`, `api/routes/registrations.routes.ts` (the person),
-  `tournaments.routes.ts` (organizers and draw), `public.routes.ts` (public list and links).
+  `tournaments.routes.ts` (organizers), `tournaments.registrations.routes.ts` (registrations and draw), `public.routes.ts` (public list and links).
 - Domain: `model/Registration.kt`, `RegistrationRepository`, `assignRegistrationsToDraw`.
 - Admin: `RegistrationsScreen`, `RegistrationsPresenter`, the switch in `CreateTournamentScreen`.
 - Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/<slug>`, `/registration`, the old `/inscripcion/...`).

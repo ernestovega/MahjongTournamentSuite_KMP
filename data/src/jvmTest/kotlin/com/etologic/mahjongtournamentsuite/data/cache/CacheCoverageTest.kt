@@ -13,7 +13,7 @@ import kotlin.test.fail
  * - every request of the API is in [policies], and every entry of [policies] is still a request;
  * - a [Cached] read is called inside the cache: `cachedRequest`, `persistedRequest`, `getOrLoad`, the table store…;
  * - a [Write] is called in a function that marks the cached data old (`markStale`), or in the function it names;
- * - every revision of the server manifest (firebase dataVersionsService.ts) is read by the app;
+ * - every revision of the server manifest (firebase dataVersionsService.ts) is read by the tournament repository;
  * - the public CDN keeps the manifest and the tables of a tournament in play no longer than the fastest check.
  *
  * It runs with the other tests of the module, every night in CI. Run it alone with
@@ -252,7 +252,7 @@ class CacheCoverageTest {
             val union = Regex("""export type $type = ([^;]+);""").find(text)?.groupValues?.get(1) ?: fail("$type not found")
             Regex(""""(\w+)"""").findAll(union).map { it.groupValues[1] }.toList()
         }
-        val repository = sources.first { it.first == "DefaultTournamentRepository.kt" }.second
+        val repository = sources.filter { it.first.startsWith("DefaultTournamentRepository") || it.first.startsWith("TournamentRepository") }.joinToString("\n") { it.second }
         val unread = resources.filterNot { repository.contains("\"$it\"") }
         assertTrue(unread.isEmpty(), "The manifest has revisions that the app never reads, so their changes never reach the cache: $unread")
     }
