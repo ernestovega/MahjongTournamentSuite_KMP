@@ -2,7 +2,12 @@ package com.etologic.mahjongtournamentsuite.domain.usecase
 
 import com.etologic.mahjongtournamentsuite.domain.model.RepeatFreeRounds
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The draw of more rounds than fit without repeats (docs/draw.md), or of the rounds left of a tournament that already
@@ -16,9 +21,14 @@ import kotlin.random.Random
  * at random in it, a new placing each block: every pair meets exactly once in each complete block, and at most once
  * in the last one. Otherwise, and always with tables already played, each block is drawn by swaps
  * ([GenerateScheduleBySwapsUseCase]) with the tables already drawn or played and the limit of the block.
+ *
+ * A block by swaps has [blockTry] of real time. With tables already played the rounds left of their block may have no
+ * way to finish without repeats, or the search may be stuck: it tries again with another seed, and then allows one
+ * more meeting from that block on (it starts a new block there).
  */
 class DrawRoundsInBlocksUseCase(
     private val swaps: GenerateScheduleBySwapsUseCase = GenerateScheduleBySwapsUseCase(),
+    private val blockTry: Duration = 5.seconds,
 ) {
     suspend operator fun invoke(
         /** The slots that play. A multiple of 4. */
@@ -43,6 +53,8 @@ class DrawRoundsInBlocksUseCase(
         val met = history.flatMap { pairsOf(it.playerIds) }.toMutableList()
         val drawn = ArrayList<TournamentTable>()
         var swapsMade = 0L
+        // The meetings allowed beyond the block number, after a block that could not finish (see blockTry).
+        var raised = 0
         // The position of each round in the tournament says its block.
         val blocks = roundIds.withIndex().groupBy { (index, _) -> (playedRounds + index) / perBlock }
         for ((block, rounds) in blocks.entries.sortedBy { it.key }) {
@@ -50,23 +62,39 @@ class DrawRoundsInBlocksUseCase(
             // The pattern only fits on blocks of the pattern: with tables played, the pairs that met are any.
             val pattern = if (history.isEmpty()) fromPattern(playerIds, ids, teamOf, isTeams, random) else null
             val tables = pattern ?: run {
-                val found = swaps(
-                    playerIds = playerIds,
-                    roundIds = ids,
-                    teamOf = teamOf,
-                    alreadyMet = met,
-                    meetLimit = block + 1,
-                    maxConcurrency = maxConcurrency,
-                    seed = random.nextLong(),
-                    onProgress = { onProgress(it.copy(tried = swapsMade + it.tried)) },
-                ) ?: return null
-                swapsMade += found.swaps
-                found.tables
+                var found: BySwapsResult? = null
+                for (attempt in 0 until TRIES_PER_BLOCK) {
+                    // The last try allows one more meeting, and so do the blocks after it.
+                    if (attempt == TRIES_PER_BLOCK - 1) raised++
+                    val seedOfTry = random.nextLong()
+                    found = withContext(Dispatchers.Default) {
+                        withTimeoutOrNull(blockTry) {
+                            swaps(
+                                playerIds = playerIds,
+                                roundIds = ids,
+                                teamOf = teamOf,
+                                alreadyMet = met,
+                                meetLimit = block + 1 + raised,
+                                maxConcurrency = maxConcurrency,
+                                seed = seedOfTry,
+                                onProgress = { onProgress(it.copy(tried = swapsMade + it.tried)) },
+                            )
+                        }
+                    }
+                    if (found != null) break
+                }
+                val result = found ?: return null
+                swapsMade += result.swaps
+                result.tables
             }
             drawn += tables
             tables.forEach { met += pairsOf(it.playerIds) }
         }
-        return BlocksResult(tables = drawn, swaps = swapsMade, perBlock = perBlock)
+        return BlocksResult(tables = drawn, swaps = swapsMade, perBlock = perBlock, extraMeetings = raised)
+    }
+
+    private companion object {
+        const val TRIES_PER_BLOCK = 3
     }
 
     /**
@@ -119,6 +147,11 @@ data class BlocksResult(
     val swaps: Long,
     /** The rounds of each block: the rounds that fit without repeats. */
     val perBlock: Int,
+    /**
+     * The meetings allowed beyond one more each block, when a block could not finish in time (usually the rounds left
+     * of a block already started): 0 when every block kept its limit.
+     */
+    val extraMeetings: Int = 0,
 )
 
 /** The pairs of players of one table. */

@@ -183,6 +183,9 @@ flowchart TD
   anyone more than k times. The last block, even when shorter, keeps the rule.
 - With a perfect pattern every complete block is the pattern, so after k blocks every pair has met exactly k times.
 - With tables already played (a tournament in play), every block is drawn by swaps, counting those tables.
+  Each block by swaps has 5 s of real time and tries again with another seed. The rounds left of a block that the
+  played rounds already started may have no way to finish without one more meeting: then the last try allows it, from
+  that block on (`BlocksResult.extraMeetings`), so the rounds left always get a draw.
 
 `DrawTournamentScheduleUseCase` uses the blocks:
 
