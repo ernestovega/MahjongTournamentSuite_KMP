@@ -931,7 +931,7 @@ private fun RegistrationFilters(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                modifier = if (compact) Modifier.fillMaxWidth().horizontalScrollWithIndicators().padding(bottom = MtsTheme.spacing.sm) else Modifier.weight(1f),
+                modifier = if (compact) Modifier.fillMaxWidth().horizontalScrollWithIndicators().padding(bottom = MtsTheme.spacing.sm) else Modifier.weight(1f).horizontalScrollWithIndicators(),
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
