@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import co.touchlab.kermit.platformLogWriter
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
+import com.etologic.mahjongtournamentsuite.data.network.BackendConfig
 import com.etologic.mahjongtournamentsuite.data.network.createHttpClient
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
@@ -99,7 +100,7 @@ val dataModule get() = module {
             isLenient = true
         }
     }
-    single { ApiConfiguration() }
+    single { ApiConfiguration(longBaseUrl = BackendConfig.functionsDirectUrl) }
     single<AuthSessionStore> { PlatformAuthSessionStore(json = get()) }
     single<CredentialStore> { PlatformCredentialStore() }
     single<HttpClient> { createHttpClient(json = get()) } withOptions { onClose { it?.close() } }
