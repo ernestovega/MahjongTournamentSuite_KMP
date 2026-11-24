@@ -146,7 +146,8 @@ read it, so each one knows its part.
 
   Done (plan.cornerCases kind player-count and plan.createWith, corners only). The tablet creates the tournament with
   32 players, a table more than the plan. In Players, before the import, the organizer opens Number of players, marks
-  the 4 empty slots 29 to 32 as the ones who leave, reviews and confirms the new draw in its red dialog (docs/player-count-change.md). The
+  the 4 empty slots 29 to 32 as the ones who leave (people are marked, also with teams; here they are the whole last
+  team, so no team stays incomplete), reviews and confirms the new draw in its red dialog (docs/player-count-change.md). The
   checks want every round of the server with 7 tables and each of the 28 players once.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.

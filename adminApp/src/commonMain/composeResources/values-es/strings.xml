@@ -1048,10 +1048,8 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_closes_on_optional">Último día de inscripción (opcional)</string>
     <string name="reg_link_name">Nombre del enlace público</string>
     <string name="reg_import_title">Importar el Google Form</string>
-    <string name="reg_import_info">Descarga las respuestas en Google Sheets con Archivo &gt; Descargar (Excel o CSV) y elige el archivo.\nLas personas mantienen el orden del formulario. Nadie recibe email.\nEl archivo de Exportar CSV tiene las mismas columnas: úsalo como ejemplo.</string>
     <string name="reg_import_ready">Se pueden importar %1$d de %2$d filas.</string>
     <string name="reg_import_apply">Importar %1$d</string>
-    <string name="reg_import_choose">Elegir archivo</string>
     <string name="reg_import_result">Se importaron %1$d personas.</string>
     <string name="reg_problem_invalid_ema">El número EMA no es válido.</string>
     <string name="reg_problem_duplicate_ema">El número EMA está dos veces en el archivo.</string>
@@ -1098,13 +1096,11 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_add_locked">Para añadir mesas, primero desmarca a quienes salen.</string>
     <string name="pc_remove_locked">Para marcar quién sale, primero quita las mesas añadidas.</string>
     <string name="pc_leave_people">¿Quién sale?</string>
-    <string name="pc_leave_teams">¿Qué equipos salen?</string>
+    <string name="pc_leave_people_teams">Marca a las personas. Un equipo que pierde a alguien se queda incompleto, y los equipos se reorganizan después.</string>
     <string name="pc_marked_none">Marca a quienes salen, en grupos de 4.</string>
-    <string name="pc_marked_teams_none">Marca los equipos que salen.</string>
     <string name="pc_marked_fits">Marcados: %1$d. Mesas que salen: %2$d.</string>
     <string name="pc_marked_more_or_less">Marcados: %1$d. Marca %2$d más o desmarca %3$d.</string>
     <string name="pc_marked_less">Marcados: %1$d. Desmarca %2$d.</string>
-    <string name="pc_marked_teams">Equipos marcados: %1$d.</string>
     <string name="pc_minimum">Con %1$d jugadores no puede salir nadie: un torneo necesita al menos 16.</string>
     <string name="pc_sure_text">Las mesas de todas las rondas se sortean de nuevo.\nNo se puede deshacer.</string>
     <string name="pc_change">Cambiar</string>
@@ -1121,7 +1117,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_removed_label">Se borra:</string>
     <string name="pc_removed_tables">Las mesas de las %1$d rondas. Se sortean de nuevo.</string>
     <string name="pc_removed_people">Las personas que se van: %1$s.</string>
-    <string name="pc_removed_teams">Los equipos que se van, con sus jugadores: %1$s.</string>
+    <string name="pc_broken_teams">Equipos que se quedan incompletos, con los jugadores que les quedan: %1$s. Se reorganizan después.</string>
     <string name="pc_removed_registrations">Sus inscripciones.</string>
     <string name="pc_added_label">Se añade:</string>
     <string name="pc_added_slots">%1$d huecos vacíos, numerados a partir del más alto, para asignarlos después.</string>
@@ -1129,7 +1125,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_added_waiting">De la lista de espera, que pasan a tener plaza: %1$s.</string>
     <string name="pc_kept_label">Se mantiene:</string>
     <string name="pc_kept_people">El resto de jugadores, con su número, su jugador EMA, su cuenta y su email.</string>
-    <string name="pc_kept_teams">El resto de equipos, con su número, su nombre y sus jugadores.</string>
+    <string name="pc_kept_teams">Los equipos, con su número, su nombre y los jugadores que siguen.</string>
     <string name="pc_kept_rounds">Las rondas, sus horarios y sus relojes.</string>
     <string name="pc_note">Cada persona afectada recibe un correo.
 El cambio queda registrado en la actividad.</string>

@@ -1048,10 +1048,8 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_closes_on_optional">Letzter Anmeldetag (optional)</string>
     <string name="reg_link_name">Name des öffentlichen Links</string>
     <string name="reg_import_title">Google-Formular importieren</string>
-    <string name="reg_import_info">Lade die Antworten in Google Sheets mit Datei &gt; Herunterladen (Excel oder CSV) herunter und wähle die Datei.\nDie Reihenfolge des Formulars bleibt. Niemand bekommt eine E-Mail.\nDie Datei von „CSV exportieren“ hat dieselben Spalten: nimm sie als Beispiel.</string>
     <string name="reg_import_ready">%1$d von %2$d Zeilen können importiert werden.</string>
     <string name="reg_import_apply">%1$d importieren</string>
-    <string name="reg_import_choose">Datei wählen</string>
     <string name="reg_import_result">%1$d Personen wurden importiert.</string>
     <string name="reg_problem_invalid_ema">Die EMA-Nummer ist ungültig.</string>
     <string name="reg_problem_duplicate_ema">Die EMA-Nummer steht zweimal in der Datei.</string>
@@ -1098,13 +1096,11 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_add_locked">Um Tische hinzuzufügen, entferne zuerst die Markierung bei denen, die gehen.</string>
     <string name="pc_remove_locked">Um zu markieren, wer geht, nimm zuerst die hinzugefügten Tische weg.</string>
     <string name="pc_leave_people">Wer geht?</string>
-    <string name="pc_leave_teams">Welche Teams gehen?</string>
+    <string name="pc_leave_people_teams">Markiere die Personen. Ein Team, das jemanden verliert, bleibt unvollständig, und die Teams werden danach neu aufgestellt.</string>
     <string name="pc_marked_none">Markiere, wer geht, in Vierergruppen.</string>
-    <string name="pc_marked_teams_none">Markiere die Teams, die gehen.</string>
     <string name="pc_marked_fits">Markiert: %1$d. Tische, die wegfallen: %2$d.</string>
     <string name="pc_marked_more_or_less">Markiert: %1$d. Markiere %2$d mehr oder entferne %3$d.</string>
     <string name="pc_marked_less">Markiert: %1$d. Entferne %2$d.</string>
-    <string name="pc_marked_teams">Markierte Teams: %1$d.</string>
     <string name="pc_minimum">Mit %1$d Spielern kann niemand gehen: Ein Turnier braucht mindestens 16.</string>
     <string name="pc_sure_text">Die Tische aller Runden werden neu ausgelost.\nDas kann nicht rückgängig gemacht werden.</string>
     <string name="pc_change">Ändern</string>
@@ -1121,7 +1117,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_removed_label">Wird gelöscht:</string>
     <string name="pc_removed_tables">Die Tische aller %1$d Runden. Sie werden neu ausgelost.</string>
     <string name="pc_removed_people">Die Personen, die gehen: %1$s.</string>
-    <string name="pc_removed_teams">Die Teams, die gehen, mit ihren Spielern: %1$s.</string>
+    <string name="pc_broken_teams">Teams, die unvollständig bleiben, mit den verbleibenden Spielern: %1$s. Sie werden danach neu aufgestellt.</string>
     <string name="pc_removed_registrations">Ihre Anmeldungen.</string>
     <string name="pc_added_label">Wird hinzugefügt:</string>
     <string name="pc_added_slots">%1$d leere Plätze, nach der höchsten Nummer nummeriert, zum späteren Zuweisen.</string>
@@ -1129,7 +1125,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_added_waiting">Von der Warteliste, die jetzt einen Platz haben: %1$s.</string>
     <string name="pc_kept_label">Bleibt:</string>
     <string name="pc_kept_people">Die übrigen Spieler, mit Nummer, EMA-Spieler, Konto und E-Mail.</string>
-    <string name="pc_kept_teams">Die übrigen Teams, mit Nummer, Namen und Spielern.</string>
+    <string name="pc_kept_teams">Die Teams, mit ihrer Nummer, ihrem Namen und den Spielern, die bleiben.</string>
     <string name="pc_kept_rounds">Die Runden, ihre Zeiten und ihre Uhren.</string>
     <string name="pc_note">Jede betroffene Person bekommt eine E-Mail.
 Die Änderung steht in der Aktivität.</string>

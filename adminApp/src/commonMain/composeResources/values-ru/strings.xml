@@ -1062,10 +1062,8 @@
     <string name="reg_closes_on_optional">Последний день регистрации (необязательно)</string>
     <string name="reg_link_name">Имя публичной ссылки</string>
     <string name="reg_import_title">Импорт Google Form</string>
-    <string name="reg_import_info">Скачайте ответы в Google Таблицах: Файл &gt; Скачать (Excel или CSV), и выберите файл.\nПорядок формы сохраняется. Писем никто не получит.\nФайл из «Экспорт в CSV» имеет те же столбцы: используйте его как пример.</string>
     <string name="reg_import_ready">Можно импортировать %1$d из %2$d строк.</string>
     <string name="reg_import_apply">Импортировать %1$d</string>
-    <string name="reg_import_choose">Выбрать файл</string>
     <string name="reg_import_result">Импортировано участников: %1$d.</string>
     <string name="reg_problem_invalid_ema">Неверный номер EMA.</string>
     <string name="reg_problem_duplicate_ema">Номер EMA в файле дважды.</string>
@@ -1112,13 +1110,11 @@
     <string name="pc_add_locked">Чтобы добавить столы, сначала снимите отметки с тех, кто уходит.</string>
     <string name="pc_remove_locked">Чтобы отметить, кто уходит, сначала уберите добавленные столы.</string>
     <string name="pc_leave_people">Кто уходит?</string>
-    <string name="pc_leave_teams">Какие команды уходят?</string>
+    <string name="pc_leave_people_teams">Отметьте людей. Команда, которая кого-то теряет, остаётся неполной, а команды переформируются потом.</string>
     <string name="pc_marked_none">Отметьте тех, кто уходит, группами по 4.</string>
-    <string name="pc_marked_teams_none">Отметьте команды, которые уходят.</string>
     <string name="pc_marked_fits">Отмечено: %1$d. Столов уходит: %2$d.</string>
     <string name="pc_marked_more_or_less">Отмечено: %1$d. Отметьте ещё %2$d или снимите %3$d.</string>
     <string name="pc_marked_less">Отмечено: %1$d. Снимите %2$d.</string>
-    <string name="pc_marked_teams">Отмечено команд: %1$d.</string>
     <string name="pc_minimum">При %1$d игроках никто не может уйти: в турнире должно быть не меньше 16.</string>
     <string name="pc_sure_text">Столы всех раундов будут разыграны заново.\nЭто нельзя отменить.</string>
     <string name="pc_change">Изменить</string>
@@ -1135,7 +1131,7 @@
     <string name="pc_removed_label">Удаляется:</string>
     <string name="pc_removed_tables">Столы всех %1$d раундов. Они разыгрываются заново.</string>
     <string name="pc_removed_people">Уходящие игроки: %1$s.</string>
-    <string name="pc_removed_teams">Уходящие команды с их игроками: %1$s.</string>
+    <string name="pc_broken_teams">Команды, которые остаются неполными, с оставшимися игроками: %1$s. Их переформируют потом.</string>
     <string name="pc_removed_registrations">Их регистрации.</string>
     <string name="pc_added_label">Добавляется:</string>
     <string name="pc_added_slots">%1$d пустых мест с номерами после самого большого, чтобы назначить позже.</string>
@@ -1143,7 +1139,7 @@
     <string name="pc_added_waiting">Из листа ожидания, получают место: %1$s.</string>
     <string name="pc_kept_label">Сохраняется:</string>
     <string name="pc_kept_people">Остальные игроки с их номером, игроком EMA, аккаунтом и почтой.</string>
-    <string name="pc_kept_teams">Остальные команды с их номером, названием и игроками.</string>
+    <string name="pc_kept_teams">Команды с их номером, названием и оставшимися игроками.</string>
     <string name="pc_kept_rounds">Раунды, их расписание и часы.</string>
     <string name="pc_note">Каждый, кого это касается, получит письмо.
 Изменение записывается в журнал действий.</string>

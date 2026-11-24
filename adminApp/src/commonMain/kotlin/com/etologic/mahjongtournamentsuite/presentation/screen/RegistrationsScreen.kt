@@ -24,8 +24,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -34,7 +35,6 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -165,8 +165,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_food_of
 import mahjongtournamentsuite.adminapp.generated.resources.reg_give_place
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_apply
-import mahjongtournamentsuite.adminapp.generated.resources.reg_import_choose
-import mahjongtournamentsuite.adminapp.generated.resources.reg_import_info
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_ready
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_result
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_title
@@ -262,7 +260,11 @@ fun RegistrationsScreen(
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<AdminRegistration?>(null) }
     var removing by remember { mutableStateOf<AdminRegistration?>(null) }
-    var importOpen by remember { mutableStateOf(false) }
+    var importFile by remember { mutableStateOf<Pair<String, ByteArray>?>(null) }
+    val importPicker = rememberSpreadsheetPicker(
+        onSelected = { selected -> importFile = selected.fileName to selected.bytes },
+        onError = { error = it },
+    )
     var drawConfirm by remember { mutableStateOf(false) }
     var drawTries by remember { mutableStateOf<Long?>(null) }
     var drawBackup by remember { mutableStateOf(false) }
@@ -319,7 +321,7 @@ fun RegistrationsScreen(
         actions = {
             AppTopBarButton(
                 text = stringResource(Res.string.reg_export),
-                icon = Icons.Default.Download,
+                icon = Icons.Default.FileUpload,
                 onClick = {
                     val ready = current ?: return@AppTopBarButton
                     val name = tournament?.shortName?.ifBlank { null } ?: tournament?.name.orEmpty()
@@ -330,8 +332,8 @@ fun RegistrationsScreen(
             )
             AppTopBarButton(
                 text = stringResource(Res.string.reg_import),
-                icon = Icons.Default.UploadFile,
-                onClick = { importOpen = true },
+                icon = Icons.Default.FileDownload,
+                onClick = { importPicker.launch() },
                 enabled = current != null,
             )
         },
@@ -523,12 +525,13 @@ fun RegistrationsScreen(
             )
         }
     }
-    if (importOpen) {
+    importFile?.let { chosen ->
         RegistrationImportDialog(
+            file = chosen,
             preview = { name, bytes -> presenter.previewImport(tournamentId, name, bytes) },
             apply = { name, bytes -> presenter.applyImport(tournamentId, name, bytes) },
             onDone = { imported ->
-                importOpen = false
+                importFile = null
                 if (imported != null) {
                     refresh()
                     info = UiText.of(Res.string.reg_import_result, imported)
@@ -1274,40 +1277,43 @@ private fun RegistrationEditDialog(
     }
 }
 
-/** Reads the CSV or Excel file of the old Google Form, shows what it will do, and imports it. */
+/** Shows what the chosen CSV or Excel file of the Google Form will do, and imports it. */
 @Composable
 private fun RegistrationImportDialog(
+    file: Pair<String, ByteArray>,
     preview: suspend (String, ByteArray) -> AppResult<RegistrationImport>,
     apply: suspend (String, ByteArray) -> AppResult<RegistrationImport>,
     onDone: (imported: Int?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var file by remember { mutableStateOf<Pair<String, ByteArray>?>(null) }
     var result by remember { mutableStateOf<RegistrationImport?>(null) }
-    var busy by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<UiText?>(null) }
-    val picker = rememberSpreadsheetPicker(
-        onSelected = { selected ->
-            file = selected.fileName to selected.bytes
-            busy = true
-            scope.launch {
-                when (val read = preview(selected.fileName, selected.bytes)) {
-                    is AppResult.Success -> result = read.value
-                    is AppResult.Failure -> error = read.error.toUiText()
-                }
-                busy = false
-            }
-        },
-        onError = { error = it },
-    )
-    error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
+    LaunchedEffect(file) {
+        busy = true
+        when (val read = preview(file.first, file.second)) {
+            is AppResult.Success -> result = read.value
+            is AppResult.Failure -> error = read.error.toUiText()
+        }
+        busy = false
+    }
+    error?.let {
+        // Nothing to review without a readable file: the error closes the import too.
+        AppErrorDialog(
+            message = it,
+            onDismiss = {
+                error = null
+                if (result == null) onDone(null)
+            },
+        )
+        if (result == null) return
+    }
     TrackedDialog("ImportRegistrations") {
         AlertDialog(
             onDismissRequest = { if (!busy) onDone(null) },
             title = { MtsDialogTitle(stringResource(Res.string.reg_import_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MtsDialogText(stringResource(Res.string.reg_import_info))
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                     result?.let { read ->
                         val ready = read.rows.count { it.problems.isEmpty() }
@@ -1338,7 +1344,7 @@ private fun RegistrationImportDialog(
                 MtsDialogButtons {
                     val chosen = file
                     val ready = result?.rows?.count { it.problems.isEmpty() } ?: 0
-                    if (chosen != null && ready > 0) {
+                    if (ready > 0) {
                         FocusedButton(
                             enabled = !busy,
                             onClick = {
@@ -1353,7 +1359,6 @@ private fun RegistrationImportDialog(
                             },
                         ) { Text(stringResource(Res.string.reg_import_apply, ready)) }
                     }
-                    OutlinedButton(enabled = !busy, onClick = { picker.launch() }) { Text(stringResource(Res.string.reg_import_choose)) }
                     FocusedTextButton(enabled = !busy, onClick = { onDone(null) }) { Text(stringResource(Res.string.cancel)) }
                 }
             },

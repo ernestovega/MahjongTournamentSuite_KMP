@@ -65,7 +65,8 @@ class DrawRoundsInBlocksTest {
             val block = upTo / perBlock + 1
             val soFar = all.take(upTo + 1).toSet()
             val worst = meetings((history + result.tables).filter { it.roundId in soFar }).values.maxOrNull() ?: 0
-            if (worst > block) fail("${ids.size} x ${all.size}: after round ${upTo + 1} (block $block) a pair met $worst times")
+            // A block that could not finish (with tables played, the rounds left of its block) allows one more meeting.
+            if (worst > block + result.extraMeetings) fail("${ids.size} x ${all.size}: after round ${upTo + 1} (block $block) a pair met $worst times")
         }
         return result
     }
@@ -138,6 +139,18 @@ class DrawRoundsInBlocksTest {
         val teams = teamsOf(ids)
         val played = check(ids, (1..2).toList(), teams).tables
         check(ids, (3..8).toList(), teams, history = played)
+    }
+
+    /** Whatever the rounds played, the rounds left always get a draw: a block that cannot finish allows one more meeting. */
+    @Test
+    fun aStartedTournamentAlwaysGetsTheRoundsLeft() {
+        val ids = (1..4).toList() + (9..24).toList()
+        val teams = teamsOf(ids)
+        for (seed in 1L..4L) {
+            val played = check(ids, (1..2).toList(), teams, seed = seed).tables
+            val left = check(ids, (3..8).toList(), teams, history = played, seed = seed)
+            assertTrue(left.extraMeetings <= 1, "Seed $seed: ${left.extraMeetings} extra meetings")
+        }
     }
 
     @Test

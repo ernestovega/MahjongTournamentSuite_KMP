@@ -315,19 +315,15 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun theSearchFindsTeamsByTheirNameOrPlayers() = runComposeUiTest {
+    fun theSearchFindsPeopleByTheNameOfTheirTeam() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
         showScreen(world)
-        val shownTeams = { (1..5).filter { onAllNodesWithTag("playerCountTeam-$it").fetchSemanticsNodes().isNotEmpty() } }
+        val shown = { (1..20).filter { onAllNodesWithTag("playerCountSlot-$it").fetchSemanticsNodes().isNotEmpty() } }
         onNodeWithTag("playerCountSearch").performTextInput("team 4")
         waitForIdle()
-        assertEquals(listOf(4), shownTeams())
-        // Name 10 plays in team 3.
-        onNodeWithTag("playerCountSearch").performTextReplacement("Name 10")
-        waitForIdle()
-        assertEquals(listOf(3), shownTeams())
+        assertEquals(listOf(13, 14, 15, 16), shown())
     }
 
     @Test
@@ -381,24 +377,36 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun aTeamTournamentRemovesWholeTeams() = runComposeUiTest {
+    fun aTeamTournamentRemovesPeopleAndTheirTeamsStayIncomplete() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
         showScreen(world)
 
-        onNodeWithText("Which teams leave?").assertIsDisplayed()
-        click("playerCountTeam-3")
-        see("playerCountChosen").assertTextEquals("Teams marked: 1.")
-        // 16 is the minimum: a second team cannot leave.
-        see("playerCountTeam-4").assertIsNotEnabled()
+        // People, not teams (Ernesto, 24-nov): 3 of team 1 and 1 of team 2.
+        onNodeWithText("Who leaves?").assertIsDisplayed()
+        onNodeWithText("Mark the people. A team that loses someone stays incomplete, and you reorganize the teams afterwards.")
+            .assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountTeam-1").fetchSemanticsNodes().isEmpty())
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        see("playerCountChosen").assertTextEquals("Marked: 4. Tables that leave: 1.")
+        // 16 is the minimum: nobody else can leave.
+        see("playerCountSlot-6").assertIsNotEnabled()
         click("playerCountContinue")
-        onNodeWithText("The teams that leave, with their players: Team 3.").assertIsDisplayed()
-        onNodeWithText("The other teams, with their number, name and players.").assertIsDisplayed()
+        onNodeWithText("The people who leave: #1 · Name 1, #2 · Name 2, #3 · Name 3, #5 · Name 5.").assertIsDisplayed()
+        onNodeWithText("Teams that stay incomplete, with the players they keep: Team 1 (1), Team 2 (3). Reorganize them afterwards.")
+            .assertIsDisplayed()
         makeTheDraw()
         waitForDone()
-        assertEquals(listOf(9, 10, 11, 12), world.server.playerCountRequest!!.removedSlotIds)
-        assertEquals(List(4) { 4 }, world.server.playerCountRequest!!.players.groupBy { it.team }.values.map { it.size })
+        val request = world.server.playerCountRequest!!
+        assertEquals(listOf(1, 2, 3, 5), request.removedSlotIds)
+        // Everyone who stays keeps their number and team; teammates never share a table.
+        assertEquals((4..20).filter { it != 5 }, request.players.map { it.id }.sorted())
+        assertEquals(listOf(1, 3, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size }.sorted())
+        request.players.forEach { assertEquals((it.id - 1) / 4 + 1, it.team) }
+        val teamOf = request.players.associate { it.id to it.team }
+        request.tables.forEach { table -> assertEquals(4, table.playerIds.map { teamOf[it] }.toSet().size, "$table") }
+        assertEquals(teamsTournament.numRounds * 4, request.tables.size)
     }
 
     @Test
