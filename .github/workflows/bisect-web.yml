@@ -1,0 +1,51 @@
+# TEMPORARY (only on branch claude/project-thread-ggjfam): which web version made the screens slower.
+# Builds old versions of the player app, serves each locally against the production API (same data for all) and
+# measures the screens with the benchmark script of today.
+name: Check · Bisect web slowdown
+on:
+  push:
+    branches: [claude/project-thread-ggjfam]
+    paths: [.github/workflows/bisect-web.yml]
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - { name: "1.0.119 (13-nov)", sha: 15a35353 }
+          - { name: "1.0.184 (15-nov)", sha: 00a30148 }
+          - { name: "1.0.256 (17-nov)", sha: dc7a276c }
+          - { name: "1.0.315 (19-nov)", sha: 80b9bb88 }
+          - { name: "1.0.339 (21-nov)", sha: 09fe4c6f }
+          - { name: "1.0.401 (24-nov)", sha: 0591f3d9 }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Keep the tools of today
+        run: mkdir -p /tmp/tools && cp scripts/benchmark/screens.mjs .github/bisect/serve.mjs /tmp/tools/
+      - run: git checkout ${{ matrix.version.sha }}
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Build the player web app
+        run: ./gradlew :playerApp:wasmJsBrowserDistribution --no-configuration-cache
+      - name: Measure
+        run: |
+          cd /tmp/tools
+          npm install --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node serve.mjs "$GITHUB_WORKSPACE/playerApp/build/dist/wasmJs/productionExecutable" 8080 &
+          sleep 2
+          node screens.mjs --url http://localhost:8080 --api https://mts.mahjongmadrid.com/api --samples 3 --out results.json
+          echo "### ${{ matrix.version.name }}" >> "$GITHUB_STEP_SUMMARY"
+          node -e 'const r=require("/tmp/tools/results.json"); console.log("| screen | profile | screen ms | since nav ms |\n|---|---|---:|---:|"); for (const x of r.results) console.log(`| ${x.name} | ${x.profile} | ${x.appMs} | ${x.sinceNavigationMs} |`); console.log(`errors: ${r.errors}`)' | tee -a "$GITHUB_STEP_SUMMARY"
