@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +40,6 @@ import mahjongtournamentsuite.ui.generated.resources.leader_best_hand_value
 import mahjongtournamentsuite.ui.generated.resources.leader_best_self_draw_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
-import mahjongtournamentsuite.ui.generated.resources.leaders_average_shape
 import mahjongtournamentsuite.ui.generated.resources.open_player_statistics
 import mahjongtournamentsuite.ui.generated.resources.stats_leaders
 import org.jetbrains.compose.resources.stringResource
@@ -132,8 +130,8 @@ private val AvatarSize = 44.dp
 private const val MIN_WINS_FOR_SELF_DRAW_RATE = 3
 
 /**
- * The best players as a spider web with four corners. The photo of the best player of each stat sits on its corner,
- * with the stat, the value and the name next to it; the photo and the name open the player.
+ * The best players as a spider web with four corners, the skills of the skills chart in the same places.
+ * Each corner shows the stat, the photo and the name of the best player, and the value; a tap opens the player.
  * The shaded shape is the average player as a share of the best one, so it shows how far the best are from the rest.
  * Outside is always better, also for the deal-in rate.
  */
@@ -147,24 +145,16 @@ internal fun LeadersCard(
     val corners = leaderCorners(statistics)
     if (corners.all { it.player == null }) return
     StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-            LeadersWeb(corners, names, photos, onOpenPlayer)
-            Text(
-                stringResource(Res.string.leaders_average_shape),
-                Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
+        LeadersWeb(corners, names, photos, onOpenPlayer)
     }
 }
 
 private fun cornerAngle(index: Int, count: Int): Double = -PI / 2 + 2 * PI * index / count
 
 /**
- * The web, the photos on its corners and the texts beside them. On a wide card the texts of the side corners stand
- * beside their photos. On a narrow card they stand above or below them, in three columns, so the web keeps its size.
+ * The web and one block of text at the end of each axis: above the top one, below the bottom one and beside the
+ * side ones. The side blocks take at most a third of the width each, so the web keeps the middle. The top and bottom
+ * blocks move further out when the side blocks are taller than the web, and the web grows taller with them.
  */
 @Composable
 private fun LeadersWeb(
@@ -175,30 +165,30 @@ private fun LeadersWeb(
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val grid = MaterialTheme.colorScheme.outlineVariant
-    val outline = MaterialTheme.colorScheme.outline
     val count = corners.size
     val radiusState = remember { mutableFloatStateOf(0f) }
     val centerYState = remember { mutableFloatStateOf(0f) }
+    // The web is as tall as the room between the top and bottom blocks, so on a phone it is a tall diamond.
+    val heightRadiusState = remember { mutableFloatStateOf(0f) }
     val openLabel = stringResource(Res.string.open_player_statistics)
-    fun open(player: PlayerStatistics?): Modifier = if (player != null && onOpenPlayer != null) Modifier.clickable(onClickLabel = openLabel) { onOpenPlayer(player.playerId) } else Modifier
 
     Layout(
         modifier = Modifier.fillMaxWidth(),
         content = {
             Canvas(Modifier.fillMaxSize()) {
                 val radius = radiusState.floatValue
+                val heightRadius = heightRadiusState.floatValue
                 if (radius <= 0f) return@Canvas
                 val center = Offset(size.width / 2f, centerYState.floatValue)
                 fun point(index: Int, fraction: Float): Offset {
                     val angle = cornerAngle(index, count)
-                    return Offset(center.x + (radius * fraction * cos(angle)).toFloat(), center.y + (radius * fraction * sin(angle)).toFloat())
+                    return Offset(center.x + (radius * fraction * cos(angle)).toFloat(), center.y + (heightRadius * fraction * sin(angle)).toFloat())
                 }
                 fun shape(fractions: List<Float>) = Path().apply {
                     fractions.forEachIndexed { i, f -> point(i, f).let { if (i == 0) moveTo(it.x, it.y) else lineTo(it.x, it.y) } }
                     close()
                 }
-                listOf(0.25f, 0.5f, 0.75f).forEach { ring -> drawPath(shape(List(count) { ring }), grid, style = Stroke(width = 1.dp.toPx())) }
-                drawPath(shape(List(count) { 1f }), outline, style = Stroke(width = 1.5.dp.toPx()))
+                listOf(0.25f, 0.5f, 0.75f, 1f).forEach { ring -> drawPath(shape(List(count) { ring }), grid, style = Stroke(width = 1.dp.toPx())) }
                 repeat(count) { i -> drawLine(grid, center, point(i, 1f), strokeWidth = 1.dp.toPx()) }
                 val reaches = corners.map { it.reach }
                 drawPath(shape(reaches), primary.copy(alpha = 0.22f))
@@ -207,90 +197,51 @@ private fun LeadersWeb(
             }
             corners.forEach { corner ->
                 val player = corner.player
-                Box(
+                val open = if (player != null && onOpenPlayer != null) {
+                    Modifier.clickable(onClickLabel = openLabel) { onOpenPlayer(player.playerId) }
+                } else {
                     Modifier
-                        .size(AvatarSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(2.dp, if (player != null) primary else grid, CircleShape)
-                        .then(open(player))
-                        .padding(3.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (player != null) {
-                        val name = names[player.playerId] ?: "Player ${player.playerId}"
-                        PlayerPhoto(photos[player.playerId], name, size = AvatarSize - 6.dp)
-                    }
                 }
-            }
-            corners.forEachIndexed { index, corner ->
-                val dx = cos(cornerAngle(index, count))
-                val align = when {
-                    dx > 0.3 -> TextAlign.Start
-                    dx < -0.3 -> TextAlign.End
-                    else -> TextAlign.Center
-                }
-                CornerLabel(corner, names, align, open(corner.player))
+                CornerBlock(corner, names, photos, open)
             }
         },
     ) { measurables, constraints ->
         val width = constraints.maxWidth
-        val canvas = measurables[0]
-        val avatars = measurables.subList(1, 1 + count).map { it.measure(Constraints.fixed(AvatarSize.roundToPx(), AvatarSize.roundToPx())) }
-        val labelMeasurables = measurables.subList(1 + count, 1 + 2 * count)
-        val avatarRadius = AvatarSize.toPx() / 2f
-        val gap = 6.dp.toPx()
+        val gap = 8.dp.toPx()
         val side = (0 until count).map { abs(cos(cornerAngle(it, count))) > 0.3 }
-        // Wide: the side texts stand beside the photos, as wide as the longest word allows. Narrow: three columns.
-        val sideLabelWidth = 150.dp.toPx()
-        // The side corner that is furthest out sets how big the web can be.
-        val sideCos = (0 until count).filter { side[it] }.maxOfOrNull { abs(cos(cornerAngle(it, count))).toFloat() } ?: 1f
-        val wideRadius = (width / 2f - avatarRadius - gap - sideLabelWidth) / sideCos
-        val wide = wideRadius >= 80.dp.toPx()
-        val radius = if (wide) min(wideRadius, 130.dp.toPx()) else (width / 3f) / sideCos
-        val column = width / 3
-        val labels = labelMeasurables.mapIndexed { index, label ->
-            val maxWidth = when {
-                !side[index] -> if (wide) width / 2 else column
-                wide -> max(0, (width / 2f - radius * abs(cos(cornerAngle(index, count))).toFloat() - avatarRadius - gap).toInt())
-                else -> column
-            }
-            label.measure(Constraints(maxWidth = maxWidth))
+        val blocks = measurables.drop(1).mapIndexed { index, block ->
+            val maxWidth = if (side[index]) min(width / 3, 170.dp.roundToPx()) else min(width, 260.dp.roundToPx())
+            block.measure(Constraints(maxWidth = maxWidth))
         }
-        // The place of each text, with the center of the web at (0, 0).
-        val places = labels.mapIndexed { index, label ->
+        val sideWidth = blocks.filterIndexed { i, _ -> side[i] }.maxOfOrNull { it.width } ?: 0
+        val sideHalfHeight = blocks.filterIndexed { i, _ -> side[i] }.maxOfOrNull { it.height / 2f } ?: 0f
+        val radius = (width / 2f - sideWidth - gap).coerceIn(40.dp.toPx(), 130.dp.toPx())
+        // A top or bottom block stays clear of the side blocks.
+        val endDistance = max(radius + gap, sideHalfHeight + gap)
+        val places = blocks.mapIndexed { index, block ->
             val angle = cornerAngle(index, count)
-            val cx = (radius * cos(angle)).toFloat()
-            val cy = (radius * sin(angle)).toFloat()
-            val up = sin(angle) < 0
-            if (wide && side[index]) {
-                val x = if (cos(angle) > 0) cx + avatarRadius + gap else cx - avatarRadius - gap - label.width
-                Offset(x, cy - label.height / 2f)
-            } else {
-                val y = if (up) cy - avatarRadius - gap - label.height else cy + avatarRadius + gap
-                Offset(cx - label.width / 2f, y)
+            val dx = cos(angle).toFloat()
+            val dy = sin(angle).toFloat()
+            when {
+                side[index] -> Offset(if (dx > 0) radius + gap else -radius - gap - block.width, -block.height / 2f)
+                dy < 0 -> Offset(-block.width / 2f, -endDistance - block.height)
+                else -> Offset(-block.width / 2f, endDistance)
             }
         }
-        val top = min(places.minOf { it.y }, -radius - avatarRadius)
-        val bottom = max(places.indices.maxOf { places[it].y + labels[it].height }, radius + avatarRadius)
+        val top = places.minOf { it.y }
+        val bottom = places.indices.maxOf { places[it].y + blocks[it].height }
         val height = ceil(bottom - top).toInt()
         val centerX = width / 2f
         val centerY = -top
         radiusState.floatValue = radius
         centerYState.floatValue = centerY
-        val canvasPlaceable = canvas.measure(Constraints.fixed(width, height))
+        heightRadiusState.floatValue = endDistance - gap
+        val canvas = measurables[0].measure(Constraints.fixed(width, height))
         layout(width, height) {
-            canvasPlaceable.place(0, 0)
-            avatars.forEachIndexed { index, avatar ->
-                val angle = cornerAngle(index, count)
-                avatar.place(
-                    (centerX + radius * cos(angle) - avatarRadius).roundToInt(),
-                    (centerY + radius * sin(angle) - avatarRadius).roundToInt(),
-                )
-            }
-            labels.forEachIndexed { index, label ->
-                label.place(
-                    (centerX + places[index].x).roundToInt().coerceIn(0, max(0, width - label.width)),
+            canvas.place(0, 0)
+            blocks.forEachIndexed { index, block ->
+                block.place(
+                    (centerX + places[index].x).roundToInt().coerceIn(0, max(0, width - block.width)),
                     (centerY + places[index].y).roundToInt(),
                 )
             }
@@ -298,27 +249,45 @@ private fun LeadersWeb(
     }
 }
 
-/** The text of one corner: the stat, the value of the best player and the name of the player. */
+/** One corner: the stat, the photo of the best player, the name and the value, one under the other. */
 @Composable
-private fun CornerLabel(corner: LeaderCorner, names: Map<Int, String>, align: TextAlign, open: Modifier) {
+private fun CornerBlock(corner: LeaderCorner, names: Map<Int, String>, photos: Map<Int, String?>, open: Modifier) {
     val player = corner.player
-    val horizontal = when (align) {
-        TextAlign.Start -> Alignment.Start
-        TextAlign.End -> Alignment.End
-        else -> Alignment.CenterHorizontally
-    }
-    // On a narrow card a side text may cross a line of the web: the color of the card behind the text hides it.
-    val card = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface)
+    val name = player?.let { names[it.playerId] ?: "Player ${it.playerId}" }
     Column(
-        Modifier.clip(MaterialTheme.shapes.small).background(card).padding(horizontal = 2.dp),
-        horizontalAlignment = horizontal,
+        Modifier.clip(MaterialTheme.shapes.medium).then(open).padding(MtsTheme.spacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
         Text(
             corner.title,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = align,
+            textAlign = TextAlign.Center,
         )
+        Box(
+            Modifier
+                .size(AvatarSize)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(2.dp, if (player != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                .padding(3.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (player != null && name != null) PlayerPhoto(photos[player.playerId], name, size = AvatarSize - 6.dp)
+        }
+        if (name != null) {
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyMedium.inTextFont(),
+                fontWeight = FontWeight.Bold,
+                // A name in the color of the links shows that the player opens.
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
             Text(corner.value, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
             if (corner.calculation.isNotEmpty()) {
@@ -329,19 +298,6 @@ private fun CornerLabel(corner: LeaderCorner, names: Map<Int, String>, align: Te
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-        if (player != null) {
-            Text(
-                names[player.playerId] ?: "Player ${player.playerId}",
-                Modifier.clip(MaterialTheme.shapes.small).then(open),
-                style = MaterialTheme.typography.bodyMedium.inTextFont(),
-                fontWeight = FontWeight.Bold,
-                // A name in the color of the links shows that the player opens.
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = align,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
