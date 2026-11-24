@@ -266,6 +266,7 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
                     fontSize = (unit.value * 1.4f).sp,
                     lineHeight = (unit.value * 1.5f).sp,
                     maxLines = 1,
+                    modifier = Modifier.padding(top = unit * 0.4f),
                 )
                 Text(
                     tableId.toString(),
@@ -289,7 +290,7 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
                 )
                 Text(
                     tournamentName,
-                    color = Color.Black,
+                    color = Color.Gray,
                     fontWeight = FontWeight.Bold,
                     fontSize = (unit.value * 0.95f).sp,
                     maxLines = 1,

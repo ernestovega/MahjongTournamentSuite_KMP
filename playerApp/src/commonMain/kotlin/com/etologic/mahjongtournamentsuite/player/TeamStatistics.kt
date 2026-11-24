@@ -95,7 +95,7 @@ internal fun TeamStatisticsTab(
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
         val teamId = loaded.slots.firstOrNull { it.id in members }?.team ?: 0
-        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }
+        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = teamCount) } }
         val combined = teamStatistics(teamId, members, loaded.statistics.players)
         // The place of the team first, then its players, then the statistics of all their tables together.
         standing?.invoke(Modifier.fillMaxWidth())
