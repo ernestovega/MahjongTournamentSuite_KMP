@@ -3,10 +3,11 @@
 name: Test · Game day · Auto
 
 on:
-  # Every night at 03:15 UTC, after the other tests (Ernesto, 2026-11-24): small on even days of the year, corners on
-  # odd days, with teams, chicken and best hands, without phone emulators. It deploys main to staging first.
+  # Once a week, Sunday at 03:15 UTC, after the other night tests (Ernesto, 2026-11-24: weekly, not nightly, because it
+  # costs money): small on even weeks of the year, corners on odd weeks, with teams, chicken and best hands, without
+  # phone emulators. It deploys main to staging first.
   schedule:
-    - cron: "15 3 * * *"
+    - cron: "15 3 * * 0"
   workflow_dispatch:
     inputs:
       scenario:
@@ -114,9 +115,9 @@ jobs:
           echo "::add-mask::$REHEARSAL_PASSWORD"
           export REHEARSAL_PASSWORD
           SCENARIO="${{ inputs.scenario }}"
-          # The night run has no inputs: small and corners take turns.
+          # The weekly run has no inputs: small and corners take turns, one week each.
           if [ -z "$SCENARIO" ]; then
-            if [ $(( 10#$(date -u +%j) % 2 )) = 0 ]; then SCENARIO=small; else SCENARIO=corners; fi
+            if [ $(( 10#$(date -u +%V) % 2 )) = 0 ]; then SCENARIO=small; else SCENARIO=corners; fi
           fi
           echo "Scenario: $SCENARIO"
           node scripts/rehearsal/scenario.mjs plan --scenario="$SCENARIO" \

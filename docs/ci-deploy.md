@@ -26,7 +26,7 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
 
 ### Every night
 
-Every test runs on `main` every night, and GitHub emails the owner when one fails (Ernesto, 2026-11-24). Times in UTC
+Every test runs on `main` every night (the game day once a week), and GitHub emails the owner when one fails (Ernesto, 2026-11-24). Times in UTC
 (Madrid is one hour later in winter):
 
 | Time | Workflow | What |
@@ -34,7 +34,7 @@ Every test runs on `main` every night, and GitHub emails the owner when one fail
 | 02:30 | Deploy · Production | The five checks of **Build and test**. Nothing is deployed. |
 | 02:45 | Test · Screenshots | Compares every screen with its reference image. |
 | 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
-| 03:15 | Test · Game day · Auto | Deploys `main` to staging and plays a tournament: `small` on even days of the year, `corners` on odd days. |
+| 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `main` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
 | 05:00 | Check · Production benchmark | The times of production (see [benchmark.md](benchmark.md)). |
 
 Two tests guard the lists themselves: `testList.test.ts` fails when a unit test of the functions is not in `npm test`,
