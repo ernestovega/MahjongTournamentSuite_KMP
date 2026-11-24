@@ -1048,16 +1048,21 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_closes_on_optional">Último día de inscripción (opcional)</string>
     <string name="reg_link_name">Nombre del enlace público</string>
     <string name="reg_import_title">Importar el Google Form</string>
-    <string name="reg_import_info">Descarga las respuestas en Google Sheets con Archivo &gt; Descargar (Excel o CSV) y elige el archivo.\nLas personas mantienen el orden del formulario. Nadie recibe email.\nEl archivo de Exportar CSV tiene las mismas columnas: úsalo como ejemplo.</string>
-    <string name="reg_import_ready">Se pueden importar %1$d de %2$d filas.</string>
+    <string name="reg_import_ready">Se importarán %1$d filas.</string>
+    <string name="reg_import_with_problems">Las filas con problemas también se importan, marcadas en la lista, para que las corrijas allí.</string>
+    <string name="reg_file_ema">En el fichero: %1$s</string>
+    <string name="reg_choose_ema">Elegir la persona correcta</string>
+    <string name="reg_filter_problems">Con problemas (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">El fichero sustituye a la lista actual: se quita a la persona inscrita ahora, sin enviarle email.</item>
+        <item quantity="other">El fichero sustituye a la lista actual: se quita a las %1$d personas inscritas ahora, sin enviarles email.</item>
+    </plurals>
     <string name="reg_import_apply">Importar %1$d</string>
-    <string name="reg_import_choose">Elegir archivo</string>
     <string name="reg_import_result">Se importaron %1$d personas.</string>
     <string name="reg_problem_invalid_ema">El número EMA no es válido.</string>
     <string name="reg_problem_duplicate_ema">El número EMA está dos veces en el archivo.</string>
     <string name="reg_problem_invalid_email">El email no es válido.</string>
     <string name="reg_problem_ema_not_found">El número EMA no está en el registro de la EMA.</string>
-    <string name="reg_problem_already_registered">La persona ya está inscrita.</string>
     <string name="reg_open_registrations">Inscripciones</string>
     <string name="reg_export">Exportar CSV</string>
     <string name="reg_status_label">Estado</string>

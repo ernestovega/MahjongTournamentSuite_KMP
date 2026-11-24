@@ -1363,7 +1363,7 @@ export function tournamentsRouter(): Router {
       const result = await importRegistrations({
         tournamentId, csv: body.csv, fileName: body.fileName, dataBase64: body.dataBase64, apply: body.apply === true, language: parseAcceptLanguage(req.header("accept-language")),
       });
-      if (body.apply === true) await registrationActivity(res, tournamentId, `${result.imported} registrations`, { imported: result.imported });
+      if (body.apply === true) await registrationActivity(res, tournamentId, `${result.imported} registrations`, { imported: result.imported, replaced: result.replaced });
       res.status(200).json(result);
     }),
   );
@@ -1383,9 +1383,11 @@ export function tournamentsRouter(): Router {
         paid: body.paid,
         teamName: body.teamName,
         foodRestrictions: body.foodRestrictions,
+        newEmaId: body.newEmaId,
       });
       await registrationActivity(res, tournamentId, `registration ${result.emaId}`, {
         status: body.status, paid: body.paid, teamName: body.teamName, emailChanged: body.email !== undefined,
+        ...(body.newEmaId != null ? { from: pathParam(req, "emaId") } : {}),
       });
       res.status(200).json(result);
     }),

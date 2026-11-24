@@ -26,7 +26,10 @@ class PlayerAssignmentTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
-        c.clickMoreMenuButton("Teams")
+        // Teams opens from the top bar of the players screen.
+        c.clickMoreMenuButton("Players")
+        c.waitForText("Tournament players")
+        c.clickButton("Teams")
         c.waitForText("Tournament teams")
     }
 

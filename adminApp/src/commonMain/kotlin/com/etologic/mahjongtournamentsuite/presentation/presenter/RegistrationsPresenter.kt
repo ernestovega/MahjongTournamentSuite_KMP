@@ -86,6 +86,10 @@ class RegistrationsPresenter(
         if (!TournamentPlayerCountValidator.isValid(confirmed.size)) {
             return AppResult.Failure(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, listOf(confirmed.size.toString())))
         }
+        val withoutEma = confirmed.filter { it.hasEmaProblem }
+        if (withoutEma.isNotEmpty()) {
+            return AppResult.Failure(AppError.Registration(RegistrationErrorCode.IMPORT_PROBLEMS, withoutEma.map { it.name.ifBlank { it.shownEmaId } }))
+        }
         val incomplete = if (registrations.isTeams) {
             confirmed.filter { registration ->
                 val team = registrations.teamOf(registration)

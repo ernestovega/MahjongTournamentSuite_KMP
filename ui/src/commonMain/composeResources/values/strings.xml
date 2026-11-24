@@ -594,6 +594,7 @@
     <string name="registration_error_ema_not_found">This EMA number is not in the EMA registry.</string>
     <string name="registration_error_empty_file">The file is empty.</string>
     <string name="registration_error_food_too_long">The food restrictions can have at most 300 characters.</string>
+    <string name="registration_error_import_problems">Some people with a place have no valid EMA number yet. Choose the right person in the list before the draw.\nWithout an EMA number: %1$s.</string>
     <string name="registration_error_incomplete_teams">Every person needs a team of 4 before the draw.\nWithout a full team: %1$s.</string>
     <string name="registration_error_invalid_close_date">The last day to register is not a valid date.</string>
     <string name="registration_error_invalid_email">Write a valid email.</string>

@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Det här EMA-numret finns inte i EMA-registret.</string>
     <string name="registration_error_empty_file">Filen är tom.</string>
     <string name="registration_error_food_too_long">Matrestriktionerna får ha högst 300 tecken.</string>
+    <string name="registration_error_import_problems">Några personer med plats har inget giltigt EMA-nummer ännu. Välj rätt person i listan före lottningen.\nUtan EMA-nummer: %1$s.</string>
     <string name="registration_error_incomplete_teams">Varje person behöver ett lag på 4 före lottningen.\nUtan fullt lag: %1$s.</string>
     <string name="registration_error_invalid_close_date">Sista anmälningsdagen är inget giltigt datum.</string>
     <string name="registration_error_invalid_email">Skriv en giltig e-postadress.</string>

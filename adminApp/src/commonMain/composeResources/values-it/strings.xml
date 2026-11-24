@@ -1048,16 +1048,21 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="reg_closes_on_optional">Ultimo giorno di iscrizione (facoltativo)</string>
     <string name="reg_link_name">Nome del link pubblico</string>
     <string name="reg_import_title">Importa il Google Form</string>
-    <string name="reg_import_info">Scarica le risposte da Google Sheets con File &gt; Scarica (Excel o CSV) e scegli il file.\nLe persone mantengono l'ordine del modulo. Nessuno riceve email.\nIl file di «Esporta CSV» ha le stesse colonne: usalo come esempio.</string>
-    <string name="reg_import_ready">Si possono importare %1$d righe su %2$d.</string>
+    <string name="reg_import_ready">Verranno importate %1$d righe.</string>
+    <string name="reg_import_with_problems">Anche le righe con problemi vengono importate, segnalate nella lista, così puoi correggerle lì.</string>
+    <string name="reg_file_ema">Nel file: %1$s</string>
+    <string name="reg_choose_ema">Scegli la persona giusta</string>
+    <string name="reg_filter_problems">Con problemi (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Il file sostituisce la lista attuale: la persona iscritta ora viene tolta, senza email.</item>
+        <item quantity="other">Il file sostituisce la lista attuale: le %1$d persone iscritte ora vengono tolte, senza email.</item>
+    </plurals>
     <string name="reg_import_apply">Importa %1$d</string>
-    <string name="reg_import_choose">Scegli il file</string>
     <string name="reg_import_result">Sono state importate %1$d persone.</string>
     <string name="reg_problem_invalid_ema">Il numero EMA non è valido.</string>
     <string name="reg_problem_duplicate_ema">Il numero EMA compare due volte nel file.</string>
     <string name="reg_problem_invalid_email">L'email non è valida.</string>
     <string name="reg_problem_ema_not_found">Il numero EMA non è nel registro EMA.</string>
-    <string name="reg_problem_already_registered">La persona è già iscritta.</string>
     <string name="reg_open_registrations">Iscrizioni</string>
     <string name="reg_export">Esporta CSV</string>
     <string name="reg_status_label">Stato</string>

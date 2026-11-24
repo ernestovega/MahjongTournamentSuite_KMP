@@ -30,9 +30,19 @@ enum class SuiteSection {
 
 /**
  * Where the app starts. [signIn] opens the sign-in form of the player part. [link] is a link of the web that the
- * player part opens, such as the QR of a table.
+ * player part opens, such as the QR of a table. [tournamentId] opens a tournament, like `/t/<id>` on the web, and
+ * [support] the support form, like `/support`.
  */
-data class SuiteStart(val section: SuiteSection, val signIn: Boolean = false, val link: RegistrationLink? = null)
+data class SuiteStart(
+    val section: SuiteSection,
+    val signIn: Boolean = false,
+    val link: RegistrationLink? = null,
+    val tournamentId: String? = null,
+    val support: Boolean = false,
+) {
+    /** True when the player part opens something of a link of the web, so it starts again over the tournaments. */
+    val opensSomething: Boolean get() = link != null || tournamentId != null || support
+}
 
 /**
  * Holds the player application and the admin application, one at a time, like the two apps of the web site.
@@ -58,16 +68,16 @@ fun SuiteRoot(
     // The first part is known before the first frame, so the other part never starts for nothing.
     var section by rememberSaveable { mutableStateOf(initial?.section ?: SuiteSection.PLAYER) }
     var playerSignIn by remember { mutableStateOf(initial?.signIn == true) }
-    // A link that the player part opens when it starts. It is used once.
-    var playerLink by remember { mutableStateOf(initial?.link) }
+    // A link of the web that the player part opens when it starts. It is used once.
+    var playerEntry by remember { mutableStateOf(initial?.takeIf { it.opensSomething }) }
     // A new number starts the player part again, without the screens of the old session.
     var playerRun by rememberSaveable { mutableIntStateOf(0) }
     // The account whose screens the admin part keeps.
     var adminAccount by rememberSaveable { mutableStateOf(if (initial?.section == SuiteSection.ADMIN) storedSessionUid() else null) }
     val savedParts = rememberSaveableStateHolder()
 
-    fun show(target: SuiteSection, signIn: Boolean, fresh: Boolean, link: RegistrationLink? = null) {
-        playerLink = link
+    fun show(target: SuiteSection, signIn: Boolean, fresh: Boolean, entry: SuiteStart? = null) {
+        playerEntry = entry
         if (target == SuiteSection.PLAYER && (fresh || signIn)) {
             savedParts.removeState(SuiteSection.PLAYER.name + playerRun)
             playerRun++
@@ -86,7 +96,7 @@ fun SuiteRoot(
     LaunchedEffect(startRequest) {
         val request = startRequest ?: return@LaunchedEffect
         // A link starts the player part again, so it opens the link over the tournaments, like the web.
-        show(request.section, request.signIn, fresh = request.signIn || request.link != null, link = request.link)
+        show(request.section, request.signIn, fresh = request.signIn || request.opensSomething, entry = request.takeIf { it.opensSomething })
         onStartHandled()
     }
 
@@ -116,7 +126,9 @@ fun SuiteRoot(
                     PlayerApp(
                         appVersion = AppVersion.admin,
                         openSignIn = playerSignIn,
-                        openRegistration = playerLink,
+                        openTournamentId = playerEntry?.tournamentId,
+                        openSupport = playerEntry?.support == true,
+                        openRegistration = playerEntry?.link,
                         numpadEntry = true,
                         isolatedKoin = true,
                     )

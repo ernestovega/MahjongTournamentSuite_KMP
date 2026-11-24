@@ -105,12 +105,12 @@ fun AppTopBarActions(
         }
     }
     TopBarButtonsLayout {
-        onTeams?.let { AppTopBarButton(stringResource(Res.string.teams), Icons.Default.Groups, it, teamsFocusRequester) }
         onPlayers?.let { AppTopBarButton(stringResource(Res.string.players), Icons.Default.People, it, playersFocusRequester) }
         onIdCards?.let { AppTopBarButton(stringResource(Res.string.top_bar_id_cards), Icons.Default.Badge, it, idCardsFocusRequester) }
         onIdList?.let {
             AppTopBarButton(stringResource(Res.string.top_bar_id_list), Icons.AutoMirrored.Filled.FormatListBulleted, it, idListFocusRequester)
         }
+        onTeams?.let { AppTopBarButton(stringResource(Res.string.teams), Icons.Default.Groups, it, teamsFocusRequester) }
         onPlayerAccounts?.let { AppTopBarButton(stringResource(Res.string.top_bar_invitations), Icons.Default.Email, it) }
         onImportPlayers?.let {
             AppTopBarButton(

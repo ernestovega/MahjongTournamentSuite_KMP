@@ -806,3 +806,40 @@ internal fun rememberRegistrationLinkOpener(navController: NavHostController): s
         }
     }
 }
+
+/**
+ * What an address of the site opens in the Android app, which takes every address of mts.mahjongmadrid.com (App Links,
+ * docs/table-qr.md). The web keeps one address while the player moves around, so these are its only entry addresses.
+ */
+sealed interface SiteLink {
+    /** `/`: the tournaments. */
+    data object Home : SiteLink
+
+    /** `/admin/...`: the management part. */
+    data object Admin : SiteLink
+
+    /** `/support`: the support form over the tournaments. */
+    data object Support : SiteLink
+
+    /** `/t/<id>` or `/?tournament=<id>`: that tournament, like a shared link of the web. */
+    data class Tournament(val tournamentId: String) : SiteLink
+
+    /** `/<slug>`, `/registration?...`, `/<slug>/my-table`...: see [registrationLinkOf]. */
+    data class Registration(val link: RegistrationLink) : SiteLink
+
+    /** A page that is not the app (the privacy policy, the Green Book, the version, the API docs): the browser opens it. */
+    data object Browser : SiteLink
+}
+
+/** The [SiteLink] of an address of the site. [path] is the path without the query, [query] its decoded parameters. */
+fun siteLinkOf(path: String, query: Map<String, String>): SiteLink {
+    val parts = path.trim('/').split('/').filter { it.isNotEmpty() }
+    registrationLinkOf(path, query)?.let { return SiteLink.Registration(it) }
+    return when {
+        parts.isEmpty() -> query["tournament"]?.takeIf { it.isNotBlank() }?.let { SiteLink.Tournament(it) } ?: SiteLink.Home
+        parts[0] == "admin" -> SiteLink.Admin
+        parts.size == 1 && parts[0] == "support" -> SiteLink.Support
+        parts.size == 2 && parts[0] == "t" -> SiteLink.Tournament(parts[1])
+        else -> SiteLink.Browser
+    }
+}

@@ -29,9 +29,17 @@ builds the same link with `myTableQrLink` of `tableQrService.ts` and `PLAYER_APP
 Without an account in the tournament, before the draw, in a finished tournament, or when the player has played all
 their tables, the app shows only the tables tab. Back from the table shows the tournament.
 
-The Android app opens these links when it is installed (App Links): `MainActivity` has an `autoVerify` intent filter
-for `https://mts.mahjongmadrid.com/.*/my-table` (and the old `/table/` and `/mesa/`), and passes the link to the player
-part (`SuiteStart.link`), which starts again and opens it like the web. The site serves `/.well-known/assetlinks.json`
+The Android app opens every address of `https://mts.mahjongmadrid.com` when it is installed (App Links), where the web
+opens it: `MainActivity` has an `autoVerify` intent filter for the whole host, and `siteLinkOf` (playerApp,
+Registrations.kt) reads the address. The web keeps one address while the player moves around, so these are its only
+entry addresses:
+- `/`: the tournaments; `/t/<id>` and `/?tournament=<id>`: that tournament;
+- `/<slug>`, `/registration?t=&k=` (and the old `/inscripcion/...`): the tournament on its registration;
+- `/<slug>/my-table` (and the old `/table/` and `/mesa/`): My tables and the table of the player;
+- `/support`: the support form; `/admin/...`: the management part.
+The other pages (privacy policy, Green Book, `/version`, `/api-docs`) go on to the browser, named in the intent so the
+address does not come back to the app (`<queries>` for the browsers). Typing an address in the browser never opens an
+app on Android: only a tapped link or a scanned code does. The site serves `/.well-known/assetlinks.json`
 (a rewrite of firebase.json to `playerApp/src/wasmJsMain/resources/assetlinks.json`) with the SHA-256 fingerprints of the
 signing keys of the app. Without the app, or before Android verifies the site, the link opens in the
 browser. The staging app does not take the links.

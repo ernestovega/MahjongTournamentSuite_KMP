@@ -342,9 +342,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val count = byHand.getJSONArray("form").length()
         pickNext("registrations-form.csv")
         c.clickButton("Import")
+        // Import opens the file picker at once; the dialog only reviews the chosen file.
         c.waitForText("Import the Google Form", timeoutMs = 30_000)
-        c.clickButton("Choose the file")
-        c.waitForText("$count of $count rows can be imported.", timeoutMs = 60_000)
+        c.waitForText("$count rows will be imported.", timeoutMs = 60_000)
         c.clickButton("Import $count")
         c.waitForText("$count people were imported.", timeoutMs = 60_000)
         // The result stays until OK closes it: the organizer taps OK again while it shows.
@@ -531,14 +531,14 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         log("Export CSV: ${emaIds.size} people with a place in Downloads")
         pickNext(uri)
         c.clickButton("Import")
+        // Import opens the file picker at once; the dialog only reviews the chosen file.
         c.waitForText("Import the Google Form", timeoutMs = 30_000)
-        c.clickButton("Choose the file")
-        c.waitForText("0 of $count rows can be imported.", timeoutMs = 60_000)
-        c.waitForText("The person is already registered.", timeoutMs = 10_000)
-        check(!c.isOnScreen("Import $count")) { "The import offers to import the people again" }
+        c.waitForText("$count rows will be imported.", timeoutMs = 60_000)
+        // The file replaces the list: the review says how many registrations go away. Cancel keeps the list.
+        c.waitForText("the $count people registered now are removed", substring = true, timeoutMs = 10_000)
         c.clickLastButton("Cancel")
         c.waitForNoText("Import the Google Form", timeoutMs = 10_000)
-        log("the exported file goes back in the import: 0 of $count rows, everybody is already registered")
+        log("the exported file goes back in the import: $count rows, replacing the $count people of the list")
     }
 
     /** The files of Downloads that the app saved with this name ("registrations-x.csv", "registrations-x (1).csv"). */

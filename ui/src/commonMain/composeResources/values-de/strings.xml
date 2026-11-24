@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Diese EMA-Nummer steht nicht im EMA-Register.</string>
     <string name="registration_error_empty_file">Die Datei ist leer.</string>
     <string name="registration_error_food_too_long">Die Ernährungseinschränkungen haben höchstens 300 Zeichen.</string>
+    <string name="registration_error_import_problems">Einige Personen mit Platz haben noch keine gültige EMA-Nummer. Wähle vor der Auslosung die richtige Person in der Liste.\nOhne EMA-Nummer: %1$s.</string>
     <string name="registration_error_incomplete_teams">Jede Person braucht vor der Auslosung ein Team von 4.\nOhne volles Team: %1$s.</string>
     <string name="registration_error_invalid_close_date">Der letzte Anmeldetag ist kein gültiges Datum.</string>
     <string name="registration_error_invalid_email">Gib eine gültige E-Mail an.</string>
