@@ -1162,4 +1162,5 @@ Change les places dans Inscriptions.</string>
     <string name="table_qr_no_tables">Le tournoi n'a pas encore de tables.\nLes cartes peuvent être imprimées après le tirage.</string>
     <string name="table_qr_card_size">Taille de chaque carte : %1$s</string>
     <string name="table_qr_hint">Scanne le code pour aller à ta table.</string>
+    <string name="table_qr_open_app">Ou ouvre simplement l'app :</string>
 </resources>

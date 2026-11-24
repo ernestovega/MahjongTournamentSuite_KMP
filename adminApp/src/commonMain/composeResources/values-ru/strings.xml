@@ -1176,4 +1176,5 @@
     <string name="table_qr_no_tables">В турнире ещё нет столов.\nКарточки можно напечатать после жеребьёвки.</string>
     <string name="table_qr_card_size">Размер каждой карточки: %1$s</string>
     <string name="table_qr_hint">Отсканируйте код, чтобы перейти к своему столу.</string>
+    <string name="table_qr_open_app">Или просто откройте приложение:</string>
 </resources>

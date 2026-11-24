@@ -1162,4 +1162,5 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="table_qr_no_tables">Het toernooi heeft nog geen tafels.\nDe kaarten kunnen na de loting worden afgedrukt.</string>
     <string name="table_qr_card_size">Formaat van elke kaart: %1$s</string>
     <string name="table_qr_hint">Scan de code om naar je tafel te gaan.</string>
+    <string name="table_qr_open_app">Of open gewoon de app:</string>
 </resources>

@@ -42,14 +42,15 @@ Two buttons of the top bar of the tournament screen:
 
 - "QR" (next to Timer and Ranking) opens a window of its own (a browser tab on the web, a window on the desktop, an activity on
   Android) with the code as big as it fits, black on white, the logo of the main organizer (or its initial on its color
-  when it has no logo) over the name of the tournament and one sentence, all centred, to project it
+  when it has no logo) over the name of the tournament and one sentence, then "Or just open the app:" over the main site
+  (only the host, `mts.mahjongmadrid.com`, not the full link), all centred, to project it
   (`TableQrProjectionScreen`, screen `TableQrProjection`). The window gets the name, the link, the logo address and
   the name and color of the organizer, so it loads nothing and needs no session;
 - "Tables IDs" (in the "More" menu) opens a dialog like the one of the ID cards (`TablesIdsDialog`, dialog
   `CreateTablesIds`): 1, 2, 4, 6 or 8 cards per A4 sheet, the size of each card, a preview of the first sheet, and
   "Create PDF", which makes `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4|6|8` (permission `tournament.view`). Each card
-  (the table ID) has the logo of the main organizer in the top left corner, the name of the tournament, the word
-  "TABLE" and its number as big as the card allows on the left, and on the right one sentence and the link over the
+  (the table ID) has the logo of the main organizer in the top left corner (a full padding from the edges, clear of the cut), the name of the tournament, the word
+  "TABLE" and its number as big as the card allows on the left, and on the right one sentence, "Or just open the app:" and the main site (only the host) over the
   code; dashed lines show where to cut. Without a logo the corner shows a circle of the color of the organizer with its
   first letter, like the app. Every card is landscape: 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm,
   6 = 148.5 x 70 mm, 8 = 105 x 74.25 mm; the sheet is landscape for 1, 4 and 6 cards and portrait for 2 and 8. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
