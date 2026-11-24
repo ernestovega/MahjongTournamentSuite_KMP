@@ -120,7 +120,10 @@
     <string name="stats_empty_title">Aún no hay estadísticas</string>
     <string name="stats_empty_message">Las estadísticas aparecen cuando se completa la primera mesa.</string>
     <string name="stats_hand_stats_missing">Las estadísticas de manos necesitan mesas con manos introducidas. Ninguna mesa de aquí las tiene.</string>
-    <string name="stats_hand_values_use">Los valores de las manos usan %1$d de %2$d mesas.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Los valores de las manos usan %1$d de %2$d mesa.</item>
+        <item quantity="other">Los valores de las manos usan %1$d de %2$d mesas.</item>
+    </plurals>
     <string name="card_fold">Plegar</string>
     <string name="card_unfold">Desplegar</string>
     <string name="more_information">Más información</string>
@@ -193,7 +196,10 @@
     <string name="stat_penalties_info">Este es el número de penalizaciones.\nEl número entre paréntesis es el total de puntos perdidos.</string>
     <string name="round_n">Ronda %1$d</string>
     <string name="table_n">Mesa %1$d</string>
-    <string name="places_history_title">Puesto en las últimas %1$d mesas</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Puesto en la última mesa</item>
+        <item quantity="other">Puesto en las últimas %1$d mesas</item>
+    </plurals>
     <string name="leader_best_hand_value">Mejor valor medio de mano</string>
     <string name="leader_best_win_rate">Mejor tasa de victorias</string>
     <string name="leader_lowest_deal_in">Menor tasa de derrotas por descarte</string>

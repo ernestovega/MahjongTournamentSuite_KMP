@@ -167,6 +167,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_waiting_none
 import mahjongtournamentsuite.adminapp.generated.resources.pc_waiting_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
 import mahjongtournamentsuite.adminapp.generated.resources.search
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
@@ -547,9 +548,9 @@ internal fun ColumnScope.ChooseContent(
                     form.chosen.isNotEmpty() -> Hint(stringResource(Res.string.pc_add_locked))
                     adding -> Hint(
                         if (isTeams) {
-                            stringResource(Res.string.pc_new_teams, newSlots / PlayerCountRules.STEP)
+                            pluralStringResource(Res.plurals.pc_new_teams, newSlots / PlayerCountRules.STEP, newSlots / PlayerCountRules.STEP)
                         } else {
-                            stringResource(Res.string.pc_new_slots, newSlots)
+                            pluralStringResource(Res.plurals.pc_new_slots, newSlots, newSlots)
                         },
                     )
                 }
@@ -558,7 +559,7 @@ internal fun ColumnScope.ChooseContent(
         if (adding && tournament.registration != null) {
             item(key = "waiting-title") {
                 Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                    ChoiceHeader(stringResource(Res.string.pc_waiting_title, newSlots))
+                    ChoiceHeader(pluralStringResource(Res.plurals.pc_waiting_title, newSlots, newSlots))
                     if (data.waiting.isEmpty()) Hint(stringResource(Res.string.pc_waiting_none)) else ChoiceSearch(form, onFormChange)
                 }
             }
@@ -973,9 +974,9 @@ internal fun ColumnScope.ReviewContent(
                 buildList {
                     val empty = summary.newSlots - summary.fromWaiting.size
                     if (summary.isTeams) {
-                        add(stringResource(Res.string.pc_added_teams, summary.newSlots / PlayerCountRules.STEP))
+                        add(pluralStringResource(Res.plurals.pc_added_teams, summary.newSlots / PlayerCountRules.STEP, summary.newSlots / PlayerCountRules.STEP))
                     } else if (empty > 0) {
-                        add(stringResource(Res.string.pc_added_slots, empty))
+                        add(pluralStringResource(Res.plurals.pc_added_slots, empty, empty))
                     }
                     if (summary.fromWaiting.isNotEmpty()) {
                         add(BulletItem(stringResource(Res.string.pc_added_waiting), summary.fromWaiting, "playerCountFromWaiting"))
@@ -1104,7 +1105,7 @@ internal fun ColumnScope.DoneContent(
             )
         }
         MtsDialogText(stringResource(Res.string.pc_done_text, now))
-        MtsDialogText(stringResource(Res.string.pc_emails_sent, emailsSent), modifier = Modifier.testTag("playerCountEmailsSent"))
+        MtsDialogText(pluralStringResource(Res.plurals.pc_emails_sent, emailsSent, emailsSent), modifier = Modifier.testTag("playerCountEmailsSent"))
         // The organizer tells these people by hand: they have no email, or the email failed.
         if (noEmail.isNotEmpty()) BulletGroup(stringResource(Res.string.pc_emails_none), noEmail, "playerCountNoEmail")
         if (emailFailed.isNotEmpty()) BulletGroup(stringResource(Res.string.pc_emails_failed), emailFailed, "playerCountEmailFailed")

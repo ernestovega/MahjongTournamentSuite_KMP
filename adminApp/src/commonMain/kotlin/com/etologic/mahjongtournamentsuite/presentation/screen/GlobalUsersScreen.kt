@@ -188,6 +188,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.user_enabled
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
@@ -506,7 +507,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             SectionCard(
                 container = false,
                 title = stringResource(Res.string.accounts),
-                subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
+                subtitle = if (loading) stringResource(Res.string.loading) else pluralStringResource(Res.plurals.accounts_count_summary, users.size, filteredUsers.size, users.size),
             ) {
                 if (canReset) {
                     PasswordResetBar(
@@ -1195,7 +1196,7 @@ private fun ManageUserDialog(
                             val assignmentSummary = when (selectedEditorTournaments.size) {
                                 0 -> stringResource(Res.string.no_tournaments_assigned)
                                 1 -> selectedEditorTournaments.single().name
-                                else -> stringResource(Res.string.tournaments_selected, selectedEditorTournaments.size)
+                                else -> pluralStringResource(Res.plurals.tournaments_selected, selectedEditorTournaments.size, selectedEditorTournaments.size)
                             }
                             FocusedOutlinedButton(
                                 onClick = {

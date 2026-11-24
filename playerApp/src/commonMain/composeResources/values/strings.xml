@@ -252,7 +252,10 @@
     <string name="preg_open_detail">Anyone with an EMA number can register.</string>
     <string name="preg_closed_detail">Nobody can register now.\nThe organization will publish the draw here.</string>
     <string name="preg_places_value">%1$d of %2$d places taken</string>
-    <string name="preg_places_value_no_limit">%1$d people registered, with no limit of places</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d person registered, with no limit of places</item>
+        <item quantity="other">%1$d people registered, with no limit of places</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d on the waiting list</string>
     <string name="preg_waiting_none">Nobody on the waiting list</string>
     <string name="preg_closes_until">Until %1$s, included</string>

@@ -173,6 +173,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_standing
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.table_n
 import mahjongtournamentsuite.ui.generated.resources.years_all
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
@@ -247,7 +248,7 @@ fun PlayerStatisticsPanel(
                     if (statistics.tablesWithHands == 0) {
                         stringResource(Res.string.stats_hand_stats_missing)
                     } else {
-                        stringResource(Res.string.stats_hand_values_use, statistics.tablesWithHands, statistics.tablesPlayed)
+                        pluralStringResource(Res.plurals.stats_hand_values_use, statistics.tablesPlayed, statistics.tablesWithHands, statistics.tablesPlayed)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1381,7 +1382,7 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
     val placeNames = placeNames()
     val times = results.map { tableTime(it, tournaments) }
     val tips = results.mapIndexed { index, result -> tableLabel(result, tournaments) + "\n" + times[index].replace('\n', ' ') }
-    if (showTitle) Text(stringResource(Res.string.places_history_title, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
+    if (showTitle) Text(pluralStringResource(Res.plurals.places_history_title, places.size, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
     val pointColors = (1..4).map { positionColor(it) }
     // The tables of one tournament follow each other. Each run of tables gets a band of its own color behind it,
     // with the short name of the tournament on top, so the chart shows where each tournament starts and ends.

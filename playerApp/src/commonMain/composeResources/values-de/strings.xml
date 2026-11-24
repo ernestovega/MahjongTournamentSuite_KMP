@@ -252,7 +252,10 @@
     <string name="preg_open_detail">Jede Person mit einer EMA-Nummer kann sich anmelden.</string>
     <string name="preg_closed_detail">Im Moment kann sich niemand anmelden.\nDie Organisation veröffentlicht die Auslosung hier.</string>
     <string name="preg_places_value">%1$d von %2$d Plätzen belegt</string>
-    <string name="preg_places_value_no_limit">%1$d Personen angemeldet, ohne Platzlimit</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d Person angemeldet, ohne Platzlimit</item>
+        <item quantity="other">%1$d Personen angemeldet, ohne Platzlimit</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d auf der Warteliste</string>
     <string name="preg_waiting_none">Niemand auf der Warteliste</string>
     <string name="preg_closes_until">Bis %1$s, einschließlich</string>

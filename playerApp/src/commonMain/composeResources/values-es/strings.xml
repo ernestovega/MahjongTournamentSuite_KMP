@@ -252,7 +252,10 @@
     <string name="preg_open_detail">Puede inscribirse cualquier persona con número EMA.</string>
     <string name="preg_closed_detail">Ahora no se puede inscribir nadie.\nLa organización publicará aquí el sorteo.</string>
     <string name="preg_places_value">%1$d de %2$d plazas ocupadas</string>
-    <string name="preg_places_value_no_limit">%1$d personas inscritas, sin límite de plazas</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d persona inscrita, sin límite de plazas</item>
+        <item quantity="other">%1$d personas inscritas, sin límite de plazas</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d en lista de espera</string>
     <string name="preg_waiting_none">Nadie en lista de espera</string>
     <string name="preg_closes_until">Hasta el %1$s, incluido</string>

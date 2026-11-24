@@ -252,7 +252,10 @@
     <string name="preg_open_detail">Iedereen met een EMA-nummer kan zich inschrijven.</string>
     <string name="preg_closed_detail">Op dit moment kan niemand zich inschrijven.\nDe organisatie publiceert de loting hier.</string>
     <string name="preg_places_value">%1$d van %2$d plaatsen bezet</string>
-    <string name="preg_places_value_no_limit">%1$d mensen ingeschreven, zonder limiet</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d persoon ingeschreven, zonder limiet</item>
+        <item quantity="other">%1$d mensen ingeschreven, zonder limiet</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d op de wachtlijst</string>
     <string name="preg_waiting_none">Niemand op de wachtlijst</string>
     <string name="preg_closes_until">Tot en met %1$s</string>

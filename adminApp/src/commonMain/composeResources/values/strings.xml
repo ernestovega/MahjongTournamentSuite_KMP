@@ -303,13 +303,19 @@
     <string name="data_checked">checked %1$s</string>
     <string name="points">Points</string>
     <string name="hand_score">Hand score</string>
-    <string name="rows_count">%1$d rows</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Account created. Firebase sent a password-reset email to %1$s.</string>
     <string name="user_disabled">%1$s is disabled.</string>
     <string name="user_deleted">%1$s is deleted.</string>
     <string name="user_enabled">%1$s is enabled.</string>
-    <string name="accounts_count_summary">%1$d of %2$d accounts</string>
+    <plurals name="accounts_count_summary">
+        <item quantity="one">%1$d of %2$d account</item>
+        <item quantity="other">%1$d of %2$d accounts</item>
+    </plurals>
     <string name="password_reset_sent_to">Password-reset email sent to %1$s.</string>
     <string name="user_status_disabled">Disabled</string>
     <string name="user_status_active">Active</string>
@@ -319,7 +325,10 @@
     <string name="ema_player_n">EMA Player: %1$s</string>
     <string name="ema_needed_for_player">A player account needs an EMA ID.</string>
     <string name="no_tournaments_assigned">No tournaments assigned</string>
-    <string name="tournaments_selected">%1$d tournaments selected</string>
+    <plurals name="tournaments_selected">
+        <item quantity="one">%1$d tournament selected</item>
+        <item quantity="other">%1$d tournaments selected</item>
+    </plurals>
     <string name="plus_more">+%1$d more</string>
     <string name="enable_account">Enable account</string>
     <string name="disable_account_action">Disable account</string>
@@ -530,7 +539,6 @@
     <string name="this_player">this player</string>
     <string name="photo_choose">Choose photo</string>
     <string name="photo_choose_new">Choose new photo</string>
-    <string name="player_base_summary">%1$d players · %2$d countries</string>
     <plurals name="country_players_count">
         <item quantity="one">%1$s · %2$d player</item>
         <item quantity="other">%1$s · %2$d players</item>
@@ -610,7 +618,10 @@
     <string name="send_reminder">Remind</string>
     <string name="send_password_reset_count">Send password reset (%1$d)</string>
     <string name="password_resets_confirm_title">Send password reset emails?</string>
-    <string name="password_resets_confirm_text">The app sends an email to %1$d accounts.\n\nEach person gets a link to choose a new password.</string>
+    <plurals name="password_resets_confirm_text">
+        <item quantity="one">The app sends an email to %1$d account.\n\nThe person gets a link to choose a new password.</item>
+        <item quantity="other">The app sends an email to %1$d accounts.\n\nEach person gets a link to choose a new password.</item>
+    </plurals>
     <string name="password_resets_partial_title">Not all emails were sent</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">The account does not exist.</string>
@@ -643,7 +654,10 @@
     <string name="import_state_removed">Removed</string>
     <string name="import_state_unchanged">No change</string>
     <string name="app_errors">App errors</string>
-    <string name="errors_summary">%1$d of %2$d problems</string>
+    <plurals name="errors_summary">
+        <item quantity="one">%1$d of %2$d problem</item>
+        <item quantity="other">%1$d of %2$d problems</item>
+    </plurals>
     <string name="errors_kpi_problems">Problems</string>
     <string name="errors_kpi_occurrences">Occurrences</string>
     <string name="errors_kpi_crashes">Crashes</string>
@@ -688,7 +702,10 @@
     <string name="errors_report_reason">Reason: %1$s</string>
     <string name="errors_loading_detail">Loading the details…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
-    <string name="errors_loading_count">Loading… %1$d problems so far</string>
+    <plurals name="errors_loading_count">
+        <item quantity="one">Loading… %1$d problem so far</item>
+        <item quantity="other">Loading… %1$d problems so far</item>
+    </plurals>
     <string name="errors_load_more_reports">Load more reports</string>
     <string name="public_tournament">Public tournament</string>
     <string name="public_tournament_description">Anyone can see the tournament, its results and its statistics without an account.\nTurn it off for a test tournament: only its staff will see it.</string>
@@ -706,7 +723,10 @@
     <string name="activity_only_person">Show only this person</string>
     <string name="activity_load_more">Load more</string>
     <string name="activity_none">No changes recorded</string>
-    <string name="activity_loaded_count">%1$d changes loaded</string>
+    <plurals name="activity_loaded_count">
+        <item quantity="one">%1$d change loaded</item>
+        <item quantity="other">%1$d changes loaded</item>
+    </plurals>
     <string name="activity_col_when">When</string>
     <string name="activity_col_who">Who</string>
     <string name="activity_col_what">What</string>
@@ -715,7 +735,10 @@
     <string name="activity_from_player">Player app</string>
     <string name="activity_from_system">Automatic</string>
     <string name="activity_table">Round %1$d · Table %2$d</string>
-    <string name="activity_changes_count">%1$d values changed</string>
+    <plurals name="activity_changes_count">
+        <item quantity="one">%1$d value changed</item>
+        <item quantity="other">%1$d values changed</item>
+    </plurals>
     <string name="activity_hand">Hand %1$d</string>
     <string name="activity_changes">Changes</string>
     <string name="activity_details">Details</string>
@@ -834,7 +857,10 @@
     <string name="round_control_table_status">Status</string>
     <string name="delete_selected_count">Delete (%1$d)</string>
     <string name="users_delete_confirm_title">Delete accounts?</string>
-    <string name="users_delete_confirm_text">%1$d accounts will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</string>
+    <plurals name="users_delete_confirm_text">
+        <item quantity="one">%1$d account will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA player and the tournament results remain.\n\nThis cannot be undone.</item>
+        <item quantity="other">%1$d accounts will be deleted for good: the sign-in, the email, the alias and the photo.\n\nThe EMA players and the tournament results remain.\n\nThis cannot be undone.</item>
+    </plurals>
     <string name="delete_failure_self">You cannot delete your own account.</string>
     <string name="delete_failure_last_admin">It is the last enabled admin.</string>
     <string name="delete_failure_unknown">The account was not deleted. Try again.</string>
@@ -1047,7 +1073,10 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_closes_on_optional">Last day to register (optional)</string>
     <string name="reg_link_name">Name of the public link</string>
     <string name="reg_import_title">Import the Google Form</string>
-    <string name="reg_import_ready">%1$d rows will be imported.</string>
+    <plurals name="reg_import_ready">
+        <item quantity="one">%1$d row will be imported.</item>
+        <item quantity="other">%1$d rows will be imported.</item>
+    </plurals>
     <string name="reg_import_with_problems">The rows with problems are imported too, marked in the list, so you can fix them there.</string>
     <string name="reg_file_ema">In the file: %1$s</string>
     <string name="reg_choose_ema">Choose the right person</string>
@@ -1057,7 +1086,10 @@ Give it a tournament as an editor and it is enabled again when you save.</string
         <item quantity="other">The file replaces the current list: the %1$d people registered now are removed, without an email.</item>
     </plurals>
     <string name="reg_import_apply">Import %1$d</string>
-    <string name="reg_import_result">%1$d people were imported.</string>
+    <plurals name="reg_import_result">
+        <item quantity="one">%1$d person was imported.</item>
+        <item quantity="other">%1$d people were imported.</item>
+    </plurals>
     <string name="reg_problem_invalid_ema">The EMA number is not valid.</string>
     <string name="reg_problem_duplicate_ema">The EMA number is twice in the file.</string>
     <string name="reg_problem_invalid_email">The email is not valid.</string>
@@ -1112,9 +1144,18 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_change">Change</string>
     <string name="pc_now">Now: %1$d players, %2$d tables per round.</string>
     <string name="pc_empty_slot">#%1$d · no player</string>
-    <string name="pc_new_slots">%1$d new places, empty until you assign them in Players.</string>
-    <string name="pc_new_teams">%1$d new teams, empty until you assign them in Teams.</string>
-    <string name="pc_waiting_title">Waiting list: up to %1$d people (optional)</string>
+    <plurals name="pc_new_slots">
+        <item quantity="one">%1$d new place, empty until you assign it in Players.</item>
+        <item quantity="other">%1$d new places, empty until you assign them in Players.</item>
+    </plurals>
+    <plurals name="pc_new_teams">
+        <item quantity="one">%1$d new team, empty until you assign it in Teams.</item>
+        <item quantity="other">%1$d new teams, empty until you assign them in Teams.</item>
+    </plurals>
+    <plurals name="pc_waiting_title">
+        <item quantity="one">Waiting list: up to %1$d person (optional)</item>
+        <item quantity="other">Waiting list: up to %1$d people (optional)</item>
+    </plurals>
     <string name="pc_waiting_none">Nobody is on the waiting list.</string>
     <string name="pc_no_match">Nobody matches the search.</string>
     <string name="pc_continue">Continue</string>
@@ -1134,8 +1175,14 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_team_changes">The people who change team:</string>
     <string name="pc_removed_registrations">Their registrations.</string>
     <string name="pc_added_label">Added:</string>
-    <string name="pc_added_slots">%1$d empty places, numbered after the highest one, to assign afterwards.</string>
-    <string name="pc_added_teams">%1$d new teams.</string>
+    <plurals name="pc_added_slots">
+        <item quantity="one">%1$d empty place, numbered after the highest one, to assign afterwards.</item>
+        <item quantity="other">%1$d empty places, numbered after the highest one, to assign afterwards.</item>
+    </plurals>
+    <plurals name="pc_added_teams">
+        <item quantity="one">%1$d new team.</item>
+        <item quantity="other">%1$d new teams.</item>
+    </plurals>
     <string name="pc_added_waiting">From the waiting list, with a place now:</string>
     <string name="pc_kept_label">Kept:</string>
     <string name="pc_kept_people">The other players, with their number, EMA player, account and email.</string>
@@ -1149,7 +1196,10 @@ The change is recorded in the activity.</string>
     <string name="pc_saving">Saving the new draw…</string>
     <string name="pc_done_title">Done</string>
     <string name="pc_done_text">The tournament now has %1$d players and a new draw.</string>
-    <string name="pc_emails_sent">%1$d people got an email.</string>
+    <plurals name="pc_emails_sent">
+        <item quantity="one">%1$d person got an email.</item>
+        <item quantity="other">%1$d people got an email.</item>
+    </plurals>
     <string name="pc_emails_none">Without an email, tell them yourself:</string>
     <string name="pc_emails_failed">The email failed, tell them yourself:</string>
     <string name="pc_locked_title">The number of players cannot change</string>
@@ -1173,4 +1223,12 @@ Change the places in Registrations.</string>
     <string name="table_qr_card_size">Size of each card: %1$s</string>
     <string name="table_qr_hint">Scan the code to go to your table.</string>
     <string name="table_qr_open_app">Or just open the app:</string>
+    <plurals name="player_base_players">
+        <item quantity="one">%1$d player</item>
+        <item quantity="other">%1$d players</item>
+    </plurals>
+    <plurals name="player_base_countries">
+        <item quantity="one">%1$d country</item>
+        <item quantity="other">%1$d countries</item>
+    </plurals>
 </resources>

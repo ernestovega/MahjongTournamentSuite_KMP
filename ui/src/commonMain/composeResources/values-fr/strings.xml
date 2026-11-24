@@ -120,7 +120,10 @@
     <string name="stats_empty_title">Pas encore de statistiques</string>
     <string name="stats_empty_message">Les statistiques s'affichent quand la première table est terminée.</string>
     <string name="stats_hand_stats_missing">Les statistiques de mains demandent des tables avec des mains saisies. Aucune table ici n'en a.</string>
-    <string name="stats_hand_values_use">Les valeurs de main utilisent %1$d tables sur %2$d.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Les valeurs de main utilisent %1$d table sur %2$d.</item>
+        <item quantity="other">Les valeurs de main utilisent %1$d tables sur %2$d.</item>
+    </plurals>
     <string name="card_fold">Replier</string>
     <string name="card_unfold">Déplier</string>
     <string name="more_information">Plus d'informations</string>
@@ -193,7 +196,10 @@
     <string name="stat_penalties_info">Ceci est le nombre de pénalités.\nLe nombre entre parenthèses est le total des points perdus.</string>
     <string name="round_n">Tour %1$d</string>
     <string name="table_n">Table %1$d</string>
-    <string name="places_history_title">Place sur les %1$d dernières tables</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Place sur la dernière table</item>
+        <item quantity="other">Place sur les %1$d dernières tables</item>
+    </plurals>
     <string name="leader_best_hand_value">Meilleure valeur moyenne de main</string>
     <string name="leader_best_win_rate">Meilleur taux de victoire</string>
     <string name="leader_lowest_deal_in">Plus faible taux de défaites sur défausse</string>

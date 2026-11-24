@@ -303,13 +303,19 @@
     <string name="data_checked">vérifié %1$s</string>
     <string name="points">Points</string>
     <string name="hand_score">Score de la main</string>
-    <string name="rows_count">%1$d lignes</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d ligne</item>
+        <item quantity="other">%1$d lignes</item>
+    </plurals>
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Compte créé. Firebase a envoyé un e-mail de réinitialisation du mot de passe à %1$s.</string>
     <string name="user_disabled">%1$s est désactivé.</string>
     <string name="user_deleted">%1$s est supprimé.</string>
     <string name="user_enabled">%1$s est activé.</string>
-    <string name="accounts_count_summary">%1$d comptes sur %2$d</string>
+    <plurals name="accounts_count_summary">
+        <item quantity="one">%1$d compte sur %2$d</item>
+        <item quantity="other">%1$d comptes sur %2$d</item>
+    </plurals>
     <string name="password_reset_sent_to">E-mail de réinitialisation du mot de passe envoyé à %1$s.</string>
     <string name="user_status_disabled">Désactivé</string>
     <string name="user_status_active">Actif</string>
@@ -319,7 +325,10 @@
     <string name="ema_player_n">Joueur EMA : %1$s</string>
     <string name="ema_needed_for_player">Un compte de joueur a besoin d'un ID EMA.</string>
     <string name="no_tournaments_assigned">Aucun tournoi attribué</string>
-    <string name="tournaments_selected">%1$d tournois sélectionnés</string>
+    <plurals name="tournaments_selected">
+        <item quantity="one">%1$d tournoi sélectionné</item>
+        <item quantity="other">%1$d tournois sélectionnés</item>
+    </plurals>
     <string name="plus_more">+%1$d de plus</string>
     <string name="enable_account">Activer le compte</string>
     <string name="disable_account_action">Désactiver le compte</string>
@@ -530,7 +539,6 @@
     <string name="this_player">ce joueur</string>
     <string name="photo_choose">Choisir une photo</string>
     <string name="photo_choose_new">Choisir une nouvelle photo</string>
-    <string name="player_base_summary">%1$d joueurs · %2$d pays</string>
     <plurals name="country_players_count">
         <item quantity="one">%1$s · %2$d joueur</item>
         <item quantity="other">%1$s · %2$d joueurs</item>
@@ -610,7 +618,10 @@
     <string name="send_reminder">Rappeler</string>
     <string name="send_password_reset_count">Envoyer la réinitialisation du mot de passe (%1$d)</string>
     <string name="password_resets_confirm_title">Envoyer les e-mails de réinitialisation du mot de passe ?</string>
-    <string name="password_resets_confirm_text">L'app envoie un e-mail à %1$d comptes.\n\nChaque personne reçoit un lien pour choisir un nouveau mot de passe.</string>
+    <plurals name="password_resets_confirm_text">
+        <item quantity="one">L'app envoie un e-mail à %1$d compte.\n\nLa personne reçoit un lien pour choisir un nouveau mot de passe.</item>
+        <item quantity="other">L'app envoie un e-mail à %1$d comptes.\n\nChaque personne reçoit un lien pour choisir un nouveau mot de passe.</item>
+    </plurals>
     <string name="password_resets_partial_title">Tous les e-mails n’ont pas été envoyés</string>
     <string name="reset_failure_line">• %1$s : %2$s</string>
     <string name="reset_failure_not_found">Le compte n'existe pas.</string>
@@ -643,7 +654,10 @@
     <string name="import_state_removed">Retiré</string>
     <string name="import_state_unchanged">Aucun changement</string>
     <string name="app_errors">Erreurs de l'app</string>
-    <string name="errors_summary">%1$d problèmes sur %2$d</string>
+    <plurals name="errors_summary">
+        <item quantity="one">%1$d problème sur %2$d</item>
+        <item quantity="other">%1$d problèmes sur %2$d</item>
+    </plurals>
     <string name="errors_kpi_problems">Problèmes</string>
     <string name="errors_kpi_occurrences">Occurrences</string>
     <string name="errors_kpi_crashes">Plantages</string>
@@ -688,7 +702,10 @@
     <string name="errors_report_reason">Motif : %1$s</string>
     <string name="errors_loading_detail">Chargement des détails…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
-    <string name="errors_loading_count">Chargement… %1$d problèmes pour l'instant</string>
+    <plurals name="errors_loading_count">
+        <item quantity="one">Chargement… %1$d problème pour l'instant</item>
+        <item quantity="other">Chargement… %1$d problèmes pour l'instant</item>
+    </plurals>
     <string name="errors_load_more_reports">Charger plus de rapports</string>
     <string name="public_tournament">Tournoi public</string>
     <string name="public_tournament_description">Tout le monde peut voir le tournoi, ses résultats et ses statistiques sans compte.\nDésactivez-le pour un tournoi de test : seule son équipe le verra.</string>
@@ -706,7 +723,10 @@
     <string name="activity_only_person">Voir seulement cette personne</string>
     <string name="activity_load_more">Charger plus</string>
     <string name="activity_none">Aucun changement enregistré</string>
-    <string name="activity_loaded_count">%1$d changements chargés</string>
+    <plurals name="activity_loaded_count">
+        <item quantity="one">%1$d changement chargé</item>
+        <item quantity="other">%1$d changements chargés</item>
+    </plurals>
     <string name="activity_col_when">Quand</string>
     <string name="activity_col_who">Qui</string>
     <string name="activity_col_what">Quoi</string>
@@ -715,7 +735,10 @@
     <string name="activity_from_player">App joueur</string>
     <string name="activity_from_system">Automatique</string>
     <string name="activity_table">Manche %1$d · Table %2$d</string>
-    <string name="activity_changes_count">%1$d valeurs modifiées</string>
+    <plurals name="activity_changes_count">
+        <item quantity="one">%1$d valeur modifiée</item>
+        <item quantity="other">%1$d valeurs modifiées</item>
+    </plurals>
     <string name="activity_hand">Main %1$d</string>
     <string name="activity_changes">Changements</string>
     <string name="activity_details">Détails</string>
@@ -834,7 +857,10 @@
     <string name="round_control_table_status">État</string>
     <string name="delete_selected_count">Supprimer (%1$d)</string>
     <string name="users_delete_confirm_title">Supprimer les comptes ?</string>
-    <string name="users_delete_confirm_text">%1$d comptes seront supprimés définitivement : la connexion, l’e-mail, le pseudo et la photo.\n\nLes joueurs EMA et les résultats des tournois restent.\n\nAction irréversible.</string>
+    <plurals name="users_delete_confirm_text">
+        <item quantity="one">%1$d compte sera supprimé définitivement : la connexion, l’e-mail, le pseudo et la photo.\n\nLe joueur EMA et les résultats des tournois restent.\n\nAction irréversible.</item>
+        <item quantity="other">%1$d comptes seront supprimés définitivement : la connexion, l’e-mail, le pseudo et la photo.\n\nLes joueurs EMA et les résultats des tournois restent.\n\nAction irréversible.</item>
+    </plurals>
     <string name="delete_failure_self">Vous ne pouvez pas supprimer votre propre compte.</string>
     <string name="delete_failure_last_admin">C’est le dernier admin actif.</string>
     <string name="delete_failure_unknown">Le compte n’a pas été supprimé. Réessayez.</string>
@@ -1047,7 +1073,10 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_closes_on_optional">Dernier jour d'inscription (facultatif)</string>
     <string name="reg_link_name">Nom du lien public</string>
     <string name="reg_import_title">Importer le Google Form</string>
-    <string name="reg_import_ready">%1$d lignes seront importées.</string>
+    <plurals name="reg_import_ready">
+        <item quantity="one">%1$d ligne sera importée.</item>
+        <item quantity="other">%1$d lignes seront importées.</item>
+    </plurals>
     <string name="reg_import_with_problems">Les lignes avec des problèmes sont aussi importées, marquées dans la liste, pour que vous les corrigiez là.</string>
     <string name="reg_file_ema">Dans le fichier : %1$s</string>
     <string name="reg_choose_ema">Choisir la bonne personne</string>
@@ -1057,7 +1086,10 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
         <item quantity="other">Le fichier remplace la liste actuelle : les %1$d personnes inscrites maintenant sont retirées, sans email.</item>
     </plurals>
     <string name="reg_import_apply">Importer %1$d</string>
-    <string name="reg_import_result">%1$d personnes ont été importées.</string>
+    <plurals name="reg_import_result">
+        <item quantity="one">%1$d personne a été importée.</item>
+        <item quantity="other">%1$d personnes ont été importées.</item>
+    </plurals>
     <string name="reg_problem_invalid_ema">Le numéro EMA n'est pas valide.</string>
     <string name="reg_problem_duplicate_ema">Le numéro EMA est deux fois dans le fichier.</string>
     <string name="reg_problem_invalid_email">L'e-mail n'est pas valide.</string>
@@ -1112,9 +1144,18 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_change">Changer</string>
     <string name="pc_now">Actuellement : %1$d joueurs, %2$d tables par manche.</string>
     <string name="pc_empty_slot">#%1$d · sans joueur</string>
-    <string name="pc_new_slots">%1$d nouvelles places, vides jusqu'à ce que tu les attribues dans Joueurs.</string>
-    <string name="pc_new_teams">%1$d nouvelles équipes, vides jusqu'à ce que tu les attribues dans Équipes.</string>
-    <string name="pc_waiting_title">Liste d'attente : jusqu'à %1$d personnes (facultatif)</string>
+    <plurals name="pc_new_slots">
+        <item quantity="one">%1$d nouvelle place, vide jusqu'à ce que tu l'attribues dans Joueurs.</item>
+        <item quantity="other">%1$d nouvelles places, vides jusqu'à ce que tu les attribues dans Joueurs.</item>
+    </plurals>
+    <plurals name="pc_new_teams">
+        <item quantity="one">%1$d nouvelle équipe, vide jusqu'à ce que tu l'attribues dans Équipes.</item>
+        <item quantity="other">%1$d nouvelles équipes, vides jusqu'à ce que tu les attribues dans Équipes.</item>
+    </plurals>
+    <plurals name="pc_waiting_title">
+        <item quantity="one">Liste d'attente : jusqu'à %1$d personne (facultatif)</item>
+        <item quantity="other">Liste d'attente : jusqu'à %1$d personnes (facultatif)</item>
+    </plurals>
     <string name="pc_waiting_none">Personne n'est sur la liste d'attente.</string>
     <string name="pc_no_match">Personne ne correspond à la recherche.</string>
     <string name="pc_continue">Continuer</string>
@@ -1134,8 +1175,14 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_team_changes">Les personnes qui changent d'équipe :</string>
     <string name="pc_removed_registrations">Leurs inscriptions.</string>
     <string name="pc_added_label">Est ajouté :</string>
-    <string name="pc_added_slots">%1$d places vides, numérotées après la plus haute, à attribuer plus tard.</string>
-    <string name="pc_added_teams">%1$d nouvelles équipes.</string>
+    <plurals name="pc_added_slots">
+        <item quantity="one">%1$d place vide, numérotée après la plus haute, à attribuer plus tard.</item>
+        <item quantity="other">%1$d places vides, numérotées après la plus haute, à attribuer plus tard.</item>
+    </plurals>
+    <plurals name="pc_added_teams">
+        <item quantity="one">%1$d nouvelle équipe.</item>
+        <item quantity="other">%1$d nouvelles équipes.</item>
+    </plurals>
     <string name="pc_added_waiting">De la liste d'attente, qui obtiennent une place :</string>
     <string name="pc_kept_label">Est conservé :</string>
     <string name="pc_kept_people">Les autres joueurs, avec leur numéro, leur joueur EMA, leur compte et leur e-mail.</string>
@@ -1149,7 +1196,10 @@ Le changement est enregistré dans l'activité.</string>
     <string name="pc_saving">Enregistrement du nouveau tirage…</string>
     <string name="pc_done_title">Terminé</string>
     <string name="pc_done_text">Le tournoi a maintenant %1$d joueurs et un nouveau tirage.</string>
-    <string name="pc_emails_sent">%1$d personnes ont reçu un e-mail.</string>
+    <plurals name="pc_emails_sent">
+        <item quantity="one">%1$d personne a reçu un e-mail.</item>
+        <item quantity="other">%1$d personnes ont reçu un e-mail.</item>
+    </plurals>
     <string name="pc_emails_none">Sans e-mail, préviens-les toi-même :</string>
     <string name="pc_emails_failed">L'e-mail a échoué, préviens-les toi-même :</string>
     <string name="pc_locked_title">Le nombre de joueurs ne peut pas changer</string>
@@ -1173,4 +1223,12 @@ Change les places dans Inscriptions.</string>
     <string name="table_qr_card_size">Taille de chaque carte : %1$s</string>
     <string name="table_qr_hint">Scanne le code pour aller à ta table.</string>
     <string name="table_qr_open_app">Ou ouvre simplement l'app :</string>
+    <plurals name="player_base_players">
+        <item quantity="one">%1$d joueur</item>
+        <item quantity="other">%1$d joueurs</item>
+    </plurals>
+    <plurals name="player_base_countries">
+        <item quantity="one">%1$d pays</item>
+        <item quantity="other">%1$d pays</item>
+    </plurals>
 </resources>
