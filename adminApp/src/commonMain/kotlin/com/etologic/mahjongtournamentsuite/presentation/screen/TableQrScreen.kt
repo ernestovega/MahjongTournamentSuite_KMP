@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,6 +66,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_card_size
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_hint
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_open_app
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_no_tables
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_info
@@ -397,9 +399,14 @@ private fun ProjectionTexts(tournamentName: String, link: String, titleStyle: Te
 private fun ProjectionHint(link: String, align: TextAlign) {
     Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Text(stringResource(Res.string.table_qr_hint), style = MaterialTheme.typography.headlineSmall, color = Color.Black, textAlign = align, modifier = Modifier.fillMaxWidth())
-        Text(link.substringAfter("://"), style = MaterialTheme.typography.titleMedium, color = Color.DarkGray, textAlign = align, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(MtsTheme.spacing.sm))
+        Text(stringResource(Res.string.table_qr_open_app), style = MaterialTheme.typography.titleMedium, color = Color.DarkGray, textAlign = align, modifier = Modifier.fillMaxWidth())
+        Text(link.mainSite(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black, textAlign = align, modifier = Modifier.fillMaxWidth())
     }
 }
+
+/** Only the host of the link ("mts.mahjongmadrid.com"), easier to type than the full path to the tournament. */
+internal fun String.mainSite(): String = substringAfter("://").substringBefore("/")
 
 /** The code on white with a margin around it, also in the dark theme: phones read black on white best. */
 @Composable

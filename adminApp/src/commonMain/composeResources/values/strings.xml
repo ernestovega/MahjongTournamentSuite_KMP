@@ -1162,4 +1162,5 @@ Change the places in Registrations.</string>
     <string name="table_qr_no_tables">The tournament has no tables yet.\nThe cards can be printed after the draw.</string>
     <string name="table_qr_card_size">Size of each card: %1$s</string>
     <string name="table_qr_hint">Scan the code to go to your table.</string>
+    <string name="table_qr_open_app">Or just open the app:</string>
 </resources>

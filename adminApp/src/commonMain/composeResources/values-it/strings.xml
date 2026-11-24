@@ -1162,4 +1162,5 @@ Cambia i posti in Iscrizioni.</string>
     <string name="table_qr_no_tables">Il torneo non ha ancora tavoli.\nLe schede si possono stampare dopo il sorteggio.</string>
     <string name="table_qr_card_size">Dimensioni di ogni scheda: %1$s</string>
     <string name="table_qr_hint">Scansiona il codice per andare al tuo tavolo.</string>
+    <string name="table_qr_open_app">Oppure apri semplicemente l'app:</string>
 </resources>

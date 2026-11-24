@@ -42,7 +42,8 @@ Two buttons of the top bar of the tournament screen:
 
 - "QR" (next to Timer and Ranking) opens a window of its own (a browser tab on the web, a window on the desktop, an activity on
   Android) with the code as big as it fits, black on white, the logo of the main organizer (or its initial on its color
-  when it has no logo) over the name of the tournament and one sentence, all centred, to project it
+  when it has no logo) over the name of the tournament and one sentence, then "Or just open the app:" over the main site
+  (only the host, `mts.mahjongmadrid.com`, not the full link), all centred, to project it
   (`TableQrProjectionScreen`, screen `TableQrProjection`). The window gets the name, the link, the logo address and
   the name and color of the organizer, so it loads nothing and needs no session;
 - "Tables IDs" (in the "More" menu) opens a dialog like the one of the ID cards (`TablesIdsDialog`, dialog
