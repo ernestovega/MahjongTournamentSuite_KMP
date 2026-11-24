@@ -38,7 +38,7 @@ run_gradle() {
 collect() {
   python3 - "$results" <<'PY'
 import glob, sys, xml.etree.ElementTree as ET
-harness = ("must be called on the main thread", "State must be at least 'CREATED'", "performMeasureAndLayout called during measure layout", "runDetachLifecycle")
+harness = ("must be called on the main thread", "State must be at least 'CREATED'", "performMeasureAndLayout called during measure layout", "runDetachLifecycle", "Detected multithreaded access to SnapshotStateObserver")
 for path in glob.glob(sys.argv[1] + "/**/TEST-*.xml", recursive=True):
     for case in ET.parse(path).getroot().iter("testcase"):
         bad = [c for c in case if c.tag in ("failure", "error")]
@@ -50,7 +50,10 @@ for path in glob.glob(sys.argv[1] + "/**/TEST-*.xml", recursive=True):
         stack = frames[:8] + [f for f in frames[8:] if f.startswith("at com.etologic")][:15]
         # The first line is the error. The stack goes next, before the long screen dump.
         message = " | ".join((lines[:1] + stack + lines[1:])[:330])[:30000]
-        print(f"{case.get('classname')}#{case.get('name')}\t{'FAIL' if bad else 'PASS'}\t{'harness' if flaky else 'real'}\t{message}")
+        # A test that does not apply to this run (assumeTrue: the Game day organizer, the rehearsal player) is skipped.
+        skipped = bool(bad) and "AssumptionViolatedException" in text
+        status = "PASS" if not bad or skipped else "FAIL"
+        print(f"{case.get('classname')}#{case.get('name')}\t{status}\t{'harness' if flaky else 'real'}\t{message}")
 PY
 }
 

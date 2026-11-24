@@ -44,7 +44,8 @@ class DrawTournamentScheduleUseCaseTest {
 
     @Test
     fun whenTheFirstWayRunsOutOfTimeTheSecondMakesTheSameKindOfDraw() {
-        val draw = DrawTournamentScheduleUseCase(firstLimit = { _, _ -> 1.milliseconds })
+        // No time at all for the first way: with 1 ms a fast machine (CI) finished an easy size with it, without the second.
+        val draw = DrawTournamentScheduleUseCase(firstLimit = { _, _ -> Duration.ZERO })
         for ((players, rounds, teams) in listOf(Triple(24, 4, false), Triple(16, 4, true), Triple(28, 5, false), Triple(32, 5, true))) {
             val reports = mutableListOf<TournamentScheduleCalcProgress>()
             val result = assertNotNull(runBlocking { draw(players, rounds, teams, 4) { synchronized(reports) { reports += it } } })
