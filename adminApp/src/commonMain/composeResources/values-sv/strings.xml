@@ -1048,10 +1048,8 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_closes_on_optional">Sista anmälningsdag (valfritt)</string>
     <string name="reg_link_name">Namn på den publika länken</string>
     <string name="reg_import_title">Importera Google-formuläret</string>
-    <string name="reg_import_info">Ladda ner svaren i Google Kalkylark med Arkiv &gt; Ladda ner (Excel eller CSV) och välj filen.\nPersonerna behåller formulärets ordning. Ingen får e-post.\nFilen från ”Exportera CSV” har samma kolumner: använd den som exempel.</string>
     <string name="reg_import_ready">%1$d av %2$d rader kan importeras.</string>
     <string name="reg_import_apply">Importera %1$d</string>
-    <string name="reg_import_choose">Välj fil</string>
     <string name="reg_import_result">%1$d personer importerades.</string>
     <string name="reg_problem_invalid_ema">EMA-numret är ogiltigt.</string>
     <string name="reg_problem_duplicate_ema">EMA-numret finns två gånger i filen.</string>

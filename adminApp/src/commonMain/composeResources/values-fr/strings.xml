@@ -1048,10 +1048,8 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_closes_on_optional">Dernier jour d'inscription (facultatif)</string>
     <string name="reg_link_name">Nom du lien public</string>
     <string name="reg_import_title">Importer le Google Form</string>
-    <string name="reg_import_info">Téléchargez les réponses dans Google Sheets avec Fichier &gt; Télécharger (Excel ou CSV) et choisissez le fichier.\nLes personnes gardent l'ordre du formulaire. Personne ne reçoit d'e-mail.\nLe fichier de « Exporter en CSV » a les mêmes colonnes : servez-vous-en comme exemple.</string>
     <string name="reg_import_ready">%1$d lignes sur %2$d peuvent être importées.</string>
     <string name="reg_import_apply">Importer %1$d</string>
-    <string name="reg_import_choose">Choisir le fichier</string>
     <string name="reg_import_result">%1$d personnes ont été importées.</string>
     <string name="reg_problem_invalid_ema">Le numéro EMA n'est pas valide.</string>
     <string name="reg_problem_duplicate_ema">Le numéro EMA est deux fois dans le fichier.</string>
