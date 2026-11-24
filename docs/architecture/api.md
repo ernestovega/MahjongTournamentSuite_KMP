@@ -38,14 +38,14 @@ Everything is one Express application inside one Cloud Function (`firebase/funct
 ```mermaid
 sequenceDiagram
   autonumber
-  participant App as App (Android / web)
+  participant App as App (web, Android, desktop)
   participant H as Firebase Hosting
   participant F as Function api (Express)
   participant A as Firebase Auth
   participant DB as Firestore
 
   App->>H: PUT /api/tournaments/T1/tables/2/5/state<br/>Authorization: Bearer idToken<br/>X-Firebase-AppCheck: token
-  Note over App,H: Android and desktop go straight to the function,<br/>without Hosting
+  Note over App,H: Android and desktop too, since 24-nov-2026.<br/>Only the requests that can pass 60 s<br/>(exports, draw) go straight to the function
   H->>F: forward (rewrite /api/**)
   F->>F: removes the /api prefix, gzip, size limit
   F->>F: App Check (today it only logs)

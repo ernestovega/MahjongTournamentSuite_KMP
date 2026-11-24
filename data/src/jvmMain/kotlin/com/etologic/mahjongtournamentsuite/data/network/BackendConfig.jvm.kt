@@ -1,7 +1,7 @@
 package com.etologic.mahjongtournamentsuite.data.network
 
-actual fun functionsBaseUrlPlatform(): String =
-    "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api"
+actual fun functionsBaseUrlPlatform(): String = PublicSite.apiThroughHosting(functionsDirectUrlPlatform())
 
+actual fun functionsDirectUrlPlatform(): String = PublicSite.PRODUCTION_FUNCTIONS
 
 actual fun publicSiteUrlPlatform(): String = PublicSite.PRODUCTION
