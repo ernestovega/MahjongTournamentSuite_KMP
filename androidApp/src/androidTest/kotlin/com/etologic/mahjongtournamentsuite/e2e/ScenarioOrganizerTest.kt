@@ -470,6 +470,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun registerAndCancelInThePlayerApp(account: String) {
         c.signIn(account, password)
         val name = byHand.getString("name")
+        // The app opens on In play when the account plays a tournament now (an earlier game day, for example), and
+        // that tab leaves out this tournament: it is in the All tab.
+        c.waitForText("My tournaments", timeoutMs = 60_000)
+        if (c.isOnScreen("In play")) c.clickButton("All")
         c.scrollListTo(name)
         val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
         c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
