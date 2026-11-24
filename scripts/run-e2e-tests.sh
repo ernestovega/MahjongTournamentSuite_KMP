@@ -43,7 +43,9 @@ for path in glob.glob(sys.argv[1] + "/**/TEST-*.xml", recursive=True):
     for case in ET.parse(path).getroot().iter("testcase"):
         bad = [c for c in case if c.tag in ("failure", "error")]
         text = (bad[0].text or "") if bad else ""
-        flaky = any(h in text for h in harness)
+        # The test clock of Compose can run a recomposition on a worker thread, where a dialog cannot be made. It is the
+        # harness only when the stack holds the test clock.
+        flaky = any(h in text for h in harness) or ("TestMonotonicFrameClock" in text and "has not called Looper.prepare()" in text)
         lines = [l for l in text.split("\n") if l.strip() and not l.strip().startswith("at ")]
         # The app frames of the stack show where an error comes from, for example a call off the main thread.
         frames = [l.strip() for l in text.split("\n") if l.strip().startswith("at ")]

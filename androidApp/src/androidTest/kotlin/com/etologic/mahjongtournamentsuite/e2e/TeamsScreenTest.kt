@@ -59,8 +59,11 @@ class TeamsScreenTest : AdminE2eTest() {
     }
 
     @Test
-    fun backReturnsToTheTournament() {
+    fun backReturnsToThePlayersAndThenToTheTournament() {
         openTeams()
+        // Teams opens from the players screen, which opens from the More menu of the tournament.
+        c.clickButton("Back")
+        c.waitForText("Tournament players")
         c.clickButton("Back")
         c.waitForText("Players & results")
     }

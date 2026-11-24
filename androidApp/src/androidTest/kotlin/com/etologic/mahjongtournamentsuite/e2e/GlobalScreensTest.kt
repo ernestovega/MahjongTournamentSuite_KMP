@@ -108,14 +108,15 @@ class GlobalScreensTest : AdminE2eTest() {
         c.clickButton("Stats")
         c.waitForText("Records")
         c.waitForText("Highest hand value")
-        c.waitForText("All tournaments")
+        // Without a filter the one Statistics screen shows everything.
+        c.waitForText("All tournaments and players")
     }
 
     /** The theme is chosen in the profile, which opens from the name and role in the top bar. */
     @Test
     fun themeChoiceInTheProfileChangesTheTheme() {
         start(E2eAccounts.ADMIN)
-        c.clickButton("Admin")
+        c.clickButton("Super Admin")
         c.waitForText("Theme")
         // The theme buttons show their name next to the icon.
         val light = hasText("Light") and hasClickAction()

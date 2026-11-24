@@ -107,8 +107,9 @@ class PlayerTournamentTest : PlayerE2eTest() {
     fun backReturnsToMyTournaments() {
         open()
         c.clickButton("Back")
-        // The list keeps its scroll position, so the filters above the cards can be out of view. The cards show.
-        c.waitForAnyText("Playing", "Played")
+        // The list keeps its scroll position, so the filters above the cards can be out of view. The cards show, with the
+        // stamp of the own tournament in capitals.
+        c.waitForAnyText("PLAYING", "PLAYED")
         // "Ranking" is also the name of the place line on the cards, so the test looks for the Tables tab.
         c.assertNoText("Tables")
     }

@@ -122,12 +122,14 @@ class RoundControlTest : AdminE2eTest() {
     }
 
     @Test
-    fun anEditorHasNoRoundControl() {
+    fun anEditorOfTheTournamentHasRoundControl() {
+        // The editors of a tournament also open and close its rounds (tournament.roundControl, docs/user-roles-matrix.md).
         start(E2eAccounts.EDITOR)
         c.openTournament(LIVE)
         c.waitForText("Players & results")
         c.waitForText("Timer")
-        c.assertNoText("Round control")
+        c.clickButton("Round control")
+        c.waitForText("What the players can do")
     }
 
     @After

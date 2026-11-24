@@ -83,6 +83,26 @@ class TableEditingTest : AdminE2eTest() {
     private val winner get() = seats[0]
     private val loser get() = seats[1]
 
+    /**
+     * Presses Save and waits until the server has the save. The screen shows the new hands before the server answers, and
+     * a save that lands after the reset of the test would change the table for the next test.
+     */
+    private fun saveAndWaitForTheServer(confirm: String? = null) {
+        // One sign-in for the whole wait: the API refuses many sign-ins in a short time (429).
+        val token = E2eApi.signIn(E2eAccounts.ADMIN)
+        val before = E2eApi.lastTableVersion(token)
+        c.clickButton("Save")
+        confirm?.let {
+            c.waitForText(it)
+            c.clickButton(it)
+        }
+        val end = System.currentTimeMillis() + SERVER_WAIT_MS
+        while (E2eApi.lastTableVersion(token) <= before) {
+            check(System.currentTimeMillis() < end) { "The save did not reach the server within $SERVER_WAIT_MS ms." }
+            Thread.sleep(250)
+        }
+    }
+
     private fun enterLastHand(done: Boolean) {
         chooseWinner(winner)
         chooseLoser(loser)
@@ -94,7 +114,7 @@ class TableEditingTest : AdminE2eTest() {
     fun lastHandMarkedDoneCompletesTheTable() {
         openLastTable()
         enterLastHand(done = true)
-        c.clickButton("Save")
+        saveAndWaitForTheServer()
         c.waitForText("16 of 16 hands done.")
         c.assertNoText("Incomplete")
     }
@@ -103,7 +123,8 @@ class TableEditingTest : AdminE2eTest() {
     fun lastHandNotMarkedDoneIsSavedButNotCounted() {
         openLastTable()
         enterLastHand(done = false)
-        c.clickButton("Save")
+        // The app asks first, because a hand with a valid result and Done off does not count.
+        saveAndWaitForTheServer(confirm = "Save anyway")
         c.waitForText("15 of 16 hands done.")
     }
 
@@ -111,7 +132,7 @@ class TableEditingTest : AdminE2eTest() {
     fun markingTheLastTableCompletedCompletesTheTournament() {
         openLastTable()
         tickTableCompleted()
-        c.clickButton("Save")
+        saveAndWaitForTheServer()
         c.waitForText("Completed")
         // The server marks the tournament as completed.
         val list = E2eApi.call("GET", "/tournaments", E2eApi.signIn(E2eAccounts.ADMIN)).json().getJSONArray("tournaments")
@@ -123,7 +144,7 @@ class TableEditingTest : AdminE2eTest() {
     fun editorCanSaveTheLastHand() {
         openLastTable(E2eAccounts.EDITOR)
         enterLastHand(done = true)
-        c.clickButton("Save")
+        saveAndWaitForTheServer()
         c.waitForText("16 of 16 hands done.")
     }
 
@@ -165,7 +186,7 @@ class TableEditingTest : AdminE2eTest() {
         openLastTable()
         enterLastHand(done = true)
         tickTableCompleted()
-        c.clickButton("Save")
+        saveAndWaitForTheServer()
         c.waitForText("16 of 16 hands done.")
     }
 
@@ -224,5 +245,9 @@ class TableEditingTest : AdminE2eTest() {
         val toggles = c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))
         toggles[toggles.fetchSemanticsNodes().size - 2].performClick()
         c.scrollListTo("A chicken hand cannot score more than 12 points.", substring = true)
+    }
+
+    private companion object {
+        const val SERVER_WAIT_MS = 20_000L
     }
 }
