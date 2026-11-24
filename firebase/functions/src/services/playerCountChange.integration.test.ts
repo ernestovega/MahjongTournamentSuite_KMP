@@ -303,6 +303,18 @@ describe("change of the number of players that keeps the numbers of the people w
     assert.equal((await ref.collection("teams").doc("2").get()).exists, false);
   });
 
+  it("moves a person who stays to another team to complete it: same slot, new team, the empty team goes", async () => {
+    const { id, ref } = await create(24, { isTeams: true });
+    const removed = [1, 2, 3, 5];
+    const kept = Array.from({ length: 24 }, (_, index) => index + 1).filter((slot) => !removed.includes(slot));
+    const moved = (slot: number) => (slot === 4 ? 2 : teamOf(slot));
+    await change(id, drawOn(kept, moved), removed);
+    const slots = await slotsOf(ref);
+    assert.equal(slots.get(4)?.team, 2);
+    assert.equal((await ref.collection("teams").doc("1").get()).exists, false);
+    assert.equal((await ref.collection("teams").get()).size, 5);
+  });
+
   it("removes a whole team: the others keep their team numbers, names and slots", async () => {
     const tag = String(Date.now()).slice(-6);
     const { id, ref } = await create(24, { isTeams: true });

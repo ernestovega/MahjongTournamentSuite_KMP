@@ -1103,7 +1103,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_add_locked">Per aggiungere tavoli, togli prima il segno a chi esce.</string>
     <string name="pc_remove_locked">Per segnare chi esce, togli prima i tavoli aggiunti.</string>
     <string name="pc_leave_people">Chi esce?</string>
-    <string name="pc_leave_people_teams">Segna le persone. Una squadra che perde qualcuno resta incompleta, e le squadre si riorganizzano dopo.</string>
+    <string name="pc_leave_people_teams">Segna le persone. Se una squadra perde qualcuno, il passo successivo ti aiuta a completarla.</string>
     <string name="pc_marked_none">Segna chi esce, a gruppi di 4.</string>
     <string name="pc_marked_fits">Segnati: %1$d. Tavoli che escono: %2$d.</string>
     <string name="pc_marked_more_or_less">Segnati: %1$d. Segnane altri %2$d o togline %3$d.</string>
@@ -1125,6 +1125,15 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_removed_tables">I tavoli di tutti i %1$d turni. Vengono sorteggiati di nuovo.</string>
     <string name="pc_removed_people">Le persone che se ne vanno:</string>
     <string name="pc_broken_teams">Squadre che restano incomplete, con i giocatori che restano. Si riorganizzano dopo:</string>
+    <string name="pc_step_teams">Squadre</string>
+    <string name="pc_teams_title">Riorganizza le squadre</string>
+    <string name="pc_teams_hint">Alcune squadre hanno perso giocatori. Sposta persone tra queste squadre perché ognuna torni ad averne 4, oppure premi Proponi.\nPuoi anche andare avanti con squadre incomplete e riorganizzarle più tardi in Squadre.</string>
+    <string name="pc_teams_complete">Tutte le squadre hanno 4 giocatori.</string>
+    <string name="pc_teams_incomplete">Squadre incomplete: %1$d.</string>
+    <string name="pc_teams_propose">Proponi</string>
+    <string name="pc_teams_reset">Ricomincia</string>
+    <string name="pc_team_count">%1$s (%2$d su 4)</string>
+    <string name="pc_team_changes">Le persone che cambiano squadra:</string>
     <string name="pc_removed_registrations">Le loro iscrizioni.</string>
     <string name="pc_added_label">Si aggiunge:</string>
     <string name="pc_added_slots">%1$d posti vuoti, numerati dopo il più alto, da assegnare dopo.</string>

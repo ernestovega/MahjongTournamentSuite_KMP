@@ -1103,7 +1103,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_add_locked">För att lägga till bord, avmarkera först de som går.</string>
     <string name="pc_remove_locked">För att markera vem som går, ta först bort de tillagda borden.</string>
     <string name="pc_leave_people">Vem går?</string>
-    <string name="pc_leave_people_teams">Markera personerna. Ett lag som förlorar någon blir ofullständigt, och lagen ordnas om efteråt.</string>
+    <string name="pc_leave_people_teams">Markera personerna. Om ett lag förlorar någon hjälper nästa steg dig att fylla på det.</string>
     <string name="pc_marked_none">Markera de som går, i grupper om 4.</string>
     <string name="pc_marked_fits">Markerade: %1$d. Bord som försvinner: %2$d.</string>
     <string name="pc_marked_more_or_less">Markerade: %1$d. Markera %2$d till eller avmarkera %3$d.</string>
@@ -1125,6 +1125,15 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_removed_tables">Borden i alla %1$d omgångar. De lottas om.</string>
     <string name="pc_removed_people">Personerna som lämnar:</string>
     <string name="pc_broken_teams">Lag som blir ofullständiga, med spelarna som är kvar. De ordnas om efteråt:</string>
+    <string name="pc_step_teams">Lag</string>
+    <string name="pc_teams_title">Ordna om lagen</string>
+    <string name="pc_teams_hint">Några lag har förlorat spelare. Flytta personer mellan de här lagen så att varje lag har 4 igen, eller tryck på Föreslå.\nDu kan också fortsätta med ofullständiga lag och ordna om dem senare i Lag.</string>
+    <string name="pc_teams_complete">Alla lag har 4 spelare.</string>
+    <string name="pc_teams_incomplete">Ofullständiga lag: %1$d.</string>
+    <string name="pc_teams_propose">Föreslå</string>
+    <string name="pc_teams_reset">Börja om</string>
+    <string name="pc_team_count">%1$s (%2$d av 4)</string>
+    <string name="pc_team_changes">Personerna som byter lag:</string>
     <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
     <string name="pc_added_slots">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</string>
