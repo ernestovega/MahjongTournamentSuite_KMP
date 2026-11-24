@@ -85,7 +85,24 @@ data class AdminRegistration(
     val hasAccount: Boolean = false,
     /** Another person of the list has the same email. One account cannot share an email. */
     val sharedEmail: Boolean = false,
-)
+    /**
+     * What the import found wrong in the row of the file (INVALID_EMA, DUPLICATE_EMA, EMA_NOT_FOUND, INVALID_EMAIL).
+     * The organizer fixes it in the list. Without a valid EMA number [emaId] is `row-<line>` and [fileEmaId] keeps
+     * the text of the file.
+     */
+    val problems: List<String> = emptyList(),
+    val fileEmaId: String? = null,
+) {
+    /** The person has no EMA number to play with yet: the draw waits until the organizer picks the right one. */
+    val hasEmaProblem: Boolean get() = problems.any { it in EMA_PROBLEMS }
+
+    /** The EMA number to show: the one of the file when the row of the import has none. */
+    val shownEmaId: String get() = fileEmaId ?: emaId
+
+    companion object {
+        val EMA_PROBLEMS = setOf("INVALID_EMA", "DUPLICATE_EMA", "EMA_NOT_FOUND")
+    }
+}
 
 data class AdminRegistrations(
     val settings: RegistrationSettings,
@@ -148,6 +165,8 @@ data class RegistrationUpdate(
     /** The name of the team. Empty takes the person out of its team. */
     val teamName: String? = null,
     val foodRestrictions: String? = null,
+    /** Another EMA number, to fix a row of an import. */
+    val newEmaId: String? = null,
 )
 
 data class NewRegistration(
@@ -175,13 +194,15 @@ data class RegistrationImportRow(
     val registryName: String?,
     val registryCountry: String?,
     val sharedEmail: Boolean,
-    /** Codes, such as INVALID_EMA or ALREADY_REGISTERED. A row with problems is not imported. */
+    /** Codes, such as INVALID_EMA or EMA_NOT_FOUND. A row with problems is not imported. */
     val problems: List<String>,
 )
 
 data class RegistrationImport(
     val rows: List<RegistrationImportRow>,
     val imported: Int,
+    /** How many registrations the list has before the import, which replaces them all. */
+    val replaced: Int = 0,
 )
 
 /** Who sits in each slot of the draw. */
@@ -202,6 +223,7 @@ enum class RegistrationErrorCode {
     EMA_NOT_FOUND,
     EMPTY_FILE,
     FOOD_TOO_LONG,
+    IMPORT_PROBLEMS,
     INCOMPLETE_TEAMS,
     INVALID_CLOSE_DATE,
     INVALID_EMAIL,

@@ -437,17 +437,21 @@ describe("registrations", () => {
     assert.equal((await adminList(id)).registrations.length, 0);
     assert.equal(sent.length, 0);
     const applied = await server.request("POST", `/tournaments/${id}/registrations/import`, { token: admin.token, body: { csv, apply: true } });
-    assert.equal((applied.body as { imported: number }).imported, 5);
+    // The row with problems is imported too, marked, for the organizer to fix it in the list.
+    assert.equal((applied.body as { imported: number }).imported, 6);
     const list = await adminList(id);
     assert.deepEqual(list.registrations.map((item) => [item.emaId, item.status]), [
-      [ids[0], "CONFIRMED"], [ids[1], "CONFIRMED"], [ids[2], "CONFIRMED"], [ids[3], "CONFIRMED"], [ids[4], "WAITING"],
+      [ids[0], "CONFIRMED"], [ids[1], "CONFIRMED"], [ids[2], "CONFIRMED"], [ids[3], "CONFIRMED"], [ids[4], "WAITING"], ["99999997", "WAITING"],
     ]);
+    assert.deepEqual((list.registrations[5] as unknown as { problems: string[] }).problems, ["EMA_NOT_FOUND"]);
     assert.equal(list.registrations[0].foodRestrictions, "Celiac");
     assert.equal(list.teams.length, 1);
     assert.deepEqual(list.teams[0].members.sort(), [ids[0], ids[1]].sort());
     assert.equal(sent.length, 0);
+    // The file replaces the list: the preview says how many registrations go away, the rows have no problem.
     const again = await server.request("POST", `/tournaments/${id}/registrations/import`, { token: admin.token, body: { csv } });
-    assert.equal((again.body as { rows: Array<{ problems: string[] }> }).rows[0].problems[0], "ALREADY_REGISTERED");
+    assert.equal((again.body as { replaced: number }).replaced, 6);
+    assert.deepEqual((again.body as { rows: Array<{ problems: string[] }> }).rows[0].problems, []);
     // The same answers as the Excel file that Google Sheets downloads.
     const excel = await writePlayerExportXlsx(csv.split("\n").map((line) => line.split(",")));
     const fromExcel = await server.request("POST", `/tournaments/${id}/registrations/import`, {
@@ -457,7 +461,38 @@ describe("registrations", () => {
     const excelRows = (fromExcel.body as { rows: Array<{ emaId: string; problems: string[] }> }).rows;
     assert.equal(excelRows.length, 6);
     assert.equal(excelRows[1].emaId, ids[0]);
-    assert.equal(excelRows[0].problems[0], "ALREADY_REGISTERED");
+    assert.deepEqual(excelRows[0].problems, []);
+    // Applied again with only two people, the list is those two, without teams left over and without emails.
+    const shorter = [csv.split("\n")[0], csv.split("\n")[3], csv.split("\n")[4]].join("\n");
+    const replacedList = await server.request("POST", `/tournaments/${id}/registrations/import`, { token: admin.token, body: { csv: shorter, apply: true } });
+    assert.equal(replacedList.status, 200, JSON.stringify(replacedList.body));
+    assert.deepEqual([(replacedList.body as { imported: number }).imported, (replacedList.body as { replaced: number }).replaced], [2, 6]);
+    const after = await adminList(id);
+    assert.deepEqual(after.registrations.map((item) => [item.emaId, item.status]), [[ids[2], "CONFIRMED"], [ids[3], "CONFIRMED"]]);
+    assert.equal(after.teams.length, 0);
+    assert.equal(sent.length, 0);
+    // A wrong EMA number and a repeated one are imported with an id of their row; the organizer gives them the right
+    // number, and the problems go away.
+    const wrong = [
+      csv.split("\n")[0],
+      `21/09/2026 10:00:00,f@example.test,F,F,abc,Spain,,Vegan`,
+      `22/09/2026 10:00:00,bad-email,G,G,${ids[2]},Spain,,`,
+    ].join("\n");
+    const marked = await server.request("POST", `/tournaments/${id}/registrations/import`, { token: admin.token, body: { csv: wrong, apply: true } });
+    assert.equal((marked.body as { imported: number }).imported, 2);
+    const withProblems = (await adminList(id)).registrations as unknown as Array<{ emaId: string; problems: string[]; fileEmaId: string | null; foodRestrictions: string }>;
+    assert.deepEqual(withProblems.map((item) => [item.emaId, item.problems, item.fileEmaId]), [
+      ["row-2", ["INVALID_EMA"], "abc"], [ids[2], ["INVALID_EMAIL"], null],
+    ]);
+    assert.equal(withProblems[0].foodRestrictions, "Vegan");
+    const fixed = await server.request("PUT", `/tournaments/${id}/registrations/row-2`, { token: admin.token, body: { newEmaId: ids[0] } });
+    assert.equal(fixed.status, 200, JSON.stringify(fixed.body));
+    const fixedEmail = await server.request("PUT", `/tournaments/${id}/registrations/${ids[2]}`, { token: admin.token, body: { email: "g@example.test" } });
+    assert.equal(fixedEmail.status, 200, JSON.stringify(fixedEmail.body));
+    const clean = (await adminList(id)).registrations as unknown as Array<{ emaId: string; problems: string[]; foodRestrictions: string }>;
+    assert.deepEqual(clean.map((item) => [item.emaId, item.problems]), [[ids[0], []], [ids[2], []]]);
+    assert.equal(clean[0].foodRestrictions, "Vegan");
+    assert.equal(sent.length, 0);
   });
 
   describe("hourly job", () => {

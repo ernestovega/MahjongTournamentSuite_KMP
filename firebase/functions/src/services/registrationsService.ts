@@ -61,7 +61,23 @@ export type StoredRegistration = {
   manageToken: string;
   /** Milliseconds after which a PENDING registration is removed. */
   pendingUntil: number | null;
+  /**
+   * What the import found wrong in the row of the file (INVALID_EMA, DUPLICATE_EMA, EMA_NOT_FOUND, INVALID_EMAIL).
+   * The row is imported anyway and the organizer fixes it in the list. Without a valid EMA number the id of the
+   * registration is `row-<line>` and [fileEmaId] keeps the text of the file.
+   */
+  problems: string[];
+  fileEmaId: string | null;
 };
+
+/** The problems that stop the draw: the person has no EMA number to play with. */
+export const EMA_PROBLEMS = ["INVALID_EMA", "DUPLICATE_EMA", "EMA_NOT_FOUND"];
+
+/** The id of a registration: its EMA number, or `row-<line>` for a row of an import without a valid one. */
+export function validateRegistrationId(value: unknown): string {
+  const id = String(value ?? "").trim();
+  return /^row-\d{1,4}$/.test(id) ? id : validateEmaId(id);
+}
 
 /** What everyone sees: no email, no payment, no food restrictions. */
 export type PublicRegistration = {
@@ -94,6 +110,9 @@ export type AdminRegistration = Omit<PublicRegistration, "status"> & {
   hasAccount: boolean;
   /** Another registration of the list has the same email. One account cannot share an email. */
   sharedEmail: boolean;
+  /** See [StoredRegistration.problems]. */
+  problems: string[];
+  fileEmaId: string | null;
 };
 
 export type OwnRegistration = Omit<PublicRegistration, "status"> & {
@@ -157,6 +176,8 @@ function toStored(doc: FirebaseFirestore.DocumentSnapshot): StoredRegistration {
     source: source === "ADMIN" || source === "IMPORT" ? source : "SELF",
     manageToken: String(doc.get("manageToken") ?? ""),
     pendingUntil: typeof doc.get("pendingUntil") === "number" ? Number(doc.get("pendingUntil")) : null,
+    problems: Array.isArray(doc.get("problems")) ? (doc.get("problems") as unknown[]).map(String) : [],
+    fileEmaId: typeof doc.get("fileEmaId") === "string" ? String(doc.get("fileEmaId")) : null,
   };
 }
 
@@ -283,9 +304,13 @@ export async function adminRegistrations(tournamentId: string): Promise<{
   const [food, accounts, docs] = await Promise.all([
     foodOf(emaIds),
     accountsOf(emaIds),
-    tournament.ref.collection(REGISTRATIONS).select("createdAt").get(),
+    tournament.ref.collection(REGISTRATIONS).select("createdAt", "importFood").get(),
   ]);
   const createdAt = new Map(docs.docs.map((doc) => [doc.id, doc.get("createdAt")]));
+  // A row of an import without a valid EMA number keeps its food restrictions until the number is fixed.
+  docs.docs.forEach((doc) => {
+    if (typeof doc.get("importFood") === "string" && !food.has(doc.id)) food.set(doc.id, String(doc.get("importFood")));
+  });
   const emailCount = new Map<string, number>();
   stored.forEach((registration) => {
     if (registration.email !== "") emailCount.set(registration.email, (emailCount.get(registration.email) ?? 0) + 1);
@@ -308,6 +333,8 @@ export async function adminRegistrations(tournamentId: string): Promise<{
         registeredAt: new Date(registration.order || (created instanceof Timestamp ? created.toMillis() : 0)).toISOString(),
         hasAccount: accounts.has(registration.emaId),
         sharedEmail: registration.email !== "" && (emailCount.get(registration.email) ?? 0) > 1,
+        problems: registration.problems,
+        fileEmaId: registration.fileEmaId,
       };
     }),
     teams: await listTeams(tournament, nonPending),
@@ -822,16 +849,24 @@ async function adminSetTeam(tournament: TournamentForRegistrations, emaId: strin
 /** An organizer changes a registration: email, payment, team, food restrictions, or moves it between the lists. */
 export async function adminUpdateRegistration(params: {
   tournamentId: string; emaId: unknown; email?: unknown; status?: unknown; paid?: unknown; teamName?: unknown; foodRestrictions?: unknown;
+  /** Another EMA number for the person, to fix a row of an import. */
+  newEmaId?: unknown;
 }): Promise<AdminRegistration> {
   const tournament = await loadTournament(params.tournamentId);
   assertBeforeDraw(tournament);
-  const emaId = validateEmaId(params.emaId);
+  let emaId = validateRegistrationId(params.emaId);
+  if (params.newEmaId != null && String(params.newEmaId).trim() !== "" && String(params.newEmaId).trim() !== emaId) {
+    emaId = await changeEmaNumber(tournament, emaId, params.newEmaId);
+  }
   const ref = tournament.ref.collection(REGISTRATIONS).doc(emaId);
   const doc = await ref.get();
   if (!doc.exists) throw missing("Registration not found", { code: "REGISTRATION_NOT_FOUND" });
   const before = toStored(doc);
   const update: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
-  if (params.email !== undefined) update.email = String(params.email ?? "").trim() === "" ? "" : normalizedEmail(params.email);
+  if (params.email !== undefined) {
+    update.email = String(params.email ?? "").trim() === "" ? "" : normalizedEmail(params.email);
+    if (before.problems.includes("INVALID_EMAIL")) update.problems = before.problems.filter((problem) => problem !== "INVALID_EMAIL");
+  }
   if (params.paid !== undefined) update.paid = params.paid === true;
   let promoted = false;
   if (params.status !== undefined) {
@@ -855,11 +890,40 @@ export async function adminUpdateRegistration(params: {
   return (await adminRegistrations(params.tournamentId)).registrations.find((item) => item.emaId === emaId) as AdminRegistration;
 }
 
+/**
+ * Gives a registration of an import another EMA number: the registration moves to the new number, with the name and
+ * the country of the EMA registry, and loses its problems with the EMA number. Returns the new id.
+ */
+async function changeEmaNumber(tournament: TournamentForRegistrations, id: string, newEmaId: unknown): Promise<string> {
+  const person = await registryPerson(newEmaId);
+  const oldRef = tournament.ref.collection(REGISTRATIONS).doc(id);
+  const newRef = tournament.ref.collection(REGISTRATIONS).doc(person.emaId);
+  const [oldDoc, taken] = await Promise.all([oldRef.get(), newRef.get()]);
+  if (!oldDoc.exists) throw missing("Registration not found", { code: "REGISTRATION_NOT_FOUND" });
+  if (taken.exists) throw conflict("This EMA number is already registered", { code: "ALREADY_REGISTERED" });
+  const { fileEmaId: _fileEmaId, importFood: _importFood, ...data } = oldDoc.data() ?? {};
+  const problems = toStored(oldDoc).problems.filter((problem) => !EMA_PROBLEMS.includes(problem));
+  const food = typeof _importFood === "string" ? _importFood : "";
+  const batch = db.batch();
+  batch.set(newRef, {
+    ...data, emaId: person.emaId, name: person.name, country: person.country, problems, updatedAt: FieldValue.serverTimestamp(),
+  });
+  batch.delete(oldRef);
+  const teamId = typeof data.teamId === "string" && data.teamId !== "" ? data.teamId : null;
+  if (teamId != null) {
+    const team = await tournament.ref.collection(TEAMS).doc(teamId).get();
+    if (team.exists && team.get("captainEmaId") === id) batch.update(team.ref, { captainEmaId: person.emaId });
+  }
+  await batch.commit();
+  if (food !== "") await saveFoodRestrictions(person.emaId, food, true);
+  return person.emaId;
+}
+
 /** An organizer removes a registration. The person gets an email, unless [notify] is false. */
 export async function adminRemoveRegistration(params: { tournamentId: string; emaId: unknown; notify?: boolean }): Promise<void> {
   const tournament = await loadTournament(params.tournamentId);
   assertBeforeDraw(tournament);
-  const emaId = validateEmaId(params.emaId);
+  const emaId = validateRegistrationId(params.emaId);
   const doc = await tournament.ref.collection(REGISTRATIONS).doc(emaId).get();
   if (!doc.exists) throw missing("Registration not found", { code: "REGISTRATION_NOT_FOUND" });
   const registration = toStored(doc);
@@ -990,13 +1054,16 @@ export type ImportRow = FormRow & {
 };
 
 /**
- * Reads the answers of the old Google Form. Without [apply] it only checks them. With [apply] it registers every
- * row without problems, in the order of the times of the form: places first, then the waiting list when the places
- * are full. It sends no email: the people registered long ago.
+ * Reads the answers of the old Google Form. Without [apply] it only checks them. With [apply] the file REPLACES the
+ * list: every registration and team of now is removed (without an email), then every row is registered in the order
+ * of the times of the form: places first, then the waiting list when the places are full. A row with problems is
+ * registered too, with its problems, so the organizer fixes it in the list (see [StoredRegistration.problems]).
+ * It sends no email: the people registered long ago. [replaced] is how many registrations the list has (preview) or
+ * had (apply) before the import.
  */
 export async function importRegistrations(params: {
   tournamentId: string; csv?: unknown; fileName?: unknown; dataBase64?: unknown; apply: boolean; language: Language;
-}): Promise<{ rows: ImportRow[]; imported: number }> {
+}): Promise<{ rows: ImportRow[]; imported: number; replaced: number }> {
   const tournament = await loadTournament(params.tournamentId);
   assertBeforeDraw(tournament);
   let input: string | string[][];
@@ -1013,8 +1080,7 @@ export async function importRegistrations(params: {
   const formRows = readFormRows(input);
   const validIds = formRows.filter((row) => /^\d{8}$/.test(row.emaId)).map((row) => row.emaId);
   const registry = new Map<string, FirebaseFirestore.DocumentSnapshot>();
-  const existing = new Set((await tournament.ref.collection(REGISTRATIONS).select("status").get()).docs
-    .filter((doc) => doc.get("status") !== "PENDING").map((doc) => doc.id));
+  const current = await tournament.ref.collection(REGISTRATIONS).get();
   for (let start = 0; start < validIds.length; start += 300) {
     const refs = validIds.slice(start, start + 300).map((emaId) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`));
     if (refs.length > 0) (await db.getAll(...refs)).forEach((snapshot) => registry.set(snapshot.id, snapshot));
@@ -1028,7 +1094,6 @@ export async function importRegistrations(params: {
     const player = snapshot?.exists ? toPlayer(row.emaId, snapshot.data() ?? {}) : null;
     const problems = [...row.problems];
     if (problems.length === 0 && (player == null || player.disabled)) problems.push("EMA_NOT_FOUND");
-    if (problems.length === 0 && existing.has(row.emaId)) problems.push("ALREADY_REGISTERED");
     return {
       ...row,
       problems,
@@ -1037,16 +1102,23 @@ export async function importRegistrations(params: {
       sharedEmail: row.email !== "" && (emailCount.get(row.email) ?? 0) > 1,
     };
   });
-  if (!params.apply) return { rows, imported: 0 };
+  const replaced = current.size;
+  if (!params.apply) return { rows, imported: 0, replaced };
+  await removeAllRegistrations(tournament, current.docs);
   let imported = 0;
-  const ordered = rows.filter((row) => row.problems.length === 0)
+  const ordered = [...rows]
     .sort((left, right) => (left.registeredAt ?? Number.MAX_SAFE_INTEGER) - (right.registeredAt ?? Number.MAX_SAFE_INTEGER) || left.line - right.line);
   for (const row of ordered) {
-    await placeRegistration(tournament, row.emaId, {
-      emaId: row.emaId,
-      name: row.registryName ?? `${row.firstName} ${row.lastName}`.trim(),
+    const withoutEma = row.problems.includes("INVALID_EMA") || row.problems.includes("DUPLICATE_EMA");
+    const id = withoutEma ? `row-${row.line}` : row.emaId;
+    await placeRegistration(tournament, id, {
+      emaId: id,
+      name: row.registryName ?? (`${row.firstName} ${row.lastName}`.trim() || row.email || id),
       country: row.registryCountry ?? "",
       email: row.email,
+      problems: row.problems,
+      ...(withoutEma ? { fileEmaId: row.emaId } : {}),
+      ...(withoutEma && row.foodRestrictions !== "" ? { importFood: row.foodRestrictions } : {}),
       paid: false,
       teamId: null,
       language: params.language,
@@ -1055,10 +1127,10 @@ export async function importRegistrations(params: {
       order: row.registeredAt ?? Date.now() + row.line,
       createdAt: FieldValue.serverTimestamp(),
     });
-    if (row.foodRestrictions !== "") await saveFoodRestrictions(row.emaId, row.foodRestrictions, true);
+    if (!withoutEma && row.foodRestrictions !== "") await saveFoodRestrictions(row.emaId, row.foodRestrictions, true);
     if (tournament.isTeams && row.team != null) {
       try {
-        await adminSetTeam(tournament, row.emaId, row.team);
+        await adminSetTeam(tournament, id, row.team);
       } catch (error) {
         // A full team or a strange name leaves the person without a team. The organizer sees it in the list.
         console.warn("Import: the team of a row was not set", row.line, error);
@@ -1067,7 +1139,22 @@ export async function importRegistrations(params: {
     imported++;
   }
   await refreshCounters(tournament);
-  return { rows, imported };
+  return { rows, imported, replaced };
+}
+
+/** The import replaces the list: the registrations and teams of now go away, without emails. */
+async function removeAllRegistrations(tournament: TournamentForRegistrations, docs: FirebaseFirestore.QueryDocumentSnapshot[]): Promise<void> {
+  const teams = await tournament.ref.collection(TEAMS).get();
+  const refs = [...docs.map((doc) => doc.ref), ...teams.docs.map((doc) => doc.ref)];
+  for (let start = 0; start < refs.length; start += 400) {
+    const batch = db.batch();
+    refs.slice(start, start + 400).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+  for (const doc of docs) {
+    const registration = toStored(doc);
+    if (registration.status !== "PENDING") await logChange(tournament, "removed", registration);
+  }
 }
 
 /**

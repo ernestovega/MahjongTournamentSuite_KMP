@@ -35,19 +35,25 @@ tournament > Data. It survives a reload of the web, and a row of steps at the to
      numbered after the highest one, to assign afterwards in Players (or Teams). In a tournament with registrations,
      the new places can go to people of the waiting list, in its order, up to the number of new places.
    - **Who leaves?** The organizer marks the people who leave, and the screen counts them: "Marked: 7. Mark 1 more or
-     unmark 3." In a team tournament, whole teams are marked. At least 16 players stay, so the list stops there.
+     unmark 3." In a team tournament people are marked too, never whole teams (Ernesto, 24-nov): each line shows the
+     team of the person, and the search finds people by the name of their team. A team that loses someone stays
+     with the others, incomplete, and the teams are reorganized afterwards. At least 16 players stay, so the list
+     stops there.
    - Adding and removing never go together: tables can only be added with nobody marked, and people can only be
      marked with no table added. The screen says so where it applies.
-   - A search field above each list (people, teams, waiting list) finds them by name, slot number or EMA number. It
+   - A search field above each list (people, waiting list) finds them by name, slot number, EMA number or team. It
      only hides lines: the people marked stay marked.
    - **Continue** only works when the choice fits in whole tables.
 2. **Review.** The screen says what is deleted (the tables of every round, the people who leave, their
-   registrations), what is added and what is kept (the other players with their EMA player, account and email, the
+   registrations, and with teams the teams that stay incomplete with how many players they keep), what is added
+   and what is kept (the other players with their EMA player, account and email, the
    rounds with their times and clocks). The button **How does the draw work?** explains the draw, as when a tournament
    is created. The red **Make the new draw** asks one last time, in a short red dialog, because it cannot be undone.
 3. **Draw.** The app computes the new draw of every round, as at the creation (docs/draw.md: the first way, and the
    second one when the first takes too long; nobody meets twice; with teams, four
-   teams at each table), and sends it. The server checks it again and saves it in one go. While it runs, the screen
+   teams at each table), and sends it. With incomplete teams the draw is made directly on the slot numbers with their
+   teams, by swaps or in blocks (`onSlots` in `DrawTournamentScheduleUseCase.kt`): teammates still never share a
+   table. The server checks it again and saves it in one go. While it runs, the screen
    shows the tries and cannot be left. **Done** then says how many people got an email and who must be told by hand.
 
 ## What the server does
@@ -59,7 +65,9 @@ tournament > Data. It survives a reload of the web, and a row of steps at the to
   the highest ones, never a gap. The app draws on 1..N as always and puts that draw on the real numbers
   (`onSlots` in `DrawTournamentScheduleUseCase.kt`: without history any renaming keeps every rule). A draw of an older
   app, on 1..N, is still accepted: then the people who stay take the lowest numbers in their order, as before.
-- The removed slots and teams are deleted, and so are the old tables. The new tables are written with a higher version,
+- A team that keeps some of its people keeps its number, its name and those slots, with fewer than 4. A new team
+  (added tables) still needs 4 slots. The old way (a draw on 1..N) still wants whole teams (`PARTIAL_TEAM`).
+- The removed slots, and the teams left without people, are deleted, and so are the old tables. The new tables are written with a higher version,
   so every phone and screen loads the new draw.
 - With registrations: the people who leave lose their registration. The people of the waiting list who get a place
   are confirmed. A maximum of places, when there was one, becomes the new number.

@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Этого номера нет в реестре EMA.</string>
     <string name="registration_error_empty_file">Файл пуст.</string>
     <string name="registration_error_food_too_long">Ограничения в питании — не более 300 символов.</string>
+    <string name="registration_error_import_problems">У некоторых участников с местом ещё нет правильного номера EMA. Выберите нужного человека в списке до жеребьёвки.\nБез номера EMA: %1$s.</string>
     <string name="registration_error_incomplete_teams">Перед жеребьёвкой у каждого должна быть команда из 4 человек.\nБез полной команды: %1$s.</string>
     <string name="registration_error_invalid_close_date">Последний день регистрации — неверная дата.</string>
     <string name="registration_error_invalid_email">Укажите правильный email.</string>

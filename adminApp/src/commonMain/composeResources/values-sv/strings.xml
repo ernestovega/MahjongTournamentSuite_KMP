@@ -1048,16 +1048,21 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_closes_on_optional">Sista anmälningsdag (valfritt)</string>
     <string name="reg_link_name">Namn på den publika länken</string>
     <string name="reg_import_title">Importera Google-formuläret</string>
-    <string name="reg_import_info">Ladda ner svaren i Google Kalkylark med Arkiv &gt; Ladda ner (Excel eller CSV) och välj filen.\nPersonerna behåller formulärets ordning. Ingen får e-post.\nFilen från ”Exportera CSV” har samma kolumner: använd den som exempel.</string>
-    <string name="reg_import_ready">%1$d av %2$d rader kan importeras.</string>
+    <string name="reg_import_ready">%1$d rader importeras.</string>
+    <string name="reg_import_with_problems">Rader med problem importeras också, markerade i listan, så att du kan rätta dem där.</string>
+    <string name="reg_file_ema">I filen: %1$s</string>
+    <string name="reg_choose_ema">Välj rätt person</string>
+    <string name="reg_filter_problems">Med problem (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Filen ersätter den nuvarande listan: personen som är anmäld nu tas bort, utan e-post.</item>
+        <item quantity="other">Filen ersätter den nuvarande listan: de %1$d personer som är anmälda nu tas bort, utan e-post.</item>
+    </plurals>
     <string name="reg_import_apply">Importera %1$d</string>
-    <string name="reg_import_choose">Välj fil</string>
     <string name="reg_import_result">%1$d personer importerades.</string>
     <string name="reg_problem_invalid_ema">EMA-numret är ogiltigt.</string>
     <string name="reg_problem_duplicate_ema">EMA-numret finns två gånger i filen.</string>
     <string name="reg_problem_invalid_email">E-postadressen är ogiltig.</string>
     <string name="reg_problem_ema_not_found">EMA-numret finns inte i EMA-registret.</string>
-    <string name="reg_problem_already_registered">Personen är redan anmäld.</string>
     <string name="reg_open_registrations">Anmälningar</string>
     <string name="reg_export">Exportera CSV</string>
     <string name="reg_status_label">Status</string>
@@ -1098,13 +1103,11 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_add_locked">För att lägga till bord, avmarkera först de som går.</string>
     <string name="pc_remove_locked">För att markera vem som går, ta först bort de tillagda borden.</string>
     <string name="pc_leave_people">Vem går?</string>
-    <string name="pc_leave_teams">Vilka lag går?</string>
+    <string name="pc_leave_people_teams">Markera personerna. Ett lag som förlorar någon blir ofullständigt, och lagen ordnas om efteråt.</string>
     <string name="pc_marked_none">Markera de som går, i grupper om 4.</string>
-    <string name="pc_marked_teams_none">Markera lagen som går.</string>
     <string name="pc_marked_fits">Markerade: %1$d. Bord som försvinner: %2$d.</string>
     <string name="pc_marked_more_or_less">Markerade: %1$d. Markera %2$d till eller avmarkera %3$d.</string>
     <string name="pc_marked_less">Markerade: %1$d. Avmarkera %2$d.</string>
-    <string name="pc_marked_teams">Markerade lag: %1$d.</string>
     <string name="pc_minimum">Med %1$d spelare kan ingen gå: en turnering behöver minst 16.</string>
     <string name="pc_sure_text">Borden i alla ronder lottas om.\nDet går inte att ångra.</string>
     <string name="pc_change">Ändra</string>
@@ -1121,7 +1124,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_removed_label">Tas bort:</string>
     <string name="pc_removed_tables">Borden i alla %1$d omgångar. De lottas om.</string>
     <string name="pc_removed_people">Personerna som lämnar: %1$s.</string>
-    <string name="pc_removed_teams">Lagen som lämnar, med sina spelare: %1$s.</string>
+    <string name="pc_broken_teams">Lag som blir ofullständiga, med spelarna som är kvar: %1$s. De ordnas om efteråt.</string>
     <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
     <string name="pc_added_slots">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</string>
@@ -1129,7 +1132,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_added_waiting">Från väntelistan, som nu får en plats: %1$s.</string>
     <string name="pc_kept_label">Behålls:</string>
     <string name="pc_kept_people">Övriga spelare, med sitt nummer, sin EMA-spelare, sitt konto och sin e-post.</string>
-    <string name="pc_kept_teams">Övriga lag, med sitt nummer, sitt namn och sina spelare.</string>
+    <string name="pc_kept_teams">Lagen, med sitt nummer, sitt namn och spelarna som är kvar.</string>
     <string name="pc_kept_rounds">Omgångarna, deras tider och deras klockor.</string>
     <string name="pc_note">Alla som berörs får ett mejl.
 Ändringen registreras i aktiviteten.</string>

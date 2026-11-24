@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
 import kotlin.test.Test
@@ -19,12 +18,6 @@ class PlayerCountLabelsTest {
     }
 
     @Test
-    fun theMembersOfATeamShowTheirNamesAndTheEmptySlotsTheirNumber() {
-        val team = TournamentTeam(2, "Dragons", listOf(7, 8, 99))
-        assertEquals("Ana García, #8", team.memberNames(listOf(ana, empty)))
-    }
-
-    @Test
     fun theSearchFindsASlotByNumberNameOrEmaNumber() {
         assertTrue(ana.matches(""))
         assertTrue(ana.matches("7"))
@@ -36,11 +29,10 @@ class PlayerCountLabelsTest {
     }
 
     @Test
-    fun aTeamIsFoundByItsNameOrOneOfItsPlayers() {
-        val team = TournamentTeam(2, "Dragons", listOf(7, 8))
-        assertTrue(team.matches("drag", listOf(ana, empty)))
-        assertTrue(team.matches("ana", listOf(ana, empty)))
-        assertFalse(team.matches("tigers", listOf(ana, empty)))
+    fun aPersonIsFoundByTheNameOfTheirTeamToo() {
+        assertTrue(ana.matches("drag", teamName = "Dragons"))
+        assertTrue(empty.matches("dragons", teamName = "Dragons"))
+        assertFalse(ana.matches("tigers", teamName = "Dragons"))
     }
 
     @Test

@@ -46,11 +46,22 @@ object PlayerCountRules {
     fun newSlots(current: Int, target: Int): Int = (target - current).coerceAtLeast(0)
 
     /**
-     * The slots that leave, from the choice of the organizer: the chosen slots, or with teams the slots of the
-     * chosen teams.
+     * The slots that leave: the people the organizer marks, also in a team tournament (Ernesto, 24-nov). Teams that
+     * lose someone stay incomplete, and are reorganized afterwards.
      */
-    fun removedSlots(isTeams: Boolean, chosen: Set<Int>, teams: List<TournamentTeam>): List<Int> =
-        if (isTeams) teams.filter { it.id in chosen }.flatMap { it.playerIds }.sorted() else chosen.sorted()
+    fun removedSlots(chosen: Set<Int>): List<Int> = chosen.sorted()
+
+    /**
+     * The teams that a removal leaves incomplete, with the players that stay in each: a team that loses some of its
+     * players but not all. Teams that leave whole and teams untouched are not in it.
+     */
+    fun brokenTeams(slots: List<TournamentPlayer>, removedSlotIds: Collection<Int>): Map<Int, List<Int>> {
+        val removed = removedSlotIds.toSet()
+        return slots.filter { it.team > 0 }.groupBy { it.team }
+            .mapValues { (_, members) -> members.filter { it.id !in removed }.map { it.id }.sorted() }
+            .filter { (team, kept) -> kept.isNotEmpty() && kept.size < slots.count { it.team == team } }
+            .toSortedMap().toMap()
+    }
 
     /**
      * The slots of the new draw: the slots that stay keep their number and their team, and the new ones take the
@@ -99,13 +110,11 @@ object PlayerCountRules {
     fun isChoiceComplete(
         current: Int,
         target: Int,
-        isTeams: Boolean,
         chosen: Set<Int>,
-        teams: List<TournamentTeam>,
         waiting: List<String>,
     ): Boolean {
         if (!isValidTarget(current, target)) return false
-        val removed = removedSlots(isTeams, chosen, teams)
+        val removed = removedSlots(chosen)
         return if (target < current) {
             removed.size == slotsToRemove(current, target) && waiting.isEmpty()
         } else {

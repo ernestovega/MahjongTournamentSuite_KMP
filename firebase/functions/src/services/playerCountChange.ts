@@ -20,7 +20,8 @@ import { getTournament, tournamentContentWrites, type ContentWrite, type Tournam
  *
  * - The people who stay keep their slot data (EMA player, name, country, pending email) and their slot number, and
  *   in a team tournament their team and its number.
- * - Fewer players: the organizer says which slots leave, a multiple of 4. With teams, whole teams leave.
+ * - Fewer players: the organizer says which slots leave, a multiple of 4. With teams, the organizer marks people too,
+ *   and a team that loses someone stays with the others, incomplete, until the teams are reorganized.
  * - More players: the new slots, numbered after the highest one, are empty ("Player N"), or take people of the
  *   waiting list of the registrations. With teams, every new team is a new empty team ("Team N").
  */
@@ -110,19 +111,18 @@ export function planPlayerCountChange(params: {
       const newTeams = new Map<number, number[]>();
       newPlayers.forEach((player) => newTeams.set(player.team, [...(newTeams.get(player.team) ?? []), player.id]));
       for (const [team, ids] of newTeams) {
-        if (team <= 0 || ids.length !== 4) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
+        if (team <= 0) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
         if (keptTeamIds.has(team)) {
           if (ids.some((id) => !keptIds.has(id))) return { problem: `Team ${team} gets a slot it did not have`, code: "BAD_DRAW" };
           teamSourceOf.set(team, team);
         } else {
           if (currentTeamIds.has(team)) return { problem: `Team ${team} left and cannot come back`, code: "BAD_DRAW" };
+          if (ids.length !== 4) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
           teamSourceOf.set(team, null);
         }
       }
-      const removedTeams = new Set(current.filter((slot) => removedSet.has(slot.id)).map((slot) => slot.team));
-      for (const team of removedTeams) {
-        if (keptTeamIds.has(team)) return { problem: `Team ${team} must leave whole`, code: "PARTIAL_TEAM" };
-      }
+      // A team that loses some of its people stays with the others, incomplete, until the organizer reorganizes the
+      // teams (Ernesto, 24-nov). Teammates still never share a table: drawProblem checks it.
     }
   } else if (!params.isTeams) {
     newPlayers.forEach((player, index) => sourceOf.set(player.id, kept[index]?.id ?? null));

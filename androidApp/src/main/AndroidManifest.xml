@@ -3,6 +3,17 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The browsers, to send them the pages of the site that are not the app (MainActivity.openPageInBrowser). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -24,7 +35,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- The QR of a tournament opens the app when it is installed (App Links). docs/table-qr.md. -->
+            <!--
+                Every address of the site opens the app when it is installed (App Links), where the web opens it.
+                Pages that are not the app (privacy policy, Green Book...) go on to the browser. docs/table-qr.md.
+            -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -33,9 +47,6 @@
 
                 <data android:scheme="https" />
                 <data android:host="mts.mahjongmadrid.com" />
-                <data android:pathPattern="/.*/my-table" />
-                <data android:pathPattern="/.*/table/.*" />
-                <data android:pathPattern="/.*/mesa/.*" />
             </intent-filter>
         </activity>
         <activity

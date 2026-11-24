@@ -35,14 +35,16 @@ class TournamentScreenTest : AdminE2eTest() {
         listOf("Back", "Timer", "Ranking", "QR", "More").forEach { c.waitForText(it) }
         // The screens that are not used during the rounds are in the "More" menu.
         c.openMoreMenu()
-        listOf("Teams", "Players", "Tables IDs", "Stats", "EMA report").forEach { c.waitForText(it) }
+        listOf("Players", "Tables IDs", "Stats", "EMA report").forEach { c.waitForText(it) }
+        // Teams opens from the players screen.
+        c.assertNoText("Teams")
     }
 
     @Test
     fun individualTournamentHasNoTeamsButton() {
         open("Test - One table left, broken logo, chicken hands off")
-        c.openMoreMenu()
-        c.waitForText("Players")
+        c.clickMoreMenuButton("Players")
+        c.waitForText("Tournament players")
         c.assertNoText("Teams")
     }
 

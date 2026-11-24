@@ -50,7 +50,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawBackupRunningNote
@@ -94,6 +94,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_added_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_added_waiting
 import mahjongtournamentsuite.adminapp.generated.resources.pc_after
 import mahjongtournamentsuite.adminapp.generated.resources.pc_back
+import mahjongtournamentsuite.adminapp.generated.resources.pc_broken_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_come_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_confirm
 import mahjongtournamentsuite.adminapp.generated.resources.pc_confirm_title
@@ -111,7 +112,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_people
 import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_rounds
 import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people
-import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_teams
+import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_loading
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_completed
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_pending
@@ -121,8 +122,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_fits
 import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_less
 import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_more_or_less
 import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_none
-import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_teams
-import mahjongtournamentsuite.adminapp.generated.resources.pc_marked_teams_none
 import mahjongtournamentsuite.adminapp.generated.resources.pc_minimum
 import mahjongtournamentsuite.adminapp.generated.resources.pc_new_slots
 import mahjongtournamentsuite.adminapp.generated.resources.pc_new_teams
@@ -135,7 +134,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_removed_label
 import mahjongtournamentsuite.adminapp.generated.resources.pc_removed_people
 import mahjongtournamentsuite.adminapp.generated.resources.pc_removed_registrations
 import mahjongtournamentsuite.adminapp.generated.resources.pc_removed_tables
-import mahjongtournamentsuite.adminapp.generated.resources.pc_removed_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_saving
 import mahjongtournamentsuite.adminapp.generated.resources.pc_step_choose
 import mahjongtournamentsuite.adminapp.generated.resources.pc_step_done
@@ -262,8 +260,8 @@ fun PlayerCountScreen(
                 working = true
                 tries = 0
                 scope.launch {
-                    val removed = PlayerCountRules.removedSlots(tournament.isTeams, form.chosen, loaded.teams)
-                    val target = form.targetOf(tournament, loaded)
+                    val removed = PlayerCountRules.removedSlots(form.chosen)
+                    val target = form.targetOf(tournament)
                     val changed = presenter.change(tournament, loaded.slots, target, removed, form.waiting) {
                         tries = it.tried
                         backup = it.backup
@@ -288,7 +286,7 @@ fun PlayerCountScreen(
 }
 
 /**
- * The choice of the organizer: the slots or teams marked to leave, the tables added, and the people of the waiting
+ * The choice of the organizer: the people marked to leave (also with teams, Ernesto 24-nov), the tables added, and the people of the waiting
  * list who take the new places. Removing and adding never go together.
  */
 internal data class PlayerCountForm(
@@ -314,10 +312,7 @@ internal data class PlayerCountForm(
     fun withAddedTables(value: Int): PlayerCountForm =
         copy(addedTables = value, waiting = waiting.take(value * PlayerCountRules.STEP))
 
-    fun removedCount(isTeams: Boolean, teams: List<TournamentTeam>): Int = PlayerCountRules.removedSlots(isTeams, chosen, teams).size
-
-    fun targetOf(tournament: Tournament, data: PlayerCountData): Int =
-        PlayerCountRules.targetOf(tournament.numPlayers, removedCount(tournament.isTeams, data.teams), addedTables)
+    fun targetOf(tournament: Tournament): Int = PlayerCountRules.targetOf(tournament.numPlayers, chosen.size, addedTables)
 
     companion object {
         /** Keeps the choice through a recreation of the screen, such as a rotation. */
@@ -344,18 +339,23 @@ internal data class PlayerCountSummary(
     val isTeams: Boolean,
     val hasRegistrations: Boolean,
     val leaving: List<String>,
+    /** The teams that stay incomplete, as "Team A (1)": they are reorganized afterwards. */
+    val brokenTeams: List<String>,
     val newSlots: Int,
     val fromWaiting: List<String>,
 ) {
     companion object {
         fun of(tournament: Tournament, data: PlayerCountData, form: PlayerCountForm): PlayerCountSummary {
-            val leaving = if (tournament.isTeams) {
-                data.teams.filter { it.id in form.chosen }.map { it.name }
+            val leaving = data.slots.filter { it.id in form.chosen }.map { it.label() }
+            val teamNames = data.teams.associate { it.id to it.name }
+            val broken = if (tournament.isTeams) {
+                PlayerCountRules.brokenTeams(data.slots.map { TournamentPlayer(it.id, it.name, it.team) }, form.chosen)
+                    .map { (team, kept) -> "${teamNames[team] ?: "Team $team"} (${kept.size})" }
             } else {
-                data.slots.filter { it.id in form.chosen }.map { it.label() }
+                emptyList()
             }
             val waitingNames = data.waiting.associate { it.emaId to it.name }
-            val target = form.targetOf(tournament, data)
+            val target = form.targetOf(tournament)
             return PlayerCountSummary(
                 from = tournament.numPlayers,
                 to = target,
@@ -363,6 +363,7 @@ internal data class PlayerCountSummary(
                 isTeams = tournament.isTeams,
                 hasRegistrations = tournament.registration != null,
                 leaving = leaving,
+                brokenTeams = broken,
                 newSlots = PlayerCountRules.newSlots(tournament.numPlayers, target),
                 fromWaiting = form.waiting.map { waitingNames[it] ?: it },
             )
@@ -372,12 +373,10 @@ internal data class PlayerCountSummary(
 
 internal fun PlayerCountSlot.label(): String = "#$id · $name"
 
-/** The lines that match the search: by slot number, name or EMA number; a team also by its players. */
-internal fun PlayerCountSlot.matches(query: String): Boolean =
-    query.isBlank() || "#$id $name ${emaId.orEmpty()}".matchesSearch(query) || id.toString() == query.trim().removePrefix("#")
-
-internal fun TournamentTeam.matches(query: String, slots: List<PlayerCountSlot>): Boolean =
-    query.isBlank() || name.matchesSearch(query) || slots.filter { it.id in playerIds }.any { it.matches(query) }
+/** The lines that match the search: by slot number, name, EMA number or the name of the team. */
+internal fun PlayerCountSlot.matches(query: String, teamName: String? = null): Boolean = query.isBlank() ||
+    "#$id $name ${emaId.orEmpty()} ${teamName.orEmpty()}".matchesSearch(query) ||
+    id.toString() == query.trim().removePrefix("#")
 
 internal fun PlayerCountWaiting.matches(query: String): Boolean =
     query.isBlank() || "$name $emaId".matchesSearch(query) || position.toString() == query.trim()
@@ -468,11 +467,12 @@ internal fun ColumnScope.ChooseContent(
 ) {
     val current = tournament.numPlayers
     val isTeams = tournament.isTeams
-    val target = form.targetOf(tournament, data)
+    val target = form.targetOf(tournament)
     val newSlots = PlayerCountRules.newSlots(current, target)
     val maxRemovable = PlayerCountRules.maxRemovable(current)
-    val maxChosen = if (isTeams) maxRemovable / PlayerCountRules.STEP else maxRemovable
-    val complete = PlayerCountRules.isChoiceComplete(current, target, isTeams, form.chosen, data.teams, form.waiting)
+    val maxChosen = maxRemovable
+    val complete = PlayerCountRules.isChoiceComplete(current, target, form.chosen, form.waiting)
+    val teamNames = data.teams.associate { it.id to it.name }
     val adding = form.addedTables > 0
     LazyColumnWithScrollbar(
         state = rememberLazyListState(),
@@ -525,8 +525,9 @@ internal fun ColumnScope.ChooseContent(
         item(key = "leave") {
             Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 HorizontalDivider()
-                SectionTitle(stringResource(if (isTeams) Res.string.pc_leave_teams else Res.string.pc_leave_people))
-                MarkedStatus(current, isTeams, form.chosen.size)
+                SectionTitle(stringResource(Res.string.pc_leave_people))
+                MarkedStatus(current, form.chosen.size)
+                if (isTeams) Hint(stringResource(Res.string.pc_leave_people_teams))
                 when {
                     adding -> Hint(stringResource(Res.string.pc_remove_locked))
                     maxChosen == 0 -> Hint(stringResource(Res.string.pc_minimum, current))
@@ -536,34 +537,20 @@ internal fun ColumnScope.ChooseContent(
         }
         if (!adding && maxChosen > 0) {
             val full = form.chosen.size >= maxChosen
-            if (isTeams) {
-                val shown = data.teams.filter { it.matches(form.query, data.slots) }
-                if (shown.isEmpty() && form.query.isNotBlank()) item(key = "teams-none") { Hint(stringResource(Res.string.pc_no_match)) }
-                items(shown, key = { "team-${it.id}" }) { team ->
-                    val checked = team.id in form.chosen
-                    ChoiceRow(
-                        title = team.name,
-                        detail = team.memberNames(data.slots),
-                        checked = checked,
-                        enabled = checked || !full,
-                        tag = "playerCountTeam-${team.id}",
-                        onToggle = { onFormChange(form.toggleChosen(team.id, maxChosen)) },
-                    )
-                }
-            } else {
-                val shown = data.slots.filter { it.matches(form.query) }
-                if (shown.isEmpty() && form.query.isNotBlank()) item(key = "slots-none") { Hint(stringResource(Res.string.pc_no_match)) }
-                items(shown, key = { "slot-${it.id}" }) { slot ->
-                    val checked = slot.id in form.chosen
-                    ChoiceRow(
-                        title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
-                        detail = slot.emaId,
-                        checked = checked,
-                        enabled = checked || !full,
-                        tag = "playerCountSlot-${slot.id}",
-                        onToggle = { onFormChange(form.toggleChosen(slot.id, maxChosen)) },
-                    )
-                }
+            val shown = data.slots.filter { it.matches(form.query, teamNames[it.team]) }
+            if (shown.isEmpty() && form.query.isNotBlank()) item(key = "slots-none") { Hint(stringResource(Res.string.pc_no_match)) }
+            items(shown, key = { "slot-${it.id}" }) { slot ->
+                val checked = slot.id in form.chosen
+                // With teams, the team of each person under the name, so the organizer sees which teams break.
+                val team = if (isTeams) teamNames[slot.team] ?: "Team ${slot.team}" else null
+                ChoiceRow(
+                    title = if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
+                    detail = listOfNotNull(team, slot.emaId).joinToString(" · ").ifEmpty { null },
+                    checked = checked,
+                    enabled = checked || !full,
+                    tag = "playerCountSlot-${slot.id}",
+                    onToggle = { onFormChange(form.toggleChosen(slot.id, maxChosen)) },
+                )
             }
         }
     }
@@ -614,11 +601,9 @@ private fun Hint(text: String) {
 
 /** "Marked 7: mark 1 more or unmark 3". Colored when it fits in whole tables. */
 @Composable
-private fun MarkedStatus(current: Int, isTeams: Boolean, marked: Int) {
-    val fit = PlayerCountRules.markedFit(current, if (isTeams) marked * PlayerCountRules.STEP else marked)
+private fun MarkedStatus(current: Int, marked: Int) {
+    val fit = PlayerCountRules.markedFit(current, marked)
     val text = when {
-        isTeams && marked == 0 -> stringResource(Res.string.pc_marked_teams_none)
-        isTeams -> stringResource(Res.string.pc_marked_teams, marked)
         marked == 0 -> stringResource(Res.string.pc_marked_none)
         fit.fits -> stringResource(Res.string.pc_marked_fits, marked, marked / PlayerCountRules.STEP)
         fit.missing > 0 -> stringResource(Res.string.pc_marked_more_or_less, marked, fit.missing, fit.extra)
@@ -671,11 +656,6 @@ private fun ChoiceSearch(form: PlayerCountForm, onFormChange: (PlayerCountForm) 
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         label = { Text(stringResource(Res.string.search)) },
     )
-}
-
-internal fun TournamentTeam.memberNames(slots: List<PlayerCountSlot>): String {
-    val byId = slots.associateBy { it.id }
-    return playerIds.mapNotNull { byId[it] }.joinToString(", ") { if (it.emaId == null) "#${it.id}" else it.name }
 }
 
 @Composable
@@ -740,7 +720,8 @@ internal fun ColumnScope.ReviewContent(
                 add(stringResource(Res.string.pc_removed_tables, summary.rounds))
                 if (summary.leaving.isNotEmpty()) {
                     val names = summary.leaving.joinToString(", ")
-                    add(stringResource(if (summary.isTeams) Res.string.pc_removed_teams else Res.string.pc_removed_people, names))
+                    add(stringResource(Res.string.pc_removed_people, names))
+                    if (summary.brokenTeams.isNotEmpty()) add(stringResource(Res.string.pc_broken_teams, summary.brokenTeams.joinToString(", ")))
                     if (summary.hasRegistrations) add(stringResource(Res.string.pc_removed_registrations))
                 }
             },
