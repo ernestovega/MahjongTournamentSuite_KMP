@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextFunction, Request, Response, Router } from "express";
 
 import { auth } from "../../firebase";
@@ -19,6 +20,12 @@ import { assertSafeDocumentId, unauthenticated } from "../httpError";
 import { rateLimit } from "../middleware/rateLimit";
 import { pathParam } from "../pathParam";
 
+/**
+ * Registration emails that one instance of the API sends in an hour, for all the people together. The opening of the
+ * registrations of a big tournament (about 240 people) fits, and a script that sends emails to anybody stops there.
+ */
+export const REGISTRATION_MAILS_PER_HOUR = 300;
+
 /** The header with the token of the links of the registration emails. */
 export const REGISTRATION_TOKEN_HEADER = "x-registration-token";
 
@@ -31,6 +38,19 @@ export function registrationsRouter(): Router {
   // Registering sends an email, so one address registers a few people at most (a family, a club laptop).
   const registerLimit = rateLimit({ windowMs: 15 * 60_000, max: 20 });
   const messageLimit = rateLimit({ windowMs: 15 * 60_000, max: 3 });
+  // Each registration and each message sends an email from the mailbox of the club. The limits above count one
+  // address, so these also count the person and all the senders together: a flood must not burn the mailbox.
+  const personMailLimit = rateLimit({
+    windowMs: 60 * 60_000,
+    max: 5,
+    // The EMA number of the body; an account that registers itself sends none, so its token counts instead.
+    key: (req) => {
+      const emaId = String((req.body as { emaId?: unknown } | undefined)?.emaId ?? "").trim();
+      const account = createHash("sha256").update(req.header("authorization") ?? "").digest("base64url");
+      return `${String(req.params.tournamentId ?? "")}|${emaId || `account:${account}`}`;
+    },
+  });
+  const allMailLimit = rateLimit({ windowMs: 60 * 60_000, max: REGISTRATION_MAILS_PER_HOUR, key: () => "all" });
 
   router.param("tournamentId", (_req, _res, next, value: string) => {
     try {
@@ -66,7 +86,7 @@ export function registrationsRouter(): Router {
     };
   const body = (req: Request) => (req.body ?? {}) as Record<string, unknown>;
 
-  router.post("/:tournamentId", registerLimit, handle(async (req, res, caller) => {
+  router.post("/:tournamentId", registerLimit, personMailLimit, allMailLimit, handle(async (req, res, caller) => {
     const input = body(req);
     res.status(200).json(await register({
       tournamentId: caller.tournamentId,
@@ -118,7 +138,7 @@ export function registrationsRouter(): Router {
     res.status(200).json(await removeOwnTeamMember({ ...caller, emaId: pathParam(req, "emaId") }));
   }));
 
-  router.post("/:tournamentId/no-ema", messageLimit, handle(async (req, res, caller) => {
+  router.post("/:tournamentId/no-ema", messageLimit, allMailLimit, handle(async (req, res, caller) => {
     const input = body(req);
     await requestWithoutEmaNumber({
       tournamentId: caller.tournamentId, name: input.name, country: input.country, email: input.email, message: input.message,
