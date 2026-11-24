@@ -44,7 +44,9 @@ class TournamentTableStore {
     }
 
     /** Drops the tables of one tournament, for example after a new draw. The next [all] loads them all again. */
-    suspend fun forget(tournamentId: String) = mutex.withLock { entries.remove(tournamentId) }
+    suspend fun forget(tournamentId: String) {
+        mutex.withLock { entries.remove(tournamentId) }
+    }
 
     suspend fun clear() = mutex.withLock {
         entries.clear()
