@@ -3,7 +3,7 @@
 This document lists every case for the player import, accounts, EMA ids, tournament links and password resets.
 Each row names the test that covers it. Change a rule and its test together.
 
-Code: `firebase/functions/src/services/playerAccountsService.ts`, `playerImport.ts`, `playerImportService.ts`, `tournamentContentService.ts` (`overwriteTournamentPlayers`), and the routes in `api/routes/tournaments.routes.ts` and `api/routes/admin.routes.ts`.
+Code: `firebase/functions/src/services/playerAccountsService.ts`, `playerImport.ts`, `playerImportService.ts`, `tournamentContentService.ts` (`overwriteTournamentPlayers`), and the routes in `api/routes/tournaments.registrations.routes.ts` and `api/routes/admin.routes.ts`.
 Tests: `firebase/functions/src/api/playerAccounts.integration.test.ts`, `firebase/functions/src/services/playerImport.integration.test.ts` and `playerImport.test.ts` (run the integration tests with `npm run test:integration`, JDK 21).
 
 ## Base rules
