@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.domain.usecase
 
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -119,5 +120,36 @@ class DrawTournamentScheduleUseCaseTest {
             assertTrue(secondDrawLimit(b.first, b.second) >= secondDrawLimit(a.first, a.second))
         }
         sizes.forEach { (t, r) -> assertTrue(firstDrawLimit(t, r) >= 15.seconds && secondDrawLimit(t, r) >= 30.seconds) }
+    }
+
+    /** After people leave a team tournament, the teams that lost someone are smaller; teammates still never meet. */
+    @Test
+    fun onTheSlotsWithIncompleteTeamsTeammatesNeverMeet() {
+        val removed = setOf(1, 2, 3, 5)
+        val slots = (1..24).filter { it !in removed }.map { TournamentPlayer(id = it, name = "P$it", team = (it - 1) / 4 + 1) }
+        val result = assertNotNull(runBlocking { DrawTournamentScheduleUseCase().onSlots(slots, 4, true, 2) {} })
+        assertEquals(slots.map { it.id }, result.players.map { it.id })
+        assertEquals(slots.map { it.team }, result.players.map { it.team })
+        assertEquals(20, result.tables.size)
+        val teamOf = slots.associate { it.id to it.team }
+        result.tables.groupBy { it.roundId }.forEach { (_, round) ->
+            assertEquals(slots.map { it.id }.toSet(), round.flatMap { it.playerIds }.toSet())
+            round.forEach { table -> assertEquals(4, table.playerIds.map { teamOf.getValue(it) }.toSet().size) }
+        }
+    }
+
+    @Test
+    fun onTheSlotsWithWholeTeamsItIsTheUsualDrawOnThoseNumbers() {
+        val slots = (5..24).map { TournamentPlayer(id = it, name = "P$it", team = (it - 1) / 4 + 1) }
+        val result = assertNotNull(runBlocking { DrawTournamentScheduleUseCase().onSlots(slots, 3, true, 2) {} })
+        assertEquals(slots.map { it.id }, result.players.map { it.id }.sorted())
+        assertEquals(15, result.tables.size)
+        assertTrue(result.tables.all { t -> t.playerIds.all { it in 5..24 } })
+    }
+
+    @Test
+    fun onTheSlotsRefusesACountThatIsNotTables() {
+        val slots = (1..18).map { TournamentPlayer(id = it, name = "P$it", team = 0) }
+        assertNull(runBlocking { DrawTournamentScheduleUseCase().onSlots(slots, 3, false, 2) {} })
     }
 }

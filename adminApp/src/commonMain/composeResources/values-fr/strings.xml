@@ -1098,13 +1098,11 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_add_locked">Pour ajouter des tables, décoche d'abord ceux qui partent.</string>
     <string name="pc_remove_locked">Pour cocher qui part, retire d'abord les tables ajoutées.</string>
     <string name="pc_leave_people">Qui part ?</string>
-    <string name="pc_leave_teams">Quelles équipes partent ?</string>
+    <string name="pc_leave_people_teams">Marque les personnes. Une équipe qui perd quelqu’un reste incomplète, et les équipes se réorganisent ensuite.</string>
     <string name="pc_marked_none">Coche ceux qui partent, par groupes de 4.</string>
-    <string name="pc_marked_teams_none">Coche les équipes qui partent.</string>
     <string name="pc_marked_fits">Cochés : %1$d. Tables qui partent : %2$d.</string>
     <string name="pc_marked_more_or_less">Cochés : %1$d. Coche-en %2$d de plus ou décoche-en %3$d.</string>
     <string name="pc_marked_less">Cochés : %1$d. Décoche-en %2$d.</string>
-    <string name="pc_marked_teams">Équipes cochées : %1$d.</string>
     <string name="pc_minimum">Avec %1$d joueurs, personne ne peut partir : un tournoi en demande au moins 16.</string>
     <string name="pc_sure_text">Les tables de toutes les rondes sont tirées à nouveau.\nCela ne peut pas être annulé.</string>
     <string name="pc_change">Changer</string>
@@ -1121,7 +1119,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_removed_label">Est supprimé :</string>
     <string name="pc_removed_tables">Les tables des %1$d manches. Elles sont tirées à nouveau.</string>
     <string name="pc_removed_people">Les personnes qui partent : %1$s.</string>
-    <string name="pc_removed_teams">Les équipes qui partent, avec leurs joueurs : %1$s.</string>
+    <string name="pc_broken_teams">Équipes qui restent incomplètes, avec les joueurs qui leur restent : %1$s. Elles se réorganisent ensuite.</string>
     <string name="pc_removed_registrations">Leurs inscriptions.</string>
     <string name="pc_added_label">Est ajouté :</string>
     <string name="pc_added_slots">%1$d places vides, numérotées après la plus haute, à attribuer plus tard.</string>
@@ -1129,7 +1127,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_added_waiting">De la liste d'attente, qui obtiennent une place : %1$s.</string>
     <string name="pc_kept_label">Est conservé :</string>
     <string name="pc_kept_people">Les autres joueurs, avec leur numéro, leur joueur EMA, leur compte et leur e-mail.</string>
-    <string name="pc_kept_teams">Les autres équipes, avec leur numéro, leur nom et leurs joueurs.</string>
+    <string name="pc_kept_teams">Les équipes, avec leur numéro, leur nom et les joueurs qui restent.</string>
     <string name="pc_kept_rounds">Les manches, leurs horaires et leurs horloges.</string>
     <string name="pc_note">Chaque personne concernée reçoit un e-mail.
 Le changement est enregistré dans l'activité.</string>

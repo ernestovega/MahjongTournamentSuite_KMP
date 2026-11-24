@@ -1098,13 +1098,11 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_add_locked">Om tafels toe te voegen, vink eerst wie weggaat uit.</string>
     <string name="pc_remove_locked">Om aan te vinken wie weggaat, haal eerst de toegevoegde tafels weg.</string>
     <string name="pc_leave_people">Wie gaat weg?</string>
-    <string name="pc_leave_teams">Welke teams gaan weg?</string>
+    <string name="pc_leave_people_teams">Markeer de personen. Een team dat iemand verliest blijft onvolledig, en de teams worden daarna opnieuw ingedeeld.</string>
     <string name="pc_marked_none">Vink aan wie weggaat, in groepen van 4.</string>
-    <string name="pc_marked_teams_none">Vink de teams aan die weggaan.</string>
     <string name="pc_marked_fits">Aangevinkt: %1$d. Tafels die weggaan: %2$d.</string>
     <string name="pc_marked_more_or_less">Aangevinkt: %1$d. Vink er %2$d meer aan of %3$d uit.</string>
     <string name="pc_marked_less">Aangevinkt: %1$d. Vink er %2$d uit.</string>
-    <string name="pc_marked_teams">Aangevinkte teams: %1$d.</string>
     <string name="pc_minimum">Met %1$d spelers kan niemand weg: een toernooi heeft er minstens 16 nodig.</string>
     <string name="pc_sure_text">De tafels van alle rondes worden opnieuw geloot.\nDit kan niet ongedaan worden gemaakt.</string>
     <string name="pc_change">Wijzigen</string>
@@ -1121,7 +1119,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_removed_label">Wordt verwijderd:</string>
     <string name="pc_removed_tables">De tafels van alle %1$d rondes. Ze worden opnieuw geloot.</string>
     <string name="pc_removed_people">De personen die vertrekken: %1$s.</string>
-    <string name="pc_removed_teams">De teams die vertrekken, met hun spelers: %1$s.</string>
+    <string name="pc_broken_teams">Teams die onvolledig blijven, met de spelers die overblijven: %1$s. Ze worden daarna opnieuw ingedeeld.</string>
     <string name="pc_removed_registrations">Hun inschrijvingen.</string>
     <string name="pc_added_label">Wordt toegevoegd:</string>
     <string name="pc_added_slots">%1$d lege plaatsen, genummerd na de hoogste, om later toe te wijzen.</string>
@@ -1129,7 +1127,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_added_waiting">Van de wachtlijst, die nu een plaats krijgen: %1$s.</string>
     <string name="pc_kept_label">Blijft:</string>
     <string name="pc_kept_people">De overige spelers, met hun nummer, EMA-speler, account en e-mail.</string>
-    <string name="pc_kept_teams">De overige teams, met hun nummer, naam en spelers.</string>
+    <string name="pc_kept_teams">De teams, met hun nummer, hun naam en de spelers die blijven.</string>
     <string name="pc_kept_rounds">De rondes, hun tijden en hun klokken.</string>
     <string name="pc_note">Iedereen die het raakt krijgt een e-mail.
 De wijziging staat in de activiteit.</string>
