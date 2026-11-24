@@ -41,7 +41,7 @@ It has two parts:
 
 - **One Android app**: it starts in Player. If the account is staff, the «Management» button opens the Admin part and «Player view» goes back.
 - **On the web**, after signing in, staff choose «Player view» or «Management».
-- **Direct links**: `/t/<id>` opens a tournament, `/<short-name>` (for example `/6thmmc`) opens its registrations, or the tournament after the draw, and `/<short-name>/my-table` opens your table. On Android they are App Links and open the app.
+- **Direct links**: `/t/<id>` opens a tournament, `/<short-name>` (for example `/6thmmc`) opens its registrations, or the tournament after the draw, and `/<short-name>/my-table` opens your table. On Android the app takes every address of the site (App Links) and opens it where the web does; the pages that are not the app (privacy policy, Green Book, API docs) go on to the browser.
 - **Browser back/forward** work like the app's back button on both web apps.
 
 ---
@@ -129,6 +129,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
   - **Best rivals**: the 3 toughest rivals, with a tooltip that explains the criteria.
   - **By round**: place, score, skills and hands of each round.
   - **By tournament**: one card per tournament, with search and a date range.
+  - With one tournament chosen, the **Standing** card shows a small chart of the place after each round.
 - **Tournament**: summary; tops for points, win rate, deal-in rate and self-draws; hands per round; average time per hand; records.
 - **Team**: the same as a player, with team sums and a breakdown per person.
 
@@ -163,24 +164,28 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 
 - It draws every round at once: nobody meets the same rival twice in the whole tournament and, in team tournaments, two teammates never share a table. The order of the tables and seats is random too.
 - **Two methods**: seat by seat and, when the first one does not finish in time, a second method by swaps. It solves hard cases such as 28 or 40 players over 7 rounds, or dense teams.
+- **More rounds than fit without repeats** go in blocks: each block has no repeated rival, with a perfect pattern for 16, 28, 40, 64 and 256 players. A block by swaps has a time limit, tries again and then allows one more meeting, so a started tournament always gets its rounds left.
 - **«How does the draw work?»**: a dialog with a flowchart and plain words (how it works, what it guarantees, and why it is 100 % random). It is in the Player too.
 
 ### 5.3 Registrations
 
 - **Settings on the screen itself**: status (open or close), places, last day and public link with a Copy button.
-- **List** with search, chips (All, With a place, Waiting list, Email not confirmed) and how many have paid.
+- **List** with search, chips (All, With a place, Waiting list, Email not confirmed, and With problems after an import) and how many have paid.
 - **Per person**: change email, team, food or paid; give a place; move to the waiting list; remove (with or without an email).
-- **Import** the Google Form or an exported file (CSV or Excel, up to 500 rows), with a preview of the problems of each row.
+- **Import** the Google Form or an exported file (CSV or Excel, up to 500 rows): the button opens the file picker, and a review shows the problems of each row and warns how many registrations go away, because the file **replaces** the list (no emails are sent).
+  - Rows with problems (invalid, repeated or unknown EMA number, invalid email) are imported too and marked in the list. **Edit** picks the right person from the EMA registry, and a new email clears the email problem.
 - **Export CSV**, which can be imported again.
 - **Automatic emails**: confirmation to the person, cancellations and a weekly report to the organization (Sunday evening). The registrations close by themselves the day after the last day.
-- **Make the draw**: checks that the people with a place are a multiple of 4, at least 16, and that the teams are complete.
+- **Make the draw**: checks that the people with a place are a multiple of 4, at least 16, that none has an EMA number problem of the import, and that the teams are complete.
 
 ### 5.4 Players, teams and accounts
 
-- **Tournament players**: slots with a fixed number «#N», EMA number, import, substitutions, and a strip with each round's tables under each player.
+- **Tournament players**: slots with a fixed number «#N», EMA number, import, substitutions, and each player's tables per round, folded until a «Tables» button opens them.
+  - The top bar has **Teams**, **ID cards**, **ID list** and **Invitations** at the left, and Import and Export at the right.
 - **Invitations** by email (in bulk) and reminders.
-- **Change the number of players** before the first hand: mark who leaves or add tables, review, and a new draw. Those who stay keep their number and team, and everyone affected gets an email.
-- **Teams**: name and members.
+- **Change the number of players** before the first hand: mark the people who leave or add tables, review, and a new draw. Those who stay keep their number and team, and everyone affected gets an email.
+  - In a team tournament a **Teams** step completes the teams that lose people: «Complete the teams» with the proposal, or drag people between teams by hand. Every team must end with 4, and the server checks it again.
+- **Teams** (opens from Players): name and members.
 - **EMA registry**: EMA players with photo (public), hide from the public, create, edit and delete, and every country plus «No country».
 - **Accounts**: create players and staff, permissions, deactivate, delete, password email. Each screen deletes only its own: deleting an account does not delete the EMA player, nor the other way round.
 - **Roles**: standard (read only, can be duplicated) and custom, with permission boxes and how many accounts use each one.
@@ -188,6 +193,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ### 5.5 During the tournament
 
 - **Round editor**: round › table, with players, seats, points and the 16 hands (winner, discard, value, «Done»), penalties and manual totals.
+- **Top bar**: Timer, Ranking, QR and Round control during the rounds; Players, Tables IDs, Stats, EMA report and Activity in a **More** menu.
 - **Several editors at once**: the server always wins. If someone else saved first, a dialog says so and lists what you had typed. Before saving, it warns about hands not marked as done.
 - **Tables**: all of them, with their status and filters.
 - **Round clock**
@@ -199,7 +205,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
   - Open or close hand entry and seats by hand, per round or per table; mark tables as completed or in play.
   - A warning for **open tables in finished rounds**, with a badge per round and a Review dialog to close them in bulk.
 - **Big-screen ranking**: to project in the venue; it pages by itself through players, teams, chicken hands and best hands.
-- **Tournament QR code**: a big QR code in a separate window to project ("QR" button), and a PDF ("Tables IDs") of cards per table (big number + QR code) with 1, 2 or 4 per A4 sheet.
+- **Tournament QR code**: a big QR code in a separate window to project ("QR" button), with the logo of the main organizer (or its initial) and «Or just open the app:» with the main site. The «Tables IDs» dialog previews and downloads a PDF of cards per table (big number + QR code, tournament name in grey) with 1, 2, 4, 6 or 8 per A4 sheet.
 - **Statistics**: the same as the Player, with the same filters.
 
 ### 5.6 Printing and export
@@ -221,6 +227,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ## 6. Shared by both apps
 
 - **Design**: own design system (`:designsystem`), light and dark theme, phone and desktop layout of each screen, fading edges and scrollbars on every list, buttons with text except on narrow screens.
+- **Checkboxes, switches and radio buttons** also change when you tap their text.
 - **Sign-in** shared, with Contact, Privacy and «Forgot password?».
 - **Profile** shared (photo, theme, language).
 - **Analytics** (GA4) with consent, and an own error log.

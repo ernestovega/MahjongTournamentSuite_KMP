@@ -13,7 +13,7 @@ test("every language has the texts of the cards, and an unknown one falls back t
   assert.equal(tableQrTexts("xx" as never).table, "Table");
 });
 
-test("the cards per sheet are 1, 2 or 4, and 4 by default", () => {
+test("the cards per sheet are 1, 2, 4, 6 or 8, and 4 by default", () => {
   assert.equal(readCardsPerSheet("1"), 1);
   assert.equal(readCardsPerSheet(2), 2);
   assert.equal(readCardsPerSheet("4"), 4);
@@ -42,5 +42,16 @@ test("the PDF has one page for each group of cards", async () => {
     });
     assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
     assert.equal((pdf.toString("latin1").match(/\/Type \/Page\b/g) ?? []).length, pages, `${perSheet} per sheet`);
+  }
+});
+
+test("a logo that cannot be read, or an organizer without a name, still makes the PDF", async () => {
+  // A logo in a format pdfkit cannot read shows the initial of the organizer; without a name, the corner stays empty.
+  for (const [logo, organizerName] of [[Buffer.from("not an image"), "Madrid Riichi Club"], [null, ""], [null, "  "]] as const) {
+    const pdf = await buildTableQrPdf({
+      tournamentName: "Madrid Open 2027", logo, organizerName, organizerColor: "#02B16B", link: "https://mts.example.test/open/my-table", tableCount: 3,
+      texts: tableQrTexts("en"), perSheet: 4,
+    });
+    assert.equal(pdf.subarray(0, 5).toString(), "%PDF-", `${organizerName} / ${logo == null ? "no logo" : "bad logo"}`);
   }
 });

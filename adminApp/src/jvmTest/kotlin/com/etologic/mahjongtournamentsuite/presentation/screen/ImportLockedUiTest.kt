@@ -164,12 +164,12 @@ class ImportLockedUiTest {
     }
 
     @Test
-    fun oneAssignedSeatInOneTableLocksTheImportOnTheTeamsScreen() = runComposeUiTest {
+    fun theTeamsScreenHasNoImportNorExport() = runComposeUiTest {
         showScreen(table(east = "1")) { TeamsScreen(rememberNavController(), "t1") }
 
-        onNodeWithText("Import").performClick()
-
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(lockedTitle).fetchSemanticsNodes().isNotEmpty() }
+        // The import and the export of the players are on the players screen only.
+        onAllNodesWithText("Import").assertCountEquals(0)
+        onAllNodesWithText("Export").assertCountEquals(0)
     }
 
     @Test

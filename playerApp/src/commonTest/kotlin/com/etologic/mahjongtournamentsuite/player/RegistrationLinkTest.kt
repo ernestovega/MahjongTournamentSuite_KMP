@@ -47,4 +47,21 @@ class RegistrationLinkTest {
             assertNull(registrationLinkOf(path, emptyMap()), path)
         }
     }
+
+    @Test
+    fun theAndroidAppOpensEveryEntryAddressOfTheWebWhereTheWebDoes() {
+        assertEquals(SiteLink.Home, siteLinkOf("", emptyMap()))
+        assertEquals(SiteLink.Home, siteLinkOf("/", emptyMap()))
+        assertEquals(SiteLink.Tournament("AbC123"), siteLinkOf("/", mapOf("tournament" to "AbC123")))
+        assertEquals(SiteLink.Tournament("AbC123"), siteLinkOf("/t/AbC123", emptyMap()))
+        assertEquals(SiteLink.Registration(RegistrationLink(slug = "6thmmc")), siteLinkOf("/6thmmc", emptyMap()))
+        assertEquals(SiteLink.Registration(RegistrationLink(slug = "6thmmc", myTable = true)), siteLinkOf("/6thmmc/my-table", emptyMap()))
+        assertEquals(SiteLink.Registration(RegistrationLink(tournamentId = "t1", token = "k1")), siteLinkOf("/registration", mapOf("t" to "t1", "k" to "k1")))
+        assertEquals(SiteLink.Support, siteLinkOf("/support", emptyMap()))
+        assertEquals(SiteLink.Admin, siteLinkOf("/admin/", emptyMap()))
+        assertEquals(SiteLink.Admin, siteLinkOf("/admin/index.html", emptyMap()))
+        for (path in listOf("/privacy", "/privacy/es", "/green-book/mcr-en.pdf", "/version", "/api-docs/", "/index.html", "/a/b/c")) {
+            assertEquals(SiteLink.Browser, siteLinkOf(path, emptyMap()), path)
+        }
+    }
 }

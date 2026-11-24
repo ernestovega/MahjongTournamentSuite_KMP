@@ -190,6 +190,7 @@ class DefaultRegistrationRepository(
                     paid = update.paid,
                     teamName = update.teamName?.trim(),
                     foodRestrictions = update.foodRestrictions?.trim(),
+                    newEmaId = update.newEmaId,
                 ),
             ).toDomain()
         }
@@ -227,6 +228,7 @@ class DefaultRegistrationRepository(
                     )
                 },
                 imported = dto.imported,
+                replaced = dto.replaced,
             )
         }
 
@@ -321,6 +323,8 @@ private fun AdminRegistrationDto.toDomain() = AdminRegistration(
     registeredAt = registeredAt,
     hasAccount = hasAccount,
     sharedEmail = sharedEmail,
+    problems = problems,
+    fileEmaId = fileEmaId,
 )
 
 private fun OwnRegistrationDto.toDomain() = OwnRegistration(
@@ -333,6 +337,7 @@ private fun OwnRegistrationDto.toDomain() = OwnRegistration(
     email = email,
     foodRestrictions = foodRestrictions,
     manageToken = manageToken,
+    sharedEmail = sharedEmail,
 )
 
 /**

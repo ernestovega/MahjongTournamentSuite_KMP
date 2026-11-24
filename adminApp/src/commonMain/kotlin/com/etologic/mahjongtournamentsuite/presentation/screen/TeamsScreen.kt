@@ -60,7 +60,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
@@ -136,12 +135,10 @@ fun TeamsScreen(
     var basePlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var editingTeamId by remember { mutableStateOf<Int?>(null) }
-    var importDialogOpen by remember { mutableStateOf(false) }
     var restoreTeamId by remember { mutableStateOf<Int?>(null) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
-    val exportPlayers = rememberPlayersExport(tournamentId) { error = it }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var initialFocusApplied by remember { mutableStateOf(false) }
@@ -285,13 +282,6 @@ fun TeamsScreen(
         isLoading = loading || saving,
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
-        actions = {
-            AppTopBarActions(
-                onImportPlayers = { importDialogOpen = true },
-                importLocked = tables.any { it.hasProgress },
-                onExportPlayers = exportPlayers,
-            )
-        },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,
@@ -302,14 +292,6 @@ fun TeamsScreen(
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
-                )
-            }
-            if (importDialogOpen) {
-                PlayerImportDialog(
-                    tournamentId = tournamentId,
-                    playerNameOf = { emaId -> basePlayersByEma[emaId]?.displayName },
-                    onChanged = { refresh(force = true) },
-                    onDismiss = { importDialogOpen = false },
                 )
             }
             if (teams.isNotEmpty()) {

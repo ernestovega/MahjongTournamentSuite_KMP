@@ -594,6 +594,7 @@
     <string name="registration_error_ema_not_found">This EMA number is not in the EMA registry.</string>
     <string name="registration_error_empty_file">The file is empty.</string>
     <string name="registration_error_food_too_long">The food restrictions can have at most 300 characters.</string>
+    <string name="registration_error_import_problems">Some people with a place have no valid EMA number yet. Choose the right person in the list before the draw.\nWithout an EMA number: %1$s.</string>
     <string name="registration_error_incomplete_teams">Every person needs a team of 4 before the draw.\nWithout a full team: %1$s.</string>
     <string name="registration_error_invalid_close_date">The last day to register is not a valid date.</string>
     <string name="registration_error_invalid_email">Write a valid email.</string>
@@ -622,7 +623,7 @@
     <string name="registration_error_bad_waiting">There are more people of the waiting list than new places.</string>
     <string name="registration_error_draw_pending">The tournament has no draw yet.</string>
     <string name="registration_error_not_waiting">Someone you chose is no longer on the waiting list. Open the dialog again.</string>
-    <string name="registration_error_partial_team">A team leaves whole: choose whole teams.</string>
+    <string name="registration_error_partial_team">Every team must have 4 players. Complete the teams in the step Teams.</string>
     <string name="registration_error_same_player_count">The tournament already has that number of players.</string>
     <string name="registration_error_tournament_completed">The tournament is finished.</string>
     <string name="registration_error_tournament_started">The tournament already has data in its tables. The draw can no longer change.</string>

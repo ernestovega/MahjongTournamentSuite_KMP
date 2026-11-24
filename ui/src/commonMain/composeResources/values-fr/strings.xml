@@ -594,6 +594,7 @@
     <string name="registration_error_ema_not_found">Ce numéro EMA n'est pas dans le registre de l'EMA.</string>
     <string name="registration_error_empty_file">Le fichier est vide.</string>
     <string name="registration_error_food_too_long">Les restrictions alimentaires font au plus 300 caractères.</string>
+    <string name="registration_error_import_problems">Certaines personnes avec une place n'ont pas encore de numéro EMA valide. Choisissez la bonne personne dans la liste avant le tirage.\nSans numéro EMA : %1$s.</string>
     <string name="registration_error_incomplete_teams">Chaque personne doit avoir une équipe de 4 avant le tirage.\nSans équipe complète : %1$s.</string>
     <string name="registration_error_invalid_close_date">Le dernier jour d'inscription n'est pas une date valide.</string>
     <string name="registration_error_invalid_email">Écrivez un e-mail valide.</string>
@@ -622,7 +623,7 @@
     <string name="registration_error_bad_waiting">Il y a plus de personnes de la liste d'attente que de nouvelles places.</string>
     <string name="registration_error_draw_pending">Le tournoi n'a pas encore de tirage.</string>
     <string name="registration_error_not_waiting">Une personne choisie n'est plus sur la liste d'attente. Rouvre la fenêtre.</string>
-    <string name="registration_error_partial_team">Une équipe part en entier : choisis des équipes complètes.</string>
+    <string name="registration_error_partial_team">Chaque équipe doit avoir 4 joueurs. Complète les équipes à l’étape Équipes.</string>
     <string name="registration_error_same_player_count">Le tournoi a déjà ce nombre de joueurs.</string>
     <string name="registration_error_tournament_completed">Le tournoi est terminé.</string>
     <string name="registration_error_tournament_started">Le tournoi a déjà des données à ses tables. Le tirage ne peut plus changer.</string>

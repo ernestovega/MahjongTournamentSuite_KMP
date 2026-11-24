@@ -29,9 +29,17 @@ builds the same link with `myTableQrLink` of `tableQrService.ts` and `PLAYER_APP
 Without an account in the tournament, before the draw, in a finished tournament, or when the player has played all
 their tables, the app shows only the tables tab. Back from the table shows the tournament.
 
-The Android app opens these links when it is installed (App Links): `MainActivity` has an `autoVerify` intent filter
-for `https://mts.mahjongmadrid.com/.*/my-table` (and the old `/table/` and `/mesa/`), and passes the link to the player
-part (`SuiteStart.link`), which starts again and opens it like the web. The site serves `/.well-known/assetlinks.json`
+The Android app opens every address of `https://mts.mahjongmadrid.com` when it is installed (App Links), where the web
+opens it: `MainActivity` has an `autoVerify` intent filter for the whole host, and `siteLinkOf` (playerApp,
+Registrations.kt) reads the address. The web keeps one address while the player moves around, so these are its only
+entry addresses:
+- `/`: the tournaments; `/t/<id>` and `/?tournament=<id>`: that tournament;
+- `/<slug>`, `/registration?t=&k=` (and the old `/inscripcion/...`): the tournament on its registration;
+- `/<slug>/my-table` (and the old `/table/` and `/mesa/`): My tables and the table of the player;
+- `/support`: the support form; `/admin/...`: the management part.
+The other pages (privacy policy, Green Book, `/version`, `/api-docs`) go on to the browser, named in the intent so the
+address does not come back to the app (`<queries>` for the browsers). Typing an address in the browser never opens an
+app on Android: only a tapped link or a scanned code does. The site serves `/.well-known/assetlinks.json`
 (a rewrite of firebase.json to `playerApp/src/wasmJsMain/resources/assetlinks.json`) with the SHA-256 fingerprints of the
 signing keys of the app. Without the app, or before Android verifies the site, the link opens in the
 browser. The staging app does not take the links.
@@ -49,9 +57,17 @@ Two buttons of the top bar of the tournament screen:
 - "Tables IDs" (in the "More" menu) opens a dialog like the one of the ID cards (`TablesIdsDialog`, dialog
   `CreateTablesIds`): 1, 2, 4, 6 or 8 cards per A4 sheet, the size of each card, a preview of the first sheet, and
   "Create PDF", which makes `GET /tournaments/{id}/table-qr-codes?perSheet=1|2|4|6|8` (permission `tournament.view`). Each card
-  (the table ID) has the logo of the main organizer in the top left corner, the name of the tournament, the word
-  "TABLE" and its number as big as the card allows on the left, and on the right one sentence and the link over the
+  (the table ID) has the logo of the main organizer in the top left corner (a full padding from the edges, clear of the cut), the name of the tournament, the word
+  "TABLE" and its number as big as the card allows on the left, and on the right one sentence, "Or just open the app:" and the main site (only the host) over the
   code; dashed lines show where to cut. Without a logo the corner shows a circle of the color of the organizer with its
-  first letter, like the app. Every card is landscape: 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm,
+  first letter, like the app (also when the logo cannot be read). The name of the tournament is grey, so the number stands out. Every card is landscape: 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm,
   6 = 148.5 x 70 mm, 8 = 105 x 74.25 mm; the sheet is landscape for 1, 4 and 6 cards and portrait for 2 and 8. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
   tables and the PDF is not offered. The export counts `table_qr_exported`.
+
+## Tests
+
+- Backend: `tableQrService.test.ts` (link, texts, cards per sheet, landscape cards, pages, a logo that cannot be read).
+- App: `TableQrLinkPresenterTest` and `RegistrationLinkTest` (the links), `SitePagesLinkTest` (every folder and file of
+  the site goes to the browser in the Android app, and the backend refuses their names as link names),
+  `TableQrTextsTest` (main site, name for the initial), `TournamentScreenUiTest` (QR in the bar, Tables IDs in More),
+  and the screenshots `table-qr-projection` and the dialogs `tables-ids`, `tables-ids-6`, `tables-ids-8` (admin).

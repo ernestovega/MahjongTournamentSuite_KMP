@@ -27,7 +27,8 @@ with no hand does not stop it. When it is not possible, the button looks off and
 
 The change has its own screen (`PlayerCountRoute`, `PlayerCountScreen.kt`), opened from Players and from Edit
 tournament > Data. It survives a reload of the web, and a row of steps at the top says where the organizer is:
-**Who leaves or comes**, **Review** and **Done**. The ⓘ next to the numbers explains the change in short.
+**Who leaves or comes**, **Teams** (only in a team tournament where some team loses people), **Review** and
+**Done**. The ⓘ next to the numbers explains the change in short.
 
 1. **Who leaves or comes.** The top says the number now and after the change ("After" only shows when it fits in
    tables of 4).
@@ -35,14 +36,23 @@ tournament > Data. It survives a reload of the web, and a row of steps at the to
      numbered after the highest one, to assign afterwards in Players (or Teams). In a tournament with registrations,
      the new places can go to people of the waiting list, in its order, up to the number of new places.
    - **Who leaves?** The organizer marks the people who leave, and the screen counts them: "Marked: 7. Mark 1 more or
-     unmark 3." In a team tournament, whole teams are marked. At least 16 players stay, so the list stops there.
+     unmark 3." In a team tournament people are marked too, never whole teams (Ernesto, 24-nov): each line shows the
+     team of the person, and the search finds people by the name of their team. A team that loses someone is completed
+     again in the next step. At least 16 players stay, so the list
+     stops there.
    - Adding and removing never go together: tables can only be added with nobody marked, and people can only be
      marked with no table added. The screen says so where it applies.
-   - A search field above each list (people, teams, waiting list) finds them by name, slot number or EMA number. It
+   - A search field above each list (people, waiting list) finds them by name, slot number, EMA number or team. It
      only hides lines: the people marked stay marked.
    - **Continue** only works when the choice fits in whole tables.
+   **Teams** (Ernesto, 24-nov). The teams that lost people, each with who is left ("Dragons (3 of 4)"). Each person
+   has a button with their team: its menu moves them to another of those teams. **Propose** completes them with few
+   moves (`PlayerCountRules.proposeTeams`: the most complete incomplete team takes the players of the least complete
+   one), and **Undo** undoes the moves. **Continue** only works when every team has 4 players: no team stays
+   incomplete after this step (Ernesto, 24-nov). Changing who leaves forgets the moves. People can also be dragged by the handle on their left and dropped on a team with room. People keep their slot number; only their team changes.
 2. **Review.** The screen says what is deleted (the tables of every round, the people who leave, their
-   registrations), what is added and what is kept (the other players with their EMA player, account and email, the
+   registrations, and with teams the people who change team), what is added
+   and what is kept (the other players with their EMA player, account and email, the
    rounds with their times and clocks). The button **How does the draw work?** explains the draw, as when a tournament
    is created. The red **Make the new draw** asks one last time, in a short red dialog, because it cannot be undone.
 3. **Draw.** The app computes the new draw of every round, as at the creation (docs/draw.md: the first way, and the
@@ -59,7 +69,11 @@ tournament > Data. It survives a reload of the web, and a row of steps at the to
   the highest ones, never a gap. The app draws on 1..N as always and puts that draw on the real numbers
   (`onSlots` in `DrawTournamentScheduleUseCase.kt`: without history any renaming keeps every rule). A draw of an older
   app, on 1..N, is still accepted: then the people who stay take the lowest numbers in their order, as before.
-- The removed slots and teams are deleted, and so are the old tables. The new tables are written with a higher version,
+- A team that keeps some of its people keeps its number and its name, and must have 4 players again: the people who
+  stay may move to another team of the tournament (the step Teams), never to a new team number. A team with fewer
+  than 4 is refused (`PARTIAL_TEAM`). A new team
+  (added tables) still needs 4 slots. The old way (a draw on 1..N) still wants whole teams (`PARTIAL_TEAM`).
+- The removed slots, and the teams left without people, are deleted, and so are the old tables. The new tables are written with a higher version,
   so every phone and screen loads the new draw.
 - With registrations: the people who leave lose their registration. The people of the waiting list who get a place
   are confirmed. A maximum of places, when there was one, becomes the new number.

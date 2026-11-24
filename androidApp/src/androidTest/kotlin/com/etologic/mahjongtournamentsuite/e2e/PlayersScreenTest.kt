@@ -87,7 +87,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun playerToolsAreInTheTopBar() {
         openPlayers()
-        listOf("ID cards", "ID list", "Invitations", "Import", "Export", "Back").forEach { c.waitForText(it) }
+        listOf("ID cards", "ID list", "Teams", "Invitations", "Import", "Export", "Back").forEach { c.waitForText(it) }
     }
 
     @Test

@@ -212,6 +212,45 @@ describe("plan of a change that keeps the numbers of the people who stay", () =>
     assert.equal(result.teamSourceOf.has(2), false);
   });
 
+  it("refuses a team of people who stay with fewer than 4 players", () => {
+    const removed = [1, 2, 3, 5];
+    const kept = range(1, 24).filter((id) => !removed.includes(id));
+    const result = planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: removed, waitingEmaIds: [] });
+    assert.equal(code(result), "PARTIAL_TEAM");
+  });
+
+  it("deletes a team whose people all leave", () => {
+    const removed = [1, 2, 3, 4];
+    const kept = range(1, 20).filter((id) => !removed.includes(id));
+    const result = plan(planPlayerCountChange({ current: slots(20, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: removed, waitingEmaIds: [] }));
+    assert.equal(result.teamSourceOf.has(1), false);
+    assert.equal(result.teamSourceOf.get(2), 2);
+  });
+
+  it("moves people who stay to another team of the tournament to complete it", () => {
+    const removed = [1, 2, 3, 5];
+    const kept = range(1, 24).filter((id) => !removed.includes(id));
+    const moved = players(kept, (id) => (id === 4 ? 2 : teamOf(id)));
+    const result = plan(planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: moved, removedSlotIds: removed, waitingEmaIds: [] }));
+    assert.equal(result.teamSourceOf.has(1), false, "team 1 has nobody now");
+    assert.equal(result.teamSourceOf.get(2), 2);
+    assert.equal(result.sourceOf.get(4), 4, "the person keeps the slot");
+  });
+
+  it("refuses to move people who stay to a team that the tournament does not have", () => {
+    const removed = [1, 2, 3, 5];
+    const kept = range(1, 24).filter((id) => !removed.includes(id));
+    const odd = players(kept, (id) => (id === 4 ? 9 : teamOf(id)));
+    assert.equal(code(planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: odd, removedSlotIds: removed, waitingEmaIds: [] })), "BAD_DRAW");
+  });
+
+  it("still refuses a new team that does not have 4 slots", () => {
+    const current = slots(16, true);
+    const ids = [...range(1, 16), 17, 18, 19, 20];
+    const odd = ids.map((id) => ({ id, team: id === 20 ? 6 : teamOf(id) }));
+    assert.equal(code(planPlayerCountChange({ current, isTeams: true, newPlayers: odd, removedSlotIds: [], waitingEmaIds: [] })), "BAD_DRAW");
+  });
+
   it("refuses a team that stays with a slot that is not its own", () => {
     const current = slots(16, true);
     const wrong = [...range(1, 16), 17, 18, 19, 20].map((id) => ({ id, team: id === 17 ? 1 : teamOf(id) }));

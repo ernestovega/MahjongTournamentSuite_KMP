@@ -45,8 +45,8 @@ const val SCREENSHOT_GALLERY_URL = "https://mts-staging-screenshots.web.app"
 /** The Swagger UI of the backend API (docs/api). */
 const val API_DOCS_URL = "https://mts.mahjongmadrid.com/api-docs/"
 
-/** The documentation of the architecture in Markdown on GitHub (docs/arquitectura). */
-const val ARCHITECTURE_DOCS_URL = "https://github.com/ernestovega/mahjongtournamentsuite_kmp/tree/main/docs/arquitectura"
+/** The documentation of the architecture in Markdown on GitHub (docs/architecture). */
+const val ARCHITECTURE_DOCS_URL = "https://github.com/ernestovega/mahjongtournamentsuite_kmp/tree/main/docs/architecture"
 
 /** The admin app of the staging project (docs/staging.md). */
 const val STAGING_ADMIN_URL = "https://mts---staging.web.app/admin/"

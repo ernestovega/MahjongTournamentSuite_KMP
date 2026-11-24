@@ -289,6 +289,8 @@
     <string name="preg_food_hint">Allergieën, intoleranties of diëten. Privé: alleen de organisatie ziet het.</string>
     <string name="preg_consent">Ik ga ermee akkoord dat de organisatie dit bewaart om het eten van het toernooi voor te bereiden.</string>
     <string name="preg_manage_title">Mijn inschrijving</string>
+    <string name="preg_shared_email_note">Een andere inschrijving voor dit toernooi gebruikt ook %1$s. Dat is geen probleem, bijvoorbeeld voor een ouder en een kind.
+Maar één e-mailadres kan maar één account in de app hebben: wie een eigen account wil, heeft een eigen e-mailadres nodig. Veel providers, zoals Gmail, accepteren een alias met +, bijvoorbeeld naam+kind@gmail.com, die in dezelfde inbox komt.</string>
     <string name="preg_save">Opslaan</string>
     <string name="preg_team">Team</string>
     <string name="preg_team_info">Een team heeft %1$d personen.\n• De captain maakt het aan en voegt de anderen toe, die ingeschreven moeten zijn.\n• De anderen hoeven niets aan te maken: ze wachten tot ze worden toegevoegd.</string>

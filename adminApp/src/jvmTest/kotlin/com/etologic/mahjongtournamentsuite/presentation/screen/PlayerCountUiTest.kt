@@ -1,47 +1,41 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TestTimeSource
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.compose.ui.test.hasScrollToIndexAction
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.performScrollToNode
-import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
-import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
+import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
@@ -56,7 +50,10 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RegistrationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
@@ -74,6 +71,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 
 /**
  * The change of the number of players (docs/player-count-change.md): the screen from its first step to the result,
@@ -210,7 +209,10 @@ class PlayerCountUiTest {
         onNodeWithText("Make a new draw?").assertIsDisplayed()
         onNodeWithText("From 20 to 16 players").assertIsDisplayed()
         onNodeWithText("The tables of all 2 rounds. They are drawn again.").assertIsDisplayed()
-        onNodeWithText("The people who leave: #5 · Name 5, #6 · Player 6, #7 · Name 7, #8 · Name 8.").assertIsDisplayed()
+        onNodeWithText("The people who leave:").assertIsDisplayed()
+        listOf("#5 · Name 5", "#6 · Player 6", "#7 · Name 7", "#8 · Name 8").forEachIndexed { index, line ->
+            onNodeWithTag("playerCountLeaving-$index").assertTextEquals(line)
+        }
         onNodeWithText("How does the draw work?").assertIsDisplayed()
         // Without registrations, nothing is said about them.
         assertTrue(onAllNodesWithText("Their registrations.").fetchSemanticsNodes().isEmpty())
@@ -315,19 +317,15 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun theSearchFindsTeamsByTheirNameOrPlayers() = runComposeUiTest {
+    fun theSearchFindsPeopleByTheNameOfTheirTeam() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
         showScreen(world)
-        val shownTeams = { (1..5).filter { onAllNodesWithTag("playerCountTeam-$it").fetchSemanticsNodes().isNotEmpty() } }
+        val shown = { (1..20).filter { onAllNodesWithTag("playerCountSlot-$it").fetchSemanticsNodes().isNotEmpty() } }
         onNodeWithTag("playerCountSearch").performTextInput("team 4")
         waitForIdle()
-        assertEquals(listOf(4), shownTeams())
-        // Name 10 plays in team 3.
-        onNodeWithTag("playerCountSearch").performTextReplacement("Name 10")
-        waitForIdle()
-        assertEquals(listOf(3), shownTeams())
+        assertEquals(listOf(13, 14, 15, 16), shown())
     }
 
     @Test
@@ -373,7 +371,8 @@ class PlayerCountUiTest {
 
         onNodeWithText("From 16 to 20 players").assertIsDisplayed()
         onNodeWithText("3 empty places, numbered after the highest one, to assign afterwards.").assertIsDisplayed()
-        onNodeWithText("From the waiting list, with a place now: Late Two.").assertIsDisplayed()
+        onNodeWithText("From the waiting list, with a place now:").assertIsDisplayed()
+        onNodeWithTag("playerCountFromWaiting-0").assertTextEquals("Late Two")
         makeTheDraw()
         waitForDone()
         assertEquals(listOf("20000002"), world.server.playerCountRequest!!.waitingEmaIds)
@@ -381,24 +380,123 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun aTeamTournamentRemovesWholeTeams() = runComposeUiTest {
+    fun aTeamTournamentRemovesPeopleAndNeverGoesOnWithIncompleteTeams() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
         showScreen(world)
 
-        onNodeWithText("Which teams leave?").assertIsDisplayed()
-        click("playerCountTeam-3")
-        see("playerCountChosen").assertTextEquals("Teams marked: 1.")
-        // 16 is the minimum: a second team cannot leave.
-        see("playerCountTeam-4").assertIsNotEnabled()
+        // People, not teams (Ernesto, 24-nov): 3 of team 1 and 1 of team 2.
+        onNodeWithText("Who leaves?").assertIsDisplayed()
+        onNodeWithText("Mark the people. If a team loses someone, in the next step you complete it again.").assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountTeam-1").fetchSemanticsNodes().isEmpty())
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        see("playerCountChosen").assertTextEquals("Marked: 4. Tables that leave: 1.")
+        // 16 is the minimum: nobody else can leave.
+        see("playerCountSlot-6").assertIsNotEnabled()
         click("playerCountContinue")
-        onNodeWithText("The teams that leave, with their players: Team 3.").assertIsDisplayed()
-        onNodeWithText("The other teams, with their number, name and players.").assertIsDisplayed()
+        // The step Teams: no team may stay incomplete (Ernesto, 24-nov).
+        onNodeWithText("Reorganize the teams").assertIsDisplayed()
+        see("playerCountTeamsStatus").assertTextEquals("Incomplete teams: 2.")
+        see("playerCountTeam-1").assertExists()
+        see("playerCountTeam-2").assertExists()
+        see("playerCountTeamsContinue").assertIsNotEnabled()
+        click("playerCountPropose")
+        see("playerCountTeamsContinue").assertIsEnabled()
+        click("playerCountTeamsContinue")
+        listOf("#1 · Name 1", "#2 · Name 2", "#3 · Name 3", "#5 · Name 5").forEachIndexed { index, line ->
+            onNodeWithTag("playerCountLeaving-$index").assertTextEquals(line)
+        }
+        onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
         makeTheDraw()
         waitForDone()
-        assertEquals(listOf(9, 10, 11, 12), world.server.playerCountRequest!!.removedSlotIds)
-        assertEquals(List(4) { 4 }, world.server.playerCountRequest!!.players.groupBy { it.team }.values.map { it.size })
+        val request = world.server.playerCountRequest!!
+        assertEquals(listOf(1, 2, 3, 5), request.removedSlotIds)
+        // Everyone who stays keeps their number, the 4 goes to team 2, and every team has 4; teammates never share a table.
+        assertEquals((4..20).filter { it != 5 }, request.players.map { it.id }.sorted())
+        assertEquals(listOf(4, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size })
+        request.players.forEach { assertEquals(if (it.id == 4) 2 else (it.id - 1) / 4 + 1, it.team) }
+        val teamOf = request.players.associate { it.id to it.team }
+        request.tables.forEach { table -> assertEquals(4, table.playerIds.map { teamOf[it] }.toSet().size, "$table") }
+        assertEquals(teamsTournament.numRounds * 4, request.tables.size)
+    }
+
+    @Test
+    fun theStepTeamsCompletesTheTeamsWithTheProposalOrByHand() = runComposeUiTest {
+        val teamsTournament = individual.copy(isTeams = true)
+        val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
+        val world = World(teamsTournament, slots(20, isTeams = true), teams)
+        showScreen(world)
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        see("playerCountStep-1").assertExists()
+        see("playerCountStep-3").assertExists()
+
+        // By hand: the 4 goes to team 2, from its menu.
+        click("playerCountMove-4")
+        click("playerCountMoveTo-4-2")
+        see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
+        // Start again, and then the proposal makes the same move.
+        click("playerCountTeamsReset")
+        see("playerCountTeamsStatus").assertTextEquals("Incomplete teams: 2.")
+        click("playerCountPropose")
+        see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
+
+        click("playerCountTeamsContinue")
+        onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
+        // Back from the review goes to the teams, with the moves kept.
+        click("playerCountBack")
+        see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
+        click("playerCountTeamsContinue")
+        makeTheDraw()
+        waitForDone()
+        val request = world.server.playerCountRequest!!
+        assertEquals(2, request.players.first { it.id == 4 }.team)
+        assertEquals(listOf(4, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size })
+        val teamOf = request.players.associate { it.id to it.team }
+        request.tables.forEach { table -> assertEquals(4, table.playerIds.map { teamOf[it] }.toSet().size, "$table") }
+    }
+
+    @Test
+    fun aPersonIsDraggedByTheHandleToAnotherTeam() = runComposeUiTest {
+        val teamsTournament = individual.copy(isTeams = true)
+        val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
+        val world = World(teamsTournament, slots(20, isTeams = true), teams)
+        showScreen(world)
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        see("playerCountTeamsStatus").assertTextEquals("Incomplete teams: 2.")
+
+        val handle = onNodeWithTag("playerCountDrag-4").fetchSemanticsNode().boundsInRoot
+        val target = onNodeWithTag("playerCountTeam-2").fetchSemanticsNode().boundsInRoot
+        onNodeWithTag("playerCountDrag-4").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, (target.center.y - handle.center.y) / 2), delayMillis = 50)
+            moveBy(Offset(0f, (target.center.y - handle.center.y) / 2), delayMillis = 50)
+            up()
+        }
+        waitForIdle()
+        see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
+        click("playerCountTeamsContinue")
+        onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
+    }
+
+    @Test
+    fun anotherChoiceOfWhoLeavesForgetsTheMoves() = runComposeUiTest {
+        val teamsTournament = individual.copy(isTeams = true)
+        val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
+        val world = World(teamsTournament, slots(20, isTeams = true), teams)
+        showScreen(world)
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        click("playerCountPropose")
+        click("playerCountTeamsBack")
+        // A whole team leaves instead: no team is incomplete, so there is no step Teams.
+        listOf(5, 4).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        onNodeWithText("Make a new draw?").assertIsDisplayed()
+        assertTrue(onAllNodesWithTag("playerCountTeamChanges-0").fetchSemanticsNodes().isEmpty())
+        assertTrue(onAllNodesWithTag("playerCountStep-3").fetchSemanticsNodes().isEmpty())
     }
 
     @Test

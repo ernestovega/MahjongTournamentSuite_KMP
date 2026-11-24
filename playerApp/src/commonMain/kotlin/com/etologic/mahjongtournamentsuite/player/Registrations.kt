@@ -37,7 +37,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -91,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -167,6 +167,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_rename_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_save
 import mahjongtournamentsuite.playerapp.generated.resources.preg_search_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_send
+import mahjongtournamentsuite.playerapp.generated.resources.preg_shared_email_note
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_label
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_pending
 import mahjongtournamentsuite.playerapp.generated.resources.preg_team
@@ -819,10 +820,13 @@ private fun FoodFields(food: String, onFood: (String) -> Unit, consent: Boolean,
         modifier = Modifier.fillMaxWidth(),
     )
     if (food.isNotBlank()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = consent, onCheckedChange = onConsent, modifier = Modifier.testTag("registration-consent"))
-            Text(stringResource(Res.string.preg_consent), style = MaterialTheme.typography.bodySmall)
-        }
+        MtsCheckboxRow(
+            text = stringResource(Res.string.preg_consent),
+            checked = consent,
+            onCheckedChange = onConsent,
+            modifier = Modifier.testTag("registration-consent"),
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 
@@ -891,6 +895,15 @@ private fun ManageRegistrationDialog(
             text = {
                 Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    if (own.sharedEmail) {
+                        Text(
+                            stringResource(Res.string.preg_shared_email_note, own.email),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MtsTheme.colors.warning,
+                            modifier = Modifier.testTag("registration-shared-email"),
+                        )
+                        HorizontalDivider()
+                    }
                     FoodFields(food, { food = it }, consent, { consent = it })
                     TextButton(
                         enabled = !busy && (food.isBlank() || consent) && food != own.foodRestrictions,
@@ -1016,5 +1029,42 @@ internal fun rememberRegistrationLinkOpener(navController: NavHostController): s
             // The QR of the tournament opens the table of the player over My tables, so Back shows them.
             if (link.myTable) tables.find(tournamentId)?.let { navController.navigate(it) }
         }
+    }
+}
+
+/**
+ * What an address of the site opens in the Android app, which takes every address of mts.mahjongmadrid.com (App Links,
+ * docs/table-qr.md). The web keeps one address while the player moves around, so these are its only entry addresses.
+ */
+sealed interface SiteLink {
+    /** `/`: the tournaments. */
+    data object Home : SiteLink
+
+    /** `/admin/...`: the management part. */
+    data object Admin : SiteLink
+
+    /** `/support`: the support form over the tournaments. */
+    data object Support : SiteLink
+
+    /** `/t/<id>` or `/?tournament=<id>`: that tournament, like a shared link of the web. */
+    data class Tournament(val tournamentId: String) : SiteLink
+
+    /** `/<slug>`, `/registration?...`, `/<slug>/my-table`...: see [registrationLinkOf]. */
+    data class Registration(val link: RegistrationLink) : SiteLink
+
+    /** A page that is not the app (the privacy policy, the Green Book, the version, the API docs): the browser opens it. */
+    data object Browser : SiteLink
+}
+
+/** The [SiteLink] of an address of the site. [path] is the path without the query, [query] its decoded parameters. */
+fun siteLinkOf(path: String, query: Map<String, String>): SiteLink {
+    val parts = path.trim('/').split('/').filter { it.isNotEmpty() }
+    registrationLinkOf(path, query)?.let { return SiteLink.Registration(it) }
+    return when {
+        parts.isEmpty() -> query["tournament"]?.takeIf { it.isNotBlank() }?.let { SiteLink.Tournament(it) } ?: SiteLink.Home
+        parts[0] == "admin" -> SiteLink.Admin
+        parts.size == 1 && parts[0] == "support" -> SiteLink.Support
+        parts.size == 2 && parts[0] == "t" -> SiteLink.Tournament(parts[1])
+        else -> SiteLink.Browser
     }
 }

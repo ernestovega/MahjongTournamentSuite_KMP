@@ -49,17 +49,19 @@ export type TableQrTexts = {
   table: string;
   /** One sentence beside the code. */
   hint: string;
+  /** The line over the main site, for who prefers typing it. */
+  openApp: string;
 };
 
 const TEXTS: Record<Language, TableQrTexts> = {
-  en: { table: "Table", hint: "Scan the code to go to your table." },
-  es: { table: "Mesa", hint: "Escanea el código para ir a tu mesa." },
-  fr: { table: "Table", hint: "Scannez le code pour aller à votre table." },
-  it: { table: "Tavolo", hint: "Scansiona il codice per andare al tuo tavolo." },
-  de: { table: "Tisch", hint: "Scanne den Code, um zu deinem Tisch zu gehen." },
-  sv: { table: "Bord", hint: "Skanna koden för att gå till ditt bord." },
-  nl: { table: "Tafel", hint: "Scan de code om naar je tafel te gaan." },
-  ru: { table: "Стол", hint: "Отсканируйте код, чтобы перейти к своему столу." },
+  en: { table: "Table", hint: "Scan the code to go to your table.", openApp: "Or just open the app:" },
+  es: { table: "Mesa", hint: "Escanea el código para ir a tu mesa.", openApp: "O simplemente abre la app:" },
+  fr: { table: "Table", hint: "Scannez le code pour aller à votre table.", openApp: "Ou ouvrez simplement l'app :" },
+  it: { table: "Tavolo", hint: "Scansiona il codice per andare al tuo tavolo.", openApp: "Oppure apri semplicemente l'app:" },
+  de: { table: "Tisch", hint: "Scanne den Code, um zu deinem Tisch zu gehen.", openApp: "Oder öffne einfach die App:" },
+  sv: { table: "Bord", hint: "Skanna koden för att gå till ditt bord.", openApp: "Eller öppna bara appen:" },
+  nl: { table: "Tafel", hint: "Scan de code om naar je tafel te gaan.", openApp: "Of open gewoon de app:" },
+  ru: { table: "Стол", hint: "Отсканируйте код, чтобы перейти к своему столу.", openApp: "Или просто откройте приложение:" },
 };
 
 export function tableQrTexts(language: Language): TableQrTexts {
@@ -175,9 +177,10 @@ function drawCard(
   const padding = 20 * scale;
   const bandHeight = 40 * scale;
   // The logo of the organizer in the top left corner, and the name of the tournament centred, clear of the logo.
-  const logoSize = bandHeight * 0.8;
-  const logoX = left + padding * 0.6;
-  const logoY = top + padding * 0.6;
+  // A full padding around the logo, so it does not sit on the cut line (Ernesto 24-nov).
+  const logoSize = bandHeight * 0.75;
+  const logoX = left + padding;
+  const logoY = top + padding;
   const drawInitial = () => {
     doc.save().circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2).fill(model.organizerColor).restore();
     const initial = model.organizerName.trim().slice(0, 1).toUpperCase();
@@ -200,17 +203,19 @@ function drawCard(
       drawInitial();
     }
   }
-  doc.font("CardApp").fillColor("#000000");
-  const nameRoom = width - (padding + logoSize) * 2;
+  // The name in grey, so the number stands out (Ernesto 24-nov).
+  doc.font("CardApp").fillColor("#777777");
+  const nameRoom = width - (padding * 1.5 + logoSize) * 2;
   const nameSize = fitFontSize(doc, model.tournamentName, nameRoom, 15 * scale, 7);
   doc.fontSize(nameSize);
-  centeredLine(doc, model.tournamentName, left + padding + logoSize, top + padding * 0.6 + (logoSize - nameSize) / 2, nameRoom);
+  centeredLine(doc, model.tournamentName, left + padding * 1.5 + logoSize, logoY + (logoSize - nameSize) / 2, nameRoom);
 
   const bodyTop = top + bandHeight + padding * 0.6;
   const bodyHeight = height - bandHeight - padding * 1.6;
   const wide = width > height * 1.2;
   const numberText = String(tableId);
-  const linkText = model.link.replace(/^https?:\/\//, "");
+  // Only the host (mts.mahjongmadrid.com): easier to type than the full link, which the code already carries.
+  const siteText = model.link.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
   // The number: the word "Table" over it, and the number as big as the room allows.
   const numberBox = wide
@@ -230,25 +235,31 @@ function drawCard(
   const block = labelSize * capRatio + gap + numberSize * capRatio;
   const blockTop = numberBox.y + Math.max(0, (room - block) / 2);
   doc.fontSize(labelSize);
-  centeredLine(doc, model.texts.table.toUpperCase(), numberBox.x, blockTop - (ascentRatio - capRatio) * labelSize, numberBox.w);
+  // The word a bit lower, closer to its number and further from the name (Ernesto 24-nov).
+  const labelDrop = gap * 0.5;
+  centeredLine(doc, model.texts.table.toUpperCase(), numberBox.x, blockTop + labelDrop - (ascentRatio - capRatio) * labelSize, numberBox.w);
   doc.fontSize(numberSize);
   const digitsTop = blockTop + labelSize * capRatio + gap;
   centeredLine(doc, numberText, numberBox.x, digitsTop - (ascentRatio - capRatio) * numberSize, numberBox.w);
 
-  // The code, with the sentence and the link under it.
+  // The code, with the sentences and the main site over it.
   const codeBox = wide
     ? { x: left + padding * 2 + numberBox.w, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight }
     : { x: left + padding, y: bodyTop + numberBox.h, w: width - padding * 2, h: bodyHeight - numberBox.h };
-  // The sentence and the link go over the code.
+  // The sentence, then "Or just open the app:" and the main site, go over the code.
   const hintSize = Math.max(8, 10.5 * scale);
-  const linkSize = Math.max(6, 8 * scale);
+  const openSize = Math.max(6, 7.5 * scale);
+  const siteSize = Math.max(6, 9 * scale);
   const hintHeight = doc.font(sentenceFont(model.texts.hint)).fontSize(hintSize).heightOfString(model.texts.hint, { width: codeBox.w });
-  const textHeight = hintHeight + linkSize * 1.3 + hintSize * 0.7;
+  const textHeight = hintHeight + openSize * 0.6 + openSize * 1.2 + siteSize * 1.3 + hintSize * 0.6;
   const qrSize = Math.max(60, Math.min(codeBox.w, codeBox.h - textHeight));
   const codeTop = codeBox.y + Math.max(0, (codeBox.h - qrSize - textHeight) / 2);
   doc.fillColor("#000000").text(model.texts.hint, codeBox.x, codeTop, { width: codeBox.w, align: "center", height: 100000 });
-  doc.font("Helvetica").fontSize(fitFontSize(doc.font("Helvetica"), linkText, codeBox.w, linkSize, 5)).fillColor("#555555");
-  centeredLine(doc, linkText, codeBox.x, codeTop + hintHeight + linkSize * 0.2, codeBox.w);
+  const openTop = codeTop + hintHeight + openSize * 0.6;
+  doc.font(sentenceFont(model.texts.openApp)).fontSize(fitFontSize(doc.font(sentenceFont(model.texts.openApp)), model.texts.openApp, codeBox.w, openSize, 5)).fillColor("#555555");
+  centeredLine(doc, model.texts.openApp, codeBox.x, openTop, codeBox.w);
+  doc.font("Helvetica-Bold").fontSize(fitFontSize(doc.font("Helvetica-Bold"), siteText, codeBox.w, siteSize, 5)).fillColor("#000000");
+  centeredLine(doc, siteText, codeBox.x, openTop + openSize * 1.2, codeBox.w);
   drawQr(doc, modules, codeBox.x + (codeBox.w - qrSize) / 2, codeTop + textHeight, qrSize);
 }
 

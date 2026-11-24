@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Det här EMA-numret finns inte i EMA-registret.</string>
     <string name="registration_error_empty_file">Filen är tom.</string>
     <string name="registration_error_food_too_long">Matrestriktionerna får ha högst 300 tecken.</string>
+    <string name="registration_error_import_problems">Några personer med plats har inget giltigt EMA-nummer ännu. Välj rätt person i listan före lottningen.\nUtan EMA-nummer: %1$s.</string>
     <string name="registration_error_incomplete_teams">Varje person behöver ett lag på 4 före lottningen.\nUtan fullt lag: %1$s.</string>
     <string name="registration_error_invalid_close_date">Sista anmälningsdagen är inget giltigt datum.</string>
     <string name="registration_error_invalid_email">Skriv en giltig e-postadress.</string>
@@ -618,7 +619,7 @@
     <string name="registration_error_bad_waiting">Det finns fler personer från väntelistan än nya platser.</string>
     <string name="registration_error_draw_pending">Turneringen har ingen lottning än.</string>
     <string name="registration_error_not_waiting">Någon du valde står inte längre på väntelistan. Öppna dialogen igen.</string>
-    <string name="registration_error_partial_team">Ett lag lämnar helt: välj hela lag.</string>
+    <string name="registration_error_partial_team">Varje lag måste ha 4 spelare. Fyll på lagen i steget Lag.</string>
     <string name="registration_error_same_player_count">Turneringen har redan det antalet spelare.</string>
     <string name="registration_error_tournament_completed">Turneringen är avslutad.</string>
     <string name="registration_error_tournament_started">Turneringen har redan data vid sina bord. Lottningen kan inte längre ändras.</string>

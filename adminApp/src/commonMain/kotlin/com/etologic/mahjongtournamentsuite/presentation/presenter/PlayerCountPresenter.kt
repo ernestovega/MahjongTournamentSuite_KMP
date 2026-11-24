@@ -23,7 +23,6 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
-import com.etologic.mahjongtournamentsuite.domain.usecase.onSlots
 
 /** One slot of the tournament as the dialog lists it: its number, the name to show and its team. */
 data class PlayerCountSlot(val id: Int, val name: String, val emaId: String?, val team: Int)
@@ -99,6 +98,8 @@ class PlayerCountPresenter(
         target: Int,
         removedSlotIds: List<Int>,
         waitingEmaIds: List<String>,
+        /** With teams, the people who stay and change team to complete one (the step Teams): slot to new team. */
+        teamMoves: Map<Int, Int> = emptyMap(),
         onProgress: (TournamentScheduleCalcProgress) -> Unit,
     ): AppResult<PlayerCountOutcome> {
         if (!PlayerCountRules.isValidTarget(tournament.numPlayers, target)) {
@@ -110,16 +111,16 @@ class PlayerCountPresenter(
             removedSlotIds = removedSlotIds,
             target = target,
             isTeams = tournament.isTeams,
+            teamMoves = teamMoves,
         )
-        val drawn = generateSchedule(
-            numPlayers = target,
+        // With teams, the teams that lost someone are completed in the step Teams, or stay incomplete (Ernesto, 24-nov).
+        val schedule = generateSchedule.onSlots(
+            slots = targets,
             numRounds = tournament.numRounds,
             isTeams = tournament.isTeams,
             maxConcurrency = (platformCpuCount() / 2).coerceIn(1, 32),
             onProgress = onProgress,
         ) ?: return AppResult.Failure(AppError.Unexpected("Unable to generate rounds/tables locally with the current constraints."))
-        val schedule = drawn.onSlots(targets, tournament.isTeams)
-            ?: return AppResult.Failure(AppError.Unexpected("The draw does not fit the slots of the tournament."))
         return tournamentRepository.changePlayerCount(
             PlayerCountChangeRequest(
                 tournamentId = tournament.id,

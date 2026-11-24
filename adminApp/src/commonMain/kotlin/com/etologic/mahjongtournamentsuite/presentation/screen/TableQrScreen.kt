@@ -266,6 +266,7 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
                     fontSize = (unit.value * 1.4f).sp,
                     lineHeight = (unit.value * 1.5f).sp,
                     maxLines = 1,
+                    modifier = Modifier.padding(top = unit * 0.4f),
                 )
                 Text(
                     tableId.toString(),
@@ -278,18 +279,18 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
             }
         }
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxWidth().height(unit * 2.4f).padding(horizontal = unit * 0.6f), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().height(unit * 2.8f).padding(start = unit, end = unit, top = unit * 0.6f), contentAlignment = Alignment.Center) {
                 // Without a logo, the circle of the color of the organizer with its first letter, like the PDF.
                 OrganizationLogo(
                     name = tournament.mainOrganizerName(),
                     logoUrl = tournament.associationLogoUrl,
                     primaryColor = tournament.primaryColor,
-                    size = unit * 1.9f,
+                    size = unit * 1.8f,
                     modifier = Modifier.align(Alignment.CenterStart).testTag("table_qr_preview_logo"),
                 )
                 Text(
                     tournamentName,
-                    color = Color.Black,
+                    color = Color.Gray,
                     fontWeight = FontWeight.Bold,
                     fontSize = (unit.value * 0.95f).sp,
                     maxLines = 1,
@@ -304,10 +305,19 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(HINT_TEXT, color = Color.Black, fontSize = (unit.value * 0.7f).sp, lineHeight = (unit.value * 0.8f).sp, textAlign = TextAlign.Center)
                         Text(
-                            link.substringAfter("://"),
+                            OPEN_APP_TEXT,
                             color = Color.DarkGray,
-                            fontSize = (unit.value * 0.5f).sp,
-                            lineHeight = (unit.value * 0.6f).sp,
+                            fontSize = (unit.value * 0.45f).sp,
+                            lineHeight = (unit.value * 0.55f).sp,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = unit * 0.3f),
+                        )
+                        Text(
+                            link.mainSite(),
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = (unit.value * 0.55f).sp,
+                            lineHeight = (unit.value * 0.65f).sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -333,6 +343,7 @@ internal fun Tournament.mainOrganizerName(): String = organizers.firstOrNull()?.
 /** The cards of the tables are always in English, like the PDF (tableQrService.ts). */
 private const val TABLE_WORD = "TABLE"
 private const val HINT_TEXT = "Scan the code to go to your table."
+private const val OPEN_APP_TEXT = "Or just open the app:"
 
 /**
  * The code of the tournament as big as the window allows, to project it (docs/table-qr.md). Always black on white,

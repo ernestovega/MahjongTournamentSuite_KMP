@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesToggleTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
@@ -75,7 +76,7 @@ class AdminScreensScreenshotTest {
     @Test
     fun tournament() = adminScreenshots("tournament", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentScreen(nav, ONGOING) }
 
-    /** The "More" menu of the top bar of a tournament: Teams, Players, Stats, EMA report and Activity. */
+    /** The "More" menu of the top bar of a tournament: Players, Tables IDs, Stats, EMA report and Activity. */
     @Test
     fun tournamentMoreMenu() = adminScreenshots(
         "tournament-more-menu",
@@ -101,7 +102,10 @@ class AdminScreensScreenshotTest {
     fun playersManyRounds() = adminScreenshots(
         "players-many-rounds",
         modules = { adminModules(tournaments = ManyRoundsTournamentRepository()) },
-        ready = { waitForText("04010001", substring = true) },
+        ready = {
+            waitForText("04010001", substring = true)
+            openRoundTables()
+        },
     ) { nav -> PlayersScreen(nav, ONGOING) }
 
     /** The 24 rounds after a swipe: the strips are scrolled to the middle and go past both edges of the row. */
@@ -111,6 +115,7 @@ class AdminScreensScreenshotTest {
         modules = { adminModules(tournaments = ManyRoundsTournamentRepository()) },
         ready = {
             waitForText("04010001", substring = true)
+            openRoundTables()
             onAllNodesWithTag(PlayerRoundTablesTag).fetchSemanticsNodes().indices.forEach { index ->
                 // A slow swipe, so it does not fling to the end.
                 onAllNodesWithTag(PlayerRoundTablesTag)[index].performTouchInput {
@@ -126,7 +131,10 @@ class AdminScreensScreenshotTest {
     fun playersSevenRounds() = adminScreenshots(
         "players-seven-rounds",
         modules = { adminModules(tournaments = ManyRoundsTournamentRepository(rounds = 7)) },
-        ready = { waitForText("04010001", substring = true) },
+        ready = {
+            waitForText("04010001", substring = true)
+            openRoundTables()
+        },
     ) { nav -> PlayersScreen(nav, ONGOING) }
 
     @Test
@@ -255,5 +263,16 @@ private class ManyRoundsTournamentRepository(private val rounds: Int = 24) : Scr
             }
         }
         return AppResult.Success(tables.filter { roundId == null || it.roundId == roundId })
+    }
+}
+
+/** The tables per round start closed under each player. The captures that show them open every visible one. */
+@OptIn(ExperimentalTestApi::class)
+private fun androidx.compose.ui.test.ComposeUiTest.openRoundTables() {
+    // An open strip pushes the rows below it out of the screen, so the count is read again after each click.
+    var index = 0
+    while (index < onAllNodesWithTag(PlayerRoundTablesToggleTag).fetchSemanticsNodes().size) {
+        onAllNodesWithTag(PlayerRoundTablesToggleTag)[index++].performClick()
+        waitForIdle()
     }
 }

@@ -594,6 +594,7 @@
     <string name="registration_error_ema_not_found">Este número EMA no está en el registro de la EMA.</string>
     <string name="registration_error_empty_file">El archivo está vacío.</string>
     <string name="registration_error_food_too_long">Las restricciones alimentarias pueden tener como máximo 300 caracteres.</string>
+    <string name="registration_error_import_problems">Algunas personas con plaza aún no tienen un número EMA válido. Elige la persona correcta en la lista antes del sorteo.\nSin número EMA: %1$s.</string>
     <string name="registration_error_incomplete_teams">Cada persona necesita un equipo de 4 antes del sorteo.\nSin equipo completo: %1$s.</string>
     <string name="registration_error_invalid_close_date">El último día de inscripción no es una fecha válida.</string>
     <string name="registration_error_invalid_email">Escribe un email válido.</string>
@@ -622,7 +623,7 @@
     <string name="registration_error_bad_waiting">Hay más personas de la lista de espera que huecos nuevos.</string>
     <string name="registration_error_draw_pending">El torneo aún no tiene sorteo.</string>
     <string name="registration_error_not_waiting">Alguien que elegiste ya no está en la lista de espera. Vuelve a abrir el diálogo.</string>
-    <string name="registration_error_partial_team">Un equipo se va entero: elige equipos completos.</string>
+    <string name="registration_error_partial_team">Todos los equipos deben tener 4 jugadores. Complétalos en el paso Equipos.</string>
     <string name="registration_error_same_player_count">El torneo ya tiene ese número de jugadores.</string>
     <string name="registration_error_tournament_completed">El torneo ha terminado.</string>
     <string name="registration_error_tournament_started">El torneo ya tiene datos en sus mesas. El sorteo ya no puede cambiar.</string>

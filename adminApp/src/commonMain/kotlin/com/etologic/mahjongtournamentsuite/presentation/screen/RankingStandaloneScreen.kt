@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +73,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -417,10 +417,12 @@ private fun RankingControls(
         }
     }
     val topThree: @Composable () -> Unit = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = showTopThree, onCheckedChange = onShowTopThreeChanged)
-            Text(stringResource(Res.string.show_first_3), style = MaterialTheme.typography.labelSmall)
-        }
+        MtsCheckboxRow(
+            text = stringResource(Res.string.show_first_3),
+            checked = showTopThree,
+            onCheckedChange = onShowTopThreeChanged,
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
     val pager: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {

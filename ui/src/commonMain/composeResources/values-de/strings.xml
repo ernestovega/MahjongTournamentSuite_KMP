@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Diese EMA-Nummer steht nicht im EMA-Register.</string>
     <string name="registration_error_empty_file">Die Datei ist leer.</string>
     <string name="registration_error_food_too_long">Die Ernährungseinschränkungen haben höchstens 300 Zeichen.</string>
+    <string name="registration_error_import_problems">Einige Personen mit Platz haben noch keine gültige EMA-Nummer. Wähle vor der Auslosung die richtige Person in der Liste.\nOhne EMA-Nummer: %1$s.</string>
     <string name="registration_error_incomplete_teams">Jede Person braucht vor der Auslosung ein Team von 4.\nOhne volles Team: %1$s.</string>
     <string name="registration_error_invalid_close_date">Der letzte Anmeldetag ist kein gültiges Datum.</string>
     <string name="registration_error_invalid_email">Gib eine gültige E-Mail an.</string>
@@ -618,7 +619,7 @@
     <string name="registration_error_bad_waiting">Es gibt mehr Personen von der Warteliste als neue Plätze.</string>
     <string name="registration_error_draw_pending">Das Turnier hat noch keine Auslosung.</string>
     <string name="registration_error_not_waiting">Jemand, den du gewählt hast, steht nicht mehr auf der Warteliste. Öffne den Dialog erneut.</string>
-    <string name="registration_error_partial_team">Ein Team geht nur ganz: wähle ganze Teams.</string>
+    <string name="registration_error_partial_team">Jedes Team muss 4 Spieler haben. Vervollständige die Teams im Schritt Teams.</string>
     <string name="registration_error_same_player_count">Das Turnier hat schon diese Spielerzahl.</string>
     <string name="registration_error_tournament_completed">Das Turnier ist beendet.</string>
     <string name="registration_error_tournament_started">Das Turnier hat schon Daten an seinen Tischen. Die Auslosung kann sich nicht mehr ändern.</string>

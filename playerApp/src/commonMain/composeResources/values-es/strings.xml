@@ -289,6 +289,8 @@
     <string name="preg_food_hint">Alergias, intolerancias o dietas. Privado: solo lo ve la organización.</string>
     <string name="preg_consent">Acepto que la organización guarde esta información para preparar la comida del torneo.</string>
     <string name="preg_manage_title">Mi inscripción</string>
+    <string name="preg_shared_email_note">Otra inscripción de este torneo también usa %1$s. No pasa nada, por ejemplo con un padre y su hijo.
+Pero un email solo puede tener una cuenta en la app: quien quiera su propia cuenta necesita su propio email. Muchos proveedores, como Gmail, aceptan un alias con +, por ejemplo nombre+hijo@gmail.com, que llega al mismo buzón.</string>
     <string name="preg_save">Guardar</string>
     <string name="preg_team">Equipo</string>
     <string name="preg_team_info">Un equipo tiene %1$d personas.\n• El capitán lo crea y añade a los demás, que deben estar inscritos.\n• Los demás no tienen que crear nada: esperan a que los añadan.</string>

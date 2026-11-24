@@ -278,6 +278,32 @@ describe("change of the number of players that keeps the numbers of the people w
     assert.equal((await ref.get()).get("numPlayers"), 20);
   });
 
+  it("refuses teams left incomplete, and keeps the old draw", async () => {
+    const { id, ref } = await create(24, { isTeams: true });
+    const removed = [1, 2, 3, 5];
+    const kept = Array.from({ length: 24 }, (_, index) => index + 1).filter((slot) => !removed.includes(slot));
+    // A valid draw otherwise: teammates never share a table, but team 1 keeps only the 4 and team 2 keeps 6, 7 and 8.
+    const tables = [[4, 6, 9, 13], [7, 14, 17, 21], [8, 10, 18, 22], [11, 15, 19, 23], [12, 16, 20, 24]]
+      .map((playerIds, index) => ({ roundId: 1, tableId: index + 1, playerIds }));
+
+    await expectConflict(change(id, { players: kept.map((slot) => ({ id: slot, team: teamOf(slot) })), tables }, removed), "PARTIAL_TEAM");
+
+    assert.equal((await slotsOf(ref)).size, 24);
+    assert.equal((await ref.collection("teams").get()).size, 6);
+  });
+
+  it("moves a person who stays to another team to complete it: same slot, new team, the empty team goes", async () => {
+    const { id, ref } = await create(24, { isTeams: true });
+    const removed = [1, 2, 3, 5];
+    const kept = Array.from({ length: 24 }, (_, index) => index + 1).filter((slot) => !removed.includes(slot));
+    const moved = (slot: number) => (slot === 4 ? 2 : teamOf(slot));
+    await change(id, drawOn(kept, moved), removed);
+    const slots = await slotsOf(ref);
+    assert.equal(slots.get(4)?.team, 2);
+    assert.equal((await ref.collection("teams").doc("1").get()).exists, false);
+    assert.equal((await ref.collection("teams").get()).size, 5);
+  });
+
   it("removes a whole team: the others keep their team numbers, names and slots", async () => {
     const tag = String(Date.now()).slice(-6);
     const { id, ref } = await create(24, { isTeams: true });

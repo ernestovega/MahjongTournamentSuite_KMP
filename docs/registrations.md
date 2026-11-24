@@ -98,11 +98,17 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
 - Export CSV (top bar): the list as a CSV file with the columns of the import (Timestamp, Email, First name, Last
   name, EMA number, Country, Team, Food restrictions), plus Status and Paid, which the import leaves out. The app makes
   it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the
-  import and goes back in as it is (into another tournament: the people of this one are already registered). UTF-8
+  import and goes back in as it is (it replaces the list of the tournament where it is imported). UTF-8
   with BOM and CRLF, so Excel opens it well.
-- Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): first a preview with the
-  problems of each row, then the import. The name and the country come from the EMA registry, not from the file. A row
-  with problems is not imported. The import never sends emails.
+- Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): opens the file picker at
+  once, then a review of the rows. The file REPLACES the list: the review warns how many registrations are there now,
+  and the import removes them all, and their teams, without emails. Every row is imported, also the rows with
+  problems (EMA number not valid, twice in the file or not in the EMA registry, email not valid): they keep their
+  problems and the list marks them, with a "With problems" filter, so the organizer fixes them there. A row without a
+  valid EMA number gets the id `row-<line>` and keeps the text of the file (`fileEmaId`); "Choose the right person" in
+  its Edit gives it the EMA number, with the name and country of the registry. A new email clears INVALID_EMAIL. The
+  draw refuses while a person with a place has a problem with the EMA number (IMPORT_PROBLEMS). The name and the
+  country come from the EMA registry, not from the file. The import never sends emails.
 - Emails to the organization (the contact email of the tournament): each cancellation, and a weekly report on Sunday at
   21:00 of the tournament, until the draw.
 
@@ -144,9 +150,13 @@ account of the functions can run it (`registrationHourRelay.ts`).
 - Export and import share `testdata/registrations-export.csv`: `RegistrationsCsvTest` checks that the export writes it,
   and `registrationImport.test.ts` that the import reads it.
 - Backend: `registrationSettings.test.ts`, `registrationImport.test.ts`, `registrationEmails.test.ts`,
-  `registrations.integration.test.ts`
+  `registrations.integration.test.ts` (the import that replaces the list, rows with problems and their fix, the draw
+  refused with IMPORT_PROBLEMS)
   (emulators), and the routes in `rolePermissions.integration.test.ts`.
-- Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest` (admin)
+- Kotlin: `AssignRegistrationsToDrawTest` (domain), `DefaultRegistrationRepositoryTest` (data: problems, fileEmaId,
+  replaced, newEmaId), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest`, `RegistrationsPresenterTest` (the draw
+  refuses by name: count, EMA problems of the import, incomplete teams) and `RegistrationsProblemsUiTest` (the rows with
+  problems and the With problems filter) (admin)
   and the screenshots `registrations`, `registrations-list` and `registrations-editor` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
 - Game day: the job "Registrations before the tournament" of every scenario runs the whole process in staging
   (`scripts/rehearsal/registrations.mjs`, docs/scenarios.md).

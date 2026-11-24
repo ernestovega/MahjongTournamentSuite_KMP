@@ -2,75 +2,75 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.52",
-  "description": "La API del backend: una sola Cloud Function HTTP (`api`, Express, Node 22, europe-southwest1).\n\n- Las apps nunca leen ni escriben Firestore directamente (las reglas lo niegan todo): todo pasa por aquí.\n- **Autenticación:** cabecera `Authorization: Bearer <ID token de Firebase>`, obtenido con `POST /auth/signIn`.\n- **App Check:** las apps envían `X-Firebase-AppCheck`. Hoy en modo *monitor* (solo se registra).\n- **Errores:** siempre `{ error, message, details }` (ver el esquema `Error`).\n- **Límites:** 600 escrituras/min por dirección, 120 por cuenta; 600 lecturas/min por dirección en `/public`.\n\nDocumentación con diagramas: `docs/arquitectura/` en el repositorio.\n\nEn esta página «Try it out» solo está activo para GET: los cambios se hacen desde las apps."
+  "version": "1.0.58",
+  "description": "The API of the backend: one HTTP Cloud Function (`api`, Express, Node 22, europe-southwest1).\n\n- The apps never read or write Firestore directly (the rules deny everything): everything goes through here.\n- **Authentication:** header `Authorization: Bearer <Firebase ID token>`, from `POST /auth/signIn`.\n- **App Check:** the apps send `X-Firebase-AppCheck`. Today in *monitor* mode (it is only logged).\n- **Errors:** always `{ error, message, details }` (see the `Error` schema).\n- **Limits:** 600 writes/min per address, 120 per account; 600 reads/min per address on `/public`.\n\nDocumentation with diagrams: `docs/architecture/` in the repository.\n\nOn this page «Try it out» only works for GET: changes are made from the apps."
  },
  "servers": [
   {
    "url": "https://mts.mahjongmadrid.com/api",
-   "description": "Producción (web, vía Firebase Hosting)"
+   "description": "Production (web, through Firebase Hosting)"
   },
   {
    "url": "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api",
-   "description": "Producción (Android y escritorio, directo a la función)"
+   "description": "Production (Android and desktop, straight to the function)"
   },
   {
    "url": "http://localhost:5055/api",
-   "description": "Entorno de pruebas local (emuladores)"
+   "description": "Local test environment (emulators)"
   }
  ],
  "tags": [
   {
-   "name": "Sistema"
+   "name": "System"
   },
   {
-   "name": "Sesión"
+   "name": "Session"
   },
   {
-   "name": "Público"
+   "name": "Public"
   },
   {
-   "name": "Jugador en mesa"
+   "name": "Player at the table"
   },
   {
-   "name": "Torneos"
+   "name": "Tournaments"
   },
   {
-   "name": "Jugadores del torneo"
+   "name": "Tournament players"
   },
   {
-   "name": "Editores del torneo"
+   "name": "Tournament editors"
   },
   {
-   "name": "Rondas y mesas"
+   "name": "Rounds and tables"
   },
   {
-   "name": "Exportaciones"
+   "name": "Exports"
   },
   {
-   "name": "Estadísticas"
+   "name": "Statistics"
   },
   {
-   "name": "Registro EMA"
+   "name": "EMA registry"
   },
   {
    "name": "Admin"
   },
   {
-   "name": "Organizaciones"
+   "name": "Organizations"
   },
   {
-   "name": "Inscripciones"
+   "name": "Registrations"
   }
  ],
  "paths": {
   "/health": {
    "get": {
     "tags": [
-     "Sistema"
+     "System"
     ],
-    "summary": "Estado y versión del backend",
-    "description": "🌐 Público: sin cuenta.\n\nResponde `{ ok: true, version }`. Lo usa `python3 scripts/versions.py status`. No pasa por App Check.",
+    "summary": "Status and version of the backend",
+    "description": "🌐 Public: no account.\n\nAnswers `{ ok: true, version }`. `python3 scripts/versions.py status` uses it. It skips App Check.",
     "security": [],
     "responses": {
      "200": {
@@ -104,10 +104,10 @@
   "/version": {
    "get": {
     "tags": [
-     "Sistema"
+     "System"
     ],
-    "summary": "Página HTML de versiones",
-    "description": "🌐 Público: sin cuenta.\n\nTabla con la versión de la web, del backend y de la app Android: la de `main` frente a la publicada. En el sitio también se sirve en `https://mts.mahjongmadrid.com/version`.",
+    "summary": "HTML page of the versions",
+    "description": "🌐 Public: no account.\n\nA table with the version of the web, the backend and the Android app: the one of `main` next to the published one. The site also serves it at `https://mts.mahjongmadrid.com/version`.",
     "security": [],
     "responses": {
      "200": {
@@ -132,10 +132,10 @@
   "/config": {
    "get": {
     "tags": [
-     "Sistema"
+     "System"
     ],
-    "summary": "Interruptores de funciones (feature flags)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Feature flags",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -160,14 +160,14 @@
   "/telemetry/errors": {
    "post": {
     "tags": [
-     "Sistema"
+     "System"
     ],
-    "summary": "Enviar un informe de error de una app",
-    "description": "🌐 Público: sin cuenta.\n\nPúblico porque un fallo puede ocurrir antes de iniciar sesión. Límite: 30 por minuto y dirección. El servidor borra emails, números largos y tokens del texto. Responde 204 sin cuerpo.",
+    "summary": "Send an error report of an app",
+    "description": "🌐 Public: no account.\n\nPublic because a failure can happen before signing in. Limit: 30 per minute and address. The server removes emails, long numbers and tokens from the text. Answers 204 without a body.",
     "security": [],
     "responses": {
      "204": {
-      "description": "Hecho, sin cuerpo."
+      "description": "Done, without a body."
      },
      "400": {
       "$ref": "#/components/responses/E400"
@@ -267,10 +267,10 @@
   "/support/message": {
    "post": {
     "tags": [
-     "Sistema"
+     "System"
     ],
-    "summary": "Formulario «¿Necesitas ayuda?»",
-    "description": "🌐 Público: sin cuenta.\n\nEnvía un email al buzón de soporte. Límite: 3 mensajes cada 15 minutos por dirección.",
+    "summary": "Contact form",
+    "description": "🌐 Public: no account.\n\nSends an email to the support mailbox. Limit: 3 messages every 15 minutes per address.",
     "security": [],
     "responses": {
      "200": {
@@ -305,10 +305,10 @@
   "/auth/signIn": {
    "post": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Iniciar sesión con email y contraseña",
-    "description": "🌐 Público: sin cuenta.\n\nEl backend llama a Firebase Auth y devuelve el ID token (1 h) y el refresh token. Límite: 30 por minuto.",
+    "summary": "Sign in with email and password",
+    "description": "🌐 Public: no account.\n\nThe backend calls Firebase Auth and returns the ID token (1 h) and the refresh token. Limit: 30 per minute.",
     "security": [],
     "responses": {
      "200": {
@@ -343,10 +343,10 @@
   "/auth/refresh": {
    "post": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Renovar el ID token",
-    "description": "🌐 Público: sin cuenta.\n\nLas apps lo llaman al recibir `401 unauthenticated`.",
+    "summary": "Refresh the ID token",
+    "description": "🌐 Public: no account.\n\nThe apps call it when they get `401 unauthenticated`.",
     "security": [],
     "responses": {
      "200": {
@@ -381,10 +381,10 @@
   "/auth/passwordReset": {
    "post": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Pedir el email de cambio de contraseña",
-    "description": "🌐 Público: sin cuenta.\n\nFirebase envía el email. Siempre responde `ok` para no revelar qué emails existen.",
+    "summary": "Ask for the password email",
+    "description": "🌐 Public: no account.\n\nFirebase sends the email. It always answers `ok`, so it never reveals which emails exist.",
     "security": [],
     "responses": {
      "200": {
@@ -419,10 +419,10 @@
   "/auth/me": {
    "get": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Mi perfil",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nAlias, EMA id, foto y roles de la cuenta.",
+    "summary": "My profile",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nAlias, EMA number, photo and roles of the account.",
     "security": [
      {
       "bearer": []
@@ -461,10 +461,10 @@
    },
    "put": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Cambiar mi alias",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\n1 a 60 caracteres.",
+    "summary": "Change my alias",
+    "description": "🔑 Any signed-in account (Firebase token).\n\n1 to 60 characters.",
     "security": [
      {
       "bearer": []
@@ -513,10 +513,10 @@
    },
    "delete": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Borrar mi cuenta",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nBorra la cuenta y su perfil. El registro EMA y los resultados de los torneos se quedan.",
+    "summary": "Delete my account",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nDeletes the account and its profile. The EMA player and the results of the tournaments stay.",
     "security": [
      {
       "bearer": []
@@ -557,10 +557,10 @@
   "/auth/me/photo": {
    "put": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Subir mi foto",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nJPEG o PNG en Base64. Se guarda en Storage `userPhotos/{uid}`.",
+    "summary": "Upload my photo",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nJPEG or PNG in Base64. It is saved in Storage `userPhotos/{uid}`.",
     "security": [
      {
       "bearer": []
@@ -609,10 +609,10 @@
    },
    "delete": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Quitar mi foto",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Remove my photo",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -653,10 +653,10 @@
   "/me": {
    "get": {
     "tags": [
-     "Sesión"
+     "Session"
     ],
-    "summary": "Mis huecos en los torneos y mis inscripciones",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nEMA id de la cuenta y, por cada torneo donde está, su hueco y su equipo. La app de jugador lo usa para marcar al jugador propio. También da las inscripciones de la persona (con plaza o en lista de espera) en los torneos que esperan su sorteo.",
+    "summary": "My slots in the tournaments and my registrations",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nEMA number of the account and, for each tournament where it is, its slot and its team. The player app uses it to mark its own player. It also gives the registrations of the person (with a place or on the waiting list) in the tournaments that wait for their draw.",
     "security": [
      {
       "bearer": []
@@ -697,10 +697,10 @@
   "/public/tournaments": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Lista de torneos públicos",
-    "description": "🌐 Público: sin cuenta.\n\nTorneos con `isPublic != false`. Caché CDN de 60 s.",
+    "summary": "List of public tournaments",
+    "description": "🌐 Public: no account.\n\nTournaments with `isPublic != false`. CDN cache of 60 s.",
     "security": [],
     "responses": {
      "200": {
@@ -725,10 +725,10 @@
   "/public/tournaments/{tournamentId}": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Un torneo público",
-    "description": "🌐 Público: sin cuenta.\n\n404 si no existe o no es público. Caché 15 s en juego, 300 s terminado.",
+    "summary": "One public tournament",
+    "description": "🌐 Public: no account.\n\n404 when it does not exist or is not public. Cache 15 s in play, 300 s finished.",
     "security": [],
     "responses": {
      "200": {
@@ -756,7 +756,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -764,10 +764,10 @@
   "/public/tournaments/{tournamentId}/sync/manifest": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Revisiones de los datos de un torneo",
-    "description": "🌐 Público: sin cuenta.\n\nLas apps comparan revisiones para pedir solo lo que cambió.",
+    "summary": "Revisions of the data of a tournament",
+    "description": "🌐 Public: no account.\n\nThe apps compare revisions to ask only for what changed.",
     "security": [],
     "responses": {
      "200": {
@@ -795,7 +795,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -803,10 +803,10 @@
   "/public/tournaments/{tournamentId}/players": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Jugadores de un torneo",
-    "description": "🌐 Público: sin cuenta.\n\nSin emails ni cuentas. Un jugador con `hiddenFromPublic` aparece como «#N».",
+    "summary": "Players of a tournament",
+    "description": "🌐 Public: no account.\n\nNo emails and no accounts. A player with `hiddenFromPublic` shows as «#N».",
     "security": [],
     "responses": {
      "200": {
@@ -834,7 +834,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -842,10 +842,10 @@
   "/public/tournaments/{tournamentId}/teams": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Equipos de un torneo",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Teams of a tournament",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -873,7 +873,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -881,10 +881,10 @@
   "/public/tournaments/{tournamentId}/round-clocks": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Relojes y control de las rondas",
-    "description": "🌐 Público: sin cuenta.\n\nIncluye `serverNowMs` para que la app ajuste su reloj.",
+    "summary": "Clocks and control of the rounds",
+    "description": "🌐 Public: no account.\n\nIncludes `serverNowMs`, so the app corrects its clock.",
     "security": [],
     "responses": {
      "200": {
@@ -912,7 +912,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -920,10 +920,10 @@
   "/public/tournaments/{tournamentId}/rounds": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Rondas",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Rounds",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -951,7 +951,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -959,10 +959,10 @@
   "/public/tournaments/{tournamentId}/tables": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Mesas (resumen)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Tables (summary)",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -990,7 +990,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -999,7 +999,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Solo las mesas de esta ronda."
+      "description": "Only the tables of this round."
      }
     ]
    }
@@ -1007,10 +1007,10 @@
   "/public/tournaments/{tournamentId}/tables-with-hands": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Todas las mesas con sus 16 manos",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Every table with its 16 hands",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1038,7 +1038,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -1046,10 +1046,10 @@
   "/public/tournaments/{tournamentId}/rounds/{roundId}/tables-with-hands": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Mesas de una ronda con sus manos",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Tables of a round with their hands",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1077,7 +1077,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1086,7 +1086,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      }
     ]
    }
@@ -1094,10 +1094,10 @@
   "/public/tournaments/{tournamentId}/tables/{roundId}/{tableId}": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Una mesa con sus manos",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "One table with its hands",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1125,7 +1125,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1134,7 +1134,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -1143,7 +1143,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ]
    }
@@ -1151,10 +1151,10 @@
   "/public/statistics/overview": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Estadísticas globales",
-    "description": "🌐 Público: sin cuenta.\n\nSumas de todos los torneos públicos.",
+    "summary": "Global statistics",
+    "description": "🌐 Public: no account.\n\nSums of every public tournament.",
     "security": [],
     "responses": {
      "200": {
@@ -1176,13 +1176,88 @@
     }
    }
   },
+  "/public/statistics/groups": {
+   "get": {
+    "tags": [
+     "Public"
+    ],
+    "summary": "Statistics of a group of tournaments and players",
+    "description": "🌐 Public: no account.\n\nThe filters of the Statistics screen. Only public tournaments; the people hidden from the public are left out.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StatisticsGroup"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournaments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Ids of tournaments, comma separated."
+     },
+     {
+      "name": "tournamentCountry",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Two-letter ISO code of the country of the tournaments."
+     },
+     {
+      "name": "playerCountry",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA country code of the players, or `none` for players without a country."
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "ISO date: tournaments that start on or after it."
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "ISO date: tournaments that start on or before it."
+     }
+    ]
+   }
+  },
   "/public/statistics/persons/{emaId}": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Estadísticas de una persona",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Statistics of a person",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1210,7 +1285,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      }
     ]
    }
@@ -1218,10 +1293,10 @@
   "/public/statistics/persons/{emaId}/standings": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Puestos de una persona en varios torneos",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Places of a person in several tournaments",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1249,7 +1324,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      },
      {
       "name": "tournaments",
@@ -1258,7 +1333,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Ids de torneo separados por comas."
+      "description": "Ids of tournaments, comma separated."
      }
     ]
    }
@@ -1266,10 +1341,10 @@
   "/public/players": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Registro EMA público",
-    "description": "🌐 Público: sin cuenta.\n\nSin fotos. Caché 1 h.",
+    "summary": "Public EMA registry",
+    "description": "🌐 Public: no account.\n\nNumber, name, country and photo. Cache 1 h.",
     "security": [],
     "responses": {
      "200": {
@@ -1294,10 +1369,10 @@
   "/public/countries": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Países",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Countries",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1322,10 +1397,10 @@
   "/public/sync/manifest": {
    "get": {
     "tags": [
-     "Público"
+     "Public"
     ],
-    "summary": "Revisiones globales (lista de torneos, registro…)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Global revisions (list of tournaments, registry…)",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -1350,10 +1425,10 @@
   "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/seats": {
    "post": {
     "tags": [
-     "Jugador en mesa"
+     "Player at the table"
     ],
-    "summary": "Sentar a los jugadores",
-    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nFija Este/Sur/Oeste/Norte. `expectedVersion` evita pisar cambios de otro dispositivo (409 si la mesa cambió).",
+    "summary": "Seat the players",
+    "description": "🀄 Player: a signed-in account whose EMA number is in a slot of the tournament.\n\nSets East/South/West/North. `expectedVersion` avoids overwriting changes of another device (409 when the table changed).",
     "security": [
      {
       "bearer": []
@@ -1397,7 +1472,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1406,7 +1481,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -1415,7 +1490,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ],
     "requestBody": {
@@ -1433,10 +1508,10 @@
   "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/hands/preview": {
    "post": {
     "tags": [
-     "Jugador en mesa"
+     "Player at the table"
     ],
-    "summary": "Calcular una mano sin guardarla",
-    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nDevuelve cómo quedaría la mesa.",
+    "summary": "Compute a hand without saving it",
+    "description": "🀄 Player: a signed-in account whose EMA number is in a slot of the tournament.\n\nReturns how the table would be.",
     "security": [
      {
       "bearer": []
@@ -1480,7 +1555,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1489,7 +1564,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -1498,7 +1573,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ],
     "requestBody": {
@@ -1516,10 +1591,10 @@
   "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/hands": {
    "post": {
     "tags": [
-     "Jugador en mesa"
+     "Player at the table"
     ],
-    "summary": "Apuntar una mano",
-    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.\n\nSolo con la ronda abierta para manos (reloj iniciado o control `open`). 409 si la mesa cambió.",
+    "summary": "Enter a hand",
+    "description": "🀄 Player: a signed-in account whose EMA number is in a slot of the tournament.\n\nOnly while the round is open for hands (clock started or control `open`). 409 when the table changed.",
     "security": [
      {
       "bearer": []
@@ -1563,7 +1638,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1572,7 +1647,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -1581,7 +1656,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ],
     "requestBody": {
@@ -1599,10 +1674,10 @@
   "/player/tournaments/{tournamentId}/tables/{roundId}/{tableId}/penalties": {
    "post": {
     "tags": [
-     "Jugador en mesa"
+     "Player at the table"
     ],
-    "summary": "Apuntar penalizaciones",
-    "description": "🀄 Jugador: cuenta con sesión cuyo EMA id está en un hueco del torneo.",
+    "summary": "Enter penalties",
+    "description": "🀄 Player: a signed-in account whose EMA number is in a slot of the tournament.",
     "security": [
      {
       "bearer": []
@@ -1646,7 +1721,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -1655,7 +1730,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -1664,7 +1739,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ],
     "requestBody": {
@@ -1682,10 +1757,10 @@
   "/tournaments": {
    "get": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Torneos que gestiono",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\nAdmin: todos. Editor: los asignados. Cuenta solo jugador: lista vacía (usa `/public`).",
+    "summary": "Tournaments I manage",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nSuper Admin: all. Club Admin: those of its organizations. Editor: the assigned ones. A player account: an empty list (it uses `/public`).",
     "security": [
      {
       "bearer": []
@@ -1724,10 +1799,10 @@
    },
    "post": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Crear un torneo",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nLa app genera rondas y mesas (sorteo) y las envía aquí; el backend valida y guarda. Sede y email de contacto obligatorios.",
+    "summary": "Create a tournament",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nThe app makes the rounds and the tables (the draw) and sends them here; the backend checks and saves them. Venue and contact email are required. With open registrations the tournament starts without players and the draw comes at the close.",
     "security": [
      {
       "bearer": []
@@ -1778,10 +1853,10 @@
   "/tournaments/{tournamentId}": {
    "put": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Renombrar un torneo",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Rename a tournament",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -1825,7 +1900,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -1841,10 +1916,10 @@
    },
    "delete": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Borrar un torneo",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nBorra el torneo y todas sus subcolecciones.",
+    "summary": "Delete a tournament",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nDeletes the tournament and all its subcollections.",
     "security": [
      {
       "bearer": []
@@ -1888,7 +1963,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -1896,10 +1971,10 @@
   "/tournaments/{tournamentId}/settings": {
    "put": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Editar los ajustes del torneo",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nNombre, fechas, sede, colores, logo, horarios de rondas, agenda, público/privado, duración de partida…",
+    "summary": "Edit the settings of the tournament",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nName, dates, venue, colors, logo, organizers, round times, agenda, public or private, match length…",
     "security": [
      {
       "bearer": []
@@ -1943,7 +2018,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -1961,10 +2036,10 @@
   "/tournaments/{tournamentId}/player-count": {
    "post": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Cambiar el número de jugadores",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAntes de la primera mano: quitar o añadir mesas enteras de 4. La app calcula el sorteo nuevo de todas las rondas; el servidor mantiene a las personas que siguen, quita los huecos elegidos (con equipos, equipos enteros) y puede dar los huecos nuevos a la lista de espera. Envía un correo a cada persona afectada y responde quién no lo recibió. 409 TOURNAMENT_STARTED si alguna mesa tiene datos. Ver docs/player-count-change.md.",
+    "summary": "Change the number of players",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nBefore the first hand: remove or add whole tables of 4. The app computes the new draw of every round; the server keeps the people who stay with their numbers, removes the chosen slots and can give the new slots to the waiting list. In a team tournament every team must end with 4 people (`PARTIAL_TEAM`), and people who stay can move to another team. It sends an email to each person affected and answers who did not get it. 409 TOURNAMENT_STARTED when a table has data. See docs/player-count-change.md.",
     "security": [
      {
       "bearer": []
@@ -2008,7 +2083,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2026,10 +2101,10 @@
   "/tournaments/{tournamentId}/sync/manifest": {
    "get": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Revisiones de los datos del torneo",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Revisions of the data of the tournament",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -2073,7 +2148,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -2081,10 +2156,10 @@
   "/sync/manifest": {
    "get": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Revisiones globales",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Global revisions",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -2125,10 +2200,10 @@
   "/tournaments/{tournamentId}/integrity": {
    "get": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Comprobar la integridad del torneo",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nBusca incoherencias (huecos, copias de manos, horarios…). Solo lee.",
+    "summary": "Check the integrity of the tournament",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nLooks for inconsistencies (slots, copies of hands, times…). It only reads.",
     "security": [
      {
       "bearer": []
@@ -2172,7 +2247,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -2180,10 +2255,10 @@
   "/tournaments/{tournamentId}/complete-open-tables": {
    "post": {
     "tags": [
-     "Torneos"
+     "Tournaments"
     ],
-    "summary": "Completar mesas abiertas",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Complete open tables",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -2227,7 +2302,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2245,10 +2320,10 @@
   "/tournaments/{tournamentId}/players": {
    "get": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Huecos del torneo",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEl email solo llega a admins; los editores reciben `hasAccount` y `hasEmail`.",
+    "summary": "Slots of the tournament",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nThe email only goes to admins; editors get `hasAccount` and `hasEmail`.",
     "security": [
      {
       "bearer": []
@@ -2292,7 +2367,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -2300,10 +2375,10 @@
   "/tournaments/{tournamentId}/players/{playerId}": {
    "put": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Asignar un EMA id a un hueco",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`emaId` vacío o null deja el hueco libre.",
+    "summary": "Give an EMA number to a slot",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nAn empty or null `emaId` leaves the slot free.",
     "security": [
      {
       "bearer": []
@@ -2347,7 +2422,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "playerId",
@@ -2356,7 +2431,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de hueco (slot) del jugador en el torneo."
+      "description": "Number of the slot of the player in the tournament."
      }
     ],
     "requestBody": {
@@ -2374,10 +2449,10 @@
   "/tournaments/{tournamentId}/players/{playerId}/substitution": {
    "put": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Marcar una sustitución",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`reason`: LATE, ILLNESS o DISQUALIFIED.",
+    "summary": "Mark a substitution",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\n`reason`: LATE, ILLNESS or DISQUALIFIED.",
     "security": [
      {
       "bearer": []
@@ -2421,7 +2496,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "playerId",
@@ -2430,7 +2505,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de hueco (slot) del jugador en el torneo."
+      "description": "Number of the slot of the player in the tournament."
      }
     ],
     "requestBody": {
@@ -2446,10 +2521,10 @@
    },
    "delete": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Quitar la sustitución",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Remove the substitution",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -2493,7 +2568,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "playerId",
@@ -2502,7 +2577,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de hueco (slot) del jugador en el torneo."
+      "description": "Number of the slot of the player in the tournament."
      }
     ]
    }
@@ -2510,10 +2585,10 @@
   "/tournaments/{tournamentId}/teams": {
    "get": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Equipos",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Teams",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -2557,7 +2632,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -2565,10 +2640,10 @@
   "/tournaments/{tournamentId}/teams/{teamId}": {
    "put": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Editar un equipo",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nNombre y EMA ids de sus miembros.",
+    "summary": "Edit a team",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nName and EMA numbers of its members.",
     "security": [
      {
       "bearer": []
@@ -2612,7 +2687,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "teamId",
@@ -2638,10 +2713,10 @@
   "/tournaments/{tournamentId}/player-accounts/send": {
    "post": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Invitar o recordar",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nPor cada jugador: sin cuenta → crea la cuenta y envía el email de contraseña (`INVITED`); con cuenta → email recordatorio (`REMINDED`). Hasta 200.",
+    "summary": "Invite or remind",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nFor each player: without an account → creates the account and sends the password email (`INVITED`); with an account → a reminder email (`REMINDED`). Up to 200.",
     "security": [
      {
       "bearer": []
@@ -2685,7 +2760,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2703,10 +2778,10 @@
   "/tournaments/{tournamentId}/player-emails": {
    "put": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Guardar emails pendientes de huecos",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nHasta 200. Resultado por jugador: SAVED, CLEARED o FAILED.",
+    "summary": "Save pending emails of slots",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nUp to 200. Result per player: SAVED, CLEARED or FAILED.",
     "security": [
      {
       "bearer": []
@@ -2750,7 +2825,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2768,10 +2843,10 @@
   "/tournaments/{tournamentId}/player-import/export": {
    "get": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Exportar jugadores a Excel",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEl Excel va en Base64 dentro del JSON.",
+    "summary": "Export the players to Excel",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nThe Excel file goes in Base64 inside the JSON.",
     "security": [
      {
       "bearer": []
@@ -2815,7 +2890,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -2823,10 +2898,10 @@
   "/tournaments/{tournamentId}/player-import/preview": {
    "post": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Previsualizar una importación",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nLee un CSV o Excel y dice qué cambiaría. No escribe nada.",
+    "summary": "Preview an import",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nReads a CSV or Excel file and says what would change. It writes nothing.",
     "security": [
      {
       "bearer": []
@@ -2870,7 +2945,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2888,10 +2963,10 @@
   "/tournaments/{tournamentId}/player-import/apply": {
    "post": {
     "tags": [
-     "Jugadores del torneo"
+     "Tournament players"
     ],
-    "summary": "Aplicar una importación",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nSustituye todos los jugadores y equipos. 409 `FILE_HAS_ERRORS` o `TOURNAMENT_STARTED`.",
+    "summary": "Apply an import",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nReplaces every player and team. 409 `FILE_HAS_ERRORS` or `TOURNAMENT_STARTED`.",
     "security": [
      {
       "bearer": []
@@ -2935,7 +3010,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -2953,10 +3028,10 @@
   "/tournaments/{tournamentId}/members": {
    "get": {
     "tags": [
-     "Editores del torneo"
+     "Tournament editors"
     ],
-    "summary": "Editores asignados",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Assigned editors",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3000,7 +3075,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -3008,10 +3083,10 @@
   "/tournaments/{tournamentId}/members/{uid}": {
    "put": {
     "tags": [
-     "Editores del torneo"
+     "Tournament editors"
     ],
-    "summary": "Asignar un editor",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Assign an editor",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -3055,7 +3130,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "uid",
@@ -3064,7 +3139,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ],
     "requestBody": {
@@ -3080,10 +3155,10 @@
    },
    "delete": {
     "tags": [
-     "Editores del torneo"
+     "Tournament editors"
     ],
-    "summary": "Quitar un editor",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Remove an editor",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -3127,7 +3202,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "uid",
@@ -3136,7 +3211,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ]
    }
@@ -3144,10 +3219,10 @@
   "/tournaments/{tournamentId}/users/lookup": {
    "get": {
     "tags": [
-     "Editores del torneo"
+     "Tournament editors"
     ],
-    "summary": "Buscar una cuenta por email",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Find an account by email",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3191,7 +3266,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "email",
@@ -3200,7 +3275,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Email de la cuenta."
+      "description": "Email of the account."
      }
     ]
    }
@@ -3208,10 +3283,10 @@
   "/tournaments/{tournamentId}/rounds": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Rondas",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Rounds",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3255,7 +3330,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -3263,10 +3338,10 @@
   "/tournaments/{tournamentId}/round-clocks": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Relojes de las rondas",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Clocks of the rounds",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3310,7 +3385,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -3318,10 +3393,10 @@
   "/tournaments/{tournamentId}/rounds/{roundId}/clock": {
    "post": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Manejar el reloj de una ronda",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`action`: start, pause, resume, reset, setRemaining o stop. `agoSeconds` permite acciones hechas sin conexión (hasta 10 min).",
+    "summary": "Drive the clock of a round",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\n`action`: start, pause, resume, reset, setRemaining or stop. `agoSeconds` allows actions made without network (up to 10 min).",
     "security": [
      {
       "bearer": []
@@ -3365,7 +3440,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3374,7 +3449,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      }
     ],
     "requestBody": {
@@ -3392,10 +3467,10 @@
   "/tournaments/{tournamentId}/rounds/{roundId}/control": {
    "post": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Control manual de la ronda",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nAbre o cierra manos y asientos (`auto`, `open`, `closed`), por ronda o por mesa; reabre o completa mesas.",
+    "summary": "Manual control of the round",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nOpens or closes hands and seats (`auto`, `open`, `closed`), per round or per table; reopens or completes tables. Permission `tournament.roundControl`.",
     "security": [
      {
       "bearer": []
@@ -3439,7 +3514,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3448,7 +3523,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      }
     ],
     "requestBody": {
@@ -3466,10 +3541,10 @@
   "/tournaments/{tournamentId}/tables": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Mesas (resumen)",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Tables (summary)",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3513,7 +3588,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3522,7 +3597,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Solo las mesas de esta ronda."
+      "description": "Only the tables of this round."
      }
     ]
    }
@@ -3530,10 +3605,10 @@
   "/tournaments/{tournamentId}/tables-with-hands": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Todas las mesas con manos",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Every table with its hands",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3577,7 +3652,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -3585,10 +3660,10 @@
   "/tournaments/{tournamentId}/rounds/{roundId}/tables-with-hands": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Mesas de una ronda con manos",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Tables of a round with their hands",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3632,7 +3707,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3641,7 +3716,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      }
     ]
    }
@@ -3649,10 +3724,10 @@
   "/tournaments/{tournamentId}/tables/{roundId}/{tableId}": {
    "get": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Una mesa con sus manos",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "One table with its hands",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -3696,7 +3771,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3705,7 +3780,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -3714,7 +3789,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ]
    }
@@ -3722,10 +3797,10 @@
   "/tournaments/{tournamentId}/tables/{roundId}/{tableId}/state": {
    "put": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Guardar una mesa (editor)",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nParche de la mesa y de sus manos en una transacción. `expectedVersion` debe ser la versión actual: si otro guardó antes, 409 con los datos del servidor. Actualiza estadísticas y registro de cambios en la misma transacción.",
+    "summary": "Save a table (editor)",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nPatch of the table and its hands in one transaction. `expectedVersion` must be the current version: if someone else saved first, 409 with the data of the server. It updates the statistics and the change log in the same transaction.",
     "security": [
      {
       "bearer": []
@@ -3769,7 +3844,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3778,7 +3853,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -3787,7 +3862,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ],
     "requestBody": {
@@ -3805,10 +3880,10 @@
   "/tournaments/{tournamentId}/tables/{roundId}/{tableId}/reset": {
    "post": {
     "tags": [
-     "Rondas y mesas"
+     "Rounds and tables"
     ],
-    "summary": "Vaciar una mesa",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Reset a table",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -3852,7 +3927,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "roundId",
@@ -3861,7 +3936,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de ronda (desde 1)."
+      "description": "Number of the round (from 1)."
      },
      {
       "name": "tableId",
@@ -3870,7 +3945,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Número de mesa en la ronda (desde 1)."
+      "description": "Number of the table in the round (from 1)."
      }
     ]
    }
@@ -3878,10 +3953,10 @@
   "/tournaments/{tournamentId}/id-cards": {
    "get": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "PDF de acreditaciones (ID cards)",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nRechaza torneos con huecos sin asignar.",
+    "summary": "PDF of the ID cards",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nRefuses tournaments with slots without a person.",
     "security": [
      {
       "bearer": []
@@ -3926,7 +4001,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "layout",
@@ -3935,7 +4010,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "`sheet` para varias por hoja A4; sin valor, una por página."
+      "description": "`sheet` for several per A4 sheet; without a value, one per page."
      },
      {
       "name": "cardsPerSheet",
@@ -3944,7 +4019,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "1 a 40 (por defecto 10)."
+      "description": "1 to 40 (10 by default)."
      },
      {
       "name": "scalePercent",
@@ -3953,7 +4028,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Tamaño de la tarjeta."
+      "description": "Size of the card."
      },
      {
       "name": "landscape",
@@ -3989,7 +4064,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "true/false. Con false el PDF solo tiene las caras delanteras."
+      "description": "true/false. With false the PDF has only the front sides."
      },
      {
       "name": "backSameAsFront",
@@ -3998,7 +4073,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "true/false. La trasera de jugadores y staff repite la delantera; los sustitutos mantienen la tabla."
+      "description": "true/false. The back of players and staff repeats the front; the substitutes keep the table."
      },
      {
       "name": "substituteSheets",
@@ -4007,7 +4082,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Hojas de tarjetas sin nombre ni número para sustitutos (0-20)."
+      "description": "Sheets of cards without name or number, for substitutes (0-20)."
      },
      {
       "name": "staffSheets",
@@ -4016,7 +4091,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Hojas de tarjetas con STAFF en lugar del número (0-20)."
+      "description": "Sheets of cards with STAFF in place of the number (0-20)."
      },
      {
       "name": "staffName",
@@ -4025,7 +4100,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Nombre de una tarjeta de staff. Se repite una vez por nombre, en orden (máx. 200)."
+      "description": "Name of a staff card. Repeated once per name, in order (max. 200)."
      }
     ]
    }
@@ -4033,10 +4108,10 @@
   "/tournaments/{tournamentId}/id-cards/staff-names": {
    "get": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Nombres guardados del staff para las acreditaciones",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Saved staff names for the ID cards",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -4080,16 +4155,16 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    },
    "put": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Guardar los nombres del staff para las acreditaciones",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nQuita los nombres vacíos. Máximo 200 nombres de 60 caracteres.",
+    "summary": "Save the staff names for the ID cards",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nRemoves the empty names. At most 200 names of 60 characters.",
     "security": [
      {
       "bearer": []
@@ -4133,7 +4208,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -4151,10 +4226,10 @@
   "/tournaments/{tournamentId}/id-cards/staff-candidates": {
    "get": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Cuentas de la app para elegir el staff de las acreditaciones",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nSolo nombre (jugador EMA o alias) y rol, nunca el email. Primero el staff del torneo, luego editores y admins, luego jugadores.",
+    "summary": "Accounts of the app to choose the staff of the ID cards",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nOnly the name (EMA player or alias) and the role, never the email. First the staff of the tournament, then editors and admins, then players.",
     "security": [
      {
       "bearer": []
@@ -4198,7 +4273,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -4206,10 +4281,10 @@
   "/tournaments/id-card-proof": {
    "post": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "PDF de prueba de una acreditación",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).",
+    "summary": "Proof PDF of one ID card",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -4261,10 +4336,10 @@
   "/tournaments/id-card-preview": {
    "post": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Vista previa de una acreditación",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nIgual que id-card-proof.",
+    "summary": "Preview of one ID card",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nThe same as id-card-proof.",
     "security": [
      {
       "bearer": []
@@ -4316,10 +4391,10 @@
   "/tournaments/{tournamentId}/id-list": {
    "get": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Excel con la lista de jugadores",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Excel file with the list of players",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -4364,7 +4439,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -4372,10 +4447,10 @@
   "/tournaments/{tournamentId}/table-qr-codes": {
    "get": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "PDF con las tarjetas de las mesas",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nUna tarjeta por mesa con su número en grande y el QR del torneo; `?perSheet=1|2|4|6|8` tarjetas por A4 (4 por defecto), siempre en inglés. Ver docs/table-qr.md.",
+    "summary": "PDF with the cards of the tables (Tables IDs)",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nOne card per table with its number in big and the QR code of the tournament, the logo of the main organizer (or its initial) and «Or just open the app:» with the main site. `?perSheet=1|2|4|6|8` cards per A4 sheet (4 by default), always in English. Permission `tournament.view`. See docs/table-qr.md.",
     "security": [
      {
       "bearer": []
@@ -4420,7 +4495,16 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
+     },
+     {
+      "name": "perSheet",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "1, 2, 4, 6 or 8."
      }
     ]
    }
@@ -4428,10 +4512,10 @@
   "/tournaments/{tournamentId}/ema-report": {
    "post": {
     "tags": [
-     "Exportaciones"
+     "Exports"
     ],
-    "summary": "Excel de resultados para la EMA",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nLa app envía la clasificación final.",
+    "summary": "Excel file of results for the EMA",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nThe app sends the final ranking.",
     "security": [
      {
       "bearer": []
@@ -4476,7 +4560,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -4494,10 +4578,10 @@
   "/tournaments/statistics/overview": {
    "get": {
     "tags": [
-     "Estadísticas"
+     "Statistics"
     ],
-    "summary": "Estadísticas globales (todas)",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Global statistics (all)",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -4535,13 +4619,104 @@
     }
    }
   },
+  "/tournaments/statistics/groups": {
+   "get": {
+    "tags": [
+     "Statistics"
+    ],
+    "summary": "Statistics of a group of tournaments and players",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nLike `/public/statistics/groups`, over the tournaments that the account can see.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StatisticsGroup"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournaments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Ids of tournaments, comma separated."
+     },
+     {
+      "name": "tournamentCountry",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Two-letter ISO code of the country of the tournaments."
+     },
+     {
+      "name": "playerCountry",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "EMA country code of the players, or `none` for players without a country."
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "ISO date: tournaments that start on or after it."
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "ISO date: tournaments that start on or before it."
+     }
+    ]
+   }
+  },
   "/tournaments/statistics/me": {
    "get": {
     "tags": [
-     "Estadísticas"
+     "Statistics"
     ],
-    "summary": "Mis estadísticas",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "My statistics",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -4582,10 +4757,10 @@
   "/tournaments/statistics/me/standings": {
    "get": {
     "tags": [
-     "Estadísticas"
+     "Statistics"
     ],
-    "summary": "Mis puestos",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "My places",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -4629,7 +4804,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Ids de torneo separados por comas."
+      "description": "Ids of tournaments, comma separated."
      }
     ]
    }
@@ -4637,10 +4812,10 @@
   "/tournaments/statistics/persons/{emaId}": {
    "get": {
     "tags": [
-     "Estadísticas"
+     "Statistics"
     ],
-    "summary": "Estadísticas de una persona",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Statistics of a person",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -4684,7 +4859,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      }
     ]
    }
@@ -4692,10 +4867,10 @@
   "/tournaments/statistics/persons/{emaId}/standings": {
    "get": {
     "tags": [
-     "Estadísticas"
+     "Statistics"
     ],
-    "summary": "Puestos de una persona",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Places of a person",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -4739,7 +4914,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      },
      {
       "name": "tournaments",
@@ -4748,7 +4923,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Ids de torneo separados por comas."
+      "description": "Ids of tournaments, comma separated."
      }
     ]
    }
@@ -4756,10 +4931,10 @@
   "/ema-player-registry": {
    "get": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Registro EMA completo",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Full EMA registry",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -4798,10 +4973,10 @@
    },
    "post": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Crear un jugador EMA",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Create an EMA player",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nSuper Admin or Club Admin.",
     "security": [
      {
       "bearer": []
@@ -4852,10 +5027,10 @@
   "/ema-player-registry/{emaId}": {
    "put": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Editar un jugador EMA",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nIncluye `hiddenFromPublic` (en público sale como «#N»).",
+    "summary": "Edit an EMA player",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nIncludes `hiddenFromPublic` (in public it shows as «#N»).",
     "security": [
      {
       "bearer": []
@@ -4899,7 +5074,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      }
     ],
     "requestBody": {
@@ -4917,10 +5092,10 @@
   "/ema-player-registry/{emaId}/photo": {
    "put": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Foto de un jugador EMA",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nStorage `playerPhotos/{emaId}`.",
+    "summary": "Photo of an EMA player",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nStorage `playerPhotos/{emaId}`.",
     "security": [
      {
       "bearer": []
@@ -4964,7 +5139,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      }
     ],
     "requestBody": {
@@ -4979,13 +5154,121 @@
     }
    }
   },
+  "/ema-player-registry/delete/preview": {
+   "post": {
+    "tags": [
+     "EMA registry"
+    ],
+    "summary": "Before deleting EMA players",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `ema.delete`. The tournaments where each chosen player has data: those players are deactivated, not deleted. It writes nothing.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EmaPlayerDeletesPreviewResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EmaPlayerDeletesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ema-player-registry/delete": {
+   "post": {
+    "tags": [
+     "EMA registry"
+    ],
+    "summary": "Delete EMA players",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `ema.delete`. Deletes the chosen EMA players, or deactivates those with data in a tournament. Their accounts stay, without the EMA number.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EmaPlayerDeletesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EmaPlayerDeletesRequest"
+       }
+      }
+     }
+    }
+   }
+  },
   "/countries": {
    "get": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Países",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).",
+    "summary": "Countries",
+    "description": "🔑 Any signed-in account (Firebase token).",
     "security": [
      {
       "bearer": []
@@ -5026,10 +5309,10 @@
   "/venues/resolve-link": {
    "post": {
     "tags": [
-     "Registro EMA"
+     "EMA registry"
     ],
-    "summary": "Resolver un enlace corto de Google Maps",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nSigue hasta 5 redirecciones de Google y devuelve el enlace completo y, si puede, nombre, dirección, ciudad, país y zona horaria.",
+    "summary": "Resolve a short Google Maps link",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nFollows up to 5 redirects of Google and returns the full link and, when it can, name, address, city, country and time zone.",
     "security": [
      {
       "bearer": []
@@ -5082,8 +5365,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Quién soy",
-    "description": "🔑 Cualquier cuenta con sesión (token de Firebase).\n\n`role` es la capacidad más alta; `roles` todas.",
+    "summary": "Who am I",
+    "description": "🔑 Any signed-in account (Firebase token).\n\n`role` is the highest capacity; `roles` all of them.",
     "security": [
      {
       "bearer": []
@@ -5126,8 +5409,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Cuentas",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nAdmin: todas. Editor: la suya.",
+    "summary": "Accounts",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nSuper Admin: all. Club Admin: the players and the staff of its organizations. Editor: its own.",
     "security": [
      {
       "bearer": []
@@ -5168,8 +5451,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Crear una cuenta",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nResponde 201.",
+    "summary": "Create an account",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nAnswers 201.",
     "security": [
      {
       "bearer": []
@@ -5222,8 +5505,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Editar una cuenta",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nUn editor solo edita la suya. Un EMA id de otra cuenta da 409.",
+    "summary": "Edit an account",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nAn editor only edits its own. An EMA number of another account gives 409.",
     "security": [
      {
       "bearer": []
@@ -5267,7 +5550,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ],
     "requestBody": {
@@ -5285,8 +5568,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Borrar una cuenta",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Delete an account",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5330,7 +5613,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ]
    }
@@ -5340,8 +5623,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Foto de una cuenta",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Photo of an account",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5385,7 +5668,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ],
     "requestBody": {
@@ -5403,8 +5686,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Quitar la foto de una cuenta",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Remove the photo of an account",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5448,7 +5731,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ]
    }
@@ -5458,8 +5741,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Desactivar o activar una cuenta",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Disable or enable an account",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5503,7 +5786,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ],
     "requestBody": {
@@ -5523,8 +5806,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Borrar varias cuentas",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Delete several accounts",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5577,8 +5860,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Enviar emails de contraseña",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nHasta 200 uids.",
+    "summary": "Send password emails",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nUp to 200 uids.",
     "security": [
      {
       "bearer": []
@@ -5626,13 +5909,187 @@
     }
    }
   },
+  "/admin/users/{uid}/removal": {
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Take an account out of my organizations",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nPermission `accounts.requestRemoval` (Club Admin). Removes the account from the organizations and tournaments in the scope of the caller. With `kind` DISABLE or DELETE it also asks the Super Admins to disable or delete the whole account. Never the own account or a Super Admin.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AccountRemovalResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Firebase Auth uid of the account."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AccountRemovalRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/admin/account-requests": {
+   "get": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Requests to disable or delete accounts",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `accounts.reviewRequests`. The open requests of the Club Admins.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AccountRequestsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/admin/account-requests/{requestId}": {
+   "post": {
+    "tags": [
+     "Admin"
+    ],
+    "summary": "Approve or reject a request",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `accounts.reviewRequests`. `approve: true` disables or deletes the account at once.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResolveAccountRequestResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "requestId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id of the request."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResolveAccountRequest"
+       }
+      }
+     }
+    }
+   }
+  },
   "/admin/users/{uid}/permissions": {
    "put": {
     "tags": [
      "Admin"
     ],
-    "summary": "Rol a medida y permisos de una cuenta",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nPermiso `accounts.manageStaff`. `levels.EDITOR` y `levels.CLUB_ADMIN` llevan `roleId` (null: rol estándar) y `permissions` (lista entera; null vuelve al rol; sin ella se mantienen los cambios). Solo con `permissions.manage` se mandan permisos sueltos; un Club Admin solo elige roles sin más permisos que los suyos, para cuentas de sus organizaciones. Nunca la propia cuenta ni un Super Admin.",
+    "summary": "Custom role and permissions of an account",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nPermission `accounts.manageStaff`. `levels.EDITOR` and `levels.CLUB_ADMIN` carry `roleId` (null: standard role) and `permissions` (the whole list; null goes back to the role; without it the changes stay). Only with `permissions.manage` can single permissions be sent; a Club Admin only chooses roles with no more permissions than its own, for accounts of its organizations. Never the own account or a Super Admin.",
     "security": [
      {
       "bearer": []
@@ -5676,7 +6133,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Uid de Firebase Auth de la cuenta."
+      "description": "Firebase Auth uid of the account."
      }
     ],
     "requestBody": {
@@ -5696,8 +6153,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Roles estándar y a medida",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nPermiso `accounts.view`. Incluye lo que puede tener cada base (`grantable`), lo que todo rol conserva (`required`) y cuántas cuentas usan cada rol a medida.",
+    "summary": "Standard and custom roles",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nPermission `accounts.view`. Includes what each base can have (`grantable`), what every role keeps (`required`) and how many accounts use each custom role.",
     "security": [
      {
       "bearer": []
@@ -5738,8 +6195,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Crear un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. Base EDITOR o CLUB_ADMIN; nombre de 1 a 40 caracteres, único. Responde 201.",
+    "summary": "Create a custom role",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `permissions.manage`. Base EDITOR or CLUB_ADMIN; a unique name of 1 to 40 characters. Answers 201.",
     "security": [
      {
       "bearer": []
@@ -5792,8 +6249,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Cambiar un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. La base no cambia. El cambio llega a las cuentas que lo usan.",
+    "summary": "Change a custom role",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `permissions.manage`. The base does not change. The change reaches the accounts that use it.",
     "security": [
      {
       "bearer": []
@@ -5837,7 +6294,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del rol a medida."
+      "description": "Id of the custom role."
      }
     ],
     "requestBody": {
@@ -5855,8 +6312,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Borrar un rol a medida",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nPermiso `permissions.manage`. Sus cuentas vuelven al rol estándar; `accounts` dice cuántas.",
+    "summary": "Delete a custom role",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nPermission `permissions.manage`. Its accounts go back to the standard role; `accounts` says how many.",
     "security": [
      {
       "bearer": []
@@ -5900,7 +6357,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del rol a medida."
+      "description": "Id of the custom role."
      }
     ]
    }
@@ -5910,8 +6367,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Buscar una cuenta",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).",
+    "summary": "Find an account",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -5955,7 +6412,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Email, uid o EMA id."
+      "description": "Email, uid or EMA number."
      }
     ]
    }
@@ -5963,10 +6420,10 @@
   "/admin/organizations": {
    "get": {
     "tags": [
-     "Organizaciones"
+     "Organizations"
     ],
-    "summary": "Organizaciones",
-    "description": "✏️ Editor o admin (claim `editor` o `admin`).\n\nClubs y federaciones dueños de los torneos, con `canEdit` y `canDelete` para quien pregunta.",
+    "summary": "Organizations",
+    "description": "✏️ Staff: editor, Club Admin or Super Admin, with the named permission of the route.\n\nClubs and federations that own the tournaments, with `canEdit` and `canDelete` for the caller.",
     "security": [
      {
       "bearer": []
@@ -6005,10 +6462,10 @@
    },
    "post": {
     "tags": [
-     "Organizaciones"
+     "Organizations"
     ],
-    "summary": "Crear una organización",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador. Responde 201.",
+    "summary": "Create an organization",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nSuper Admin only. Answers 201.",
     "security": [
      {
       "bearer": []
@@ -6059,10 +6516,10 @@
   "/admin/organizations/{organizationId}": {
    "put": {
     "tags": [
-     "Organizaciones"
+     "Organizations"
     ],
-    "summary": "Editar una organización",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSuperadministrador, o administrador de club de esa organización. Logo JPEG o PNG de hasta 2 MB.",
+    "summary": "Edit an organization",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nSuper Admin, or a Club Admin of that organization. Logo JPEG or PNG of up to 2 MB.",
     "security": [
      {
       "bearer": []
@@ -6106,7 +6563,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id de la organización."
+      "description": "Id of the organization."
      }
     ],
     "requestBody": {
@@ -6122,10 +6579,10 @@
    },
    "delete": {
     "tags": [
-     "Organizaciones"
+     "Organizations"
     ],
-    "summary": "Borrar una organización",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nSolo superadministrador, y solo si no organiza ningún torneo (409).",
+    "summary": "Delete an organization",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nSuper Admin only, and only when it organizes no tournament (409).",
     "security": [
      {
       "bearer": []
@@ -6169,7 +6626,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id de la organización."
+      "description": "Id of the organization."
      }
     ]
    }
@@ -6179,8 +6636,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Registro de actividad",
-    "description": "🛡️ Solo admin (claim `admin`).\n\nCambios de mesas y acciones de gestión, del más nuevo al más viejo.",
+    "summary": "Activity log",
+    "description": "🛡️ Super Admin, or the named permission of the route.\n\nChanges of tables and management actions, newest first.",
     "security": [
      {
       "bearer": []
@@ -6224,7 +6681,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Tamaño de página (máx. 50)."
+      "description": "Page size (max. 50)."
      },
      {
       "name": "source",
@@ -6233,7 +6690,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "all, tables u other."
+      "description": "all, tables or other."
      },
      {
       "name": "tournamentId",
@@ -6242,7 +6699,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Filtrar por torneo."
+      "description": "Filter by tournament."
      },
      {
       "name": "uid",
@@ -6251,7 +6708,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Filtrar por cuenta."
+      "description": "Filter by account."
      },
      {
       "name": "origin",
@@ -6260,7 +6717,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "admin, player o system."
+      "description": "admin, player or system."
      },
      {
       "name": "from",
@@ -6269,7 +6726,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Desde (ms epoch)."
+      "description": "From (ms epoch)."
      },
      {
       "name": "to",
@@ -6278,7 +6735,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Hasta (ms epoch)."
+      "description": "To (ms epoch)."
      },
      {
       "name": "q",
@@ -6287,7 +6744,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Texto libre (sin mayúsculas ni acentos)."
+      "description": "Free text (no capitals or accents)."
      },
      {
       "name": "cursor",
@@ -6296,7 +6753,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "`nextCursor` de la página anterior."
+      "description": "`nextCursor` of the previous page."
      }
     ]
    }
@@ -6306,8 +6763,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Errores de las apps agrupados",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "Errors of the apps, grouped",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -6351,7 +6808,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Máx. 200."
+      "description": "Max. 200."
      },
      {
       "name": "since",
@@ -6360,7 +6817,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Desde (ms epoch)."
+      "description": "From (ms epoch)."
      },
      {
       "name": "cursorAt",
@@ -6369,7 +6826,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Del `nextCursor`."
+      "description": "From `nextCursor`."
      },
      {
       "name": "cursorId",
@@ -6378,7 +6835,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Del `nextCursor`."
+      "description": "From `nextCursor`."
      }
     ]
    }
@@ -6388,8 +6845,8 @@
     "tags": [
      "Admin"
     ],
-    "summary": "Un grupo de errores con sus informes",
-    "description": "🛡️ Solo admin (claim `admin`).",
+    "summary": "One group of errors with its reports",
+    "description": "🛡️ Super Admin, or the named permission of the route.",
     "security": [
      {
       "bearer": []
@@ -6441,7 +6898,7 @@
       "schema": {
        "type": "integer"
       },
-      "description": "Máx. 50."
+      "description": "Max. 50."
      },
      {
       "name": "cursorAt",
@@ -6467,10 +6924,10 @@
   "/public/tournaments/{tournamentId}/registrations": {
    "get": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Lista pública de inscritos",
-    "description": "🌐 Público: sin cuenta.\n\nPlazas y lista de espera, sin emails, sin restricciones alimentarias y sin fecha de inscripción.",
+    "summary": "Public list of the registered people",
+    "description": "🌐 Public: no account.\n\nPlaces and waiting list, without emails, food restrictions or registration dates.",
     "security": [],
     "responses": {
      "200": {
@@ -6498,7 +6955,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -6506,10 +6963,10 @@
   "/public/registration-links/{slug}": {
    "get": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Torneo de un enlace público",
-    "description": "🌐 Público: sin cuenta.\n\nEl enlace corto `/<slug>` (y el antiguo `/inscripcion/<slug>`) abre este torneo.",
+    "summary": "Tournament of a public link",
+    "description": "🌐 Public: no account.\n\nThe short link `/<slug>` (and the old `/inscripcion/<slug>`) opens this tournament.",
     "security": [],
     "responses": {
      "200": {
@@ -6544,10 +7001,10 @@
   "/registrations/{tournamentId}": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Inscribirse",
-    "description": "🌐 Público: sin cuenta.\n\nSin cuenta: llega un email con el enlace para confirmar (estado PENDING). Con cuenta y EMA id: plaza o lista de espera al momento.",
+    "summary": "Register",
+    "description": "🌐 Public: no account.\n\nWithout an account: an email arrives with the link to confirm (status PENDING). With an account and an EMA number: a place or the waiting list at once.",
     "security": [],
     "responses": {
      "200": {
@@ -6575,7 +7032,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6593,10 +7050,10 @@
   "/registrations/{tournamentId}/confirm": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Confirmar el email",
-    "description": "🌐 Público: sin cuenta.\n\nEl enlace de los emails. Da plaza o lista de espera.",
+    "summary": "Confirm the email",
+    "description": "🌐 Public: no account.\n\nThe link of the emails. It gives a place or the waiting list.",
     "security": [],
     "responses": {
      "200": {
@@ -6624,7 +7081,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6642,10 +7099,10 @@
   "/registrations/{tournamentId}/me": {
    "get": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Mi inscripción",
-    "description": "🌐 Público: sin cuenta.\n\n404 si no hay.",
+    "summary": "My registration",
+    "description": "🌐 Public: no account.\n\n404 when there is none.",
     "security": [],
     "responses": {
      "200": {
@@ -6673,16 +7130,16 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    },
    "put": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Cambiar mis restricciones alimentarias",
-    "description": "🌐 Público: sin cuenta.\n\nNecesitan el consentimiento.",
+    "summary": "Change my food restrictions",
+    "description": "🌐 Public: no account.\n\nThey need the consent.",
     "security": [],
     "responses": {
      "200": {
@@ -6710,7 +7167,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6726,10 +7183,10 @@
    },
    "delete": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Darse de baja",
-    "description": "🌐 Público: sin cuenta.\n\nLa organización recibe un email.",
+    "summary": "Cancel my registration",
+    "description": "🌐 Public: no account.\n\nThe organization gets an email.",
     "security": [],
     "responses": {
      "200": {
@@ -6757,7 +7214,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -6765,10 +7222,10 @@
   "/registrations/{tournamentId}/me/team": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Crear un equipo (capitán)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Create a team (captain)",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -6796,7 +7253,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6812,10 +7269,10 @@
    },
    "put": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Renombrar el equipo (capitán)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Rename the team (captain)",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -6843,7 +7300,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6859,10 +7316,10 @@
    },
    "delete": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Salir del equipo",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Leave the team",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -6890,7 +7347,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    }
@@ -6898,10 +7355,10 @@
   "/registrations/{tournamentId}/me/team/members": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Añadir un miembro (capitán)",
-    "description": "🌐 Público: sin cuenta.\n\nUna persona inscrita y sin equipo.",
+    "summary": "Add a member (captain)",
+    "description": "🌐 Public: no account.\n\nA registered person without a team.",
     "security": [],
     "responses": {
      "200": {
@@ -6929,7 +7386,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -6947,10 +7404,10 @@
   "/registrations/{tournamentId}/me/team/members/{emaId}": {
    "delete": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Quitar un miembro (capitán)",
-    "description": "🌐 Público: sin cuenta.",
+    "summary": "Remove a member (captain)",
+    "description": "🌐 Public: no account.",
     "security": [],
     "responses": {
      "200": {
@@ -6978,7 +7435,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "emaId",
@@ -6987,7 +7444,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits)."
      }
     ]
    }
@@ -6995,10 +7452,10 @@
   "/registrations/{tournamentId}/no-ema": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "«No tengo número EMA»",
-    "description": "🌐 Público: sin cuenta.\n\nEnvía un mensaje a la organización. Límite por dirección.",
+    "summary": "«I have no EMA number»",
+    "description": "🌐 Public: no account.\n\nSends a message to the organization. Limit per address.",
     "security": [],
     "responses": {
      "200": {
@@ -7026,7 +7483,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -7044,10 +7501,10 @@
   "/tournaments/{tournamentId}/registrations": {
    "get": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Inscripciones (organización)",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCon emails, pagos y restricciones alimentarias. Permiso `tournament.playerEmails`.",
+    "summary": "Registrations (organization)",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nWith emails, payments and food restrictions, and the `problems` and `fileEmaId` of the rows of an import. Permission `tournament.playerEmails`.",
     "security": [
      {
       "bearer": []
@@ -7091,16 +7548,16 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ]
    },
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Añadir una persona",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).",
+    "summary": "Add a person",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).",
     "security": [
      {
       "bearer": []
@@ -7144,7 +7601,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -7162,10 +7619,10 @@
   "/tournaments/{tournamentId}/registrations/import": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Importar el Google Form",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCSV o Excel de las respuestas. `apply: false` solo comprueba las filas.",
+    "summary": "Import the Google Form",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nCSV or Excel file of the answers. `apply: false` only checks the rows and says in `replaced` how many registrations the list has. `apply: true` REPLACES the list (registrations and teams, without emails); rows with problems (INVALID_EMA, DUPLICATE_EMA, EMA_NOT_FOUND, INVALID_EMAIL) are imported too, marked, and a row without a valid EMA number gets the id `row-<line>`.",
     "security": [
      {
       "bearer": []
@@ -7209,7 +7666,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -7227,10 +7684,10 @@
   "/tournaments/{tournamentId}/registrations/{emaId}": {
    "put": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Cambiar una inscripción",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nEmail, estado (dar plaza o pasar a espera), pagado, equipo y restricciones.",
+    "summary": "Change a registration",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nEmail (a new one clears INVALID_EMAIL), status (give a place or move to the waiting list), paid, team and restrictions. `newEmaId` moves a row of an import to the right EMA number and clears its EMA problems (409 ALREADY_REGISTERED when that number is in the list).",
     "security": [
      {
       "bearer": []
@@ -7274,7 +7731,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "emaId",
@@ -7283,7 +7740,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits), or `row-<line>` for a row of an import without a valid EMA number."
      }
     ],
     "requestBody": {
@@ -7299,10 +7756,10 @@
    },
    "delete": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Quitar una inscripción",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\n`notify=false` no envía el email.",
+    "summary": "Remove a registration",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\n`notify=false` sends no email.",
     "security": [
      {
       "bearer": []
@@ -7346,7 +7803,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      },
      {
       "name": "emaId",
@@ -7355,7 +7812,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "EMA id (8 cifras)."
+      "description": "EMA number (8 digits), or `row-<line>` for a row of an import without a valid EMA number."
      },
      {
       "name": "notify",
@@ -7364,7 +7821,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "true o false."
+      "description": "true or false."
      }
     ]
    }
@@ -7372,10 +7829,10 @@
   "/tournaments/{tournamentId}/registration-settings": {
    "put": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Ajustes de las inscripciones",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nAbrir o cerrar, plazas, último día y enlace.",
+    "summary": "Settings of the registrations",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nOpen or close, places, last day and link.",
     "security": [
      {
       "bearer": []
@@ -7419,7 +7876,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -7437,10 +7894,10 @@
   "/tournaments/{tournamentId}/draw": {
    "post": {
     "tags": [
-     "Inscripciones"
+     "Registrations"
     ],
-    "summary": "Hacer el sorteo",
-    "description": "✏️ Admin, o editor asignado a este torneo (`tournaments/{id}/members/{uid}`).\n\nCon las inscripciones cerradas: la app calcula rondas y mesas y reparte las personas confirmadas en los huecos.",
+    "summary": "Make the draw",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nWith the registrations closed: the app computes the rounds and the tables and places the confirmed people in the slots. 409 with `details.code`: REGISTRATION_OPEN, BAD_PLAYER_COUNT, IMPORT_PROBLEMS (a person with a place has no valid EMA number yet; `details.emaIds`), INCOMPLETE_TEAMS, BAD_ASSIGNMENTS or DRAW_MADE.",
     "security": [
      {
       "bearer": []
@@ -7484,7 +7941,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Id del torneo."
+      "description": "Id of the tournament."
      }
     ],
     "requestBody": {
@@ -7510,7 +7967,7 @@
   },
   "responses": {
    "E400": {
-    "description": "Petición no válida (`bad_request`). `details` dice qué campo falla.",
+    "description": "Request not valid (`bad_request`). `details` says which field fails.",
     "content": {
      "application/json": {
       "schema": {
@@ -7520,7 +7977,7 @@
     }
    },
    "E401": {
-    "description": "Sin token, token caducado (`unauthenticated`) o App Check rechazado (`app_check_failed`, solo en modo enforce).",
+    "description": "No token, an expired token (`unauthenticated`) or App Check refused (`app_check_failed`, only in enforce mode).",
     "content": {
      "application/json": {
       "schema": {
@@ -7530,7 +7987,7 @@
     }
    },
    "E403": {
-    "description": "La cuenta no tiene permiso (`forbidden`).",
+    "description": "The account has no permission (`forbidden`).",
     "content": {
      "application/json": {
       "schema": {
@@ -7540,7 +7997,7 @@
     }
    },
    "E404": {
-    "description": "No existe (`not_found`).",
+    "description": "It does not exist (`not_found`).",
     "content": {
      "application/json": {
       "schema": {
@@ -7550,7 +8007,7 @@
     }
    },
    "E409": {
-    "description": "Conflicto (`conflict`): la mesa cambió en el servidor, el EMA id ya tiene dueño, el fichero tiene errores…",
+    "description": "Conflict (`conflict`): the table changed on the server, the EMA number has an owner, the file has errors, the draw is not ready… `details.code` says which.",
     "content": {
      "application/json": {
       "schema": {
@@ -7560,7 +8017,7 @@
     }
    },
    "E429": {
-    "description": "Demasiadas peticiones (`too_many_requests`).",
+    "description": "Too many requests (`too_many_requests`).",
     "content": {
      "application/json": {
       "schema": {
@@ -7872,6 +8329,18 @@
      },
      "sharedEmail": {
       "type": "boolean"
+     },
+     "problems": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "fileEmaId": {
+      "type": [
+       "string",
+       "null"
+      ]
      }
     },
     "required": [
@@ -7939,6 +8408,13 @@
        "string",
        "null"
       ]
+     },
+     "newEmaId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "Another EMA number, to fix a row of an import."
      }
     }
    },
@@ -8585,14 +9061,14 @@
      "error": {
       "type": "string",
       "example": "conflict",
-      "description": "Código estable del error."
+      "description": "Stable code of the error."
      },
      "message": {
       "type": "string",
-      "description": "Texto para personas (en inglés)."
+      "description": "Text for people (in English)."
      },
      "details": {
-      "description": "Datos extra, p. ej. `{ code: \"FILE_HAS_ERRORS\" }` o el estado actual de la mesa."
+      "description": "Extra data, such as `{ code: \"FILE_HAS_ERRORS\" }` or the current state of the table."
      }
     }
    },
@@ -10451,6 +10927,11 @@
      "imported": {
       "type": "integer",
       "format": "int32"
+     },
+     "replaced": {
+      "type": "integer",
+      "format": "int32",
+      "description": "How many registrations the list has now: the import replaces them all."
      }
     }
    },

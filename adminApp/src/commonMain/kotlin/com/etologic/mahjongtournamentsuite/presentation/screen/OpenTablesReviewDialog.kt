@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
@@ -39,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
@@ -93,14 +93,10 @@ internal fun OpenTablesReviewDialog(
             text = {
                 Column {
                     TableRow(
-                        checkbox = {
-                            Checkbox(
-                                checked = tables.isNotEmpty() && selected.size == tables.size,
-                                enabled = !busy,
-                                onCheckedChange = { all -> picked = if (all) tables.toSet() else emptySet() },
-                                modifier = Modifier.testTag("open_tables_select_all"),
-                            )
-                        },
+                        checked = tables.isNotEmpty() && selected.size == tables.size,
+                        enabled = !busy,
+                        onCheckedChange = { all -> picked = if (all) tables.toSet() else emptySet() },
+                        checkTag = "open_tables_select_all",
                         round = stringResource(Res.string.round_control_finished_col_round),
                         table = stringResource(Res.string.round_control_finished_col_table),
                         hands = stringResource(Res.string.round_control_finished_col_hands),
@@ -119,14 +115,10 @@ internal fun OpenTablesReviewDialog(
                             tables.forEachIndexed { index, table ->
                                 if (index > 0) HorizontalDivider()
                                 TableRow(
-                                    checkbox = {
-                                        Checkbox(
-                                            checked = table in selected,
-                                            enabled = !busy,
-                                            onCheckedChange = { on -> picked = if (on) selected + table else selected - table },
-                                            modifier = Modifier.testTag("open_table_${table.roundId}_${table.tableId}_check"),
-                                        )
-                                    },
+                                    checked = table in selected,
+                                    enabled = !busy,
+                                    onCheckedChange = { on -> picked = if (on) selected + table else selected - table },
+                                    checkTag = "open_table_${table.roundId}_${table.tableId}_check",
                                     round = table.roundId.toString(),
                                     table = table.tableId.toString(),
                                     hands = handsByTable?.let { counts -> counts[table]?.toString() ?: "?" } ?: "…",
@@ -175,7 +167,10 @@ internal fun OpenTablesReviewDialog(
 /** One row of the review: a checkbox, three short columns and the button of the last one. */
 @Composable
 private fun TableRow(
-    checkbox: @Composable () -> Unit,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    checkTag: String,
     round: String,
     table: String,
     hands: String,
@@ -190,10 +185,18 @@ private fun TableRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        checkbox()
-        Text(round, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-        Text(table, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-        Text(hands, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        // A tap on the round, the table or the hands checks the line too: only the button does something else.
+        MtsCheckboxRow(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            gap = 4.dp,
+            modifier = Modifier.weight(1f).testTag(checkTag),
+        ) {
+            Text(round, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            Text(table, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            Text(hands, style = style, fontWeight = weight, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        }
         // The button keeps its natural width, so its label never breaks.
         Box(contentAlignment = Alignment.Center) { action() }
     }

@@ -7,7 +7,7 @@ import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "./tournamentContentR
 import { overwriteTournamentPlayers } from "./tournamentContentService";
 import { drawProblem, type DrawTable } from "./tournamentDraw";
 import { commitContentWrites, getTournament, tournamentContentWrites, type Tournament } from "./tournamentsService";
-import { listStored, loadTournament, TEAMS, type StoredRegistration } from "./registrationsService";
+import { EMA_PROBLEMS, listStored, loadTournament, TEAMS, type StoredRegistration } from "./registrationsService";
 import { TEAM_SIZE } from "./registrationSettings";
 
 export type DrawAssignment = { playerId: number; emaId: string };
@@ -116,6 +116,10 @@ export async function makeDrawFromRegistrations(params: {
   if (!tournament.drawPending) throw conflict("The draw is already made", { code: "DRAW_MADE" });
   if (tournament.settings.status === "OPEN") throw conflict("Close the registrations first", { code: "REGISTRATION_OPEN" });
   const confirmed = (await listStored(tournament)).filter((registration) => registration.status === "CONFIRMED");
+  const withoutEma = confirmed.filter((registration) => registration.problems.some((problem) => EMA_PROBLEMS.includes(problem)));
+  if (withoutEma.length > 0) {
+    throw conflict("Some people with a place have no valid EMA number", { code: "IMPORT_PROBLEMS", emaIds: withoutEma.map((registration) => registration.emaId) });
+  }
   const numPlayers = confirmed.length;
   if (!isValidPlayerCount(numPlayers)) {
     throw conflict(`The confirmed players must be a multiple of 4 and at least ${MIN_TOURNAMENT_PLAYERS}`, { code: "BAD_PLAYER_COUNT", confirmed: numPlayers });

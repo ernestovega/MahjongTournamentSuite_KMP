@@ -590,6 +590,7 @@
     <string name="registration_error_ema_not_found">Dit EMA-nummer staat niet in het EMA-register.</string>
     <string name="registration_error_empty_file">Het bestand is leeg.</string>
     <string name="registration_error_food_too_long">De voedselbeperkingen mogen maximaal 300 tekens hebben.</string>
+    <string name="registration_error_import_problems">Sommige mensen met een plaats hebben nog geen geldig EMA-nummer. Kies de juiste persoon in de lijst vóór de loting.\nZonder EMA-nummer: %1$s.</string>
     <string name="registration_error_incomplete_teams">Iedereen heeft vóór de loting een team van 4 nodig.\nZonder volledig team: %1$s.</string>
     <string name="registration_error_invalid_close_date">De laatste inschrijfdag is geen geldige datum.</string>
     <string name="registration_error_invalid_email">Vul een geldig e-mailadres in.</string>
@@ -618,7 +619,7 @@
     <string name="registration_error_bad_waiting">Er zijn meer personen van de wachtlijst dan nieuwe plaatsen.</string>
     <string name="registration_error_draw_pending">Het toernooi heeft nog geen loting.</string>
     <string name="registration_error_not_waiting">Iemand die je koos staat niet meer op de wachtlijst. Open het venster opnieuw.</string>
-    <string name="registration_error_partial_team">Een team vertrekt in zijn geheel: kies hele teams.</string>
+    <string name="registration_error_partial_team">Elk team moet 4 spelers hebben. Vul de teams aan in de stap Teams.</string>
     <string name="registration_error_same_player_count">Het toernooi heeft al dat aantal spelers.</string>
     <string name="registration_error_tournament_completed">Het toernooi is afgelopen.</string>
     <string name="registration_error_tournament_started">Het toernooi heeft al gegevens aan zijn tafels. De loting kan niet meer wijzigen.</string>

@@ -55,6 +55,8 @@ data class AdminRegistrationDto(
     val registeredAt: String = "",
     val hasAccount: Boolean = false,
     val sharedEmail: Boolean = false,
+    val problems: List<String> = emptyList(),
+    val fileEmaId: String? = null,
 )
 
 @Serializable
@@ -78,6 +80,7 @@ data class OwnRegistrationDto(
     val email: String = "",
     val foodRestrictions: String = "",
     val manageToken: String = "",
+    val sharedEmail: Boolean = false,
 )
 
 @Serializable
@@ -144,6 +147,8 @@ data class AdminUpdateRegistrationRequestDto(
     val paid: Boolean? = null,
     val teamName: String? = null,
     val foodRestrictions: String? = null,
+    /** Another EMA number, to fix a row of an import. */
+    val newEmaId: String? = null,
 )
 
 @Serializable
@@ -181,6 +186,8 @@ data class RegistrationImportRowDto(
 data class RegistrationImportDto(
     val rows: List<RegistrationImportRowDto> = emptyList(),
     val imported: Int = 0,
+    /** How many registrations the list has now: the import replaces them all. */
+    val replaced: Int = 0,
 )
 
 @Serializable

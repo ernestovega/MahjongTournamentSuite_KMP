@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -22,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -70,6 +67,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_EXT
 import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
@@ -683,27 +681,21 @@ fun CreateTournamentDialog(
                                         modifier = Modifier.fillMaxWidth(),
                                         interactionSource = teamsToggleInteractionSource,
                                     ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Switch(
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            MtsSwitchRow(
                                                 checked = isTeams,
                                                 onCheckedChange = ::setTeamsChecked,
                                                 enabled = !isLoading,
+                                                switchFirst = true,
+                                                gap = 12.dp,
                                                 interactionSource = teamsToggleInteractionSource,
-                                            )
-                                            Text(
-                                                text = stringResource(Res.string.teams),
-                                                modifier = Modifier.toggleable(
-                                                    value = isTeams,
-                                                    enabled = !isLoading,
-                                                    role = Role.Switch,
-                                                    interactionSource = teamsToggleInteractionSource,
-                                                    indication = null,
-                                                    onValueChange = ::setTeamsChecked,
-                                                ),
-                                            )
+                                                modifier = Modifier.weight(1f, fill = false),
+                                            ) {
+                                                Text(
+                                                    text = stringResource(Res.string.teams),
+                                                    modifier = Modifier.weight(1f, fill = false).padding(end = 12.dp),
+                                                )
+                                            }
                                             InfoTooltipIcon(
                                                 stringResource(Res.string.create_teams_info),
                                             )
@@ -731,28 +723,22 @@ fun CreateTournamentDialog(
                                             modifier = Modifier.fillMaxWidth(),
                                             interactionSource = computeToggleInteractionSource,
                                         ) {
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
                                                 val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                                                Switch(
+                                                MtsSwitchRow(
                                                     checked = isHeavy,
                                                     onCheckedChange = ::setHeavyCompute,
                                                     enabled = !isLoading,
+                                                    switchFirst = true,
+                                                    gap = 12.dp,
                                                     interactionSource = computeToggleInteractionSource,
-                                                )
-                                                Text(
-                                                    text = stringResource(Res.string.heavy_computing),
-                                                    modifier = Modifier.toggleable(
-                                                        value = isHeavy,
-                                                        enabled = !isLoading,
-                                                        role = Role.Switch,
-                                                        interactionSource = computeToggleInteractionSource,
-                                                        indication = null,
-                                                        onValueChange = ::setHeavyCompute,
-                                                    ),
-                                                )
+                                                    modifier = Modifier.weight(1f, fill = false),
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(Res.string.heavy_computing),
+                                                        modifier = Modifier.weight(1f, fill = false).padding(end = 12.dp),
+                                                    )
+                                                }
                                                 InfoTooltipIcon(stringResource(Res.string.create_heavy_info))
                                             }
                                         }

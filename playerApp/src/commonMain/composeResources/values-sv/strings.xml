@@ -289,6 +289,8 @@
     <string name="preg_food_hint">Allergier, intoleranser eller dieter. Privat: bara arrangören ser det.</string>
     <string name="preg_consent">Jag godkänner att arrangören sparar uppgiften för att förbereda maten på turneringen.</string>
     <string name="preg_manage_title">Min anmälan</string>
+    <string name="preg_shared_email_note">En annan anmälan till den här turneringen använder också %1$s. Det går bra, till exempel för en förälder och ett barn.
+Men en e-post kan bara ha ett konto i appen: den som vill ha ett eget konto behöver en egen e-post. Många leverantörer, som Gmail, tar ett alias med +, till exempel namn+barn@gmail.com, som kommer till samma inkorg.</string>
     <string name="preg_save">Spara</string>
     <string name="preg_team">Lag</string>
     <string name="preg_team_info">Ett lag har %1$d personer.\n• Kaptenen skapar det och lägger till de andra, som måste vara anmälda.\n• De andra behöver inte skapa något: de väntar på att läggas till.</string>

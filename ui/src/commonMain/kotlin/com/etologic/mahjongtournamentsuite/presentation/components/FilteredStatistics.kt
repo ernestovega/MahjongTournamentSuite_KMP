@@ -132,7 +132,7 @@ private fun SlotContent(data: TournamentStatisticsData, slotId: Int, onFiltersCh
     val places = rankings.second.mapNotNull { (round, byRound) ->
         byRound.players.firstOrNull { it.playerId == slotId }?.let { round to it.position }
     }.toMap()
-    ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth()) }
+    ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth(), places = places, of = data.slots.size) }
     val stats = data.statistics.players.firstOrNull { it.playerId == slotId }
     if (stats == null) {
         AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_empty_message))
