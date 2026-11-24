@@ -15,8 +15,9 @@ in its CDN and every viewer of a tournament shares one call to the function.
 | --- | --- | --- |
 | `GET /public/tournaments` | All public tournaments, without the creator | 60 s |
 | `GET /public/tournaments/:id` | One tournament | 15 s in play, 300 s completed |
-| `GET /public/tournaments/:id/sync/manifest` | The revisions of the tournament | 15 s in play, 300 s completed |
-| `GET /public/tournaments/:id/players`, `teams`, `rounds`, `tables`, `tables-with-hands`, `rounds/:r/tables-with-hands`, `tables/:r/:t` | The content of the tournament. Players never carry an email or an account | 15 s in play, 300 s completed |
+| `GET /public/tournaments/:id/sync/manifest` | The revisions of the tournament | 2 s in play, 300 s completed |
+| `GET /public/tournaments/:id/players`, `teams`, `rounds` | The content of the tournament. Players never carry an email or an account | 15 s in play, 300 s completed |
+| `GET /public/tournaments/:id/tables`, `tables-with-hands`, `rounds/:r/tables-with-hands`, `tables/:r/:t` | The tables and their hands | 2 s in play, 300 s completed |
 | `GET /public/tournaments/:id/registrations` | The registrations before the draw: name, flag, EMA number, status, position, team. No email, no food restrictions, no date (docs/registrations.md) | 15 s |
 | `GET /public/registration-links/:slug` | The tournament of the public link `/<slug>` (and the old `/inscripcion/<slug>`) | 60 s |
 | `GET /public/statistics/overview` | Sums and leaderboards of all tournaments | 60 s |
@@ -27,6 +28,9 @@ in its CDN and every viewer of a tournament shares one call to the function.
 | `GET /me` (token) | The EMA number of the account, its slot and team in each tournament, and its registrations (`CONFIRMED` or `WAITING`) in the tournaments before their draw | none |
 
 A browser keeps an answer for 5 seconds at most (`max-age`), so polling sees new data soon after the CDN does.
+The manifest and the tables of a tournament in play stay 2 s (`PUBLIC_CACHE_SECONDS.playing`), because the own table of
+a player checks every 2 s and the players every 5 s (`PollSchedule`). `CacheCoverageTest` fails if the CDN keeps them
+longer than the fastest check.
 A hidden tournament answers 404 on every public route.
 
 ## Hidden tournaments

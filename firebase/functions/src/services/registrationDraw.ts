@@ -2,7 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { auth, db } from "../firebase";
 import { badRequest, conflict } from "../api/httpError";
-import { bumpGlobalDataVersion } from "./dataVersionsService";
+import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "./tournamentContentRules";
 import { overwriteTournamentPlayers } from "./tournamentContentService";
 import { drawProblem, type DrawTable } from "./tournamentDraw";
@@ -157,6 +157,10 @@ export async function makeDrawFromRegistrations(params: {
       drawPending: false,
       "registration.status": "CLOSED",
       tablesWithProgress: 0,
+      // The rounds and the tables are new. The apps that read them before the draw (none) must read them again.
+      ...tournamentVersionUpdate("rounds"),
+      ...tournamentVersionUpdate("tables"),
+      ...tournamentVersionUpdate("draw"),
       updatedAt: FieldValue.serverTimestamp(),
     });
     await overwriteTournamentPlayers({

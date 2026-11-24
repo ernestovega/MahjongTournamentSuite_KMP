@@ -375,6 +375,8 @@ export async function changePlayerCount(params: {
       ...tournamentVersionUpdate("teams"),
       ...tournamentVersionUpdate("tables"),
       ...tournamentVersionUpdate("rounds"),
+      // Tables were removed or got other players without a save, so the apps read every table again.
+      ...tournamentVersionUpdate("draw"),
       updatedAt: now,
     });
   } catch (error) {

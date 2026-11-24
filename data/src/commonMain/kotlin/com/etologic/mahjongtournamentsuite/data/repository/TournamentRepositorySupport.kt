@@ -37,6 +37,9 @@ internal fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     startTime = startTime,
 )
 
+/** The revision of the draw of the tables. Older servers do not send it: 0. */
+internal fun DataVersionsManifestDto.drawRevision(): Long = resources["draw"]?.revision ?: 0
+
 internal fun DataVersionsManifestDto.toDomain(): TournamentManifest = TournamentManifest(
     tablesRevision = resources["tables"]?.revision ?: 0,
     playersRevision = resources["players"]?.revision ?: 0,

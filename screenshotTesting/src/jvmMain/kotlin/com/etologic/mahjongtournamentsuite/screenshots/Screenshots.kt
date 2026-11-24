@@ -1,13 +1,16 @@
 package com.etologic.mahjongtournamentsuite.screenshots
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.runDesktopComposeUiTest
+import androidx.compose.ui.unit.Density
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
@@ -33,10 +36,21 @@ enum class ScreenSize(val width: Int, val height: Int) {
 /** The languages of the apps besides English. A screen and a dialog get a screenshot in each one, see [allVariants]. */
 val otherLanguages: List<String> = listOf("de", "es", "fr", "it", "nl", "ru", "sv")
 
-/** One screenshot of a screen: a window size, a theme and a language (English when [language] is null). */
-data class Variant(val size: ScreenSize, val dark: Boolean, val language: String? = null) {
-    val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}${language?.let { "-$it" }.orEmpty()}.png"
+/**
+ * One screenshot of a screen: a window size, a theme, a language (English when [language] is null) and the size of the
+ * text that the user chose in the system settings ([fontScale], 1 is the normal size).
+ */
+data class Variant(val size: ScreenSize, val dark: Boolean, val language: String? = null, val fontScale: Float = 1f) {
+    val fileName: String get() =
+        "${size.name.lowercase()}-${if (dark) "dark" else "light"}${language?.let { "-$it" }.orEmpty()}" +
+            (if (fontScale == 1f) "" else "-font${(fontScale * 100).toInt()}") + ".png"
 }
+
+/**
+ * A phone, light, with the large text of the accessibility settings (Android allows up to 2×): the texts that are cut or
+ * overlap when a player needs bigger letters (audit 2026-11-24, item 10).
+ */
+val phoneWithLargeText: List<Variant> = listOf(1.5f, 2f).map { Variant(ScreenSize.Phone, dark = false, fontScale = it) }
 
 /** A small phone, light, in each language besides English: the texts that do not fit or break the layout of a dialog. */
 val narrowInEveryLanguage: List<Variant> = otherLanguages.map { Variant(ScreenSize.Narrow, dark = false, language = it) }
@@ -53,15 +67,16 @@ val componentVariants: List<Variant> = listOf(Variant(ScreenSize.Phone, false), 
  * texts that do not fit.
  */
 val dialogVariants: List<Variant> =
-    listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) } + narrowInEveryLanguage
+    listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) } + narrowInEveryLanguage +
+        phoneWithLargeText
 
 /** A component that is a dialog: [componentVariants] and the small phone in every other language. */
 val componentDialogVariants: List<Variant> = componentVariants + narrowInEveryLanguage
 
-/** Screens: phone, tablet and desktop, light and dark, and the phone in every other language. */
+/** Screens: phone, tablet and desktop, light and dark, the phone in every other language and the phone with large text. */
 val allVariants: List<Variant> =
     listOf(ScreenSize.Phone, ScreenSize.Tablet, ScreenSize.Desktop).flatMap { size -> listOf(Variant(size, false), Variant(size, true)) } +
-        phoneInEveryLanguage
+        phoneInEveryLanguage + phoneWithLargeText
 
 /** Small differences of antialiasing between machines do not fail a test; a changed color or a moved text does. */
 @OptIn(ExperimentalRoborazziApi::class)
@@ -92,11 +107,16 @@ fun screenshots(
         Locale.setDefault(variant.language?.let(Locale::forLanguageTag) ?: locale)
         try {
             runDesktopComposeUiTest(variant.size.width, variant.size.height) {
-                setContent { content(variant) }
+                setContent {
+                    val density = LocalDensity.current
+                    CompositionLocalProvider(LocalDensity provides Density(density.density, variant.fontScale)) { content(variant) }
+                }
                 waitForIdle()
                 try {
                     ready()
                 } catch (e: Throwable) {
+                    // With large text the awaited text can be pushed below the window: the screen is ready, it shows less.
+                    if (variant.fontScale != 1f) return@runDesktopComposeUiTest captureLarge(name, variant)
                     // The image of a screen that never got ready shows why: an error, an empty list, another text.
                     val file = File("build/outputs/roborazzi/not-ready/$name/${variant.fileName}").apply { parentFile.mkdirs() }
                     ImageIO.write(onAllNodes(isRoot()).onFirst().captureToImage().toAwtImage(), "png", file)
@@ -116,6 +136,12 @@ fun screenshots(
         failures.forEach(error::addSuppressed)
         throw error
     }
+}
+
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.captureLarge(name: String, variant: Variant) {
+    waitForIdle()
+    onAllNodes(isRoot()).onFirst().captureRoboImage("screenshots/$name/${variant.fileName}", roborazziOptions = options)
 }
 
 /** [screenshots] with the content inside [MtsTheme], light or dark as the variant says. */

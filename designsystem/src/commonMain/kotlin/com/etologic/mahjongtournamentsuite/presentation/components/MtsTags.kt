@@ -14,7 +14,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,7 +51,11 @@ fun MtsTintedChip(icon: ImageVector, text: String, accent: Color, modifier: Modi
             Icon(icon, contentDescription = null, Modifier.size(if (small) 13.dp else 16.dp), tint = accent)
             Text(
                 text,
-                style = if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                // A soft white glow behind the letters only, so the colored text stands out from its tinted pill
+                // (Ernesto, 2026-11-24). In the dark theme the glow would wash the text out, so it is not drawn.
+                style = (if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge).let { style ->
+                    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) style else style.copy(shadow = Shadow(Color.White, Offset.Zero, blurRadius = 6f))
+                },
                 fontWeight = FontWeight.SemiBold,
                 color = accent,
             )

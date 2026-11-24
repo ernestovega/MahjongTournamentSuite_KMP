@@ -14,6 +14,10 @@ resizes something on a screen fails the test and shows where.
   de, es, fr, it, nl, ru, sv), and every dialog on a small phone (`narrow-light-<language>.png`, 360×760 dp). They show
   the texts that are missing, cut or too long in a language. A new screen or dialog gets them from `allVariants`,
   `dialogVariants` or `componentDialogVariants`.
+- Every screen and dialog is also drawn on the phone, light, with the large text of the accessibility settings:
+  `phone-light-font150.png` and `phone-light-font200.png` (1.5× and 2×, Android allows up to 2×). They show the texts
+  that are cut or overlap for a player who needs bigger letters. With large text a `ready` text pushed below the window
+  does not fail the test: the screen is captured as it is.
 - A `ready` step that waits for or clicks a text must find it in every language: it takes the text from the resources
   with `playerText("key")`, `adminText("key")` or `uiText("key")` (`resourceText` of `:screenshotTesting`), never an
   English literal. Names and numbers of the fake data are the same in every language.

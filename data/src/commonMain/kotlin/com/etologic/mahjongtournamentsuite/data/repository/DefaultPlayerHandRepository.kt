@@ -43,7 +43,7 @@ class DefaultPlayerHandRepository(
                 expectedVersion = expectedVersion,
             ),
         )
-        cache.markStale("tournament:$tournamentId:tables")
+        cache.markStale(tablesOf(tournamentId))
     }
 
     override suspend fun previewHand(
@@ -63,7 +63,7 @@ class DefaultPlayerHandRepository(
         expectedVersion: Long,
     ): AppResult<HandPreview> = request("Recording hand") { token ->
         backendApi.recordHand(token, tournamentId, roundId, tableId, proposal.toDto(expectedVersion)).toDomain()
-            .also { cache.markStale("tournament:$tournamentId:tables") }
+            .also { cache.markStale(tablesOf(tournamentId)) }
     }
 
     override suspend fun assignSeats(
@@ -87,7 +87,7 @@ class DefaultPlayerHandRepository(
                 expectedVersion = expectedVersion,
             ),
         )
-        cache.markStale("tournament:$tournamentId:tables")
+        cache.markStale(tablesOf(tournamentId))
     }
 
     private suspend fun <T : Any> request(action: String, block: suspend (String) -> T): AppResult<T> =
@@ -103,6 +103,9 @@ class DefaultPlayerHandRepository(
             },
         )
 }
+
+/** The prefix of every cached table of the tournament: one table (`table:`), the lists (`tables:`) and the rounds with hands. */
+private fun tablesOf(tournamentId: String) = "tournament:$tournamentId:table"
 
 private fun HandProposal.toDto(expectedVersion: Long?) = HandRequestDto(
     playerWinnerId = winnerSlotId?.toString().orEmpty(),
