@@ -120,7 +120,10 @@
     <string name="stats_empty_title">Ancora nessuna statistica</string>
     <string name="stats_empty_message">Le statistiche compaiono quando si completa il primo tavolo.</string>
     <string name="stats_hand_stats_missing">Le statistiche delle mani richiedono tavoli con mani inserite. Nessun tavolo qui ne ha.</string>
-    <string name="stats_hand_values_use">I valori delle mani usano %1$d tavoli su %2$d.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">I valori delle mani usano %1$d tavolo su %2$d.</item>
+        <item quantity="other">I valori delle mani usano %1$d tavoli su %2$d.</item>
+    </plurals>
     <string name="card_fold">Comprimi</string>
     <string name="card_unfold">Espandi</string>
     <string name="more_information">Altre informazioni</string>
@@ -193,7 +196,10 @@
     <string name="stat_penalties_info">Questo è il numero di penalità.\nIl numero tra parentesi è il totale dei punti persi.</string>
     <string name="round_n">Turno %1$d</string>
     <string name="table_n">Tavolo %1$d</string>
-    <string name="places_history_title">Posto negli ultimi %1$d tavoli</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Posto nell'ultimo tavolo</item>
+        <item quantity="other">Posto negli ultimi %1$d tavoli</item>
+    </plurals>
     <string name="leader_best_hand_value">Miglior valore medio della mano</string>
     <string name="leader_best_win_rate">Migliore percentuale di vittorie</string>
     <string name="leader_lowest_deal_in">Minore percentuale di sconfitte su scarto</string>

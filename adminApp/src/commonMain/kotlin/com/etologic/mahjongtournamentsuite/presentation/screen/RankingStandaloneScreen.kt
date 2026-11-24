@@ -129,6 +129,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.teams
 import mahjongtournamentsuite.adminapp.generated.resources.the_ranking_shows_when_the_first
 import mahjongtournamentsuite.adminapp.generated.resources.use_a_longer_page_interval
 import mahjongtournamentsuite.adminapp.generated.resources.use_a_shorter_page_interval
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -456,7 +457,7 @@ private fun RankingControls(
             ) {
                 Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.show_fewer_rows))
             }
-            Text(stringResource(Res.string.rows_count, rowsPerScroll))
+            Text(pluralStringResource(Res.plurals.rows_count, rowsPerScroll, rowsPerScroll))
             FocusedIconButton(
                 onClick = {
                     onRowsChanged((rowsPerScroll + 1).coerceAtMost(minOf(MAX_ROWS_PER_SCROLL, maxVisibleRows)))

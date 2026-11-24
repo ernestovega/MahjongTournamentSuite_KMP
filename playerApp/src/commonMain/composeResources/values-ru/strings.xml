@@ -258,7 +258,12 @@
     <string name="preg_open_detail">Зарегистрироваться может любой человек с номером EMA.</string>
     <string name="preg_closed_detail">Сейчас регистрация недоступна.\nОрганизаторы опубликуют здесь жеребьёвку.</string>
     <string name="preg_places_value">Занято %1$d из %2$d мест</string>
-    <string name="preg_places_value_no_limit">Зарегистрировано: %1$d, без ограничения мест</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">Зарегистрирован %1$d человек, без ограничения мест</item>
+        <item quantity="few">Зарегистрировано %1$d человека, без ограничения мест</item>
+        <item quantity="many">Зарегистрировано %1$d человек, без ограничения мест</item>
+        <item quantity="other">Зарегистрировано %1$d человека, без ограничения мест</item>
+    </plurals>
     <string name="preg_waiting_value">В листе ожидания: %1$d</string>
     <string name="preg_waiting_none">Лист ожидания пуст</string>
     <string name="preg_closes_until">До %1$s включительно</string>

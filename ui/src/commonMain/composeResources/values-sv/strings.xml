@@ -119,7 +119,10 @@
     <string name="stats_empty_title">Ingen statistik än</string>
     <string name="stats_empty_message">Statistiken visas när första bordet är klart.</string>
     <string name="stats_hand_stats_missing">Handstatistik kräver bord med inmatade händer. Inget bord här har det.</string>
-    <string name="stats_hand_values_use">Handvärdena bygger på %1$d av %2$d bord.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Handvärdena bygger på %1$d av %2$d bord.</item>
+        <item quantity="other">Handvärdena bygger på %1$d av %2$d bord.</item>
+    </plurals>
     <string name="card_fold">Fäll ihop</string>
     <string name="card_unfold">Fäll ut</string>
     <string name="more_information">Mer information</string>
@@ -192,7 +195,10 @@
     <string name="stat_penalties_info">Det här är antalet straff.\nTalet inom parentes är summan av förlorade poäng.</string>
     <string name="round_n">Omgång %1$d</string>
     <string name="table_n">Bord %1$d</string>
-    <string name="places_history_title">Placering vid de senaste %1$d borden</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Placering vid det senaste bordet</item>
+        <item quantity="other">Placering vid de senaste %1$d borden</item>
+    </plurals>
     <string name="leader_best_hand_value">Högsta snittvärde per hand</string>
     <string name="leader_best_win_rate">Bästa vinstandel</string>
     <string name="leader_lowest_deal_in">Lägsta inkastandel</string>

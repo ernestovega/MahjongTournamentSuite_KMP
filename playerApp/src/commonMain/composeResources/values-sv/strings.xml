@@ -252,7 +252,10 @@
     <string name="preg_open_detail">Alla med ett EMA-nummer kan anmäla sig.</string>
     <string name="preg_closed_detail">Just nu kan ingen anmäla sig.\nOrganisationen publicerar lottningen här.</string>
     <string name="preg_places_value">%1$d av %2$d platser tagna</string>
-    <string name="preg_places_value_no_limit">%1$d personer anmälda, utan platsgräns</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d person anmäld, utan platsgräns</item>
+        <item quantity="other">%1$d personer anmälda, utan platsgräns</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d på väntelistan</string>
     <string name="preg_waiting_none">Ingen på väntelistan</string>
     <string name="preg_closes_until">Till och med %1$s</string>

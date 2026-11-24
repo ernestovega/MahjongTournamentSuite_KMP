@@ -303,13 +303,19 @@
     <string name="data_checked">gecontroleerd %1$s</string>
     <string name="points">Punten</string>
     <string name="hand_score">Handscore</string>
-    <string name="rows_count">%1$d rijen</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d rij</item>
+        <item quantity="other">%1$d rijen</item>
+    </plurals>
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Account aangemaakt. Firebase heeft een e-mail voor een nieuw wachtwoord gestuurd naar %1$s.</string>
     <string name="user_disabled">%1$s is uitgeschakeld.</string>
     <string name="user_deleted">%1$s is verwijderd.</string>
     <string name="user_enabled">%1$s is ingeschakeld.</string>
-    <string name="accounts_count_summary">%1$d van %2$d accounts</string>
+    <plurals name="accounts_count_summary">
+        <item quantity="one">%1$d van %2$d account</item>
+        <item quantity="other">%1$d van %2$d accounts</item>
+    </plurals>
     <string name="password_reset_sent_to">E-mail voor nieuw wachtwoord gestuurd naar %1$s.</string>
     <string name="user_status_disabled">Uitgeschakeld</string>
     <string name="user_status_active">Actief</string>
@@ -319,7 +325,10 @@
     <string name="ema_player_n">EMA-speler: %1$s</string>
     <string name="ema_needed_for_player">Een spelersaccount heeft een EMA-ID nodig.</string>
     <string name="no_tournaments_assigned">Geen toernooien toegewezen</string>
-    <string name="tournaments_selected">%1$d toernooien geselecteerd</string>
+    <plurals name="tournaments_selected">
+        <item quantity="one">%1$d toernooi geselecteerd</item>
+        <item quantity="other">%1$d toernooien geselecteerd</item>
+    </plurals>
     <string name="plus_more">+%1$d meer</string>
     <string name="enable_account">Account inschakelen</string>
     <string name="disable_account_action">Account uitschakelen</string>
@@ -530,7 +539,6 @@
     <string name="this_player">deze speler</string>
     <string name="photo_choose">Foto kiezen</string>
     <string name="photo_choose_new">Nieuwe foto kiezen</string>
-    <string name="player_base_summary">%1$d spelers · %2$d landen</string>
     <plurals name="country_players_count">
         <item quantity="one">%1$s · %2$d speler</item>
         <item quantity="other">%1$s · %2$d spelers</item>
@@ -610,7 +618,10 @@
     <string name="send_reminder">Herinneren</string>
     <string name="send_password_reset_count">Nieuw wachtwoord sturen (%1$d)</string>
     <string name="password_resets_confirm_title">E-mails voor nieuw wachtwoord sturen?</string>
-    <string name="password_resets_confirm_text">De app stuurt een e-mail naar %1$d accounts.\n\nIedereen krijgt een link om een nieuw wachtwoord te kiezen.</string>
+    <plurals name="password_resets_confirm_text">
+        <item quantity="one">De app stuurt een e-mail naar %1$d account.\n\nDe persoon krijgt een link om een nieuw wachtwoord te kiezen.</item>
+        <item quantity="other">De app stuurt een e-mail naar %1$d accounts.\n\nIedereen krijgt een link om een nieuw wachtwoord te kiezen.</item>
+    </plurals>
     <string name="password_resets_partial_title">Niet alle e-mails zijn verstuurd</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Het account bestaat niet.</string>
@@ -643,7 +654,10 @@
     <string name="import_state_removed">Verwijderd</string>
     <string name="import_state_unchanged">Geen wijziging</string>
     <string name="app_errors">App-fouten</string>
-    <string name="errors_summary">%1$d van %2$d problemen</string>
+    <plurals name="errors_summary">
+        <item quantity="one">%1$d van %2$d probleem</item>
+        <item quantity="other">%1$d van %2$d problemen</item>
+    </plurals>
     <string name="errors_kpi_problems">Problemen</string>
     <string name="errors_kpi_occurrences">Keren</string>
     <string name="errors_kpi_crashes">Crashes</string>
@@ -688,7 +702,10 @@
     <string name="errors_report_reason">Reden: %1$s</string>
     <string name="errors_loading_detail">De details worden geladen…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
-    <string name="errors_loading_count">Laden… tot nu toe %1$d problemen</string>
+    <plurals name="errors_loading_count">
+        <item quantity="one">Laden… tot nu toe %1$d probleem</item>
+        <item quantity="other">Laden… tot nu toe %1$d problemen</item>
+    </plurals>
     <string name="errors_load_more_reports">Meer rapporten laden</string>
     <string name="public_tournament">Openbaar toernooi</string>
     <string name="public_tournament_description">Iedereen kan het toernooi, de resultaten en de statistieken zien zonder account.\nZet dit uit voor een testtoernooi: alleen de staf ziet het dan.</string>
@@ -706,7 +723,10 @@
     <string name="activity_only_person">Alleen deze persoon tonen</string>
     <string name="activity_load_more">Meer laden</string>
     <string name="activity_none">Geen wijzigingen geregistreerd</string>
-    <string name="activity_loaded_count">%1$d wijzigingen geladen</string>
+    <plurals name="activity_loaded_count">
+        <item quantity="one">%1$d wijziging geladen</item>
+        <item quantity="other">%1$d wijzigingen geladen</item>
+    </plurals>
     <string name="activity_col_when">Wanneer</string>
     <string name="activity_col_who">Wie</string>
     <string name="activity_col_what">Wat</string>
@@ -715,7 +735,10 @@
     <string name="activity_from_player">Spelers-app</string>
     <string name="activity_from_system">Automatisch</string>
     <string name="activity_table">Ronde %1$d · Tafel %2$d</string>
-    <string name="activity_changes_count">%1$d waarden gewijzigd</string>
+    <plurals name="activity_changes_count">
+        <item quantity="one">%1$d waarde gewijzigd</item>
+        <item quantity="other">%1$d waarden gewijzigd</item>
+    </plurals>
     <string name="activity_hand">Hand %1$d</string>
     <string name="activity_changes">Wijzigingen</string>
     <string name="activity_details">Details</string>
@@ -834,7 +857,10 @@
     <string name="round_control_table_status">Status</string>
     <string name="delete_selected_count">Verwijderen (%1$d)</string>
     <string name="users_delete_confirm_title">Accounts verwijderen?</string>
-    <string name="users_delete_confirm_text">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</string>
+    <plurals name="users_delete_confirm_text">
+        <item quantity="one">%1$d account wordt definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-speler en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</item>
+        <item quantity="other">%1$d accounts worden definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto.\n\nDe EMA-spelers en de toernooiresultaten blijven.\n\nDit kan niet ongedaan gemaakt worden.</item>
+    </plurals>
     <string name="delete_failure_self">Je kunt je eigen account niet verwijderen.</string>
     <string name="delete_failure_last_admin">Het is de laatste actieve beheerder.</string>
     <string name="delete_failure_unknown">Het account is niet verwijderd. Probeer het opnieuw.</string>
@@ -1047,7 +1073,10 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="reg_closes_on_optional">Laatste inschrijfdag (optioneel)</string>
     <string name="reg_link_name">Naam van de openbare link</string>
     <string name="reg_import_title">Google-formulier importeren</string>
-    <string name="reg_import_ready">%1$d rijen worden geïmporteerd.</string>
+    <plurals name="reg_import_ready">
+        <item quantity="one">%1$d rij wordt geïmporteerd.</item>
+        <item quantity="other">%1$d rijen worden geïmporteerd.</item>
+    </plurals>
     <string name="reg_import_with_problems">Rijen met problemen worden ook geïmporteerd, gemarkeerd in de lijst, zodat je ze daar kunt verbeteren.</string>
     <string name="reg_file_ema">In het bestand: %1$s</string>
     <string name="reg_choose_ema">Kies de juiste persoon</string>
@@ -1057,7 +1086,10 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
         <item quantity="other">Het bestand vervangt de huidige lijst: de %1$d mensen die nu ingeschreven zijn, worden verwijderd, zonder e-mail.</item>
     </plurals>
     <string name="reg_import_apply">%1$d importeren</string>
-    <string name="reg_import_result">%1$d personen zijn geïmporteerd.</string>
+    <plurals name="reg_import_result">
+        <item quantity="one">%1$d persoon is geïmporteerd.</item>
+        <item quantity="other">%1$d personen zijn geïmporteerd.</item>
+    </plurals>
     <string name="reg_problem_invalid_ema">Het EMA-nummer is ongeldig.</string>
     <string name="reg_problem_duplicate_ema">Het EMA-nummer staat twee keer in het bestand.</string>
     <string name="reg_problem_invalid_email">Het e-mailadres is ongeldig.</string>
@@ -1112,9 +1144,18 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_change">Wijzigen</string>
     <string name="pc_now">Nu: %1$d spelers, %2$d tafels per ronde.</string>
     <string name="pc_empty_slot">#%1$d · geen speler</string>
-    <string name="pc_new_slots">%1$d nieuwe plaatsen, leeg tot je ze toewijst bij Spelers.</string>
-    <string name="pc_new_teams">%1$d nieuwe teams, leeg tot je ze toewijst bij Teams.</string>
-    <string name="pc_waiting_title">Wachtlijst: tot %1$d personen (optioneel)</string>
+    <plurals name="pc_new_slots">
+        <item quantity="one">%1$d nieuwe plaats, leeg tot je hem toewijst bij Spelers.</item>
+        <item quantity="other">%1$d nieuwe plaatsen, leeg tot je ze toewijst bij Spelers.</item>
+    </plurals>
+    <plurals name="pc_new_teams">
+        <item quantity="one">%1$d nieuw team, leeg tot je het toewijst bij Teams.</item>
+        <item quantity="other">%1$d nieuwe teams, leeg tot je ze toewijst bij Teams.</item>
+    </plurals>
+    <plurals name="pc_waiting_title">
+        <item quantity="one">Wachtlijst: tot %1$d persoon (optioneel)</item>
+        <item quantity="other">Wachtlijst: tot %1$d personen (optioneel)</item>
+    </plurals>
     <string name="pc_waiting_none">Er staat niemand op de wachtlijst.</string>
     <string name="pc_no_match">Niemand komt overeen met de zoekopdracht.</string>
     <string name="pc_continue">Doorgaan</string>
@@ -1134,8 +1175,14 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_team_changes">De personen die van team wisselen:</string>
     <string name="pc_removed_registrations">Hun inschrijvingen.</string>
     <string name="pc_added_label">Wordt toegevoegd:</string>
-    <string name="pc_added_slots">%1$d lege plaatsen, genummerd na de hoogste, om later toe te wijzen.</string>
-    <string name="pc_added_teams">%1$d nieuwe teams.</string>
+    <plurals name="pc_added_slots">
+        <item quantity="one">%1$d lege plaats, genummerd na de hoogste, om later toe te wijzen.</item>
+        <item quantity="other">%1$d lege plaatsen, genummerd na de hoogste, om later toe te wijzen.</item>
+    </plurals>
+    <plurals name="pc_added_teams">
+        <item quantity="one">%1$d nieuw team.</item>
+        <item quantity="other">%1$d nieuwe teams.</item>
+    </plurals>
     <string name="pc_added_waiting">Van de wachtlijst, die nu een plaats krijgen:</string>
     <string name="pc_kept_label">Blijft:</string>
     <string name="pc_kept_people">De overige spelers, met hun nummer, EMA-speler, account en e-mail.</string>
@@ -1149,7 +1196,10 @@ De wijziging staat in de activiteit.</string>
     <string name="pc_saving">Nieuwe loting opslaan…</string>
     <string name="pc_done_title">Klaar</string>
     <string name="pc_done_text">Het toernooi heeft nu %1$d spelers en een nieuwe loting.</string>
-    <string name="pc_emails_sent">%1$d mensen hebben een e-mail gekregen.</string>
+    <plurals name="pc_emails_sent">
+        <item quantity="one">%1$d persoon heeft een e-mail gekregen.</item>
+        <item quantity="other">%1$d mensen hebben een e-mail gekregen.</item>
+    </plurals>
     <string name="pc_emails_none">Zonder e-mail, laat het ze zelf weten:</string>
     <string name="pc_emails_failed">De e-mail is mislukt, laat het ze zelf weten:</string>
     <string name="pc_locked_title">Het aantal spelers kan niet wijzigen</string>
@@ -1173,4 +1223,12 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
     <string name="table_qr_card_size">Formaat van elke kaart: %1$s</string>
     <string name="table_qr_hint">Scan de code om naar je tafel te gaan.</string>
     <string name="table_qr_open_app">Of open gewoon de app:</string>
+    <plurals name="player_base_players">
+        <item quantity="one">%1$d speler</item>
+        <item quantity="other">%1$d spelers</item>
+    </plurals>
+    <plurals name="player_base_countries">
+        <item quantity="one">%1$d land</item>
+        <item quantity="other">%1$d landen</item>
+    </plurals>
 </resources>

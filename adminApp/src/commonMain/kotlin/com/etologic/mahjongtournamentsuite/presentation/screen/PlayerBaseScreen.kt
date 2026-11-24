@@ -130,7 +130,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.photo_error_size
 import mahjongtournamentsuite.adminapp.generated.resources.photo_error_type
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_base
-import mahjongtournamentsuite.adminapp.generated.resources.player_base_summary
+import mahjongtournamentsuite.adminapp.generated.resources.player_base_countries
+import mahjongtournamentsuite.adminapp.generated.resources.player_base_players
 import mahjongtournamentsuite.adminapp.generated.resources.player_details
 import mahjongtournamentsuite.adminapp.generated.resources.player_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.player_disabled_description
@@ -826,7 +827,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     SectionCard(
                         modifier = Modifier.weight(1.7f).fillMaxHeight(),
                         title = stringResource(Res.string.player_base),
-                        subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
+                        subtitle = pluralStringResource(Res.plurals.player_base_players, filteredPlayers.size, filteredPlayers.size) + " · " +
+                            pluralStringResource(Res.plurals.player_base_countries, filteredCountryCount, filteredCountryCount),
                     ) {
                         Column(Modifier.fillMaxWidth().weight(1f)) {
                             if (canDelete) {

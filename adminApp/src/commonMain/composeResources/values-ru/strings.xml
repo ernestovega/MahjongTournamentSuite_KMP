@@ -303,13 +303,23 @@
     <string name="data_checked">проверено %1$s</string>
     <string name="points">Очки</string>
     <string name="hand_score">Счёт раздачи</string>
-    <string name="rows_count">Строк: %1$d</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d строка</item>
+        <item quantity="few">%1$d строки</item>
+        <item quantity="many">%1$d строк</item>
+        <item quantity="other">%1$d строки</item>
+    </plurals>
     <string name="seconds_short">%1$d с</string>
     <string name="account_created_reset_sent">Аккаунт создан. Firebase отправил письмо для сброса пароля на %1$s.</string>
     <string name="user_disabled">%1$s отключён.</string>
     <string name="user_deleted">%1$s удалён.</string>
     <string name="user_enabled">%1$s включён.</string>
-    <string name="accounts_count_summary">%1$d из %2$d аккаунтов</string>
+    <plurals name="accounts_count_summary">
+        <item quantity="one">%1$d из %2$d аккаунта</item>
+        <item quantity="few">%1$d из %2$d аккаунтов</item>
+        <item quantity="many">%1$d из %2$d аккаунтов</item>
+        <item quantity="other">%1$d из %2$d аккаунтов</item>
+    </plurals>
     <string name="password_reset_sent_to">Письмо для сброса пароля отправлено на %1$s.</string>
     <string name="user_status_disabled">Отключён</string>
     <string name="user_status_active">Активен</string>
@@ -319,7 +329,12 @@
     <string name="ema_player_n">Игрок EMA: %1$s</string>
     <string name="ema_needed_for_player">Аккаунту игрока нужен EMA ID.</string>
     <string name="no_tournaments_assigned">Турниры не назначены</string>
-    <string name="tournaments_selected">Выбрано турниров: %1$d</string>
+    <plurals name="tournaments_selected">
+        <item quantity="one">Выбран %1$d турнир</item>
+        <item quantity="few">Выбрано %1$d турнира</item>
+        <item quantity="many">Выбрано %1$d турниров</item>
+        <item quantity="other">Выбрано %1$d турнира</item>
+    </plurals>
     <string name="plus_more">и ещё %1$d</string>
     <string name="enable_account">Включить аккаунт</string>
     <string name="disable_account_action">Отключить аккаунт</string>
@@ -530,7 +545,6 @@
     <string name="this_player">этот игрок</string>
     <string name="photo_choose">Выбрать фото</string>
     <string name="photo_choose_new">Выбрать новое фото</string>
-    <string name="player_base_summary">Игроков: %1$d · Стран: %2$d</string>
     <plurals name="country_players_count">
         <item quantity="one">%1$s · %2$d игрок</item>
         <item quantity="few">%1$s · %2$d игрока</item>
@@ -612,7 +626,12 @@
     <string name="send_reminder">Напомнить</string>
     <string name="send_password_reset_count">Отправить сброс пароля (%1$d)</string>
     <string name="password_resets_confirm_title">Отправить письма для сброса пароля?</string>
-    <string name="password_resets_confirm_text">Приложение отправит письмо на %1$d аккаунтов.\n\nКаждый получит ссылку для выбора нового пароля.</string>
+    <plurals name="password_resets_confirm_text">
+        <item quantity="one">Приложение отправит письмо на %1$d аккаунт.\n\nЧеловек получит ссылку для выбора нового пароля.</item>
+        <item quantity="few">Приложение отправит письмо на %1$d аккаунта.\n\nКаждый получит ссылку для выбора нового пароля.</item>
+        <item quantity="many">Приложение отправит письмо на %1$d аккаунтов.\n\nКаждый получит ссылку для выбора нового пароля.</item>
+        <item quantity="other">Приложение отправит письмо на %1$d аккаунта.\n\nКаждый получит ссылку для выбора нового пароля.</item>
+    </plurals>
     <string name="password_resets_partial_title">Отправлены не все письма</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Аккаунт не существует.</string>
@@ -645,7 +664,12 @@
     <string name="import_state_removed">Удалено</string>
     <string name="import_state_unchanged">Без изменений</string>
     <string name="app_errors">Ошибки приложения</string>
-    <string name="errors_summary">Проблем: %1$d из %2$d</string>
+    <plurals name="errors_summary">
+        <item quantity="one">%1$d из %2$d проблемы</item>
+        <item quantity="few">%1$d из %2$d проблем</item>
+        <item quantity="many">%1$d из %2$d проблем</item>
+        <item quantity="other">%1$d из %2$d проблем</item>
+    </plurals>
     <string name="errors_kpi_problems">Проблемы</string>
     <string name="errors_kpi_occurrences">Случаи</string>
     <string name="errors_kpi_crashes">Сбои</string>
@@ -690,7 +714,12 @@
     <string name="errors_report_reason">Причина: %1$s</string>
     <string name="errors_loading_detail">Загрузка подробностей…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
-    <string name="errors_loading_count">Загрузка… проблем пока: %1$d</string>
+    <plurals name="errors_loading_count">
+        <item quantity="one">Загрузка… пока %1$d проблема</item>
+        <item quantity="few">Загрузка… пока %1$d проблемы</item>
+        <item quantity="many">Загрузка… пока %1$d проблем</item>
+        <item quantity="other">Загрузка… пока %1$d проблемы</item>
+    </plurals>
     <string name="errors_load_more_reports">Загрузить ещё отчёты</string>
     <string name="public_tournament">Публичный турнир</string>
     <string name="public_tournament_description">Любой может видеть турнир, его результаты и статистику без аккаунта.\nВыключите для тестового турнира: его увидит только персонал.</string>
@@ -708,7 +737,12 @@
     <string name="activity_only_person">Показать только этого человека</string>
     <string name="activity_load_more">Загрузить ещё</string>
     <string name="activity_none">Изменений не зарегистрировано</string>
-    <string name="activity_loaded_count">Загружено изменений: %1$d</string>
+    <plurals name="activity_loaded_count">
+        <item quantity="one">Загружено %1$d изменение</item>
+        <item quantity="few">Загружено %1$d изменения</item>
+        <item quantity="many">Загружено %1$d изменений</item>
+        <item quantity="other">Загружено %1$d изменения</item>
+    </plurals>
     <string name="activity_col_when">Когда</string>
     <string name="activity_col_who">Кто</string>
     <string name="activity_col_what">Что</string>
@@ -717,7 +751,12 @@
     <string name="activity_from_player">Приложение игрока</string>
     <string name="activity_from_system">Автоматически</string>
     <string name="activity_table">Раунд %1$d · Стол %2$d</string>
-    <string name="activity_changes_count">Изменено значений: %1$d</string>
+    <plurals name="activity_changes_count">
+        <item quantity="one">Изменено %1$d значение</item>
+        <item quantity="few">Изменено %1$d значения</item>
+        <item quantity="many">Изменено %1$d значений</item>
+        <item quantity="other">Изменено %1$d значения</item>
+    </plurals>
     <string name="activity_hand">Раздача %1$d</string>
     <string name="activity_changes">Изменения</string>
     <string name="activity_details">Подробности</string>
@@ -838,7 +877,12 @@
     <string name="round_control_table_status">Статус</string>
     <string name="delete_selected_count">Удалить (%1$d)</string>
     <string name="users_delete_confirm_title">Удалить аккаунты?</string>
-    <string name="users_delete_confirm_text">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</string>
+    <plurals name="users_delete_confirm_text">
+        <item quantity="one">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</item>
+        <item quantity="few">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</item>
+        <item quantity="many">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</item>
+        <item quantity="other">Аккаунты будут удалены навсегда (%1$d): вход, адрес эл. почты, псевдоним и фото.\n\nИгроки EMA и результаты турниров останутся.\n\nЭто нельзя отменить.</item>
+    </plurals>
     <string name="delete_failure_self">Нельзя удалить собственный аккаунт.</string>
     <string name="delete_failure_last_admin">Это последний активный администратор.</string>
     <string name="delete_failure_unknown">Аккаунт не удалён. Попробуйте снова.</string>
@@ -1061,7 +1105,12 @@
     <string name="reg_closes_on_optional">Последний день регистрации (необязательно)</string>
     <string name="reg_link_name">Имя публичной ссылки</string>
     <string name="reg_import_title">Импорт Google Form</string>
-    <string name="reg_import_ready">Будет импортировано строк: %1$d.</string>
+    <plurals name="reg_import_ready">
+        <item quantity="one">Будет импортирована %1$d строка.</item>
+        <item quantity="few">Будет импортировано %1$d строки.</item>
+        <item quantity="many">Будет импортировано %1$d строк.</item>
+        <item quantity="other">Будет импортировано %1$d строки.</item>
+    </plurals>
     <string name="reg_import_with_problems">Строки с ошибками тоже импортируются и помечаются в списке, чтобы вы исправили их там.</string>
     <string name="reg_file_ema">В файле: %1$s</string>
     <string name="reg_choose_ema">Выбрать нужного человека</string>
@@ -1073,7 +1122,12 @@
         <item quantity="other">Файл заменяет текущий список: %1$d зарегистрированных участников будут удалены, без письма.</item>
     </plurals>
     <string name="reg_import_apply">Импортировать %1$d</string>
-    <string name="reg_import_result">Импортировано участников: %1$d.</string>
+    <plurals name="reg_import_result">
+        <item quantity="one">Импортирован %1$d участник.</item>
+        <item quantity="few">Импортировано %1$d участника.</item>
+        <item quantity="many">Импортировано %1$d участников.</item>
+        <item quantity="other">Импортировано %1$d участника.</item>
+    </plurals>
     <string name="reg_problem_invalid_ema">Неверный номер EMA.</string>
     <string name="reg_problem_duplicate_ema">Номер EMA в файле дважды.</string>
     <string name="reg_problem_invalid_email">Неверный email.</string>
@@ -1128,9 +1182,24 @@
     <string name="pc_change">Изменить</string>
     <string name="pc_now">Сейчас: %1$d игроков, %2$d столов в раунде.</string>
     <string name="pc_empty_slot">#%1$d · без игрока</string>
-    <string name="pc_new_slots">%1$d новых мест, пустых, пока ты не назначишь их в разделе «Игроки».</string>
-    <string name="pc_new_teams">%1$d новых команд, пустых, пока ты не назначишь их в разделе «Команды».</string>
-    <string name="pc_waiting_title">Лист ожидания: до %1$d человек (необязательно)</string>
+    <plurals name="pc_new_slots">
+        <item quantity="one">%1$d новое место, пустое, пока ты не назначишь его в разделе «Игроки».</item>
+        <item quantity="few">%1$d новых места, пустых, пока ты не назначишь их в разделе «Игроки».</item>
+        <item quantity="many">%1$d новых мест, пустых, пока ты не назначишь их в разделе «Игроки».</item>
+        <item quantity="other">%1$d новых места, пустых, пока ты не назначишь их в разделе «Игроки».</item>
+    </plurals>
+    <plurals name="pc_new_teams">
+        <item quantity="one">%1$d новая команда, пустая, пока ты не назначишь её в разделе «Команды».</item>
+        <item quantity="few">%1$d новые команды, пустые, пока ты не назначишь их в разделе «Команды».</item>
+        <item quantity="many">%1$d новых команд, пустых, пока ты не назначишь их в разделе «Команды».</item>
+        <item quantity="other">%1$d новые команды, пустые, пока ты не назначишь их в разделе «Команды».</item>
+    </plurals>
+    <plurals name="pc_waiting_title">
+        <item quantity="one">Лист ожидания: до %1$d человека (необязательно)</item>
+        <item quantity="few">Лист ожидания: до %1$d человек (необязательно)</item>
+        <item quantity="many">Лист ожидания: до %1$d человек (необязательно)</item>
+        <item quantity="other">Лист ожидания: до %1$d человек (необязательно)</item>
+    </plurals>
     <string name="pc_waiting_none">В листе ожидания никого нет.</string>
     <string name="pc_no_match">Никто не подходит под поиск.</string>
     <string name="pc_continue">Продолжить</string>
@@ -1150,8 +1219,18 @@
     <string name="pc_team_changes">Игроки, которые меняют команду:</string>
     <string name="pc_removed_registrations">Их регистрации.</string>
     <string name="pc_added_label">Добавляется:</string>
-    <string name="pc_added_slots">%1$d пустых мест с номерами после самого большого, чтобы назначить позже.</string>
-    <string name="pc_added_teams">%1$d новых команд.</string>
+    <plurals name="pc_added_slots">
+        <item quantity="one">%1$d пустое место с номером после самого большого, чтобы назначить позже.</item>
+        <item quantity="few">%1$d пустых места с номерами после самого большого, чтобы назначить позже.</item>
+        <item quantity="many">%1$d пустых мест с номерами после самого большого, чтобы назначить позже.</item>
+        <item quantity="other">%1$d пустых места с номерами после самого большого, чтобы назначить позже.</item>
+    </plurals>
+    <plurals name="pc_added_teams">
+        <item quantity="one">%1$d новая команда.</item>
+        <item quantity="few">%1$d новые команды.</item>
+        <item quantity="many">%1$d новых команд.</item>
+        <item quantity="other">%1$d новые команды.</item>
+    </plurals>
     <string name="pc_added_waiting">Из листа ожидания, получают место:</string>
     <string name="pc_kept_label">Сохраняется:</string>
     <string name="pc_kept_people">Остальные игроки с их номером, игроком EMA, аккаунтом и почтой.</string>
@@ -1165,7 +1244,12 @@
     <string name="pc_saving">Сохранение новой жеребьёвки…</string>
     <string name="pc_done_title">Готово</string>
     <string name="pc_done_text">Теперь в турнире %1$d игроков и новая жеребьёвка.</string>
-    <string name="pc_emails_sent">Письмо получили: %1$d.</string>
+    <plurals name="pc_emails_sent">
+        <item quantity="one">Письмо получил %1$d человек.</item>
+        <item quantity="few">Письмо получили %1$d человека.</item>
+        <item quantity="many">Письмо получили %1$d человек.</item>
+        <item quantity="other">Письмо получили %1$d человека.</item>
+    </plurals>
     <string name="pc_emails_none">Без адреса, сообщи им сам:</string>
     <string name="pc_emails_failed">Письмо не ушло, сообщи им сам:</string>
     <string name="pc_locked_title">Число игроков изменить нельзя</string>
@@ -1189,4 +1273,16 @@
     <string name="table_qr_card_size">Размер каждой карточки: %1$s</string>
     <string name="table_qr_hint">Отсканируйте код, чтобы перейти к своему столу.</string>
     <string name="table_qr_open_app">Или просто откройте приложение:</string>
+    <plurals name="player_base_players">
+        <item quantity="one">%1$d игрок</item>
+        <item quantity="few">%1$d игрока</item>
+        <item quantity="many">%1$d игроков</item>
+        <item quantity="other">%1$d игрока</item>
+    </plurals>
+    <plurals name="player_base_countries">
+        <item quantity="one">%1$d страна</item>
+        <item quantity="few">%1$d страны</item>
+        <item quantity="many">%1$d стран</item>
+        <item quantity="other">%1$d страны</item>
+    </plurals>
 </resources>

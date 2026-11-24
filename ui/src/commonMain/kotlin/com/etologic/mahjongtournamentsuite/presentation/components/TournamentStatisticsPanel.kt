@@ -81,6 +81,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_leaders
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -140,7 +141,7 @@ fun TournamentStatisticsPanel(
                 if (shown.tablesWithHands == 0) {
                     stringResource(Res.string.stats_hand_stats_missing)
                 } else {
-                    stringResource(Res.string.stats_hand_values_use, shown.tablesWithHands, shown.tablesCompleted)
+                    pluralStringResource(Res.plurals.stats_hand_values_use, shown.tablesCompleted, shown.tablesWithHands, shown.tablesCompleted)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

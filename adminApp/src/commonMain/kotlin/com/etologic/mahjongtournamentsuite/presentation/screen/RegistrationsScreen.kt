@@ -548,7 +548,7 @@ fun RegistrationsScreen(
                 importFile = null
                 if (imported != null) {
                     refresh()
-                    info = UiText.of(Res.string.reg_import_result, imported)
+                    info = UiText.Plural(Res.plurals.reg_import_result, imported, listOf(imported))
                 }
             },
         )
@@ -1383,7 +1383,7 @@ private fun RegistrationImportDialog(
                                 modifier = Modifier.testTag("registrations-import-replaces"),
                             )
                         }
-                        Text(stringResource(Res.string.reg_import_ready, read.rows.size), fontWeight = FontWeight.SemiBold)
+                        Text(pluralStringResource(Res.plurals.reg_import_ready, read.rows.size, read.rows.size), fontWeight = FontWeight.SemiBold)
                         if (read.rows.any { it.problems.isNotEmpty() }) MtsDialogText(stringResource(Res.string.reg_import_with_problems))
                         val state = rememberLazyListState()
                         LazyColumnWithScrollbar(state = state, modifier = Modifier.heightIn(max = 320.dp)) {

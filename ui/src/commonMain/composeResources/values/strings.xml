@@ -120,7 +120,10 @@
     <string name="stats_empty_title">No statistics yet</string>
     <string name="stats_empty_message">The statistics show when the first table is completed.</string>
     <string name="stats_hand_stats_missing">Hand statistics need tables with entered hands. No table here has them.</string>
-    <string name="stats_hand_values_use">Hand values use %1$d of %2$d tables.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Hand values use %1$d of %2$d table.</item>
+        <item quantity="other">Hand values use %1$d of %2$d tables.</item>
+    </plurals>
     <string name="card_fold">Fold</string>
     <string name="card_unfold">Unfold</string>
     <string name="more_information">More information</string>
@@ -193,7 +196,10 @@
     <string name="stat_penalties_info">This is the number of penalties.\nThe number in brackets is the total of points lost.</string>
     <string name="round_n">Round %1$d</string>
     <string name="table_n">Table %1$d</string>
-    <string name="places_history_title">Place in the last %1$d tables</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Place in the last table</item>
+        <item quantity="other">Place in the last %1$d tables</item>
+    </plurals>
     <string name="leader_best_hand_value">Best hand avg. value</string>
     <string name="leader_best_win_rate">Best win rate</string>
     <string name="leader_lowest_deal_in">Lowest deal-in rate</string>
