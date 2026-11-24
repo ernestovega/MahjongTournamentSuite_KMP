@@ -17,7 +17,7 @@ class LabeledControlsTest {
     /** File name to the number of bare controls it may have, and why. */
     private val allowed = mapOf(
         // The box that selects a row of the list of users: a tap on the row opens the user, so only the box selects.
-        "GlobalUsersScreen.kt" to 1,
+        "UsersTable.kt" to 1,
         // The box that selects a row of the list of EMA players: a tap on the row opens the player.
         "PlayerBaseScreen.kt" to 1,
         // The boxes of the hand table: the box keeps the focus for the arrow keys; a tap on its name checks it too.
