@@ -41,6 +41,9 @@ private class ChangingServer {
     var teamsRevision = 1L
     var tournamentsRevision = 1L
     var emaPlayersRevision = 1L
+
+    /** Raised by a new draw: the draw of the registrations, or a change of the number of players. */
+    var drawRevision = 0L
     var playerTeam = 1
     var teamName = "Team A"
     var tournamentName = "Open"
@@ -57,7 +60,7 @@ private class ChangingServer {
     }
 
     fun tournamentManifestJson() = """{"resources":{"tables":{"revision":${tableVersions.values.sum()}},""" +
-        """"players":{"revision":$playersRevision},"teams":{"revision":$teamsRevision}},""" +
+        """"players":{"revision":$playersRevision},"teams":{"revision":$teamsRevision},"draw":{"revision":$drawRevision}},""" +
         """"globalResources":{"tournaments":{"revision":$tournamentsRevision},"emaPlayers":{"revision":$emaPlayersRevision},""" +
         """"countries":{"revision":1},"users":{"revision":1}},"tableVersions":{""" +
         tableVersions.entries.joinToString(",") { "\"${it.key}\":${it.value}" } + "}}"
@@ -259,6 +262,45 @@ class PersistedRepositoryFreshnessTest {
         clock += 3.seconds
 
         assertEquals(listOf("8", "2"), app.east())
+    }
+
+    /** A new draw removes table 1_2 and gives table 1_1 other players. Neither is a save, so no table version moves. */
+    private fun makeANewDraw() {
+        server.drawRevision++
+        server.tableVersions.remove("1_2")
+        server.tableEast.remove("1_2")
+        server.tableEast["1_1"] = "5"
+    }
+
+    @Test
+    fun aNewDrawWhileTheAppWasClosedReplacesTheSavedTables() = runTest {
+        startApp().east()
+        makeANewDraw()
+
+        assertEquals(listOf("5"), startApp().east())
+    }
+
+    @Test
+    fun aCachedReadAfterARestartSeesANewDraw() = runTest {
+        startApp().east()
+        makeANewDraw()
+
+        assertEquals(listOf("5"), startApp().east(RefreshMode.CACHED))
+    }
+
+    @Test
+    fun aNewDrawWhileTheAppIsOpenReplacesEveryTableAtTheNextCheck() = runTest {
+        val clock = TestTimeSource()
+        val app = startApp(clock)
+        app.east()
+        makeANewDraw()
+        clock += 3.seconds
+
+        assertEquals(listOf("5"), app.east())
+        // The tables of the new draw are saved, so the next start downloads nothing.
+        server.requests.clear()
+        assertEquals(listOf("5"), startApp().east())
+        assertEquals(0, server.count("/tables-with-hands"))
     }
 
     @Test

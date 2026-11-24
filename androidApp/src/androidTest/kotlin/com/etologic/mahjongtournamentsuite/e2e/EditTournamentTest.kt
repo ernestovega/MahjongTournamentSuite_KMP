@@ -2,12 +2,12 @@ package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import org.junit.After
 import org.junit.Test
 
@@ -20,7 +20,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.openTournament(name)
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
-        c.waitForText("Branding")
+        c.waitForText(DIALOG_TAB)
     }
 
     @Test
@@ -28,8 +28,9 @@ class EditTournamentTest : AdminE2eTest() {
         openDialog()
         c.clickButton("Venue")
         listOf("Eskalerria", "test-live@example.com", "Madrid").forEach { c.waitForText(it) }
-        c.clickButton("Branding")
-        c.waitForText("#D81B60")
+        // The color and the logo come from the main organizer, the test club of the seed.
+        c.clickButton("Organizers")
+        c.waitForText("Test Mahjong Club")
         c.clickButton("Schedule")
         listOf("Tournament schedule", "Player agenda").forEach { c.waitForText(it) }
     }
@@ -56,7 +57,7 @@ class EditTournamentTest : AdminE2eTest() {
     fun cancelClosesWithoutSaving() {
         openDialog()
         c.clickButton("Cancel")
-        c.waitForNoText("Branding")
+        c.waitForNoText(DIALOG_TAB)
         c.waitForText("Round 4")
     }
 
@@ -65,14 +66,14 @@ class EditTournamentTest : AdminE2eTest() {
         openDialog()
         c.field("Tournament name").performTextReplacementText("Live renamed by a test")
         c.clickButton("Save")
-        c.waitForNoText("Branding")
+        c.waitForNoText(DIALOG_TAB)
         c.waitForText("Live renamed by a test")
     }
 
     @Test
     fun tournamentWithoutAgendaOpensTheDialog() {
         openDialog("Test - Without best hands or chicken hands")
-        c.waitForText("Branding")
+        c.waitForText(DIALOG_TAB)
         c.clickButton("Schedule")
         c.waitForText("Add activity")
     }
@@ -99,7 +100,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
-        c.waitForText("Branding")
+        c.waitForText(DIALOG_TAB)
         c.field("Tournament name").performTextReplacementText("Renamed by an editor")
         c.clickButton("Save")
         c.waitForText("You do not have permission to perform this action.")
@@ -115,7 +116,8 @@ class EditTournamentTest : AdminE2eTest() {
         openDialog()
         c.clickButton("Delete")
         c.waitForText("Delete tournament")
-        c.waitForText("This will permanently delete \"Test - Live ongoing tournament\" (ID: test-live-ongoing).")
+        // The message goes on with what happens to the editors of the tournament, in the same text.
+        c.waitForText("This will permanently delete \"Test - Live ongoing tournament\" (ID: test-live-ongoing).", substring = true)
     }
 
     @Test
@@ -125,7 +127,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Delete tournament")
         c.onAllNodes(hasText("Cancel") and hasClickAction()).onLast().performClick()
         c.waitForNoText("Delete tournament")
-        c.waitForText("Branding")
+        c.waitForText(DIALOG_TAB)
     }
 
     @Test
@@ -164,7 +166,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.field("Match duration (minutes)").performTextReplacementText("0")
         c.clickButton("Save")
         c.waitForText("Match duration must be a whole number of minutes from 1 to 600.")
-        c.waitForText("Branding")
+        c.waitForText(DIALOG_TAB)
     }
 
     /**
@@ -172,7 +174,9 @@ class EditTournamentTest : AdminE2eTest() {
      * tree. Turning it on shows the extra time field.
      */
     private fun toggleFinishTheHand() {
-        val switch = c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast()
+        // The switch and its label are one control (MtsSwitchRow), so the toggleable node holds the label.
+        val switch = c.onAllNodes(isToggleable() and hasText("Finish the hand in play")).onLast()
+        switch.performScrollTo()
         switch.assertIsOff()
         switch.performClick()
         switch.assertIsOn()
@@ -195,10 +199,15 @@ class EditTournamentTest : AdminE2eTest() {
         toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("20")
         c.clickButton("Save")
-        c.waitForNoText("Branding")
+        c.waitForNoText(DIALOG_TAB)
         val tournament = liveTournamentJson()
         check(tournament.getInt("matchDurationMinutes") == 95) { "Duration: ${tournament.opt("matchDurationMinutes")}" }
         check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }
         check(tournament.getInt("matchExtraMinutes") == 20) { "Extra time: ${tournament.opt("matchExtraMinutes")}" }
+    }
+
+    private companion object {
+        /** A tab of the edit dialog, so it shows while the dialog is open. */
+        const val DIALOG_TAB = "Organizers"
     }
 }

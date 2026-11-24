@@ -95,31 +95,39 @@ The pull request from `develop` to `main` does not run the UI tests until the ap
 
 ## What the tests cover
 
-193 tests: 140 for the admin app and 53 for the player app. All pass on the emulator.
+243 tests: 173 for the admin part and 70 for the player part. All pass on the emulator, except 2 that skip on purpose:
+`ScenarioOrganizerTest` and `RehearsalPlayerTest` run only with their own arguments.
 
 | Class | Tests | Area |
 | --- | ---: | --- |
-| `SignInTest` | 12 | Sign in, wrong password, empty fields, disabled account, no network, reset password, session restore, logout. |
-| `TournamentListTest` | 13 | List rows, switches, roles (admin, editor, editor without tournaments, player), permission error for a player. |
+| `SignInTest` | 11 | Sign in, wrong password, empty fields, disabled account, no network, reset password, session restore, logout. |
+| `TournamentListTest` | 13 | List rows, switches, roles (super admin, editor, editor without tournaments, player), permission error for a player. |
 | `TournamentScreenTest` | 13 | Rounds, table chips, finished, running and not started tournaments, totals tables, back, editor access. |
 | `TableStatesTest` | 10 | Penalty explanation, hand counts, totals with a wrong sum, incomplete rounds, chicken column on and off. |
-| `PlayersScreenTest` | 13 | Columns, filters, searches, open slots, linked accounts, large tournament. |
-| `TeamsScreenTest` | 6 | Team list, searches, unicode team names, open slots. |
+| `PlayersScreenTest` | 12 | Columns, filters, searches, open slots, linked accounts, large tournament. |
+| `TeamsScreenTest` | 7 | Team list, searches, unicode team names, open slots, back to the players and to the tournament. |
 | `PlayerAssignmentTest` | 8 | Clear, substitute and team edit dialogs. |
-| `EditTournamentTest` | 12 | Edit dialog values, cancel, save, agenda rows, delete with confirmation, editor is refused. |
-| `CreateTournamentTest` | 10 | Form defaults, validation messages, and a valid creation that opens the new tournament. |
-| `TableEditingTest` | 7 | Hand entry in the admin table editor, the Completed switch, an editor save, and conflicts with another editor. |
+| `EditTournamentTest` | 16 | Edit dialog tabs (General, Venue, Organizers, Schedule, Data), cancel, save, agenda rows, match time, delete with confirmation, editor is refused. |
+| `CreateTournamentTest` | 20 | Form defaults, validation messages, match time, and a valid creation with a main organizer that opens the new tournament. |
+| `SelectFieldsTest` | 3 | The country and time zone select fields of the new tournament form. |
+| `TableEditingTest` | 13 | Hand entry in the admin table editor, the Completed switch, an editor save, and conflicts with another editor. Each save waits until the server has it. |
+| `RoundControlTest` | 7 | Round control, the plan B of the Timer: the clock of a round, what the players can do, and an editor of the tournament who uses it. |
 | `ToolsDialogsTest` | 4 | ID card and invitation dialogs. |
 | `InvitationsTest` | 4 | Send from the invitations dialog: the dialog asks for a missing email, a typed email, a valid email, email refused by the mailbox. |
 | `GlobalScreensTest` | 11 | App users, App errors, EMA registry, statistics, theme. |
-| `StatisticsTest` | 6 | Tournament statistics tabs. |
-| `RankingAndTimerTest` | 12 | Ranking board paging and rows. The Timer opens from a tournament, waits for the gong, and Play and Pause change the clock of the round on the server. |
-| `PlayerSignInTest` | 6 | Player app sign in and errors. |
-| `PlayerHomeTest` | 12 | Tournament card, schedule, roles, theme, sign out. |
-| `PlayerTournamentTest` | 13 | Tabs, my tables, all tables, ranking, info. |
+| `StatisticsTest` | 6 | The Statistics screen of a tournament: the tournament and table filters, a table not completed, the whole tournament, back. |
+| `RankingAndTimerTest` | 13 | Ranking board paging and rows. The Timer opens from a tournament, waits for the gong, and Play and Pause change the clock of the round on the server. |
+| `ScenarioOrganizerTest` | 1 | A long organizer scenario in phases. It runs only with its own arguments. |
+| `PlayerSignInTest` | 8 | Player app sign in and errors. |
+| `PlayerHomeTest` | 12 | Tournament card, the Playing or Played stamp, schedule, roles, theme, sign out. |
+| `PlayerTournamentTest` | 14 | Tabs, my tables, all tables, ranking, info. |
 | `PlayerStatisticsTest` | 10 | Tournament and personal statistics, and the message for an account with no EMA number. |
 | `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self-draw), penalty dialog, review, cancel. |
-| `PlayerRoundStartTest` | 2 | Waiting for the gong until the Timer starts the round, and a player who sets the seats of a table without seats. |
+| `PlayerRoundStartTest` | 4 | Waiting for the gong until the Timer starts the round, and a player who sets the seats of a table without seats. |
+| `PlayerMatchTimeTest` | 3 | Extra time and time over at the end of a match. |
+| `PlayerSelectFieldTest` | 3 | The search field of the ranking. |
+| `SuiteSwitchTest` | 4 | The switch between the player part and the admin part on a phone. |
+| `RehearsalPlayerTest` | 1 | The automatic player of a rehearsal (`docs/rehearsal.md`). It runs only with the rehearsal arguments. |
 | `TournamentJourneyTest` | 1 | A whole tournament from the admin app: the form, the picker for a player, Play on the Timer for each round, tables that the phones fill in, the last hand in the table editor and the ranking. |
 | `PlayerTournamentJourneyTest` | 1 | A whole tournament from the phone of one player: seats before the gong, hands from this phone and from the other phones of the table, the hand 16 that closes the table, the last hand of the tournament and the ranking. |
 

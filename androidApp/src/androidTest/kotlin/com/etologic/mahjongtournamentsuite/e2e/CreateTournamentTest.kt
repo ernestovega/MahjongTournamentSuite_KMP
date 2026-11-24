@@ -1,17 +1,11 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasAnySibling
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import org.junit.After
 import org.junit.Test
@@ -20,24 +14,10 @@ class CreateTournamentTest : AdminE2eTest() {
     @After
     fun deleteCreatedTournaments() = E2eApi.deleteTournamentsNamed("E2E created")
 
-    /** The form shows its fields in tabs: General, Venue, Branding and Schedule. */
+    /** The form shows its fields in tabs: General, Venue, Organizers and Schedule. */
     private fun openTab(name: String) {
         c.clickLastButton(name)
     }
-
-    /** The country is a select field on the Venue tab. Its menu lists every country, after a search field. */
-    private fun chooseCountry(name: String) {
-        c.selectField("Country").performClick()
-        // The menu composes at most 50 options, so a country far down the list shows only after a search.
-        c.waitUntil(5_000) { c.onAllNodes(hasTestTag("select-search")).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(hasTestTag("select-search")).onLast().performTextInput(name)
-        val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
-        c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(option).onLast().performClick()
-        c.waitUntil(5_000) { c.onAllNodes(hasText(name) and isDropdownList()).fetchSemanticsNodes().isNotEmpty() }
-    }
-
-    private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
 
     private fun fillValidForm(players: String, rounds: String) {
         c.field("Name").performTextInputText("E2E created")
@@ -45,12 +25,15 @@ class CreateTournamentTest : AdminE2eTest() {
         c.field("Players").performTextReplacementText(players)
         c.field("Rounds").performTextReplacementText(rounds)
         openTab("Venue")
-        chooseCountry("Spain")
+        c.chooseInSelectField("Country", "Spain")
         c.field("City").performTextInputText("Madrid")
         c.field("Venue name").performTextInputText("E2E club")
         c.field("Address").performTextInputText("Calle Mayor 1, Madrid")
         c.field("Contact email").performTextInputText("e2e@example.com")
         rounds.toIntOrNull()?.takeIf { it > 0 }?.let { fillRoundSchedules(it) }
+        // A tournament needs a main organizer, which gives it its logo and color.
+        openTab("Organizers")
+        c.chooseInSelectField("Main organizer", ORGANIZER)
         openTab("General")
     }
 
@@ -67,9 +50,11 @@ class CreateTournamentTest : AdminE2eTest() {
         }
     }
 
-    /** Only the switch reacts to a tap. Its label is a plain text next to it. */
+    /** The switch and its label are one control (MtsSwitchRow), so the toggleable node holds the label. */
     private fun toggleFinishTheHand() {
-        c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast().performClick()
+        val switch = c.onAllNodes(isToggleable() and hasText("Finish the hand in play")).onLast()
+        switch.performScrollTo()
+        switch.performClick()
     }
 
     /** The form shows the zone of the device when its list has it, and "UTC" otherwise, for example for "Etc/UTC". */
@@ -269,5 +254,10 @@ class CreateTournamentTest : AdminE2eTest() {
         check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }
         check(tournament.getInt("matchExtraMinutes") == 15) { "Extra time: ${tournament.opt("matchExtraMinutes")}" }
         check(tournament.getString("timeZone") == expectedTimeZone()) { "Time zone: ${tournament.opt("timeZone")}" }
+    }
+
+    private companion object {
+        /** The test club of the seed. */
+        const val ORGANIZER = "Test Mahjong Club"
     }
 }

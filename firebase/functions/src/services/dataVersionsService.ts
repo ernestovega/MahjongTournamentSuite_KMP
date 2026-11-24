@@ -4,7 +4,11 @@ import { db } from "../firebase";
 import { notFound } from "../api/httpError";
 
 export type GlobalDataResource = "tournaments" | "emaPlayers" | "countries" | "users";
-export type TournamentDataResource = "members" | "players" | "teams" | "rounds" | "tables";
+/**
+ * `draw` changes when the draw itself is made again: the tables are new, not saved. The draw of the registrations and
+ * the change of the number of players raise it, so the apps drop every table they hold and read them all again.
+ */
+export type TournamentDataResource = "members" | "players" | "teams" | "rounds" | "tables" | "draw";
 
 type VersionStamp = {
   revision: number;
@@ -82,6 +86,7 @@ export async function getTournamentManifest(tournamentId: string): Promise<Tourn
       teams: readVersion(versions.teams),
       rounds: readVersion(versions.rounds),
       tables: readVersion(versions.tables),
+      draw: readVersion(versions.draw),
     },
     tableVersions: readTableVersions(versions.tableVersions),
   };

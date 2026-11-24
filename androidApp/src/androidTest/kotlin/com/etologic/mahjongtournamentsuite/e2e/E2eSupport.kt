@@ -347,6 +347,25 @@ fun ComposeTestRule.field(label: String): SemanticsNodeInteraction = onNode(hasS
 fun ComposeTestRule.selectField(label: String): SemanticsNodeInteraction =
     onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList) and hasText(label))
 
+/**
+ * Picks [option] in the select field [label]. A menu with many options starts with a search field (only the first 50
+ * options compose), so the helper types the option there when the menu has one.
+ */
+fun ComposeTestRule.chooseInSelectField(label: String, option: String) {
+    val dropdown = androidx.compose.ui.test.SemanticsMatcher.expectValue(
+        androidx.compose.ui.semantics.SemanticsProperties.Role,
+        androidx.compose.ui.semantics.Role.DropdownList,
+    )
+    val search = androidx.compose.ui.test.hasTestTag("select-search")
+    val item = hasText(option) and hasClickAction() and !hasSetTextAction() and !dropdown
+    selectField(label).also { runCatching { it.performScrollTo() } }.performClick()
+    waitUntil(5_000) { onAllNodes(search).fetchSemanticsNodes().isNotEmpty() || onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
+    if (onAllNodes(search).fetchSemanticsNodes().isNotEmpty()) onAllNodes(search).onLast().performTextInput(option)
+    waitUntil(5_000) { onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
+    onAllNodes(item).onLast().performClick()
+    waitUntil(5_000) { onAllNodes(hasText(option) and dropdown).fetchSemanticsNodes().isNotEmpty() }
+}
+
 /** Base class of the admin app tests. */
 abstract class AdminE2eTest {
     protected val app = AdminAppRule()

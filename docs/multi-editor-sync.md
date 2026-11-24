@@ -42,6 +42,9 @@ Several people can edit one tournament at the same time. This page describes how
 - Polling watches every revision. A higher number marks the cached copies that depend on it as old, and the next read fetches them. The editor reloads the player names (players or EMA players changed) and the tournament settings (tournaments changed) at once. A reload that fails is tried again at the next poll.
 - The generated files (ID cards, ID list, EMA report) follow the same rule. They are reused without any request until polling marks them old. The EMA export first runs one poll, then uses the held data like the ranking.
 - The ranking screen loads once and stays still while it is open. The EMA export forces a fresh load.
+- A new draw (the draw of the registrations, a change of the number of players) raises the `draw` revision of the tournament manifest. Tables then disappear or get other players without a save, so `tableVersions` does not show it: the app drops every table it holds, also the copy saved on the device, and loads them all again. The saved copy of the tables keeps the `draw` revision it belongs to.
+- Every write marks old the cached data it changes, also when the server raises the revision anyway, so the next read does not wait for the 10 seconds. The registrations mark the tournament list old (it shows the counters), and the draw the whole tournament. The organizations mark the tournament list old (it shows the organizers).
+- `CacheCoverageTest` (`:data:jvmTest`, every night in CI) gives every request of `FunctionsBackendApi` a policy: cached, live with a reason, a write that marks the cache old, or a write of data that nothing caches. A new request without a policy, a cached read outside the cache, a write that marks nothing old, or a revision of the server that the app never reads fails the test.
 
 ## Answers saved on the device
 

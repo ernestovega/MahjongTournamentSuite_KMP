@@ -260,15 +260,18 @@ class DefaultAdminRepository(
     }
 
     override suspend fun createOrganization(draft: OrganizationDraft): AppResult<Organization> = managedUserRequest("Creating an organization") { idToken ->
-        backendApi.createOrganization(idToken, draft.toDto()).toDomain()
+        backendApi.createOrganization(idToken, draft.toDto()).toDomain().also { cache.markStale(TOURNAMENTS_CACHE_KEY) }
     }
 
     override suspend fun updateOrganization(id: String, draft: OrganizationDraft): AppResult<Organization> = managedUserRequest("Updating an organization") { idToken ->
-        backendApi.updateOrganization(idToken, id, draft.toDto()).toDomain()
+        // The tournaments show the name, the color and the logo of their organizers.
+        backendApi.updateOrganization(idToken, id, draft.toDto()).toDomain().also { cache.markStale(TOURNAMENTS_CACHE_KEY) }
     }
 
     override suspend fun deleteOrganization(id: String): AppResult<Unit> = managedUserRequest("Deleting an organization") { idToken ->
         backendApi.deleteOrganization(idToken, id)
+        // Its club admins lose it, and maybe their role.
+        cache.markStale(TOURNAMENTS_CACHE_KEY, USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY)
         Unit
     }
 
@@ -353,6 +356,7 @@ class DefaultAdminRepository(
 
 private const val USERS_CACHE_KEY = "global:users"
 private const val WHO_AM_I_CACHE_KEY = "global:whoAmI"
+private const val TOURNAMENTS_CACHE_KEY = "global:tournaments"
 
 private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
     uid = uid,

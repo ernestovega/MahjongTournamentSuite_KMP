@@ -52,7 +52,19 @@ HARNESS_ERRORS = (
     "State must be at least 'CREATED'",
     "performMeasureAndLayout called during measure layout",
     "runDetachLifecycle",
+    "Detected multithreaded access to SnapshotStateObserver",
 )
+# The test clock of Compose can run a recomposition on the thread that changed a state, a worker thread. A dialog made
+# there fails with this error. It is the harness only when the stack holds the test clock, so the same error from the
+# app code stays a failure.
+HARNESS_ERRORS_WITH_TEST_CLOCK = ("has not called Looper.prepare()",)
+TEST_CLOCK = "TestMonotonicFrameClock"
+
+
+def is_harness_error(text: str) -> bool:
+    if any(error in text for error in HARNESS_ERRORS):
+        return True
+    return TEST_CLOCK in text and any(error in text for error in HARNESS_ERRORS_WITH_TEST_CLOCK)
 MAX_ATTEMPTS = 4
 CHUNK = 5  # Tests per group. Small groups spread the work evenly; each group costs a few seconds of start-up.
 ORCHESTRATOR = "androidx.test.orchestrator/androidx.test.orchestrator.AndroidTestOrchestrator"
@@ -109,7 +121,7 @@ class Result:
 
     @property
     def harness(self) -> bool:
-        return self.status == "FAIL" and (self.no_result or any(error in self.message for error in HARNESS_ERRORS))
+        return self.status == "FAIL" and (self.no_result or is_harness_error(self.message))
 
 
 def parse_instrumentation(output: str) -> list[Result]:

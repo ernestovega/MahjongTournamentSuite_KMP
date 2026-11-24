@@ -116,6 +116,10 @@ jobs:
         run: ./gradlew ktlintCheck --continue
 
       - name: Test Kotlin code
+        env:
+          # Ga4ValidationSmokeTest asks GA4 if it accepts every event of the app. Without the secret (a pull request
+          # from a fork, or no repository secret) the test checks nothing. See docs/telemetry.md.
+          MTS_GA4_API_SECRET: ${{ secrets.MTS_GA4_API_SECRET }}
         run: >
           ./gradlew
           :domain:jvmTest :data:jvmTest :designsystem:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
@@ -137,6 +141,7 @@ jobs:
         run: |
           node --test scripts/recovery.test.mjs
           node --test scripts/rehearsal/test/*.test.mjs
+          node --test scripts/smoke/test/*.test.mjs
           python3 -m unittest discover -s scripts -p "*_test.py"
           node --test playerApp/diagnostics-test/*.test.mjs
 
@@ -256,6 +261,12 @@ jobs:
           --project "$FIREBASE_PROJECT"
           --non-interactive
           --force
+
+      # A few quick requests that say the deploy is alive: both web apps load with their scripts, the site and the API
+      # serve the versions of main, the public list has data and the App Links file is there (scripts/smoke/smoke.mjs).
+      # A failure makes the run red, and GitHub emails the owner. It does not undo the deploy.
+      - name: Smoke test of production
+        run: node scripts/smoke/smoke.mjs
 
       # The table of versions in the summary of the run. Google Play is shown by the job below and by
       # Actions > Check · Published versions.

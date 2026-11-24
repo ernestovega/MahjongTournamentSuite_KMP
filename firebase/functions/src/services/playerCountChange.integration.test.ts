@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { newTournamentId, requireEmulator } from "../testing/firestoreFixtures";
 import { setMailTransportForTests, type OutgoingEmail } from "./mailService";
+import { getTournamentManifest } from "./dataVersionsService";
 import { changePlayerCount } from "./playerCountChange";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import { createTournament } from "./tournamentsService";
@@ -137,6 +138,9 @@ describe("change of the number of players", () => {
     assert.equal((await ref.collection("tables").get()).size, 5);
     assert.equal((await ref.collection("tables").doc("1_5").get()).get("version"), 0);
     assert.notDeepEqual(before.get("dataVersions.tables"), (await ref.get()).get("dataVersions.tables"));
+    // A new draw: the apps drop the tables they hold and read them all again.
+    const manifest = await getTournamentManifest(id);
+    assert.equal(manifest.resources.draw.revision, 1);
   });
 
   it("refuses a tournament with table data, without changing anything", async () => {

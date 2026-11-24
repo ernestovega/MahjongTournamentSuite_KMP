@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RegistrationTeamDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.PersistentCacheStore
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -61,6 +62,11 @@ class DefaultRegistrationRepository(
     private val logger: Logger,
     /** Keeps the token of the links of the emails, so a person without an account can manage the registration. */
     private val tokens: PersistentCacheStore,
+    /**
+     * The cache of the tournaments of this app. A change of the registrations changes the counters of the tournament
+     * list, and the draw makes the players, the teams, the rounds and the tables.
+     */
+    private val cache: RepositoryCache? = null,
 ) : RegistrationRepository {
     override suspend fun loadPublicList(tournamentId: String): AppResult<TournamentRegistrations> = call("Reading the registrations") {
         backendApi.publicRegistrations(tournamentId).let { dto ->
@@ -89,6 +95,7 @@ class DefaultRegistrationRepository(
             ),
         )
         dto.manageToken?.takeIf(String::isNotBlank)?.let { saveToken(tournamentId, it) }
+        countersChanged()
         RegisterResult(
             status = dto.status.toStatus(),
             position = dto.position,
@@ -98,7 +105,10 @@ class DefaultRegistrationRepository(
     }
 
     override suspend fun confirm(tournamentId: String, token: String): AppResult<OwnRegistration> = call("Confirming a registration") {
-        backendApi.confirmRegistration(tournamentId, token.trim()).toDomain().also { saveToken(tournamentId, it.manageToken.ifBlank { token.trim() }) }
+        backendApi.confirmRegistration(tournamentId, token.trim()).toDomain().also {
+            saveToken(tournamentId, it.manageToken.ifBlank { token.trim() })
+            countersChanged()
+        }
     }
 
     override suspend fun loadOwn(tournamentId: String): AppResult<OwnRegistration?> = personCall(tournamentId, "Reading the own registration") { idToken, token ->
@@ -120,6 +130,7 @@ class DefaultRegistrationRepository(
     override suspend fun cancelOwn(tournamentId: String): AppResult<Unit> = personCall(tournamentId, "Cancelling the own registration") { idToken, token ->
         backendApi.cancelOwnRegistration(idToken, token, tournamentId)
         forgetToken(tournamentId)
+        countersChanged()
     }
 
     override suspend fun createTeam(tournamentId: String, name: String): AppResult<OwnRegistration> = personCall(tournamentId, "Creating a team") { idToken, token ->
@@ -176,7 +187,7 @@ class DefaultRegistrationRepository(
                 teamName = registration.teamName.trim(),
                 notify = registration.notify,
             ),
-        ).toDomain()
+        ).toDomain().also { countersChanged() }
     }
 
     override suspend fun adminUpdate(tournamentId: String, emaId: String, update: RegistrationUpdate): AppResult<AdminRegistration> = adminCall("Changing a registration") { idToken ->
@@ -192,16 +203,16 @@ class DefaultRegistrationRepository(
                     foodRestrictions = update.foodRestrictions?.trim(),
                     newEmaId = update.newEmaId,
                 ),
-            ).toDomain()
+            ).toDomain().also { countersChanged() }
         }
 
     override suspend fun adminRemove(tournamentId: String, emaId: String, notify: Boolean): AppResult<Unit> = adminCall("Removing a registration") { idToken ->
         backendApi.adminRemoveRegistration(idToken, tournamentId, emaId, notify)
-        Unit
+        countersChanged()
     }
 
     override suspend fun updateSettings(tournamentId: String, settings: RegistrationSettings): AppResult<RegistrationSettings> = adminCall("Changing the registration settings") { idToken ->
-            backendApi.updateRegistrationSettings(idToken, tournamentId, settings.toRequestDto()).toDomain()
+            backendApi.updateRegistrationSettings(idToken, tournamentId, settings.toRequestDto()).toDomain().also { countersChanged() }
         }
 
     override suspend fun previewImport(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<RegistrationImport> = import(tournamentId, fileName, bytes, apply = false)
@@ -210,6 +221,7 @@ class DefaultRegistrationRepository(
 
     private suspend fun import(tournamentId: String, fileName: String, bytes: ByteArray, apply: Boolean): AppResult<RegistrationImport> = adminCall("Importing registrations") { idToken ->
             val dto = backendApi.importRegistrations(idToken, tournamentId, RegistrationImportRequestDto(fileName, Base64.Default.encode(bytes), apply))
+            if (apply) countersChanged()
             RegistrationImport(
                 rows = dto.rows.map { row ->
                     RegistrationImportRow(
@@ -248,7 +260,15 @@ class DefaultRegistrationRepository(
                 tables = tables.map { DrawTableDto(it.roundId, it.tableId, it.playerIds) },
                 assignments = assignments.map { DrawAssignmentDto(it.playerId, it.emaId) },
             ),
-        ).toDomain()
+        ).toDomain().also {
+            // The draw makes the players, the teams, the rounds and the tables of the tournament.
+            cache?.markStale(TOURNAMENTS_CACHE_KEY, "tournament:$tournamentId:")
+        }
+    }
+
+    /** The tournament list shows how many people have a place and how many wait. */
+    private suspend fun countersChanged() {
+        cache?.markStale(TOURNAMENTS_CACHE_KEY)
     }
 
     private suspend fun savedToken(tournamentId: String): String? = tokens.read(tokenName(tournamentId))?.takeIf(String::isNotBlank)
@@ -285,6 +305,8 @@ class DefaultRegistrationRepository(
         authRepository.withFreshIdToken(block)
     }
 }
+
+private const val TOURNAMENTS_CACHE_KEY = "global:tournaments"
 
 internal fun RegistrationSettingsDto.toDomain() = RegistrationSettings(
     status = if (status == RegistrationPhase.CLOSED.name) RegistrationPhase.CLOSED else RegistrationPhase.OPEN,

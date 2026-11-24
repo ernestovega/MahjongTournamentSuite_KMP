@@ -15,6 +15,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -475,10 +476,17 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.signIn(account, password)
         val name = byHand.getString("name")
         // The app opens on In play when the account plays a tournament now (an earlier game day, for example), and
-        // that tab leaves out this tournament: it is in the All tab.
+        // that tab leaves out this tournament: it is in the All tab. The app can switch to In play once the list has
+        // loaded, after a first tap on All, so the tap is repeated until the tournament shows.
         c.waitForText("My tournaments", timeoutMs = 60_000)
-        if (c.isOnScreen("In play")) c.clickButton("All")
-        c.scrollListTo(name)
+        c.waitUntil(120_000) {
+            if (c.isOnScreen(name)) return@waitUntil true
+            if (c.isOnScreen("In play")) runCatching { c.onAllNodes(hasText("All") and hasClickAction()).onFirst().performClick() }
+            c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
+                runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(name)) }
+            }
+            c.isOnScreen(name)
+        }
         val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
         c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
         runCatching { c.onNode(open).performScrollTo() }
@@ -754,11 +762,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun confirmTheNewDraw(from: Int, to: Int) {
         c.clickButton("Continue")
-        // With teams the step Teams comes first (always, 24-nov). Whole teams left or came, so every team has 4.
-        if (plan.getBoolean("isTeams")) {
-            c.waitForText("Every team has 4 players.", timeoutMs = 30_000)
-            clickTagged("playerCountTeamsContinue")
-        }
+        // The step Teams shows only when a team stays incomplete (PlayerCountForm.needsTeams). Whole teams leave or
+        // come here, so the screen goes straight to the review; if it shows, every team has 4.
+        c.waitForAnyText("Make a new draw?", "Every team has 4 players.", timeoutMs = 30_000)
+        if (plan.getBoolean("isTeams") && c.isOnScreen("Every team has 4 players.")) clickTagged("playerCountTeamsContinue")
         c.waitForText("Make a new draw?", timeoutMs = 30_000)
         c.waitForText("From $from to $to players")
         c.clickButton("Make the new draw")

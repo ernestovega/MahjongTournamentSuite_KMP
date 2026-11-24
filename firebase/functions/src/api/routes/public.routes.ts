@@ -34,6 +34,11 @@ import { pathParam } from "../pathParam";
 export const PUBLIC_CACHE_SECONDS = {
   /** A tournament in play changes with every hand. */
   live: 15,
+  /**
+   * The manifest and the tables of a tournament in play. The own table of a player checks every 2 s and the players
+   * every 5 s (PollSchedule), so a hand must not wait 15 s in the CDN. All viewers still share one call each 2 s.
+   */
+  playing: 2,
   /** A completed tournament changes only when an admin corrects it. */
   completed: 300,
   /** The tournament list and the statistics of people. */
@@ -111,6 +116,11 @@ export function publicRouter(): Router {
     }, next);
   });
   const tournamentCache = (res: Response) => cacheFor(res, Number(res.locals.publicCacheSeconds ?? PUBLIC_CACHE_SECONDS.live));
+  // The hands: what polling reads during play. A completed tournament keeps its long cache.
+  const handsCache = (res: Response) => cacheFor(
+    res,
+    res.locals.publicCacheSeconds === PUBLIC_CACHE_SECONDS.completed ? PUBLIC_CACHE_SECONDS.completed : PUBLIC_CACHE_SECONDS.playing,
+  );
 
   router.get("/sync/manifest", handle(async (_req, res) => {
     cacheFor(res, PUBLIC_CACHE_SECONDS.live);
@@ -145,7 +155,7 @@ export function publicRouter(): Router {
   }));
 
   router.get("/tournaments/:tournamentId/sync/manifest", handle(async (req, res) => {
-    tournamentCache(res);
+    handsCache(res);
     res.status(200).json(await getTournamentManifest(pathParam(req, "tournamentId")));
   }));
 
@@ -187,20 +197,20 @@ export function publicRouter(): Router {
   router.get("/tournaments/:tournamentId/tables", handle(async (req, res) => {
     const roundId = req.query.roundId == null ? null : readPositiveInt(req.query.roundId, "roundId");
     const tables = await listTournamentTables(pathParam(req, "tournamentId"), roundId);
-    tournamentCache(res);
+    handsCache(res);
     res.status(200).json({ tables });
   }));
 
   router.get("/tournaments/:tournamentId/tables-with-hands", handle(async (req, res) => {
     const tables = await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") });
-    tournamentCache(res);
+    handsCache(res);
     res.status(200).json({ tables });
   }));
 
   router.get("/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", handle(async (req, res) => {
     const roundId = readPositiveInt(pathParam(req, "roundId"), "roundId");
     const tables = await getRoundTablesWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId });
-    tournamentCache(res);
+    handsCache(res);
     res.status(200).json({ tables });
   }));
 
@@ -208,7 +218,7 @@ export function publicRouter(): Router {
     const roundId = readPositiveInt(pathParam(req, "roundId"), "roundId");
     const tableId = readPositiveInt(pathParam(req, "tableId"), "tableId");
     const data = await getTableWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId, tableId });
-    tournamentCache(res);
+    handsCache(res);
     res.status(200).json(data);
   }));
 

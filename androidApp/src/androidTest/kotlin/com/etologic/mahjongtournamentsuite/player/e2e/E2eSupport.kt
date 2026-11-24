@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
@@ -180,7 +181,20 @@ fun ComposeTestRule.clickButton(text: String) {
     val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
     // A button outside a scroll container is already visible.
     runCatching { button.performScrollTo() }
-    button.performClick()
+    button.tap()
+}
+
+/**
+ * A tap, or the click action of the node when the system refuses the touch ("Failed to inject touch input"): the window
+ * can lose the focus for a while, for example while the system shows a notice.
+ */
+fun SemanticsNodeInteraction.tap() {
+    try {
+        performClick()
+    } catch (error: AssertionError) {
+        if (error.message?.contains("Failed to inject touch input") != true) throw error
+        performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+    }
 }
 
 /**

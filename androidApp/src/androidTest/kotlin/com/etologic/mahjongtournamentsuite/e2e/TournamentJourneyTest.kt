@@ -4,11 +4,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
@@ -45,19 +43,6 @@ class TournamentJourneyTest : AdminE2eTest() {
 
     // The form, as in CreateTournamentTest.
 
-    private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
-
-    private fun chooseCountry(name: String) {
-        c.selectField("Country").performClick()
-        // The menu composes at most 50 options, so a country far down the list shows only after a search.
-        c.waitUntil(5_000) { c.onAllNodes(hasTestTag("select-search")).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(hasTestTag("select-search")).onLast().performTextInput(name)
-        val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
-        c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
-        c.onAllNodes(option).onLast().performClick()
-        c.waitUntil(5_000) { c.onAllNodes(hasText(name) and isDropdownList()).fetchSemanticsNodes().isNotEmpty() }
-    }
-
     private fun createTheTournamentWithTheForm() {
         c.clickButton("New tournament")
         c.waitForText("Creates rounds, tables, and players automatically.")
@@ -66,7 +51,7 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.field("Players").performTextReplacementText("16")
         c.field("Rounds").performTextReplacementText("2")
         c.clickLastButton("Venue")
-        chooseCountry("Spain")
+        c.chooseInSelectField("Country", "Spain")
         c.field("City").performTextInputText("Madrid")
         c.field("Venue name").performTextInputText("E2E club")
         c.field("Address").performTextInputText("Calle Mayor 1, Madrid")
@@ -80,6 +65,9 @@ class TournamentJourneyTest : AdminE2eTest() {
             dates[index].performTextReplacement(today)
             times[index].performTextReplacement("${10 + index}:00")
         }
+        // A tournament needs a main organizer: the test club of the seed.
+        c.clickLastButton("Organizers")
+        c.chooseInSelectField("Main organizer", "Test Mahjong Club")
         c.clickLastButton("General")
         c.clickButton("Create")
         // The app draws the seating, and then it opens the players of the new tournament.
@@ -127,7 +115,9 @@ class TournamentJourneyTest : AdminE2eTest() {
                 c.isOnScreen("Increase round") -> c.clickButton("Increase round")
             }
         }
-        c.waitForText("Press Start when the starting gong sounds", substring = true)
+        // The rounds are planned for 10:00 and 11:00 today. After that time the Timer says that the round should have
+        // started ("Press Start when the gong sounds"), before it "Press Start when the starting gong sounds".
+        c.waitForText("Press Start when the", substring = true)
         c.clickButton("Start timer")
         c.waitForText("Pause timer")
         check(JourneyApi.hasClock(tournamentId, round)) { "Round $round has no clock on the server" }
@@ -246,7 +236,8 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.waitForText("Start automatic paging")
         c.waitForText("???")
         c.assertNoText(players[0].lastName, substring = true)
-        c.onAllNodes(isToggleable() and hasAnySibling(hasText("Show first 3"))).onLast().performClick()
+        // The box and its text are one control (MtsCheckboxRow). After the Timer window the system can refuse a touch.
+        c.onAllNodes(isToggleable() and hasText("Show first 3")).onLast().tap()
         c.waitForText(players[0].lastName, substring = true)
         check(JourneyApi.finalRank(tournamentId, players[0].emaId) == 1) { "Slot 1 is not first in the final ranking" }
     }

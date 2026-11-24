@@ -39,6 +39,9 @@ describe("the limits of the public routes", () => {
       ["/public/sync/manifest", PUBLIC_CACHE_SECONDS.live],
       ["/public/tournaments", PUBLIC_CACHE_SECONDS.lists],
       [`/public/tournaments/${open}`, PUBLIC_CACHE_SECONDS.live],
+      // What polling reads during play: the own table checks every 2 s.
+      [`/public/tournaments/${open}/sync/manifest`, PUBLIC_CACHE_SECONDS.playing],
+      [`/public/tournaments/${open}/tables-with-hands`, PUBLIC_CACHE_SECONDS.playing],
       ["/public/statistics/overview", PUBLIC_CACHE_SECONDS.lists],
       ["/public/statistics/groups", PUBLIC_CACHE_SECONDS.lists],
       ["/public/players", PUBLIC_CACHE_SECONDS.registry],
