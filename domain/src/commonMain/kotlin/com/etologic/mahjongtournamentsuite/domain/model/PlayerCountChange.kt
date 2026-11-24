@@ -59,8 +59,8 @@ object PlayerCountRules {
         val removed = removedSlotIds.toSet()
         return slots.filter { it.team > 0 && it.id !in removed }
             .groupBy({ teamMoves[it.id] ?: it.team }, { it.id })
-            .mapValues { (_, ids) -> ids.sorted() }
-            .toSortedMap().toMap()
+            .entries.sortedBy { it.key }
+            .associate { (team, ids) -> team to ids.sorted() }
     }
 
     /** The teams that have fewer than 4 players after the removal and the moves. */

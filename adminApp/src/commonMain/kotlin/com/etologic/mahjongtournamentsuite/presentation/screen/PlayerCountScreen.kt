@@ -765,7 +765,7 @@ internal fun ColumnScope.TeamsContent(
         PlayerCountRules.incompleteTeams(players, form.chosen).keys +
             form.teamMoves.values +
             data.slots.filter { it.id in form.teamMoves }.map { it.team }
-        ).toSortedSet()
+        ).distinct().sorted()
     val after = PlayerCountRules.teamsAfter(players, form.chosen, form.teamMoves).filterKeys { it in involved }
     val open = PlayerCountRules.incompleteTeams(players, form.chosen, form.teamMoves)
     val slotsById = data.slots.associateBy { it.id }
