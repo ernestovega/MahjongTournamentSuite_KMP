@@ -366,6 +366,9 @@ fun HandEntryPanel(
     }
 
     val review = preview
+    // The notice of a changed table goes first. The entry dialogs wait behind it with the data kept, so a tap on the
+    // notice never lands on them, and they come back when the player closes it.
+    val showEntry = conflict == null
     val saving = busy || awaitingKey != null
 
     // The server computes the result of the hand. The review shows it, and a change of "last hand" asks again,
@@ -399,7 +402,7 @@ fun HandEntryPanel(
     fun backButton(to: WinStep): @Composable () -> Unit = {
         TextButton(onClick = { winStep = to }) { Text(stringResource(Res.string.entry_back)) }
     }
-    if (mode == EntryMode.DRAW && review == null) {
+    if (showEntry && mode == EntryMode.DRAW && review == null) {
         TrackedDialog("EntryAddDraw") {
             AlertDialog(
                 onDismissRequest = { finishEntry() },
@@ -420,7 +423,7 @@ fun HandEntryPanel(
         }
     }
     // A win is asked in small steps: who won, who discarded, and the score. A tap on a player goes to the next step.
-    if (mode == EntryMode.WIN && review == null) {
+    if (showEntry && mode == EntryMode.WIN && review == null) {
         TrackedDialog(
             when (winStep) {
                 WinStep.WINNER -> "EntryWinWinner"
@@ -510,7 +513,7 @@ fun HandEntryPanel(
             )
         }
     }
-    if ((mode == EntryMode.WIN || mode == EntryMode.DRAW) && review != null) {
+    if (showEntry && (mode == EntryMode.WIN || mode == EntryMode.DRAW) && review != null) {
         TrackedDialog("EntryCheckHand") {
             AlertDialog(
                 onDismissRequest = {
@@ -570,7 +573,7 @@ fun HandEntryPanel(
             )
         }
     }
-    if (mode == EntryMode.PENALTY && !penaltyReview) {
+    if (showEntry && mode == EntryMode.PENALTY && !penaltyReview) {
         TrackedDialog("EntryAddPenalty") {
             AlertDialog(
                 onDismissRequest = { finishEntry() },
@@ -616,7 +619,7 @@ fun HandEntryPanel(
             )
         }
     }
-    if (mode == EntryMode.PENALTY && penaltyReview) {
+    if (showEntry && mode == EntryMode.PENALTY && penaltyReview) {
         TrackedDialog("EntryCheckPenalty") {
             AlertDialog(
                 onDismissRequest = {
