@@ -195,6 +195,11 @@ Turn it on in this order:
 4. Set `APP_CHECK_MODE=monitor`, then deploy the API and both web sites. Publish the Android app.
 5. Read the log for a few days. When no real app fails, set `APP_CHECK_MODE=enforce` and deploy the API.
 
+The Android and desktop apps also send `X-MTS-Client`, such as `android/1.0.342; appcheck=failed:...` or
+`desktop/1.0.342; appcheck=none`, and the log line keeps it with the user agent and whether the request was signed in.
+The desktop app can never send a token: Firebase has no App Check provider for a desktop app. An Android app that is
+not installed from Google Play, or whose signing key is not registered, gets a failure from Play Integrity.
+
 A debug build uses the debug provider. The console shows the debug token in the log of the app. Register it in App Check, under "Manage debug tokens". On localhost the web app prints its debug token in the browser console.
 
 ## First admin

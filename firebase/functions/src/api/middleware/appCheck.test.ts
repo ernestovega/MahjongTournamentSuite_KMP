@@ -36,6 +36,23 @@ describe("appCheck", () => {
     assert.equal(await call("enforce", "token", true), undefined);
   });
 
+  it("logs which app sent no token, its version and whether it was signed in", async () => {
+    const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
+    const headers: Record<string, string> = { "x-mts-client": "android/1.0.341; appcheck=failed:IntegrityException", authorization: "Bearer abc" };
+    const req = { method: "GET", path: "/me", header: (name: string) => headers[name.toLowerCase()] } as unknown as Request;
+    const logged: unknown[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => { logged.push(args[1]); };
+    try {
+      await middleware(req, {} as never, () => undefined);
+    } finally {
+      console.warn = original;
+    }
+    assert.deepEqual(logged, [{
+      reason: "missing", method: "GET", path: "/me", client: "android/1.0.341; appcheck=failed:IntegrityException", userAgent: null, signedIn: true,
+    }]);
+  });
+
   it("reads the mode from a text and falls back to off", () => {
     assert.equal(appCheckModeFromEnv("Enforce"), "enforce");
     assert.equal(appCheckModeFromEnv(" monitor "), "monitor");
