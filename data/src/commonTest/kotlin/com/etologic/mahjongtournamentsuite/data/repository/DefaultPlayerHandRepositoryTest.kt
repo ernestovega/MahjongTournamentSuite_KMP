@@ -73,7 +73,7 @@ class DefaultPlayerHandRepositoryTest {
         assertEquals("", json["playerLooserId"]?.jsonPrimitive?.content)
         assertEquals("true", json["isLastHand"]?.jsonPrimitive?.content)
         assertTrue(requests.single().url.encodedPath.endsWith("/player/tournaments/t-1/tables/2/5/hands"))
-        assertEquals(listOf("tournament:t-1:tables"), cache.stale)
+        assertEquals(listOf("tournament:t-1:table"), cache.stale)
     }
 
     @Test
@@ -104,7 +104,7 @@ class DefaultPlayerHandRepositoryTest {
         assertEquals(";10", json["playerWestPenalty"]?.jsonPrimitive?.content)
         assertEquals(";10", json["playerNorthPenalty"]?.jsonPrimitive?.content)
         assertEquals("7", json["expectedVersion"]?.jsonPrimitive?.content)
-        assertEquals(listOf("tournament:t-1:tables"), cache.stale)
+        assertEquals(listOf("tournament:t-1:table"), cache.stale)
     }
 
     @Test

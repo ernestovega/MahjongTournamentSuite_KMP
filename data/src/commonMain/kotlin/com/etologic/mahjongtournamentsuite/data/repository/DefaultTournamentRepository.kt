@@ -102,6 +102,9 @@ class DefaultTournamentRepository(
     private val persisted: PersistedValues? = null,
 ) : TournamentRepository {
     private val lastPolledRevisions = mutableMapOf<String, Map<String, Long>>()
+
+    /** The `draw` revision of the tables that [tableStore] holds, by tournament. A new draw makes them all old. */
+    private val heldDraws = mutableMapOf<String, Long>()
     private var lastPolledGlobalRevisions: Map<String, Long>? = null
 
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = persistedRequest(
@@ -348,6 +351,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
             )
             cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY, "tournament:$tournamentId:")
+            tableStore.forget(tournamentId)
             Unit
         }
     }.fold(
@@ -391,7 +395,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
                 uid = uid,
             )
-            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY)
+            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY, GLOBAL_TOURNAMENTS_CACHE_KEY)
             Unit
         }
     }.fold(
@@ -412,7 +416,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
                 uid = uid,
             )
-            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY)
+            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY, GLOBAL_TOURNAMENTS_CACHE_KEY)
             Unit
         }
     }.fold(
@@ -492,6 +496,7 @@ class DefaultTournamentRepository(
             )
             // The slots, the teams, the rounds and every table are new.
             cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY, "tournament:${request.tournamentId}:")
+            tableStore.forget(request.tournamentId)
             PlayerCountOutcome(
                 tournament = dto.tournament.toDomain(),
                 emailsSent = dto.emails.sent,
@@ -737,6 +742,14 @@ class DefaultTournamentRepository(
             }
         }
         val hasNewerTables: suspend (Map<TableKey, Long>) -> Boolean = { known -> roundsWithNewerTables(known).isNotEmpty() }
+        // A new draw (the draw of the registrations, a change of the number of players) removes tables and gives others
+        // new players without a save, so the table versions do not show it. Its own revision does.
+        val currentDraw: suspend () -> Long = { withReadToken { token -> tournamentManifest(token, tournamentId).drawRevision() } }
+        val drawNow = if (refreshMode == RefreshMode.CACHED) null else currentDraw()
+        val heldDraw = heldDraws[tournamentId]
+        if (drawNow != null && heldDraw != null && heldDraw != drawNow) tableStore.forget(tournamentId)
+        var restoredDraw: Long? = null
+        var fetchedDraw: Long? = null
         val persistedName = "tournament:$tournamentId:all-tables"
         var answer: RoundTablesWithHandsResponseDto? = null
         val roundAnswers = mutableMapOf<Int, RoundTablesWithHandsResponseDto>()
@@ -749,13 +762,17 @@ class DefaultTournamentRepository(
             restore = persisted?.let { store ->
                 {
                     store.read(owner, persistedName, RoundTablesWithHandsResponseDto.serializer())
-                        ?.let { (_, saved) -> runCatching { saved.tables.map { it.toDomain() } }.getOrNull() }
+                        // Tables saved before a new draw are of no use.
+                        ?.takeIf { (savedDraw, _) -> drawNow == null || savedDraw == drawNow }
+                        ?.let { (savedDraw, saved) ->
+                            runCatching { saved.tables.map { it.toDomain() } }.getOrNull()?.also { restoredDraw = savedDraw }
+                        }
                 }
             },
-            verifyRestored = hasNewerTables,
+            verifyRestored = { known -> restoredDraw.let { it != null && it != currentDraw() } || hasNewerTables(known) },
             onFetched = {
-                // The table versions are inside the answer, so the saved revision is not used.
-                answer?.let { persisted?.write(owner, persistedName, 0, RoundTablesWithHandsResponseDto.serializer(), it) }
+                // The table versions are inside the answer. The saved revision is the draw that the tables belong to.
+                answer?.let { persisted?.write(owner, persistedName, fetchedDraw ?: 0L, RoundTablesWithHandsResponseDto.serializer(), it) }
             },
             // While a round is played, only its tables change. Loading that round is a fraction of all the tables.
             changedRounds = roundsWithNewerTables.takeIf { refreshMode == RefreshMode.IF_CHANGED },
@@ -765,11 +782,14 @@ class DefaultTournamentRepository(
                 }
             },
             fetchAll = {
+                // The revision is read before the tables, so a draw made in between only causes one more load later.
+                fetchedDraw = drawNow ?: currentDraw()
                 withReadToken { token ->
                     backendApi.getAllTablesWithHands(token, tournamentId).also { answer = it }.tables.map { it.toDomain() }
                 }
             },
         ).also {
+            (fetchedDraw ?: drawNow ?: restoredDraw)?.let { heldDraws[tournamentId] = it }
             // The saved copy gets the reloaded rounds too, so the next start of the app does not download them again.
             if (roundAnswers.isNotEmpty()) persisted?.let { store -> saveReloadedRounds(store, owner, persistedName, roundAnswers) }
         }
@@ -787,10 +807,10 @@ class DefaultTournamentRepository(
         name: String,
         rounds: Map<Int, RoundTablesWithHandsResponseDto>,
     ) {
-        val (_, saved) = store.read(owner, name, RoundTablesWithHandsResponseDto.serializer()) ?: return
+        val (savedDraw, saved) = store.read(owner, name, RoundTablesWithHandsResponseDto.serializer()) ?: return
         val merged = saved.tables.filter { it.table.roundId !in rounds.keys } + rounds.values.flatMap { it.tables }
         val sorted = merged.sortedWith(compareBy({ it.table.roundId }, { it.table.tableId }))
-        store.write(owner, name, 0, RoundTablesWithHandsResponseDto.serializer(), RoundTablesWithHandsResponseDto(sorted))
+        store.write(owner, name, savedDraw, RoundTablesWithHandsResponseDto.serializer(), RoundTablesWithHandsResponseDto(sorted))
     }
 
     override suspend fun saveTableState(
@@ -1156,6 +1176,9 @@ private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     date = date,
     startTime = startTime,
 )
+
+/** The revision of the draw of the tables. Older servers do not send it: 0. */
+private fun DataVersionsManifestDto.drawRevision(): Long = resources["draw"]?.revision ?: 0
 
 private fun DataVersionsManifestDto.toDomain(): TournamentManifest = TournamentManifest(
     tablesRevision = resources["tables"]?.revision ?: 0,
