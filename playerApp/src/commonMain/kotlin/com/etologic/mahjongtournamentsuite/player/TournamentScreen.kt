@@ -53,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -133,6 +134,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
     fun openPlayer(slot: Int, statistics: Boolean = false) {
         navController.navigate(TournamentPlayerRoute(tournamentId, slot, if (statistics) PlayerTab.STATISTICS else PlayerTab.TABLES))
     }
+
     // The own results: the Results tab of the screen of the signed-in player.
     fun openMyResults(slot: Int) {
         navController.navigate(TournamentPlayerRoute(tournamentId, slot, PlayerTab.SUMMARY))
@@ -487,7 +489,15 @@ private fun RoundHeader(roundId: Int, start: String?) {
         )
         if (start != null) {
             Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(20.dp), tint = colors.onSurfaceVariant)
-            Text(start, style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
+            // With the large text of the accessibility settings the start is weighted too, so it wraps instead of squeezing
+            // the round name into a column. With normal text it keeps one line.
+            val largeText = LocalDensity.current.fontScale >= 1.3f
+            Text(
+                start,
+                if (largeText) Modifier.weight(1f, fill = false) else Modifier,
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.onSurfaceVariant,
+            )
         }
     }
 }

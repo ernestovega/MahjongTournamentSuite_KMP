@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -127,19 +128,11 @@ internal fun TournamentFilterBar(
         // On a phone the clear button is an icon, so the search field keeps room to type.
         val narrow = maxWidth < 560.dp
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // The search field shares its row with the "My tournaments" chip and the button that clears the filters.
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = filter.query,
-                    onValueChange = { onChange(filter.copy(query = it)) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    // The title says what the field is. The hint, which is longer, shows while the person types.
-                    label = { Text(stringResource(Res.string.filter_search_label)) },
-                    placeholder = { Text(stringResource(Res.string.filter_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                )
+            // The search field shares its row with the "My tournaments" chip and the button that clears the filters. With
+            // the large text of the accessibility settings on a phone, the chip and the button go below the field, which
+            // otherwise gets too narrow to read.
+            val stacked = narrow && LocalDensity.current.fontScale >= 1.3f
+            val chips: @Composable () -> Unit = {
                 if (signedIn) {
                     Chip(stringResource(Res.string.scope_my_tournaments), filter.mineOnly) { onChange(filter.copy(mineOnly = !filter.mineOnly)) }
                 }
@@ -152,6 +145,23 @@ internal fun TournamentFilterBar(
                         TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
                     }
                 }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = filter.query,
+                    onValueChange = { onChange(filter.copy(query = it)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    // The title says what the field is. The hint, which is longer, shows while the person types.
+                    label = { Text(stringResource(Res.string.filter_search_label)) },
+                    placeholder = { Text(stringResource(Res.string.filter_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                )
+                if (!stacked) chips()
+            }
+            if (stacked && (signedIn || filter.isActive)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { chips() }
             }
             // The three dropdowns share one row, also on a phone.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
