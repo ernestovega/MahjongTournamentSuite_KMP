@@ -24,7 +24,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
+import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -44,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutl
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LeadersCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelChangeTag
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedal
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedalTag
@@ -88,6 +92,7 @@ import com.etologic.mahjongtournamentsuite.screenshots.componentDialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
+import com.etologic.mahjongtournamentsuite.screenshots.narrowInEveryLanguage
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import kotlin.test.Test
 
@@ -278,6 +283,19 @@ class UiComponentsScreenshotTest {
     @Test
     fun supportForm() = component("support-form", scroll = false) {
         SupportForm(app = "player", initialEmail = "lucia@example.test", onSend = { AppResult.Success(Unit) }, onBack = {})
+    }
+
+    /** The top players: a spider chart with the best player of each stat at its corners, over the average player. */
+    @Test
+    fun statisticsTopPlayers() = component("statistics-top-players", variants = componentVariants + narrowInEveryLanguage) {
+        val players = ScreenshotData.tournamentPlayers()
+        val tables = (1..4).flatMap { round ->
+            (1..4).map { table -> ScreenshotData.table(ScreenshotData.ONGOING, round, table).let { (state, hands) -> RankingTable(state, hands) } }
+        }
+        val statistics = CalculateStatisticsUseCase()(players, tables, ScreenshotData.ONGOING)
+        val byEma = ScreenshotData.players.associateBy { it.emaId }
+        val names = players.associate { it.id to (it.assignedEmaId?.let(byEma::get)?.displayName ?: "Player ${it.id}") }
+        LeadersCard(statistics, names, photos = emptyMap(), onOpenPlayer = {})
     }
 
     @Test
