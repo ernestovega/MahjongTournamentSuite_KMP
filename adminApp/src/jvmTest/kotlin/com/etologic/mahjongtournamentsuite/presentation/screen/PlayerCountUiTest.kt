@@ -210,7 +210,10 @@ class PlayerCountUiTest {
         onNodeWithText("Make a new draw?").assertIsDisplayed()
         onNodeWithText("From 20 to 16 players").assertIsDisplayed()
         onNodeWithText("The tables of all 2 rounds. They are drawn again.").assertIsDisplayed()
-        onNodeWithText("The people who leave: #5 · Name 5, #6 · Player 6, #7 · Name 7, #8 · Name 8.").assertIsDisplayed()
+        onNodeWithText("The people who leave:").assertIsDisplayed()
+        listOf("#5 · Name 5", "#6 · Player 6", "#7 · Name 7", "#8 · Name 8").forEachIndexed { index, line ->
+            onNodeWithTag("playerCountLeaving-$index").assertTextEquals(line)
+        }
         onNodeWithText("How does the draw work?").assertIsDisplayed()
         // Without registrations, nothing is said about them.
         assertTrue(onAllNodesWithText("Their registrations.").fetchSemanticsNodes().isEmpty())
@@ -369,7 +372,8 @@ class PlayerCountUiTest {
 
         onNodeWithText("From 16 to 20 players").assertIsDisplayed()
         onNodeWithText("3 empty places, numbered after the highest one, to assign afterwards.").assertIsDisplayed()
-        onNodeWithText("From the waiting list, with a place now: Late Two.").assertIsDisplayed()
+        onNodeWithText("From the waiting list, with a place now:").assertIsDisplayed()
+        onNodeWithTag("playerCountFromWaiting-0").assertTextEquals("Late Two")
         makeTheDraw()
         waitForDone()
         assertEquals(listOf("20000002"), world.server.playerCountRequest!!.waitingEmaIds)
@@ -393,9 +397,12 @@ class PlayerCountUiTest {
         // 16 is the minimum: nobody else can leave.
         see("playerCountSlot-6").assertIsNotEnabled()
         click("playerCountContinue")
-        onNodeWithText("The people who leave: #1 · Name 1, #2 · Name 2, #3 · Name 3, #5 · Name 5.").assertIsDisplayed()
-        onNodeWithText("Teams that stay incomplete, with the players they keep: Team 1 (1), Team 2 (3). Reorganize them afterwards.")
-            .assertIsDisplayed()
+        listOf("#1 · Name 1", "#2 · Name 2", "#3 · Name 3", "#5 · Name 5").forEachIndexed { index, line ->
+            onNodeWithTag("playerCountLeaving-$index").assertTextEquals(line)
+        }
+        onNodeWithText("Teams that stay incomplete, with the players they keep. Reorganize them afterwards:").assertIsDisplayed()
+        onNodeWithTag("playerCountBrokenTeams-0").assertTextEquals("Team 1 (1)")
+        onNodeWithTag("playerCountBrokenTeams-1").assertTextEquals("Team 2 (3)")
         makeTheDraw()
         waitForDone()
         val request = world.server.playerCountRequest!!

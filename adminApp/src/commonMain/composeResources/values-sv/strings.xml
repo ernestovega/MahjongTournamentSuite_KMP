@@ -1123,13 +1123,13 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_from_to">Från %1$d till %2$d spelare</string>
     <string name="pc_removed_label">Tas bort:</string>
     <string name="pc_removed_tables">Borden i alla %1$d omgångar. De lottas om.</string>
-    <string name="pc_removed_people">Personerna som lämnar: %1$s.</string>
-    <string name="pc_broken_teams">Lag som blir ofullständiga, med spelarna som är kvar: %1$s. De ordnas om efteråt.</string>
+    <string name="pc_removed_people">Personerna som lämnar:</string>
+    <string name="pc_broken_teams">Lag som blir ofullständiga, med spelarna som är kvar. De ordnas om efteråt:</string>
     <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
     <string name="pc_added_slots">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</string>
     <string name="pc_added_teams">%1$d nya lag.</string>
-    <string name="pc_added_waiting">Från väntelistan, som nu får en plats: %1$s.</string>
+    <string name="pc_added_waiting">Från väntelistan, som nu får en plats:</string>
     <string name="pc_kept_label">Behålls:</string>
     <string name="pc_kept_people">Övriga spelare, med sitt nummer, sin EMA-spelare, sitt konto och sin e-post.</string>
     <string name="pc_kept_teams">Lagen, med sitt nummer, sitt namn och spelarna som är kvar.</string>

@@ -1123,13 +1123,13 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_from_to">From %1$d to %2$d players</string>
     <string name="pc_removed_label">Deleted:</string>
     <string name="pc_removed_tables">The tables of all %1$d rounds. They are drawn again.</string>
-    <string name="pc_removed_people">The people who leave: %1$s.</string>
-    <string name="pc_broken_teams">Teams that stay incomplete, with the players they keep: %1$s. Reorganize them afterwards.</string>
+    <string name="pc_removed_people">The people who leave:</string>
+    <string name="pc_broken_teams">Teams that stay incomplete, with the players they keep. Reorganize them afterwards:</string>
     <string name="pc_removed_registrations">Their registrations.</string>
     <string name="pc_added_label">Added:</string>
     <string name="pc_added_slots">%1$d empty places, numbered after the highest one, to assign afterwards.</string>
     <string name="pc_added_teams">%1$d new teams.</string>
-    <string name="pc_added_waiting">From the waiting list, with a place now: %1$s.</string>
+    <string name="pc_added_waiting">From the waiting list, with a place now:</string>
     <string name="pc_kept_label">Kept:</string>
     <string name="pc_kept_people">The other players, with their number, EMA player, account and email.</string>
     <string name="pc_kept_teams">The teams, with their number, name and the players who stay.</string>
