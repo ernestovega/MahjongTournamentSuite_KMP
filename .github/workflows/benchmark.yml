@@ -1,17 +1,18 @@
 # Measures the response times of the public API and the load times of the screens of the player web app, in
-# production. It runs after each deploy of main, every morning, and by hand. It fails when a time is over its budget
+# production. It runs every morning and by hand. It fails when a time is over its budget
 # (benchmarks/budgets.json) or clearly slower than the recent runs, twice in a row. See docs/benchmark.md.
 name: Check · Production benchmark
 
 on:
-  # Paused (Ernesto, 2026-11-13): it only runs by hand. To turn it back on, uncomment the two triggers below.
+  # Every morning until the tournament of February 2027 (Ernesto, 2026-11-24). After each deploy stays off: main
+  # deploys many times a day. To run it after each deploy too, uncomment workflow_run.
   # workflow_run:
   #   workflows: ["Deploy · Production"]
   #   types: [completed]
   #   branches: [main]
-  # schedule:
-  #   # 05:00 UTC, when nobody plays.
-  #   - cron: "0 5 * * *"
+  schedule:
+    # 05:00 UTC, when nobody plays.
+    - cron: "0 5 * * *"
   workflow_dispatch:
     inputs:
       url:
