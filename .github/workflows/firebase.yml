@@ -1,5 +1,7 @@
-# Runs every test on the pull request from develop to main. When main changes, deploys Firebase and publishes the
-# Android apps that have a new version code on Google Play (docs/android-release.md).
+# Runs every test on the pull request from develop to main, or when it is started by hand on a branch that is not
+# main (Actions > Deploy · Production > Run workflow > pick the branch): then it only tests and deploys nothing.
+# When main changes, deploys Firebase and publishes the Android apps that have a new version code on Google Play
+# (docs/android-release.md).
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 # The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
 name: Deploy · Production
@@ -27,7 +29,7 @@ jobs:
   # The checks below run at the same time. The job "Build and test" at the end is the one the ruleset of main requires.
   functions:
     name: Functions tests
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -55,7 +57,7 @@ jobs:
 
   integration:
     name: Functions integration tests
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -85,7 +87,7 @@ jobs:
 
   kotlin:
     name: Kotlin tests
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     # A hung UI test must not use a long time.
     timeout-minutes: 20
@@ -111,7 +113,7 @@ jobs:
 
   scripts:
     name: Scripts and diagnostics tests
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -129,7 +131,7 @@ jobs:
 
   web:
     name: Build web apps
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -150,7 +152,7 @@ jobs:
 
   check:
     name: Build and test
-    if: ${{ always() && github.event_name == 'pull_request' }}
+    if: ${{ always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')) }}
     needs: [functions, integration, kotlin, scripts, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5

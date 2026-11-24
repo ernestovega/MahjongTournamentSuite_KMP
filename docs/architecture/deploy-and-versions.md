@@ -41,7 +41,7 @@ The workflows are named by kind: Test, Deploy, Check and Publish.
 
 | Workflow | When | What it does |
 |---|---|---|
-| `firebase.yml` «Deploy · Production» | Push to `main` (and by hand) | `firebase deploy` (without tests until production) of hosting (both webs + `/api-docs/`), functions, rules and indexes. The upload to Google Play only when it is started by hand. |
+| `firebase.yml` «Deploy · Production» | Push to `main` (and by hand) | `firebase deploy` (without tests until production) of hosting (both webs + `/api-docs/`), functions, rules and indexes. The upload to Google Play only when it is started by hand on main. Started by hand on another branch, it runs every unit and integration test and deploys nothing. |
 | `staging.yml` «Deploy · Staging» | By hand | Deploys main on staging (`deploy`) or seeds it (`seed`). |
 | `ui-tests.yml` «Test · UI (emulators)» | By hand | Instrumented tests on a GitHub emulator or Firebase Test Lab |
 | `screenshots.yml` «Test · Screenshots» | By hand | Screenshot tests (Roborazzi): verify or record |
