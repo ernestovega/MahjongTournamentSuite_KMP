@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
@@ -141,7 +140,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_me
 import mahjongtournamentsuite.playerapp.generated.resources.preg_message
 import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_pending
 import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_place
-import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_place_detail
 import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_waiting
 import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_waiting_detail
 import mahjongtournamentsuite.playerapp.generated.resources.preg_name
@@ -184,6 +182,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_without_team
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
@@ -409,7 +408,14 @@ internal fun RegistrationsTab(tournament: Tournament) {
                     )
                 }
                 items(rows, key = { "$status-${it.emaId}" }) { row ->
-                    RegistrationLine(row, current?.teamOf(row)?.name, isTeams = current?.isTeams == true, isMe = row.emaId == own?.emaId)
+                    val isMe = row.emaId == own?.emaId
+                    RegistrationLine(
+                        row,
+                        current?.teamOf(row)?.name,
+                        isTeams = current?.isTeams == true,
+                        isMe = isMe,
+                        onEdit = if (isMe && own?.status != RegistrationStatus.PENDING) ({ managing = true }) else null,
+                    )
                 }
             }
         }
@@ -532,12 +538,12 @@ private fun SummaryRow(label: String, compact: Boolean, value: @Composable () ->
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
     }
     if (compact) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.md), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             title(Modifier)
             Column(Modifier.fillMaxWidth()) { value() }
         }
     } else {
-        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = MtsTheme.spacing.md), verticalAlignment = Alignment.CenterVertically) {
             title(Modifier.width(160.dp))
             Column(Modifier.weight(1f)) { value() }
         }
@@ -571,7 +577,7 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                 null -> Icons.Default.HowToReg to MaterialTheme.colorScheme.primary
             }
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(32.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 Text(
                     when (own?.status) {
                         RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place, own.position)
@@ -584,15 +590,13 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     color = if (own == null || own.status == RegistrationStatus.PENDING) MaterialTheme.colorScheme.onSurface else accent,
                     modifier = Modifier.testTag("registration-own-title"),
                 )
-                Text(
-                    when (own?.status) {
-                        RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place_detail)
-                        RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting_detail)
-                        RegistrationStatus.PENDING -> stringResource(Res.string.preg_status_pending)
-                        null -> stringResource(Res.string.preg_join_detail)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                // With a place the title and the button say it all (Ernesto, 24-nov): no text under the title.
+                when (own?.status) {
+                    RegistrationStatus.CONFIRMED -> null
+                    RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting_detail)
+                    RegistrationStatus.PENDING -> stringResource(Res.string.preg_status_pending)
+                    null -> stringResource(Res.string.preg_join_detail)
+                }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 FlowRow(
                     modifier = Modifier.padding(top = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -626,7 +630,7 @@ private fun TeamMissingCard(onSetUp: () -> Unit) {
     ) {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(32.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 Text(stringResource(Res.string.preg_team_missing_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(Res.string.preg_team_missing_detail), style = MaterialTheme.typography.bodyLarge)
                 Button(
@@ -651,7 +655,7 @@ private fun RegistrationSectionTitle(text: String, color: Color) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(Modifier.width(4.dp).height(20.dp).clip(RoundedCornerShape(2.dp)).background(color))
+        Box(Modifier.width(4.dp).height(20.dp).clip(MtsTheme.shapes.tag).background(color))
         Text(text, style = MaterialTheme.typography.titleMedium)
     }
 }
@@ -660,8 +664,8 @@ private fun RegistrationSectionTitle(text: String, color: Color) {
 private val RegistrationPhotoSize = 36.dp
 
 @Composable
-private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams: Boolean, isMe: Boolean) {
-    val content = if (isMe) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams: Boolean, isMe: Boolean, onEdit: (() -> Unit)? = null) {
+    val content = if (isMe) Color.White else MaterialTheme.colorScheme.onSurface
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -669,7 +673,7 @@ private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams
             contentColor = content,
         ),
     ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = MtsTheme.spacing.md), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(row.position.toString(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
             PlayerPhoto(photoUrl = row.photoUrl, name = row.name, size = RegistrationPhotoSize)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -691,6 +695,12 @@ private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            // The own line has the pencil of My registration.
+            if (onEdit != null) {
+                IconButton(onClick = onEdit, modifier = Modifier.testTag("registration-line-edit")) {
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.preg_manage), tint = content)
+                }
             }
         }
     }

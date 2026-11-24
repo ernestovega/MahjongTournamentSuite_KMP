@@ -254,7 +254,6 @@
     <string name="preg_waiting_none">Ingen på väntelistan</string>
     <string name="preg_closes_until">Till och med %1$s</string>
     <string name="preg_mine_place">Du har plats %1$d</string>
-    <string name="preg_mine_place_detail">I Min anmälan kan du ändra dina matrestriktioner eller ditt lag, eller avboka anmälan.</string>
     <string name="preg_mine_waiting">Du är nummer %1$d på väntelistan</string>
     <string name="preg_mine_waiting_detail">Organisationen skriver till dig om en plats blir ledig.</string>
     <string name="preg_mine_pending">Bekräfta din e-post</string>

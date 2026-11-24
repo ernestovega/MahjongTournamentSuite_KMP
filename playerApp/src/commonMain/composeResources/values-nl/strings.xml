@@ -254,7 +254,6 @@
     <string name="preg_waiting_none">Niemand op de wachtlijst</string>
     <string name="preg_closes_until">Tot en met %1$s</string>
     <string name="preg_mine_place">Je hebt plaats %1$d</string>
-    <string name="preg_mine_place_detail">In Mijn inschrijving kun je je dieetwensen of je team wijzigen, of de inschrijving annuleren.</string>
     <string name="preg_mine_waiting">Je bent nummer %1$d op de wachtlijst</string>
     <string name="preg_mine_waiting_detail">De organisatie schrijft je als er een plaats vrijkomt.</string>
     <string name="preg_mine_pending">Bevestig je e-mail</string>

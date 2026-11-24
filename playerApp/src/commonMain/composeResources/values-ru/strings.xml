@@ -260,7 +260,6 @@
     <string name="preg_waiting_none">Лист ожидания пуст</string>
     <string name="preg_closes_until">До %1$s включительно</string>
     <string name="preg_mine_place">Ваше место: %1$d</string>
-    <string name="preg_mine_place_detail">В разделе «Моя регистрация» можно изменить ограничения в питании или команду, а также отменить регистрацию.</string>
     <string name="preg_mine_waiting">Ваш номер в листе ожидания: %1$d</string>
     <string name="preg_mine_waiting_detail">Организаторы напишут вам, если освободится место.</string>
     <string name="preg_mine_pending">Подтвердите e-mail</string>

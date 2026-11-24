@@ -254,7 +254,6 @@
     <string name="preg_waiting_none">Nessuno in lista d'attesa</string>
     <string name="preg_closes_until">Fino al %1$s incluso</string>
     <string name="preg_mine_place">Hai il posto %1$d</string>
-    <string name="preg_mine_place_detail">In La mia iscrizione puoi cambiare le restrizioni alimentari o la squadra, oppure annullare l'iscrizione.</string>
     <string name="preg_mine_waiting">Sei il numero %1$d della lista d'attesa</string>
     <string name="preg_mine_waiting_detail">L'organizzazione ti scriverà se si libera un posto.</string>
     <string name="preg_mine_pending">Conferma la tua email</string>

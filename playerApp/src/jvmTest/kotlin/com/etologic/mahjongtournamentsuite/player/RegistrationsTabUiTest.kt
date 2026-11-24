@@ -227,6 +227,14 @@ class RegistrationsTabUiTest {
     }
 
     @Test
+    fun theOwnLineHasThePencilOfMyRegistration() = runComposeUiTest {
+        show(FakeRegistrations(own = OwnRegistration("10990001", "ANA LOPEZ", "ES", RegistrationStatus.CONFIRMED, 1, teamId = "dragons")))
+        waitUntil { onAllNodesWithTagExists("registration-line-edit") }
+        onNodeWithTag("registration-line-edit").performClick()
+        waitUntil { onAllNodesWithTagExists("registration-cancel") }
+    }
+
+    @Test
     fun aPersonOnTheWaitingListSeesItsNumberAndNoWarningWithItsTeam() = runComposeUiTest {
         show(FakeRegistrations(own = OwnRegistration("10990003", "CARLA GIL", "FR", RegistrationStatus.WAITING, 1, teamId = "dragons")))
         waitUntil { onAllNodesWithTextExists("You are number 1 on the waiting list") }
