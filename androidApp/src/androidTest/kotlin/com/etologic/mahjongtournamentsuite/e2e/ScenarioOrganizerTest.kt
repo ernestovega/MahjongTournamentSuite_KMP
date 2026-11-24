@@ -762,11 +762,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun confirmTheNewDraw(from: Int, to: Int) {
         c.clickButton("Continue")
-        // With teams the step Teams comes first (always, 24-nov). Whole teams left or came, so every team has 4.
-        if (plan.getBoolean("isTeams")) {
-            c.waitForText("Every team has 4 players.", timeoutMs = 30_000)
-            clickTagged("playerCountTeamsContinue")
-        }
+        // The step Teams shows only when a team stays incomplete (PlayerCountForm.needsTeams). Whole teams leave or
+        // come here, so the screen goes straight to the review; if it shows, every team has 4.
+        c.waitForAnyText("Make a new draw?", "Every team has 4 players.", timeoutMs = 30_000)
+        if (plan.getBoolean("isTeams") && c.isOnScreen("Every team has 4 players.")) clickTagged("playerCountTeamsContinue")
         c.waitForText("Make a new draw?", timeoutMs = 30_000)
         c.waitForText("From $from to $to players")
         c.clickButton("Make the new draw")
