@@ -3,17 +3,14 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,15 +19,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -92,18 +89,26 @@ fun PlayerSubstitutionDialog(
                     )
                     SubstitutionSection(stringResource(Res.string.reason)) {
                         SubstitutionReason.entries.forEach { option ->
-                            ChoiceLine(
-                                text = when (option) {
-                                    SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
-                                    SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
-                                    SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
-                                },
-                                modifier = Modifier.selectable(selected = reason == option, role = Role.RadioButton) {
+                            MtsRadioRow(
+                                selected = reason == option,
+                                onClick = {
                                     reason = option
                                     if (option == SubstitutionReason.LATE) duringSession = false
                                     if (option != SubstitutionReason.ILLNESS) excluded = false
                                 },
-                            ) { RadioButton(selected = reason == option, onClick = null) }
+                                modifier = Modifier.fillMaxWidth(),
+                                gap = 12.dp,
+                                contentPadding = ChoiceLinePadding,
+                                controlPadding = 0.dp,
+                            ) {
+                                ChoiceText(
+                                    when (option) {
+                                        SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
+                                        SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
+                                        SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
+                                    },
+                                )
+                            }
                         }
                     }
                     SubstitutionSection(stringResource(Res.string.first_round_of_the_substitute)) {
@@ -119,16 +124,24 @@ fun PlayerSubstitutionDialog(
                     if (reason != SubstitutionReason.DISQUALIFIED) {
                         Column {
                             if (reason != SubstitutionReason.LATE) {
-                                ChoiceLine(
-                                    text = stringResource(Res.string.the_player_leaves_after_the_session),
-                                    modifier = Modifier.toggleable(value = duringSession, role = Role.Checkbox) { duringSession = it },
-                                ) { Checkbox(checked = duringSession, onCheckedChange = null) }
+                                MtsCheckboxRow(
+                                    checked = duringSession,
+                                    onCheckedChange = { duringSession = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    gap = 12.dp,
+                                    contentPadding = ChoiceLinePadding,
+                                    controlPadding = 0.dp,
+                                ) { ChoiceText(stringResource(Res.string.the_player_leaves_after_the_session)) }
                             }
                             if (reason == SubstitutionReason.ILLNESS) {
-                                ChoiceLine(
-                                    text = stringResource(Res.string.the_head_referee_excluded_the_player),
-                                    modifier = Modifier.toggleable(value = excluded, role = Role.Checkbox) { excluded = it },
-                                ) { Checkbox(checked = excluded, onCheckedChange = null) }
+                                MtsCheckboxRow(
+                                    checked = excluded,
+                                    onCheckedChange = { excluded = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    gap = 12.dp,
+                                    contentPadding = ChoiceLinePadding,
+                                    controlPadding = 0.dp,
+                                ) { ChoiceText(stringResource(Res.string.the_head_referee_excluded_the_player)) }
                             }
                         }
                     } else {
@@ -171,15 +184,11 @@ private fun SubstitutionSection(label: String, content: @Composable ColumnScope.
     }
 }
 
-/** A radio or checkbox line: the whole line takes the tap, with the same padding for one line of text or more. */
+/** The text of a radio or checkbox line. It takes the rest of the line and wraps when it is long. */
 @Composable
-private fun ChoiceLine(text: String, modifier: Modifier, control: @Composable () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).then(modifier).padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        control()
-        Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-    }
+private fun RowScope.ChoiceText(text: String) {
+    Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
 }
+
+/** The padding inside a line of a choice, so the whole line is the touch target. */
+private val ChoiceLinePadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)

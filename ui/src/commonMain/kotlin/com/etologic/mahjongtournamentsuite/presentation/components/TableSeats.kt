@@ -33,7 +33,6 @@ import androidx.compose.material3.Icon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -338,16 +337,8 @@ fun TableSeatsView(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { leading?.invoke() }
                 DiffsInfo()
-                Row(
-                    Modifier.clickable { showDiffs = !showDiffs },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }) {
                     Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
-                    Switch(
-                        checked = showDiffs,
-                        onCheckedChange = { showDiffs = it },
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
                 }
             }
         } else if (leading != null) {

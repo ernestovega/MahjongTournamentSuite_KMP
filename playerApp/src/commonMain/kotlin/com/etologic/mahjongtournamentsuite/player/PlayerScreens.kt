@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
 import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayerNumberDigits
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -74,7 +75,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -2099,12 +2099,8 @@ private fun HandHistory(
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
-        Row(
-            Modifier.align(Alignment.CenterEnd).clickable { onDetailsChange(!details) },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        MtsSwitchRow(checked = details, onCheckedChange = onDetailsChange, modifier = Modifier.align(Alignment.CenterEnd)) {
             Text(stringResource(Res.string.table_details), style = MaterialTheme.typography.labelLarge)
-            Switch(checked = details, onCheckedChange = onDetailsChange, modifier = Modifier.padding(start = 8.dp))
         }
     }
     if (details) {

@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -35,7 +34,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,10 +47,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +74,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIc
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -736,15 +733,14 @@ private fun ModeRadios(
                 ControlMode.OPEN -> Res.string.round_control_open
                 ControlMode.CLOSED -> Res.string.round_control_closed
             }
-            Row(
-                Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .selectable(selected = mode == selected, enabled = enabled, role = Role.RadioButton) { if (mode != selected) onSelect(mode) }
-                    .padding(end = 12.dp)
-                    .testTag("${tag}_${mode.name.lowercase()}"),
-                verticalAlignment = Alignment.CenterVertically,
+            MtsRadioRow(
+                selected = mode == selected,
+                onClick = { onSelect(mode) },
+                modifier = Modifier.testTag("${tag}_${mode.name.lowercase()}"),
+                enabled = enabled,
+                contentPadding = PaddingValues(end = 12.dp),
+                controlPadding = 8.dp,
             ) {
-                RadioButton(selected = mode == selected, onClick = null, enabled = enabled, modifier = Modifier.padding(8.dp))
                 Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
             }
         }

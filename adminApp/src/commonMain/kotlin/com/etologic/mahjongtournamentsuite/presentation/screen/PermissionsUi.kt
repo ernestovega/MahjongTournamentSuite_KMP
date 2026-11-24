@@ -4,17 +4,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +51,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -251,23 +250,17 @@ internal fun PermissionChecklist(
 private fun PermissionRow(label: String, hint: String?, checked: Boolean, enabled: Boolean, onToggle: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .activateOnEnter(enabled, onToggle)
-                .toggleable(
-                    value = checked,
-                    enabled = enabled,
-                    role = Role.Checkbox,
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onValueChange = { onToggle() },
-                )
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        MtsCheckboxRow(
+            checked = checked,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.fillMaxWidth().activateOnEnter(enabled, onToggle),
+            enabled = enabled,
+            gap = 8.dp,
+            interactionSource = interactionSource,
+            indication = null,
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+            controlPadding = 0.dp,
         ) {
-            Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
             Column(Modifier.weight(1f)) {
                 Text(label)
                 if (hint != null) {

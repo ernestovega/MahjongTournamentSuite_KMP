@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -73,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -607,10 +607,13 @@ private fun FoodFields(food: String, onFood: (String) -> Unit, consent: Boolean,
         modifier = Modifier.fillMaxWidth(),
     )
     if (food.isNotBlank()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = consent, onCheckedChange = onConsent, modifier = Modifier.testTag("registration-consent"))
-            Text(stringResource(Res.string.preg_consent), style = MaterialTheme.typography.bodySmall)
-        }
+        MtsCheckboxRow(
+            text = stringResource(Res.string.preg_consent),
+            checked = consent,
+            onCheckedChange = onConsent,
+            modifier = Modifier.testTag("registration-consent"),
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 

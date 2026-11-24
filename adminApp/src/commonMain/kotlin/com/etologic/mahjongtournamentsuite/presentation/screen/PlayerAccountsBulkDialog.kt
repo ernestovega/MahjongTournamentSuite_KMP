@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,15 +27,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -232,18 +230,15 @@ fun PlayerAccountsBulkDialog(
                             stickyHeader { ColumnTitles(compact) }
                             items(shown, key = { it.id }) { slot ->
                                 val result = results.firstOrNull { it.playerId == slot.id }
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(columnGap(compact)),
+                                // A tap anywhere on the line (the number, the name, the email...) checks the player.
+                                MtsCheckboxRow(
+                                    checked = slot.id in selected,
+                                    enabled = !busy,
+                                    onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    gap = columnGap(compact),
+                                    controlPadding = 0.dp,
                                 ) {
-                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
-                                        Checkbox(
-                                            checked = slot.id in selected,
-                                            enabled = !busy,
-                                            onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
-                                        )
-                                    }
                                     Text(slot.id.toString(), Modifier.width(idColumnWidth(compact)), textAlign = TextAlign.Center)
                                     val country = countryOf(slot)
                                     Box(Modifier.width(flagColumnWidth(compact)), contentAlignment = Alignment.Center) {

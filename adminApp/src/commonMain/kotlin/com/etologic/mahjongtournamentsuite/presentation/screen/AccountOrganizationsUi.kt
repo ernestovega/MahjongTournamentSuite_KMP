@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -17,7 +15,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,11 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
@@ -41,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -183,14 +178,13 @@ internal fun RemoveFromOrganizationsDialog(
                             AccountRequestKind.DISABLE to Res.string.remove_from_organizations_request_disable,
                             AccountRequestKind.DELETE to Res.string.remove_from_organizations_request_delete,
                         ).forEach { (option, label) ->
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clip(MaterialTheme.shapes.small)
-                                    .selectable(selected = kind == option, enabled = !saving, role = Role.RadioButton) { kind = option },
-                                verticalAlignment = Alignment.CenterVertically,
+                            MtsRadioRow(
+                                selected = kind == option,
+                                onClick = { kind = option },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !saving,
+                                controlPadding = 8.dp,
                             ) {
-                                RadioButton(selected = kind == option, onClick = null, enabled = !saving, modifier = Modifier.padding(8.dp))
                                 Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
