@@ -20,9 +20,21 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
   The UI tests do not run here until the apps are in production. Run them by hand: see [Instrumented UI tests](instrumented-ui-tests.md).
 
   The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
-- **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. Until production it runs no test (the tests run on the computer before the push). It deploys hosting (one site with both web apps, see [web-hosting.md](web-hosting.md)), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
+- **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. Until production it runs no test (the tests run on the computer before the push). With the gate on (below), it runs only after every test and a deploy to staging. It deploys hosting (one site with both web apps, see [web-hosting.md](web-hosting.md)), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
 - **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
+
+### The gate before production
+
+The repository variable `PROD_DEPLOY_GATE` turns the gate on (Settings > Secrets and variables > Actions > Variables,
+value `on`). Then each push to `main`:
+
+1. runs the five checks of **Build and test** (without the version check: a push has no base branch);
+2. deploys `main` to staging (**Deploy to staging first**, the deploy job of `staging.yml`);
+3. deploys to production only when all of that passed.
+
+A failed test or a failed staging deploy stops the run, and production keeps the version it had. Remove the variable
+(or give it another value) to deploy without tests again. A run started by hand on `main` deploys without the gate.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
 
