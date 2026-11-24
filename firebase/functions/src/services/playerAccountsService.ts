@@ -128,10 +128,10 @@ async function claimEmaId(uid: string, emaId: string): Promise<void> {
   await db.runTransaction(async (transaction) => {
     const indexRef = db.doc(`emaIdIndex/${emaId}`);
     const [index, profile] = await Promise.all([transaction.get(indexRef), transaction.get(db.doc(`users/${uid}`))]);
-    if (index.exists && index.get("uid") !== uid) throw conflict("This EMA id belongs to another account");
+    if (index.exists && index.get("uid") !== uid) throw conflict("This EMA id belongs to another account", { code: "EMA_ID_TAKEN" });
     const current = profile.get("emaId");
     if (typeof current === "string" && current.length > 0 && current !== emaId) {
-      throw conflict("This account belongs to another EMA player");
+      throw conflict("This account belongs to another EMA player", { code: "ACCOUNT_HAS_OTHER_EMA" });
     }
     transaction.set(indexRef, { uid, updatedAt: FieldValue.serverTimestamp() });
     transaction.set(db.doc(`users/${uid}`), { emaId, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
@@ -155,7 +155,7 @@ export async function assertEmaIdAvailable(emaId: string, ownUid?: string): Prom
   const registered = await db.doc(`emaPlayerRegistry/${emaId}`).get();
   if (!registered.exists) throw notFound("EMA player not found");
   const index = await db.doc(`emaIdIndex/${emaId}`).get();
-  if (index.exists && index.get("uid") !== ownUid) throw conflict("This EMA id belongs to another account");
+  if (index.exists && index.get("uid") !== ownUid) throw conflict("This EMA id belongs to another account", { code: "EMA_ID_TAKEN" });
 }
 
 /**

@@ -102,7 +102,7 @@ export async function loadTableQrDocument(tournamentId: string, perSheet: CardsP
   const tournament = await db.collection("tournaments").doc(tournamentId).get();
   if (!tournament.exists) throw notFound("Tournament not found");
   const tableCount = Math.floor(Number(tournament.get("numPlayers") ?? 0) / 4);
-  if (tableCount < 1) throw conflict("The tournament has no tables yet");
+  if (tableCount < 1) throw conflict("The tournament has no tables yet", { code: "NO_TABLES" });
   const slug = String((tournament.get("registration") as Record<string, unknown> | undefined)?.slug ?? "");
   const organizerIds = readOrganizerIds(tournament.get("organizerIds"));
   const mainOrganizer = (await organizersOf(organizerIds))[0];

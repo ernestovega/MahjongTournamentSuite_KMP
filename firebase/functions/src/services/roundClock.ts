@@ -126,13 +126,13 @@ export function applyRoundClockAction(
       return { startedAtMs, pausedAtMs: null, pausedMs: 0, adjustMs: 0 };
     }
     case "pause": {
-      if (clock == null) throw conflict("This round has not started yet");
+      if (clock == null) throw conflict("This round has not started yet", { code: "CLOCK_NOT_STARTED" });
       if (clock.pausedAtMs != null) return clock;
       const at = Math.max(clock.startedAtMs, actionTime(nowMs, action.agoMs, MAX_ACTION_DELAY_MS));
       return { ...clock, pausedAtMs: at };
     }
     case "resume": {
-      if (clock == null) throw conflict("This round has not started yet");
+      if (clock == null) throw conflict("This round has not started yet", { code: "CLOCK_NOT_STARTED" });
       if (clock.pausedAtMs == null) return clock;
       const at = Math.max(clock.pausedAtMs, actionTime(nowMs, action.agoMs, MAX_ACTION_DELAY_MS));
       return { ...clock, pausedAtMs: null, pausedMs: clock.pausedMs + (at - clock.pausedAtMs) };
@@ -140,7 +140,7 @@ export function applyRoundClockAction(
     case "reset":
       return null;
     case "setRemaining": {
-      if (clock == null) throw conflict("This round has not started yet");
+      if (clock == null) throw conflict("This round has not started yet", { code: "CLOCK_NOT_STARTED" });
       if (!Number.isFinite(action.remainingMs) || action.remainingMs < 0 || action.remainingMs > MAX_REMAINING_MS) {
         throw badRequest("The remaining time must be from 0 to 12 hours");
       }
@@ -148,7 +148,7 @@ export function applyRoundClockAction(
       return { ...clock, adjustMs: clockElapsedMs(clock, nowMs) + remaining - durationMinutes * 60_000 };
     }
     case "stop": {
-      if (clock == null) throw conflict("This round has not started yet");
+      if (clock == null) throw conflict("This round has not started yet", { code: "CLOCK_NOT_STARTED" });
       // A round that is already over stays as it is.
       if (clock.pausedAtMs == null && clockElapsedMs(clock, nowMs) >= clockDurationMs(clock, durationMinutes) + extraMs) return clock;
       // A paused clock runs again, so the end is now. The match time becomes what was played minus the extra time,

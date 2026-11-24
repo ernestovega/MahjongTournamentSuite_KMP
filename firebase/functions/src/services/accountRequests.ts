@@ -110,7 +110,7 @@ export async function resolveAccountRequest(id: string, approve: boolean, resolv
   const snapshot = await ref.get();
   if (!snapshot.exists) throw notFound("Request not found");
   const request = toRequest(id, snapshot.data() ?? {});
-  if (request.status !== "PENDING") throw conflict("The request is already resolved");
+  if (request.status !== "PENDING") throw conflict("The request is already resolved", { code: "REQUEST_RESOLVED" });
   await ref.update({ status: approve ? "APPROVED" : "REJECTED", resolvedByUid, resolvedAt: FieldValue.serverTimestamp() });
   await bumpGlobalDataVersion("users");
   return { ...request, status: approve ? "APPROVED" : "REJECTED", resolvedByUid, resolvedAtMs: Date.now() };

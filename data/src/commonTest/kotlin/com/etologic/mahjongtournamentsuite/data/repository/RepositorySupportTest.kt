@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundSched
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -17,6 +18,25 @@ import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 
 class RepositorySupportTest {
+    @Test
+    fun aConflictWithAKnownCodeCarriesTheCodeAndItsCount() {
+        val error = BackendHttpException(
+            HttpStatusCode.Conflict,
+            """{"error":"conflict","message":"Assign every tournament player","details":{"code":"ASSIGNMENTS_MISSING","missing":3}}""",
+        ).toRepositoryAppError()
+
+        assertEquals(AppError.Conflict("Assign every tournament player", code = ConflictCode.ASSIGNMENTS_MISSING, args = listOf("3")), error)
+    }
+
+    @Test
+    fun aConflictWithoutAKnownCodeStaysAnUnexpectedError() {
+        val unknown = BackendHttpException(HttpStatusCode.Conflict, """{"message":"x","details":{"code":"SOMETHING_NEW"}}""")
+        val plain = BackendHttpException(HttpStatusCode.Conflict, """{"message":"x"}""")
+
+        assertIs<AppError.Unexpected>(unknown.toRepositoryAppError())
+        assertIs<AppError.Unexpected>(plain.toRepositoryAppError())
+    }
+
     @Test
     fun tournamentMappingTrimsValues() {
         val tournament = TournamentDto(

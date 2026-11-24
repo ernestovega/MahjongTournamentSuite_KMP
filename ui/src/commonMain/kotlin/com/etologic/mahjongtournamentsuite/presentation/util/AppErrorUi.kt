@@ -1,9 +1,42 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.conflict_account_has_other_ema
+import mahjongtournamentsuite.ui.generated.resources.conflict_all_hands_done
+import mahjongtournamentsuite.ui.generated.resources.conflict_assignments_missing
+import mahjongtournamentsuite.ui.generated.resources.conflict_clock_not_started
+import mahjongtournamentsuite.ui.generated.resources.conflict_duplicate_tournament
+import mahjongtournamentsuite.ui.generated.resources.conflict_ema_already_in_tournament
+import mahjongtournamentsuite.ui.generated.resources.conflict_ema_id_taken
+import mahjongtournamentsuite.ui.generated.resources.conflict_ema_players_gone
+import mahjongtournamentsuite.ui.generated.resources.conflict_email_in_use
+import mahjongtournamentsuite.ui.generated.resources.conflict_hand_entry_closed
+import mahjongtournamentsuite.ui.generated.resources.conflict_no_table_in_round
+import mahjongtournamentsuite.ui.generated.resources.conflict_no_tables
+import mahjongtournamentsuite.ui.generated.resources.conflict_not_assigned
+import mahjongtournamentsuite.ui.generated.resources.conflict_player_in_two_teams
+import mahjongtournamentsuite.ui.generated.resources.conflict_request_resolved
+import mahjongtournamentsuite.ui.generated.resources.conflict_round_not_started
+import mahjongtournamentsuite.ui.generated.resources.conflict_round_time_over
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_closed
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_locked
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_assigned
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_open
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_hand
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_penalty
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_seats
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_totals
+import mahjongtournamentsuite.ui.generated.resources.conflict_table_completed
+import mahjongtournamentsuite.ui.generated.resources.conflict_team_players_locked
+import mahjongtournamentsuite.ui.generated.resources.conflict_team_slots_mismatch
+import mahjongtournamentsuite.ui.generated.resources.conflict_too_many_penalties
+import mahjongtournamentsuite.ui.generated.resources.conflict_totals_only
+import mahjongtournamentsuite.ui.generated.resources.conflict_tournament_gone
 import mahjongtournamentsuite.ui.generated.resources.error_account_disabled
 import mahjongtournamentsuite.ui.generated.resources.error_credentials_missing
 import mahjongtournamentsuite.ui.generated.resources.error_credentials_wrong
@@ -75,7 +108,7 @@ import org.jetbrains.compose.resources.StringResource
 /** Gives the text for the screen. Call [asString] on it while the screen draws. */
 fun AppError.toUiText(): UiText = when (this) {
     AppError.Network -> UiText.of(Res.string.error_network)
-    is AppError.Conflict -> UiText.Plain(message)
+    is AppError.Conflict -> code?.let { conflictText(it, args) } ?: UiText.Plain(message)
     is AppError.ImportFile -> when (code) {
         ImportFileErrorCode.NOT_EXCEL -> UiText.of(Res.string.import_file_not_excel)
         ImportFileErrorCode.TOO_LARGE -> UiText.of(Res.string.import_file_too_large)
@@ -134,6 +167,45 @@ fun AppError.toUiText(): UiText = when (this) {
         RegistrationErrorCode.USE_LEAVE -> UiText.of(Res.string.registration_error_use_leave)
     }
     is AppError.Unexpected -> UiText.of(message.toFriendlyErrorResource())
+}
+
+/** The translated reason of a refused change. */
+private fun conflictText(code: ConflictCode, args: List<String>): UiText = when (code) {
+    ConflictCode.ACCOUNT_HAS_OTHER_EMA -> UiText.of(Res.string.conflict_account_has_other_ema)
+    ConflictCode.ALL_HANDS_DONE -> UiText.of(Res.string.conflict_all_hands_done)
+    ConflictCode.ASSIGNMENTS_MISSING -> UiText.of(Res.string.conflict_assignments_missing, args.firstOrNull().orEmpty())
+    ConflictCode.CLOCK_NOT_STARTED -> UiText.of(Res.string.conflict_clock_not_started)
+    ConflictCode.DUPLICATE_TOURNAMENT -> UiText.of(Res.string.conflict_duplicate_tournament)
+    ConflictCode.EMA_ALREADY_IN_TOURNAMENT -> UiText.of(Res.string.conflict_ema_already_in_tournament)
+    ConflictCode.EMA_ID_TAKEN -> UiText.of(Res.string.conflict_ema_id_taken)
+    ConflictCode.EMA_PLAYERS_GONE -> UiText.of(Res.string.conflict_ema_players_gone)
+    ConflictCode.EMAIL_IN_USE -> UiText.of(Res.string.conflict_email_in_use)
+    ConflictCode.HAND_ENTRY_CLOSED -> UiText.of(Res.string.conflict_hand_entry_closed)
+    ConflictCode.NO_TABLE_IN_ROUND -> UiText.of(Res.string.conflict_no_table_in_round)
+    ConflictCode.NO_TABLES -> UiText.of(Res.string.conflict_no_tables)
+    ConflictCode.NOT_ASSIGNED -> UiText.of(Res.string.conflict_not_assigned)
+    ConflictCode.PLAYER_IN_TWO_TEAMS -> UiText.of(Res.string.conflict_player_in_two_teams)
+    ConflictCode.REQUEST_RESOLVED -> UiText.of(Res.string.conflict_request_resolved)
+    ConflictCode.ROUND_NOT_STARTED -> UiText.of(Res.string.conflict_round_not_started)
+    ConflictCode.ROUND_TIME_OVER -> UiText.of(Res.string.conflict_round_time_over)
+    ConflictCode.SEATS_CLOSED -> UiText.of(Res.string.conflict_seats_closed)
+    ConflictCode.SEATS_LOCKED -> UiText.of(Res.string.conflict_seats_locked)
+    ConflictCode.SEATS_NOT_ASSIGNED -> UiText.of(Res.string.conflict_seats_not_assigned)
+    ConflictCode.SEATS_NOT_OPEN -> UiText.of(Res.string.conflict_seats_not_open)
+    ConflictCode.TABLE_CHANGED -> UiText.of(Res.string.conflict_table_changed)
+    ConflictCode.TABLE_CHANGED_HAND -> UiText.of(Res.string.conflict_table_changed_hand)
+    ConflictCode.TABLE_CHANGED_PENALTY -> UiText.of(Res.string.conflict_table_changed_penalty)
+    ConflictCode.TABLE_CHANGED_SEATS -> UiText.of(Res.string.conflict_table_changed_seats)
+    ConflictCode.TABLE_CHANGED_TOTALS -> UiText.of(Res.string.conflict_table_changed_totals)
+    ConflictCode.TABLE_COMPLETED -> UiText.of(Res.string.conflict_table_completed)
+    ConflictCode.TEAM_PLAYERS_LOCKED -> UiText.of(Res.string.conflict_team_players_locked)
+    ConflictCode.TEAM_SLOTS_MISMATCH -> UiText.of(Res.string.conflict_team_slots_mismatch)
+    ConflictCode.TOO_MANY_PENALTIES -> UiText.of(Res.string.conflict_too_many_penalties)
+    ConflictCode.TOTALS_ONLY -> UiText.of(Res.string.conflict_totals_only)
+    ConflictCode.TOURNAMENT_GONE -> UiText.of(Res.string.conflict_tournament_gone)
+    ConflictCode.NO_TEAMS -> UiText.of(Res.string.registration_error_no_teams)
+    ConflictCode.TEAM_NAME_TAKEN -> UiText.of(Res.string.registration_error_team_name_taken)
+    ConflictCode.TOURNAMENT_COMPLETED -> UiText.of(Res.string.registration_error_tournament_completed)
 }
 
 private fun String?.toFriendlyErrorResource(): StringResource {
