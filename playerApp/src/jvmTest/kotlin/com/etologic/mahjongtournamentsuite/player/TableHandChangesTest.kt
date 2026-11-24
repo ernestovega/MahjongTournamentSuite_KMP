@@ -61,4 +61,13 @@ class TableHandChangesTest {
         tracker.update(twoHands, animate = false)
         assertNull(tracker.update(listOf(hand(1), hand(2), hand(3)), animate = false))
     }
+
+    @Test
+    fun lessMotionStillKeepsTheChangeForTheScreenReader() {
+        val tracker = TableChangeTracker()
+        tracker.update(twoHands, animate = false)
+        assertNull(tracker.latest)
+        tracker.update(listOf(hand(1), hand(2), hand(3)), animate = false)
+        assertEquals(setOf(3), tracker.latest?.added)
+    }
 }

@@ -224,6 +224,9 @@
     <string name="entry_seats_first">Lege die Plätze des Tisches fest, um Hände einzutragen.</string>
     <string name="round_starts_at">Beginnt um</string>
     <string name="round_clock_remaining">Verbleibende Zeit: %1$s</string>
+    <string name="table_hand_announce_new">Neue Hand %1$d</string>
+    <string name="table_hand_announce_edited">Hand %1$d korrigiert</string>
+    <string name="table_hand_announce_deleted">Hand %1$d gelöscht</string>
     <string name="round_clock_paused">Pausiert · Verbleibende Zeit: %1$s</string>
     <string name="round_clock_over">Die Spielzeit ist abgelaufen.</string>
     <string name="filter_table_search">Tischnummer oder Spieler</string>

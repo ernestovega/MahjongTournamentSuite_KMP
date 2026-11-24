@@ -2,14 +2,27 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.delay
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.table_hand_announce_deleted
+import mahjongtournamentsuite.playerapp.generated.resources.table_hand_announce_edited
+import mahjongtournamentsuite.playerapp.generated.resources.table_hand_announce_new
+import org.jetbrains.compose.resources.stringResource
 
 /** Whether the list of hands shows the hand: it has a result or a penalty. */
 internal fun TableHand.isListed(): Boolean = isDone || penaltyRows().isNotEmpty()
@@ -44,6 +57,10 @@ internal class TableChangeTracker {
     private var last: List<TableHand>? = null
     private var serial = 0
 
+    /** The last change, also when it does not animate: a screen reader announces it (see [HandChangeAnnouncement]). */
+    var latest: HandListChange? = null
+        private set
+
     /** The change to animate for these hands, or null when nothing should move. */
     fun update(hands: List<TableHand>, animate: Boolean): HandListChange? {
         val before = last
@@ -51,6 +68,7 @@ internal class TableChangeTracker {
         if (before == null) return null
         val change = handListChange(before, hands, serial + 1) ?: return null
         serial = change.serial
+        latest = change
         return change.takeIf { animate }
     }
 }
@@ -86,3 +104,28 @@ internal fun rememberHandGlow(handId: Int, change: HandListChange?): Float {
 /** Green for a new hand, the primary color for a corrected one. */
 @Composable
 internal fun handGlowColor(handId: Int, change: HandListChange?): Color = if (change != null && handId in change.edited) MaterialTheme.colorScheme.primary else MtsTheme.colors.gain
+
+/** What a screen reader says about a change of the hands: "New hand 7", "Hand 5 corrected", "Hand 6 deleted". */
+@Composable
+internal fun handChangeAnnouncement(change: HandListChange?): String {
+    if (change == null) return ""
+    val parts = change.added.sorted().map { stringResource(Res.string.table_hand_announce_new, it) } +
+        change.edited.sorted().map { stringResource(Res.string.table_hand_announce_edited, it) } +
+        change.removed.map { it.handId }.sorted().map { stringResource(Res.string.table_hand_announce_deleted, it) }
+    return parts.joinToString(". ")
+}
+
+/**
+ * Says a change of the hands with the screen reader (TalkBack, VoiceOver), politely, after what it is reading. The
+ * node is one dot with no look: only its text matters, and it changes only when the hands change.
+ */
+@Composable
+internal fun HandChangeAnnouncement(change: HandListChange?) {
+    val text = handChangeAnnouncement(change)
+    Box(
+        Modifier.size(1.dp).semantics {
+            liveRegion = LiveRegionMode.Polite
+            contentDescription = text
+        },
+    )
+}

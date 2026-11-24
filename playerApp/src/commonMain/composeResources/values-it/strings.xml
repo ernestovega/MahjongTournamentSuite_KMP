@@ -224,6 +224,9 @@
     <string name="entry_seats_first">Assegna i posti del tavolo per iniziare ad aggiungere mani.</string>
     <string name="round_starts_at">Inizia alle</string>
     <string name="round_clock_remaining">Tempo rimasto: %1$s</string>
+    <string name="table_hand_announce_new">Nuova mano %1$d</string>
+    <string name="table_hand_announce_edited">Mano %1$d corretta</string>
+    <string name="table_hand_announce_deleted">Mano %1$d eliminata</string>
     <string name="round_clock_paused">In pausa · Tempo rimasto: %1$s</string>
     <string name="round_clock_over">Il tempo di gioco è finito.</string>
     <string name="filter_table_search">N. tavolo o giocatore</string>

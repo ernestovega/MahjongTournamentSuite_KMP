@@ -103,7 +103,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -2032,6 +2034,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             ) {
                 MessageDialog(message)
                 if (view == null || table == null) return@ScreenColumn
+                // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.
+                HandChangeAnnouncement(changes.latest)
                 val complete = view.isFinished(table, now)
                 val handNumber = minOf(table.doneHands + 1, 16)
                 TableSeatsView(
@@ -2361,9 +2365,24 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
     }
     // A screen reader still says what the time is.
     val description = if (remaining > 0 && !clock.isPaused) stringResource(Res.string.round_clock_remaining, formatClock(remaining)) else text
+    // And it announces the time left by itself only every 15 minutes, at 5 minutes and at the end: every second would
+    // tire the players.
+    val milestone = roundClockMilestone(remaining, clock.isPaused)
+    val announcement = when {
+        milestone == null -> ""
+        milestone <= 0 -> stringResource(Res.string.round_clock_over)
+        else -> stringResource(Res.string.round_clock_remaining, formatClock(milestone * 60_000L))
+    }
     val red = remaining <= 15 * 60_000L
     val color = if (red) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-    // An hourglass before the time, in the same color.
+    // An hourglass before the time, in the same color. The announcer is a dot over it that takes no room.
+    Box {
+    Box(
+        Modifier.size(1.dp).semantics {
+            liveRegion = LiveRegionMode.Polite
+            contentDescription = announcement
+        },
+    )
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
         Icon(Icons.Default.HourglassTop, contentDescription = null, Modifier.size(24.dp), tint = color)
         Text(
@@ -2374,6 +2393,18 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
             color = color,
         )
     }
+    }
+}
+
+/**
+ * The minutes that the screen reader announces for [remainingMs]: the quarter hour that has just started (45, 30, 15),
+ * 5 in the last five minutes, 0 when the time is over, and null while the clock is paused.
+ */
+internal fun roundClockMilestone(remainingMs: Long, paused: Boolean): Int? {
+    if (paused) return null
+    if (remainingMs <= 0) return 0
+    val minutes = ((remainingMs + 59_999) / 60_000).toInt()
+    return if (minutes <= 5) 5 else (minutes + 14) / 15 * 15
 }
 
 /**
