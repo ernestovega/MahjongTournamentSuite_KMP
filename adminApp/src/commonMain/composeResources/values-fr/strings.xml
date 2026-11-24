@@ -1029,7 +1029,6 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_state_open">Inscriptions ouvertes</string>
     <string name="reg_state_closed">Inscriptions fermées</string>
     <string name="reg_add">Ajouter une personne</string>
-    <string name="reg_without_team">Sans équipe</string>
     <string name="reg_no_account">Sans compte</string>
     <string name="reg_shared_email">Une autre personne utilise cet e-mail. Un compte ne peut pas le partager.</string>
     <string name="reg_food">Restrictions alimentaires</string>

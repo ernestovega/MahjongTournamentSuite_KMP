@@ -1043,7 +1043,6 @@
     <string name="reg_state_open">Регистрация открыта</string>
     <string name="reg_state_closed">Регистрация закрыта</string>
     <string name="reg_add">Добавить</string>
-    <string name="reg_without_team">Без команды</string>
     <string name="reg_no_account">Без аккаунта</string>
     <string name="reg_shared_email">Этот email у другого участника. Аккаунты не могут его делить.</string>
     <string name="reg_food">Ограничения в питании</string>

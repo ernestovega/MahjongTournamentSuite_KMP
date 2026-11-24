@@ -1029,7 +1029,6 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_state_open">Anmeldung offen</string>
     <string name="reg_state_closed">Anmeldung geschlossen</string>
     <string name="reg_add">Person hinzufügen</string>
-    <string name="reg_without_team">Ohne Team</string>
     <string name="reg_no_account">Kein Konto</string>
     <string name="reg_shared_email">Eine andere Person nutzt diese E-Mail. Ein Konto kann sie nicht teilen.</string>
     <string name="reg_food">Ernährungseinschränkungen</string>
