@@ -741,7 +741,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/users/lookup",
     requireAuth,
-    requireTournamentPermission("tournament.view"),
+    requireTournamentPermission("tournament.members"),
     async (req, res, next) => {
       try {
         const email = String(req.query.email ?? "").trim();

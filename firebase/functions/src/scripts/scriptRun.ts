@@ -1,6 +1,7 @@
 import { userInfo } from "node:os";
 
 import { FieldValue, type Firestore } from "firebase-admin/firestore";
+import { historyExpireAt } from "../services/historyRetention";
 
 /**
  * The maintenance scripts change data outside the API, so each run that writes leaves one record in the activity log:
@@ -65,7 +66,11 @@ export function buildScriptRunEntry(params: {
 /** Writes the record of one run. A failure is reported and never hides the result of the script. */
 export async function recordScriptRun(firestore: Firestore, params: Parameters<typeof buildScriptRunEntry>[0]): Promise<void> {
   try {
-    await firestore.collection(ACTIVITY_COLLECTION).add({ ...buildScriptRunEntry(params), at: FieldValue.serverTimestamp() });
+    await firestore.collection(ACTIVITY_COLLECTION).add({
+      ...buildScriptRunEntry(params),
+      at: FieldValue.serverTimestamp(),
+      expireAt: historyExpireAt(),
+    });
   } catch (error) {
     console.error("Writing the script run to the activity log failed", error);
   }
