@@ -1199,7 +1199,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier(), TextAlign.Start)
                                 }
                             }
-                            if (anyRoundTables) Spacer(Modifier.width(tablesToggleWidth))
+                            if (anyRoundTables) {
+                                TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(tablesToggleWidth))
+                            }
                             Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                         }
                     }
@@ -1500,7 +1502,8 @@ private val TournamentPlayerTeamColumnWidth = 180.dp
 // The button that opens the tables of a player shows its text from this width of the list, and only the arrow below it.
 private val TablesToggleLabelMinWidth = 1000.dp
 private val TablesToggleLabeledWidth = 112.dp
-private val TablesToggleIconWidth = 48.dp
+// Wide enough for the title of the column above the arrow.
+private val TablesToggleIconWidth = 64.dp
 
 /**
  * Inside the row of the name and the team: the same width in the header and in every row, so the columns line up.
