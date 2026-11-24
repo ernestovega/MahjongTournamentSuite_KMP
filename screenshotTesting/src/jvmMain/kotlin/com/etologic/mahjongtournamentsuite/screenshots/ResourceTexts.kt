@@ -16,7 +16,11 @@ fun resourceText(module: String, key: String, vararg args: Any): String {
     val folders = listOf("values-$language", "values").distinct()
     val text = folders.firstNotNullOfOrNull { folder ->
         File(resources, folder).listFiles { f -> f.extension == "xml" }.orEmpty().firstNotNullOfOrNull { file ->
-            Regex("""<string name="${Regex.escape(key)}">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL).find(file.readText())?.groupValues?.get(1)
+            val xml = file.readText()
+            Regex("""<string name="${Regex.escape(key)}">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL).find(xml)?.groupValues?.get(1)
+                // A plural gives its "other" form, the one of most numbers.
+                ?: Regex("""<plurals name="${Regex.escape(key)}">.*?<item quantity="other">(.*?)</item>""", RegexOption.DOT_MATCHES_ALL)
+                    .find(xml)?.groupValues?.get(1)
         }
     } ?: error("$module has no text $key")
     val plain = text.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"").replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
