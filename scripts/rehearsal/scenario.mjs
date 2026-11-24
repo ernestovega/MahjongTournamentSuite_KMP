@@ -272,10 +272,12 @@ export async function makePlan(args) {
       { kind: "offline", round: size.rounds, table: 4, afterHands: 2, seconds: 60 },
       // Corners only: the 4 players of table 7 of round 1 finish level in the ranking. Their tables play only draws.
       ...(size.tie ? [{ kind: "tie", round: 1, table: 7 }] : []),
-      // Corners only: last minute withdrawals. The tournament is created with a table more, and before the first hand
-      // the organizer takes it out in Players (Number of players): a new draw for the players of the plan. Round 0: before
-      // the first round.
-      ...(size.tableOut ? [{ kind: "player-count", round: 0, table: 0, from: size.players + 4, to: size.players }] : []),
+      // Corners only: last minute withdrawals and arrivals. The tournament is created with a table more. Before the
+      // first hand the organizer takes 2 tables out in Players (Number of players), and then adds one back: two new
+      // draws, and the last one is for the players of the plan. Round 0: before the first round. Once the first round
+      // has a hand, the screen says the number of players cannot change any more (the substitution covers the changes
+      // during the tournament).
+      ...(size.tableOut ? [{ kind: "player-count", round: 0, table: 0, from: size.players + 4, via: size.players - 4, to: size.players }] : []),
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
       { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
       { kind: "edit", round: fix, table: fixTables[2], which: "last", minHands: 4 },
@@ -301,6 +303,13 @@ export async function makePlan(args) {
       form: slots.slice(0, 16).map((slot) => slot.emaId),
       added: slots[16].emaId,
       removed: slots[0].emaId,
+      // The Google Form has the mistakes of real people. The rows with problems are imported too, marked in the list:
+      // an EMA number that the registry does not have (the draw refuses until the organizer chooses the right person),
+      // an email with a typo (it does not stop the draw, the organizer corrects it), and two people with the same email
+      // (a parent who registers a child: allowed).
+      mistyped: { emaId: slots[5].emaId, file: MISTYPED_EMA, name: slots[5].name },
+      badEmail: { emaId: slots[6].emaId, email: slots[6].email },
+      sharedEmail: { emaId: slots[7].emaId, with: slots[8].emaId },
     };
   }
 
@@ -316,8 +325,21 @@ export async function makePlan(args) {
   bad.push([...bad[3]]);
   bad.push([size.players + 5, imported[4].emaId, "", ...(isTeams ? [""] : [])]);
   const files = { "players.csv": csv(good), "players-errors.csv": csv(bad) };
-  if (plan.byHand) files["registrations-form.csv"] = `${formCsv(slots.slice(0, 16), false)}\n`;
+  if (plan.byHand) files["registrations-form.csv"] = `${formCsv(formWithMistakes(slots.slice(0, 16)), false)}\n`;
   return { plan, files };
+}
+
+/** An EMA number of 8 digits that the registry does not have: below the calibration players (from 99980000). */
+export const MISTYPED_EMA = "99970123";
+
+/** The rows of the Google Form of the registrations by hand, with the mistakes of plan.byHand (slots 6, 7 and 8). */
+export function formWithMistakes(people) {
+  return people.map((slot, index) => {
+    if (index === 5) return { ...slot, emaId: MISTYPED_EMA };
+    if (index === 6) return { ...slot, email: String(slot.email).replace("@", "@@") };
+    if (index === 7) return { ...slot, email: people[8].email };
+    return slot;
+  });
 }
 
 async function main() {

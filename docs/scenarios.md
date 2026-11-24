@@ -142,13 +142,17 @@ read it, so each one knows its part.
   with no penalty, and so does every table of the next rounds with one of its players. The 4 players finish with the
   same table points and score. The checks want them level in the independent count, and the check of the places wants
   the server to give them the same place.
-- A table less before the first hand (last minute withdrawals).
+- Tables less and more before the first hand (last minute withdrawals and arrivals), and no change once it started.
 
   Done (plan.cornerCases kind player-count and plan.createWith, corners only). The tablet creates the tournament with
   32 players, a table more than the plan. In Players, before the import, the organizer opens Number of players, marks
-  the 4 empty slots 29 to 32 as the ones who leave (people are marked, also with teams; here they are the whole last
-  team, so no team stays incomplete), reviews and confirms the new draw in its red dialog (docs/player-count-change.md). The
-  checks want every round of the server with 7 tables and each of the 28 players once.
+  the 8 empty slots 25 to 32 as the ones who leave (people are marked, also with teams; here they are the 2 last
+  teams, so no team stays incomplete), goes through the step Teams when there are teams, and confirms the new draw in
+  its red dialog. Then it opens Number of players again and adds a table: 4 empty places (or a new team) after the
+  highest number, filled by the import of Players (docs/player-count-change.md). The checks want every round of the
+  last draw of the server with 7 tables and each of the 28 players once. During the tournament, once a table has a
+  hand, the organizer opens Number of players again and the screen says the number cannot change; the late player of
+  round 1 is replaced with Substitute instead.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.
 
@@ -238,11 +242,16 @@ of the scenario, in the phase setup of `ScenarioOrganizerTest`):
   organizer (the form puts it) and "Game day co-club" as co-organizer. The tournament opens on its registrations.
 - The settings change on the screen: Change of the public link, the name of the plan (`plan.byHand.slug`), Save, and
   the link of the tile ends with it.
-- Import with `registrations-form.csv` (the first 16 people of the plan): 16 with a place. Add a person
-  (the 17th) from the EMA registry: the waiting list.
+- Import with `registrations-form.csv` (the first 16 people of the plan, with the mistakes of real people: an EMA
+  number that the registry does not have, an email with a typo, and two people with the same email): 16 with a place.
+  The rows with problems are imported too, marked in the list: the chip With problems (2) shows only those two, and
+  the shared email is no problem. Add a person (the 17th) from the EMA registry: the waiting list.
 - A player (`+mts-cal01`) signs in to the player app, opens the tournament, registers (number 2 of the waiting list)
   and cancels in My registration.
 - The club admin removes the first person and gives the place to the person of the waiting list.
+- The club admin closes the registrations and tries the draw: it is refused, with the name of the person whose EMA
+  number is not in the registry. In that registration, Choose the right person picks the EMA player, and the email
+  with the typo is corrected: the chip of problems goes away, and the registrations open again.
 - Export CSV saves `registrations-<short name>.csv` in Downloads: the header of the import and the 16 people with a
   place (the 17th in, the first one out). The same file goes back in Import: the preview says "0 of 16 rows can be
   imported." and "The person is already registered.", without an Import button, and the club admin cancels.

@@ -40,6 +40,14 @@ async function pickTournament() {
   return ranked[0];
 }
 
+/** A tournament that takes registrations (it has registration settings), the one with the most people; or null. */
+async function pickRegistrationTournament() {
+  const { tournaments = [] } = await getJson("/public/tournaments");
+  const open = tournaments.filter((t) => t.registration != null);
+  open.sort((a, b) => ((b.registration.confirmed ?? 0) + (b.registration.waiting ?? 0)) - ((a.registration.confirmed ?? 0) + (a.registration.waiting ?? 0)));
+  return open[0] ? { id: open[0].id, slug: open[0].registration.slug ?? "" } : null;
+}
+
 async function pickPerson(tournamentId) {
   const { players = [] } = await getJson(`/public/tournaments/${tournamentId}/players`);
   return players.map((p) => p.assignedEmaId).find((id) => typeof id === "string" && id.length > 0) ?? null;
@@ -112,9 +120,19 @@ const endpoints = [
   ["tournament tables", `/public/tournaments/${id}/tables`],
   ["tables with hands (all)", `/public/tournaments/${id}/tables-with-hands`],
   ["tables with hands (round 1)", `/public/tournaments/${id}/rounds/1/tables-with-hands`],
+  ["tournament round clocks", `/public/tournaments/${id}/round-clocks`],
+  ["one table (round 1, table 1)", `/public/tournaments/${id}/tables/1/1`],
   ["statistics overview", "/public/statistics/overview"],
+  // The statistics of a group: the filters of the Statistics screen (here, the tournament).
+  ["statistics of a group", `/public/statistics/groups?tournaments=${id}`],
 ];
 if (tournament.isTeams) endpoints.push(["tournament teams", `/public/tournaments/${id}/teams`]);
+// A tournament that takes registrations: its public list and its public link.
+const open = await pickRegistrationTournament();
+if (open) {
+  endpoints.push(["public registrations", `/public/tournaments/${encodeURIComponent(open.id)}/registrations`]);
+  if (open.slug) endpoints.push(["registration link", `/public/registration-links/${encodeURIComponent(open.slug)}`]);
+}
 if (emaId) {
   endpoints.push(["person statistics", `/public/statistics/persons/${encodeURIComponent(emaId)}`]);
   endpoints.push(["person standings", `/public/statistics/persons/${encodeURIComponent(emaId)}/standings?tournaments=${id}`]);
@@ -124,7 +142,7 @@ const results = [];
 for (const [name, path] of endpoints) {
   for (const mode of ["cdn", "origin"]) {
     const result = await measure(path, mode);
-    results.push({ name, mode, path: path.replace(id, ":tournament").replace(emaId ?? "\u0000", ":emaId"), ...result });
+    results.push({ name, mode, path: path.replace(id, ":tournament").replace(open ? encodeURIComponent(open.id) : "\u0000", ":registrations").replace(open?.slug || "\u0000", ":slug").replace(emaId ?? "\u0000", ":emaId"), ...result });
     console.log(`${name.padEnd(30)} ${mode.padEnd(6)} p50 ${String(result.p50).padStart(5)} ms  p95 ${String(result.p95).padStart(5)} ms  ${result.kb} kB${result.reads == null ? "" : `  ${result.reads} reads`}${result.errors ? `  errors ${result.errors}` : ""}`);
   }
 }

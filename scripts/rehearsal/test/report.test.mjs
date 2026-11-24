@@ -168,4 +168,10 @@ test("a table taken out passes when every round has the new tables with each pla
   assert.ok(!ok(cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], [[1, 5, 2, 6], [3, 7, 4, 8]]]))));
   assert.ok(!ok(cornerCaseVerdicts(plan, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8]]]))));
   assert.ok(!ok(cornerCaseVerdicts(plan, run([]), null)));
+
+  // Tables out and one back (corners): the last draw is the one checked, and the verdict says both changes.
+  const both = { rounds: 2, cornerCases: [{ kind: "player-count", round: 0, table: 0, from: 12, via: 4, to: 8 }] };
+  const backIn = cornerCaseVerdicts(both, run([]), drawOf([[[1, 2, 3, 4], [5, 6, 7, 8]], [[1, 5, 2, 6], [3, 7, 4, 8]]]));
+  assert.ok(ok(backIn), backIn.join("\n"));
+  assert.ok(backIn[0].includes("took 2 tables out (4 players) and added 1 back"), backIn[0]);
 });

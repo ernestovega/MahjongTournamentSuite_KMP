@@ -109,20 +109,17 @@ async function measureProfile(browser, profile, tournamentId) {
       await page.reload({ waitUntil: "commit" });
       rows.push({ screen: "Tournaments", cache: "warm", ...(await waitForLoad(page, "Tournaments")) });
 
-      await reloadWith(page, "/value:tournaments-tab", 1, false);
+      // The tabs of the start: In play (only while a tournament is in play), All and Statistics (StartTab).
+      await reloadWith(page, "/value:tournaments-tab-v2", 2, false);
       rows.push({ screen: "Tournaments", cache: "warm", ...(await waitForLoad(page, "Tournaments")), view: "General statistics" });
 
       await page.goto(`${appUrl}/t/${encodeURIComponent(tournamentId)}`, { waitUntil: "commit" });
       rows.push({ screen: "Tournament", cache: "warm", ...(await waitForLoad(page, "Tournament")), view: "Tables" });
-      for (const [tab, view] of [[1, "Ranking"], [2, "Statistics"], [3, "Info"]]) {
-        await reloadWith(page, "/value:mainTab", tab, false);
+      // The tabs of a tournament by their ids (MainTab): Ranking, Players, Statistics and Info.
+      for (const [tab, view] of [[1, "Ranking"], [2, "Players"], [3, "Statistics"], [4, "Info"]]) {
+        await reloadWith(page, "/value:tournamentTab", tab, false);
         rows.push({ screen: "Tournament", cache: "warm", ...(await waitForLoad(page, "Tournament")), view });
       }
-      // The Players tab of the statistics of the tournament.
-      await reloadWith(page, "/value:mainTab", 2, false);
-      await waitForLoad(page, "Tournament");
-      await reloadWith(page, "/text:tournament-statistics-tab", "PLAYERS", true);
-      rows.push({ screen: "Tournament", cache: "warm", ...(await waitForLoad(page, "Tournament")), view: "Statistics › Players" });
     } catch (error) {
       console.warn(`  ${profile.name} sample ${sample + 1} stopped: ${error.message}`);
       rows.push({ screen: "error", error: error.message });

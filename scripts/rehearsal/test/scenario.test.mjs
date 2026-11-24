@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { accountsToFreeUp, eligiblePlayers, makePlan, plannedStart, returningPlayers, SCENARIOS, slotKind } from "../scenario.mjs";
+import { accountsToFreeUp, eligiblePlayers, makePlan, MISTYPED_EMA, plannedStart, returningPlayers, SCENARIOS, slotKind } from "../scenario.mjs";
 import { ENV, planStaging, registry, withEnv, withFetch } from "./support.mjs";
 
 const planFor = (args, players = registry(300), users = []) => withEnv(ENV, () => withFetch(planStaging(players, users), () => makePlan(args)));
@@ -59,7 +59,7 @@ test("the corners plan has every corner case in round 1, and the slow and abando
   assert.deepEqual(plan.cornerCases.find((item) => item.kind === "penalty-draw").penalties, ["-10", "-5"]);
   // Before the first round the organizer takes out a table: the tournament is created with 32 players.
   assert.equal(plan.createWith, 32);
-  assert.deepEqual(plan.cornerCases.filter((item) => item.kind === "player-count").map(({ round, table, from, to }) => [round, table, from, to]), [[0, 0, 32, 28]]);
+  assert.deepEqual(plan.cornerCases.filter((item) => item.kind === "player-count").map(({ round, table, from, via, to }) => [round, table, from, via, to]), [[0, 0, 32, 24, 28]]);
   assert.equal(plan.slots.length, 28, "the slots of the plan are the players after the change");
 });
 
@@ -208,7 +208,19 @@ test("corners plans the registrations by hand: 16 people in the Google Form, a 1
   const rows = files["registrations-form.csv"].trim().split("\n");
   assert.equal(rows.length, 17);
   assert.ok(rows[0].includes("EMA number"));
-  assert.ok(plan.byHand.form.every((emaId) => files["registrations-form.csv"].includes(emaId)));
+  // The Google Form has the mistakes of real people: an EMA number that the registry does not have, an email with a
+  // typo and an email shared by two people. The other rows are as the plan has them.
+  const form = files["registrations-form.csv"];
+  const { mistyped, badEmail, sharedEmail } = plan.byHand;
+  assert.equal(mistyped.emaId, plan.slots[5].emaId);
+  assert.equal(mistyped.file, MISTYPED_EMA);
+  assert.ok(!form.includes(mistyped.emaId) && rows[6].includes(MISTYPED_EMA), rows[6]);
+  assert.ok(plan.byHand.form.filter((emaId) => emaId !== mistyped.emaId).every((emaId) => form.includes(emaId)));
+  assert.equal(badEmail.emaId, plan.slots[6].emaId);
+  assert.ok(rows[7].includes(badEmail.email.replace("@", "@@")) && rows[7].includes(badEmail.emaId), rows[7]);
+  assert.equal(sharedEmail.with, plan.slots[8].emaId);
+  assert.ok(rows[8].includes(plan.slots[8].email) && rows[9].includes(plan.slots[8].email), `${rows[8]}\n${rows[9]}`);
+  assert.ok(!rows[8].includes(plan.slots[7].email));
   // The other scenarios leave it to the bots.
   const { plan: small, files: smallFiles } = await planFor({ scenario: "small" });
   assert.equal(small.byHand, undefined);

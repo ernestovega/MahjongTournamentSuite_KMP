@@ -36,6 +36,9 @@ modes:
   routes in docs/public-data.md).
 - `origin`: the same call with a unique `bench` parameter, so the cache misses and the Cloud Function answers.
 
+It also measures the clocks of the rounds, one table, the statistics of a group (the filters of the Statistics screen,
+here the tournament), and, when a public tournament takes registrations, its public list and its public link.
+
 One call before the measured ones keeps a cold start of the function out of the times. The result has p50, p95,
 the maximum and the size of each answer.
 
@@ -58,9 +61,8 @@ real load times of the users are in GA4 too. On the web the load is also kept in
 |---|---|
 | Tournaments (cold) | The first visit of a new user, with an empty cache. The time since navigation includes the download and start of the app. |
 | Tournaments (warm) | A page refresh: the files of the app are in the cache. |
-| Tournaments › General statistics | The statistics tab of the start screen. |
-| Tournament › Tables, Ranking, Statistics, Info | Each tab of a tournament, opened with a page refresh. |
-| Tournament › Statistics › Players | The statistics of one player in the tournament. |
+| Tournaments › General statistics | The Statistics tab of the start screen (tabs In play, All and Statistics). |
+| Tournament › Tables, Ranking, Players, Statistics, Info | Each tab of a tournament, opened with a page refresh. |
 
 The script opens a tab by changing the saved tab of the screen in `sessionStorage` and reloading, like a page refresh
 on that tab. Each visit runs 3 times (`--samples`) on two profiles: a desktop, and a Pixel 7 with the CPU four times

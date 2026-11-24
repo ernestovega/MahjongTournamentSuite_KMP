@@ -140,7 +140,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         ensureTheOrganization()
         if (plan.has("byHand")) registrationsByHand()
         createTheTournamentWithTheForm()
-        if (plan.has("createWith")) takeOutATable()
+        if (plan.has("createWith")) changeTheNumberOfPlayers()
         importThePlayers()
         slots.filter { it.via == "manual" }.forEach { assignByHand(it) }
         sendTheInvitations()
@@ -224,6 +224,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.openTournament(byHand.getString("name"))
         c.waitForText("Export CSV", timeoutMs = 60_000)
         removeAndGiveThePlace(byHand.getString("removed"), byHand.getString("added"))
+        drawRefusedUntilTheProblemsAreFixed()
         exportAndImportAgain()
         closeAndMakeTheDraw()
         signOut()
@@ -360,7 +361,69 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForNoText("$count people were imported.", timeoutMs = 10_000)
         c.waitForText("With a place ($count)", timeoutMs = 60_000)
         log("$count people imported from the Google Form")
+        // The rows with problems are imported too, marked in the list: the EMA number that the registry does not have
+        // and the email with a typo. The shared email is no problem. The chip shows only them.
+        c.waitForText("With problems (2)", timeoutMs = 60_000)
+        clickTagged("registrations-filter-problems")
+        showCard(byHand.getJSONObject("mistyped").getString("file"))
+        showCard(byHand.getJSONObject("badEmail").getString("emaId"))
+        // Only those two: the list of 2 cards has no other card, such as the one with the shared email.
+        c.waitUntil(30_000) { c.onAllNodes(registrationCard(byHand.getJSONObject("sharedEmail").getString("emaId"))).fetchSemanticsNodes().isEmpty() }
+        clickTagged("registrations-filter-problems")
+        showCard(byHand.getJSONObject("sharedEmail").getString("emaId"))
+        log("the 2 rows with problems are in the list, marked, and the shared email is not a problem")
     }
+
+    /**
+     * Before the draw: the person whose EMA number is not in the registry has a place, so the draw is refused with
+     * their name. The club admin chooses the right EMA player for that row and corrects the email with a typo, and
+     * opens the registrations again for the export.
+     */
+    private fun drawRefusedUntilTheProblemsAreFixed() {
+        val mistyped = byHand.getJSONObject("mistyped")
+        val badEmail = byHand.getJSONObject("badEmail")
+        showSetting("registrations-toggle-status")
+        clickTagged("registrations-toggle-status")
+        c.waitUntil(60_000) { textOf("registrations-status-value") == "Registrations closed" }
+        c.clickLastButton("Make the draw")
+        c.waitForText("Make the draw?", timeoutMs = 30_000)
+        c.clickLastButton("Make the draw")
+        c.waitForText("Some people with a place have no valid EMA number yet.", substring = true, timeoutMs = 60_000)
+        c.waitForText(mistyped.getString("name"), substring = true)
+        c.clickLastButton("OK")
+        c.waitForNoText("Some people with a place have no valid EMA number yet.", substring = true, timeoutMs = 10_000)
+        log("the draw is refused while ${mistyped.getString("file")} is not in the EMA registry")
+
+        // The right person for the row: the edit dialog shows the problem and the number of the file.
+        showCard(mistyped.getString("file"))
+        c.onNode(registrationCard(mistyped.getString("file"))).tap()
+        c.waitForText("The EMA number is not in the EMA registry.", timeoutMs = 30_000)
+        clickTagged("registration-choose-ema")
+        c.waitUntil(30_000) { c.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(hasSetTextAction()).onLast().performTextInput(mistyped.getString("emaId"))
+        val row = hasClickAction() and hasText(mistyped.getString("emaId"), substring = true) and !hasSetTextAction()
+        c.waitUntil(30_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(row).onLast().tap()
+        c.waitForText(mistyped.getString("emaId"), substring = true)
+        c.clickLastButton("Save")
+        // The registration now has the EMA number of the person, so its card has a new tag.
+        showCard(mistyped.getString("emaId"))
+        c.waitForText("With problems (1)", timeoutMs = 60_000)
+
+        // The email with a typo.
+        showCard(badEmail.getString("emaId"))
+        c.onNode(registrationCard(badEmail.getString("emaId"))).tap()
+        c.waitForText("The email is not valid.", timeoutMs = 30_000)
+        c.field("Email").performTextReplacement(badEmail.getString("email"))
+        c.clickLastButton("Save")
+        c.waitUntil(60_000) { c.onAllNodes(hasTestTag("registrations-filter-problems")).fetchSemanticsNodes().isEmpty() }
+        log("the right EMA player chosen for the row of ${mistyped.getString("file")} and the email corrected: no problems left")
+
+        showSetting("registrations-toggle-status")
+        clickTagged("registrations-toggle-status")
+        c.waitUntil(60_000) { textOf("registrations-status-value") == "Registrations open" }
+    }
+
 
     private fun registrationCard(emaId: String): SemanticsMatcher = hasTestTag("registration-$emaId")
 
@@ -655,30 +718,35 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     }
 
     /**
-     * Corners only (plan.createWith): last minute withdrawals. Before the first hand the organizer takes a table out in
-     * Players with Number of players, chooses the 4 empty slots at the end, and confirms the new draw
-     * (docs/player-count-change.md). The report checks the new draw of the server.
+     * Corners only (plan.createWith): last minute withdrawals and arrivals. Before the first hand the organizer opens
+     * Number of players in Players twice: it marks the 8 empty slots at the end (2 tables leave), and then adds a table
+     * back (4 new empty places after the highest number). Each change is a new draw, confirmed in its red dialog
+     * (docs/player-count-change.md). The report checks the last draw of the server.
      */
-    private fun takeOutATable() {
-        val from = plan.getInt("createWith")
-        val to = plan.getInt("players")
+    private fun changeTheNumberOfPlayers() {
+        val case = (0 until plan.getJSONArray("cornerCases").length()).map { plan.getJSONArray("cornerCases").getJSONObject(it) }
+            .first { it.getString("kind") == "player-count" }
+        val from = case.getInt("from")
+        val via = case.optInt("via", case.getInt("to"))
+        val to = case.getInt("to")
+        takeOutTables(from, via)
+        if (to > via) addTables(via, to)
+    }
+
+    private fun openTheNumberOfPlayers(now: Int) {
         c.clickButton("Number of players")
-        // Its own screen, by steps: the organizer marks who leaves and the screen counts them in tables of 4.
+        // Its own screen, by steps: the organizer marks who leaves, or adds tables, and the screen counts them.
         c.waitForText("Who leaves or comes", timeoutMs = 60_000)
-        c.waitForText("Now: $from players, ${from / 4} tables per round.", timeoutMs = 60_000)
-        // People are marked, also in a team tournament (Ernesto, 24-nov): the empty slots to+1..from. With teams they are
-        // the last team, so no team stays incomplete and the bots of the plan keep their slots.
-        c.waitForText("Who leaves?")
-        val tags = (to + 1..from).map { "playerCountSlot-$it" }
-        tags.forEach { tag ->
-            // The list composes only the lines in view: it scrolls to the line first.
-            runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag(tag)) }
-            c.onNode(hasTestTag(tag)).tap()
-        }
-        // The count is above the list, out of view after the last lines.
-        runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("playerCountChosen")) }
-        c.waitForText("Marked: ${from - to}. Tables that leave: ${(from - to) / 4}.")
+        c.waitForText("Now: $now players, ${now / 4} tables per round.", timeoutMs = 60_000)
+    }
+
+    private fun confirmTheNewDraw(from: Int, to: Int) {
         c.clickButton("Continue")
+        // With teams the step Teams comes first (always, 24-nov). Whole teams left or came, so every team has 4.
+        if (plan.getBoolean("isTeams")) {
+            c.waitForText("Every team has 4 players.", timeoutMs = 30_000)
+            clickTagged("playerCountTeamsContinue")
+        }
         c.waitForText("Make a new draw?", timeoutMs = 30_000)
         c.waitForText("From $from to $to players")
         c.clickButton("Make the new draw")
@@ -690,7 +758,52 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickLastButton("Close")
         // Close goes back to Players.
         c.waitForNoText("The tournament now has $to players and a new draw.")
-        log("a table taken out: $from to $to players, new draw")
+    }
+
+    private fun takeOutTables(from: Int, to: Int) {
+        openTheNumberOfPlayers(from)
+        // People are marked, also in a team tournament (Ernesto, 24-nov): the empty slots to+1..from. With teams they are
+        // the last teams, so no team stays incomplete and the bots of the plan keep their slots.
+        c.waitForText("Who leaves?")
+        val tags = (to + 1..from).map { "playerCountSlot-$it" }
+        tags.forEach { tag ->
+            // The list composes only the lines in view: it scrolls to the line first.
+            runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag(tag)) }
+            c.onNode(hasTestTag(tag)).tap()
+        }
+        // The count is above the list, out of view after the last lines.
+        runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("playerCountChosen")) }
+        c.waitForText("Marked: ${from - to}. Tables that leave: ${(from - to) / 4}.")
+        confirmTheNewDraw(from, to)
+        log("${(from - to) / 4} tables taken out: $from to $to players, new draw")
+    }
+
+    private fun addTables(from: Int, to: Int) {
+        openTheNumberOfPlayers(from)
+        c.waitForText("Who comes?")
+        repeat((to - from) / 4) { clickTagged("playerCountMore") }
+        c.waitForText("Tables added: ${(to - from) / 4}")
+        // No registrations here, so no waiting list: the new places stay empty until the import of Players fills them.
+        if (plan.getBoolean("isTeams")) {
+            c.waitForText("${(to - from) / 4} new teams, empty until you assign them in Teams.")
+        } else {
+            c.waitForText("${to - from} new places, empty until you assign them in Players.")
+        }
+        confirmTheNewDraw(from, to)
+        log("${(to - from) / 4} tables added: $from to $to players, new draw")
+    }
+
+    /**
+     * Corners only, during the tournament: once a table has a hand, Number of players shows that the number cannot
+     * change any more, and Close goes back to Players. A late player is replaced with Substitute instead.
+     */
+    private fun theNumberOfPlayersIsLocked() {
+        c.clickButton("Number of players")
+        c.waitForText("The number of players cannot change", timeoutMs = 60_000)
+        c.waitForText("The number of players can only change before the first hand.", substring = true)
+        c.clickLastButton("Close")
+        c.waitForText("Tournament players", timeoutMs = 60_000)
+        log("during the tournament the number of players is locked: the screen says so")
     }
 
     private fun chooseCountry(name: String) {
@@ -1033,6 +1146,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         }
         c.clickMoreMenuButton("Players")
         c.waitForText("Tournament players", timeoutMs = 60_000)
+        if (plan.has("createWith")) theNumberOfPlayersIsLocked()
         // The search finds the slot by its EMA number. The email of the slot is the other key that only it has: it is
         // tried when the EMA number shows no single row.
         val oneRow = { c.onAllNodes(hasContentDescription("Player actions") and hasClickAction()).fetchSemanticsNodes().size == 1 }
