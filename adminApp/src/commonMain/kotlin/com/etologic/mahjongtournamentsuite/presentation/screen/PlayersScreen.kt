@@ -3,22 +3,16 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,14 +20,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -55,26 +45,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -105,20 +87,15 @@ import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExport
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
@@ -130,29 +107,20 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.assign
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_list
-import mahjongtournamentsuite.adminapp.generated.resources.assign_ema_player_to_player
-import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.clear
-import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment
-import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment_2
-import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment_message
 import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
-import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.edit_account
 import mahjongtournamentsuite.adminapp.generated.resources.edit_email
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.name
-import mahjongtournamentsuite.adminapp.generated.resources.no_ema_players_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_generated_players
 import mahjongtournamentsuite.adminapp.generated.resources.no_matches
-import mahjongtournamentsuite.adminapp.generated.resources.no_player_photo
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_yet
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournament_players_match
 import mahjongtournamentsuite.adminapp.generated.resources.not_assigned
 import mahjongtournamentsuite.adminapp.generated.resources.photo
-import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_actions
 import mahjongtournamentsuite.adminapp.generated.resources.player_n
 import mahjongtournamentsuite.adminapp.generated.resources.round
@@ -162,11 +130,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
-import mahjongtournamentsuite.adminapp.generated.resources.table
 import mahjongtournamentsuite.adminapp.generated.resources.tables
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
-import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_players
@@ -581,330 +547,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
 
     if (assignmentSlot != null) {
-        val searchFocusRequester = remember(assignmentSlot.id) { FocusRequester() }
-        val clearSearchFocusRequester = remember(assignmentSlot.id) { FocusRequester() }
-        val cancelFocusRequester = remember(assignmentSlot.id) { FocusRequester() }
-        val playerFocusRequesters = remember(assignmentSlot.id, filteredBasePlayers.map(Player::emaId)) {
-            filteredBasePlayers.map { FocusRequester() }
-        }
-        val playerListState = rememberPersistentLazyListState("players")
-        var focusedPlayerIndex by remember(assignmentSlot.id) { mutableStateOf(0) }
-        var searchFieldFocused by remember(assignmentSlot.id) { mutableStateOf(false) }
-
-        fun selectedPlayerIndex(): Int = focusedPlayerIndex
-            .coerceAtMost(playerFocusRequesters.lastIndex)
-            .coerceAtLeast(0)
-
-        fun requestPlayerFocus(index: Int) {
-            if (index !in playerFocusRequesters.indices) return
-            focusedPlayerIndex = index
-            scope.launch {
-                playerListState.scrollToItem(index)
-                playerFocusRequesters[index].requestFocus()
-            }
-        }
-
-        LaunchedEffect(assignmentSlot.id) {
-            searchFocusRequester.requestFocus()
-        }
-
-        TrackedDialog("AssignEmaPlayerToPlayer") {
-            AlertDialog(
-                onDismissRequest = { assignmentSlotId = null },
-                modifier = Modifier.appFocusGroup(),
-                title = { MtsDialogTitle(stringResource(Res.string.assign_ema_player_to_player, assignmentSlot.id)) },
-                text = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = assignmentSearchQuery,
-                            onValueChange = { assignmentSearchQuery = it },
-                            label = { Text(stringResource(Res.string.search)) },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(searchFocusRequester)
-                                .onFocusChanged { searchFieldFocused = it.isFocused }
-                                .focusProperties {
-                                    next = if (assignmentSearchQuery.isNotEmpty()) {
-                                        clearSearchFocusRequester
-                                    } else {
-                                        playerFocusRequesters.firstOrNull() ?: cancelFocusRequester
-                                    }
-                                    previous = cancelFocusRequester
-                                }
-                                .onPreviewKeyEvent { event ->
-                                    if (!searchFieldFocused) return@onPreviewKeyEvent false
-                                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                    when (event.key) {
-                                        Key.Tab -> {
-                                            if (event.isShiftPressed) {
-                                                cancelFocusRequester.requestFocus()
-                                            } else if (assignmentSearchQuery.isNotEmpty()) {
-                                                clearSearchFocusRequester.requestFocus()
-                                            } else if (playerFocusRequesters.isEmpty()) {
-                                                cancelFocusRequester.requestFocus()
-                                            } else {
-                                                requestPlayerFocus(selectedPlayerIndex())
-                                            }
-                                            true
-                                        }
-                                        Key.Enter, Key.NumPadEnter, Key.DirectionDown -> {
-                                            if (playerFocusRequesters.isEmpty()) {
-                                                cancelFocusRequester.requestFocus()
-                                            } else {
-                                                requestPlayerFocus(0)
-                                            }
-                                            true
-                                        }
-                                        Key.DirectionUp -> {
-                                            cancelFocusRequester.requestFocus()
-                                            true
-                                        }
-                                        Key.DirectionLeft -> {
-                                            if (assignmentSearchQuery.isEmpty()) {
-                                                cancelFocusRequester.requestFocus()
-                                                true
-                                            } else {
-                                                false
-                                            }
-                                        }
-                                        Key.DirectionRight -> {
-                                            if (assignmentSearchQuery.isEmpty()) {
-                                                if (playerFocusRequesters.isEmpty()) {
-                                                    cancelFocusRequester.requestFocus()
-                                                } else {
-                                                    requestPlayerFocus(selectedPlayerIndex())
-                                                }
-                                                true
-                                            } else {
-                                                false
-                                            }
-                                        }
-                                        else -> false
-                                    }
-                                },
-                            trailingIcon = if (assignmentSearchQuery.isNotEmpty()) {
-                                {
-                                    IconButton(
-                                        onClick = {
-                                            assignmentSearchQuery = ""
-                                            searchFocusRequester.requestFocus()
-                                        },
-                                        buttonModifier = Modifier
-                                            .focusRequester(clearSearchFocusRequester)
-                                            .focusProperties {
-                                                previous = searchFocusRequester
-                                                next = playerFocusRequesters.firstOrNull() ?: cancelFocusRequester
-                                            }
-                                            .onPreviewKeyEvent { event ->
-                                                if (event.type != KeyEventType.KeyDown) {
-                                                    return@onPreviewKeyEvent false
-                                                }
-                                                when (event.key) {
-                                                    Key.Tab -> {
-                                                        if (event.isShiftPressed) {
-                                                            searchFocusRequester.requestFocus()
-                                                        } else if (playerFocusRequesters.isEmpty()) {
-                                                            cancelFocusRequester.requestFocus()
-                                                        } else {
-                                                            requestPlayerFocus(selectedPlayerIndex())
-                                                        }
-                                                        true
-                                                    }
-                                                    Key.DirectionLeft -> {
-                                                        searchFocusRequester.requestFocus()
-                                                        true
-                                                    }
-                                                    Key.DirectionRight -> {
-                                                        if (playerFocusRequesters.isEmpty()) {
-                                                            cancelFocusRequester.requestFocus()
-                                                        } else {
-                                                            requestPlayerFocus(selectedPlayerIndex())
-                                                        }
-                                                        true
-                                                    }
-                                                    else -> false
-                                                }
-                                            },
-                                    ) {
-                                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
-                                    }
-                                }
-                            } else {
-                                null
-                            },
-                        )
-                        Column(Modifier.fillMaxWidth()) {
-                            DataTableHeaderRow {
-                                TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(AssignmentPhotoColumnWidth), TextAlign.Center)
-                                TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(AssignmentCountryColumnWidth), TextAlign.Center)
-                                TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(AssignmentEmaColumnWidth))
-                                TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                            }
-                            DataTableDivider()
-                            if (filteredBasePlayers.isEmpty()) {
-                                AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_ema_players_match), compact = true)
-                            } else {
-                                LazyColumnWithScrollbar(
-                                    state = playerListState,
-                                    modifier = Modifier.heightIn(max = 410.dp),
-                                ) {
-                                    items(filteredBasePlayers.size, key = { filteredBasePlayers[it].emaId }) { index ->
-                                        val player = filteredBasePlayers[index]
-                                        DataTableRow(
-                                            modifier = Modifier
-                                                .focusRequester(playerFocusRequesters[index])
-                                                .onFocusChanged {
-                                                    if (it.isFocused) focusedPlayerIndex = index
-                                                }
-                                                .focusProperties {
-                                                    previous = searchFocusRequester
-                                                    next = cancelFocusRequester
-                                                }
-                                                .onPreviewKeyEvent { event ->
-                                                    if (event.type != KeyEventType.KeyDown) {
-                                                        return@onPreviewKeyEvent false
-                                                    }
-                                                    when (event.key) {
-                                                        Key.Tab -> {
-                                                            if (event.isShiftPressed) {
-                                                                if (assignmentSearchQuery.isNotEmpty()) {
-                                                                    clearSearchFocusRequester.requestFocus()
-                                                                } else {
-                                                                    searchFocusRequester.requestFocus()
-                                                                }
-                                                            } else {
-                                                                cancelFocusRequester.requestFocus()
-                                                            }
-                                                            true
-                                                        }
-                                                        Key.DirectionUp -> {
-                                                            if (index == 0) {
-                                                                searchFocusRequester.requestFocus()
-                                                            } else {
-                                                                requestPlayerFocus(index - 1)
-                                                            }
-                                                            true
-                                                        }
-                                                        Key.DirectionDown -> {
-                                                            if (index == filteredBasePlayers.lastIndex) {
-                                                                cancelFocusRequester.requestFocus()
-                                                            } else {
-                                                                requestPlayerFocus(index + 1)
-                                                            }
-                                                            true
-                                                        }
-                                                        Key.DirectionLeft -> {
-                                                            searchFocusRequester.requestFocus()
-                                                            true
-                                                        }
-                                                        Key.DirectionRight -> {
-                                                            cancelFocusRequester.requestFocus()
-                                                            true
-                                                        }
-                                                        else -> false
-                                                    }
-                                                },
-                                            onClick = { assign(assignmentSlot.id, player) },
-                                        ) {
-                                            TournamentPlayerPhoto(
-                                                photoUrl = player.photoUrl,
-                                                playerName = player.displayName,
-                                                columnWidth = AssignmentPhotoColumnWidth,
-                                            )
-                                            Box(
-                                                modifier = Modifier.width(AssignmentCountryColumnWidth),
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                CountryFlag(
-                                                    code = player.country,
-                                                    contentDescription = stringResource(Res.string.country_n, player.country),
-                                                )
-                                            }
-                                            Text(
-                                                player.emaId,
-                                                modifier = Modifier.width(AssignmentEmaColumnWidth),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                            Text(player.displayName, modifier = Modifier.weight(1f))
-                                        }
-                                        DataTableDivider()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    MtsDialogButtons {
-                        val cancelInteractionSource = remember { MutableInteractionSource() }
-                        val cancelHovered by cancelInteractionSource.collectIsHoveredAsState()
-                        val cancelFocused by cancelInteractionSource.collectIsFocusedAsState()
-                        TextButton(
-                            onClick = { assignmentSlotId = null },
-                            interactionSource = cancelInteractionSource,
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.small)
-                                .background(
-                                    if (cancelHovered || cancelFocused) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                    } else {
-                                        androidx.compose.ui.graphics.Color.Transparent
-                                    },
-                                )
-                                .focusRequester(cancelFocusRequester)
-                                .focusProperties {
-                                    previous = playerFocusRequesters.getOrNull(
-                                        selectedPlayerIndex(),
-                                    ) ?: searchFocusRequester
-                                    next = searchFocusRequester
-                                }
-                                .onPreviewKeyEvent { event ->
-                                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                    when (event.key) {
-                                        Key.Tab -> {
-                                            if (event.isShiftPressed && playerFocusRequesters.isNotEmpty()) {
-                                                requestPlayerFocus(selectedPlayerIndex())
-                                            } else {
-                                                searchFocusRequester.requestFocus()
-                                            }
-                                            true
-                                        }
-                                        Key.DirectionLeft -> {
-                                            if (playerFocusRequesters.isEmpty()) {
-                                                searchFocusRequester.requestFocus()
-                                            } else {
-                                                requestPlayerFocus(selectedPlayerIndex())
-                                            }
-                                            true
-                                        }
-                                        Key.DirectionRight -> {
-                                            searchFocusRequester.requestFocus()
-                                            true
-                                        }
-                                        Key.DirectionUp -> {
-                                            if (playerFocusRequesters.isEmpty()) {
-                                                searchFocusRequester.requestFocus()
-                                            } else {
-                                                requestPlayerFocus(selectedPlayerIndex())
-                                            }
-                                            true
-                                        }
-                                        Key.DirectionDown -> {
-                                            searchFocusRequester.requestFocus()
-                                            true
-                                        }
-                                        else -> false
-                                    }
-                                },
-                        ) { Text(stringResource(Res.string.cancel)) }
-                    }
-                },
-            )
-        }
+        AssignEmaPlayerDialog(
+            slotId = assignmentSlot.id,
+            players = filteredBasePlayers,
+            searchQuery = assignmentSearchQuery,
+            onSearchQueryChange = { assignmentSearchQuery = it },
+            onAssign = { player -> assign(assignmentSlot.id, player) },
+            onDismiss = { assignmentSlotId = null },
+        )
     }
 
     val substitutionSlot = substitutionSlotId?.let { id -> players.firstOrNull { it.id == id } }
@@ -926,123 +576,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
 
     if (clearAssignmentSlot != null) {
-        val assigned = clearAssignmentSlot.assignedEmaId?.let(playersByEma::get)
-        val assignedName = assigned?.displayName
-        val clearConfirmFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
-        val clearCancelFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
-        val clearConfirmInteractionSource = remember(clearAssignmentSlot.id) { MutableInteractionSource() }
-        val clearCancelInteractionSource = remember(clearAssignmentSlot.id) { MutableInteractionSource() }
-        val clearConfirmFocused by clearConfirmInteractionSource.collectIsFocusedAsState()
-        val clearConfirmHovered by clearConfirmInteractionSource.collectIsHoveredAsState()
-        val clearCancelFocused by clearCancelInteractionSource.collectIsFocusedAsState()
-        val clearCancelHovered by clearCancelInteractionSource.collectIsHoveredAsState()
-
-        LaunchedEffect(clearAssignmentSlot.id) {
-            clearConfirmFocusRequester.requestFocus()
-        }
-
-        TrackedDialog("ClearAssignment") {
-            AlertDialog(
-                modifier = Modifier.appFocusGroup(),
-                onDismissRequest = { clearAssignmentSlotId = null },
-                title = { MtsDialogTitle(stringResource(Res.string.clear_assignment)) },
-                text = {
-                    MtsDialogText(
-                        stringResource(
-                            Res.string.clear_assignment_message,
-                            assignedName ?: stringResource(Res.string.this_assignment),
-                            clearAssignmentSlot.id,
-                        ),
-                    )
-                },
-                confirmButton = {
-                    MtsDialogButtons {
-                        Box(
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.small)
-                                .background(
-                                    if (clearConfirmFocused || clearConfirmHovered) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                    } else {
-                                        androidx.compose.ui.graphics.Color.Transparent
-                                    },
-                                )
-                                .padding(3.dp),
-                        ) {
-                            Button(
-                                enabled = savingId == null,
-                                onClick = { assign(clearAssignmentSlot.id, null) },
-                                interactionSource = clearConfirmInteractionSource,
-                                modifier = Modifier
-                                    .focusRequester(clearConfirmFocusRequester)
-                                    .focusProperties {
-                                        previous = clearCancelFocusRequester
-                                        next = clearCancelFocusRequester
-                                    }
-                                    .onPreviewKeyEvent { event ->
-                                        if (event.type != KeyEventType.KeyDown) {
-                                            return@onPreviewKeyEvent false
-                                        }
-                                        when (event.key) {
-                                            Key.Tab,
-                                            Key.DirectionLeft,
-                                            Key.DirectionRight,
-                                            Key.DirectionUp,
-                                            Key.DirectionDown,
-                                            -> {
-                                                clearCancelFocusRequester.requestFocus()
-                                                true
-                                            }
-                                            else -> false
-                                        }
-                                    },
-                            ) { Text(stringResource(Res.string.clear_assignment_2)) }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.small)
-                                .background(
-                                    if (clearCancelFocused || clearCancelHovered) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                    } else {
-                                        androidx.compose.ui.graphics.Color.Transparent
-                                    },
-                                )
-                                .padding(3.dp),
-                        ) {
-                            TextButton(
-                                onClick = { clearAssignmentSlotId = null },
-                                interactionSource = clearCancelInteractionSource,
-                                modifier = Modifier
-                                    .focusRequester(clearCancelFocusRequester)
-                                    .focusProperties {
-                                        previous = clearConfirmFocusRequester
-                                        next = clearConfirmFocusRequester
-                                    }
-                                    .onPreviewKeyEvent { event ->
-                                        if (event.type != KeyEventType.KeyDown) {
-                                            return@onPreviewKeyEvent false
-                                        }
-                                        when (event.key) {
-                                            Key.Tab,
-                                            Key.DirectionLeft,
-                                            Key.DirectionRight,
-                                            Key.DirectionUp,
-                                            Key.DirectionDown,
-                                            -> {
-                                                clearConfirmFocusRequester.requestFocus()
-                                                true
-                                            }
-                                            else -> false
-                                        }
-                                    },
-                            ) { Text(stringResource(Res.string.cancel)) }
-                        }
-                    }
-                },
-            )
-        }
+        ClearAssignmentDialog(
+            slotId = clearAssignmentSlot.id,
+            assignedName = clearAssignmentSlot.assignedEmaId?.let(playersByEma::get)?.displayName,
+            saving = savingId != null,
+            onConfirm = { assign(clearAssignmentSlot.id, null) },
+            onDismiss = { clearAssignmentSlotId = null },
+        )
     }
 
     AppScaffold(
@@ -1485,257 +1025,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 }
                 }
             }
-        }
-    }
-}
-
-private val TournamentPlayerPhotoSize = 40.dp
-private val TournamentPlayerPhotoColumnWidth = 48.dp
-private val TournamentPlayerCountryColumnWidth = 64.dp
-private val TournamentPlayerIdColumnWidth = 48.dp
-private val TournamentPlayerEmaColumnWidth = 96.dp
-
-// The widths of the name and the team when there is room. The space left over stays before the menu.
-private val TournamentPlayerNameMaxWidth = 300.dp
-private val TournamentPlayerTeamColumnWidth = 180.dp
-
-// The button that opens the tables of a player shows its text from this width of the list, and only the arrow below it.
-private val TablesToggleLabelMinWidth = 1000.dp
-private val TablesToggleLabeledWidth = 112.dp
-// Wide enough for the title of the column above the arrow.
-private val TablesToggleIconWidth = 64.dp
-
-/**
- * Inside the row of the name and the team: the same width in the header and in every row, so the columns line up.
- * Not filled: the fixed width, or less when the row is narrower. Never the width of the text.
- * On a narrow screen the name keeps two thirds of the room and the team one third.
- */
-@Composable
-private fun RowScope.TournamentPlayerNameModifier(): Modifier = Modifier.weight(2f, fill = false).width(TournamentPlayerNameMaxWidth)
-
-@Composable
-private fun RowScope.TournamentPlayerTeamModifier(): Modifier = Modifier.weight(1f, fill = false).width(TournamentPlayerTeamColumnWidth)
-
-// The photo column of a phone. The tables title below it takes the same width.
-private val TournamentPlayerCompactLeadingWidth = 44.dp
-private val RoundTableCellWidth = 36.dp
-
-/** One round and the table where a player sits in it. */
-internal data class PlayerRoundTable(val roundId: Int, val tableId: Int)
-
-/** Every player's table per round, in round order. A player has at most one table per round. */
-internal fun roundTablesByPlayer(tables: List<TournamentTable>): Map<Int, List<PlayerRoundTable>> = tables
-    .sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
-    .flatMap { table -> table.playerIds.map { playerId -> playerId to PlayerRoundTable(table.roundId, table.tableId) } }
-    .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-
-/**
- * The "Tables" title and a small two-row table: the round on top and the table below.
- * The table is as wide as the row: the cells share the free width. When the rounds do not fit, the title and the
- * table scroll sideways from one edge of the row to the other, with a scrollbar on desktop and web.
- */
-@Composable
-private fun PlayerRoundTablesToggle(
-    expanded: Boolean,
-    showLabel: Boolean,
-    onToggle: () -> Unit,
-) {
-    val label = stringResource(Res.string.tables)
-    val icon = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore
-    if (showLabel) {
-        TextButton(onClick = onToggle, modifier = Modifier.testTag(PlayerRoundTablesToggleTag)) {
-            Text(label, maxLines = 1)
-            Spacer(Modifier.width(4.dp))
-            Icon(icon, contentDescription = null)
-        }
-    } else {
-        IconButton(onClick = onToggle, modifier = Modifier.testTag(PlayerRoundTablesToggleTag)) {
-            Icon(icon, contentDescription = label)
-        }
-    }
-}
-
-@Composable
-private fun PlayerRoundTablesStrip(
-    roundTables: List<PlayerRoundTable>,
-    titleWidth: Dp,
-    modifier: Modifier = Modifier,
-) {
-    val scrollState = rememberScrollState()
-    val shape = MaterialTheme.shapes.small
-    val borderColor = MaterialTheme.colorScheme.outlineVariant
-    val density = LocalDensity.current
-    BoxWithConstraints(modifier.fillMaxWidth().testTag(PlayerRoundTablesTag)) {
-        // Whole pixels, so the cells add up to the row exactly and nothing scrolls by a pixel.
-        val cellWidths = with(density) {
-            val divider = 1.dp.roundToPx()
-            val free = maxWidth.roundToPx() -
-                (RoundTableStripPadding * 2 + titleWidth + RoundTableStripGap + RoundTableLabelWidth).roundToPx() -
-                // The dividers between cells and the 1 dp inside the border on each side.
-                divider * (roundTables.size + 2)
-            val minCell = RoundTableCellWidth.roundToPx()
-            val even = free / roundTables.size
-            if (even < minCell) {
-                List(roundTables.size) { minCell.toDp() }
-            } else {
-                // The pixels left over go to the first cells, one each.
-                val extra = free - even * roundTables.size
-                List(roundTables.size) { index -> (even + if (index < extra) 1 else 0).toDp() }
-            }
-        }
-        Column(Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .horizontalScrollWithIndicators(scrollState)
-                    .padding(horizontal = RoundTableStripPadding),
-                horizontalArrangement = Arrangement.spacedBy(RoundTableStripGap),
-                verticalAlignment = Alignment.Top,
-            ) {
-                // The title sits under the ID (desktop) or the photo (phone).
-                Box(
-                    modifier = Modifier.width(titleWidth).height(RoundTableCellHeight * 2),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.tables),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        softWrap = false,
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .clip(shape)
-                        .border(1.dp, borderColor, shape)
-                        .padding(1.dp),
-                ) {
-                    // The labels stay as the first column so each row says what it holds.
-                    RoundTableCell(
-                        top = stringResource(Res.string.round),
-                        bottom = stringResource(Res.string.table),
-                        width = RoundTableLabelWidth,
-                        isLabel = true,
-                    )
-                    roundTables.forEachIndexed { index, roundTable ->
-                        Box(Modifier.width(1.dp).height(RoundTableCellHeight * 2).background(borderColor))
-                        RoundTableCell(
-                            top = roundTable.roundId.toString(),
-                            bottom = roundTable.tableId.toString(),
-                            width = cellWidths[index],
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Test tag of each player's round and table strip. */
-internal const val PlayerRoundTablesTag = "playerRoundTables"
-internal const val PlayerRoundTablesToggleTag = "playerRoundTablesToggle"
-private val RoundTableStripPadding = 12.dp
-private val RoundTableStripGap = 12.dp
-private val RoundTableLabelWidth = 60.dp
-private val RoundTableCellHeight = 28.dp
-
-@Composable
-private fun RoundTableCell(
-    top: String,
-    bottom: String,
-    width: Dp,
-    isLabel: Boolean = false,
-) {
-    val colors = MaterialTheme.colorScheme
-    Column(
-        modifier = Modifier.width(width),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(RoundTableCellHeight)
-                .background(colors.surfaceVariant)
-                .padding(horizontal = MtsTheme.spacing.xs),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = top,
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(RoundTableCellHeight)
-                .padding(horizontal = MtsTheme.spacing.xs),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = bottom,
-                style = if (isLabel) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
-                color = if (isLabel) colors.onSurfaceVariant else colors.onSurface,
-                fontWeight = if (isLabel) null else FontWeight.Medium,
-                maxLines = 1,
-            )
-        }
-    }
-}
-private val TournamentPlayerActionColumnWidth = 112.dp
-private val AssignmentPhotoColumnWidth = 48.dp
-private val AssignmentCountryColumnWidth = 64.dp
-private val AssignmentEmaColumnWidth = 96.dp
-
-@Composable
-private fun TournamentPlayerHeader(
-    text: String,
-    modifier: Modifier,
-    textAlign: TextAlign = TextAlign.Center,
-) {
-    Text(
-        text = text,
-        modifier = modifier,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
-    )
-}
-
-@Composable
-private fun TournamentPlayerPhoto(
-    photoUrl: String?,
-    playerName: String,
-    columnWidth: Dp,
-) {
-    Box(
-        modifier = Modifier.width(columnWidth).height(TournamentPlayerPhotoSize),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (photoUrl.isNullOrBlank()) {
-            Box(
-                modifier = Modifier
-                    .size(TournamentPlayerPhotoSize)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = stringResource(Res.string.no_player_photo),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(TournamentPlayerPhotoSize * 0.62f),
-                )
-            }
-        } else {
-            AsyncImage(
-                model = photoUrl,
-                contentDescription = stringResource(Res.string.photo_of, playerName),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(TournamentPlayerPhotoSize),
-            )
         }
     }
 }
