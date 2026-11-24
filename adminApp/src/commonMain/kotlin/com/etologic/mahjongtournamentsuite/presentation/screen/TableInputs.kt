@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
@@ -17,7 +20,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -68,19 +70,22 @@ internal fun LabeledSwitch(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = label,
-                // A long name wraps, so the switch and the info icon stay in the row.
-                modifier = Modifier.weight(1f, fill = false),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Switch(
+            MtsSwitchRow(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = onCheckedChange,
+                gap = 4.dp,
                 interactionSource = interactionSource,
-            )
+                modifier = Modifier.weight(1f, fill = false),
+            ) {
+                Text(
+                    text = label,
+                    // A long name wraps, so the switch and the info icon stay in the row.
+                    modifier = Modifier.weight(1f, fill = false),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             InfoTooltipIcon(
                 description = description,
                 contentDescription = stringResource(Res.string.show_info_for, label),
@@ -150,7 +155,14 @@ internal fun HandToggleControl(
                 },
                 textAlign = TextAlign.Center,
                 maxLines = 2,
-                modifier = Modifier.fillMaxWidth(),
+                // A tap on the name checks the box too. Only the pointer: the keyboard and TalkBack use the box.
+                modifier = Modifier.fillMaxWidth().then(
+                    if (enabled && onCheckedChange != null) {
+                        Modifier.pointerInput(checked) { detectTapGestures { onCheckedChange(!checked) } }
+                    } else {
+                        Modifier
+                    },
+                ),
             )
         }
         Checkbox(

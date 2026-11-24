@@ -209,6 +209,12 @@ Apply these rules to every new or changed dialog:
 - Never import a raw Material button. `ButtonConventionTest` fails when a source file does.
 - Menu items, chips that toggle a filter, checkboxes and switches have no threshold on purpose. They must stay fast to use.
 
+## Checkboxes, Switches And Radio Buttons
+
+- A tap on the text of a checkbox, switch or radio button changes it, like a tap on the box.
+- Use `MtsCheckboxRow`, `MtsSwitchRow` and `MtsRadioRow` (`:designsystem`): the whole line is one control.
+- Never pass a click to a Material `Checkbox`, `Switch` or `RadioButton` beside a text. `LabeledControlsTest` fails when a source file does.
+
 ## Tournament Player Presentation
 
 - Treat tournament player records as schedule slots.

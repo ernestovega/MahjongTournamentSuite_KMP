@@ -7,7 +7,6 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -98,7 +97,7 @@ class CreateTournamentDialogUiTest {
     @Test
     fun theDrawButtonHidesWhenRegistrationsAreOpen() = runComposeUiTest {
         showForm()
-        val registrationSwitch = onNode(isToggleable() and hasAnySibling(hasText("Open registrations")))
+        val registrationSwitch = onNode(isToggleable() and hasText("Open registrations"))
 
         onNodeWithTag("drawExplanationButton").assertExists()
 
@@ -180,7 +179,7 @@ class CreateTournamentDialogUiTest {
         )
 
         // With registrations open there is no draw now.
-        onNode(isToggleable() and hasAnySibling(hasText("Open registrations"))).performClick()
+        onNode(isToggleable() and hasText("Open registrations")).performClick()
         waitForIdle()
         onNodeWithTag("createRoundsNotice").assertDoesNotExist()
     }

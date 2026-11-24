@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -65,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -107,6 +109,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWit
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -518,10 +521,7 @@ fun RegistrationsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         MtsDialogText(stringResource(Res.string.reg_confirm_remove_message, registration.name))
                         if (registration.email.isNotBlank()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(checked = notify, onCheckedChange = { notify = it })
-                                Text(stringResource(Res.string.reg_notify))
-                            }
+                            MtsCheckboxRow(text = stringResource(Res.string.reg_notify), checked = notify, onCheckedChange = { notify = it })
                         }
                     }
                 },
@@ -1163,12 +1163,21 @@ private fun FoodIcon(text: String, size: Dp = 22.dp) {
 
 @Composable
 private fun PaidBox(registration: AdminRegistration, enabled: Boolean, onPaidChange: (Boolean) -> Unit, compact: Boolean) {
+    // The box and its "Paid" under it are one control: a tap on the word checks it too.
+    val paidToggle = if (registration.status != RegistrationStatus.PENDING) {
+        Modifier
+            .clip(MaterialTheme.shapes.small)
+            .toggleable(value = registration.paid, enabled = enabled, role = Role.Checkbox, onValueChange = onPaidChange)
+            .testTag("registration-paid-${registration.emaId}")
+    } else {
+        Modifier
+    }
     Column(
-        Modifier.width(if (compact) 48.dp else PaidColumnWidth),
+        Modifier.width(if (compact) 48.dp else PaidColumnWidth).then(paidToggle),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (registration.status != RegistrationStatus.PENDING) {
-            Checkbox(checked = registration.paid, onCheckedChange = onPaidChange, enabled = enabled, modifier = Modifier.testTag("registration-paid-${registration.emaId}"))
+            Checkbox(checked = registration.paid, onCheckedChange = null, enabled = enabled, modifier = Modifier.padding(MtsTheme.spacing.md))
             if (compact) Text(stringResource(Res.string.reg_paid), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -1308,15 +1317,9 @@ private fun RegistrationEditDialog(
                         label = { Text(stringResource(Res.string.reg_food)) },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = paid, onCheckedChange = { paid = it })
-                        Text(stringResource(Res.string.reg_paid))
-                    }
+                    MtsCheckboxRow(text = stringResource(Res.string.reg_paid), checked = paid, onCheckedChange = { paid = it })
                     if (registration == null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = notify, onCheckedChange = { notify = it })
-                            Text(stringResource(Res.string.reg_notify))
-                        }
+                        MtsCheckboxRow(text = stringResource(Res.string.reg_notify), checked = notify, onCheckedChange = { notify = it })
                     }
                 }
             },

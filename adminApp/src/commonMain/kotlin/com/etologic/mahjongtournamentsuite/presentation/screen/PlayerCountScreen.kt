@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -26,7 +25,6 @@ import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -58,7 +56,6 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWit
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -728,16 +726,15 @@ private fun Modifier.stepBorder(enabled: Boolean): Modifier {
 /** A whole line that toggles, with its checkbox. */
 @Composable
 private fun ChoiceRow(title: String, detail: String?, checked: Boolean, enabled: Boolean, tag: String, onToggle: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = { onToggle() })
-            .padding(vertical = 4.dp)
-            .testTag(tag),
-        verticalAlignment = Alignment.CenterVertically,
+    MtsCheckboxRow(
+        checked = checked,
+        onCheckedChange = { onToggle() },
+        modifier = Modifier.fillMaxWidth().testTag(tag),
+        enabled = enabled,
+        gap = 12.dp,
+        contentPadding = PaddingValues(vertical = 4.dp),
+        controlPadding = 0.dp,
     ) {
-        Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
-        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             val color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             Text(title, style = MaterialTheme.typography.bodyLarge, color = color)

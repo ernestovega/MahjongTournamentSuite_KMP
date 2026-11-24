@@ -57,6 +57,7 @@ In `designsystem/.../presentation/components`:
 | `MtsTintedChip` | A pill tinted with an accent, with an icon and a text, like the way of winning a hand. |
 | `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
 | `Modifier.scrollIndicators`, `verticalScrollWithIndicators`, `horizontalScrollWithIndicators` | The fading edges and the always visible scrollbar of every list (see below). |
+| `MtsCheckboxRow`, `MtsSwitchRow`, `MtsRadioRow` | A checkbox, switch or radio button with its text, where the whole line is the control (see the rules). |
 
 `MtsCatalog` (same folder as the tokens) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
 **DEV > Design system** in the top bar of the tournament list (`DesignSystemRoute`).
@@ -71,6 +72,12 @@ In `designsystem/.../presentation/components`:
 - Every list, column or row that scrolls (lazy or not, vertical or horizontal, also a strip of chips) has its scroll
   indicators: `Modifier.scrollIndicators(state)` before the scroll, or `verticalScrollWithIndicators()` /
   `horizontalScrollWithIndicators()` instead of `verticalScroll()` / `horizontalScroll()`.
+- A checkbox, switch or radio button changes also with a tap on its text (Ernesto, 2026-11-24): use `MtsCheckboxRow`,
+  `MtsSwitchRow` or `MtsRadioRow`, where the whole line is one control (one node for the keyboard and TalkBack). An
+  info icon goes outside the line, beside it. A Material `Checkbox`, `Switch` or `RadioButton` is allowed only without
+  its own click (`onCheckedChange = null` / `onClick = null`) inside a `toggleable` or `selectable` parent.
+  `LabeledControlsTest` (ui, jvmTest) fails otherwise; its short allowed list holds the boxes that select a row of a
+  list whose tap opens the row, and the boxes of the hand table.
 
 ### Scroll indicators (fading edges and scrollbar)
 

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -53,7 +52,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -93,6 +91,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -1473,27 +1472,17 @@ private fun TournamentSelectionRow(
         modifier = Modifier.fillMaxWidth(),
         interactionSource = interactionSource,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .activateOnEnter(enabled, onToggle)
-                .toggleable(
-                    value = selected,
-                    enabled = enabled,
-                    role = Role.Checkbox,
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onValueChange = { onToggle() },
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        MtsCheckboxRow(
+            checked = selected,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.fillMaxWidth().activateOnEnter(enabled, onToggle),
+            enabled = enabled,
+            gap = 8.dp,
+            interactionSource = interactionSource,
+            indication = null,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            controlPadding = 0.dp,
         ) {
-            Checkbox(
-                checked = selected,
-                onCheckedChange = null,
-                enabled = enabled,
-            )
             Text(
                 text = tournament.name,
                 modifier = Modifier.weight(1f),

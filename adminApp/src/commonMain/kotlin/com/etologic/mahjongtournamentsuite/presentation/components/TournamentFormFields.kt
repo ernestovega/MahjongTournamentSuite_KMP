@@ -39,7 +39,6 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerState
@@ -888,17 +887,18 @@ fun TournamentOptionSwitch(
         modifier = Modifier.fillMaxWidth(),
         interactionSource = interactionSource,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        ) {
-            Switch(
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            MtsSwitchRow(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 enabled = enabled,
+                switchFirst = true,
+                gap = 12.dp,
                 interactionSource = interactionSource,
-            )
-            Text(text = label, modifier = Modifier.weight(1f, fill = false))
+                modifier = Modifier.weight(1f, fill = false),
+            ) {
+                Text(text = label, modifier = Modifier.weight(1f, fill = false).padding(end = 12.dp))
+            }
             InfoTooltipIcon(
                 description = description,
                 contentDescription = stringResource(Res.string.show_info_for, label),
