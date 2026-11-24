@@ -13,7 +13,8 @@ import kotlin.test.fail
  * - every request of the API is in [policies], and every entry of [policies] is still a request;
  * - a [Cached] read is called inside the cache: `cachedRequest`, `persistedRequest`, `getOrLoad`, the table store…;
  * - a [Write] is called in a function that marks the cached data old (`markStale`), or in the function it names;
- * - every revision of the server manifest (firebase dataVersionsService.ts) is read by the app.
+ * - every revision of the server manifest (firebase dataVersionsService.ts) is read by the app;
+ * - the public CDN keeps the manifest and the tables of a tournament in play no longer than the fastest check.
  *
  * It runs with the other tests of the module, every night in CI. Run it alone with
  * `./gradlew :data:jvmTest --tests '*CacheCoverageTest*'`.
@@ -254,5 +255,17 @@ class CacheCoverageTest {
         val repository = sources.first { it.first == "DefaultTournamentRepository.kt" }.second
         val unread = resources.filterNot { repository.contains("\"$it\"") }
         assertTrue(unread.isEmpty(), "The manifest has revisions that the app never reads, so their changes never reach the cache: $unread")
+    }
+
+    @Test
+    fun theCdnKeepsTheHandsNoLongerThanTheFastestCheck() {
+        val routes = File("../firebase/functions/src/api/routes/public.routes.ts").readText()
+        val cdnSeconds = Regex("""\bplaying: (\d+),""").find(routes)?.groupValues?.get(1)?.toInt() ?: fail("PUBLIC_CACHE_SECONDS.playing not found")
+        val schedule = File("../playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PollSchedule.kt").readText()
+        val fastest = Regex("""OWN_TABLE_IN_PLAY: Duration = (\d+)\.seconds""").find(schedule)?.groupValues?.get(1)?.toInt() ?: fail("OWN_TABLE_IN_PLAY not found")
+        assertTrue(
+            cdnSeconds <= fastest,
+            "The CDN keeps the manifest and the tables $cdnSeconds s, but the own table checks every $fastest s: most checks would get the same answer.",
+        )
     }
 }
