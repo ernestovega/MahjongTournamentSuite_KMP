@@ -45,8 +45,8 @@ export function clientCalls(text: string): ClientCall[] {
   const patterns: Array<[RegExp, (match: RegExpExecArray) => [string, string]]> = [
     // get(path = "/x"), post<A, B>(path = "/x", ...), delete(path = "/x")
     [/\b(get|post|put|delete|patch)(?:<[^>(]*>)?\(\s*path\s*=\s*"([^"]+)"/g, (m) => [m[1], m[2]]],
-    // httpClient.get(url("/x")) and httpClient.get(readUrl("/x", ...))
-    [/httpClient\.(get|post|put|delete|patch)\(\s*(?:url|readUrl)\(\s*"([^"]+)"/g, (m) => [m[1], m[2]]],
+    // httpClient.get(url("/x")), httpClient.get(readUrl("/x", ...)) and httpClient.post(longUrl("/x"))
+    [/httpClient\.(get|post|put|delete|patch)\(\s*(?:url|readUrl|longUrl)\(\s*"([^"]+)"/g, (m) => [m[1], m[2]]],
     // registrationCall(HttpMethod.Post, "/registrations/...", ...)
     [/registrationCall(?:<[^>(]*>)?\(\s*HttpMethod\.(\w+),\s*"([^"]+)"/g, (m) => [m[1], m[2]]],
   ];
