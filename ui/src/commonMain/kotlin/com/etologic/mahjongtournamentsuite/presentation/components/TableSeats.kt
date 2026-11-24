@@ -45,9 +45,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
@@ -502,19 +501,41 @@ private fun SeatCard(
 }
 
 /**
- * The table points of a seat, big and in the color of its place. Gold and silver are light on the white card, so they
- * get a thin darker outline of their own color (Ernesto, 2026-11-24).
+ * The table points of a seat, big and white on a patch of the color of its place whose edge fades out (Ernesto,
+ * 2026-11-25): gold and silver text was too light on the white card.
  */
 @Composable
 private fun SeatPoints(text: String, place: Int?) {
     val color = place?.let { positionColor(it) } ?: MaterialTheme.colorScheme.onSurface
     val style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-    Box {
-        if (place == 1 || place == 2) {
-            Text(text, style = style.copy(drawStyle = Stroke(width = 2f, join = StrokeJoin.Round)), color = lerp(color, Color.Black, 0.3f))
-        }
+    if (place == null) {
         Text(text, style = style, color = color)
+        return
     }
+    val feather = 10.dp
+    Text(
+        text,
+        Modifier
+            .drawBehind {
+                // A patch of the color of the place whose edge fades out: rings that grow and get lighter.
+                val f = feather.toPx()
+                val steps = 12
+                for (i in steps downTo 0) {
+                    val grow = f * i / steps
+                    val alpha = 1f - i.toFloat() / (steps + 1)
+                    drawRoundRect(
+                        color = color.copy(alpha = alpha / (steps / 3f)),
+                        topLeft = androidx.compose.ui.geometry.Offset(-grow, -grow * 0.6f),
+                        size = androidx.compose.ui.geometry.Size(size.width + 2 * grow, size.height + 1.2f * grow),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2 + grow),
+                    )
+                }
+                drawRoundRect(color = color, cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2))
+            }
+            .padding(horizontal = 10.dp),
+        style = style,
+        color = Color.White,
+    )
 }
 
 /**
