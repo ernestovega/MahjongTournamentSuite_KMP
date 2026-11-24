@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -255,14 +256,35 @@ fun PlayerStatisticsPanel(
     }
 }
 
-/** The place, the points and the score of a player in one tournament. */
+/**
+ * The place, the points and the score of a player, or of a team, in one tournament. With [places], the place at the
+ * end of each round out of [of], a small chart under the numbers shows how the place went round by round.
+ */
 @Composable
-fun PlayerStandingCard(position: Int, points: Double, score: Int, modifier: Modifier = Modifier) {
+fun PlayerStandingCard(
+    position: Int,
+    points: Double,
+    score: Int,
+    modifier: Modifier = Modifier,
+    places: Map<Int, Int>? = null,
+    of: Int = 0,
+) {
     StatCard(stringResource(Res.string.stats_standing), modifier) {
         StatGrid(Modifier.fillMaxWidth()) {
             BigNumber(stringResource(Res.string.stat_rank), position.toString())
             BigNumber(stringResource(Res.string.column_points), formatPoints(points))
             BigNumber(stringResource(Res.string.column_score), score.toString())
+        }
+        // Two places or more make a line. The rounds go from the first one to the last one with a place.
+        if (places != null && places.size >= 2 && of > 1) {
+            val last = places.keys.max()
+            // Not wider than the numbers above it, so the line keeps its shape on a computer.
+            PlaceChart(
+                (1..last).map { places[it] },
+                of,
+                Modifier.align(Alignment.CenterHorizontally).widthIn(max = 560.dp).fillMaxWidth().padding(top = MtsTheme.spacing.sm),
+                roundLabels = true,
+            )
         }
     }
 }

@@ -168,7 +168,7 @@ fun PlayerSlotStatisticsTab(
         top?.invoke()
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
-        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }
+        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = playerCount) } }
         if (stats == null) {
             standing?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
