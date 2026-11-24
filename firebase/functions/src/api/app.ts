@@ -2,6 +2,7 @@ import express from "express";
 
 import { backendVersion } from "../backendVersion";
 import { versionsPage } from "../services/versionsPage";
+import { clientAddress } from "./clientAddress";
 import { gzipJson } from "./middleware/gzipJson";
 import { appCheck } from "./middleware/appCheck";
 import { errorHandler } from "./middleware/errorHandler";
@@ -55,8 +56,8 @@ export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
 export function buildApp(): express.Express {
   const app = express();
 
-  // The API runs behind Firebase Hosting and Google front ends. Trust them to get the client address.
-  app.set("trust proxy", true);
+  // The rate limits read the client address with clientAddress(): Express would trust the first entry of
+  // X-Forwarded-For, which the client writes.
   app.disable("x-powered-by");
   // Answers hold personal data. A browser or a proxy must not keep them, unless a route says otherwise.
   app.use((_req, res, next) => {
@@ -99,12 +100,13 @@ export function buildApp(): express.Express {
     }
   });
 
-  // Staging only (MTS_FORWARDED_PROBE=1, set by .github/workflows/staging.yml): the headers that carry the client
-  // address, so the deploy can check how a request reaches the API through Hosting and directly.
+  // Staging only (MTS_FORWARDED_PROBE=1, set by .github/workflows/staging.yml): the address that the rate limits see,
+  // and the headers it comes from. Each deploy of staging checks it through Hosting and directly, with forged headers.
   if (process.env.MTS_FORWARDED_PROBE === "1") {
     app.get("/debug/forwarded", (req, res) => {
       res.status(200).json({
         ip: req.ip,
+        clientAddress: clientAddress(req),
         url: req.originalUrl,
         xff: req.header("x-forwarded-for") ?? null,
         headers: Object.fromEntries(Object.entries(req.headers).filter(([k]) => k !== "authorization" && k !== "cookie")),
@@ -120,7 +122,7 @@ export function buildApp(): express.Express {
   const writeLimit = rateLimit({
     windowMs: 60_000,
     max: WRITES_PER_MINUTE,
-    key: (req) => `${req.ip ?? "unknown"}|${(req.header("authorization") ?? "").slice(-32)}`,
+    key: (req) => `${clientAddress(req)}|${(req.header("authorization") ?? "").slice(-32)}`,
   });
   const addressWriteLimit = rateLimit({ windowMs: 60_000, max: WRITES_PER_ADDRESS_PER_MINUTE });
   app.use((req, res, next) => (READ_METHODS.has(req.method) ? next() : addressWriteLimit(req, res, next)));
