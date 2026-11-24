@@ -42,6 +42,10 @@ In `ui`, `screenLayout` gives the layout tokens of the screens of the app: the c
 compact layout (`LocalCompactLayout`, only the admin app), else the wide ones. `ScreenColumn`, `SectionCard` and the
 admin screens read it, so a screen does not write `if (compact) 12.dp else 16.dp`.
 
+In light mode the page is light grey (`background` and `surface`, #E9EBEE) and the cards are white
+(`surfaceContainerHigh` and `surfaceContainerHighest`), so a card stands out without a border (Ernesto, 24-nov-2026).
+The dark mode keeps its colors.
+
 A screen whose content is a single list (Players, Teams, Tournaments, Users, Organizations, App errors) does not
 wrap it in a big card: it uses `SectionCard(container = false)`, which keeps the title, subtitle and actions but
 draws them straight on the screen background. Cards stay for screens with several sections or panels.

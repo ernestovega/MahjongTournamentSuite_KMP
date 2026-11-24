@@ -27,7 +27,7 @@ Everything is one Express application inside one Cloud Function (`firebase/funct
 | `/public` | Everything anyone sees, without an account, with CDN cache | `public.routes.ts` |
 | `/player` | The player enters hands, seats and penalties at its table | `player.routes.ts` |
 | `/registrations` | A person registers for a tournament, with or without an account | `registrations.routes.ts` |
-| `/tournaments` | Management of tournaments: players, teams, tables, clock, registrations, draw, exports, statistics | `tournaments.routes.ts` |
+| `/tournaments` | Management of tournaments: players, teams, tables, clock, registrations, draw, exports, statistics | `tournaments.routes.ts` (tournament list, create, settings) and its parts `tournaments.statistics`, `.documents`, `.people`, `.tables`, `.registrations` `.routes.ts` |
 | `/ema-player-registry` | The shared EMA registry | `players.routes.ts` |
 | `/admin` | Accounts, roles, organizations, activity, errors | `admin.routes.ts` |
 | `/sync`, `/config`, `/countries`, `/venues`, `/support`, `/telemetry` | Utilities | one file each |
