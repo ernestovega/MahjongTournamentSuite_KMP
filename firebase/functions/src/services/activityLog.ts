@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
+import { historyExpireAt } from "./historyRetention";
 
 /**
  * The activity log keeps one record for each change that is not a table save: tournament settings, players, teams,
@@ -79,7 +80,11 @@ export function buildActivityEntry(params: {
 /** Writes one record. A failed write is reported and never fails the change that was already made. */
 export async function recordActivity(params: Parameters<typeof buildActivityEntry>[0]): Promise<void> {
   try {
-    await db.collection(ACTIVITY_COLLECTION).add({ ...buildActivityEntry(params), at: FieldValue.serverTimestamp() });
+    await db.collection(ACTIVITY_COLLECTION).add({
+      ...buildActivityEntry(params),
+      at: FieldValue.serverTimestamp(),
+      expireAt: historyExpireAt(),
+    });
   } catch (error) {
     console.error("Writing the activity log failed", params.action, error);
   }

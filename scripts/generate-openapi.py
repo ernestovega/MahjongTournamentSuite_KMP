@@ -308,7 +308,7 @@ ROUTES = [
     ("put", "/tournaments/{tournamentId}/members/{uid}", "Tournament editors", "admin", "Assign an editor", "", [T, UID],
      "UpsertMemberRequest", OK),
     ("delete", "/tournaments/{tournamentId}/members/{uid}", "Tournament editors", "admin", "Remove an editor", "", [T, UID], None, OK),
-    ("get", "/tournaments/{tournamentId}/users/lookup", "Tournament editors", "tEditor", "Find an account by email", "",
+    ("get", "/tournaments/{tournamentId}/users/lookup", "Tournament editors", "tEditor", "Find an account by email", "Permission `tournament.members` (to add a member).",
      [T, q("email", "Email of the account.", required=True)], None, "UserProfile"),
 
     # ---- Rounds & tables

@@ -5,7 +5,8 @@ import { Timestamp } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
-import { ACTIVITY_COLLECTION } from "../services/activityLog";
+import { ACTIVITY_COLLECTION, recordActivity } from "../services/activityLog";
+import { HISTORY_DAYS } from "../services/historyRetention";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 
 type Entry = {
@@ -260,6 +261,16 @@ describe("activity feed API", () => {
       const response = await server.request("GET", `/admin/activity?${query}`, { token: admin.token });
       assert.equal(response.status, 400, query);
     }
+  });
+
+  it("gives every new record an expiry date two years ahead, for the TTL of Firestore", async () => {
+    const before = Date.now();
+    await recordActivity({ action: "player.assign", tournamentId: T1, actor: { uid: "u1", name: "One" } });
+    const docs = (await db.collection(ACTIVITY_COLLECTION).get()).docs;
+    assert.equal(docs.length, 1);
+    const expireAt = (docs[0].get("expireAt") as Timestamp).toMillis();
+    const days = (expireAt - before) / (24 * 60 * 60 * 1000);
+    assert.ok(days >= HISTORY_DAYS && days < HISTORY_DAYS + 1, `expires in ${days} days`);
   });
 
   it("is only for administrators", async () => {
