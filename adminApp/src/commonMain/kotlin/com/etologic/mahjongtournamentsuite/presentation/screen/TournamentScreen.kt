@@ -39,7 +39,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
-import com.etologic.mahjongtournamentsuite.presentation.TableQrRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -170,6 +169,7 @@ fun TournamentScreen(
     // The round that the Round control dialog opens at, or null while it is closed.
     var roundControlRound by remember { mutableStateOf<Int?>(null) }
     var editingTournament by remember { mutableStateOf(false) }
+    var tablesIdsOpen by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     var handsNotDoneSave by remember { mutableStateOf<HandsNotDoneSave?>(null) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
@@ -385,7 +385,7 @@ fun TournamentScreen(
                 },
             )?.takeIf { it in tableEditors } ?: selectedTableId
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
-            RoundEditorAction.TableQr -> navController.navigate(TableQrRoute(tournamentId))
+            RoundEditorAction.TableQr -> tablesIdsOpen = true
             RoundEditorAction.Teams -> navController.navigate(TeamsRoute(tournamentId))
             RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
             RoundEditorAction.Statistics -> {
@@ -485,6 +485,9 @@ fun TournamentScreen(
         TableUpdatesDialog(notices = sync.updateNotices, onDismiss = sync::dismissNotices)
     }
     errorMessage?.let { message -> AppErrorDialog(message) { errorMessage = null } }
+    if (tablesIdsOpen && tournament != null) {
+        TablesIdsDialog(tournament = tournament, onDismiss = { tablesIdsOpen = false })
+    }
     if (editingTournament) {
         TournamentEditDialog(
             tournamentId = tournamentId,
@@ -531,7 +534,7 @@ fun TournamentScreen(
                 text = stringResource(Res.string.table_qr_show),
                 icon = Icons.Default.QrCode2,
                 onClick = {
-                    tournament?.let { openTableQrWindow(it.name, it.myTableQrLink(PublicSite.url), it.associationLogoUrl) }
+                    tournament?.let { openTableQrWindow(it.name, it.myTableQrLink(PublicSite.url), it.associationLogoUrl, it.mainOrganizerName(), it.primaryColor) }
                 },
                 enabled = tournament != null,
             )

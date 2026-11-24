@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,16 +15,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Print
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -49,29 +46,28 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
 import com.etologic.mahjongtournamentsuite.domain.model.physicalTableCount
-import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
-import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
-import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_card_size
-import mahjongtournamentsuite.adminapp.generated.resources.table_qr_download
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_hint
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_no_tables
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_info
-import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_title
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_save
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_top_bar
 import org.jetbrains.compose.resources.stringResource
@@ -93,28 +89,27 @@ private fun sheetLayout(perSheet: Int): SheetLayout = when (perSheet) {
 }
 
 /**
- * The QR code of a tournament (docs/table-qr.md). One code for all the tables: it opens the tables of the player in
- * the player app, with their table in play, or the next one, open. This screen ("Tables IDs", in the "More" menu of the
- * tournament) downloads a PDF with a card for each table (its number in big and the code). The "QR" button of the top
- * bar of the tournament opens the code in a window of its own to project it.
+ * The dialog "Tables IDs" (docs/table-qr.md), in the "More" menu of the tournament, like the dialog of the ID cards. It
+ * downloads a PDF with a card for each table: its number in big and the QR code of the tournament, which opens the
+ * tables of the player in the player app. The "QR" button of the top bar opens the code in a window of its own.
  */
 @Composable
-fun TableQrScreen(
-    tournamentId: String,
-    onBack: () -> Unit,
+fun TablesIdsDialog(
+    tournament: Tournament,
+    onDismiss: () -> Unit,
     /** The web of the players. Tests and screenshots pass a fixed one. */
     site: String = PublicSite.url,
 ) {
-    val store = koinInject<AppMemoryStore>()
     val presenter = koinInject<PlayersPresenter>()
-    LoadMissingSession()
-    val tournaments by store.tournaments.collectAsState()
-    val tournament = tournaments.firstOrNull { it.id == tournamentId }
-    TableQrContent(
+    val download = rememberTableQrDownload(presenter)
+    TablesIdsDialogContent(
         tournament = tournament,
         site = site,
-        onBack = onBack,
-        onDownload = rememberTableQrDownload(presenter),
+        onDownload = { perSheet ->
+            onDismiss()
+            download(tournament, perSheet)
+        },
+        onDismiss = onDismiss,
     )
 }
 
@@ -142,82 +137,83 @@ private suspend fun exportTableQr(
 }
 
 @Composable
-internal fun TableQrContent(
-    tournament: Tournament?,
+internal fun TablesIdsDialogContent(
+    tournament: Tournament,
     site: String,
-    onBack: () -> Unit,
-    onDownload: (Tournament, perSheet: Int) -> Unit,
+    onDownload: (perSheet: Int) -> Unit,
+    onDismiss: () -> Unit,
     /** The cards per sheet chosen at first. The screenshots use it. */
     initialPerSheet: Int = 4,
 ) {
-    val tableCount = tournament?.takeUnless { it.drawPending }?.physicalTableCount ?: 0
-    var perSheet by rememberSaveable(tournament?.id) { mutableIntStateOf(initialPerSheet) }
+    val tableCount = tournament.takeUnless { it.drawPending }?.physicalTableCount ?: 0
+    var perSheet by rememberSaveable(tournament.id) { mutableIntStateOf(initialPerSheet) }
     val compact = LocalCompactLayout.current
-    AppScaffold(
-        title = stringResource(Res.string.table_qr_top_bar),
-        subtitle = tournament?.name,
-        isLoading = tournament == null,
-        onBack = onBack,
-    ) {
-        if (tournament == null) return@AppScaffold
-        val link = tournament.myTableQrLink(site)
-        ScreenColumn(
-            scrollable = true,
-            maxWidth = 640.dp,
-            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            SectionCard(title = stringResource(Res.string.table_qr_print_title)) {
-                if (tableCount == 0) {
-                    Text(stringResource(Res.string.table_qr_no_tables), style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    Text(stringResource(Res.string.table_qr_print_info, tableCount), style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        stringResource(Res.string.table_qr_per_sheet),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("table_qr_per_sheet")) {
-                        CARDS_PER_SHEET.forEachIndexed { index, option ->
-                            SegmentedButton(
-                                selected = perSheet == option,
-                                onClick = { perSheet = option },
-                                shape = SegmentedButtonDefaults.itemShape(index, CARDS_PER_SHEET.size),
-                                label = { Text(option.toString()) },
-                            )
+    val link = tournament.myTableQrLink(site)
+    TrackedDialog("CreateTablesIds") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.table_qr_top_bar)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScrollWithIndicators(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
+                ) {
+                    if (tableCount == 0) {
+                        Text(stringResource(Res.string.table_qr_no_tables), style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        Text(stringResource(Res.string.table_qr_print_info, tableCount), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            stringResource(Res.string.table_qr_per_sheet),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("table_qr_per_sheet")) {
+                            CARDS_PER_SHEET.forEachIndexed { index, option ->
+                                SegmentedButton(
+                                    selected = perSheet == option,
+                                    onClick = { perSheet = option },
+                                    shape = SegmentedButtonDefaults.itemShape(index, CARDS_PER_SHEET.size),
+                                    icon = {},
+                                    label = { Text(option.toString()) },
+                                )
+                            }
                         }
-                    }
-                    val layout = sheetLayout(perSheet)
-                    Text(
-                        stringResource(Res.string.table_qr_card_size, layout.cardSize),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.testTag("table_qr_card_size"),
-                    )
-                    SheetPreview(
-                        tournament = tournament,
-                        link = link,
-                        layout = layout,
-                        tableCount = tableCount,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).width(
-                            when {
-                                !layout.landscape && compact -> 220.dp
-                                !layout.landscape -> 300.dp
-                                compact -> 320.dp
-                                else -> 440.dp
-                            },
-                        ),
-                    )
-                    FocusedOutlinedButton(
-                        onClick = { onDownload(tournament, perSheet) },
-                        modifier = Modifier.fillMaxWidth().testTag("table_qr_download"),
-                    ) {
-                        Icon(Icons.Default.Print, contentDescription = null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(MtsTheme.spacing.sm))
-                        Text(stringResource(Res.string.table_qr_download))
+                        val layout = sheetLayout(perSheet)
+                        Text(
+                            stringResource(Res.string.table_qr_card_size, layout.cardSize),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.testTag("table_qr_card_size"),
+                        )
+                        SheetPreview(
+                            tournament = tournament,
+                            link = link,
+                            layout = layout,
+                            tableCount = tableCount,
+                            modifier = Modifier.align(Alignment.CenterHorizontally).width(
+                                when {
+                                    !layout.landscape && compact -> 180.dp
+                                    !layout.landscape -> 220.dp
+                                    compact -> 260.dp
+                                    else -> 320.dp
+                                },
+                            ),
+                        )
                     }
                 }
-            }
-        }
+            },
+            confirmButton = {
+                MtsDialogButtons {
+                    FocusedButton(
+                        enabled = tableCount > 0,
+                        onClick = { onDownload(perSheet) },
+                        modifier = Modifier.testTag("table_qr_download"),
+                    ) {
+                        Text(stringResource(Res.string.create_pdf))
+                    }
+                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                }
+            },
+        )
     }
 }
 
@@ -283,7 +279,7 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
             Box(Modifier.fillMaxWidth().height(unit * 2.4f).padding(horizontal = unit * 0.6f), contentAlignment = Alignment.Center) {
                 // Without a logo, the circle of the color of the organizer with its first letter, like the PDF.
                 OrganizationLogo(
-                    name = tournament.organizers.firstOrNull()?.name ?: tournamentName,
+                    name = tournament.mainOrganizerName(),
                     logoUrl = tournament.associationLogoUrl,
                     primaryColor = tournament.primaryColor,
                     size = unit * 1.9f,
@@ -327,6 +323,10 @@ private fun PreviewCard(tournament: Tournament, link: String, tableId: Int) {
 }
 
 private const val A4_RATIO = 210f / 297f
+private const val DEFAULT_ORGANIZER_COLOR = "#02B16B"
+
+/** The name of the main organizer, for the initial of its logo when it has none. */
+internal fun Tournament.mainOrganizerName(): String = organizers.firstOrNull()?.name ?: name
 
 /** The cards of the tables are always in English, like the PDF (tableQrService.ts). */
 private const val TABLE_WORD = "TABLE"
@@ -337,7 +337,14 @@ private const val HINT_TEXT = "Scan the code to go to your table."
  * also in the dark theme: phones read it best, and a projector shows white brighter.
  */
 @Composable
-fun TableQrProjectionScreen(tournamentName: String, link: String, logoUrl: String? = null) {
+fun TableQrProjectionScreen(
+    tournamentName: String,
+    link: String,
+    logoUrl: String? = null,
+    /** Without a logo, the circle shows the first letter of the organizer on its color, like the rest of the app. */
+    organizerName: String = "",
+    organizerColor: String = "",
+) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.White).padding(MtsTheme.spacing.xl)) {
         val roomWidth = maxWidth
         val roomHeight = maxHeight
@@ -350,14 +357,14 @@ fun TableQrProjectionScreen(tournamentName: String, link: String, logoUrl: Strin
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
                 ) {
-                    ProjectionLogo(tournamentName, logoUrl, 160.dp)
+                    ProjectionLogo(organizerName.ifBlank { tournamentName }, logoUrl, organizerColor, 160.dp)
                     ProjectionTexts(tournamentName, link, titleStyle, TextAlign.Center)
                 }
                 QrCode(link, Modifier.size(minOf(roomHeight, roomWidth * 0.55f)).testTag("table_qr_projection_code"))
             }
         } else {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.CenterVertically)) {
-                ProjectionLogo(tournamentName, logoUrl, 96.dp)
+                ProjectionLogo(organizerName.ifBlank { tournamentName }, logoUrl, organizerColor, 96.dp)
                 Text(tournamentName, style = titleStyle, fontWeight = FontWeight.Bold, color = Color.Black, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Box(Modifier.weight(1f, fill = false), contentAlignment = Alignment.Center) {
                     QrCode(link, Modifier.size(minOf(roomWidth, roomHeight * 0.7f)).testTag("table_qr_projection_code"))
@@ -368,10 +375,16 @@ fun TableQrProjectionScreen(tournamentName: String, link: String, logoUrl: Strin
     }
 }
 
-/** The logo of the main organizer over the name, when it has one. */
+/** The logo of the main organizer over the name, or its initial on its color when it has no logo. */
 @Composable
-private fun ProjectionLogo(tournamentName: String, logoUrl: String?, size: Dp) {
-    if (!logoUrl.isNullOrBlank()) OrganizationLogo(tournamentName, logoUrl, "#FFFFFF", size = size, modifier = Modifier.testTag("table_qr_projection_logo"))
+private fun ProjectionLogo(organizerName: String, logoUrl: String?, organizerColor: String, size: Dp) {
+    OrganizationLogo(
+        name = organizerName,
+        logoUrl = logoUrl,
+        primaryColor = organizerColor.ifBlank { DEFAULT_ORGANIZER_COLOR },
+        size = size,
+        modifier = Modifier.testTag("table_qr_projection_logo"),
+    )
 }
 
 @Composable

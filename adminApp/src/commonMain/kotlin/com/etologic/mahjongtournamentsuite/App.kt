@@ -26,10 +26,8 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
-import com.etologic.mahjongtournamentsuite.presentation.TableQrRoute
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrScreen
 import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
@@ -124,11 +122,11 @@ fun RankingApp(tournamentId: String) {
 
 /** The QR code of a tournament in a window of its own, to project it. It needs no data: the window gets the link. */
 @Composable
-fun TableQrApp(tournamentName: String, link: String, logoUrl: String? = null) {
+fun TableQrApp(tournamentName: String, link: String, logoUrl: String? = null, organizerName: String = "", organizerColor: String = "") {
     AppWithModules {
         ProvideAppLanguage {
             MtsTheme(useDarkTheme = false) {
-                TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl) }
+                TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl, organizerName, organizerColor) }
             }
         }
     }
@@ -223,9 +221,6 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     screen<PlayerCountRoute> { backStackEntry ->
                         val args = backStackEntry.toRoute<PlayerCountRoute>()
                         PlayerCountScreen(tournamentId = args.tournamentId, started = args.started, onBack = { navController.popBackStack() })
-                    }
-                    screen<TableQrRoute> { backStackEntry ->
-                        TableQrScreen(tournamentId = backStackEntry.toRoute<TableQrRoute>().tournamentId, onBack = { navController.popBackStack() })
                     }
                     screen<UsersRoute> { backStackEntry ->
                         GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)

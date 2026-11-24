@@ -24,10 +24,11 @@ actual fun openRankings(
 
 private external fun encodeURIComponent(value: String): String
 
-actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: String?) {
+actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: String?, organizerName: String, organizerColor: String) {
     val logo = logoUrl?.let { "&logo=${encodeURIComponent(it)}" }.orEmpty()
     window.open(
-        "${window.location.pathname}?standalone=table-qr&name=${encodeURIComponent(tournamentName)}&link=${encodeURIComponent(link)}$logo",
+        "${window.location.pathname}?standalone=table-qr&name=${encodeURIComponent(tournamentName)}&link=${encodeURIComponent(link)}$logo" +
+            "&organizer=${encodeURIComponent(organizerName)}&color=${encodeURIComponent(organizerColor)}",
         "_blank",
     )
 }

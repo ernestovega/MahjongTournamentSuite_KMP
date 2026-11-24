@@ -28,6 +28,8 @@ fun main() {
                 tournamentName = decodeURIComponent(parameters["name"].orEmpty()),
                 link = decodeURIComponent(parameters["link"].orEmpty()),
                 logoUrl = parameters["logo"]?.let(::decodeURIComponent)?.ifBlank { null },
+                organizerName = decodeURIComponent(parameters["organizer"].orEmpty()),
+                organizerColor = decodeURIComponent(parameters["color"].orEmpty()),
             )
             else -> App(remember { BrowserSessionStorage("adminApp") }, appVersion = AppVersion.web)
         }

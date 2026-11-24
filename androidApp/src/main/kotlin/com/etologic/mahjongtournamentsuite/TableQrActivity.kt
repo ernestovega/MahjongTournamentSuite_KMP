@@ -16,6 +16,8 @@ class TableQrActivity : ComponentActivity() {
                 tournamentName = intent.getStringExtra(EXTRA_TOURNAMENT_NAME).orEmpty(),
                 link = intent.getStringExtra(EXTRA_LINK).orEmpty(),
                 logoUrl = intent.getStringExtra(EXTRA_LOGO_URL),
+                organizerName = intent.getStringExtra(EXTRA_ORGANIZER_NAME).orEmpty(),
+                organizerColor = intent.getStringExtra(EXTRA_ORGANIZER_COLOR).orEmpty(),
             )
         }
     }
@@ -24,5 +26,7 @@ class TableQrActivity : ComponentActivity() {
         const val EXTRA_TOURNAMENT_NAME = "tournamentName"
         const val EXTRA_LINK = "link"
         const val EXTRA_LOGO_URL = "logoUrl"
+        const val EXTRA_ORGANIZER_NAME = "organizerName"
+        const val EXTRA_ORGANIZER_COLOR = "organizerColor"
     }
 }

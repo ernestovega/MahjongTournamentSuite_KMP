@@ -12,7 +12,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.TablesIdsDialogContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import androidx.compose.foundation.layout.ColumnScope
@@ -238,22 +238,22 @@ class AdminDialogsScreenshotTest {
     /** A step of the screen of the change of the number of players, with its top bar and its steps. */
     /** The QR code of the tournament, with the window to project it and the PDF of the cards of the tables. */
     @Test
-    fun tableQr() = adminScreenshots("table-qr") { TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }) }
+    fun tableQr() = dialog("tables-ids") { TablesIdsDialogContent(qrTournament(), QR_SITE, onDownload = {}, onDismiss = {}) }
 
     /** Six and eight cards per sheet: the small cards. */
     @Test
-    fun tableQrSixPerSheet() = adminScreenshots("table-qr-6") {
-        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, initialPerSheet = 6)
+    fun tableQrSixPerSheet() = dialog("tables-ids-6") {
+        TablesIdsDialogContent(qrTournament(), QR_SITE, onDownload = {}, onDismiss = {}, initialPerSheet = 6)
     }
 
     @Test
-    fun tableQrEightPerSheet() = adminScreenshots("table-qr-8") {
-        TableQrContent(qrTournament(), QR_SITE, onBack = {}, onDownload = { _, _ -> }, initialPerSheet = 8)
+    fun tableQrEightPerSheet() = dialog("tables-ids-8") {
+        TablesIdsDialogContent(qrTournament(), QR_SITE, onDownload = {}, onDismiss = {}, initialPerSheet = 8)
     }
 
     /** The code in a window of its own, to project it. */
     @Test
-    fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table") }
+    fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table", organizerName = "Madrid Riichi Club", organizerColor = "#02B16B") }
 
     private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
 
