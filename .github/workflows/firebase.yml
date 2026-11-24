@@ -12,12 +12,17 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Every night at 02:30 UTC (03:30 in Madrid) every test runs on main, and nothing is deployed. GitHub emails the owner
+  # when it fails. Until the gate below is on (23-dec-2026), this is how a broken test shows up.
+  schedule:
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 concurrency:
   # Never cancel a deploy halfway. A newer push waits for the running one. A run by hand on another branch only tests:
   # it has its own group, so it never holds back a deploy of main.
-  group: firebase-${{ github.event_name == 'pull_request' && github.head_ref || github.ref != 'refs/heads/main' && github.ref || 'deploy' }}
+  # The nightly tests have their own group too.
+  group: firebase-${{ github.event_name == 'pull_request' && github.head_ref || github.event_name == 'schedule' && 'nightly' || github.ref != 'refs/heads/main' && github.ref || 'deploy' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -30,7 +35,7 @@ jobs:
   # The checks below run at the same time. The job "Build and test" at the end is the one the ruleset of main requires.
   functions:
     name: Functions tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -43,7 +48,7 @@ jobs:
       # See docs/versioning.md.
       - name: Check versions
         # By hand on a branch there is no base branch: the branch is compared with main. A push to main has no base.
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' && github.event_name != 'schedule'
         run: python3 scripts/versions.py check --base "origin/${{ github.base_ref || 'main' }}"
 
       - uses: actions/setup-node@v7
@@ -60,7 +65,7 @@ jobs:
 
   integration:
     name: Functions integration tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -90,7 +95,7 @@ jobs:
 
   kotlin:
     name: Kotlin tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     # A hung UI test must not use a long time.
     timeout-minutes: 20
@@ -118,7 +123,7 @@ jobs:
 
   scripts:
     name: Scripts and diagnostics tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -136,7 +141,7 @@ jobs:
 
   web:
     name: Build web apps
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -157,7 +162,7 @@ jobs:
 
   check:
     name: Build and test
-    if: ${{ always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')) }}
+    if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')) }}
     needs: [functions, integration, kotlin, scripts, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -192,7 +197,7 @@ jobs:
     needs: [functions, integration, kotlin, scripts, web, staging]
     # !cancelled(): the jobs above are skipped when the gate is off, and a skipped need must not stop the deploy.
     if: >-
-      !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' &&
+      !cancelled() && github.event_name != 'pull_request' && github.event_name != 'schedule' && github.ref == 'refs/heads/main' &&
       (vars.PROD_DEPLOY_GATE != 'on' || github.event_name != 'push' || (
         needs.functions.result == 'success' && needs.integration.result == 'success' && needs.kotlin.result == 'success' &&
         needs.scripts.result == 'success' && needs.web.result == 'success' && needs.staging.result == 'success'))
