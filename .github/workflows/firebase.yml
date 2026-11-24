@@ -15,8 +15,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Never cancel a deploy halfway. A newer push waits for the running one.
-  group: firebase-${{ github.event_name == 'pull_request' && github.head_ref || 'deploy' }}
+  # Never cancel a deploy halfway. A newer push waits for the running one. A run by hand on another branch only tests:
+  # it has its own group, so it never holds back a deploy of main.
+  group: firebase-${{ github.event_name == 'pull_request' && github.head_ref || github.ref != 'refs/heads/main' && github.ref || 'deploy' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
