@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCode2
@@ -22,7 +23,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.navigation.NavHostController
@@ -44,7 +50,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarMenuNote
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarMoreMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
@@ -69,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.presentation.sync.ActivityTracker
 import com.etologic.mahjongtournamentsuite.presentation.sync.PollSchedule
 import com.etologic.mahjongtournamentsuite.presentation.sync.TableSyncPoller
 import com.etologic.mahjongtournamentsuite.presentation.sync.trackActivity
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
@@ -500,8 +509,9 @@ fun TournamentScreen(
         )
     }
 
-    // The results the screen holds, and when the server was last asked. Support can ask for this.
-    // It is the subtitle of the top bar, so it takes no room from the table.
+    // The results the screen holds, and when the server was last asked. Support can ask for this, but for an organizer
+    // it says little: it goes at the end of the More menu and, on a large screen, in small faint letters in the
+    // bottom right corner.
     val dataStatus = dataStatus(
         revision = allTables.takeIf { it.isNotEmpty() }?.let { rows -> tournamentDataRevision(rows.map { it.version }) },
         at = sync.lastCheckedAt,
@@ -509,7 +519,6 @@ fun TournamentScreen(
     Box(modifier = Modifier.trackActivity(activity)) {
     AppScaffold(
         title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
-        subtitle = dataStatus.ifBlank { null },
         titleAction = {
             TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
         },
@@ -572,6 +581,7 @@ fun TournamentScreen(
                 if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
                     AppTopBarLeadingActions(onActivity = { requestAction(RoundEditorAction.Activity) })
                 }
+                if (dataStatus.isNotBlank()) AppTopBarMenuNote(dataStatus)
             }
         },
     ) {
@@ -601,6 +611,14 @@ fun TournamentScreen(
             canResetTable = canHere(Permission.TOURNAMENT_RESET_TABLE),
             onResetTable = { if (!isLoading) tableToReset = it },
         )
+        if (dataStatus.isNotBlank() && !LocalCompactLayout.current) {
+            Text(
+                text = dataStatus,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = MtsSpacing.sm, bottom = MtsSpacing.xxs).alpha(0.55f),
+            )
+        }
         }
         }
         }

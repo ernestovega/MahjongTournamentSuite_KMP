@@ -82,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsFixedColors
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
@@ -635,7 +636,7 @@ internal fun LegendRow(
 internal class Slice(val value: Int, val color: Color)
 
 /** Dark text on a light sector and white text on a dark sector. */
-private fun textColorOn(background: Color): Color = if (background.luminance() > 0.5f) Color(0xFF1B1B1B) else Color.White
+private fun textColorOn(background: Color): Color = if (background.luminance() > 0.5f) MtsFixedColors.inkOnLight else Color.White
 
 /**
  * A ring chart. [inner] is the main ring. The optional [outer] ring splits the sectors of the inner ring in parts.

@@ -4,7 +4,7 @@ The suite has a light design system on top of Material 3. Material keeps the col
 shapes. The design system adds what Material does not have, and every screen reads it through `MtsTheme`, like
 `MaterialTheme`.
 
-Status: phases 0 to 4 done (phase 5 closed: the owner keeps white text on the colors). Both apps and `ui` read the domain colors from `MtsTheme.colors` (two raw colors are left on purpose: the black center of the master medal and the black or white text on a computed background). The shared components are in `designsystem`, the screens read the layout tokens, and no padding, gap or corner shape is off the scale: the ratchet is at 2 raw colors, 0 raw shapes and 0 off-scale spacings.
+Status: phases 0 to 4 done (phase 5 closed: the owner keeps white text on the colors). Both apps and `ui` read the domain colors from `MtsTheme.colors` (the two colors that do not change with the theme, the black center of the master medal and the dark text on a light sector of a chart, are in `MtsFixedColors`). The shared components are in `designsystem`, the screens read the layout tokens, and no padding, gap or corner shape is off the scale: the ratchet is at 0 raw colors, 0 raw shapes and 0 off-scale spacings (24-nov-2026).
 
 ## The `designsystem` module
 
