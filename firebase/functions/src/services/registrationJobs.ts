@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { sendEmail } from "./mailService";
 import { organizationLanguage, teamReminderEmail, weeklyReportEmail } from "./registrationEmails";
 import {
+  accountOfEma,
   adminRegistrationsLink,
   listStored,
   loadTournament,
@@ -102,5 +103,74 @@ export async function runRegistrationsHour(now: Date = new Date()): Promise<Hour
       console.error("The hourly job of the registrations failed for a tournament", doc.id, error);
     }
   }
+  // Once a day, at night, the private data of the registrations of old tournaments goes away.
+  if (now.getUTCHours() === PURGE_HOUR_UTC) {
+    try {
+      const purge = await purgeFinishedRegistrations(now);
+      if (purge.tournaments.length > 0) console.log("Registrations purged", JSON.stringify(purge));
+    } catch (error) {
+      console.error("Purging the registrations of finished tournaments failed", error);
+    }
+  }
   return results;
+}
+
+/** Days after the last day of a tournament that the emails and food restrictions of its registrations are kept. */
+export const REGISTRATION_DATA_DAYS = 30;
+const PURGE_HOUR_UTC = 3;
+
+export type PurgeResult = { tournaments: string[]; registrations: number; foodRestrictions: number };
+
+function isoDateDaysBefore(now: Date, days: number): string {
+  return new Date(now.getTime() - days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * The privacy policy promises that the data of the registrations is not kept forever. [REGISTRATION_DATA_DAYS] days
+ * after the last day of a tournament:
+ * - each registration loses its email and the token of its links (the name, country and EMA number are public anyway);
+ * - the log of the registrations, with names and times, is deleted;
+ * - the food restrictions (`personPrivate/{emaId}`) of a person without an account are deleted, unless the person is
+ *   registered in a tournament that has not ended that long ago. An account keeps them: they are in its profile, and it
+ *   deletes them there.
+ * Each tournament is done once (`registrationsPurgedAt`).
+ */
+export async function purgeFinishedRegistrations(now: Date = new Date()): Promise<PurgeResult> {
+  const cutoff = isoDateDaysBefore(now, REGISTRATION_DATA_DAYS);
+  const result: PurgeResult = { tournaments: [], registrations: 0, foodRestrictions: 0 };
+  const finished = await db.collection("tournaments").where("eventEndDate", "<", cutoff).get();
+  const people = new Set<string>();
+  for (const tournament of finished.docs) {
+    if (tournament.get("registrationsPurgedAt") != null) continue;
+    const registrations = await tournament.ref.collection("registrations").get();
+    const log = await tournament.ref.collection("registrationLog").get();
+    const writes = [
+      ...registrations.docs.map((doc) => (batch: FirebaseFirestore.WriteBatch) => {
+        people.add(doc.id);
+        batch.update(doc.ref, { email: "", manageToken: FieldValue.delete(), sharedEmail: false });
+      }),
+      ...log.docs.map((doc) => (batch: FirebaseFirestore.WriteBatch) => batch.delete(doc.ref)),
+    ];
+    for (let start = 0; start < writes.length; start += 400) {
+      const batch = db.batch();
+      writes.slice(start, start + 400).forEach((write) => write(batch));
+      await batch.commit();
+    }
+    await tournament.ref.update({ registrationsPurgedAt: FieldValue.serverTimestamp() });
+    result.tournaments.push(tournament.id);
+    result.registrations += registrations.size;
+  }
+  if (people.size === 0) return result;
+  // The tournaments that still use the data: they have not ended, or ended less than the days ago.
+  const current = await db.collection("tournaments").where("eventEndDate", ">=", cutoff).get();
+  for (const emaId of people) {
+    const privateRef = db.doc(`personPrivate/${emaId}`);
+    if (!(await privateRef.get()).exists) continue;
+    if ((await accountOfEma(emaId)) != null) continue;
+    const elsewhere = current.empty ? [] : await db.getAll(...current.docs.map((doc) => doc.ref.collection("registrations").doc(emaId)));
+    if (elsewhere.some((snapshot) => snapshot.exists)) continue;
+    await privateRef.delete();
+    result.foodRestrictions++;
+  }
+  return result;
 }
