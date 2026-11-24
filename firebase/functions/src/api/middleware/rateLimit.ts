@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
+import { clientAddress } from "../clientAddress";
 import { HttpError } from "../httpError";
 
 const MAX_TRACKED_CLIENTS = 5000;
@@ -20,10 +21,18 @@ export function rateLimit(options: {
 
   return (req: Request, _res: Response, next: NextFunction): void => {
     const time = now();
-    const key = options.key?.(req) ?? req.ip ?? "unknown";
+    const key = options.key?.(req) ?? clientAddress(req);
     let entry = windows.get(key);
     if (!entry || entry.resetAt <= time) {
-      if (windows.size >= MAX_TRACKED_CLIENTS) windows.clear();
+      // A full map loses only the windows that are over, never the counts of the clients still being counted: else a
+      // flood of new keys would reset everybody. While no window is over, a new key is not counted (fail open).
+      if (windows.size >= MAX_TRACKED_CLIENTS) {
+        for (const [other, window] of windows) if (window.resetAt <= time) windows.delete(other);
+        if (windows.size >= MAX_TRACKED_CLIENTS) {
+          next();
+          return;
+        }
+      }
       entry = { resetAt: time + options.windowMs, count: 0 };
       windows.set(key, entry);
     }

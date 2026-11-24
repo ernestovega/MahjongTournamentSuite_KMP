@@ -5,9 +5,14 @@ import type { Request } from "express";
 import { HttpError } from "../httpError";
 import { rateLimit } from "./rateLimit";
 
+/** A request as Google forwards it: the caller's address at the end of X-Forwarded-For. */
+function request(forwardedFor: string): Request {
+  return { header: (name: string) => (name.toLowerCase() === "x-forwarded-for" ? forwardedFor : undefined), socket: {} } as unknown as Request;
+}
+
 function call(limit: ReturnType<typeof rateLimit>, ip: string): unknown {
   let result: unknown = "unset";
-  limit({ ip } as Request, {} as never, (error?: unknown) => { result = error; });
+  limit(request(ip), {} as never, (error?: unknown) => { result = error; });
   return result;
 }
 
@@ -43,5 +48,20 @@ describe("rateLimit", () => {
     assert.equal(withToken("a"), undefined);
     assert.equal(withToken("b"), undefined);
     assert.ok(withToken("a") instanceof HttpError);
+  });
+
+  it("ignores addresses that the client writes before the one Google adds", () => {
+    const limit = rateLimit({ windowMs: 1000, max: 1, now: () => 0 });
+
+    assert.equal(call(limit, "9.9.9.1, 5.5.5.5"), undefined);
+    assert.ok(call(limit, "9.9.9.2, 5.5.5.5") instanceof HttpError);
+  });
+
+  it("keeps counting the clients it knows when a flood of new keys fills its memory", () => {
+    const limit = rateLimit({ windowMs: 1000, max: 1, now: () => 0 });
+
+    assert.equal(call(limit, "1.1.1.1"), undefined);
+    for (let i = 0; i < 6000; i++) call(limit, `10.${Math.floor(i / 65536)}.${Math.floor(i / 256) % 256}.${i % 256}`);
+    assert.ok(call(limit, "1.1.1.1") instanceof HttpError);
   });
 });
