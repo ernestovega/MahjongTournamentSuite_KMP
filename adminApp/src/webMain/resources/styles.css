@@ -8,7 +8,7 @@ html, body {
 
 /* The colors of the theme of the app (MtsTheme), so the page does not change color when the app starts. */
 html {
-    background: #F2FFFA;
+    background: #E9EBEE;
 }
 
 html[data-theme="dark"] {
