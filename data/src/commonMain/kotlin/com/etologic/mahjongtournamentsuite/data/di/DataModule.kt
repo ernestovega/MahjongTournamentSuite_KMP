@@ -113,7 +113,7 @@ val dataModule get() = module {
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get(), get()) }
     single<PlayerAccountRepository> { DefaultPlayerAccountRepository(get(), get(), get(), get()) }
     single<PlayerImportRepository> { DefaultPlayerImportRepository(get(), get(), get(), get()) }
-    single<RegistrationRepository> { DefaultRegistrationRepository(get(), get(), get(), createPlatformPersistentCacheStore()) }
+    single<RegistrationRepository> { DefaultRegistrationRepository(get(), get(), get(), createPlatformPersistentCacheStore(), cache = get()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }
 }
 

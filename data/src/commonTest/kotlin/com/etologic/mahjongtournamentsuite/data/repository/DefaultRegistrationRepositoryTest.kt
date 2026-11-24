@@ -5,9 +5,11 @@ import com.etologic.mahjongtournamentsuite.data.backend.REGISTRATION_TOKEN_HEADE
 import com.etologic.mahjongtournamentsuite.data.backend.jsonResponse
 import com.etologic.mahjongtournamentsuite.data.backend.mockBackendApi
 import com.etologic.mahjongtournamentsuite.data.cache.PersistentCacheStore
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.DrawAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterRequest
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
@@ -17,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSource
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationUpdate
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
@@ -56,8 +59,20 @@ class DefaultRegistrationRepositoryTest {
         override suspend fun currentSession(): AuthSession? = null
     }
 
+    /** Records which cached data a call marks old. */
+    private class StaleRecorder : RepositoryCache {
+        val stale = mutableListOf<String>()
+        override suspend fun <T : Any> getOrLoad(ownerUid: String, key: String, refreshMode: RefreshMode, revision: suspend () -> Long, load: suspend () -> T): T = load()
+        override suspend fun <T : Any> shared(key: String, maxAge: kotlin.time.Duration, fetch: suspend () -> T): T = fetch()
+        override suspend fun markStale(vararg keyPrefixes: String) {
+            stale += keyPrefixes
+        }
+        override suspend fun clear() = Unit
+    }
+
     private val requests = mutableListOf<HttpRequestData>()
     private val tokens = MemoryStore()
+    private val cache = StaleRecorder()
 
     private fun repository(
         auth: AuthRepository = FakeAuthRepository(),
@@ -75,6 +90,7 @@ class DefaultRegistrationRepositoryTest {
         authRepository = auth,
         logger = Logger.withTag("DefaultRegistrationRepositoryTest"),
         tokens = tokens,
+        cache = cache,
     )
 
     private fun ok(body: String) = HttpStatusCode.OK to body
@@ -282,6 +298,36 @@ class DefaultRegistrationRepositoryTest {
 
         assertEquals(HttpMethod.Delete, remove.method)
         assertEquals("true", remove.url.parameters["notify"])
+    }
+
+    @Test
+    fun everyChangeOfThePlacesMarksTheTournamentListOld() = runTest {
+        val repository = repository { request ->
+            if (request.method == HttpMethod.Delete) ok("""{"ok":true}""") else ok("""{"emaId":"10990001","status":"CONFIRMED"}""")
+        }
+
+        repository.adminAdd("t-1", NewRegistration(emaId = "10990001", email = "a@example.test"))
+        repository.adminUpdate("t-1", "10990001", RegistrationUpdate(paid = true))
+        repository.adminRemove("t-1", "10990001", notify = false)
+
+        // The list of tournaments shows how many people have a place and how many wait.
+        assertEquals(List(3) { "global:tournaments" }, cache.stale)
+    }
+
+    @Test
+    fun theDrawMarksTheWholeTournamentOld() = runTest {
+        val repository = repository { ok("""{"id":"t-1","name":"Open","isTeams":false,"numPlayers":4,"numRounds":1}""") }
+
+        repository.makeDraw("t-1", numTries = 1, players = emptyList(), tables = emptyList(), assignments = listOf(DrawAssignment(1, "10990001")))
+
+        assertEquals(listOf("global:tournaments", "tournament:t-1:"), cache.stale)
+    }
+
+    @Test
+    fun aFailedChangeMarksNothingOld() = runTest {
+        repository { HttpStatusCode.Conflict to """{"message":"No"}""" }.adminRemove("t-1", "10990001", notify = false)
+
+        assertTrue(cache.stale.isEmpty())
     }
 
     @Test
