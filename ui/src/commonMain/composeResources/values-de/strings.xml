@@ -202,10 +202,7 @@
     <string name="leader_best_hand_value">Höchster Ø Handwert</string>
     <string name="leader_best_win_rate">Beste Gewinnquote</string>
     <string name="leader_lowest_deal_in">Niedrigste Einwurfquote</string>
-    <string name="leader_most_self_draws">Meiste selbst gezogen</string>
-    <string name="leaders_average">Durchschnitt: %1$s</string>
-    <string name="leaders_legend_top">Bester Spieler</string>
-    <string name="leaders_legend_average">Durchschnittsspieler</string>
+    <string name="leader_best_self_draw_rate">Beste Quote selbst gezogen</string>
     <string name="tables_completed_of">%1$d von %2$d</string>
     <string name="stat_players">Spieler</string>
     <string name="hands_won_by_discard">Durch Abwurf gewonnen</string>

@@ -203,10 +203,7 @@
     <string name="leader_best_hand_value">Meilleure valeur moyenne de main</string>
     <string name="leader_best_win_rate">Meilleur taux de victoire</string>
     <string name="leader_lowest_deal_in">Plus faible taux de défaites sur défausse</string>
-    <string name="leader_most_self_draws">Le plus de victoires du mur</string>
-    <string name="leaders_average">Moyenne : %1$s</string>
-    <string name="leaders_legend_top">Meilleur joueur</string>
-    <string name="leaders_legend_average">Joueur moyen</string>
+    <string name="leader_best_self_draw_rate">Meilleur taux de victoires du mur</string>
     <string name="tables_completed_of">%1$d sur %2$d</string>
     <string name="stat_players">Joueurs</string>
     <string name="hands_won_by_discard">Gagnées sur défausse</string>

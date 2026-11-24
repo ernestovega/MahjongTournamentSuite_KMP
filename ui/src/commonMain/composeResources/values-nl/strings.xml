@@ -202,10 +202,7 @@
     <string name="leader_best_hand_value">Hoogste gem. handwaarde</string>
     <string name="leader_best_win_rate">Beste winstpercentage</string>
     <string name="leader_lowest_deal_in">Laagste inworppercentage</string>
-    <string name="leader_most_self_draws">Meeste zelf getrokken</string>
-    <string name="leaders_average">Gemiddeld: %1$s</string>
-    <string name="leaders_legend_top">Beste speler</string>
-    <string name="leaders_legend_average">Gemiddelde speler</string>
+    <string name="leader_best_self_draw_rate">Beste percentage zelf getrokken</string>
     <string name="tables_completed_of">%1$d van %2$d</string>
     <string name="stat_players">Spelers</string>
     <string name="hands_won_by_discard">Gewonnen op afgooi</string>
