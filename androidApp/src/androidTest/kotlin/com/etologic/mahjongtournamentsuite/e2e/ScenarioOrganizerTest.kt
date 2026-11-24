@@ -492,14 +492,15 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitUntil(30_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() }
         log("the player registered in the player app and is on the waiting list: ${counts()}")
         c.clickLastButton("Close")
-        c.waitForText("My registration", timeoutMs = 30_000)
-        c.clickButton("My registration")
+        // The own registration is a card of its own with Edit beside its title (24-nov), which opens My registration.
+        c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-manage")).fetchSemanticsNodes().isNotEmpty() }
+        clickTagged("registration-manage")
         c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-cancel")).fetchSemanticsNodes().isNotEmpty() }
         c.onNode(hasTestTag("registration-cancel")).tap()
         c.waitForText("Cancel your registration?")
         c.clickButton("Cancel registration")
         c.waitForText("Register", timeoutMs = 60_000)
-        c.waitForNoText("My registration", timeoutMs = 60_000)
+        c.waitUntil(60_000) { c.onAllNodes(hasTestTag("registration-manage")).fetchSemanticsNodes().isEmpty() }
         log("the player cancelled the registration in the player app: ${counts()}")
         c.clickButton("Back")
     }
