@@ -99,6 +99,19 @@ export function buildApp(): express.Express {
     }
   });
 
+  // Staging only (MTS_FORWARDED_PROBE=1, set by .github/workflows/staging.yml): the headers that carry the client
+  // address, so the deploy can check how a request reaches the API through Hosting and directly.
+  if (process.env.MTS_FORWARDED_PROBE === "1") {
+    app.get("/debug/forwarded", (req, res) => {
+      res.status(200).json({
+        ip: req.ip,
+        url: req.originalUrl,
+        xff: req.header("x-forwarded-for") ?? null,
+        headers: Object.fromEntries(Object.entries(req.headers).filter(([k]) => k !== "authorization" && k !== "cookie")),
+      });
+    });
+  }
+
   // Every route except /health and /version needs a valid App Check token when the mode is "enforce".
   app.use(appCheck());
 
