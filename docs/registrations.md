@@ -55,8 +55,21 @@ must be complete before the draw.
 
 ## Public list
 
-`GET /public/tournaments/{id}/registrations`: order, name, flag, EMA number, status, position and team. No emails, no
-food restrictions and no registration date. There are no hidden people in this list.
+`GET /public/tournaments/{id}/registrations`: order, name, flag, EMA number, status, position, team and photo. No emails,
+no food restrictions and no registration date. There are no hidden people in this list.
+
+The photo (`photoUrl`) is the one of the account of the person, or else the one of its EMA player (both are public),
+the same order as the profile of an account. `photosOf` (registrationsService.ts) keeps them 5 minutes in memory,
+because every viewer reads the list every minute. The organizers' list has the same photo.
+
+The Players tab of the player app (screenshots `tournament-registrations` and `tournament-registrations-team-missing`):
+
+- A card with the rows Status, Places and Last day, each with a line that says what its value means, as in the
+  Registrations screen of the organizers.
+- A card with the own registration (place, waiting list, email to confirm) and its button, or "Do you want to play?"
+  with Register and I have no EMA number.
+- In a tournament with teams, a person with a place and no team sees a big red warning on top, with Set up my team.
+- Each person has its photo after the position, and "EMA <number> · team" under the name.
 
 ## Organizers
 

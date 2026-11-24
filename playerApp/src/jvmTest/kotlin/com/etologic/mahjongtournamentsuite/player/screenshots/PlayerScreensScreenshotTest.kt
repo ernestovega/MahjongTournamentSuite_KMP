@@ -362,6 +362,21 @@ class PlayerScreensScreenshotTest {
         ready = { waitForText("04010002", substring = true) },
     ) { nav -> TournamentScreen(nav, UPCOMING) }
 
+    /** The same list for a person with a place and no team yet: the big warning of the missing team is on top. */
+    @Test
+    fun tournamentRegistrationsTeamMissing() = playerScreenshots(
+        "tournament-registrations-team-missing",
+        modules = {
+            playerModules(
+                tournaments = RegistrationTournamentRepository(),
+                registrations = ScreenshotRegistrationRepository(
+                    own = OwnRegistration("04010007", "", "ES", RegistrationStatus.CONFIRMED, 7),
+                ),
+            )
+        },
+        ready = { waitForText(playerText("preg_team_missing_title")) },
+    ) { nav -> TournamentScreen(nav, UPCOMING) }
+
     /** The card of a tournament that takes registrations, with its button to register, for a guest. */
     @Test
     fun tournamentsRegistrationGuest() = playerScreenshots(

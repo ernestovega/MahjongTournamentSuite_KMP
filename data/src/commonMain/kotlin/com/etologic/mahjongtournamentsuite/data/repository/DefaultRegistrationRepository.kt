@@ -302,7 +302,7 @@ internal fun RegistrationSettings.toRequestDto() = RegistrationSettingsRequestDt
 
 private fun String.toStatus(): RegistrationStatus = RegistrationStatus.entries.firstOrNull { it.name == this } ?: RegistrationStatus.CONFIRMED
 
-private fun PublicRegistrationDto.toDomain() = PublicRegistration(emaId, name, country, status.toStatus(), position, teamId)
+private fun PublicRegistrationDto.toDomain() = PublicRegistration(emaId, name, country, status.toStatus(), position, teamId, photoUrl)
 
 private fun RegistrationTeamDto.toDomain() = RegistrationTeam(id, name, captainEmaId, members)
 
@@ -312,6 +312,7 @@ private fun AdminRegistrationDto.toDomain() = AdminRegistration(
     country = country,
     status = status.toStatus(),
     position = position,
+    photoUrl = photoUrl,
     teamId = teamId,
     email = email,
     paid = paid,

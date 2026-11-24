@@ -150,11 +150,17 @@ class RegistrationsTabUiTest {
         show(FakeRegistrations())
         waitUntil { onAllNodesWithTextExists("ANA LOPEZ") }
         onNodeWithText("Registrations are open").assertIsDisplayed()
+        // The summary says in words what each value means.
+        onNodeWithText("Anyone with an EMA number can register.").assertIsDisplayed()
+        onNodeWithText("2 of 2 places taken").assertIsDisplayed()
+        onNodeWithText("1 on the waiting list").assertIsDisplayed()
+        onNodeWithText("Do you want to play?").assertIsDisplayed()
+        onNodeWithTag("registration-team-missing").assertDoesNotExist()
         onNodeWithText("With a place (2)").assertIsDisplayed()
         onNodeWithText("Waiting list (1)").assertIsDisplayed()
-        onNodeWithText("10990001 · Dragons").assertIsDisplayed()
+        onNodeWithText("EMA 10990001 · Dragons").assertIsDisplayed()
         // A person of a tournament with teams who has none yet.
-        onNodeWithText("10990002 · No team yet").assertIsDisplayed()
+        onNodeWithText("EMA 10990002 · No team yet").assertIsDisplayed()
         onNodeWithText("CARLA GIL").assertIsDisplayed()
         onNodeWithTag("registration-register").assertIsDisplayed()
         onNodeWithText("I have no EMA number").assertIsDisplayed()
@@ -196,10 +202,11 @@ class RegistrationsTabUiTest {
     fun aRegisteredPersonSeesItsPlaceAndCancelsWithAConfirmation() = runComposeUiTest {
         val repository = FakeRegistrations(own = OwnRegistration("10990002", "BEA RUIZ", "IT", RegistrationStatus.CONFIRMED, 2))
         show(repository)
-        waitUntil { onAllNodesWithTextExists("You are registered, with place 2.") }
+        waitUntil { onAllNodesWithTextExists("You have place 2") }
         onNodeWithText("BEA RUIZ (you)").assertIsDisplayed()
         // The team is still missing in a tournament with teams.
-        onNodeWithText("Your team is missing.", substring = true).assertIsDisplayed()
+        onNodeWithTag("registration-team-missing").assertIsDisplayed()
+        onNodeWithText("Your team is missing").assertIsDisplayed()
         onNodeWithTag("registration-register").assertDoesNotExist()
         onNodeWithTag("registration-manage").performClick()
         waitUntil { onAllNodesWithTagExists("registration-cancel") }
@@ -212,11 +219,29 @@ class RegistrationsTabUiTest {
     }
 
     @Test
+    fun theWarningOfTheMissingTeamOpensTheRegistrationToSetUpTheTeam() = runComposeUiTest {
+        show(FakeRegistrations(own = OwnRegistration("10990002", "BEA RUIZ", "IT", RegistrationStatus.CONFIRMED, 2)))
+        waitUntil { onAllNodesWithTagExists("registration-set-up-team") }
+        onNodeWithTag("registration-set-up-team").performClick()
+        waitUntil { onAllNodesWithTextExists("Create the team") }
+    }
+
+    @Test
+    fun aPersonOnTheWaitingListSeesItsNumberAndNoWarningWithItsTeam() = runComposeUiTest {
+        show(FakeRegistrations(own = OwnRegistration("10990003", "CARLA GIL", "FR", RegistrationStatus.WAITING, 1, teamId = "dragons")))
+        waitUntil { onAllNodesWithTextExists("You are number 1 on the waiting list") }
+        onNodeWithText("The organization will write to you if a place frees up.").assertIsDisplayed()
+        onNodeWithTag("registration-team-missing").assertDoesNotExist()
+        onNodeWithTag("registration-manage").assertIsDisplayed()
+    }
+
+    @Test
     fun closedRegistrationsHaveNoButtonToRegister() = runComposeUiTest {
         val closed = settings.copy(status = RegistrationPhase.CLOSED)
         show(FakeRegistrations(list = publicList.copy(settings = closed)), tournament.copy(registration = closed))
         waitUntil { onAllNodesWithTextExists("ANA LOPEZ") }
         onNodeWithText("Registrations are closed").assertIsDisplayed()
+        onNodeWithTag("registration-own").assertDoesNotExist()
         onNodeWithTag("registration-register").assertDoesNotExist()
         onNodeWithText("I have no EMA number").assertDoesNotExist()
     }

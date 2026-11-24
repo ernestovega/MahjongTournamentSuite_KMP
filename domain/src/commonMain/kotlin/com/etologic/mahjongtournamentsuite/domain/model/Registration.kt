@@ -46,6 +46,8 @@ data class PublicRegistration(
     /** 1, 2, 3... in its list: the places or the waiting list. */
     val position: Int,
     val teamId: String? = null,
+    /** The photo of the account of the person, or else the one of its EMA player. Public. */
+    val photoUrl: String? = null,
 )
 
 data class RegistrationTeam(
@@ -75,6 +77,8 @@ data class AdminRegistration(
     val status: RegistrationStatus,
     val position: Int,
     val teamId: String? = null,
+    /** The photo of the account of the person, or else the one of its EMA player. */
+    val photoUrl: String? = null,
     val email: String = "",
     val paid: Boolean = false,
     /** Private: only the organizers and the person see it. */

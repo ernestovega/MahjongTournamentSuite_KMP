@@ -72,6 +72,8 @@ export type PublicRegistration = {
   /** 1, 2, 3... in its list: the places or the waiting list. */
   position: number;
   teamId: string | null;
+  /** The photo of the account of the person, or else the photo of its EMA player. Both are public. */
+  photoUrl?: string | null;
 };
 
 export type RegistrationTeamView = { id: string; name: string; captainEmaId: string; members: string[] };
@@ -231,14 +233,60 @@ function toPublic(registration: StoredRegistration & { position: number }): Publ
   };
 }
 
+/** How long the photos of the people of a list stay in memory: the list is read again every minute by every viewer. */
+const PHOTOS_TTL_MS = 5 * 60_000;
+const photoCache = new Map<string, { at: number; url: string | null }>();
+
+/**
+ * The photo of each person, by EMA number: the photo of its account when it has one, or else the photo of its EMA
+ * player (the same order as the profile of an account). A person without either has no entry.
+ */
+export async function photosOf(emaIds: string[]): Promise<Map<string, string>> {
+  const now = Date.now();
+  const result = new Map<string, string>();
+  const missing = [...new Set(emaIds)].filter((emaId) => {
+    const cached = photoCache.get(emaId);
+    if (cached == null || now - cached.at > PHOTOS_TTL_MS) return true;
+    if (cached.url != null) result.set(emaId, cached.url);
+    return false;
+  });
+  if (missing.length === 0) return result;
+  const accounts = await accountsOf(missing);
+  const accountPhotos = new Map<string, string>();
+  const emaPhotos = new Map<string, string>();
+  const uids = [...accounts.entries()].filter(([, uid]) => uid !== "");
+  for (let start = 0; start < uids.length; start += 300) {
+    const chunk = uids.slice(start, start + 300);
+    (await db.getAll(...chunk.map(([, uid]) => db.doc(`users/${uid}`)))).forEach((snapshot, index) => {
+      const url = snapshot.get("photoUrl");
+      if (typeof url === "string" && url.length > 0) accountPhotos.set(chunk[index][0], url);
+    });
+  }
+  const withoutAccountPhoto = missing.filter((emaId) => !accountPhotos.has(emaId));
+  for (let start = 0; start < withoutAccountPhoto.length; start += 300) {
+    const chunk = withoutAccountPhoto.slice(start, start + 300);
+    (await db.getAll(...chunk.map((emaId) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`)))).forEach((snapshot, index) => {
+      const url = snapshot.exists ? toPlayer(chunk[index], snapshot.data() ?? {}).photoUrl : null;
+      if (url) emaPhotos.set(chunk[index], url);
+    });
+  }
+  missing.forEach((emaId) => {
+    const url = accountPhotos.get(emaId) ?? emaPhotos.get(emaId) ?? null;
+    photoCache.set(emaId, { at: now, url });
+    if (url != null) result.set(emaId, url);
+  });
+  return result;
+}
+
 /** The list that everyone sees. Pending registrations stay out until their email is confirmed. */
 export async function publicRegistrations(tournamentId: string): Promise<PublicRegistrations> {
   const tournament = await loadTournament(tournamentId);
   const registrations = (await listStored(tournament)).filter((registration) => registration.status !== "PENDING");
+  const photos = await photosOf(registrations.map((registration) => registration.emaId));
   return {
     settings: tournament.settings,
     isTeams: tournament.isTeams,
-    registrations: withPositions(registrations).map(toPublic),
+    registrations: withPositions(registrations).map((registration) => ({ ...toPublic(registration), photoUrl: photos.get(registration.emaId) ?? null })),
     teams: await listTeams(tournament, registrations),
   };
 }
@@ -280,9 +328,10 @@ export async function adminRegistrations(tournamentId: string): Promise<{
   const tournament = await loadTournament(tournamentId);
   const stored = await listStored(tournament);
   const emaIds = stored.map((registration) => registration.emaId);
-  const [food, accounts, docs] = await Promise.all([
+  const [food, accounts, photos, docs] = await Promise.all([
     foodOf(emaIds),
     accountsOf(emaIds),
+    photosOf(emaIds),
     tournament.ref.collection(REGISTRATIONS).select("createdAt").get(),
   ]);
   const createdAt = new Map(docs.docs.map((doc) => [doc.id, doc.get("createdAt")]));
@@ -300,6 +349,7 @@ export async function adminRegistrations(tournamentId: string): Promise<{
       const created = createdAt.get(registration.emaId);
       return {
         ...toPublic(registration),
+        photoUrl: photos.get(registration.emaId) ?? null,
         status: registration.status,
         email: registration.email,
         paid: registration.paid,

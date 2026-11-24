@@ -15,7 +15,7 @@ type Settings = { status: string; maxPlayers: number | null; closesOn: string | 
 type PublicList = {
   settings: Settings;
   isTeams: boolean;
-  registrations: Array<{ emaId: string; name: string; country: string; status: string; position: number; teamId: string | null }>;
+  registrations: Array<{ emaId: string; name: string; country: string; status: string; position: number; teamId: string | null; photoUrl?: string | null }>;
   teams: Array<{ id: string; name: string; captainEmaId: string; members: string[] }>;
 };
 type AdminList = Omit<PublicList, "registrations"> & {
@@ -121,6 +121,29 @@ describe("registrations", () => {
     assert.deepEqual(link.body, { tournamentId: id });
     const integrity = await server.request("GET", `/tournaments/${id}/integrity`, { token: admin.token });
     assert.equal((integrity.body as { findings: Array<{ code: string }> }).findings.some((finding) => finding.code === "info.numPlayers"), false);
+  });
+
+  it("shows the photo of the account of each person, or else the one of its EMA player", async () => {
+    const id = await createTournament();
+    // An account with its own photo, whose EMA player also has one: the photo of the account wins.
+    const withAccount = await registerSignedIn(id);
+    assert.equal(withAccount.status, 200, JSON.stringify(withAccount.body));
+    await db.doc(`users/${withAccount.account.uid}`).set({ photoUrl: "https://photos.example.test/account.jpg" }, { merge: true });
+    await db.doc(`emaPlayerRegistry/${withAccount.emaId}`).set({ photoUrl: "https://photos.example.test/ema-of-account.jpg" }, { merge: true });
+    // No account: the photo of the EMA player.
+    const emaOnly = await newEma("Eva");
+    await db.doc(`emaPlayerRegistry/${emaOnly}`).set({ photoUrl: "https://photos.example.test/ema.jpg" }, { merge: true });
+    await adminAdd(id, emaOnly);
+    // Neither: no photo.
+    const none = await newEma("Noa");
+    await adminAdd(id, none);
+
+    const photos = new Map((await publicList(id)).registrations.map((registration) => [registration.emaId, registration.photoUrl]));
+    assert.equal(photos.get(withAccount.emaId), "https://photos.example.test/account.jpg");
+    assert.equal(photos.get(emaOnly), "https://photos.example.test/ema.jpg");
+    assert.equal(photos.get(none), null);
+    const adminPhotos = new Map((await adminList(id)).registrations.map((registration) => [registration.emaId, (registration as { photoUrl?: string | null }).photoUrl]));
+    assert.equal(adminPhotos.get(emaOnly), "https://photos.example.test/ema.jpg");
   });
 
   it("gives a free link name from the short name when the app sends an empty one", async () => {

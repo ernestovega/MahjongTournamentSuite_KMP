@@ -7846,6 +7846,12 @@
        "null"
       ]
      },
+     "photoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
      "email": {
       "type": "string"
      },
@@ -10315,6 +10321,12 @@
       "format": "int32"
      },
      "teamId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "photoUrl": {
       "type": [
        "string",
        "null"

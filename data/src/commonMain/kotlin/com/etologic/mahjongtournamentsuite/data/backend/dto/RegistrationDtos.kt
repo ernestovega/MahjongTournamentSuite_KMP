@@ -20,6 +20,7 @@ data class PublicRegistrationDto(
     val status: String = "CONFIRMED",
     val position: Int = 0,
     val teamId: String? = null,
+    val photoUrl: String? = null,
 )
 
 @Serializable
@@ -46,6 +47,7 @@ data class AdminRegistrationDto(
     val status: String = "CONFIRMED",
     val position: Int = 0,
     val teamId: String? = null,
+    val photoUrl: String? = null,
     val email: String = "",
     val paid: Boolean = false,
     val foodRestrictions: String = "",

@@ -423,7 +423,7 @@ fun RegistrationsScreen(
                                         RegistrationRow(
                                             registration = registration,
                                             displayName = player?.let { "${it.firstName} ${it.lastName}".trim() }?.ifBlank { null } ?: registration.name.ifBlank { registration.emaId },
-                                            photoUrl = player?.photoUrl,
+                                            photoUrl = registration.photoUrl ?: player?.photoUrl,
                                             teamName = current.teamOf(registration)?.name,
                                             isTeams = current.isTeams,
                                             enabled = !busy,

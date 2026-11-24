@@ -1,7 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,18 +13,28 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.HowToReg
+import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -40,14 +54,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_FOOD_RESTRICTIONS_LENGTH
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_REGISTRATION_TEAM_NAME_LENGTH
+import com.etologic.mahjongtournamentsuite.domain.model.MY_TABLE_PATH_WORD
 import com.etologic.mahjongtournamentsuite.domain.model.NoEmaNumberRequest
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -55,8 +73,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.PublicRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.REGISTRATION_TEAM_SIZE
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterRequest
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterResult
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
-import com.etologic.mahjongtournamentsuite.domain.model.MY_TABLE_PATH_WORD
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
@@ -77,9 +95,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -98,22 +118,32 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_cancel_title
 import mahjongtournamentsuite.playerapp.generated.resources.preg_captain
 import mahjongtournamentsuite.playerapp.generated.resources.preg_close
 import mahjongtournamentsuite.playerapp.generated.resources.preg_closed
-import mahjongtournamentsuite.playerapp.generated.resources.preg_closes_on
+import mahjongtournamentsuite.playerapp.generated.resources.preg_closed_detail
+import mahjongtournamentsuite.playerapp.generated.resources.preg_closes_label
+import mahjongtournamentsuite.playerapp.generated.resources.preg_closes_until
 import mahjongtournamentsuite.playerapp.generated.resources.preg_consent
 import mahjongtournamentsuite.playerapp.generated.resources.preg_create_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_pending
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_place
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_waiting
+import mahjongtournamentsuite.playerapp.generated.resources.preg_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_email
 import mahjongtournamentsuite.playerapp.generated.resources.preg_email_hint
 import mahjongtournamentsuite.playerapp.generated.resources.preg_empty
 import mahjongtournamentsuite.playerapp.generated.resources.preg_food
 import mahjongtournamentsuite.playerapp.generated.resources.preg_food_hint
+import mahjongtournamentsuite.playerapp.generated.resources.preg_join_detail
+import mahjongtournamentsuite.playerapp.generated.resources.preg_join_title
 import mahjongtournamentsuite.playerapp.generated.resources.preg_leave_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_manage
 import mahjongtournamentsuite.playerapp.generated.resources.preg_manage_title
 import mahjongtournamentsuite.playerapp.generated.resources.preg_me
 import mahjongtournamentsuite.playerapp.generated.resources.preg_message
+import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_pending
+import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_place
+import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_place_detail
+import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_waiting
+import mahjongtournamentsuite.playerapp.generated.resources.preg_mine_waiting_detail
 import mahjongtournamentsuite.playerapp.generated.resources.preg_name
 import mahjongtournamentsuite.playerapp.generated.resources.preg_no_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_no_ema_country
@@ -122,8 +152,12 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_no_ema_sent
 import mahjongtournamentsuite.playerapp.generated.resources.preg_no_ema_title
 import mahjongtournamentsuite.playerapp.generated.resources.preg_no_matches
 import mahjongtournamentsuite.playerapp.generated.resources.preg_open
+import mahjongtournamentsuite.playerapp.generated.resources.preg_open_detail
 import mahjongtournamentsuite.playerapp.generated.resources.preg_pick_hint
 import mahjongtournamentsuite.playerapp.generated.resources.preg_places
+import mahjongtournamentsuite.playerapp.generated.resources.preg_places_label
+import mahjongtournamentsuite.playerapp.generated.resources.preg_places_value
+import mahjongtournamentsuite.playerapp.generated.resources.preg_places_value_no_limit
 import mahjongtournamentsuite.playerapp.generated.resources.preg_register
 import mahjongtournamentsuite.playerapp.generated.resources.preg_register_as
 import mahjongtournamentsuite.playerapp.generated.resources.preg_register_info
@@ -133,15 +167,18 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_rename_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_save
 import mahjongtournamentsuite.playerapp.generated.resources.preg_search_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_send
+import mahjongtournamentsuite.playerapp.generated.resources.preg_status_label
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_pending
-import mahjongtournamentsuite.playerapp.generated.resources.preg_status_place
-import mahjongtournamentsuite.playerapp.generated.resources.preg_status_waiting
 import mahjongtournamentsuite.playerapp.generated.resources.preg_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_team_info
+import mahjongtournamentsuite.playerapp.generated.resources.preg_team_missing_action
+import mahjongtournamentsuite.playerapp.generated.resources.preg_team_missing_detail
+import mahjongtournamentsuite.playerapp.generated.resources.preg_team_missing_title
 import mahjongtournamentsuite.playerapp.generated.resources.preg_team_name
-import mahjongtournamentsuite.playerapp.generated.resources.preg_team_reminder
 import mahjongtournamentsuite.playerapp.generated.resources.preg_title_confirmed
 import mahjongtournamentsuite.playerapp.generated.resources.preg_title_waiting
+import mahjongtournamentsuite.playerapp.generated.resources.preg_waiting_none
+import mahjongtournamentsuite.playerapp.generated.resources.preg_waiting_value
 import mahjongtournamentsuite.playerapp.generated.resources.preg_without_team
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -325,47 +362,22 @@ internal fun RegistrationsTab(tournament: Tournament) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(16.dp),
     ) {
-        item(key = "summary") {
-            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val open = settings?.isOpen == true
-                    Text(
-                        stringResource(if (open) Res.string.preg_open else Res.string.preg_closed),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (open) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        // One item for the top, so that the list does not keep its place on the summary when the warning shows up.
+        item(key = "top") {
+            val mine = own
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The team is missing: a big warning on top, with its button, so it cannot be missed.
+                if (current?.isTeams == true && mine != null && mine.teamId == null && mine.status != RegistrationStatus.PENDING) {
+                    TeamMissingCard(onSetUp = { managing = true })
+                }
+                RegistrationSummaryCard(settings)
+                if (mine != null || settings?.isOpen == true) {
+                    OwnRegistrationCard(
+                        own = mine,
+                        onManage = { managing = true },
+                        onRegister = { registering = true },
+                        onNoEma = { noEma = true },
                     )
-                    if (settings != null) {
-                        Text(registrationPlacesText(settings.confirmed, settings.maxPlayers, settings.waiting))
-                        settings.closesOn?.let { Text(stringResource(Res.string.preg_closes_on, formatLocalizedDate(it))) }
-                    }
-                    val mine = own
-                    if (mine != null) {
-                        Text(
-                            when (mine.status) {
-                                RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_status_place, mine.position)
-                                RegistrationStatus.WAITING -> stringResource(Res.string.preg_status_waiting, mine.position)
-                                RegistrationStatus.PENDING -> stringResource(Res.string.preg_status_pending)
-                            },
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (current?.isTeams == true && mine.teamId == null && mine.status != RegistrationStatus.PENDING) {
-                            Text(stringResource(Res.string.preg_team_reminder), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (mine != null && mine.status != RegistrationStatus.PENDING) {
-                            Button(onClick = { managing = true }, modifier = Modifier.testTag("registration-manage")) {
-                                Text(stringResource(Res.string.preg_manage))
-                            }
-                        } else if (open && mine == null) {
-                            Button(onClick = { registering = true }, modifier = Modifier.testTag("registration-register")) {
-                                Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp))
-                                Text(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
-                            }
-                            TextButton(onClick = { noEma = true }) { Text(stringResource(Res.string.preg_no_ema)) }
-                        }
-                    }
                 }
             }
         }
@@ -390,10 +402,9 @@ internal fun RegistrationsTab(tournament: Tournament) {
             val rows = shown.filter { it.status == status }
             if (rows.isNotEmpty()) {
                 item(key = "title-$status") {
-                    Text(
+                    RegistrationSectionTitle(
                         stringResource(if (status == RegistrationStatus.CONFIRMED) Res.string.preg_title_confirmed else Res.string.preg_title_waiting, rows.size),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 8.dp),
+                        color = if (status == RegistrationStatus.CONFIRMED) MaterialTheme.colorScheme.primary else MtsTheme.colors.warning,
                     )
                 }
                 items(rows, key = { "$status-${it.emaId}" }) { row ->
@@ -458,26 +469,227 @@ internal fun RegistrationsTab(tournament: Tournament) {
 @Composable
 internal fun registrationPlacesText(confirmed: Int, maxPlayers: Int?, waiting: Int): String = stringResource(Res.string.preg_places, confirmed, maxPlayers?.toString() ?: "∞", waiting)
 
+/** The width under which the rows of the summary put their title over their value, as on a phone. */
+private val CompactSummaryWidth = 600.dp
+
+/**
+ * What everybody sees of the registrations, as the rows of one card, like the screen of the organizers: status, places
+ * and last day. Each row says in words what its value means.
+ */
+@Composable
+private fun RegistrationSummaryCard(settings: RegistrationSettings?) {
+    Card(Modifier.fillMaxWidth().testTag("registration-summary"), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < CompactSummaryWidth
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                val open = settings?.isOpen == true
+                SummaryRow(stringResource(Res.string.preg_status_label), compact) {
+                    val color = if (open) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+                        Text(
+                            stringResource(if (open) Res.string.preg_open else Res.string.preg_closed),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = color,
+                        )
+                    }
+                    SummaryDetail(stringResource(if (open) Res.string.preg_open_detail else Res.string.preg_closed_detail))
+                }
+                if (settings != null) {
+                    HorizontalDivider()
+                    SummaryRow(stringResource(Res.string.preg_places_label), compact) {
+                        val max = settings.maxPlayers
+                        Text(
+                            if (max == null) {
+                                stringResource(Res.string.preg_places_value_no_limit, settings.confirmed)
+                            } else {
+                                stringResource(Res.string.preg_places_value, settings.confirmed, max)
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        SummaryDetail(
+                            if (settings.waiting == 0) stringResource(Res.string.preg_waiting_none) else stringResource(Res.string.preg_waiting_value, settings.waiting),
+                        )
+                    }
+                    settings.closesOn?.let { closesOn ->
+                        HorizontalDivider()
+                        SummaryRow(stringResource(Res.string.preg_closes_label), compact) {
+                            Text(stringResource(Res.string.preg_closes_until, formatLocalizedDate(closesOn)), style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One row of the summary: the title in a column of its own, or over the value on a phone. */
+@Composable
+private fun SummaryRow(label: String, compact: Boolean, value: @Composable () -> Unit) {
+    val title: @Composable (Modifier) -> Unit = { modifier ->
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
+    }
+    if (compact) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            title(Modifier)
+            Column(Modifier.fillMaxWidth()) { value() }
+        }
+    } else {
+        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            title(Modifier.width(160.dp))
+            Column(Modifier.weight(1f)) { value() }
+        }
+    }
+}
+
+@Composable
+private fun SummaryDetail(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/**
+ * The own registration, or the invitation to register: a big line that says where the person is, what it can do, and
+ * its buttons.
+ */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onRegister: () -> Unit, onNoEma: () -> Unit) {
+    // The color of the state: green with a place, amber on the waiting list.
+    val accent = if (own?.status == RegistrationStatus.WAITING) MtsTheme.colors.warning else MaterialTheme.colorScheme.primary
+    Card(
+        Modifier.fillMaxWidth().testTag("registration-own"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = if (own == null || own.status == RegistrationStatus.PENDING) null else BorderStroke(1.dp, accent),
+    ) {
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            val (icon, tint) = when (own?.status) {
+                RegistrationStatus.CONFIRMED -> Icons.Default.CheckCircle to accent
+                RegistrationStatus.WAITING -> Icons.Default.HourglassTop to MtsTheme.colors.warning
+                RegistrationStatus.PENDING -> Icons.Default.MarkEmailUnread to MaterialTheme.colorScheme.primary
+                null -> Icons.Default.HowToReg to MaterialTheme.colorScheme.primary
+            }
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(32.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    when (own?.status) {
+                        RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place, own.position)
+                        RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting, own.position)
+                        RegistrationStatus.PENDING -> stringResource(Res.string.preg_mine_pending)
+                        null -> stringResource(Res.string.preg_join_title)
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (own == null || own.status == RegistrationStatus.PENDING) MaterialTheme.colorScheme.onSurface else accent,
+                    modifier = Modifier.testTag("registration-own-title"),
+                )
+                Text(
+                    when (own?.status) {
+                        RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place_detail)
+                        RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting_detail)
+                        RegistrationStatus.PENDING -> stringResource(Res.string.preg_status_pending)
+                        null -> stringResource(Res.string.preg_join_detail)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                FlowRow(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (own != null && own.status != RegistrationStatus.PENDING) {
+                        Button(onClick = onManage, modifier = Modifier.testTag("registration-manage")) {
+                            Icon(Icons.Default.Edit, contentDescription = null, Modifier.size(18.dp))
+                            Text(stringResource(Res.string.preg_manage), Modifier.padding(start = 8.dp))
+                        }
+                    } else if (own == null) {
+                        Button(onClick = onRegister, modifier = Modifier.testTag("registration-register")) {
+                            Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp))
+                            Text(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
+                        }
+                        TextButton(onClick = onNoEma) { Text(stringResource(Res.string.preg_no_ema)) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The team of the person is missing in a tournament with teams: big, in the colors of an error, with its button. */
+@Composable
+private fun TeamMissingCard(onSetUp: () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth().testTag("registration-team-missing"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer),
+    ) {
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(32.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(Res.string.preg_team_missing_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.preg_team_missing_detail), style = MaterialTheme.typography.bodyLarge)
+                Button(
+                    onClick = onSetUp,
+                    // The opposite colors of the card, so the button stands out on the red.
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onErrorContainer, contentColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.padding(top = 4.dp).testTag("registration-set-up-team"),
+                ) {
+                    Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(18.dp))
+                    Text(stringResource(Res.string.preg_team_missing_action), Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+/** The title of a list, with the bar of its color, as in the screen of the organizers. */
+@Composable
+private fun RegistrationSectionTitle(text: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(Modifier.width(4.dp).height(20.dp).clip(RoundedCornerShape(2.dp)).background(color))
+        Text(text, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** Registration photo size: the same as the rows of the ranking and of the screen of the organizers. */
+private val RegistrationPhotoSize = 36.dp
+
 @Composable
 private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams: Boolean, isMe: Boolean) {
+    val content = if (isMe) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = content,
         ),
     ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.widthIn(min = 28.dp))
-            CountryFlag(code = row.country, width = 22.dp)
-            Column(Modifier.weight(1f)) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
+            PlayerPhoto(photoUrl = row.photoUrl, name = row.name, size = RegistrationPhotoSize)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CountryFlag(code = row.country, width = 20.dp)
+                    Text(
+                        if (isMe) stringResource(Res.string.preg_me, row.name) else row.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                val details = listOfNotNull(stringResource(Res.string.preg_ema, row.emaId), if (isTeams) teamName ?: stringResource(Res.string.preg_without_team) else null)
                 Text(
-                    if (isMe) stringResource(Res.string.preg_me, row.name) else row.name,
-                    fontWeight = FontWeight.SemiBold,
+                    details.joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isMe) content else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val details = listOfNotNull(row.emaId, if (isTeams) teamName ?: stringResource(Res.string.preg_without_team) else null)
-                Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
