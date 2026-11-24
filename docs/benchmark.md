@@ -68,7 +68,13 @@ The script opens a tab by changing the saved tab of the screen in `sessionStorag
 on that tab. Each visit runs 3 times (`--samples`) on two profiles: a desktop, and a Pixel 7 with the CPU four times
 slower and a fast 4G network. The report gives the median.
 
-The page gets a stub of `telemetry.js`, so the benchmark sends nothing to Analytics and needs no consent.
+The page gets a stub of `telemetry.js`, so the benchmark sends nothing to Analytics and needs no consent. The stub
+goes in through the Fetch domain of Chrome, not a Playwright route: a route turns off the HTTP cache, and until
+24-nov-2026 every "warm" visit downloaded the whole app again.
+
+Before measuring, the script calls `/health` once and keeps that time apart (`apiWakeMs`). The API sleeps after a
+while without requests and its first answer then takes about 3.6 s; at 05:00 it always sleeps, and that cold start
+was hiding in the first screens.
 
 To run it on a computer:
 
