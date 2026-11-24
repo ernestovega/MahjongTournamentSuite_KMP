@@ -19,7 +19,8 @@ import { getTournament, tournamentContentWrites, type ContentWrite, type Tournam
  * again by the admin app, as at the creation, and the server writes them. See docs/player-count-change.md.
  *
  * - The people who stay keep their slot data (EMA player, name, country, pending email) and their slot number, and
- *   in a team tournament their team and its number.
+ *   in a team tournament their team and its number, unless the organizer moves them to another team of the tournament
+ *   to complete it.
  * - Fewer players: the organizer says which slots leave, a multiple of 4. With teams, the organizer marks people too,
  *   and a team that loses someone stays with the others, incomplete, until the teams are reorganized.
  * - More players: the new slots, numbered after the highest one, are empty ("Player N"), or take people of the
@@ -95,8 +96,8 @@ export function planPlayerCountChange(params: {
   const newTeamOf = new Map(newPlayers.map((player) => [player.id, player.team]));
   // The new draw keeps the numbers when every slot that stays is in it, with its team, and no new slot takes the number
   // of a slot that leaves.
-  const keepsNumbers = kept.every((slot) => newIds.has(slot.id) && (!params.isTeams || newTeamOf.get(slot.id) === slot.team)) &&
-    removed.every((id) => !newIds.has(id));
+  // With teams, a person who stays may change team when the organizer reorganizes the incomplete teams (Ernesto, 24-nov).
+  const keepsNumbers = kept.every((slot) => newIds.has(slot.id)) && removed.every((id) => !newIds.has(id));
 
   if (keepsNumbers) {
     const keptIds = new Set(kept.map((slot) => slot.id));
@@ -107,13 +108,15 @@ export function planPlayerCountChange(params: {
     });
     if (params.isTeams) {
       const currentTeamIds = new Set(current.map((slot) => slot.team));
-      const keptTeamIds = new Set(kept.map((slot) => slot.team));
       const newTeams = new Map<number, number[]>();
       newPlayers.forEach((player) => newTeams.set(player.team, [...(newTeams.get(player.team) ?? []), player.id]));
       for (const [team, ids] of newTeams) {
         if (team <= 0) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
-        if (keptTeamIds.has(team)) {
-          if (ids.some((id) => !keptIds.has(id))) return { problem: `Team ${team} gets a slot it did not have`, code: "BAD_DRAW" };
+        const keptMembers = ids.filter((id) => keptIds.has(id)).length;
+        if (keptMembers > 0) {
+          // A team of people who stay: one of the teams of now, with its number and name. It may have fewer than 4.
+          if (keptMembers !== ids.length) return { problem: `Team ${team} gets a slot it did not have`, code: "BAD_DRAW" };
+          if (!currentTeamIds.has(team)) return { problem: `Team ${team} is not a team of the tournament`, code: "BAD_DRAW" };
           teamSourceOf.set(team, team);
         } else {
           if (currentTeamIds.has(team)) return { problem: `Team ${team} left and cannot come back`, code: "BAD_DRAW" };

@@ -98,6 +98,8 @@ class PlayerCountPresenter(
         target: Int,
         removedSlotIds: List<Int>,
         waitingEmaIds: List<String>,
+        /** With teams, the people who stay and change team to complete one (the step Teams): slot to new team. */
+        teamMoves: Map<Int, Int> = emptyMap(),
         onProgress: (TournamentScheduleCalcProgress) -> Unit,
     ): AppResult<PlayerCountOutcome> {
         if (!PlayerCountRules.isValidTarget(tournament.numPlayers, target)) {
@@ -109,8 +111,9 @@ class PlayerCountPresenter(
             removedSlotIds = removedSlotIds,
             target = target,
             isTeams = tournament.isTeams,
+            teamMoves = teamMoves,
         )
-        // With teams, the teams that lost someone stay incomplete until they are reorganized (Ernesto, 24-nov).
+        // With teams, the teams that lost someone are completed in the step Teams, or stay incomplete (Ernesto, 24-nov).
         val schedule = generateSchedule.onSlots(
             slots = targets,
             numRounds = tournament.numRounds,

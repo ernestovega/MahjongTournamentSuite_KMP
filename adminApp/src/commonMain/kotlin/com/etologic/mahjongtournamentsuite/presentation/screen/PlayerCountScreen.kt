@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -140,7 +142,16 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_saving
 import mahjongtournamentsuite.adminapp.generated.resources.pc_step_choose
 import mahjongtournamentsuite.adminapp.generated.resources.pc_step_done
 import mahjongtournamentsuite.adminapp.generated.resources.pc_step_review
+import mahjongtournamentsuite.adminapp.generated.resources.pc_step_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_sure_text
+import mahjongtournamentsuite.adminapp.generated.resources.pc_team_changes
+import mahjongtournamentsuite.adminapp.generated.resources.pc_team_count
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_complete
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_hint
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_incomplete
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_propose
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_reset
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
 import mahjongtournamentsuite.adminapp.generated.resources.pc_waiting_none
 import mahjongtournamentsuite.adminapp.generated.resources.pc_waiting_title
@@ -174,6 +185,8 @@ fun PlayerCountScreen(
     var error by remember { mutableStateOf<UiText?>(null) }
     var form by rememberSaveable(tournamentId, stateSaver = PlayerCountForm.Saver) { mutableStateOf(PlayerCountForm()) }
     var reviewing by rememberSaveable(tournamentId) { mutableStateOf(false) }
+    // With teams, the step to reorganize the teams that stay incomplete (Ernesto, 24-nov).
+    var teaming by rememberSaveable(tournamentId) { mutableStateOf(false) }
     var sure by remember { mutableStateOf(false) }
     var working by remember { mutableStateOf(false) }
     var tries by remember { mutableStateOf<Long?>(null) }
@@ -196,16 +209,20 @@ fun PlayerCountScreen(
     PlatformBackHandler(enabled = working) {}
 
     val loaded = data
+    val withTeams = tournament != null && loaded != null && form.needsTeams(tournament, loaded)
+    val review = if (withTeams) 2 else 1
     val step = when {
         tournament == null || blocker != null -> null
-        result != null -> 2
+        result != null -> review + 1
         loaded == null -> null
-        working || reviewing -> 1
+        working || reviewing -> review
+        teaming && withTeams -> 1
         else -> 0
     }
     PlayerCountFrame(
         subtitle = tournament?.name,
         step = step,
+        withTeams = withTeams,
         isLoading = blocker == null && (tournament == null || loaded == null),
         onBack = if (working) null else onBack,
     ) {
@@ -240,14 +257,23 @@ fun PlayerCountScreen(
             reviewing -> ReviewContent(
                 summary = PlayerCountSummary.of(tournament, loaded, form),
                 onConfirm = { sure = true },
+                // Back goes to the step before: the teams, when there is that step.
                 onBack = { reviewing = false },
+            )
+            teaming && withTeams -> TeamsContent(
+                data = loaded,
+                form = form,
+                onFormChange = { form = it },
+                onContinue = { reviewing = true },
+                onBack = { teaming = false },
             )
             else -> ChooseContent(
                 tournament = tournament,
                 data = loaded,
                 form = form,
-                onFormChange = { form = it },
-                onContinue = { reviewing = true },
+                // Other people leaving make other teams: the moves start again.
+                onFormChange = { form = if (it.chosen != form.chosen) it.copy(teamMoves = emptyMap()) else it },
+                onContinue = { if (withTeams) teaming = true else reviewing = true },
                 onCancel = onBack,
             )
         }
@@ -264,7 +290,7 @@ fun PlayerCountScreen(
                 scope.launch {
                     val removed = PlayerCountRules.removedSlots(form.chosen)
                     val target = form.targetOf(tournament)
-                    val changed = presenter.change(tournament, loaded.slots, target, removed, form.waiting) {
+                    val changed = presenter.change(tournament, loaded.slots, target, removed, form.waiting, form.teamMoves) {
                         tries = it.tried
                         backup = it.backup
                     }
@@ -297,7 +323,17 @@ internal data class PlayerCountForm(
     val waiting: List<String> = emptyList(),
     /** The search of the list: it only hides lines, the people marked stay marked. */
     val query: String = "",
+    /** With teams, the people who stay and change team to complete one: slot to its new team. */
+    val teamMoves: Map<Int, Int> = emptyMap(),
 ) {
+    /** True when, with teams, some team stays incomplete after the removal: the step Teams shows. */
+    fun needsTeams(tournament: Tournament, data: PlayerCountData): Boolean =
+        tournament.isTeams && chosen.isNotEmpty() && PlayerCountRules.incompleteTeams(data.players(), chosen).isNotEmpty()
+
+    /** [slot] goes to [team]; back in its own team it is not a move. */
+    fun movedTo(slot: PlayerCountSlot, team: Int): PlayerCountForm =
+        copy(teamMoves = if (team == slot.team) teamMoves - slot.id else teamMoves + (slot.id to team))
+
     fun toggleChosen(id: Int, max: Int): PlayerCountForm = when {
         id in chosen -> copy(chosen = chosen - id)
         chosen.size < max && addedTables == 0 -> copy(chosen = chosen + id)
@@ -319,7 +355,7 @@ internal data class PlayerCountForm(
     companion object {
         /** Keeps the choice through a recreation of the screen, such as a rotation. */
         val Saver: Saver<PlayerCountForm, Any> = Saver(
-            save = { listOf(it.chosen.toList(), it.addedTables, it.waiting, it.query) },
+            save = { listOf(it.chosen.toList(), it.addedTables, it.waiting, it.query, it.teamMoves.flatMap { (slot, team) -> listOf(slot, team) }) },
             restore = { saved ->
                 val values = saved as List<*>
                 PlayerCountForm(
@@ -327,6 +363,7 @@ internal data class PlayerCountForm(
                     addedTables = values[1] as Int,
                     waiting = (values[2] as List<*>).map { it as String },
                     query = values[3] as String,
+                    teamMoves = (values[4] as List<*>).map { it as Int }.chunked(2).associate { it[0] to it[1] },
                 )
             },
         )
@@ -343,6 +380,8 @@ internal data class PlayerCountSummary(
     val leaving: List<String>,
     /** The teams that stay incomplete, as "Team A (1)": they are reorganized afterwards. */
     val brokenTeams: List<String>,
+    /** The people who change team in the step Teams, as "#4 · Ana → Tigers". */
+    val teamChanges: List<String> = emptyList(),
     val newSlots: Int,
     val fromWaiting: List<String>,
 ) {
@@ -350,11 +389,15 @@ internal data class PlayerCountSummary(
         fun of(tournament: Tournament, data: PlayerCountData, form: PlayerCountForm): PlayerCountSummary {
             val leaving = data.slots.filter { it.id in form.chosen }.map { it.label() }
             val teamNames = data.teams.associate { it.id to it.name }
-            val broken = if (tournament.isTeams) {
-                PlayerCountRules.brokenTeams(data.slots.map { TournamentPlayer(it.id, it.name, it.team) }, form.chosen)
+            val broken = if (tournament.isTeams && form.chosen.isNotEmpty()) {
+                PlayerCountRules.incompleteTeams(data.players(), form.chosen, form.teamMoves)
                     .map { (team, kept) -> "${teamNames[team] ?: "Team $team"} (${kept.size})" }
             } else {
                 emptyList()
+            }
+            val changes = data.slots.filter { it.id in form.teamMoves && it.id !in form.chosen }.map { slot ->
+                val team = form.teamMoves.getValue(slot.id)
+                "${slot.label()} → ${teamNames[team] ?: "Team $team"}"
             }
             val waitingNames = data.waiting.associate { it.emaId to it.name }
             val target = form.targetOf(tournament)
@@ -366,6 +409,7 @@ internal data class PlayerCountSummary(
                 hasRegistrations = tournament.registration != null,
                 leaving = leaving,
                 brokenTeams = broken,
+                teamChanges = changes,
                 newSlots = PlayerCountRules.newSlots(tournament.numPlayers, target),
                 fromWaiting = form.waiting.map { waitingNames[it] ?: it },
             )
@@ -374,6 +418,9 @@ internal data class PlayerCountSummary(
 }
 
 internal fun PlayerCountSlot.label(): String = "#$id · $name"
+
+/** The slots as the rules of the domain read them: number and team. */
+internal fun PlayerCountData.players(): List<TournamentPlayer> = slots.map { TournamentPlayer(it.id, it.name, it.team) }
 
 /** The lines that match the search: by slot number, name, EMA number or the name of the team. */
 internal fun PlayerCountSlot.matches(query: String, teamName: String? = null): Boolean = query.isBlank() ||
@@ -389,6 +436,8 @@ internal fun PlayerCountFrame(
     subtitle: String?,
     step: Int?,
     isLoading: Boolean = false,
+    /** With the step Teams, between choosing and reviewing. */
+    withTeams: Boolean = false,
     onBack: (() -> Unit)?,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -405,17 +454,18 @@ internal fun PlayerCountFrame(
             contentPadding = PaddingValues(horizontal = MtsTheme.layout.screenGutter, vertical = MtsTheme.spacing.lg),
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
         ) {
-            if (step != null) StepIndicator(step)
+            if (step != null) StepIndicator(step, withTeams)
             content()
         }
     }
 }
 
-/** The three steps, with the current one highlighted: choose, review, done. */
+/** The steps, with the current one highlighted: choose, (teams,) review, done. */
 @Composable
-private fun StepIndicator(current: Int) {
-    val labels = listOf(
+private fun StepIndicator(current: Int, withTeams: Boolean) {
+    val labels = listOfNotNull(
         stringResource(Res.string.pc_step_choose),
+        if (withTeams) stringResource(Res.string.pc_step_teams) else null,
         stringResource(Res.string.pc_step_review),
         stringResource(Res.string.pc_step_done),
     )
@@ -695,6 +745,120 @@ private fun ChoiceRow(title: String, detail: String?, checked: Boolean, enabled:
     }
 }
 
+/**
+ * With teams, the step between choosing and reviewing: the teams that lost people, with who is left in each. Each
+ * person can go to another of those teams, and Propose completes them with few moves (Ernesto, 22 and 24-nov).
+ */
+@Composable
+internal fun ColumnScope.TeamsContent(
+    data: PlayerCountData,
+    form: PlayerCountForm,
+    onFormChange: (PlayerCountForm) -> Unit,
+    onContinue: () -> Unit,
+    onBack: () -> Unit,
+) {
+    val players = data.players()
+    val teamNames = data.teams.associate { it.id to it.name }
+    fun nameOf(team: Int) = teamNames[team] ?: "Team $team"
+    // The teams in play: the incomplete ones, and the ones a move touched (complete now, or left without people).
+    val involved = (
+        PlayerCountRules.incompleteTeams(players, form.chosen).keys +
+            form.teamMoves.values +
+            data.slots.filter { it.id in form.teamMoves }.map { it.team }
+        ).toSortedSet()
+    val after = PlayerCountRules.teamsAfter(players, form.chosen, form.teamMoves).filterKeys { it in involved }
+    val open = PlayerCountRules.incompleteTeams(players, form.chosen, form.teamMoves)
+    val slotsById = data.slots.associateBy { it.id }
+    ScrollableColumnWithScrollbar(
+        state = rememberScrollState(),
+        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountTeams"),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
+        scrollbar = MtsScrollbar.Margin,
+    ) {
+        SectionTitle(stringResource(Res.string.pc_teams_title))
+        Hint(stringResource(Res.string.pc_teams_hint))
+        Text(
+            if (open.isEmpty()) stringResource(Res.string.pc_teams_complete) else stringResource(Res.string.pc_teams_incomplete, open.size),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (open.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            modifier = Modifier.testTag("playerCountTeamsStatus"),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = { onFormChange(form.copy(teamMoves = PlayerCountRules.proposeTeams(players, form.chosen, form.teamMoves))) },
+                enabled = open.size >= 2,
+                buttonModifier = Modifier.testTag("playerCountPropose"),
+            ) { Text(stringResource(Res.string.pc_teams_propose)) }
+            TextButton(
+                onClick = { onFormChange(form.copy(teamMoves = emptyMap())) },
+                enabled = form.teamMoves.isNotEmpty(),
+                modifier = Modifier.testTag("playerCountTeamsReset"),
+            ) { Text(stringResource(Res.string.pc_teams_reset)) }
+        }
+        after.forEach { (team, members) ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().testTag("playerCountTeam-$team")) {
+                HorizontalDivider()
+                Text(
+                    stringResource(Res.string.pc_team_count, nameOf(team), members.size),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (members.size < PlayerCountRules.STEP) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                )
+                members.forEach { id ->
+                    val slot = slotsById.getValue(id)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TeamPicker(
+                            slotId = id,
+                            current = team,
+                            options = involved.map { it to (after[it]?.size ?: 0) },
+                            nameOf = ::nameOf,
+                            onPick = { onFormChange(form.movedTo(slot, it)) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+    MtsDialogButtons {
+        Button(
+            onClick = onContinue,
+            buttonModifier = Modifier.testTag("playerCountTeamsContinue"),
+        ) { Text(stringResource(Res.string.pc_continue)) }
+        TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountTeamsBack")) { Text(stringResource(Res.string.pc_back)) }
+    }
+}
+
+/** The team of a person in the step Teams: a button with its name, and a menu of the teams in play with how many they have. */
+@Composable
+private fun TeamPicker(slotId: Int, current: Int, options: List<Pair<Int, Int>>, nameOf: (Int) -> String, onPick: (Int) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(
+            onClick = { open = true },
+            buttonModifier = Modifier.testTag("playerCountMove-$slotId"),
+        ) { Text(nameOf(current)) }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            options.forEach { (team, count) ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.pc_team_count, nameOf(team), count)) },
+                    enabled = team == current || count < PlayerCountRules.STEP,
+                    modifier = Modifier.testTag("playerCountMoveTo-$slotId-$team"),
+                    onClick = {
+                        open = false
+                        if (team != current) onPick(team)
+                    },
+                )
+            }
+        }
+    }
+}
+
 /** The second step: what the new draw deletes, adds and keeps, and how the draw works. */
 @Composable
 internal fun ColumnScope.ReviewContent(
@@ -724,6 +888,9 @@ internal fun ColumnScope.ReviewContent(
                 if (summary.leaving.isNotEmpty()) {
                     // Each person and each team on its own line, under its bullet (Ernesto, 24-nov).
                     add(BulletItem(stringResource(Res.string.pc_removed_people), summary.leaving, "playerCountLeaving"))
+                    if (summary.teamChanges.isNotEmpty()) {
+                        add(BulletItem(stringResource(Res.string.pc_team_changes), summary.teamChanges, "playerCountTeamChanges"))
+                    }
                     if (summary.brokenTeams.isNotEmpty()) {
                         add(BulletItem(stringResource(Res.string.pc_broken_teams), summary.brokenTeams, "playerCountBrokenTeams"))
                     }

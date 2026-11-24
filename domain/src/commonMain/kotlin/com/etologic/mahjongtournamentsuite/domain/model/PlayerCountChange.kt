@@ -64,17 +64,64 @@ object PlayerCountRules {
     }
 
     /**
+     * The teams after the removal and the moves of the organizer ([teamMoves]: slot to its new team), with their
+     * players: every team that keeps at least one person.
+     */
+    fun teamsAfter(slots: List<TournamentPlayer>, removedSlotIds: Collection<Int>, teamMoves: Map<Int, Int> = emptyMap()): Map<Int, List<Int>> {
+        val removed = removedSlotIds.toSet()
+        return slots.filter { it.team > 0 && it.id !in removed }
+            .groupBy({ teamMoves[it.id] ?: it.team }, { it.id })
+            .mapValues { (_, ids) -> ids.sorted() }
+            .toSortedMap().toMap()
+    }
+
+    /** The teams that have fewer than 4 players after the removal and the moves. */
+    fun incompleteTeams(slots: List<TournamentPlayer>, removedSlotIds: Collection<Int>, teamMoves: Map<Int, Int> = emptyMap()): Map<Int, List<Int>> =
+        teamsAfter(slots, removedSlotIds, teamMoves).filterValues { it.size < STEP }
+
+    /**
+     * A proposal to complete the teams (Ernesto, 22 and 24-nov): the most complete of the incomplete teams takes, one by
+     * one, the players of the least complete one, until every team has 4 or nobody. The people who leave are a multiple
+     * of 4, so the teams always close. Returns the moves, slot to new team, starting from [teamMoves]; a slot back in
+     * its own team is not a move.
+     */
+    fun proposeTeams(slots: List<TournamentPlayer>, removedSlotIds: Collection<Int>, teamMoves: Map<Int, Int> = emptyMap()): Map<Int, Int> {
+        val teams = incompleteTeams(slots, removedSlotIds, teamMoves).mapValues { it.value.toMutableList() }.toMutableMap()
+        val moves = teamMoves.toMutableMap()
+        while (true) {
+            val open = teams.filterValues { it.isNotEmpty() && it.size < STEP }
+            if (open.size < 2) break
+            // Ties go to the lower team number: the same proposal every time.
+            val target = open.entries.sortedWith(compareByDescending<Map.Entry<Int, MutableList<Int>>> { it.value.size }.thenBy { it.key }).first().key
+            val donor = open.entries.filter { it.key != target }.sortedWith(compareBy<Map.Entry<Int, MutableList<Int>>> { it.value.size }.thenByDescending { it.key }).first().key
+            val moved = teams.getValue(donor).max()
+            teams.getValue(donor).remove(moved)
+            teams.getValue(target).add(moved)
+            moves[moved] = target
+        }
+        val own = slots.associate { it.id to it.team }
+        return moves.filter { (slot, team) -> own[slot] != team }
+    }
+
+    /**
      * The slots of the new draw: the slots that stay keep their number and their team, and the new ones take the
      * numbers after the highest one (and with teams, the team numbers after the highest team), in groups of 4.
      * Nobody who stays changes number (Ernesto, 22-nov), so the numbers can have gaps after a removal.
      */
-    fun targetSlots(current: List<TournamentPlayer>, removedSlotIds: Collection<Int>, target: Int, isTeams: Boolean): List<TournamentPlayer> {
+    fun targetSlots(
+        current: List<TournamentPlayer>,
+        removedSlotIds: Collection<Int>,
+        target: Int,
+        isTeams: Boolean,
+        /** With teams, the new team of the people who stay and change team (the step Teams). */
+        teamMoves: Map<Int, Int> = emptyMap(),
+    ): List<TournamentPlayer> {
         val removed = removedSlotIds.toSet()
         val kept = current.filter { it.id !in removed }.sortedBy { it.id }
         val added = (target - kept.size).coerceAtLeast(0)
         val firstId = (current.maxOfOrNull { it.id } ?: 0) + 1
         val firstTeam = (current.maxOfOrNull { it.team } ?: 0) + 1
-        val keptSlots = kept.map { TournamentPlayer(id = it.id, name = "Player ${it.id}", team = if (isTeams) it.team else 0) }
+        val keptSlots = kept.map { TournamentPlayer(id = it.id, name = "Player ${it.id}", team = if (isTeams) teamMoves[it.id] ?: it.team else 0) }
         val newSlots = (0 until added).map { index ->
             val id = firstId + index
             TournamentPlayer(id = id, name = "Player $id", team = if (isTeams) firstTeam + index / STEP else 0)

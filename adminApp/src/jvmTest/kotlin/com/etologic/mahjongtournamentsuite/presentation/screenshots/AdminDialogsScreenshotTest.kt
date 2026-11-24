@@ -1,22 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
-import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
-import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
-import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
-import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
-import com.etologic.mahjongtournamentsuite.presentation.screen.ChooseContent
-import com.etologic.mahjongtournamentsuite.presentation.screen.DoneContent
-import com.etologic.mahjongtournamentsuite.presentation.screen.LockedContent
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
-import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
-import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.TablesIdsDialogContent
-import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import androidx.compose.foundation.layout.ColumnScope
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -25,13 +9,17 @@ import androidx.compose.ui.test.performScrollTo
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -40,8 +28,6 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardStaffCandidate
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
@@ -49,17 +35,23 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDat
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountWaiting
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcome
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountOutcomeDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.AccountPermissionsDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.ChooseContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteOrganizationDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.DeleteRoleDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.DoneContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerDeletesResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.EmaPlayerPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.HandNotDone
 import com.etologic.mahjongtournamentsuite.presentation.screen.HandsNotDoneDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.LockedContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.MakeDrawDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.MissingEmailsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.NewRoleNameDialog
@@ -68,10 +60,14 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationEdito
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsResultDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountForm
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountFrame
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountSummary
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerWithData
 import com.etologic.mahjongtournamentsuite.presentation.screen.RemoveFromOrganizationsDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleDraft
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleEditorDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
@@ -80,19 +76,24 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerControl
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendSummaryDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.SureDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdateNotice
 import com.etologic.mahjongtournamentsuite.presentation.screen.TableUpdatesDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.TablesIdsDialogContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.UserDeletesConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.UserDeletesResultDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.WorkingContent
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
-import org.koin.compose.koinInject
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import kotlin.test.Test
 
 /** Every dialog of the admin app, on a phone and on a desktop, light and dark. */
@@ -193,14 +194,27 @@ class AdminDialogsScreenshotTest {
         )
     }
 
+    /** With teams, the step to complete the teams that lost people: each person can go to another of them, or Propose. */
+    @Test
+    fun playerCountTeams() = playerCountScreen("player-count-teams", step = 1, withTeams = true) {
+        TeamsContent(
+            data = playerCountTeamsData(20),
+            form = PlayerCountForm(chosen = setOf(2, 6, 7, 11)),
+            onFormChange = {},
+            onContinue = {},
+            onBack = {},
+        )
+    }
+
     /** The review with teams: the teams that stay incomplete, to reorganize afterwards. */
     @Test
-    fun playerCountConfirmTeams() = playerCountScreen("player-count-confirm-teams", step = 1) {
+    fun playerCountConfirmTeams() = playerCountScreen("player-count-confirm-teams", step = 2, withTeams = true) {
         ReviewContent(
             summary = PlayerCountSummary(
                 from = 20, to = 16, rounds = 7, isTeams = true, hasRegistrations = false,
                 leaving = listOf(2, 6, 7, 11).map { "#$it · " + nameOf(it) },
-                brokenTeams = listOf(TEAM_NAMES[0] + " (3)", TEAM_NAMES[1] + " (2)", TEAM_NAMES[2] + " (3)"),
+                teamChanges = listOf("#12 · " + nameOf(12) + " → " + TEAM_NAMES[1]),
+                brokenTeams = listOf(TEAM_NAMES[0] + " (3)", TEAM_NAMES[2] + " (2)"),
                 newSlots = 0, fromWaiting = emptyList(),
             ),
             onConfirm = {},
@@ -289,8 +303,8 @@ class AdminDialogsScreenshotTest {
 
     private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
 
-    private fun playerCountScreen(name: String, step: Int? = 0, content: @Composable ColumnScope.() -> Unit) =
-        adminScreenshots(name) { PlayerCountFrame(subtitle = "Madrid Open 2026", step = step, onBack = {}, content = content) }
+    private fun playerCountScreen(name: String, step: Int? = 0, withTeams: Boolean = false, content: @Composable ColumnScope.() -> Unit) =
+        adminScreenshots(name) { PlayerCountFrame(subtitle = "Madrid Open 2026", step = step, withTeams = withTeams, onBack = {}, content = content) }
 
     private fun playerCountData(count: Int) = PlayerCountData(
         slots = (1..count).map { id -> PlayerCountSlot(id, nameOf(id), "1099${id.toString().padStart(4, '0')}", 0) },
