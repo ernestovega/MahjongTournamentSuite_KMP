@@ -47,6 +47,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_FOOD_RESTRICTIONS_LENGTH
 import com.etologic.mahjongtournamentsuite.domain.model.MAX_REGISTRATION_TEAM_NAME_LENGTH
+import com.etologic.mahjongtournamentsuite.domain.model.MY_TABLE_PATH_WORD
 import com.etologic.mahjongtournamentsuite.domain.model.NoEmaNumberRequest
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -55,7 +56,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.REGISTRATION_TEAM_SIZE
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterRequest
 import com.etologic.mahjongtournamentsuite.domain.model.RegisterResult
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
-import com.etologic.mahjongtournamentsuite.domain.model.MY_TABLE_PATH_WORD
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
@@ -80,6 +80,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -133,6 +134,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_rename_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_save
 import mahjongtournamentsuite.playerapp.generated.resources.preg_search_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_send
+import mahjongtournamentsuite.playerapp.generated.resources.preg_shared_email_note
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_pending
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_place
 import mahjongtournamentsuite.playerapp.generated.resources.preg_status_waiting
@@ -682,6 +684,15 @@ private fun ManageRegistrationDialog(
             text = {
                 Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    if (own.sharedEmail) {
+                        Text(
+                            stringResource(Res.string.preg_shared_email_note, own.email),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MtsTheme.colors.warning,
+                            modifier = Modifier.testTag("registration-shared-email"),
+                        )
+                        HorizontalDivider()
+                    }
                     FoodFields(food, { food = it }, consent, { consent = it })
                     TextButton(
                         enabled = !busy && (food.isBlank() || consent) && food != own.foodRestrictions,

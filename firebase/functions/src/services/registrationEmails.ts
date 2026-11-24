@@ -43,6 +43,8 @@ type Texts = {
   noEmaBody: (t: string, person: string) => string;
   noEmaHint: string;
   noEmaMessage: string;
+  /** Another registration of the tournament has the same email: fine, but one email has only one account. */
+  sharedEmailNote: string;
 };
 
 const en: Texts = {
@@ -80,6 +82,7 @@ const en: Texts = {
   noEmaBody: (t, p) => `${p} wants to register in ${t} and has no EMA number.`,
   noEmaHint: "Add the person in the EMA players of the management app, and then add the registration in Registrations. Reply to this email to write to the person.",
   noEmaMessage: "Message:",
+  sharedEmailNote: "Another registration of this tournament has this same email. That is fine: one email can register several people, for example a parent and a child. But one email can have only one account in the app: whoever wants their own account needs their own email. Many providers, such as Gmail, take an alias with +, for example name+child@gmail.com: it reaches the same inbox and counts as another email.",
 };
 
 const es: Texts = {
@@ -117,6 +120,7 @@ const es: Texts = {
   noEmaBody: (t, p) => `${p} quiere inscribirse en ${t} y no tiene número EMA.`,
   noEmaHint: "Da de alta a la persona en Jugadores EMA de la app de gestión y añade después su inscripción en Inscripciones. Responde a este correo para escribir a la persona.",
   noEmaMessage: "Mensaje:",
+  sharedEmailNote: "Otra inscripción de este torneo tiene este mismo email. No pasa nada: un email puede inscribir a varias personas, por ejemplo a un padre y a su hijo. Pero un email solo puede tener una cuenta en la app: quien quiera su propia cuenta necesita su propio email. Muchos proveedores, como Gmail, aceptan un alias con +, por ejemplo nombre+hijo@gmail.com: llega al mismo buzón y cuenta como otro email.",
 };
 
 const fr: Texts = {
@@ -154,6 +158,7 @@ const fr: Texts = {
   noEmaBody: (t, p) => `${p} veut s'inscrire à ${t} et n'a pas de numéro EMA.`,
   noEmaHint: "Ajoutez la personne dans les joueurs EMA de l'app de gestion, puis ajoutez son inscription dans Inscriptions. Répondez à cet e-mail pour écrire à la personne.",
   noEmaMessage: "Message :",
+  sharedEmailNote: "Une autre inscription à ce tournoi a ce même email. Ce n'est pas un problème : un email peut inscrire plusieurs personnes, par exemple un parent et son enfant. Mais un email ne peut avoir qu'un seul compte dans l'app : qui veut son propre compte a besoin de son propre email. Beaucoup de fournisseurs, comme Gmail, acceptent un alias avec +, par exemple nom+enfant@gmail.com : il arrive dans la même boîte et compte comme un autre email.",
 };
 
 const it: Texts = {
@@ -191,6 +196,7 @@ const it: Texts = {
   noEmaBody: (t, p) => `${p} vuole iscriversi a ${t} e non ha un numero EMA.`,
   noEmaHint: "Aggiungi la persona nei giocatori EMA dell'app di gestione e poi aggiungi la sua iscrizione in Iscrizioni. Rispondi a questa email per scrivere alla persona.",
   noEmaMessage: "Messaggio:",
+  sharedEmailNote: "Un'altra iscrizione a questo torneo ha questa stessa email. Va bene: un'email può iscrivere più persone, per esempio un genitore e un figlio. Ma un'email può avere un solo account nell'app: chi vuole un proprio account ha bisogno di una propria email. Molti provider, come Gmail, accettano un alias con +, per esempio nome+figlio@gmail.com: arriva nella stessa casella e conta come un'altra email.",
 };
 
 const de: Texts = {
@@ -228,6 +234,7 @@ const de: Texts = {
   noEmaBody: (t, p) => `${p} möchte sich für ${t} anmelden und hat keine EMA-Nummer.`,
   noEmaHint: "Lege die Person in den EMA-Spielern der Verwaltungs-App an und füge dann ihre Anmeldung unter Anmeldungen hinzu. Antworte auf diese E-Mail, um der Person zu schreiben.",
   noEmaMessage: "Nachricht:",
+  sharedEmailNote: "Eine andere Anmeldung für dieses Turnier hat dieselbe E-Mail. Das ist in Ordnung: Mit einer E-Mail kann man mehrere Personen anmelden, zum Beispiel ein Elternteil und ein Kind. Aber eine E-Mail kann nur ein Konto in der App haben: Wer ein eigenes Konto möchte, braucht eine eigene E-Mail. Viele Anbieter wie Gmail nehmen einen Alias mit +, zum Beispiel name+kind@gmail.com: Er landet im selben Postfach und zählt als andere E-Mail.",
 };
 
 const sv: Texts = {
@@ -265,6 +272,7 @@ const sv: Texts = {
   noEmaBody: (t, p) => `${p} vill anmäla sig till ${t} och har inget EMA-nummer.`,
   noEmaHint: "Lägg till personen bland EMA-spelarna i administrationsappen och lägg sedan till anmälan under Anmälningar. Svara på det här mejlet för att skriva till personen.",
   noEmaMessage: "Meddelande:",
+  sharedEmailNote: "En annan anmälan till den här turneringen har samma e-post. Det går bra: en e-post kan anmäla flera personer, till exempel en förälder och ett barn. Men en e-post kan bara ha ett konto i appen: den som vill ha ett eget konto behöver en egen e-post. Många leverantörer, som Gmail, tar ett alias med +, till exempel namn+barn@gmail.com: det kommer till samma inkorg och räknas som en annan e-post.",
 };
 
 const nl: Texts = {
@@ -302,6 +310,7 @@ const nl: Texts = {
   noEmaBody: (t, p) => `${p} wil zich inschrijven voor ${t} en heeft geen EMA-nummer.`,
   noEmaHint: "Voeg de persoon toe bij de EMA-spelers van de beheerapp en voeg daarna de inschrijving toe bij Inschrijvingen. Beantwoord deze e-mail om de persoon te schrijven.",
   noEmaMessage: "Bericht:",
+  sharedEmailNote: "Een andere inschrijving voor dit toernooi heeft hetzelfde e-mailadres. Dat is geen probleem: met één e-mailadres kun je meerdere mensen inschrijven, bijvoorbeeld een ouder en een kind. Maar één e-mailadres kan maar één account in de app hebben: wie een eigen account wil, heeft een eigen e-mailadres nodig. Veel providers, zoals Gmail, accepteren een alias met +, bijvoorbeeld naam+kind@gmail.com: die komt in dezelfde inbox en telt als een ander e-mailadres.",
 };
 
 const ru: Texts = {
@@ -339,6 +348,7 @@ const ru: Texts = {
   noEmaBody: (t, p) => `${p} хочет зарегистрироваться на ${t}, но у него/неё нет номера EMA.`,
   noEmaHint: "Добавьте человека в игроков EMA в приложении управления, а затем добавьте его регистрацию в разделе «Регистрация». Ответьте на это письмо, чтобы написать человеку.",
   noEmaMessage: "Сообщение:",
+  sharedEmailNote: "У другой регистрации на этот турнир тот же email. Это нормально: с одного email можно зарегистрировать нескольких человек, например родителя и ребёнка. Но у одного email может быть только один аккаунт в приложении: кому нужен свой аккаунт, нужен свой email. Многие почтовые сервисы, например Gmail, принимают адрес с +, например name+child@gmail.com: письма приходят в тот же ящик, а адрес считается другим.",
 };
 
 const TEXTS: Record<Language, Texts> = { en, es, fr, it, de, sv, nl, ru };
@@ -368,18 +378,18 @@ function build(email: Paragraphs): BuiltRegistrationEmail {
   return { subject: email.subject.replace(/[\u0000-\u001f\u007f]+/g, " ").trim(), text: textParts.join("\n\n"), html };
 }
 
-export function verifyEmail(language: Language, p: { tournament: string; person: string; link: string }): BuiltRegistrationEmail {
+export function verifyEmail(language: Language, p: { tournament: string; person: string; link: string; sharedEmail?: boolean }): BuiltRegistrationEmail {
   const t = TEXTS[language];
   return build({
     subject: t.verifySubject(p.tournament),
-    paragraphs: [t.verifyBody(p.tournament, p.person), t.verifyIgnore],
+    paragraphs: [t.verifyBody(p.tournament, p.person), ...(p.sharedEmail ? [t.sharedEmailNote] : []), t.verifyIgnore],
     action: { label: t.verifyAction, link: p.link },
   });
 }
 
 export function registeredEmail(
   language: Language,
-  p: { tournament: string; person: string; link: string; waitingPosition: number | null },
+  p: { tournament: string; person: string; link: string; waitingPosition: number | null; sharedEmail?: boolean },
 ): BuiltRegistrationEmail {
   const t = TEXTS[language];
   const waiting = p.waitingPosition != null;
@@ -387,6 +397,7 @@ export function registeredEmail(
     subject: waiting ? t.waitingSubject(p.tournament) : t.confirmedSubject(p.tournament),
     paragraphs: [
       waiting ? t.waitingBody(p.tournament, p.person, p.waitingPosition ?? 0) : t.confirmedBody(p.tournament, p.person),
+      ...(p.sharedEmail ? [t.sharedEmailNote] : []),
       t.manageIntro,
     ],
     action: { label: t.manageAction, link: p.link },
