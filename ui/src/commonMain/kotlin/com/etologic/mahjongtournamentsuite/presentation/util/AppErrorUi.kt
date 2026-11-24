@@ -45,6 +45,7 @@ import mahjongtournamentsuite.ui.generated.resources.registration_error_tourname
 import mahjongtournamentsuite.ui.generated.resources.registration_error_ema_not_found
 import mahjongtournamentsuite.ui.generated.resources.registration_error_empty_file
 import mahjongtournamentsuite.ui.generated.resources.registration_error_food_too_long
+import mahjongtournamentsuite.ui.generated.resources.registration_error_import_problems
 import mahjongtournamentsuite.ui.generated.resources.registration_error_incomplete_teams
 import mahjongtournamentsuite.ui.generated.resources.registration_error_invalid_close_date
 import mahjongtournamentsuite.ui.generated.resources.registration_error_invalid_email
@@ -101,6 +102,7 @@ fun AppError.toUiText(): UiText = when (this) {
         RegistrationErrorCode.EMA_NOT_FOUND -> UiText.of(Res.string.registration_error_ema_not_found)
         RegistrationErrorCode.EMPTY_FILE -> UiText.of(Res.string.registration_error_empty_file)
         RegistrationErrorCode.FOOD_TOO_LONG -> UiText.of(Res.string.registration_error_food_too_long)
+        RegistrationErrorCode.IMPORT_PROBLEMS -> UiText.of(Res.string.registration_error_import_problems, args.joinToString(", "))
         RegistrationErrorCode.INCOMPLETE_TEAMS -> UiText.of(Res.string.registration_error_incomplete_teams, args.joinToString(", "))
         RegistrationErrorCode.INVALID_CLOSE_DATE -> UiText.of(Res.string.registration_error_invalid_close_date)
         RegistrationErrorCode.INVALID_EMAIL -> UiText.of(Res.string.registration_error_invalid_email)

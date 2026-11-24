@@ -1048,14 +1048,21 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_closes_on_optional">Sista anmälningsdag (valfritt)</string>
     <string name="reg_link_name">Namn på den publika länken</string>
     <string name="reg_import_title">Importera Google-formuläret</string>
-    <string name="reg_import_ready">%1$d av %2$d rader kan importeras.</string>
+    <string name="reg_import_ready">%1$d rader importeras.</string>
+    <string name="reg_import_with_problems">Rader med problem importeras också, markerade i listan, så att du kan rätta dem där.</string>
+    <string name="reg_file_ema">I filen: %1$s</string>
+    <string name="reg_choose_ema">Välj rätt person</string>
+    <string name="reg_filter_problems">Med problem (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Filen ersätter den nuvarande listan: personen som är anmäld nu tas bort, utan e-post.</item>
+        <item quantity="other">Filen ersätter den nuvarande listan: de %1$d personer som är anmälda nu tas bort, utan e-post.</item>
+    </plurals>
     <string name="reg_import_apply">Importera %1$d</string>
     <string name="reg_import_result">%1$d personer importerades.</string>
     <string name="reg_problem_invalid_ema">EMA-numret är ogiltigt.</string>
     <string name="reg_problem_duplicate_ema">EMA-numret finns två gånger i filen.</string>
     <string name="reg_problem_invalid_email">E-postadressen är ogiltig.</string>
     <string name="reg_problem_ema_not_found">EMA-numret finns inte i EMA-registret.</string>
-    <string name="reg_problem_already_registered">Personen är redan anmäld.</string>
     <string name="reg_open_registrations">Anmälningar</string>
     <string name="reg_export">Exportera CSV</string>
     <string name="reg_status_label">Status</string>

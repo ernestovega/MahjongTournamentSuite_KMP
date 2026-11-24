@@ -1062,14 +1062,23 @@
     <string name="reg_closes_on_optional">Последний день регистрации (необязательно)</string>
     <string name="reg_link_name">Имя публичной ссылки</string>
     <string name="reg_import_title">Импорт Google Form</string>
-    <string name="reg_import_ready">Можно импортировать %1$d из %2$d строк.</string>
+    <string name="reg_import_ready">Будет импортировано строк: %1$d.</string>
+    <string name="reg_import_with_problems">Строки с ошибками тоже импортируются и помечаются в списке, чтобы вы исправили их там.</string>
+    <string name="reg_file_ema">В файле: %1$s</string>
+    <string name="reg_choose_ema">Выбрать нужного человека</string>
+    <string name="reg_filter_problems">С ошибками (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Файл заменяет текущий список: %1$d зарегистрированный участник будет удалён, без письма.</item>
+        <item quantity="few">Файл заменяет текущий список: %1$d зарегистрированных участника будут удалены, без письма.</item>
+        <item quantity="many">Файл заменяет текущий список: %1$d зарегистрированных участников будут удалены, без письма.</item>
+        <item quantity="other">Файл заменяет текущий список: %1$d зарегистрированных участников будут удалены, без письма.</item>
+    </plurals>
     <string name="reg_import_apply">Импортировать %1$d</string>
     <string name="reg_import_result">Импортировано участников: %1$d.</string>
     <string name="reg_problem_invalid_ema">Неверный номер EMA.</string>
     <string name="reg_problem_duplicate_ema">Номер EMA в файле дважды.</string>
     <string name="reg_problem_invalid_email">Неверный email.</string>
     <string name="reg_problem_ema_not_found">Номера нет в реестре EMA.</string>
-    <string name="reg_problem_already_registered">Участник уже зарегистрирован.</string>
     <string name="reg_open_registrations">Регистрация</string>
     <string name="reg_export">Экспорт в CSV</string>
     <string name="reg_status_label">Статус</string>

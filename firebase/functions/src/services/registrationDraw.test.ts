@@ -7,7 +7,7 @@ import type { StoredRegistration } from "./registrationsService";
 function person(emaId: string, teamId: string | null = null): StoredRegistration {
   return {
     emaId, name: emaId, country: "ES", email: "", status: "CONFIRMED", order: Number(emaId), paid: false, teamId,
-    language: "en", source: "SELF", manageToken: "", pendingUntil: null,
+    language: "en", source: "SELF", manageToken: "", pendingUntil: null, problems: [], fileEmaId: null,
   };
 }
 

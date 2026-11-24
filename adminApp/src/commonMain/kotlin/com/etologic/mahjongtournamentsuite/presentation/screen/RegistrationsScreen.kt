@@ -135,6 +135,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.reg_add
 import mahjongtournamentsuite.adminapp.generated.resources.reg_add_title
+import mahjongtournamentsuite.adminapp.generated.resources.reg_choose_ema
 import mahjongtournamentsuite.adminapp.generated.resources.reg_close_action
 import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_closes_on_optional
@@ -159,15 +160,19 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_email_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_empty_message
 import mahjongtournamentsuite.adminapp.generated.resources.reg_empty_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_export
+import mahjongtournamentsuite.adminapp.generated.resources.reg_file_ema
 import mahjongtournamentsuite.adminapp.generated.resources.reg_filter_all
+import mahjongtournamentsuite.adminapp.generated.resources.reg_filter_problems
 import mahjongtournamentsuite.adminapp.generated.resources.reg_food
 import mahjongtournamentsuite.adminapp.generated.resources.reg_food_of
 import mahjongtournamentsuite.adminapp.generated.resources.reg_give_place
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_apply
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_ready
+import mahjongtournamentsuite.adminapp.generated.resources.reg_import_replaces
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_result
 import mahjongtournamentsuite.adminapp.generated.resources.reg_import_title
+import mahjongtournamentsuite.adminapp.generated.resources.reg_import_with_problems
 import mahjongtournamentsuite.adminapp.generated.resources.reg_link_copied
 import mahjongtournamentsuite.adminapp.generated.resources.reg_link_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_link_name
@@ -186,7 +191,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_places_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_value
 import mahjongtournamentsuite.adminapp.generated.resources.reg_places_value_no_limit
-import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_already_registered
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_ema_not_found
 import mahjongtournamentsuite.adminapp.generated.resources.reg_problem_invalid_ema
@@ -205,6 +209,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_section
 import mahjongtournamentsuite.adminapp.generated.resources.reg_without_team
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
@@ -256,6 +261,7 @@ fun RegistrationsScreen(
     var info by remember { mutableStateOf<UiText?>(null) }
     var query by remember { mutableStateOf("") }
     var statusFilter by remember { mutableStateOf<RegistrationStatus?>(null) }
+    var problemsOnly by remember { mutableStateOf(false) }
     var editingSetting by remember { mutableStateOf<RegistrationSettingField?>(null) }
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<AdminRegistration?>(null) }
@@ -306,10 +312,10 @@ fun RegistrationsScreen(
     val normalizedQuery = normalizeSearchText(query.trim())
     val matching = current?.registrations.orEmpty().filter { registration ->
         normalizedQuery.isEmpty() ||
-            normalizeSearchText("${registration.name} ${registration.emaId} ${registration.email} ${registration.country} ${current?.teamOf(registration)?.name.orEmpty()}")
+            normalizeSearchText("${registration.name} ${registration.shownEmaId} ${registration.email} ${registration.country} ${current?.teamOf(registration)?.name.orEmpty()}")
                 .contains(normalizedQuery)
     }
-    val shown = matching.filter { statusFilter == null || it.status == statusFilter }
+    val shown = matching.filter { (statusFilter == null || it.status == statusFilter) && (!problemsOnly || it.problems.isNotEmpty()) }
 
     AppScaffold(
         title = stringResource(Res.string.reg_title),
@@ -397,7 +403,15 @@ fun RegistrationsScreen(
                                 onQueryChange = { query = it },
                                 matching = matching,
                                 selected = statusFilter,
-                                onSelect = { statusFilter = it },
+                                onSelect = {
+                                    statusFilter = it
+                                    problemsOnly = false
+                                },
+                                problemsOnly = problemsOnly,
+                                onProblemsOnly = {
+                                    problemsOnly = it
+                                    if (it) statusFilter = null
+                                },
                                 paid = current.registrations.count { it.status == RegistrationStatus.CONFIRMED && it.paid },
                                 confirmed = current.registrations.count { it.status == RegistrationStatus.CONFIRMED },
                                 busy = busy,
@@ -475,13 +489,14 @@ fun RegistrationsScreen(
             registry = registry,
             isTeams = current?.isTeams == true,
             teamName = current?.teamOf(registration)?.name.orEmpty(),
-            onSave = { _, email, teamName, food, paid, _ ->
+            onSave = { emaId, email, teamName, food, paid, _ ->
                 editing = null
                 change {
                     presenter.update(
                         tournamentId,
                         registration.emaId,
                         RegistrationUpdate(
+                            newEmaId = emaId.takeIf { it != registration.emaId },
                             email = email,
                             paid = paid,
                             teamName = teamName.takeIf { current?.isTeams == true },
@@ -876,6 +891,8 @@ private fun RegistrationFilters(
     matching: List<AdminRegistration>,
     selected: RegistrationStatus?,
     onSelect: (RegistrationStatus?) -> Unit,
+    problemsOnly: Boolean,
+    onProblemsOnly: (Boolean) -> Unit,
     paid: Int,
     confirmed: Int,
     busy: Boolean,
@@ -920,7 +937,7 @@ private fun RegistrationFilters(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FilterChip(
-                    selected = selected == null,
+                    selected = selected == null && !problemsOnly,
                     onClick = { onSelect(null) },
                     label = { Text(stringResource(Res.string.reg_filter_all, matching.size)) },
                 )
@@ -930,6 +947,16 @@ private fun RegistrationFilters(
                         onClick = { onSelect(if (selected == status) null else status) },
                         label = { Text(stringResource(title, matching.count { it.status == status }), maxLines = 1) },
                         leadingIcon = { Box(Modifier.size(8.dp).clip(CircleShape).background(statusColor(status))) },
+                    )
+                }
+                val withProblems = matching.count { it.problems.isNotEmpty() }
+                if (withProblems > 0 || problemsOnly) {
+                    FilterChip(
+                        selected = problemsOnly,
+                        onClick = { onProblemsOnly(!problemsOnly) },
+                        label = { Text(stringResource(Res.string.reg_filter_problems, withProblems), maxLines = 1) },
+                        leadingIcon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp)) },
+                        modifier = Modifier.testTag("registrations-filter-problems"),
                     )
                 }
             }
@@ -1038,7 +1065,7 @@ private fun RegistrationRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 NameLine(displayName, registration.country)
                 Text(
-                    listOfNotNull("EMA ${registration.emaId}", team).joinToString(" · "),
+                    listOfNotNull("EMA ${registration.shownEmaId}", team).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -1048,16 +1075,19 @@ private fun RegistrationRow(
                     Text(registration.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 RowNotes(registration, showFood = true)
+                ProblemLines(registration.problems)
             }
             PaidBox(registration, enabled, onPaidChange, compact = true)
         } else {
             Column(Modifier.weight(0.34f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 NameLine(displayName, registration.country)
-                Text("EMA ${registration.emaId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("EMA ${registration.shownEmaId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ProblemLines(registration.problems.filter { it in AdminRegistration.EMA_PROBLEMS })
             }
             Column(Modifier.weight(0.3f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(registration.email.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 RowNotes(registration, showFood = false)
+                ProblemLines(registration.problems.filter { it !in AdminRegistration.EMA_PROBLEMS })
             }
             if (team != null) {
                 Text(
@@ -1087,6 +1117,17 @@ private fun NameLine(name: String, country: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         CountryFlag(code = country, width = 20.dp)
         Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** What the import found wrong in the row, for the organizer to fix it. */
+@Composable
+private fun ProblemLines(problems: List<String>) {
+    problems.forEach { problem ->
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+            Text(problemText(problem), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
@@ -1228,7 +1269,22 @@ private fun RegistrationEditDialog(
                             Text(person?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: stringResource(Res.string.reg_pick_person))
                         }
                     } else {
-                        Text("${registration.name} · ${registration.emaId}", fontWeight = FontWeight.SemiBold)
+                        val shown = person?.takeIf { it.emaId != registration.emaId }
+                        Text(
+                            shown?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: "${registration.name} · ${registration.shownEmaId}",
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (registration.hasEmaProblem) {
+                            if (shown == null) {
+                                ProblemLines(registration.problems.filter { it in AdminRegistration.EMA_PROBLEMS })
+                                registration.fileEmaId?.let {
+                                    Text(stringResource(Res.string.reg_file_ema, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            OutlinedButton(onClick = { picking = true }, modifier = Modifier.fillMaxWidth().testTag("registration-choose-ema")) {
+                                Text(stringResource(Res.string.reg_choose_ema))
+                            }
+                        }
                     }
                     OutlinedTextField(
                         value = email,
@@ -1316,8 +1372,16 @@ private fun RegistrationImportDialog(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                     result?.let { read ->
-                        val ready = read.rows.count { it.problems.isEmpty() }
-                        Text(stringResource(Res.string.reg_import_ready, ready, read.rows.size), fontWeight = FontWeight.SemiBold)
+                        if (read.replaced > 0) {
+                            Text(
+                                pluralStringResource(Res.plurals.reg_import_replaces, read.replaced, read.replaced),
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.testTag("registrations-import-replaces"),
+                            )
+                        }
+                        Text(stringResource(Res.string.reg_import_ready, read.rows.size), fontWeight = FontWeight.SemiBold)
+                        if (read.rows.any { it.problems.isNotEmpty() }) MtsDialogText(stringResource(Res.string.reg_import_with_problems))
                         val state = rememberLazyListState()
                         LazyColumnWithScrollbar(state = state, modifier = Modifier.heightIn(max = 320.dp)) {
                             items(read.rows, key = { it.line }) { row ->
@@ -1343,7 +1407,7 @@ private fun RegistrationImportDialog(
             confirmButton = {
                 MtsDialogButtons {
                     val chosen = file
-                    val ready = result?.rows?.count { it.problems.isEmpty() } ?: 0
+                    val ready = result?.rows?.size ?: 0
                     if (ready > 0) {
                         FocusedButton(
                             enabled = !busy,
@@ -1372,6 +1436,5 @@ private fun problemText(code: String): String = when (code) {
     "DUPLICATE_EMA" -> stringResource(Res.string.reg_problem_duplicate_ema)
     "INVALID_EMAIL" -> stringResource(Res.string.reg_problem_invalid_email)
     "EMA_NOT_FOUND" -> stringResource(Res.string.reg_problem_ema_not_found)
-    "ALREADY_REGISTERED" -> stringResource(Res.string.reg_problem_already_registered)
     else -> code
 }

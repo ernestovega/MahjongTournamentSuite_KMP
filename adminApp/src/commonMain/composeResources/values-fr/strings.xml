@@ -1048,14 +1048,21 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_closes_on_optional">Dernier jour d'inscription (facultatif)</string>
     <string name="reg_link_name">Nom du lien public</string>
     <string name="reg_import_title">Importer le Google Form</string>
-    <string name="reg_import_ready">%1$d lignes sur %2$d peuvent être importées.</string>
+    <string name="reg_import_ready">%1$d lignes seront importées.</string>
+    <string name="reg_import_with_problems">Les lignes avec des problèmes sont aussi importées, marquées dans la liste, pour que vous les corrigiez là.</string>
+    <string name="reg_file_ema">Dans le fichier : %1$s</string>
+    <string name="reg_choose_ema">Choisir la bonne personne</string>
+    <string name="reg_filter_problems">Avec problèmes (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Le fichier remplace la liste actuelle : la personne inscrite maintenant est retirée, sans email.</item>
+        <item quantity="other">Le fichier remplace la liste actuelle : les %1$d personnes inscrites maintenant sont retirées, sans email.</item>
+    </plurals>
     <string name="reg_import_apply">Importer %1$d</string>
     <string name="reg_import_result">%1$d personnes ont été importées.</string>
     <string name="reg_problem_invalid_ema">Le numéro EMA n'est pas valide.</string>
     <string name="reg_problem_duplicate_ema">Le numéro EMA est deux fois dans le fichier.</string>
     <string name="reg_problem_invalid_email">L'e-mail n'est pas valide.</string>
     <string name="reg_problem_ema_not_found">Le numéro EMA n'est pas dans le registre de l'EMA.</string>
-    <string name="reg_problem_already_registered">La personne est déjà inscrite.</string>
     <string name="reg_open_registrations">Inscriptions</string>
     <string name="reg_export">Exporter en CSV</string>
     <string name="reg_status_label">Statut</string>

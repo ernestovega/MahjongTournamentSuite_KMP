@@ -1048,14 +1048,21 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="reg_closes_on_optional">Laatste inschrijfdag (optioneel)</string>
     <string name="reg_link_name">Naam van de openbare link</string>
     <string name="reg_import_title">Google-formulier importeren</string>
-    <string name="reg_import_ready">%1$d van %2$d rijen kunnen worden geïmporteerd.</string>
+    <string name="reg_import_ready">%1$d rijen worden geïmporteerd.</string>
+    <string name="reg_import_with_problems">Rijen met problemen worden ook geïmporteerd, gemarkeerd in de lijst, zodat je ze daar kunt verbeteren.</string>
+    <string name="reg_file_ema">In het bestand: %1$s</string>
+    <string name="reg_choose_ema">Kies de juiste persoon</string>
+    <string name="reg_filter_problems">Met problemen (%1$d)</string>
+    <plurals name="reg_import_replaces">
+        <item quantity="one">Het bestand vervangt de huidige lijst: de persoon die nu ingeschreven is, wordt verwijderd, zonder e-mail.</item>
+        <item quantity="other">Het bestand vervangt de huidige lijst: de %1$d mensen die nu ingeschreven zijn, worden verwijderd, zonder e-mail.</item>
+    </plurals>
     <string name="reg_import_apply">%1$d importeren</string>
     <string name="reg_import_result">%1$d personen zijn geïmporteerd.</string>
     <string name="reg_problem_invalid_ema">Het EMA-nummer is ongeldig.</string>
     <string name="reg_problem_duplicate_ema">Het EMA-nummer staat twee keer in het bestand.</string>
     <string name="reg_problem_invalid_email">Het e-mailadres is ongeldig.</string>
     <string name="reg_problem_ema_not_found">Het EMA-nummer staat niet in het EMA-register.</string>
-    <string name="reg_problem_already_registered">De persoon is al ingeschreven.</string>
     <string name="reg_open_registrations">Inschrijvingen</string>
     <string name="reg_export">CSV exporteren</string>
     <string name="reg_status_label">Status</string>

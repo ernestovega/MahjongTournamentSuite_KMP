@@ -378,6 +378,12 @@ open class ScreenshotRegistrationRepository(private val own: OwnRegistration? = 
                     source = if (index < 8) RegistrationSource.IMPORT else RegistrationSource.SELF,
                     registeredAt = "2099-01-%02dT10:00:00Z".format(index + 1),
                     hasAccount = index == 0,
+                    // Two rows of the import with problems, marked for the organizer to fix them.
+                    problems = when (index) {
+                        1 -> listOf("INVALID_EMAIL")
+                        3 -> listOf("EMA_NOT_FOUND")
+                        else -> emptyList()
+                    },
                 )
             },
             teams = teams,
