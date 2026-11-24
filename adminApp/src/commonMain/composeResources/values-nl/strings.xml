@@ -1048,10 +1048,8 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="reg_closes_on_optional">Laatste inschrijfdag (optioneel)</string>
     <string name="reg_link_name">Naam van de openbare link</string>
     <string name="reg_import_title">Google-formulier importeren</string>
-    <string name="reg_import_info">Download de antwoorden in Google Spreadsheets met Bestand &gt; Downloaden (Excel of CSV) en kies het bestand.\nDe volgorde van het formulier blijft. Niemand krijgt een e-mail.\nHet bestand van ‘CSV exporteren’ heeft dezelfde kolommen: gebruik het als voorbeeld.</string>
     <string name="reg_import_ready">%1$d van %2$d rijen kunnen worden geïmporteerd.</string>
     <string name="reg_import_apply">%1$d importeren</string>
-    <string name="reg_import_choose">Bestand kiezen</string>
     <string name="reg_import_result">%1$d personen zijn geïmporteerd.</string>
     <string name="reg_problem_invalid_ema">Het EMA-nummer is ongeldig.</string>
     <string name="reg_problem_duplicate_ema">Het EMA-nummer staat twee keer in het bestand.</string>

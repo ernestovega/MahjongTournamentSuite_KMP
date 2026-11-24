@@ -1048,10 +1048,8 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_closes_on_optional">Último día de inscripción (opcional)</string>
     <string name="reg_link_name">Nombre del enlace público</string>
     <string name="reg_import_title">Importar el Google Form</string>
-    <string name="reg_import_info">Descarga las respuestas en Google Sheets con Archivo &gt; Descargar (Excel o CSV) y elige el archivo.\nLas personas mantienen el orden del formulario. Nadie recibe email.\nEl archivo de Exportar CSV tiene las mismas columnas: úsalo como ejemplo.</string>
     <string name="reg_import_ready">Se pueden importar %1$d de %2$d filas.</string>
     <string name="reg_import_apply">Importar %1$d</string>
-    <string name="reg_import_choose">Elegir archivo</string>
     <string name="reg_import_result">Se importaron %1$d personas.</string>
     <string name="reg_problem_invalid_ema">El número EMA no es válido.</string>
     <string name="reg_problem_duplicate_ema">El número EMA está dos veces en el archivo.</string>

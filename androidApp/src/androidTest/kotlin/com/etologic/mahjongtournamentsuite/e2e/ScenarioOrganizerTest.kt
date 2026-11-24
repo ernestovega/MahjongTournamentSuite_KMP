@@ -342,8 +342,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val count = byHand.getJSONArray("form").length()
         pickNext("registrations-form.csv")
         c.clickButton("Import")
+        // Import opens the file picker at once; the dialog only reviews the chosen file.
         c.waitForText("Import the Google Form", timeoutMs = 30_000)
-        c.clickButton("Choose the file")
         c.waitForText("$count of $count rows can be imported.", timeoutMs = 60_000)
         c.clickButton("Import $count")
         c.waitForText("$count people were imported.", timeoutMs = 60_000)
@@ -531,8 +531,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         log("Export CSV: ${emaIds.size} people with a place in Downloads")
         pickNext(uri)
         c.clickButton("Import")
+        // Import opens the file picker at once; the dialog only reviews the chosen file.
         c.waitForText("Import the Google Form", timeoutMs = 30_000)
-        c.clickButton("Choose the file")
         c.waitForText("0 of $count rows can be imported.", timeoutMs = 60_000)
         c.waitForText("The person is already registered.", timeoutMs = 10_000)
         check(!c.isOnScreen("Import $count")) { "The import offers to import the people again" }

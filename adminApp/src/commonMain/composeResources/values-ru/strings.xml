@@ -1062,10 +1062,8 @@
     <string name="reg_closes_on_optional">Последний день регистрации (необязательно)</string>
     <string name="reg_link_name">Имя публичной ссылки</string>
     <string name="reg_import_title">Импорт Google Form</string>
-    <string name="reg_import_info">Скачайте ответы в Google Таблицах: Файл &gt; Скачать (Excel или CSV), и выберите файл.\nПорядок формы сохраняется. Писем никто не получит.\nФайл из «Экспорт в CSV» имеет те же столбцы: используйте его как пример.</string>
     <string name="reg_import_ready">Можно импортировать %1$d из %2$d строк.</string>
     <string name="reg_import_apply">Импортировать %1$d</string>
-    <string name="reg_import_choose">Выбрать файл</string>
     <string name="reg_import_result">Импортировано участников: %1$d.</string>
     <string name="reg_problem_invalid_ema">Неверный номер EMA.</string>
     <string name="reg_problem_duplicate_ema">Номер EMA в файле дважды.</string>

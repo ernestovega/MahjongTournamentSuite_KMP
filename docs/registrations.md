@@ -87,7 +87,7 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
   it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the
   import and goes back in as it is (into another tournament: the people of this one are already registered). UTF-8
   with BOM and CRLF, so Excel opens it well.
-- Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): first a preview with the
+- Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): opens the file picker at once, then a preview with the
   problems of each row, then the import. The name and the country come from the EMA registry, not from the file. A row
   with problems is not imported. The import never sends emails.
 - Emails to the organization (the contact email of the tournament): each cancellation, and a weekly report on Sunday at

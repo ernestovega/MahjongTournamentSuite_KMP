@@ -1048,10 +1048,8 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_closes_on_optional">Last day to register (optional)</string>
     <string name="reg_link_name">Name of the public link</string>
     <string name="reg_import_title">Import the Google Form</string>
-    <string name="reg_import_info">Download the answers in Google Sheets with File &gt; Download (Excel or CSV) and choose the file.\nThe people keep the order of the form. Nobody gets an email.\nThe file of Export CSV has the same columns: use it as an example.</string>
     <string name="reg_import_ready">%1$d of %2$d rows can be imported.</string>
     <string name="reg_import_apply">Import %1$d</string>
-    <string name="reg_import_choose">Choose the file</string>
     <string name="reg_import_result">%1$d people were imported.</string>
     <string name="reg_problem_invalid_ema">The EMA number is not valid.</string>
     <string name="reg_problem_duplicate_ema">The EMA number is twice in the file.</string>

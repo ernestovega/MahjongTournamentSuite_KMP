@@ -1048,10 +1048,8 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_closes_on_optional">Letzter Anmeldetag (optional)</string>
     <string name="reg_link_name">Name des öffentlichen Links</string>
     <string name="reg_import_title">Google-Formular importieren</string>
-    <string name="reg_import_info">Lade die Antworten in Google Sheets mit Datei &gt; Herunterladen (Excel oder CSV) herunter und wähle die Datei.\nDie Reihenfolge des Formulars bleibt. Niemand bekommt eine E-Mail.\nDie Datei von „CSV exportieren“ hat dieselben Spalten: nimm sie als Beispiel.</string>
     <string name="reg_import_ready">%1$d von %2$d Zeilen können importiert werden.</string>
     <string name="reg_import_apply">%1$d importieren</string>
-    <string name="reg_import_choose">Datei wählen</string>
     <string name="reg_import_result">%1$d Personen wurden importiert.</string>
     <string name="reg_problem_invalid_ema">Die EMA-Nummer ist ungültig.</string>
     <string name="reg_problem_duplicate_ema">Die EMA-Nummer steht zweimal in der Datei.</string>
