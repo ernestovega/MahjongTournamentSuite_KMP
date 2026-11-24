@@ -23,6 +23,17 @@ object AndroidAppCheck {
     @Volatile
     private var appCheck: FirebaseAppCheck? = null
 
+    /**
+     * What happened with App Check, for the logs of the server: `off` (no settings in the manifest), `ok`, `debug`
+     * (the debug provider), or `failed:` and the kind of error of the last token request.
+     */
+    @Volatile
+    var state: String = "off"
+        private set
+
+    @Volatile
+    private var debug = false
+
     fun install(context: Context) {
         if (appCheck != null) return
         runCatching {
@@ -44,15 +55,23 @@ object AndroidAppCheck {
                 if (debuggable) DebugAppCheckProviderFactory.getInstance() else PlayIntegrityAppCheckProviderFactory.getInstance(),
             )
             appCheck = instance
-        }
+            this.debug = debuggable
+            state = if (debuggable) "debug" else "ok"
+        }.onFailure { state = "failed:install-${it::class.simpleName}" }
     }
 
     suspend fun token(): String? {
         val instance = appCheck ?: return null
         return suspendCoroutine { continuation ->
             instance.getAppCheckToken(false)
-                .addOnSuccessListener { continuation.resume(it.token) }
-                .addOnFailureListener { continuation.resume(null) }
+                .addOnSuccessListener {
+                    state = if (debug) "debug" else "ok"
+                    continuation.resume(it.token)
+                }
+                .addOnFailureListener { error ->
+                    state = "failed:${error::class.simpleName}:${error.message.orEmpty().take(60)}"
+                    continuation.resume(null)
+                }
         }
     }
 }

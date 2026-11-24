@@ -13,3 +13,5 @@ private external fun readAppCheckToken(): Promise<JsAny?>
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 internal actual suspend fun currentAppCheckToken(): String? =
     (readAppCheckToken().await<JsAny?>() as? JsString)?.toString()
+
+internal actual fun currentClientTag(): String? = null

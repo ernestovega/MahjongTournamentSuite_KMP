@@ -35,4 +35,17 @@ class HttpClientAppCheckTest {
     fun aFailedTokenRequestDoesNotStopTheRequest() = runTest {
         assertNull(headerSent { error("no token") })
     }
+
+    @Test
+    fun theNativeAppsSayWhoTheyAreAndTheWebSaysNothing() = runTest {
+        var sent: String? = "unset"
+        val engine = MockEngine { request ->
+            sent = request.headers[CLIENT_HEADER]
+            respondOk()
+        }
+        HttpClient(engine) { configureAppCheck({ null }, { "android/1.0.341; appcheck=ok" }) }.get("https://backend.test/ping")
+        assertEquals("android/1.0.341; appcheck=ok", sent)
+        HttpClient(engine) { configureAppCheck({ null }, { null }) }.get("https://backend.test/ping")
+        assertNull(sent)
+    }
 }

@@ -16,6 +16,7 @@ fun createHttpClient(
     json: Json,
     languageTag: () -> String? = ::currentLanguageTag,
     appCheckToken: suspend () -> String? = ::currentAppCheckToken,
+    clientTag: () -> String? = ::currentClientTag,
 ): HttpClient = HttpClient(httpClientEngineFactory()) {
     expectSuccess = false
 
@@ -30,7 +31,7 @@ fun createHttpClient(
     }
 
     configureDefaultRequest(languageTag)
-    configureAppCheck(appCheckToken)
+    configureAppCheck(appCheckToken, clientTag)
 }
 
 /**
@@ -48,19 +49,28 @@ internal fun HttpClientConfig<*>.configureDefaultRequest(languageTag: () -> Stri
 /**
  * Every request carries the App Check token, when the app has one. The server uses it to tell the apps from scripts.
  * A failed token request never stops the request. The server decides what a missing token means.
+ * The Android and desktop apps also say who they are in [CLIENT_HEADER] (platform, version and the state of App Check),
+ * so the logs of the server tell which app sends no token. The web sends nothing there.
  */
-internal fun HttpClientConfig<*>.configureAppCheck(appCheckToken: suspend () -> String?) {
+internal fun HttpClientConfig<*>.configureAppCheck(appCheckToken: suspend () -> String?, clientTag: () -> String? = { null }) {
     install(
         createClientPlugin("AppCheck") {
             onRequest { request, _ ->
                 runCatching { appCheckToken() }.getOrNull()?.takeIf { it.isNotBlank() }
                     ?.let { request.headers.append(APP_CHECK_HEADER, it) }
+                runCatching { clientTag() }.getOrNull()?.takeIf { it.isNotBlank() }
+                    ?.let { request.headers.append(CLIENT_HEADER, it.take(MAX_CLIENT_TAG)) }
             }
         },
     )
 }
 
 internal const val APP_CHECK_HEADER = "X-Firebase-AppCheck"
+internal const val CLIENT_HEADER = "X-MTS-Client"
+private const val MAX_CLIENT_TAG = 120
+
+/** For example `android/1.0.341; appcheck=ok`. Null on the web. */
+internal expect fun currentClientTag(): String?
 
 /** The App Check token of this platform, or null when the app does not use App Check. */
 internal expect suspend fun currentAppCheckToken(): String?
