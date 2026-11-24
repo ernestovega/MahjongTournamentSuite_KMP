@@ -203,7 +203,8 @@ function drawCard(
       drawInitial();
     }
   }
-  doc.font("CardApp").fillColor("#000000");
+  // The name in grey, so the number stands out (Ernesto 24-nov).
+  doc.font("CardApp").fillColor("#777777");
   const nameRoom = width - (padding * 1.5 + logoSize) * 2;
   const nameSize = fitFontSize(doc, model.tournamentName, nameRoom, 15 * scale, 7);
   doc.fontSize(nameSize);
@@ -234,7 +235,9 @@ function drawCard(
   const block = labelSize * capRatio + gap + numberSize * capRatio;
   const blockTop = numberBox.y + Math.max(0, (room - block) / 2);
   doc.fontSize(labelSize);
-  centeredLine(doc, model.texts.table.toUpperCase(), numberBox.x, blockTop - (ascentRatio - capRatio) * labelSize, numberBox.w);
+  // The word a bit lower, closer to its number and further from the name (Ernesto 24-nov).
+  const labelDrop = gap * 0.5;
+  centeredLine(doc, model.texts.table.toUpperCase(), numberBox.x, blockTop + labelDrop - (ascentRatio - capRatio) * labelSize, numberBox.w);
   doc.fontSize(numberSize);
   const digitsTop = blockTop + labelSize * capRatio + gap;
   centeredLine(doc, numberText, numberBox.x, digitsTop - (ascentRatio - capRatio) * numberSize, numberBox.w);
