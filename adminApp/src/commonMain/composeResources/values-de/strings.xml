@@ -1118,13 +1118,13 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_from_to">Von %1$d auf %2$d Spieler</string>
     <string name="pc_removed_label">Wird gelöscht:</string>
     <string name="pc_removed_tables">Die Tische aller %1$d Runden. Sie werden neu ausgelost.</string>
-    <string name="pc_removed_people">Die Personen, die gehen: %1$s.</string>
-    <string name="pc_broken_teams">Teams, die unvollständig bleiben, mit den verbleibenden Spielern: %1$s. Sie werden danach neu aufgestellt.</string>
+    <string name="pc_removed_people">Die Personen, die gehen:</string>
+    <string name="pc_broken_teams">Teams, die unvollständig bleiben, mit den verbleibenden Spielern. Sie werden danach neu aufgestellt:</string>
     <string name="pc_removed_registrations">Ihre Anmeldungen.</string>
     <string name="pc_added_label">Wird hinzugefügt:</string>
     <string name="pc_added_slots">%1$d leere Plätze, nach der höchsten Nummer nummeriert, zum späteren Zuweisen.</string>
     <string name="pc_added_teams">%1$d neue Teams.</string>
-    <string name="pc_added_waiting">Von der Warteliste, die jetzt einen Platz haben: %1$s.</string>
+    <string name="pc_added_waiting">Von der Warteliste, die jetzt einen Platz haben:</string>
     <string name="pc_kept_label">Bleibt:</string>
     <string name="pc_kept_people">Die übrigen Spieler, mit Nummer, EMA-Spieler, Konto und E-Mail.</string>
     <string name="pc_kept_teams">Die Teams, mit ihrer Nummer, ihrem Namen und den Spielern, die bleiben.</string>

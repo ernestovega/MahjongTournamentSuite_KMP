@@ -722,9 +722,11 @@ internal fun ColumnScope.ReviewContent(
             buildList {
                 add(stringResource(Res.string.pc_removed_tables, summary.rounds))
                 if (summary.leaving.isNotEmpty()) {
-                    val names = summary.leaving.joinToString(", ")
-                    add(stringResource(Res.string.pc_removed_people, names))
-                    if (summary.brokenTeams.isNotEmpty()) add(stringResource(Res.string.pc_broken_teams, summary.brokenTeams.joinToString(", ")))
+                    // Each person and each team on its own line, under its bullet (Ernesto, 24-nov).
+                    add(BulletItem(stringResource(Res.string.pc_removed_people), summary.leaving, "playerCountLeaving"))
+                    if (summary.brokenTeams.isNotEmpty()) {
+                        add(BulletItem(stringResource(Res.string.pc_broken_teams), summary.brokenTeams, "playerCountBrokenTeams"))
+                    }
                     if (summary.hasRegistrations) add(stringResource(Res.string.pc_removed_registrations))
                 }
             },
@@ -740,7 +742,7 @@ internal fun ColumnScope.ReviewContent(
                         add(stringResource(Res.string.pc_added_slots, empty))
                     }
                     if (summary.fromWaiting.isNotEmpty()) {
-                        add(stringResource(Res.string.pc_added_waiting, summary.fromWaiting.joinToString(", ")))
+                        add(BulletItem(stringResource(Res.string.pc_added_waiting), summary.fromWaiting, "playerCountFromWaiting"))
                     }
                 },
             )
@@ -800,15 +802,30 @@ internal fun SureDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     }
 }
 
-/** A label and its bullet lines; each line hangs under its bullet. */
+/** A bullet line with its own list under it, one entry per line (people, teams). */
+private class BulletItem(val text: String, val lines: List<String>, val tag: String)
+
+/** A label and its bullet lines: a String, or a [BulletItem]. Each line hangs under its bullet. */
 @Composable
-private fun BulletGroup(label: String, items: List<String>, tag: String? = null) {
+private fun BulletGroup(label: String, items: List<Any>, tag: String? = null) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = if (tag == null) Modifier else Modifier.testTag(tag)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
         items.forEach { item ->
             Row {
                 Text("•", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(16.dp))
-                Text(item, style = MaterialTheme.typography.bodyMedium)
+                if (item is BulletItem) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(item.text, style = MaterialTheme.typography.bodyMedium)
+                        item.lines.forEachIndexed { index, line ->
+                            Row {
+                                Text("◦", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(16.dp))
+                                Text(line, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("${item.tag}-$index"))
+                            }
+                        }
+                    }
+                } else {
+                    Text(item.toString(), style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

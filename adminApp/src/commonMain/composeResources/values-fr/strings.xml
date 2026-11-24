@@ -1118,13 +1118,13 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_from_to">De %1$d à %2$d joueurs</string>
     <string name="pc_removed_label">Est supprimé :</string>
     <string name="pc_removed_tables">Les tables des %1$d manches. Elles sont tirées à nouveau.</string>
-    <string name="pc_removed_people">Les personnes qui partent : %1$s.</string>
-    <string name="pc_broken_teams">Équipes qui restent incomplètes, avec les joueurs qui leur restent : %1$s. Elles se réorganisent ensuite.</string>
+    <string name="pc_removed_people">Les personnes qui partent :</string>
+    <string name="pc_broken_teams">Équipes qui restent incomplètes, avec les joueurs qui leur restent. Elles se réorganisent ensuite :</string>
     <string name="pc_removed_registrations">Leurs inscriptions.</string>
     <string name="pc_added_label">Est ajouté :</string>
     <string name="pc_added_slots">%1$d places vides, numérotées après la plus haute, à attribuer plus tard.</string>
     <string name="pc_added_teams">%1$d nouvelles équipes.</string>
-    <string name="pc_added_waiting">De la liste d'attente, qui obtiennent une place : %1$s.</string>
+    <string name="pc_added_waiting">De la liste d'attente, qui obtiennent une place :</string>
     <string name="pc_kept_label">Est conservé :</string>
     <string name="pc_kept_people">Les autres joueurs, avec leur numéro, leur joueur EMA, leur compte et leur e-mail.</string>
     <string name="pc_kept_teams">Les équipes, avec leur numéro, leur nom et les joueurs qui restent.</string>
