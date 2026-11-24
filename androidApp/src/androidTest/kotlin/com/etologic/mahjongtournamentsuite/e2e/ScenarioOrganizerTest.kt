@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -371,6 +372,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitUntil(30_000) { c.onAllNodes(registrationCard(byHand.getJSONObject("sharedEmail").getString("emaId"))).fetchSemanticsNodes().isEmpty() }
         clickTagged("registrations-filter-problems")
         showCard(byHand.getJSONObject("sharedEmail").getString("emaId"))
+        // Back to the top of the list, where Add a person is, beside the search.
+        runCatching { c.onNode(hasTestTag("registrations-list")).performScrollToIndex(0) }
+        c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registrations-search")).fetchSemanticsNodes().isNotEmpty() }
         log("the 2 rows with problems are in the list, marked, and the shared email is not a problem")
     }
 

@@ -63,6 +63,8 @@ object JourneyApi {
             .put("venueName", "E2E club")
             .put("venueAddress", "Calle Mayor 1, Madrid")
             .put("contactEmail", "e2e@example.com")
+            // A tournament belongs to an organization (Club Admin, 19-nov): the test club of the seed of the local backend.
+            .put("organizerIds", JSONArray(listOf("seed-org-test-club")))
             .put("isTeams", false)
             .put("numPlayers", players.size)
             .put("numRounds", rounds)

@@ -114,7 +114,8 @@ class PlayerHomeTest : PlayerE2eTest() {
     @Test
     fun signOutReturnsToSignIn() {
         home(E2eAccounts.PLAYER)
-        c.waitForText("You play in this tournament")
+        // The stamp of an own tournament (20-nov): Playing while it is in play, Played once it ends.
+        c.waitForAnyText("Playing", "Played")
         c.clickButton("Profile")
         c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
@@ -122,7 +123,8 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Sign in")
         c.waitForNoText("Profile")
         c.waitForNoText("My tournaments")
-        c.waitForNoText("You play in this tournament")
+        c.waitForNoText("Playing")
+        c.waitForNoText("Played")
         c.waitForText("Test - Live ongoing tournament")
         c.openSignIn()
         c.waitForText("Password")

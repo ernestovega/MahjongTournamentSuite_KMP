@@ -56,12 +56,19 @@ class PlayerStatisticsTest : PlayerE2eTest() {
         c.waitForText("Hand values use 33 of 34 tables.")
     }
 
-    /** The own player is chosen, with the Change button to pick another one, and the Overall and By tournaments tabs. */
+    /**
+     * One Statistics screen with a row of filters (19-nov): the own player is the chosen filter, as a chip that can be
+     * removed, next to the Filters button that opens the dialog of every filter.
+     */
     @Test
     fun personalStatisticsShowTheOwnPlayerAndTheViews() {
         openMyStatistics()
-        listOf("Change", "Overall", "By tournaments").forEach { c.waitForText(it) }
-        c.assertNoText("Others")
+        c.waitForText("Filters")
+        c.waitForText("Remove the filter", substring = true)
+        c.assertNoText("All tournaments and players")
+        c.clickButton("Filters")
+        c.waitForText("Filter the stats")
+        listOf("Player", "Rival", "Tournament").forEach { c.waitForText(it) }
     }
 
     @Test
@@ -94,8 +101,11 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     fun accountWithoutEmaNumberChoosesAPlayer() {
         start(E2eAccounts.STRANGER, ready = "My tournaments")
         c.clickButton("Stats")
-        // Without an own player the tab works like for a guest: the picker asks to choose one.
-        c.waitForText("Choose a player")
-        c.waitForText("Player (name or EMA number)")
+        // Without an own player the tab works like for a guest: the statistics of everything, and the Filters button
+        // chooses a player.
+        c.waitForText("All tournaments and players")
+        c.clickButton("Filters")
+        c.waitForText("Filter the stats")
+        c.waitForText("Any player")
     }
 }

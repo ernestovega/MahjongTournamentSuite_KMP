@@ -42,7 +42,8 @@ jobs:
       # Fails when the web or the Android and desktop app changed without a higher version.
       # See docs/versioning.md.
       - name: Check versions
-        run: python3 scripts/versions.py check --base "origin/${{ github.base_ref }}"
+        # By hand on a branch there is no base branch: the branch is compared with main.
+        run: python3 scripts/versions.py check --base "origin/${{ github.base_ref || 'main' }}"
 
       - uses: actions/setup-node@v7
         with:
@@ -103,7 +104,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Check the Kotlin style
-        # --continue lists the style problems of every module, not only of the first one that fails.
+        # --continue lists the style problems of every module, not only of the first one that fails. By hand on a
+        # branch the style is only reported: main has old style problems, and the tests below must run anyway.
+        continue-on-error: ${{ github.event_name != 'pull_request' }}
         run: ./gradlew ktlintCheck --continue
 
       - name: Test Kotlin code

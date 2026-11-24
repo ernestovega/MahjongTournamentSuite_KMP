@@ -232,6 +232,9 @@ class FailureReport(private val compose: ComposeTestRule) : TestWatcher() {
         override fun evaluate() {
             try {
                 base.evaluate()
+            } catch (skipped: org.junit.AssumptionViolatedException) {
+                // A test that does not apply to this run (assumeTrue) is skipped, not failed.
+                throw skipped
             } catch (error: Throwable) {
                 val name = "${description.className.substringAfterLast('.')}.${description.methodName}"
                 runCatching {
