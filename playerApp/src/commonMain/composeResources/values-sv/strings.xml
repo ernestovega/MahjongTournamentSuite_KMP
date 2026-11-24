@@ -264,6 +264,7 @@
     <string name="preg_team_missing_action">Ställ in mitt lag</string>
     <string name="preg_ema">EMA %1$s</string>
     <string name="preg_manage">Min anmälan</string>
+    <string name="preg_edit">Redigera</string>
     <string name="preg_register">Anmäl mig</string>
     <string name="preg_no_ema">Jag har inget EMA-nummer</string>
     <string name="preg_search_ema">Sök</string>

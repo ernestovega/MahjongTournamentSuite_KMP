@@ -270,6 +270,7 @@
     <string name="preg_team_missing_action">Настроить команду</string>
     <string name="preg_ema">EMA %1$s</string>
     <string name="preg_manage">Моя регистрация</string>
+    <string name="preg_edit">Изменить</string>
     <string name="preg_register">Зарегистрироваться</string>
     <string name="preg_no_ema">У меня нет номера EMA</string>
     <string name="preg_search_ema">Поиск</string>

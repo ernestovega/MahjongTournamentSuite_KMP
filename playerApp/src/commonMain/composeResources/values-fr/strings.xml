@@ -264,6 +264,7 @@
     <string name="preg_team_missing_action">Configurer mon équipe</string>
     <string name="preg_ema">EMA %1$s</string>
     <string name="preg_manage">Mon inscription</string>
+    <string name="preg_edit">Modifier</string>
     <string name="preg_register">M'inscrire</string>
     <string name="preg_no_ema">Je n'ai pas de numéro EMA</string>
     <string name="preg_search_ema">Rechercher</string>

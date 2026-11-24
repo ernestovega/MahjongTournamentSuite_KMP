@@ -125,6 +125,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_create_team
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_pending
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_place
 import mahjongtournamentsuite.playerapp.generated.resources.preg_done_waiting
+import mahjongtournamentsuite.playerapp.generated.resources.preg_edit
 import mahjongtournamentsuite.playerapp.generated.resources.preg_ema
 import mahjongtournamentsuite.playerapp.generated.resources.preg_email
 import mahjongtournamentsuite.playerapp.generated.resources.preg_email_hint
@@ -569,7 +570,12 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         border = if (own == null || own.status == RegistrationStatus.PENDING) null else BorderStroke(1.dp, accent),
     ) {
-        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        // With a place the card is one line: the icon in the middle of the title and its button.
+        Row(
+            Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = if (own?.status == RegistrationStatus.CONFIRMED) Alignment.CenterVertically else Alignment.Top,
+        ) {
             val (icon, tint) = when (own?.status) {
                 RegistrationStatus.CONFIRMED -> Icons.Default.CheckCircle to accent
                 RegistrationStatus.WAITING -> Icons.Default.HourglassTop to MtsTheme.colors.warning
@@ -578,18 +584,27 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
             }
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(32.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                Text(
-                    when (own?.status) {
-                        RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place, own.position)
-                        RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting, own.position)
-                        RegistrationStatus.PENDING -> stringResource(Res.string.preg_mine_pending)
-                        null -> stringResource(Res.string.preg_join_title)
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (own == null || own.status == RegistrationStatus.PENDING) MaterialTheme.colorScheme.onSurface else accent,
-                    modifier = Modifier.testTag("registration-own-title"),
-                )
+                // The title, with Edit at its right when there is a registration to change (Ernesto, 24-nov).
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Text(
+                        when (own?.status) {
+                            RegistrationStatus.CONFIRMED -> stringResource(Res.string.preg_mine_place, own.position)
+                            RegistrationStatus.WAITING -> stringResource(Res.string.preg_mine_waiting, own.position)
+                            RegistrationStatus.PENDING -> stringResource(Res.string.preg_mine_pending)
+                            null -> stringResource(Res.string.preg_join_title)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (own == null || own.status == RegistrationStatus.PENDING) MaterialTheme.colorScheme.onSurface else accent,
+                        modifier = Modifier.weight(1f).testTag("registration-own-title"),
+                    )
+                    if (own != null && own.status != RegistrationStatus.PENDING) {
+                        Button(onClick = onManage, modifier = Modifier.testTag("registration-manage")) {
+                            Icon(Icons.Default.Edit, contentDescription = null, Modifier.size(18.dp))
+                            Text(stringResource(Res.string.preg_edit), Modifier.padding(start = MtsTheme.spacing.sm))
+                        }
+                    }
+                }
                 // With a place the title and the button say it all (Ernesto, 24-nov): no text under the title.
                 when (own?.status) {
                     RegistrationStatus.CONFIRMED -> null
@@ -597,18 +612,13 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     RegistrationStatus.PENDING -> stringResource(Res.string.preg_status_pending)
                     null -> stringResource(Res.string.preg_join_detail)
                 }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                FlowRow(
-                    modifier = Modifier.padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (own != null && own.status != RegistrationStatus.PENDING) {
-                        Button(onClick = onManage, modifier = Modifier.testTag("registration-manage")) {
-                            Icon(Icons.Default.Edit, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.preg_manage), Modifier.padding(start = 8.dp))
-                        }
-                    } else if (own == null) {
+                if (own == null) {
+                    FlowRow(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        itemVerticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Button(onClick = onRegister, modifier = Modifier.testTag("registration-register")) {
                             Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp))
                             Text(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
