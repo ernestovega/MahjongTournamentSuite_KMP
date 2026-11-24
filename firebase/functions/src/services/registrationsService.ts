@@ -418,7 +418,7 @@ export async function registryPerson(emaIdValue: unknown): Promise<RegistryPerso
   return { emaId, name: `${player.firstName} ${player.lastName}`.trim(), country: player.country };
 }
 
-async function accountOfEma(emaId: string): Promise<{ uid: string; email: string | null } | null> {
+export async function accountOfEma(emaId: string): Promise<{ uid: string; email: string | null } | null> {
   const index = await db.doc(`emaIdIndex/${emaId}`).get();
   if (!index.exists) return null;
   const uid = String(index.get("uid") ?? "");
