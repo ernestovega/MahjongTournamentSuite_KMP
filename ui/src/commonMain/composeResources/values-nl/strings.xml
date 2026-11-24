@@ -619,7 +619,7 @@
     <string name="registration_error_bad_waiting">Er zijn meer personen van de wachtlijst dan nieuwe plaatsen.</string>
     <string name="registration_error_draw_pending">Het toernooi heeft nog geen loting.</string>
     <string name="registration_error_not_waiting">Iemand die je koos staat niet meer op de wachtlijst. Open het venster opnieuw.</string>
-    <string name="registration_error_partial_team">Een team vertrekt in zijn geheel: kies hele teams.</string>
+    <string name="registration_error_partial_team">Elk team moet 4 spelers hebben. Vul de teams aan in de stap Teams.</string>
     <string name="registration_error_same_player_count">Het toernooi heeft al dat aantal spelers.</string>
     <string name="registration_error_tournament_completed">Het toernooi is afgelopen.</string>
     <string name="registration_error_tournament_started">Het toernooi heeft al gegevens aan zijn tafels. De loting kan niet meer wijzigen.</string>

@@ -1103,7 +1103,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_add_locked">Pour ajouter des tables, décoche d'abord ceux qui partent.</string>
     <string name="pc_remove_locked">Pour cocher qui part, retire d'abord les tables ajoutées.</string>
     <string name="pc_leave_people">Qui part ?</string>
-    <string name="pc_leave_people_teams">Marque les personnes. Si une équipe perd quelqu’un, l’étape suivante t’aide à la compléter.</string>
+    <string name="pc_leave_people_teams">Marque les personnes. Si une équipe perd quelqu’un, tu la complètes de nouveau à l’étape suivante.</string>
     <string name="pc_marked_none">Coche ceux qui partent, par groupes de 4.</string>
     <string name="pc_marked_fits">Cochés : %1$d. Tables qui partent : %2$d.</string>
     <string name="pc_marked_more_or_less">Cochés : %1$d. Coche-en %2$d de plus ou décoche-en %3$d.</string>
@@ -1124,14 +1124,13 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_removed_label">Est supprimé :</string>
     <string name="pc_removed_tables">Les tables des %1$d manches. Elles sont tirées à nouveau.</string>
     <string name="pc_removed_people">Les personnes qui partent :</string>
-    <string name="pc_broken_teams">Équipes qui restent incomplètes, avec les joueurs qui leur restent. Elles se réorganisent ensuite :</string>
     <string name="pc_step_teams">Équipes</string>
     <string name="pc_teams_title">Réorganise les équipes</string>
-    <string name="pc_teams_hint">Certaines équipes ont perdu des joueurs. Déplace des personnes entre ces équipes pour que chacune en ait de nouveau 4, ou appuie sur Proposer.\nTu peux aussi continuer avec des équipes incomplètes et les réorganiser plus tard dans Équipes.</string>
     <string name="pc_teams_complete">Toutes les équipes ont 4 joueurs.</string>
     <string name="pc_teams_incomplete">Équipes incomplètes : %1$d.</string>
-    <string name="pc_teams_propose">Proposer</string>
-    <string name="pc_teams_reset">Recommencer</string>
+    <string name="pc_teams_propose">Compléter les équipes</string>
+    <string name="pc_teams_propose_info">Compléter les équipes fait le moins de changements possible :\n• L’équipe incomplète qui a le plus de joueurs reçoit ceux de l’équipe qui en a le moins.\n• Cela continue jusqu’à ce que chaque équipe en ait 4.\nTu peux ensuite le modifier à la main, ou appuyer sur Annuler.</string>
+    <string name="pc_teams_reset">Annuler</string>
     <string name="pc_team_count">%1$s (%2$d sur 4)</string>
     <string name="pc_team_changes">Les personnes qui changent d'équipe :</string>
     <string name="pc_removed_registrations">Leurs inscriptions.</string>

@@ -623,7 +623,7 @@
     <string name="registration_error_bad_waiting">There are more people of the waiting list than new places.</string>
     <string name="registration_error_draw_pending">The tournament has no draw yet.</string>
     <string name="registration_error_not_waiting">Someone you chose is no longer on the waiting list. Open the dialog again.</string>
-    <string name="registration_error_partial_team">A team leaves whole: choose whole teams.</string>
+    <string name="registration_error_partial_team">Every team must have 4 players. Complete the teams in the step Teams.</string>
     <string name="registration_error_same_player_count">The tournament already has that number of players.</string>
     <string name="registration_error_tournament_completed">The tournament is finished.</string>
     <string name="registration_error_tournament_started">The tournament already has data in its tables. The draw can no longer change.</string>

@@ -619,7 +619,7 @@
     <string name="registration_error_bad_waiting">Es gibt mehr Personen von der Warteliste als neue Plätze.</string>
     <string name="registration_error_draw_pending">Das Turnier hat noch keine Auslosung.</string>
     <string name="registration_error_not_waiting">Jemand, den du gewählt hast, steht nicht mehr auf der Warteliste. Öffne den Dialog erneut.</string>
-    <string name="registration_error_partial_team">Ein Team geht nur ganz: wähle ganze Teams.</string>
+    <string name="registration_error_partial_team">Jedes Team muss 4 Spieler haben. Vervollständige die Teams im Schritt Teams.</string>
     <string name="registration_error_same_player_count">Das Turnier hat schon diese Spielerzahl.</string>
     <string name="registration_error_tournament_completed">Das Turnier ist beendet.</string>
     <string name="registration_error_tournament_started">Das Turnier hat schon Daten an seinen Tischen. Die Auslosung kann sich nicht mehr ändern.</string>

@@ -52,18 +52,6 @@ object PlayerCountRules {
     fun removedSlots(chosen: Set<Int>): List<Int> = chosen.sorted()
 
     /**
-     * The teams that a removal leaves incomplete, with the players that stay in each: a team that loses some of its
-     * players but not all. Teams that leave whole and teams untouched are not in it.
-     */
-    fun brokenTeams(slots: List<TournamentPlayer>, removedSlotIds: Collection<Int>): Map<Int, List<Int>> {
-        val removed = removedSlotIds.toSet()
-        return slots.filter { it.team > 0 }.groupBy { it.team }
-            .mapValues { (_, members) -> members.filter { it.id !in removed }.map { it.id }.sorted() }
-            .filter { (team, kept) -> kept.isNotEmpty() && kept.size < slots.count { it.team == team } }
-            .toSortedMap().toMap()
-    }
-
-    /**
      * The teams after the removal and the moves of the organizer ([teamMoves]: slot to its new team), with their
      * players: every team that keeps at least one person.
      */

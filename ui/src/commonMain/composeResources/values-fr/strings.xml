@@ -623,7 +623,7 @@
     <string name="registration_error_bad_waiting">Il y a plus de personnes de la liste d'attente que de nouvelles places.</string>
     <string name="registration_error_draw_pending">Le tournoi n'a pas encore de tirage.</string>
     <string name="registration_error_not_waiting">Une personne choisie n'est plus sur la liste d'attente. Rouvre la fenêtre.</string>
-    <string name="registration_error_partial_team">Une équipe part en entier : choisis des équipes complètes.</string>
+    <string name="registration_error_partial_team">Chaque équipe doit avoir 4 joueurs. Complète les équipes à l’étape Équipes.</string>
     <string name="registration_error_same_player_count">Le tournoi a déjà ce nombre de joueurs.</string>
     <string name="registration_error_tournament_completed">Le tournoi est terminé.</string>
     <string name="registration_error_tournament_started">Le tournoi a déjà des données à ses tables. Le tirage ne peut plus changer.</string>

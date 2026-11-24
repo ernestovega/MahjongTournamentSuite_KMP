@@ -1103,7 +1103,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_add_locked">Um Tische hinzuzufügen, entferne zuerst die Markierung bei denen, die gehen.</string>
     <string name="pc_remove_locked">Um zu markieren, wer geht, nimm zuerst die hinzugefügten Tische weg.</string>
     <string name="pc_leave_people">Wer geht?</string>
-    <string name="pc_leave_people_teams">Markiere die Personen. Wenn ein Team jemanden verliert, hilft dir der nächste Schritt, es zu vervollständigen.</string>
+    <string name="pc_leave_people_teams">Markiere die Personen. Wenn ein Team jemanden verliert, vervollständigst du es im nächsten Schritt wieder.</string>
     <string name="pc_marked_none">Markiere, wer geht, in Vierergruppen.</string>
     <string name="pc_marked_fits">Markiert: %1$d. Tische, die wegfallen: %2$d.</string>
     <string name="pc_marked_more_or_less">Markiert: %1$d. Markiere %2$d mehr oder entferne %3$d.</string>
@@ -1124,14 +1124,13 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_removed_label">Wird gelöscht:</string>
     <string name="pc_removed_tables">Die Tische aller %1$d Runden. Sie werden neu ausgelost.</string>
     <string name="pc_removed_people">Die Personen, die gehen:</string>
-    <string name="pc_broken_teams">Teams, die unvollständig bleiben, mit den verbleibenden Spielern. Sie werden danach neu aufgestellt:</string>
     <string name="pc_step_teams">Teams</string>
     <string name="pc_teams_title">Teams neu aufstellen</string>
-    <string name="pc_teams_hint">Einige Teams haben Spieler verloren. Verschiebe Personen zwischen diesen Teams, damit jedes wieder 4 hat, oder tippe auf Vorschlagen.\nDu kannst auch mit unvollständigen Teams weitermachen und sie später unter Teams neu aufstellen.</string>
     <string name="pc_teams_complete">Alle Teams haben 4 Spieler.</string>
     <string name="pc_teams_incomplete">Unvollständige Teams: %1$d.</string>
-    <string name="pc_teams_propose">Vorschlagen</string>
-    <string name="pc_teams_reset">Neu beginnen</string>
+    <string name="pc_teams_propose">Teams vervollständigen</string>
+    <string name="pc_teams_propose_info">Teams vervollständigen macht so wenige Wechsel wie möglich:\n• Das unvollständige Team mit den meisten Spielern nimmt die Spieler des Teams mit den wenigsten auf.\n• Das geht weiter, bis jedes Team 4 hat.\nDanach kannst du es von Hand ändern oder auf Rückgängig tippen.</string>
+    <string name="pc_teams_reset">Rückgängig</string>
     <string name="pc_team_count">%1$s (%2$d von 4)</string>
     <string name="pc_team_changes">Die Personen, die das Team wechseln:</string>
     <string name="pc_removed_registrations">Ihre Anmeldungen.</string>

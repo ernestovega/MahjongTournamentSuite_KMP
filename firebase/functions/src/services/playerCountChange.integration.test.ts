@@ -278,29 +278,18 @@ describe("change of the number of players that keeps the numbers of the people w
     assert.equal((await ref.get()).get("numPlayers"), 20);
   });
 
-  it("removes people of teams: the teams stay incomplete with their names, a team without people goes", async () => {
+  it("refuses teams left incomplete, and keeps the old draw", async () => {
     const { id, ref } = await create(24, { isTeams: true });
-    await ref.collection("teams").doc("2").update({ name: "Tigers" });
     const removed = [1, 2, 3, 5];
     const kept = Array.from({ length: 24 }, (_, index) => index + 1).filter((slot) => !removed.includes(slot));
-    // Teammates never share a table: team 1 keeps 4, team 2 keeps 6, 7 and 8.
+    // A valid draw otherwise: teammates never share a table, but team 1 keeps only the 4 and team 2 keeps 6, 7 and 8.
     const tables = [[4, 6, 9, 13], [7, 14, 17, 21], [8, 10, 18, 22], [11, 15, 19, 23], [12, 16, 20, 24]]
       .map((playerIds, index) => ({ roundId: 1, tableId: index + 1, playerIds }));
 
-    await change(id, { players: kept.map((slot) => ({ id: slot, team: teamOf(slot) })), tables }, removed);
+    await expectConflict(change(id, { players: kept.map((slot) => ({ id: slot, team: teamOf(slot) })), tables }, removed), "PARTIAL_TEAM");
 
-    const teams = await ref.collection("teams").get();
-    assert.equal(teams.size, 6);
-    assert.equal((await ref.collection("teams").doc("2").get()).get("name"), "Tigers");
-    const slots = await slotsOf(ref);
-    assert.deepEqual([...slots.keys()].sort((a, b) => a - b), kept);
-    assert.deepEqual([4, 6, 7, 8].map((slot) => slots.get(slot)?.team), [1, 2, 2, 2]);
-
-    // The last of team 1 leaves too: the team goes.
-    const rest = kept.filter((slot) => ![4, 6, 7, 8].includes(slot));
-    await change(id, drawOn(rest, teamOf), [4, 6, 7, 8]);
-    assert.equal((await ref.collection("teams").doc("1").get()).exists, false);
-    assert.equal((await ref.collection("teams").doc("2").get()).exists, false);
+    assert.equal((await slotsOf(ref)).size, 24);
+    assert.equal((await ref.collection("teams").get()).size, 6);
   });
 
   it("moves a person who stays to another team to complete it: same slot, new team, the empty team goes", async () => {

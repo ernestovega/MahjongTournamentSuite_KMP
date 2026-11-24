@@ -1103,7 +1103,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_add_locked">To add tables, first unmark the people who leave.</string>
     <string name="pc_remove_locked">To mark who leaves, first take away the tables added.</string>
     <string name="pc_leave_people">Who leaves?</string>
-    <string name="pc_leave_people_teams">Mark the people. If a team loses someone, the next step helps you complete it.</string>
+    <string name="pc_leave_people_teams">Mark the people. If a team loses someone, in the next step you complete it again.</string>
     <string name="pc_marked_none">Mark the people who leave, in groups of 4.</string>
     <string name="pc_marked_fits">Marked: %1$d. Tables that leave: %2$d.</string>
     <string name="pc_marked_more_or_less">Marked: %1$d. Mark %2$d more or unmark %3$d.</string>
@@ -1124,14 +1124,13 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_removed_label">Deleted:</string>
     <string name="pc_removed_tables">The tables of all %1$d rounds. They are drawn again.</string>
     <string name="pc_removed_people">The people who leave:</string>
-    <string name="pc_broken_teams">Teams that stay incomplete, with the players they keep. Reorganize them afterwards:</string>
     <string name="pc_step_teams">Teams</string>
     <string name="pc_teams_title">Reorganize the teams</string>
-    <string name="pc_teams_hint">Some teams lost players. Move people between these teams so that each one has 4 again, or press Propose.\nYou can also go on with incomplete teams and reorganize them later in Teams.</string>
     <string name="pc_teams_complete">Every team has 4 players.</string>
     <string name="pc_teams_incomplete">Incomplete teams: %1$d.</string>
-    <string name="pc_teams_propose">Propose</string>
-    <string name="pc_teams_reset">Start again</string>
+    <string name="pc_teams_propose">Complete the teams</string>
+    <string name="pc_teams_propose_info">Complete the teams makes the fewest moves:\n• The incomplete team with the most players takes the players of the one with the fewest.\n• It goes on until every team has 4.\nYou can change it by hand afterwards, or press Undo.</string>
+    <string name="pc_teams_reset">Undo</string>
     <string name="pc_team_count">%1$s (%2$d of 4)</string>
     <string name="pc_team_changes">The people who change team:</string>
     <string name="pc_removed_registrations">Their registrations.</string>

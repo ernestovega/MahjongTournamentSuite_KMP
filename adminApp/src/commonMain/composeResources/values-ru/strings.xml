@@ -1119,7 +1119,7 @@
     <string name="pc_add_locked">Чтобы добавить столы, сначала снимите отметки с тех, кто уходит.</string>
     <string name="pc_remove_locked">Чтобы отметить, кто уходит, сначала уберите добавленные столы.</string>
     <string name="pc_leave_people">Кто уходит?</string>
-    <string name="pc_leave_people_teams">Отметьте людей. Если команда кого-то теряет, следующий шаг поможет её дополнить.</string>
+    <string name="pc_leave_people_teams">Отметьте людей. Если команда кого-то теряет, на следующем шаге вы снова её дополните.</string>
     <string name="pc_marked_none">Отметьте тех, кто уходит, группами по 4.</string>
     <string name="pc_marked_fits">Отмечено: %1$d. Столов уходит: %2$d.</string>
     <string name="pc_marked_more_or_less">Отмечено: %1$d. Отметьте ещё %2$d или снимите %3$d.</string>
@@ -1140,14 +1140,13 @@
     <string name="pc_removed_label">Удаляется:</string>
     <string name="pc_removed_tables">Столы всех %1$d раундов. Они разыгрываются заново.</string>
     <string name="pc_removed_people">Уходящие игроки:</string>
-    <string name="pc_broken_teams">Команды, которые остаются неполными, с оставшимися игроками. Их переформируют потом:</string>
     <string name="pc_step_teams">Команды</string>
     <string name="pc_teams_title">Переформируйте команды</string>
-    <string name="pc_teams_hint">Некоторые команды потеряли игроков. Переместите людей между этими командами, чтобы в каждой снова было 4, или нажмите «Предложить».\nМожно также продолжить с неполными командами и переформировать их позже в разделе «Команды».</string>
     <string name="pc_teams_complete">Во всех командах по 4 игрока.</string>
     <string name="pc_teams_incomplete">Неполных команд: %1$d.</string>
-    <string name="pc_teams_propose">Предложить</string>
-    <string name="pc_teams_reset">Начать заново</string>
+    <string name="pc_teams_propose">Дополнить команды</string>
+    <string name="pc_teams_propose_info">«Дополнить команды» делает как можно меньше перестановок:\n• Неполная команда с наибольшим числом игроков получает игроков команды, где их меньше всего.\n• Так продолжается, пока в каждой команде не будет 4.\nПотом можно поправить вручную или нажать «Отменить».</string>
+    <string name="pc_teams_reset">Отменить</string>
     <string name="pc_team_count">%1$s (%2$d из 4)</string>
     <string name="pc_team_changes">Игроки, которые меняют команду:</string>
     <string name="pc_removed_registrations">Их регистрации.</string>

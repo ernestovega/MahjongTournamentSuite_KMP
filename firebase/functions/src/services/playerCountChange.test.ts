@@ -212,16 +212,14 @@ describe("plan of a change that keeps the numbers of the people who stay", () =>
     assert.equal(result.teamSourceOf.has(2), false);
   });
 
-  it("removes people of a team: their teams stay with the others, incomplete, and keep their numbers", () => {
+  it("refuses a team of people who stay with fewer than 4 players", () => {
     const removed = [1, 2, 3, 5];
     const kept = range(1, 24).filter((id) => !removed.includes(id));
-    const result = plan(planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: removed, waitingEmaIds: [] }));
-    assert.deepEqual([...result.teamSourceOf.entries()].sort((a, b) => a[0] - b[0]), [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
-    kept.forEach((id) => assert.equal(result.sourceOf.get(id), id));
-    assert.deepEqual(result.removedSlotIds, removed);
+    const result = planPlayerCountChange({ current: slots(24, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: removed, waitingEmaIds: [] });
+    assert.equal(code(result), "PARTIAL_TEAM");
   });
 
-  it("deletes a team whose people all leave, even when they are not one table", () => {
+  it("deletes a team whose people all leave", () => {
     const removed = [1, 2, 3, 4];
     const kept = range(1, 20).filter((id) => !removed.includes(id));
     const result = plan(planPlayerCountChange({ current: slots(20, true), isTeams: true, newPlayers: players(kept, teamOf), removedSlotIds: removed, waitingEmaIds: [] }));

@@ -53,16 +53,6 @@ class PlayerCountRulesTest {
         assertEquals(emptyList(), PlayerCountRules.removedSlots(emptySet()))
     }
 
-    @Test
-    fun theTeamsThatLoseSomeoneButNotAllAreIncomplete() {
-        // Teams of 4 by number: 3 of team 1 and 1 of team 2 leave, and team 3 leaves whole.
-        val slots = (1..16).map { TournamentPlayer(it, "Player $it", (it - 1) / 4 + 1) }
-        val broken = PlayerCountRules.brokenTeams(slots, listOf(1, 2, 3, 5, 9, 10, 11, 12))
-        assertEquals(mapOf(1 to listOf(4), 2 to listOf(6, 7, 8)), broken)
-        assertEquals(emptyMap(), PlayerCountRules.brokenTeams(slots, (5..8).toList()))
-        assertEquals(emptyMap(), PlayerCountRules.brokenTeams(slots.map { it.copy(team = 0) }, listOf(1, 2, 3, 5)))
-    }
-
     private val teamsOf24 = (1..24).map { TournamentPlayer(it, "Player $it", (it - 1) / 4 + 1) }
 
     @Test

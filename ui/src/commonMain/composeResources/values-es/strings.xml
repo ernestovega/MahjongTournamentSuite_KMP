@@ -623,7 +623,7 @@
     <string name="registration_error_bad_waiting">Hay más personas de la lista de espera que huecos nuevos.</string>
     <string name="registration_error_draw_pending">El torneo aún no tiene sorteo.</string>
     <string name="registration_error_not_waiting">Alguien que elegiste ya no está en la lista de espera. Vuelve a abrir el diálogo.</string>
-    <string name="registration_error_partial_team">Un equipo se va entero: elige equipos completos.</string>
+    <string name="registration_error_partial_team">Todos los equipos deben tener 4 jugadores. Complétalos en el paso Equipos.</string>
     <string name="registration_error_same_player_count">El torneo ya tiene ese número de jugadores.</string>
     <string name="registration_error_tournament_completed">El torneo ha terminado.</string>
     <string name="registration_error_tournament_started">El torneo ya tiene datos en sus mesas. El sorteo ya no puede cambiar.</string>

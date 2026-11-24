@@ -206,15 +206,14 @@ class AdminDialogsScreenshotTest {
         )
     }
 
-    /** The review with teams: the teams that stay incomplete, to reorganize afterwards. */
+    /** The review with teams: who changes team to complete the teams. */
     @Test
     fun playerCountConfirmTeams() = playerCountScreen("player-count-confirm-teams", step = 2, withTeams = true) {
         ReviewContent(
             summary = PlayerCountSummary(
                 from = 20, to = 16, rounds = 7, isTeams = true, hasRegistrations = false,
                 leaving = listOf(2, 6, 7, 11).map { "#$it · " + nameOf(it) },
-                teamChanges = listOf("#12 · " + nameOf(12) + " → " + TEAM_NAMES[1]),
-                brokenTeams = listOf(TEAM_NAMES[0] + " (3)", TEAM_NAMES[2] + " (2)"),
+                teamChanges = listOf("#8 · " + nameOf(8) + " → " + TEAM_NAMES[0], "#5 · " + nameOf(5) + " → " + TEAM_NAMES[2]),
                 newSlots = 0, fromWaiting = emptyList(),
             ),
             onConfirm = {},
@@ -248,7 +247,7 @@ class AdminDialogsScreenshotTest {
             summary = PlayerCountSummary(
                 from = 20, to = 16, rounds = 7, isTeams = false, hasRegistrations = true,
                 leaving = listOf("#5 · " + nameOf(5), "#6 · " + nameOf(6), "#11 · " + nameOf(11), "#12 · " + nameOf(12)),
-                brokenTeams = emptyList(), newSlots = 0, fromWaiting = emptyList(),
+                newSlots = 0, fromWaiting = emptyList(),
             ),
             onConfirm = {},
             onBack = {},

@@ -1103,7 +1103,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_add_locked">Om tafels toe te voegen, vink eerst wie weggaat uit.</string>
     <string name="pc_remove_locked">Om aan te vinken wie weggaat, haal eerst de toegevoegde tafels weg.</string>
     <string name="pc_leave_people">Wie gaat weg?</string>
-    <string name="pc_leave_people_teams">Markeer de personen. Als een team iemand verliest, helpt de volgende stap je het aan te vullen.</string>
+    <string name="pc_leave_people_teams">Markeer de personen. Als een team iemand verliest, vul je het in de volgende stap weer aan.</string>
     <string name="pc_marked_none">Vink aan wie weggaat, in groepen van 4.</string>
     <string name="pc_marked_fits">Aangevinkt: %1$d. Tafels die weggaan: %2$d.</string>
     <string name="pc_marked_more_or_less">Aangevinkt: %1$d. Vink er %2$d meer aan of %3$d uit.</string>
@@ -1124,14 +1124,13 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_removed_label">Wordt verwijderd:</string>
     <string name="pc_removed_tables">De tafels van alle %1$d rondes. Ze worden opnieuw geloot.</string>
     <string name="pc_removed_people">De personen die vertrekken:</string>
-    <string name="pc_broken_teams">Teams die onvolledig blijven, met de spelers die overblijven. Ze worden daarna opnieuw ingedeeld:</string>
     <string name="pc_step_teams">Teams</string>
     <string name="pc_teams_title">Deel de teams opnieuw in</string>
-    <string name="pc_teams_hint">Sommige teams zijn spelers kwijt. Verplaats personen tussen deze teams zodat elk weer 4 heeft, of druk op Voorstellen.\nJe kunt ook doorgaan met onvolledige teams en ze later in Teams opnieuw indelen.</string>
     <string name="pc_teams_complete">Alle teams hebben 4 spelers.</string>
     <string name="pc_teams_incomplete">Onvolledige teams: %1$d.</string>
-    <string name="pc_teams_propose">Voorstellen</string>
-    <string name="pc_teams_reset">Opnieuw beginnen</string>
+    <string name="pc_teams_propose">Teams aanvullen</string>
+    <string name="pc_teams_propose_info">Teams aanvullen doet zo weinig mogelijk wissels:\n• Het onvolledige team met de meeste spelers krijgt de spelers van het team met de minste.\n• Dat gaat door tot elk team er 4 heeft.\nDaarna kun je het met de hand aanpassen, of op Herstellen drukken.</string>
+    <string name="pc_teams_reset">Herstellen</string>
     <string name="pc_team_count">%1$s (%2$d van 4)</string>
     <string name="pc_team_changes">De personen die van team wisselen:</string>
     <string name="pc_removed_registrations">Hun inschrijvingen.</string>

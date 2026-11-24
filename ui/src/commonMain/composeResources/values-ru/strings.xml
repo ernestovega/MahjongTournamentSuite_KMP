@@ -619,7 +619,7 @@
     <string name="registration_error_bad_waiting">Людей из листа ожидания больше, чем новых мест.</string>
     <string name="registration_error_draw_pending">У турнира ещё нет жеребьёвки.</string>
     <string name="registration_error_not_waiting">Кого-то из выбранных уже нет в листе ожидания. Открой окно заново.</string>
-    <string name="registration_error_partial_team">Команда уходит целиком: выбирай целые команды.</string>
+    <string name="registration_error_partial_team">В каждой команде должно быть 4 игрока. Дополните команды на шаге «Команды».</string>
     <string name="registration_error_same_player_count">В турнире уже столько игроков.</string>
     <string name="registration_error_tournament_completed">Турнир завершён.</string>
     <string name="registration_error_tournament_started">В турнире уже есть данные за столами. Жеребьёвку больше нельзя изменить.</string>

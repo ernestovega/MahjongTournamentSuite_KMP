@@ -619,7 +619,7 @@
     <string name="registration_error_bad_waiting">Det finns fler personer från väntelistan än nya platser.</string>
     <string name="registration_error_draw_pending">Turneringen har ingen lottning än.</string>
     <string name="registration_error_not_waiting">Någon du valde står inte längre på väntelistan. Öppna dialogen igen.</string>
-    <string name="registration_error_partial_team">Ett lag lämnar helt: välj hela lag.</string>
+    <string name="registration_error_partial_team">Varje lag måste ha 4 spelare. Fyll på lagen i steget Lag.</string>
     <string name="registration_error_same_player_count">Turneringen har redan det antalet spelare.</string>
     <string name="registration_error_tournament_completed">Turneringen är avslutad.</string>
     <string name="registration_error_tournament_started">Turneringen har redan data vid sina bord. Lottningen kan inte längre ändras.</string>

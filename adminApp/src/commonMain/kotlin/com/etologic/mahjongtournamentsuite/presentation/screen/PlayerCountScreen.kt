@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -37,6 +39,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,11 +49,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountBlocker
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountOutcome
@@ -98,7 +111,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_added_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_added_waiting
 import mahjongtournamentsuite.adminapp.generated.resources.pc_after
 import mahjongtournamentsuite.adminapp.generated.resources.pc_back
-import mahjongtournamentsuite.adminapp.generated.resources.pc_broken_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_come_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_confirm
 import mahjongtournamentsuite.adminapp.generated.resources.pc_confirm_title
@@ -147,9 +159,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_sure_text
 import mahjongtournamentsuite.adminapp.generated.resources.pc_team_changes
 import mahjongtournamentsuite.adminapp.generated.resources.pc_team_count
 import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_complete
-import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_hint
 import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_incomplete
 import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_propose
+import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_propose_info
 import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_reset
 import mahjongtournamentsuite.adminapp.generated.resources.pc_teams_title
 import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
@@ -378,8 +390,6 @@ internal data class PlayerCountSummary(
     val isTeams: Boolean,
     val hasRegistrations: Boolean,
     val leaving: List<String>,
-    /** The teams that stay incomplete, as "Team A (1)": they are reorganized afterwards. */
-    val brokenTeams: List<String>,
     /** The people who change team in the step Teams, as "#4 · Ana → Tigers". */
     val teamChanges: List<String> = emptyList(),
     val newSlots: Int,
@@ -389,12 +399,6 @@ internal data class PlayerCountSummary(
         fun of(tournament: Tournament, data: PlayerCountData, form: PlayerCountForm): PlayerCountSummary {
             val leaving = data.slots.filter { it.id in form.chosen }.map { it.label() }
             val teamNames = data.teams.associate { it.id to it.name }
-            val broken = if (tournament.isTeams && form.chosen.isNotEmpty()) {
-                PlayerCountRules.incompleteTeams(data.players(), form.chosen, form.teamMoves)
-                    .map { (team, kept) -> "${teamNames[team] ?: "Team $team"} (${kept.size})" }
-            } else {
-                emptyList()
-            }
             val changes = data.slots.filter { it.id in form.teamMoves && it.id !in form.chosen }.map { slot ->
                 val team = form.teamMoves.getValue(slot.id)
                 "${slot.label()} → ${teamNames[team] ?: "Team $team"}"
@@ -408,7 +412,6 @@ internal data class PlayerCountSummary(
                 isTeams = tournament.isTeams,
                 hasRegistrations = tournament.registration != null,
                 leaving = leaving,
-                brokenTeams = broken,
                 teamChanges = changes,
                 newSlots = PlayerCountRules.newSlots(tournament.numPlayers, target),
                 fromWaiting = form.waiting.map { waitingNames[it] ?: it },
@@ -769,6 +772,14 @@ internal fun ColumnScope.TeamsContent(
     val after = PlayerCountRules.teamsAfter(players, form.chosen, form.teamMoves).filterKeys { it in involved }
     val open = PlayerCountRules.incompleteTeams(players, form.chosen, form.teamMoves)
     val slotsById = data.slots.associateBy { it.id }
+    // Drag and drop (Ernesto, 24-nov): a person is dragged by the handle on the left and dropped on a team that has
+    // room. The button on the right does the same with the keyboard.
+    val teamBounds = remember { mutableStateMapOf<Int, Rect>() }
+    var dragged by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    var dragPointer by remember { mutableStateOf<Offset?>(null) }
+    fun canTake(team: Int, from: Int) = team == from || (after[team]?.size ?: 0) < PlayerCountRules.STEP
+    val dropTeam = dragPointer?.let { pointer -> teamBounds.entries.firstOrNull { it.value.contains(pointer) }?.key }
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
         modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountTeams"),
@@ -776,7 +787,6 @@ internal fun ColumnScope.TeamsContent(
         scrollbar = MtsScrollbar.Margin,
     ) {
         SectionTitle(stringResource(Res.string.pc_teams_title))
-        Hint(stringResource(Res.string.pc_teams_hint))
         Text(
             if (open.isEmpty()) stringResource(Res.string.pc_teams_complete) else stringResource(Res.string.pc_teams_incomplete, open.size),
             style = MaterialTheme.typography.bodyMedium,
@@ -790,6 +800,7 @@ internal fun ColumnScope.TeamsContent(
                 enabled = open.size >= 2,
                 buttonModifier = Modifier.testTag("playerCountPropose"),
             ) { Text(stringResource(Res.string.pc_teams_propose)) }
+            InfoTooltipIcon(stringResource(Res.string.pc_teams_propose_info))
             TextButton(
                 onClick = { onFormChange(form.copy(teamMoves = emptyMap())) },
                 enabled = form.teamMoves.isNotEmpty(),
@@ -797,7 +808,16 @@ internal fun ColumnScope.TeamsContent(
             ) { Text(stringResource(Res.string.pc_teams_reset)) }
         }
         after.forEach { (team, members) ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().testTag("playerCountTeam-$team")) {
+            val from = dragged?.let { id -> after.entries.first { id in it.value }.key }
+            val target = from != null && dropTeam == team && team != from && canTake(team, from)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { teamBounds[team] = it.boundsInRoot() }
+                    .background(if (target) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent)
+                    .testTag("playerCountTeam-$team"),
+            ) {
                 HorizontalDivider()
                 Text(
                     stringResource(Res.string.pc_team_count, nameOf(team), members.size),
@@ -806,28 +826,83 @@ internal fun ColumnScope.TeamsContent(
                     color = if (members.size < PlayerCountRules.STEP) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 )
                 members.forEach { id ->
-                    val slot = slotsById.getValue(id)
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f),
-                        )
-                        TeamPicker(
-                            slotId = id,
-                            current = team,
-                            options = involved.map { it to (after[it]?.size ?: 0) },
-                            nameOf = ::nameOf,
-                            onPick = { onFormChange(form.movedTo(slot, it)) },
-                        )
+                    key(id) {
+                        val slot = slotsById.getValue(id)
+                        var rowOrigin by remember { mutableStateOf(Offset.Zero) }
+                        val isDragged = dragged == id
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .zIndex(if (isDragged) 1f else 0f)
+                                .graphicsLayer {
+                                    if (isDragged) {
+                                        translationX = dragOffset.x
+                                        translationY = dragOffset.y
+                                        shadowElevation = 8.dp.toPx()
+                                    }
+                                }
+                                .background(if (isDragged) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
+                                .onGloballyPositioned { rowOrigin = it.positionInRoot() },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.DragIndicator,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .testTag("playerCountDrag-$id")
+                                    .pointerInput(id, team, form) {
+                                        detectDragGestures(
+                                            onDragStart = { start ->
+                                                dragged = id
+                                                dragOffset = Offset.Zero
+                                                // The pointer in the root: the handle sits at the start of the row.
+                                                dragPointer = rowOrigin + start
+                                            },
+                                            onDrag = { change, amount ->
+                                                change.consume()
+                                                dragOffset += amount
+                                                dragPointer = dragPointer?.plus(amount)
+                                            },
+                                            onDragEnd = {
+                                                val to = dragPointer?.let { pointer -> teamBounds.entries.firstOrNull { it.value.contains(pointer) }?.key }
+                                                if (to != null && to != team && canTake(to, team)) onFormChange(form.movedTo(slot, to))
+                                                dragged = null
+                                                dragPointer = null
+                                                dragOffset = Offset.Zero
+                                            },
+                                            onDragCancel = {
+                                                dragged = null
+                                                dragPointer = null
+                                                dragOffset = Offset.Zero
+                                            },
+                                        )
+                                    },
+                            )
+                            Text(
+                                if (slot.emaId == null) stringResource(Res.string.pc_empty_slot, slot.id) else slot.label(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TeamPicker(
+                                slotId = id,
+                                current = team,
+                                options = involved.map { it to (after[it]?.size ?: 0) },
+                                nameOf = ::nameOf,
+                                onPick = { onFormChange(form.movedTo(slot, it)) },
+                            )
+                        }
                     }
                 }
             }
         }
     }
     MtsDialogButtons {
+        // No team may stay incomplete after this step (Ernesto, 24-nov).
         Button(
             onClick = onContinue,
+            enabled = open.isEmpty(),
             buttonModifier = Modifier.testTag("playerCountTeamsContinue"),
         ) { Text(stringResource(Res.string.pc_continue)) }
         TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountTeamsBack")) { Text(stringResource(Res.string.pc_back)) }
@@ -890,9 +965,6 @@ internal fun ColumnScope.ReviewContent(
                     add(BulletItem(stringResource(Res.string.pc_removed_people), summary.leaving, "playerCountLeaving"))
                     if (summary.teamChanges.isNotEmpty()) {
                         add(BulletItem(stringResource(Res.string.pc_team_changes), summary.teamChanges, "playerCountTeamChanges"))
-                    }
-                    if (summary.brokenTeams.isNotEmpty()) {
-                        add(BulletItem(stringResource(Res.string.pc_broken_teams), summary.brokenTeams, "playerCountBrokenTeams"))
                     }
                     if (summary.hasRegistrations) add(stringResource(Res.string.pc_removed_registrations))
                 }

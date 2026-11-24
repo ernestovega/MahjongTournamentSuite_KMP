@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -378,7 +380,7 @@ class PlayerCountUiTest {
     }
 
     @Test
-    fun aTeamTournamentRemovesPeopleAndTheirTeamsStayIncomplete() = runComposeUiTest {
+    fun aTeamTournamentRemovesPeopleAndNeverGoesOnWithIncompleteTeams() = runComposeUiTest {
         val teamsTournament = individual.copy(isTeams = true)
         val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
         val world = World(teamsTournament, slots(20, isTeams = true), teams)
@@ -386,33 +388,34 @@ class PlayerCountUiTest {
 
         // People, not teams (Ernesto, 24-nov): 3 of team 1 and 1 of team 2.
         onNodeWithText("Who leaves?").assertIsDisplayed()
-        onNodeWithText("Mark the people. If a team loses someone, the next step helps you complete it.").assertIsDisplayed()
+        onNodeWithText("Mark the people. If a team loses someone, in the next step you complete it again.").assertIsDisplayed()
         assertTrue(onAllNodesWithTag("playerCountTeam-1").fetchSemanticsNodes().isEmpty())
         listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
         see("playerCountChosen").assertTextEquals("Marked: 4. Tables that leave: 1.")
         // 16 is the minimum: nobody else can leave.
         see("playerCountSlot-6").assertIsNotEnabled()
         click("playerCountContinue")
-        // The step Teams: the organizer may go on with the teams incomplete.
+        // The step Teams: no team may stay incomplete (Ernesto, 24-nov).
         onNodeWithText("Reorganize the teams").assertIsDisplayed()
         see("playerCountTeamsStatus").assertTextEquals("Incomplete teams: 2.")
         see("playerCountTeam-1").assertExists()
         see("playerCountTeam-2").assertExists()
+        see("playerCountTeamsContinue").assertIsNotEnabled()
+        click("playerCountPropose")
+        see("playerCountTeamsContinue").assertIsEnabled()
         click("playerCountTeamsContinue")
         listOf("#1 · Name 1", "#2 · Name 2", "#3 · Name 3", "#5 · Name 5").forEachIndexed { index, line ->
             onNodeWithTag("playerCountLeaving-$index").assertTextEquals(line)
         }
-        onNodeWithText("Teams that stay incomplete, with the players they keep. Reorganize them afterwards:").assertIsDisplayed()
-        onNodeWithTag("playerCountBrokenTeams-0").assertTextEquals("Team 1 (1)")
-        onNodeWithTag("playerCountBrokenTeams-1").assertTextEquals("Team 2 (3)")
+        onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
         makeTheDraw()
         waitForDone()
         val request = world.server.playerCountRequest!!
         assertEquals(listOf(1, 2, 3, 5), request.removedSlotIds)
-        // Everyone who stays keeps their number and team; teammates never share a table.
+        // Everyone who stays keeps their number, the 4 goes to team 2, and every team has 4; teammates never share a table.
         assertEquals((4..20).filter { it != 5 }, request.players.map { it.id }.sorted())
-        assertEquals(listOf(1, 3, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size }.sorted())
-        request.players.forEach { assertEquals((it.id - 1) / 4 + 1, it.team) }
+        assertEquals(listOf(4, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size })
+        request.players.forEach { assertEquals(if (it.id == 4) 2 else (it.id - 1) / 4 + 1, it.team) }
         val teamOf = request.players.associate { it.id to it.team }
         request.tables.forEach { table -> assertEquals(4, table.playerIds.map { teamOf[it] }.toSet().size, "$table") }
         assertEquals(teamsTournament.numRounds * 4, request.tables.size)
@@ -441,7 +444,6 @@ class PlayerCountUiTest {
 
         click("playerCountTeamsContinue")
         onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
-        assertTrue(onAllNodesWithTag("playerCountBrokenTeams-0").fetchSemanticsNodes().isEmpty())
         // Back from the review goes to the teams, with the moves kept.
         click("playerCountBack")
         see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
@@ -453,6 +455,30 @@ class PlayerCountUiTest {
         assertEquals(listOf(4, 4, 4, 4), request.players.groupBy { it.team }.values.map { it.size })
         val teamOf = request.players.associate { it.id to it.team }
         request.tables.forEach { table -> assertEquals(4, table.playerIds.map { teamOf[it] }.toSet().size, "$table") }
+    }
+
+    @Test
+    fun aPersonIsDraggedByTheHandleToAnotherTeam() = runComposeUiTest {
+        val teamsTournament = individual.copy(isTeams = true)
+        val teams = (1..5).map { TournamentTeam(it, "Team $it", (1..4).map { slot -> (it - 1) * 4 + slot }) }
+        val world = World(teamsTournament, slots(20, isTeams = true), teams)
+        showScreen(world)
+        listOf(1, 2, 3, 5).forEach { click("playerCountSlot-$it") }
+        click("playerCountContinue")
+        see("playerCountTeamsStatus").assertTextEquals("Incomplete teams: 2.")
+
+        val handle = onNodeWithTag("playerCountDrag-4").fetchSemanticsNode().boundsInRoot
+        val target = onNodeWithTag("playerCountTeam-2").fetchSemanticsNode().boundsInRoot
+        onNodeWithTag("playerCountDrag-4").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, (target.center.y - handle.center.y) / 2), delayMillis = 50)
+            moveBy(Offset(0f, (target.center.y - handle.center.y) / 2), delayMillis = 50)
+            up()
+        }
+        waitForIdle()
+        see("playerCountTeamsStatus").assertTextEquals("Every team has 4 players.")
+        click("playerCountTeamsContinue")
+        onNodeWithTag("playerCountTeamChanges-0").assertTextEquals("#4 · Name 4 → Team 2")
     }
 
     @Test
