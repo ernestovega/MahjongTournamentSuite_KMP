@@ -22,6 +22,13 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
   The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
 - **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. Until production it runs no test (the tests run on the computer before the push). With the gate on (below), it runs only after every test and a deploy to staging. It deploys hosting (one site with both web apps, see [web-hosting.md](web-hosting.md)), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
+  At the end, a **smoke test** (`scripts/smoke/smoke.mjs`, a few seconds) checks that both web apps load with every one of
+  their scripts, that `/version.json` and `/api/health` give the versions of `main`, that `/api/public/tournaments` has
+  data and that the App Links file is served. Each check tries again for up to two minutes while Hosting and the API
+  take the new version. A failure makes the run red (GitHub emails the owner) but does not undo the deploy. The
+  staging deploy runs the same check against staging. By hand: `node scripts/smoke/smoke.mjs`
+  (`MTS_SITE_URL=https://mts---staging.web.app` for staging).
+
 - **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
 
 ### Every night
@@ -39,7 +46,7 @@ Every test runs on `main` every night (the game day once a week), and GitHub ema
 
 Two tests guard the lists themselves: `testList.test.ts` fails when a unit test of the functions is not in `npm test`,
 or an integration test is outside the folders of `npm run test:integration`. The scripts job runs the tests of
-`scripts/rehearsal/test` too.
+`scripts/rehearsal/test` and `scripts/smoke/test` too.
 
 ### The gate before production
 

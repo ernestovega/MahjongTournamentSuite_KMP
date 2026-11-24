@@ -18,11 +18,12 @@ what is still untested, in order of priority. The last part lists the test tourn
 | Game day (bots on staging) | `scripts/rehearsal`, `.github/workflows/scenario.yml`, `rehearsal.yml` | Actions > Test · Game day | By hand |
 | Tests of the Game day scripts | `scripts/rehearsal/test/*.test.mjs` | `node --test scripts/rehearsal/test/*.test.mjs` | By hand |
 | Project rules | `scoringCases` (server, admin, player share `testdata/scoring-cases.json`), `clientContract.test` (app calls match API routes), `CommonCodeIsMultiplatformTest` (no JVM-only APIs in `commonMain`), `AnalyticsCoverageTest`, `LocalizationParityTest`, `DesignTokenRatchetTest`, `ButtonConventionTest`, `ScrollIndicatorsConventionTest` | With the Kotlin and backend tests | Same |
+| Smoke test of a deploy | `scripts/smoke/smoke.mjs`, its tests in `scripts/smoke/test/` | `node scripts/smoke/smoke.mjs` (`MTS_SITE_URL` for staging) | At the end of every deploy to production and to staging |
 | Performance | `benchmarks/`, `.github/workflows/benchmark.yml` | Actions | Every morning against production |
 | Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | By hand |
 
 There are no tests of: the web (Wasm) apps in a real browser, the Firestore and Storage rules, load beyond Game day,
-accessibility, or a smoke check of production after a deploy.
+or accessibility.
 
 ## 2. Measured coverage
 
@@ -164,7 +165,7 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 3. **Registrations end to end**: E2E (or web E2E) of registering without an account with the email link, the waiting
    list, cancellation, and the admin per-person edits (`RegistrationsScreen` 62 %).
 4. **Change the number of players** has unit, backend and Game day tests but no E2E through the screens.
-5. **Production smoke check after each deploy**: the web loads, `/public` answers, the API version is the new one.
+5. ~~**Production smoke check after each deploy**~~: done, `scripts/smoke/smoke.mjs` (25 November).
 
 **Priority 2**
 
