@@ -141,6 +141,18 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "activity",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "changes",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "errorGroups",
       "fieldPath": "expireAt",
       "ttl": true,

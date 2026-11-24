@@ -224,6 +224,9 @@
     <string name="entry_seats_first">Asigna los asientos de la mesa para empezar a añadir manos.</string>
     <string name="round_starts_at">Empieza a las</string>
     <string name="round_clock_remaining">Tiempo restante: %1$s</string>
+    <string name="table_hand_announce_new">Mano nueva %1$d</string>
+    <string name="table_hand_announce_edited">Mano %1$d corregida</string>
+    <string name="table_hand_announce_deleted">Mano %1$d borrada</string>
     <string name="round_clock_paused">En pausa · Tiempo restante: %1$s</string>
     <string name="round_clock_over">El tiempo de juego ha terminado.</string>
     <string name="filter_table_search">Nº de mesa o jugador</string>
@@ -249,7 +252,10 @@
     <string name="preg_open_detail">Puede inscribirse cualquier persona con número EMA.</string>
     <string name="preg_closed_detail">Ahora no se puede inscribir nadie.\nLa organización publicará aquí el sorteo.</string>
     <string name="preg_places_value">%1$d de %2$d plazas ocupadas</string>
-    <string name="preg_places_value_no_limit">%1$d personas inscritas, sin límite de plazas</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d persona inscrita, sin límite de plazas</item>
+        <item quantity="other">%1$d personas inscritas, sin límite de plazas</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d en lista de espera</string>
     <string name="preg_waiting_none">Nadie en lista de espera</string>
     <string name="preg_closes_until">Hasta el %1$s, incluido</string>

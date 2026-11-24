@@ -122,7 +122,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/tournaments/:tournamentId/table-qr-codes", "@tournament.view"],
   ["GET", "/tournaments/:tournamentId/integrity", "@tournament.view"],
   ["POST", "/tournaments/:tournamentId/ema-report", "@tournament.view"],
-  ["GET", "/tournaments/:tournamentId/users/lookup", "@tournament.view"],
+  ["GET", "/tournaments/:tournamentId/users/lookup", "@tournament.members"],
   ["GET", "/tournaments/:tournamentId/members", "@tournament.view"],
   ["PUT", "/tournaments/:tournamentId/members/:uid", "@tournament.members"],
   ["DELETE", "/tournaments/:tournamentId/members/:uid", "@tournament.members"],

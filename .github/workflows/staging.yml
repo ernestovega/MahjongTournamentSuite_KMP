@@ -90,6 +90,7 @@ jobs:
           PLAYER_APP_URL=https://$STAGING.web.app
           EMA_FIREBASE_STORAGE_BUCKET=$STAGING.firebasestorage.app
           APP_CHECK_MODE=monitor
+          MTS_FORWARDED_PROBE=1
           EOF
           sed -i 's/^ *//' "firebase/functions/.env.$STAGING"
           cat "firebase/functions/.env.$STAGING"
@@ -139,6 +140,25 @@ jobs:
 
       - name: Set the CORS rules of the photo bucket
         run: gcloud storage buckets update "gs://$STAGING.firebasestorage.app" --cors-file=storage.cors.staging.json
+
+      # The rate limits must see the real address of the caller, through Hosting and directly, also when the caller
+      # forges the forwarding headers (firebase/functions/src/api/clientAddress.ts). It fails when Google changes how
+      # the address arrives, for example a new range of the proxies of Hosting.
+      - name: Check the client address
+        run: |
+          sleep 15
+          runner=$(curl -s https://api.ipify.org)
+          echo "Runner address: $runner"
+          failed=0
+          for url in "https://$STAGING.web.app/api/debug/forwarded" "https://europe-southwest1-$STAGING.cloudfunctions.net/api/debug/forwarded"; do
+            for forged in "" "9.9.9.9, 8.8.8.8"; do
+              answer=$(curl -s ${forged:+-H "X-Forwarded-For: $forged"} "$url")
+              seen=$(echo "$answer" | jq -r '.clientAddress')
+              echo "$url ${forged:+(forged $forged)} -> $seen   (x-forwarded-for: $(echo "$answer" | jq -r '.xff'))"
+              [ "$seen" = "$runner" ] || failed=1
+            done
+          done
+          [ "$failed" = 0 ] || { echo "::error::The API does not see the real client address. Check clientAddress.ts."; exit 1; }
 
       - name: Show the addresses
         run: |

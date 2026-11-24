@@ -180,6 +180,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_title_waiting
 import mahjongtournamentsuite.playerapp.generated.resources.preg_waiting_none
 import mahjongtournamentsuite.playerapp.generated.resources.preg_waiting_value
 import mahjongtournamentsuite.playerapp.generated.resources.preg_without_team
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
@@ -510,7 +511,7 @@ private fun RegistrationSummaryCard(settings: RegistrationSettings?) {
                         val max = settings.maxPlayers
                         Text(
                             if (max == null) {
-                                stringResource(Res.string.preg_places_value_no_limit, settings.confirmed)
+                                pluralStringResource(Res.plurals.preg_places_value_no_limit, settings.confirmed, settings.confirmed)
                             } else {
                                 stringResource(Res.string.preg_places_value, settings.confirmed, max)
                             },

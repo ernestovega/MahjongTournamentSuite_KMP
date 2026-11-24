@@ -49,7 +49,8 @@ flowchart LR
 
   WEBP & WEBA -- "HTML/Wasm" --> HOST
   WEBP & WEBA -- "/api/** (rewrite)" --> HOST --> API
-  AND & DESK -- "HTTPS straight to the function" --> API
+  AND & DESK -- "https://mts.mahjongmadrid.com/api/**" --> HOST
+  AND & DESK -. "requests over 60 s (exports, draw)" .-> API
   AND & WEBP & WEBA -. token .-> AC
   AND & WEBP & WEBA -. events .-> GA
   API --> AUTH
@@ -66,10 +67,10 @@ flowchart LR
 
 | Client | Module | Who uses it | How it reaches the API |
 |---|---|---|---|
-| Android app «MTS» | `androidApp` (joins `playerApp` and `adminApp`) | Players, and staff who switch to «Management» | `https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api` |
+| Android app «MTS» | `androidApp` (joins `playerApp` and `adminApp`) | Players, and staff who switch to «Management» | `https://mts.mahjongmadrid.com/api` (Hosting and its CDN); the requests that can pass 60 s go to the function directly |
 | Player web | `playerApp` (Wasm) | Anyone, with or without an account | `/api` of the same site (Hosting forwards it to the function) |
 | Management web | `adminApp` (Wasm) at `/admin/` | Staff | `/api` of the same site |
-| Desktop app | `adminApp` (JVM) | Staff | Direct URL of the function |
+| Desktop app | `adminApp` (JVM) | Staff | Like Android |
 
 Shared modules: `domain` (models and rules), `data` (Ktor client of the API, DTOs, caches), `ui` and `designsystem` (Compose components). The HTTP client is `data/.../backend/FunctionsBackendApi.kt`.
 

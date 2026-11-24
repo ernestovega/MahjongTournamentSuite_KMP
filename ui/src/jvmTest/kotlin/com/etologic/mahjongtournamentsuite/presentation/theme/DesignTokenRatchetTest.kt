@@ -13,8 +13,8 @@ import kotlin.test.assertTrue
  * The theme package is not counted: it is where the raw values are defined.
  */
 class DesignTokenRatchetTest {
-    /** The counts on main when the ratchet started (2026-11-13), lowered by phases 1 and 4. The two raw colors are on purpose. */
-    private val baselineRawColors = 2
+    /** The counts on main when the ratchet started (2026-11-13), lowered by phases 1 and 4 and to 0 on 2026-11-24. */
+    private val baselineRawColors = 0
     private val baselineRawCornerShapes = 0
     private val baselineOffScaleSpacings = 0
 

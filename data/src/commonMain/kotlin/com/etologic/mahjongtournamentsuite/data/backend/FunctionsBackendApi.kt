@@ -127,6 +127,12 @@ class FunctionsBackendApi(
     private fun url(path: String): String = apiConfiguration.baseUrl.trimEnd('/') + path
 
     /**
+     * The URL of a request that can take more than 60 s (exports, the draw, a big tournament). Firebase Hosting cuts
+     * a request at 60 s, so on Android and the desktop these go straight to the function. See [ApiConfiguration].
+     */
+    private fun longUrl(path: String): String = (apiConfiguration.longBaseUrl ?: apiConfiguration.baseUrl).trimEnd('/') + path
+
+    /**
      * The URL of a read. A read with [PUBLIC_TOKEN] goes to the public route of the same data, which needs no account
      * and never shows emails or accounts.
      */
@@ -389,7 +395,7 @@ class FunctionsBackendApi(
         request: CreateTournamentRequestDto,
     ): TournamentDto {
         // Creating a tournament can take significantly longer than typical requests (large payload + server-side writes).
-        val response = httpClient.post(url("/tournaments")) {
+        val response = httpClient.post(longUrl("/tournaments")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)
@@ -430,7 +436,7 @@ class FunctionsBackendApi(
         tournamentId: String,
         sheet: IdCardSheetLayout? = null,
     ): ByteArray {
-        val response = httpClient.get(url("/tournaments/$tournamentId/id-cards")) {
+        val response = httpClient.get(longUrl("/tournaments/$tournamentId/id-cards")) {
             sheet?.let {
                 parameter("layout", "sheet")
                 parameter("cardsPerSheet", it.cardsPerSheet)
@@ -484,7 +490,7 @@ class FunctionsBackendApi(
 
     /** The PDF with the cards of the tables, [perSheet] per A4, in the language of the app (Accept-Language). */
     suspend fun generateTableQrCodes(idToken: String, tournamentId: String, perSheet: Int): ByteArray {
-        val response = httpClient.get(url("/tournaments/$tournamentId/table-qr-codes?perSheet=$perSheet")) {
+        val response = httpClient.get(longUrl("/tournaments/$tournamentId/table-qr-codes?perSheet=$perSheet")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 180_000 }
@@ -499,7 +505,7 @@ class FunctionsBackendApi(
         idToken: String,
         tournamentId: String,
     ): ByteArray {
-        val response = httpClient.get(url("/tournaments/$tournamentId/id-list")) {
+        val response = httpClient.get(longUrl("/tournaments/$tournamentId/id-list")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, XLSX_MIME_TYPE)
             timeout { requestTimeoutMillis = 180_000 }
@@ -515,7 +521,7 @@ class FunctionsBackendApi(
         tournamentId: String,
         request: EmaReportRequestDto,
     ): ByteArray {
-        val response = httpClient.post(url("/tournaments/$tournamentId/ema-report")) {
+        val response = httpClient.post(longUrl("/tournaments/$tournamentId/ema-report")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, EMA_REPORT_MIME_TYPE)
             timeout { requestTimeoutMillis = 180_000 }
@@ -773,7 +779,7 @@ class FunctionsBackendApi(
         request: PlayerAccountActionRequestDto,
     ): PlayerAccountActionResponseDto {
         // Each player of the request gets an email: the request can take longer than a usual one.
-        val response = httpClient.post(url("/tournaments/$tournamentId/player-accounts/send")) {
+        val response = httpClient.post(longUrl("/tournaments/$tournamentId/player-accounts/send")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)
@@ -955,7 +961,7 @@ class FunctionsBackendApi(
         put(path = "/tournaments/$tournamentId/registration-settings", requestBody = request, idToken = idToken)
 
     suspend fun importRegistrations(idToken: String, tournamentId: String, request: RegistrationImportRequestDto): RegistrationImportDto {
-        val response = httpClient.post(url("/tournaments/$tournamentId/registrations/import")) {
+        val response = httpClient.post(longUrl("/tournaments/$tournamentId/registrations/import")) {
             bearer(idToken)
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)
@@ -964,7 +970,7 @@ class FunctionsBackendApi(
     }
 
     suspend fun makeDraw(idToken: String, tournamentId: String, request: MakeDrawRequestDto): TournamentDto {
-        val response = httpClient.post(url("/tournaments/$tournamentId/draw")) {
+        val response = httpClient.post(longUrl("/tournaments/$tournamentId/draw")) {
             bearer(idToken)
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)
@@ -973,7 +979,7 @@ class FunctionsBackendApi(
     }
 
     suspend fun changePlayerCount(idToken: String, tournamentId: String, request: PlayerCountRequestDto): PlayerCountResponseDto {
-        val response = httpClient.post(url("/tournaments/$tournamentId/player-count")) {
+        val response = httpClient.post(longUrl("/tournaments/$tournamentId/player-count")) {
             bearer(idToken)
             timeout { requestTimeoutMillis = 180_000 }
             setBody(request)

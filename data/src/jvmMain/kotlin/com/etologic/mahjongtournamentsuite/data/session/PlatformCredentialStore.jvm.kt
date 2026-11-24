@@ -25,15 +25,10 @@ actual class PlatformCredentialStore actual constructor() : CredentialStore {
             credentials.email,
             "-U",
         )
-        runSecurity(
-            "add-generic-password",
-            "-s",
-            PASSWORD_SERVICE,
-            "-a",
-            credentials.email,
-            "-w",
-            credentials.password,
-            "-U",
+        // The password never goes in the arguments of the process, which any user of the Mac can read in the
+        // list of processes: `security -i` reads the command from its standard input.
+        runSecurityInteractive(
+            listOf("add-generic-password", "-s", PASSWORD_SERVICE, "-a", credentials.email, "-w", credentials.password, "-U"),
         )
     }
 
@@ -54,9 +49,27 @@ actual class PlatformCredentialStore actual constructor() : CredentialStore {
         output.toString(Charsets.UTF_8.name()).trim().takeIf { it.isNotEmpty() }
     }.getOrNull()
 
+    private fun runSecurityInteractive(arguments: List<String>): Boolean = runCatching {
+        val process = ProcessBuilder("/usr/bin/security", "-i")
+            .redirectErrorStream(true)
+            .start()
+        process.outputStream.bufferedWriter(Charsets.UTF_8).use { input ->
+            input.write(securityCommandLine(arguments))
+            input.write("\n")
+        }
+        process.inputStream.copyTo(ByteArrayOutputStream())
+        process.waitFor() == 0
+    }.getOrDefault(false)
+
     private companion object {
         const val ACCOUNT = "default"
         const val EMAIL_SERVICE = "MahjongTournamentSuite.email"
         const val PASSWORD_SERVICE = "MahjongTournamentSuite.password"
     }
 }
+
+/** One line for `security -i`: every argument in double quotes, with `\` and `"` escaped. */
+internal fun securityCommandLine(arguments: List<String>): String =
+    arguments.joinToString(" ") { argument ->
+        "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    }

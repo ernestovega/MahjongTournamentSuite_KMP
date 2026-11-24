@@ -27,7 +27,7 @@ Everything is one Express application inside one Cloud Function (`firebase/funct
 | `/public` | Everything anyone sees, without an account, with CDN cache | `public.routes.ts` |
 | `/player` | The player enters hands, seats and penalties at its table | `player.routes.ts` |
 | `/registrations` | A person registers for a tournament, with or without an account | `registrations.routes.ts` |
-| `/tournaments` | Management of tournaments: players, teams, tables, clock, registrations, draw, exports, statistics | `tournaments.routes.ts` |
+| `/tournaments` | Management of tournaments: players, teams, tables, clock, registrations, draw, exports, statistics | `tournaments.routes.ts` (tournament list, create, settings) and its parts `tournaments.statistics`, `.documents`, `.people`, `.tables`, `.registrations` `.routes.ts` |
 | `/ema-player-registry` | The shared EMA registry | `players.routes.ts` |
 | `/admin` | Accounts, roles, organizations, activity, errors | `admin.routes.ts` |
 | `/sync`, `/config`, `/countries`, `/venues`, `/support`, `/telemetry` | Utilities | one file each |
@@ -38,14 +38,14 @@ Everything is one Express application inside one Cloud Function (`firebase/funct
 ```mermaid
 sequenceDiagram
   autonumber
-  participant App as App (Android / web)
+  participant App as App (web, Android, desktop)
   participant H as Firebase Hosting
   participant F as Function api (Express)
   participant A as Firebase Auth
   participant DB as Firestore
 
   App->>H: PUT /api/tournaments/T1/tables/2/5/state<br/>Authorization: Bearer idToken<br/>X-Firebase-AppCheck: token
-  Note over App,H: Android and desktop go straight to the function,<br/>without Hosting
+  Note over App,H: Android and desktop too, since 24-nov-2026.<br/>Only the requests that can pass 60 s<br/>(exports, draw) go straight to the function
   H->>F: forward (rewrite /api/**)
   F->>F: removes the /api prefix, gzip, size limit
   F->>F: App Check (today it only logs)
@@ -103,12 +103,22 @@ Always the same format:
 | 429 | `too_many_requests` | Request limit |
 | 500 | `internal` | Server failure (it shows in the logs of the function) |
 
+Every `409` has a `details.code`. The apps know each code (`ConflictCode`, `RegistrationErrorCode`,
+`ImportFileErrorCode` in the domain module) and show the reason in the language of the user, not the English
+`message`. The test `conflictCodes.test.ts` fails when a `conflict()` has no code, or a code the apps do not know.
+
 ## Limits and cache
 
 - Writes: 600/min per IP address, 120/min per token and 120/min per account.
-- `/public` routes: 600 reads/min per address. Answers with `Cache-Control` for the CDN: 15 s while the tournament is in play, 300 s when it is finished, 60 s lists, 1 h EMA registry and countries.
+- `/public` routes: 20,000 reads/min per address (a venue shares one address). Answers with `Cache-Control` for the CDN: 15 s while the tournament is in play, 300 s when it is finished, 60 s lists, 1 h EMA registry and countries.
 - Other answers: `no-store` (they carry personal data).
 - Without an account: sign-in 30/min, support 3 every 15 min, error reports 30/min.
+- Registrations: 20 every 15 min per address, 5 emails an hour about one person of a tournament and 300 registration
+  emails an hour per instance of the API. A pending registration that a second email asks for gets a new link.
+- The address of a client comes from `clientAddress()` (`api/clientAddress.ts`), never from the first entry of
+  `X-Forwarded-For`, which the client writes: on a direct call it is the last entry, which Google adds; through
+  Firebase Hosting it is the entry before the Google proxy of Hosting. Each deploy of staging checks it with forged
+  headers (`/debug/forwarded`, staging only).
 
 ## Light sync
 

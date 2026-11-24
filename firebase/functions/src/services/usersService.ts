@@ -399,7 +399,7 @@ export async function syncUserTournamentAssignments(
 ): Promise<void> {
   const desired = new Map(assignments.map((assignment) => [assignment.tournamentId, assignment]));
   const tournamentIds = [...desired.keys()];
-  if (tournamentIds.length !== assignments.length) throw conflict("Duplicate tournament assignment");
+  if (tournamentIds.length !== assignments.length) throw conflict("Duplicate tournament assignment", { code: "DUPLICATE_TOURNAMENT" });
   if (scopeTournamentIds && tournamentIds.some((id) => !scopeTournamentIds.has(id))) {
     throw forbidden("You can assign accounts only to the tournaments that you manage");
   }
@@ -495,7 +495,7 @@ export async function listEnabledSuperAdmins(): Promise<AdminAccount[]> {
 export async function assertEmailAvailable(email: string, excludedUid?: string): Promise<void> {
   try {
     const existing = await auth.getUserByEmail(email);
-    if (existing.uid !== excludedUid) throw conflict("Email already in use");
+    if (existing.uid !== excludedUid) throw conflict("Email already in use", { code: "EMAIL_IN_USE" });
   } catch (error) {
     const code = (error as { code?: string }).code;
     if (code !== "auth/user-not-found") throw error;

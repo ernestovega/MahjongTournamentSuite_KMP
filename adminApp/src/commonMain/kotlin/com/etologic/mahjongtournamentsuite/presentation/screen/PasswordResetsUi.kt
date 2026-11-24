@@ -51,6 +51,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_section_failed
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
@@ -114,7 +115,7 @@ internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: (
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
             title = { MtsDialogTitle(stringResource(Res.string.password_resets_confirm_title)) },
-            text = { MtsDialogText(stringResource(Res.string.password_resets_confirm_text, count)) },
+            text = { MtsDialogText(pluralStringResource(Res.plurals.password_resets_confirm_text, count, count)) },
             confirmButton = {
                 MtsDialogButtons {
                     Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) }

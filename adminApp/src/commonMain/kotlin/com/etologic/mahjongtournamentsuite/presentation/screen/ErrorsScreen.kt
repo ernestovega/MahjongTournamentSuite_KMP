@@ -125,6 +125,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.errors_sort_latest
 import mahjongtournamentsuite.adminapp.generated.resources.errors_stack_trace
 import mahjongtournamentsuite.adminapp.generated.resources.errors_summary
 import mahjongtournamentsuite.adminapp.generated.resources.search
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -238,7 +239,7 @@ fun ErrorsScreen(navController: NavHostController) {
             SectionCard(
                 container = false,
                 title = stringResource(Res.string.app_errors),
-                subtitle = if (loading) stringResource(Res.string.errors_loading_count, groups.size) else stringResource(Res.string.errors_summary, shown.size, groups.size),
+                subtitle = if (loading) pluralStringResource(Res.plurals.errors_loading_count, groups.size, groups.size) else pluralStringResource(Res.plurals.errors_summary, groups.size, shown.size, groups.size),
             ) {
                 ErrorGroupsTable(
                     groups = shown,

@@ -27,6 +27,8 @@ object BackendUrlOverride {
     private const val UNSET_STAGING_URL = "https://staging-project-not-set.invalid/api"
 }
 
-actual fun functionsBaseUrlPlatform(): String = BackendUrlOverride.functionsBaseUrl ?: "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api"
+actual fun functionsBaseUrlPlatform(): String = PublicSite.apiThroughHosting(functionsDirectUrlPlatform())
 
-actual fun publicSiteUrlPlatform(): String = PublicSite.ofBackend(functionsBaseUrlPlatform())
+actual fun functionsDirectUrlPlatform(): String = BackendUrlOverride.functionsBaseUrl ?: PublicSite.PRODUCTION_FUNCTIONS
+
+actual fun publicSiteUrlPlatform(): String = PublicSite.ofBackend(functionsDirectUrlPlatform())

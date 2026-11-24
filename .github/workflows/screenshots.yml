@@ -5,6 +5,9 @@
 name: Test · Screenshots
 
 on:
+  # Every night at 02:45 UTC it compares (Ernesto, 2026-11-24).
+  schedule:
+    - cron: "45 2 * * *"
   # pull_request:
   #   branches: [main]
   workflow_dispatch:

@@ -43,10 +43,10 @@ describe("registrations", () => {
   let editor: TestAccount;
   const sent: OutgoingEmail[] = [];
 
-  async function createTournament(options: { isTeams?: boolean; maxPlayers?: number | null; closesOn?: string | null; slug?: string; numRounds?: number } = {}): Promise<string> {
+  async function createTournament(options: { isTeams?: boolean; maxPlayers?: number | null; closesOn?: string | null; slug?: string; numRounds?: number; token?: string } = {}): Promise<string> {
     const numRounds = options.numRounds ?? 2;
     const response = await server.request("POST", "/tournaments", {
-      token: admin.token,
+      token: options.token ?? admin.token,
       body: {
         name: "Registration open",
         shortName: "REG",
@@ -619,5 +619,37 @@ describe("registrations", () => {
       const again = await server.request("POST", `/tournaments/${id}/draw`, { token: admin.token, body: { players: [], tables: [], assignments: [] } });
       assert.equal((again.body as { details: { code: string } }).details.code, "DRAW_MADE");
     });
+  });
+
+  // The admin of this file writes a lot, and the write limit of one user counts a minute: these use another admin.
+  it("never sends the link of a pending registration to a second email", async () => {
+    const id = await createTournament({ token: (await createAccount({ role: "SUPER_ADMIN" })).token });
+    const emaId = await newEma();
+    const first = await server.request("POST", `/registrations/${id}`, { body: { emaId, email: "owner@example.test" }, headers: { "x-forwarded-for": "10.7.0.1" } });
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    const ownerToken = tokenOf(linkIn(sent[0]));
+    // The same email again (the person did not find the first email) gets the same link.
+    await server.request("POST", `/registrations/${id}`, { body: { emaId, email: "owner@example.test" }, headers: { "x-forwarded-for": "10.7.0.1" } });
+    assert.equal(tokenOf(linkIn(sent[1])), ownerToken);
+    // Another email gets a new link, and the old link stops working.
+    const other = await server.request("POST", `/registrations/${id}`, { body: { emaId, email: "intruder@example.test" }, headers: { "x-forwarded-for": "10.7.0.1" } });
+    assert.equal(other.status, 200, JSON.stringify(other.body));
+    assert.equal(sent[2].to, "intruder@example.test");
+    const intruderToken = tokenOf(linkIn(sent[2]));
+    assert.notEqual(intruderToken, ownerToken);
+    const old = await server.request("POST", `/registrations/${id}/confirm`, { body: { token: ownerToken }, headers: { "x-forwarded-for": "10.7.0.1" } });
+    assert.notEqual(old.status, 200);
+  });
+
+  it("sends at most 5 emails an hour about the same person", async () => {
+    const id = await createTournament({ token: (await createAccount({ role: "SUPER_ADMIN" })).token });
+    const emaId = await newEma();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const response = await server.request("POST", `/registrations/${id}`, { body: { emaId, email: `try${attempt}@example.test` }, headers: { "x-forwarded-for": "10.7.0.2" } });
+      assert.equal(response.status, 200, JSON.stringify(response.body));
+    }
+    const sixth = await server.request("POST", `/registrations/${id}`, { body: { emaId, email: "try5@example.test" }, headers: { "x-forwarded-for": "10.7.0.2" } });
+    assert.equal(sixth.status, 429);
+    assert.equal(sent.length, 5);
   });
 });

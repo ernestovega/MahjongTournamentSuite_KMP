@@ -8,6 +8,9 @@ package com.etologic.mahjongtournamentsuite.data.network
  */
 actual fun functionsBaseUrlPlatform(): String = "/api"
 
+/** The web is served by Firebase Hosting: its requests always go through it. */
+actual fun functionsDirectUrlPlatform(): String = "/api"
+
 
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun pageOrigin(): String = js("window.location.origin")

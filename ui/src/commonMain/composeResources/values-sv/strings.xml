@@ -119,7 +119,10 @@
     <string name="stats_empty_title">Ingen statistik än</string>
     <string name="stats_empty_message">Statistiken visas när första bordet är klart.</string>
     <string name="stats_hand_stats_missing">Handstatistik kräver bord med inmatade händer. Inget bord här har det.</string>
-    <string name="stats_hand_values_use">Handvärdena bygger på %1$d av %2$d bord.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Handvärdena bygger på %1$d av %2$d bord.</item>
+        <item quantity="other">Handvärdena bygger på %1$d av %2$d bord.</item>
+    </plurals>
     <string name="card_fold">Fäll ihop</string>
     <string name="card_unfold">Fäll ut</string>
     <string name="more_information">Mer information</string>
@@ -192,11 +195,17 @@
     <string name="stat_penalties_info">Det här är antalet straff.\nTalet inom parentes är summan av förlorade poäng.</string>
     <string name="round_n">Omgång %1$d</string>
     <string name="table_n">Bord %1$d</string>
-    <string name="places_history_title">Placering vid de senaste %1$d borden</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Placering vid det senaste bordet</item>
+        <item quantity="other">Placering vid de senaste %1$d borden</item>
+    </plurals>
     <string name="leader_best_hand_value">Högsta snittvärde per hand</string>
     <string name="leader_best_win_rate">Bästa vinstandel</string>
     <string name="leader_lowest_deal_in">Lägsta inkastandel</string>
     <string name="leader_most_self_draws">Flest självdragna</string>
+    <string name="leaders_average">Snitt: %1$s</string>
+    <string name="leaders_legend_top">Bästa spelare</string>
+    <string name="leaders_legend_average">Genomsnittlig spelare</string>
     <string name="tables_completed_of">%1$d av %2$d</string>
     <string name="stat_players">Spelare</string>
     <string name="hands_won_by_discard">Vunna på kast</string>
@@ -695,4 +704,36 @@ Den första som fungerar vinner</string>
     <string name="summary_col_total_score">Resultat totalt</string>
     <string name="summary_col_place">Placering</string>
     <string name="summary_place_chart">Placering efter varje runda</string>
+    <string name="conflict_account_has_other_ema">Det här kontot tillhör en annan EMA-spelare.</string>
+    <string name="conflict_all_hands_done">Alla händer vid det här bordet är spelade.</string>
+    <string name="conflict_assignments_missing">Tilldela alla spelare i turneringen innan du skapar namnbrickorna.\nSaknas: %1$s.</string>
+    <string name="conflict_clock_not_started">Klockan för den här rundan har inte startat än.</string>
+    <string name="conflict_duplicate_tournament">Samma turnering finns två gånger i listan.</string>
+    <string name="conflict_ema_already_in_tournament">Den här EMA-spelaren är redan med i turneringen.</string>
+    <string name="conflict_ema_id_taken">Det här EMA-numret tillhör ett annat konto.</string>
+    <string name="conflict_ema_players_gone">En eller flera tilldelade EMA-spelare finns inte längre.</string>
+    <string name="conflict_email_in_use">Ett annat konto använder den här e-postadressen.</string>
+    <string name="conflict_hand_entry_closed">En arrangör har stängt inmatningen av händer för det här bordet.</string>
+    <string name="conflict_no_table_in_round">Spelaren har inget bord i den här rundan.</string>
+    <string name="conflict_no_tables">Turneringen har inga bord än.</string>
+    <string name="conflict_not_assigned">Bara en tilldelad spelare kan ersättas.</string>
+    <string name="conflict_player_in_two_teams">En spelare kan inte vara med i två lag.</string>
+    <string name="conflict_request_resolved">Den här förfrågan är redan besvarad.</string>
+    <string name="conflict_round_not_started">Den här rundan har inte börjat än.\nVänta på startgongen.</string>
+    <string name="conflict_round_time_over">Tiden för den här rundan är slut.\nEn arrangör måste fylla i det som saknas.</string>
+    <string name="conflict_seats_closed">En arrangör har stängt platserna för den här rundan.</string>
+    <string name="conflict_seats_locked">Platserna kan inte ändras efter första handen eller straffet.</string>
+    <string name="conflict_seats_not_assigned">Platserna vid det här bordet är inte tilldelade än.</string>
+    <string name="conflict_seats_not_open">Platserna öppnar några minuter innan rundan börjar.</string>
+    <string name="conflict_table_changed">Bordet har ändrats på servern.\nKontrollera det och spara igen.</string>
+    <string name="conflict_table_changed_hand">Bordet har ändrats.\nGranska handen igen.</string>
+    <string name="conflict_table_changed_penalty">Bordet har ändrats.\nKontrollera bordet och lägg till straffet igen.</string>
+    <string name="conflict_table_changed_seats">Bordet har ändrats.\nKontrollera platserna och spara igen.</string>
+    <string name="conflict_table_changed_totals">Bordet har ändrats efter granskningen.\nKontrollera de nya summorna och bekräfta igen.</string>
+    <string name="conflict_table_completed">Det här bordet är redan klart.</string>
+    <string name="conflict_team_players_locked">Spelarna i ett lag kan inte ändras när borden har resultat.</string>
+    <string name="conflict_team_slots_mismatch">Lagens spelare måste stämma med deras platser i lottningen.</string>
+    <string name="conflict_too_many_penalties">En hand har högst 5 straff.</string>
+    <string name="conflict_totals_only">Det här bordet använder bara summor.\nEn arrangör fyller i resultaten.</string>
+    <string name="conflict_tournament_gone">Turneringen finns inte längre.</string>
 </resources>

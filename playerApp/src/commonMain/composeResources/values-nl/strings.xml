@@ -224,6 +224,9 @@
     <string name="entry_seats_first">Leg de plaatsen aan tafel vast om handen in te voeren.</string>
     <string name="round_starts_at">Begint om</string>
     <string name="round_clock_remaining">Resterende tijd: %1$s</string>
+    <string name="table_hand_announce_new">Nieuwe hand %1$d</string>
+    <string name="table_hand_announce_edited">Hand %1$d gecorrigeerd</string>
+    <string name="table_hand_announce_deleted">Hand %1$d verwijderd</string>
     <string name="round_clock_paused">Gepauzeerd · Resterende tijd: %1$s</string>
     <string name="round_clock_over">De speeltijd is om.</string>
     <string name="filter_table_search">Tafelnummer of speler</string>
@@ -249,7 +252,10 @@
     <string name="preg_open_detail">Iedereen met een EMA-nummer kan zich inschrijven.</string>
     <string name="preg_closed_detail">Op dit moment kan niemand zich inschrijven.\nDe organisatie publiceert de loting hier.</string>
     <string name="preg_places_value">%1$d van %2$d plaatsen bezet</string>
-    <string name="preg_places_value_no_limit">%1$d mensen ingeschreven, zonder limiet</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">%1$d persoon ingeschreven, zonder limiet</item>
+        <item quantity="other">%1$d mensen ingeschreven, zonder limiet</item>
+    </plurals>
     <string name="preg_waiting_value">%1$d op de wachtlijst</string>
     <string name="preg_waiting_none">Niemand op de wachtlijst</string>
     <string name="preg_closes_until">Tot en met %1$s</string>

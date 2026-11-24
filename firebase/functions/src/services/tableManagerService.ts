@@ -12,6 +12,7 @@ import { tablePointsOf } from "./handScoring";
 import { globalVersionUpdate, tableVersionKey, tableVersionUpdate } from "./dataVersionsService";
 import { prepareTableStats } from "./statisticsStore";
 import { buildConflictChangeEntry, buildResetChangeEntry, buildSaveChangeEntry, type ChangeActor } from "./changeLog";
+import { historyExpireAt } from "./historyRetention";
 
 export type TableHand = {
   handId: number;
@@ -529,6 +530,7 @@ export async function saveTableStateInTransaction(
       handPatches: params.handPatches,
     }),
     at: FieldValue.serverTimestamp(),
+    expireAt: historyExpireAt(),
   });
 
   // The answer comes from the data that the transaction wrote, so the client needs no second read.
@@ -555,6 +557,7 @@ export async function logTableConflict(params: {
         actor: params.actor,
       }),
       at: FieldValue.serverTimestamp(),
+      expireAt: historyExpireAt(),
     });
   } catch {
     // The usage report is a best-effort record.
@@ -568,6 +571,7 @@ export async function saveTableState(params: SaveTableStateParams): Promise<{ ta
     if (error instanceof StaleTableVersion) {
       await logTableConflict({ ...params, expectedVersion: error.expectedVersion, actor: params.actor ?? null });
       throw conflict("Table data changed on the server", {
+        code: "TABLE_CHANGED",
         expectedVersion: error.expectedVersion,
         currentVersion: error.currentVersion,
         current: await getTableWithHands(params),
@@ -661,6 +665,7 @@ export async function resetTable(params: {
         actor: params.actor ?? null,
       }),
       at: FieldValue.serverTimestamp(),
+      expireAt: historyExpireAt(),
     });
   });
 }

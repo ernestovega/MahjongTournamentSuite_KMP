@@ -411,7 +411,11 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickLastButton("Save")
         // The registration now has the EMA number of the person, so its card has a new tag.
         showCard(mistyped.getString("emaId"))
-        c.waitForText("With problems (1)", timeoutMs = 60_000)
+        // The chip is at the top of the lazy list: far from the card it is not composed.
+        c.waitUntil(60_000) {
+            showSetting("registrations-filter-problems")
+            c.isOnScreen("With problems (1)")
+        }
 
         // The email with a typo.
         showCard(badEmail.getString("emaId"))
@@ -470,6 +474,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun registerAndCancelInThePlayerApp(account: String) {
         c.signIn(account, password)
         val name = byHand.getString("name")
+        // The app opens on In play when the account plays a tournament now (an earlier game day, for example), and
+        // that tab leaves out this tournament: it is in the All tab.
+        c.waitForText("My tournaments", timeoutMs = 60_000)
+        if (c.isOnScreen("In play")) c.clickButton("All")
         c.scrollListTo(name)
         val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
         c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
@@ -492,14 +500,15 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitUntil(30_000) { c.onAllNodes(done).fetchSemanticsNodes().isNotEmpty() }
         log("the player registered in the player app and is on the waiting list: ${counts()}")
         c.clickLastButton("Close")
-        c.waitForText("My registration", timeoutMs = 30_000)
-        c.clickButton("My registration")
+        // The own registration is a card of its own with Edit beside its title (24-nov), which opens My registration.
+        c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-manage")).fetchSemanticsNodes().isNotEmpty() }
+        clickTagged("registration-manage")
         c.waitUntil(30_000) { c.onAllNodes(hasTestTag("registration-cancel")).fetchSemanticsNodes().isNotEmpty() }
         c.onNode(hasTestTag("registration-cancel")).tap()
         c.waitForText("Cancel your registration?")
         c.clickButton("Cancel registration")
         c.waitForText("Register", timeoutMs = 60_000)
-        c.waitForNoText("My registration", timeoutMs = 60_000)
+        c.waitUntil(60_000) { c.onAllNodes(hasTestTag("registration-manage")).fetchSemanticsNodes().isEmpty() }
         log("the player cancelled the registration in the player app: ${counts()}")
         c.clickButton("Back")
     }

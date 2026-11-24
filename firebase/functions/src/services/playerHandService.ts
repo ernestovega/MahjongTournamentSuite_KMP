@@ -134,10 +134,10 @@ async function loadTableOf(
     throw forbidden("You are not registered in this tournament");
   }
   if (!tableSnap.exists) throw notFound("Table not found");
-  if (tournamentSnap.get("isCompleted") === true) throw conflict("This tournament is completed");
+  if (tournamentSnap.get("isCompleted") === true) throw conflict("This tournament is completed", { code: "TOURNAMENT_COMPLETED" });
   const table: Data = tableSnap.data() ?? {};
-  if (Boolean(table.isCompleted)) throw conflict("This table is already completed");
-  if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results");
+  if (Boolean(table.isCompleted)) throw conflict("This table is already completed", { code: "TABLE_COMPLETED" });
+  if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results", { code: "TOTALS_ONLY" });
   const hands = handsFromData(handSnaps.map((snap) => snap.data() ?? {}));
   return { registration, tournament: tournamentSnap.data() ?? {}, table, hands };
 }
@@ -150,23 +150,23 @@ async function loadFor(
 ) {
   const { registration, tournament, table, hands } = await loadTableOf(key, uid, read, readAll);
   const seats = seatIdsOf(table);
-  if (seats == null) throw conflict("The seats of this table are not assigned yet");
+  if (seats == null) throw conflict("The seats of this table are not assigned yet", { code: "SEATS_NOT_ASSIGNED" });
   if (!seats.includes(String(registration.playerId))) throw forbidden("You do not play at this table");
   // An admin can open or close the hand entry by hand (the plan B of the Timer). It wins over the clock.
   const manual = manualHands(tournament, key.roundId, key.tableId);
-  if (manual === "closed") throw conflict("An organizer closed the hand entry of this table");
+  if (manual === "closed") throw conflict("An organizer closed the hand entry of this table", { code: "HAND_ENTRY_CLOSED" });
   if (manual === "open") return { registration, table, seats, hands, phase: "PLAYING" };
   // Players write only while the match is on: from the Play of the Timer to the end of the match time.
   // Before or after it, an organizer enters the data.
   const phase = tournamentMatchPhase(tournament, key.roundId, Date.now());
-  if (phase === "NOT_STARTED") throw conflict("This round has not started yet. Wait for the starting gong");
-  if (phase === "OVER") throw conflict("The time of this match is over. An organizer must enter the missing data");
+  if (phase === "NOT_STARTED") throw conflict("This round has not started yet. Wait for the starting gong", { code: "ROUND_NOT_STARTED" });
+  if (phase === "OVER") throw conflict("The time of this match is over. An organizer must enter the missing data", { code: "ROUND_TIME_OVER" });
   return { registration, table, seats, hands, phase };
 }
 
 function buildPatch(table: Data, seats: [string, string, string, string], hands: ReturnType<typeof handsFromData>, input: HandInput) {
   const next = hands.find((hand) => !hand.isDone);
-  if (!next) throw conflict("All hands of this table are done");
+  if (!next) throw conflict("All hands of this table are done", { code: "ALL_HANDS_DONE" });
   if (!input.isDraw) {
     if (!seats.includes(input.playerWinnerId)) throw badRequest("The winner does not play at this table");
     if (input.playerLooserId !== "" && !seats.includes(input.playerLooserId)) {
@@ -231,7 +231,7 @@ export async function recordHand(
       );
       const version = Number(table.version ?? 0);
       if (version !== params.expectedVersion) {
-        throw conflict("The table changed after the review. Check the new totals and confirm again");
+        throw conflict("The table changed after the review. Check the new totals and confirm again", { code: "TABLE_CHANGED_TOTALS" });
       }
       const { next, handPatch, totals, handScores, tablePatch } = buildPatch(table, seats, hands, inputForPhase(params.input, phase));
       const actor: ChangeActor = { uid: params.uid, name: `Player ${registration.emaId}`, source: "player" };
@@ -257,7 +257,7 @@ export async function recordHand(
     if (isVersionConflict(error)) {
       await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
     }
-    if (error instanceof StaleTableVersion) throw conflict("The table changed. Review the hand again");
+    if (error instanceof StaleTableVersion) throw conflict("The table changed. Review the hand again", { code: "TABLE_CHANGED_HAND" });
     throw error;
   }
 }
@@ -278,7 +278,7 @@ function appendPenalties(current: PenaltyTexts, added: PenaltyTexts): PenaltyTex
   const after = added.map((text) => (text === "" ? [] : text.split(";")));
   const existingRows = Math.max(0, ...before.map((parts) => parts.length));
   const addedRows = Math.max(0, ...after.map((parts) => parts.length));
-  if (existingRows + addedRows > MAX_PENALTIES_PER_HAND) throw conflict("A hand has at most 5 penalties");
+  if (existingRows + addedRows > MAX_PENALTIES_PER_HAND) throw conflict("A hand has at most 5 penalties", { code: "TOO_MANY_PENALTIES" });
   return before.map((parts, seat) => {
     const merged = [
       ...Array.from({ length: existingRows }, (_, row) => parts[row] ?? ""),
@@ -305,10 +305,10 @@ export async function addPenalties(
       );
       const version = Number(table.version ?? 0);
       if (version !== params.expectedVersion) {
-        throw conflict("The table changed. Check the table and add the penalty again");
+        throw conflict("The table changed. Check the table and add the penalty again", { code: "TABLE_CHANGED_PENALTY" });
       }
       const next = hands.find((hand) => !hand.isDone);
-      if (!next) throw conflict("All hands of this table are done");
+      if (!next) throw conflict("All hands of this table are done", { code: "ALL_HANDS_DONE" });
       const current = [next.playerEastPenalty, next.playerSouthPenalty, next.playerWestPenalty, next.playerNorthPenalty]
         .map((value) => String(value ?? "").trim()) as PenaltyTexts;
       const merged = appendPenalties(current, params.penalties);
@@ -335,7 +335,7 @@ export async function addPenalties(
     if (isVersionConflict(error)) {
       await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
     }
-    if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the table and add the penalty again");
+    if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the table and add the penalty again", { code: "TABLE_CHANGED_PENALTY" });
     throw error;
   }
 }
@@ -375,16 +375,16 @@ export async function assignSeats(
         hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty,
       ].some((value) => String(value ?? "").trim() !== "");
       if (hands.some((hand) => hand.isDone || penalized(hand))) {
-        throw conflict("The seats cannot change after the first hand or penalty");
+        throw conflict("The seats cannot change after the first hand or penalty", { code: "SEATS_LOCKED" });
       }
       // An admin can open or close the seats by hand (the plan B of the Timer). It wins over the planned start.
       const manual = manualSeats(tournament, params.roundId);
-      if (manual === "closed") throw conflict("An organizer closed the seats of this round");
+      if (manual === "closed") throw conflict("An organizer closed the seats of this round", { code: "SEATS_CLOSED" });
       if (manual == null && !seatingIsOpen(tournament, params.roundId, Date.now())) {
-        throw conflict("The seats open a few minutes before the start of the round");
+        throw conflict("The seats open a few minutes before the start of the round", { code: "SEATS_NOT_OPEN" });
       }
       const version = Number(table.version ?? 0);
-      if (version !== params.expectedVersion) throw conflict("The table changed. Check the seats and save again");
+      if (version !== params.expectedVersion) throw conflict("The table changed. Check the seats and save again", { code: "TABLE_CHANGED_SEATS" });
       await saveTableStateInTransaction(transaction, {
         tournamentId: params.tournamentId,
         roundId: params.roundId,
@@ -405,7 +405,7 @@ export async function assignSeats(
     if (isVersionConflict(error)) {
       await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
     }
-    if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the seats and save again");
+    if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the seats and save again", { code: "TABLE_CHANGED_SEATS" });
     throw error;
   }
 }

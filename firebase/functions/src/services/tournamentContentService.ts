@@ -256,7 +256,7 @@ export async function updateTournamentTeam(params: {
     ]);
     if (!tournamentSnapshot.exists) throw notFound("Tournament not found");
     if (tournamentSnapshot.get("isTeams") !== true) {
-      throw conflict("This tournament does not use teams");
+      throw conflict("This tournament does not use teams", { code: "NO_TEAMS" });
     }
     const playerDocs = playerSnapshot.docs.slice().sort((a, b) => {
       return Number(a.get("id") ?? a.id) - Number(b.get("id") ?? b.id);
@@ -264,12 +264,12 @@ export async function updateTournamentTeam(params: {
     const targetSlots = playerDocs.filter((player) => Number(player.get("team") ?? 0) === params.teamId);
     if (targetSlots.length === 0) throw notFound("Team not found");
     if (targetSlots.length > 4 || params.emaIds.length !== targetSlots.length) {
-      throw conflict("Team assignments must match its schedule slots");
+      throw conflict("Team assignments must match its schedule slots", { code: "TEAM_SLOTS_MISMATCH" });
     }
 
     const desiredEmaIds = params.emaIds.map((emaId) => emaId?.trim() || null);
     if (hasDuplicateEmaAssignments(desiredEmaIds)) {
-      throw conflict("A player cannot occupy two team slots");
+      throw conflict("A player cannot occupy two team slots", { code: "PLAYER_IN_TWO_TEAMS" });
     }
     const assignedDesired = desiredEmaIds.filter((emaId): emaId is string => emaId != null);
 
@@ -309,7 +309,7 @@ export async function updateTournamentTeam(params: {
       return (currentByRef.get(player.ref.path) ?? null) !== (finalByRef.get(player.ref.path) ?? null);
     });
     if (membershipChanged && tournamentHasStartedTables(tournamentSnapshot)) {
-      throw conflict("Team players cannot change after table results have started");
+      throw conflict("Team players cannot change after table results have started", { code: "TEAM_PLAYERS_LOCKED" });
     }
 
     const namesByTeam = new Map<number, string>();
@@ -326,7 +326,7 @@ export async function updateTournamentTeam(params: {
     const duplicateName = [...namesByTeam.entries()].some(([teamId, name]) => {
       return teamId !== params.teamId && name.localeCompare(params.name, undefined, { sensitivity: "accent" }) === 0;
     });
-    if (duplicateName) throw conflict("Team name is already in use");
+    if (duplicateName) throw conflict("Team name is already in use", { code: "TEAM_NAME_TAKEN" });
 
     // The pending email travels with the person, so a player who moves to another slot keeps it.
     const pendingEmailByEma = new Map<string, string>();
@@ -415,11 +415,11 @@ export async function assignTournamentPlayer(params: {
     if (params.emaId != null && nextAssignmentRef != null) {
       const mappedPlayerId = nextAssignment?.exists ? Number(nextAssignment.get("playerId")) : null;
       if (mappedPlayerId != null && mappedPlayerId !== params.playerId) {
-        throw conflict("EMA player is already assigned in this tournament");
+        throw conflict("EMA player is already assigned in this tournament", { code: "EMA_ALREADY_IN_TOURNAMENT" });
       }
       const assignedElsewhere = existingAssignments?.docs.some((document) => document.id !== playerRef.id) ?? false;
       if (assignedElsewhere) {
-        throw conflict("EMA player is already assigned in this tournament");
+        throw conflict("EMA player is already assigned in this tournament", { code: "EMA_ALREADY_IN_TOURNAMENT" });
       }
     }
 
@@ -614,7 +614,7 @@ export async function setPlayerSubstitution(params: {
     if (!tournament.exists) throw notFound("Tournament not found");
     if (!player.exists) throw notFound("Player not found");
     const assigned = typeof player.get("assignedEmaId") === "string";
-    if (!assigned) throw conflict("Only an assigned player can be substituted");
+    if (!assigned) throw conflict("Only an assigned player can be substituted", { code: "NOT_ASSIGNED" });
     let targetTable: FirebaseFirestore.QueryDocumentSnapshot | null = null;
     if (next != null) {
       if (!Number.isInteger(next.fromRound) || next.fromRound < 1 || next.fromRound > Number(tournament.get("numRounds") ?? 0)) {
@@ -624,7 +624,7 @@ export async function setPlayerSubstitution(params: {
         const tables = await transaction.get(tournamentRef.collection("tables").where("roundId", "==", next.fromRound));
         targetTable = tables.docs.find((table) => (table.get("playerIds") as unknown[] | undefined ?? [])
           .map(Number).includes(params.playerId)) ?? null;
-        if (targetTable == null) throw conflict("The player has no table in this round");
+        if (targetTable == null) throw conflict("The player has no table in this round", { code: "NO_TABLE_IN_ROUND" });
       }
     }
     const tableVersions: Record<string, unknown> = {};

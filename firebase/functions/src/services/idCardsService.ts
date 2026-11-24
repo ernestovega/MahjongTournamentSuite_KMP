@@ -741,7 +741,7 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     return typeof slot.get("assignedEmaId") !== "string";
   });
   if (missingAssignments.length > 0) {
-    throw conflict(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`);
+    throw conflict(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`, { code: "ASSIGNMENTS_MISSING", missing: missingAssignments.length });
   }
 
   const playerDocuments = await Promise.all(orderedSlots.map((slot) => {
@@ -751,7 +751,7 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
       : Promise.resolve(null);
   }));
   if (playerDocuments.some((player) => player != null && !player.exists)) {
-    throw conflict("One or more assigned EMA players no longer exist");
+    throw conflict("One or more assigned EMA players no longer exist", { code: "EMA_PLAYERS_GONE" });
   }
 
   const teamNames = new Map<number, string>();

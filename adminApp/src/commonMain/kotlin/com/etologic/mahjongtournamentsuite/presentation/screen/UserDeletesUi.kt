@@ -43,6 +43,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.result_section_not_de
 import mahjongtournamentsuite.adminapp.generated.resources.users_delete_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.users_delete_confirm_title
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
@@ -57,7 +58,7 @@ internal fun UserDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: () -
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!busy) onDismiss() },
             title = { MtsDialogTitle(stringResource(Res.string.users_delete_confirm_title)) },
-            text = { MtsDialogText(stringResource(Res.string.users_delete_confirm_text, count)) },
+            text = { MtsDialogText(pluralStringResource(Res.plurals.users_delete_confirm_text, count, count)) },
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(

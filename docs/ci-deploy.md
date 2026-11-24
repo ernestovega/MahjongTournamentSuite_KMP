@@ -20,9 +20,38 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
   The UI tests do not run here until the apps are in production. Run them by hand: see [Instrumented UI tests](instrumented-ui-tests.md).
 
   The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
-- **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. Until production it runs no test (the tests run on the computer before the push). It deploys hosting (one site with both web apps, see [web-hosting.md](web-hosting.md)), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
+- **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. Until production it runs no test (the tests run on the computer before the push). With the gate on (below), it runs only after every test and a deploy to staging. It deploys hosting (one site with both web apps, see [web-hosting.md](web-hosting.md)), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
 - **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
+
+### Every night
+
+Every test runs on `main` every night (the game day once a week), and GitHub emails the owner when one fails (Ernesto, 2026-11-24). Times in UTC
+(Madrid is one hour later in winter):
+
+| Time | Workflow | What |
+|---|---|---|
+| 02:30 | Deploy · Production | The five checks of **Build and test**. Nothing is deployed. |
+| 02:45 | Test · Screenshots | Compares every screen with its reference image. |
+| 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
+| 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `main` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
+| 05:00 | Check · Production benchmark | The times of production (see [benchmark.md](benchmark.md)). |
+
+Two tests guard the lists themselves: `testList.test.ts` fails when a unit test of the functions is not in `npm test`,
+or an integration test is outside the folders of `npm run test:integration`. The scripts job runs the tests of
+`scripts/rehearsal/test` too.
+
+### The gate before production
+
+The repository variable `PROD_DEPLOY_GATE` turns the gate on (Settings > Secrets and variables > Actions > Variables,
+value `on`; planned for 23-dec-2026, Ernesto). Then each push to `main`:
+
+1. runs the five checks of **Build and test** (without the version check: a push has no base branch);
+2. deploys `main` to staging (**Deploy to staging first**, the deploy job of `staging.yml`);
+3. deploys to production only when all of that passed.
+
+A failed test or a failed staging deploy stops the run, and production keeps the version it had. Remove the variable
+(or give it another value) to deploy without tests again. A run started by hand on `main` deploys without the gate.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
 

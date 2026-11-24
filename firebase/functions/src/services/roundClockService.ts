@@ -68,7 +68,7 @@ export async function updateRoundClock(params: {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) throw notFound("Tournament not found");
     const tournament = snapshot.data() ?? {};
-    if (tournament.isCompleted === true) throw conflict("This tournament is completed");
+    if (tournament.isCompleted === true) throw conflict("This tournament is completed", { code: "TOURNAMENT_COMPLETED" });
     const numRounds = Number(tournament.numRounds ?? 0);
     if (params.roundId < 1 || params.roundId > numRounds) throw notFound("Round not found");
     const nowMs = params.nowMs ?? Date.now();

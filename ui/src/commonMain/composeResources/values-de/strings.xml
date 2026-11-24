@@ -119,7 +119,10 @@
     <string name="stats_empty_title">Noch keine Statistiken</string>
     <string name="stats_empty_message">Die Statistiken erscheinen, sobald der erste Tisch abgeschlossen ist.</string>
     <string name="stats_hand_stats_missing">Handstatistiken brauchen Tische mit eingetragenen Händen. Hier hat kein Tisch welche.</string>
-    <string name="stats_hand_values_use">Die Handwerte nutzen %1$d von %2$d Tischen.</string>
+    <plurals name="stats_hand_values_use">
+        <item quantity="one">Die Handwerte nutzen %1$d von %2$d Tisch.</item>
+        <item quantity="other">Die Handwerte nutzen %1$d von %2$d Tischen.</item>
+    </plurals>
     <string name="card_fold">Einklappen</string>
     <string name="card_unfold">Ausklappen</string>
     <string name="more_information">Weitere Informationen</string>
@@ -192,11 +195,17 @@
     <string name="stat_penalties_info">Das ist die Anzahl der Strafen.\nDie Zahl in Klammern ist die Summe der verlorenen Punkte.</string>
     <string name="round_n">Runde %1$d</string>
     <string name="table_n">Tisch %1$d</string>
-    <string name="places_history_title">Platz an den letzten %1$d Tischen</string>
+    <plurals name="places_history_title">
+        <item quantity="one">Platz am letzten Tisch</item>
+        <item quantity="other">Platz an den letzten %1$d Tischen</item>
+    </plurals>
     <string name="leader_best_hand_value">Höchster Ø Handwert</string>
     <string name="leader_best_win_rate">Beste Gewinnquote</string>
     <string name="leader_lowest_deal_in">Niedrigste Einwurfquote</string>
     <string name="leader_most_self_draws">Meiste selbst gezogen</string>
+    <string name="leaders_average">Durchschnitt: %1$s</string>
+    <string name="leaders_legend_top">Bester Spieler</string>
+    <string name="leaders_legend_average">Durchschnittsspieler</string>
     <string name="tables_completed_of">%1$d von %2$d</string>
     <string name="stat_players">Spieler</string>
     <string name="hands_won_by_discard">Durch Abwurf gewonnen</string>
@@ -695,4 +704,36 @@ Die erste, die klappt, gewinnt</string>
     <string name="summary_col_total_score">Score gesamt</string>
     <string name="summary_col_place">Platz</string>
     <string name="summary_place_chart">Platz nach jeder Runde</string>
+    <string name="conflict_account_has_other_ema">Dieses Konto gehört zu einem anderen EMA-Spieler.</string>
+    <string name="conflict_all_hands_done">Alle Hände dieses Tisches sind gespielt.</string>
+    <string name="conflict_assignments_missing">Weise vor dem Erstellen der Ausweise alle Spieler des Turniers zu.\nEs fehlen: %1$s.</string>
+    <string name="conflict_clock_not_started">Die Uhr dieser Runde läuft noch nicht.</string>
+    <string name="conflict_duplicate_tournament">Dasselbe Turnier steht zweimal in der Liste.</string>
+    <string name="conflict_ema_already_in_tournament">Dieser EMA-Spieler ist bereits in diesem Turnier.</string>
+    <string name="conflict_ema_id_taken">Diese EMA-Nummer gehört zu einem anderen Konto.</string>
+    <string name="conflict_ema_players_gone">Ein oder mehrere zugewiesene EMA-Spieler existieren nicht mehr.</string>
+    <string name="conflict_email_in_use">Ein anderes Konto verwendet diese E-Mail.</string>
+    <string name="conflict_hand_entry_closed">Ein Organisator hat die Eingabe der Hände für diesen Tisch geschlossen.</string>
+    <string name="conflict_no_table_in_round">Der Spieler hat in dieser Runde keinen Tisch.</string>
+    <string name="conflict_no_tables">Das Turnier hat noch keine Tische.</string>
+    <string name="conflict_not_assigned">Nur ein zugewiesener Spieler kann ersetzt werden.</string>
+    <string name="conflict_player_in_two_teams">Ein Spieler kann nicht in zwei Teams sein.</string>
+    <string name="conflict_request_resolved">Diese Anfrage wurde bereits beantwortet.</string>
+    <string name="conflict_round_not_started">Diese Runde hat noch nicht begonnen.\nWarte auf den Startgong.</string>
+    <string name="conflict_round_time_over">Die Zeit dieser Runde ist abgelaufen.\nEin Organisator muss die fehlenden Daten eintragen.</string>
+    <string name="conflict_seats_closed">Ein Organisator hat die Sitzplätze dieser Runde geschlossen.</string>
+    <string name="conflict_seats_locked">Die Sitzplätze können sich nach der ersten Hand oder Strafe nicht mehr ändern.</string>
+    <string name="conflict_seats_not_assigned">Die Sitzplätze dieses Tisches sind noch nicht vergeben.</string>
+    <string name="conflict_seats_not_open">Die Sitzplätze öffnen einige Minuten vor Beginn der Runde.</string>
+    <string name="conflict_table_changed">Der Tisch hat sich auf dem Server geändert.\nPrüfe ihn und speichere erneut.</string>
+    <string name="conflict_table_changed_hand">Der Tisch hat sich geändert.\nPrüfe die Hand erneut.</string>
+    <string name="conflict_table_changed_penalty">Der Tisch hat sich geändert.\nPrüfe den Tisch und füge die Strafe erneut hinzu.</string>
+    <string name="conflict_table_changed_seats">Der Tisch hat sich geändert.\nPrüfe die Sitzplätze und speichere erneut.</string>
+    <string name="conflict_table_changed_totals">Der Tisch hat sich nach der Prüfung geändert.\nPrüfe die neuen Summen und bestätige erneut.</string>
+    <string name="conflict_table_completed">Dieser Tisch ist bereits abgeschlossen.</string>
+    <string name="conflict_team_players_locked">Die Spieler eines Teams können sich nicht mehr ändern, sobald die Tische Ergebnisse haben.</string>
+    <string name="conflict_team_slots_mismatch">Die Spieler der Teams müssen zu ihren Plätzen in der Auslosung passen.</string>
+    <string name="conflict_too_many_penalties">Eine Hand hat höchstens 5 Strafen.</string>
+    <string name="conflict_totals_only">Dieser Tisch verwendet nur Summen.\nEin Organisator trägt die Ergebnisse ein.</string>
+    <string name="conflict_tournament_gone">Das Turnier existiert nicht mehr.</string>
 </resources>

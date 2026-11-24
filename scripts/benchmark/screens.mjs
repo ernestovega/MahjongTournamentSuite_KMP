@@ -58,9 +58,19 @@ async function pickTournament() {
 
 async function newPage(browser, profile) {
   const context = await browser.newContext(profile.context);
-  await context.route("**/telemetry.js", (route) => route.fulfill({ contentType: "application/javascript", body: TELEMETRY_STUB }));
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
+  // The stub goes in through the Fetch domain of Chrome and only for telemetry.js. A route of Playwright would turn off
+  // the HTTP cache of the whole context, and then a "warm" visit would download every file of the app again.
+  await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "*telemetry.js*" }] });
+  cdp.on("Fetch.requestPaused", (event) => {
+    cdp.send("Fetch.fulfillRequest", {
+      requestId: event.requestId,
+      responseCode: 200,
+      responseHeaders: [{ name: "Content-Type", value: "application/javascript" }],
+      body: Buffer.from(TELEMETRY_STUB).toString("base64"),
+    }).catch(() => {});
+  });
   if (profile.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
   if (profile.network) {
     await cdp.send("Network.enable");
@@ -135,6 +145,18 @@ function median(values) {
   return sorted.length === 0 ? null : sorted[Math.floor((sorted.length - 1) / 2)];
 }
 
+/**
+ * The API runs in a Cloud Function that sleeps after a while without requests, and its first answer then takes a few
+ * seconds. The benchmark runs at night, when it always sleeps, so it is woken first and the time is kept apart.
+ */
+async function wakeApi() {
+  const started = Date.now();
+  await fetch(`${apiBase}/health`).catch(() => null);
+  return Date.now() - started;
+}
+
+const apiWakeMs = await wakeApi();
+console.log(`API woken in ${apiWakeMs} ms`);
 const tournamentId = await pickTournament();
 const browser = await chromium.launch(process.env.BENCH_CHROMIUM ? { executablePath: process.env.BENCH_CHROMIUM } : {});
 const results = [];
@@ -162,6 +184,6 @@ for (const profile of profiles) {
 }
 await browser.close();
 
-await writeFile(args.out, JSON.stringify({ kind: "screens", at: new Date().toISOString(), url: appUrl, tournament: tournamentId, samples, errors, results }, null, 2));
+await writeFile(args.out, JSON.stringify({ kind: "screens", at: new Date().toISOString(), url: appUrl, tournament: tournamentId, samples, errors, apiWakeMs, results }, null, 2));
 console.log(`\nSaved ${args.out}`);
 if (errors > 0) process.exitCode = 1;

@@ -136,10 +136,18 @@ the team reminders and the weekly report. Cloud Scheduler does not exist in Madr
 SMTP server accepts only some countries. That function checks the Google ID token of the call: only the service
 account of the functions can run it (`registrationHourRelay.ts`).
 
+### How long the data is kept
+
+The privacy policy promises it (section "Tournament registrations"). Every night at 03:00 UTC the hourly job runs
+`purgeFinishedRegistrations` (`registrationJobs.ts`): 30 days after `eventEndDate` each registration loses its email and
+its `manageToken`, `registrationLog` is deleted, and `personPrivate/{emaId}` is deleted for a person without an account
+who is not registered in a tournament that ended less than 30 days ago. The tournament gets `registrationsPurgedAt`, so
+it is done once. An account keeps its food restrictions in its profile.
+
 ## Code
 
 - Backend: `firebase/functions/src/services/registration*.ts`, `api/routes/registrations.routes.ts` (the person),
-  `tournaments.routes.ts` (organizers and draw), `public.routes.ts` (public list and links).
+  `tournaments.routes.ts` (organizers), `tournaments.registrations.routes.ts` (registrations and draw), `public.routes.ts` (public list and links).
 - Domain: `model/Registration.kt`, `RegistrationRepository`, `assignRegistrationsToDraw`.
 - Admin: `RegistrationsScreen`, `RegistrationsPresenter`, the switch in `CreateTournamentScreen`.
 - Player: `Registrations.kt` (Players tab, dialogs, links), `main.kt` of the web (`/<slug>`, `/registration`, the old `/inscripcion/...`).

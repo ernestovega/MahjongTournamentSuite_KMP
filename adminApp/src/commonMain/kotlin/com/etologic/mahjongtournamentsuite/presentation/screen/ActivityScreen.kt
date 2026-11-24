@@ -164,6 +164,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.errors_reload
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -576,7 +577,7 @@ private fun ActivityTable(
             Column(Modifier.padding(top = MtsTheme.spacing.lg, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(Res.string.app_activity), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    stringResource(Res.string.activity_loaded_count, loadedCount),
+                    pluralStringResource(Res.plurals.activity_loaded_count, loadedCount, loadedCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -628,7 +629,7 @@ private fun ActivityTable(
                             overflow = TextOverflow.Ellipsis,
                         )
                         if (entry.isTableSave && entry.changes.isNotEmpty()) {
-                            Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
+                            Text(pluralStringResource(Res.plurals.activity_changes_count, entry.changes.size, entry.changes.size), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     return@DataTableRow
@@ -652,7 +653,7 @@ private fun ActivityTable(
                     }
                     PlayersLine(entry)
                     if (entry.isTableSave && entry.changes.isNotEmpty()) {
-                        Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
+                        Text(pluralStringResource(Res.plurals.activity_changes_count, entry.changes.size, entry.changes.size), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }

@@ -158,6 +158,18 @@ data class MtsColors(
     }
 }
 
+/**
+ * Colors that stay the same in the light and the dark theme, because they go on top of a color that does not change
+ * with the theme either.
+ */
+object MtsFixedColors {
+    /** Text on a light fill, such as a light sector of a chart: almost black. Text on a dark fill is white. */
+    val inkOnLight: Color = Color(0xFF1B1B1B)
+
+    /** The black center of the master level medal, a black hole: a black with a touch of blue. */
+    val blackHole: Color = Color(0xFF0B0B12)
+}
+
 // The palette of the domain colors, unified by Ernesto on 2026-11-13: the greens are the primary green of the theme,
 // the greys are the silver of the medals, and the text on all of them is white.
 private val MedalGold = Color(0xFFFFAC33)

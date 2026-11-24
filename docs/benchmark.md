@@ -7,12 +7,12 @@ The benchmark measures production as a guest sees it, so a slower deploy shows u
 
 ## When it runs
 
-**Paused since 2026-11-13:** it only runs by hand. To turn it back on, uncomment `workflow_run` and `schedule` in
-the workflow.
+**Since 2026-11-24 it runs every morning** (until the tournament of February 2027) and by hand. The run after each
+deploy stays off, because main deploys many times a day: to turn it on, uncomment `workflow_run` in the workflow.
 
 The workflow **Check · Production benchmark** (`.github/workflows/benchmark.yml`) runs:
 
-- after each successful run of **Deploy · Production** on `main`;
+- after each successful run of **Deploy · Production** on `main` (off for now, see above);
 - every day at 05:00 UTC;
 - by hand: Actions › Benchmark › Run workflow. You can choose the web app, the tournament, and the number of calls
   and visits.
@@ -68,7 +68,13 @@ The script opens a tab by changing the saved tab of the screen in `sessionStorag
 on that tab. Each visit runs 3 times (`--samples`) on two profiles: a desktop, and a Pixel 7 with the CPU four times
 slower and a fast 4G network. The report gives the median.
 
-The page gets a stub of `telemetry.js`, so the benchmark sends nothing to Analytics and needs no consent.
+The page gets a stub of `telemetry.js`, so the benchmark sends nothing to Analytics and needs no consent. The stub
+goes in through the Fetch domain of Chrome, not a Playwright route: a route turns off the HTTP cache, and until
+24-nov-2026 every "warm" visit downloaded the whole app again.
+
+Before measuring, the script calls `/health` once and keeps that time apart (`apiWakeMs`). The API sleeps after a
+while without requests and its first answer then takes about 3.6 s; at 05:00 it always sleeps, and that cold start
+was hiding in the first screens.
 
 To run it on a computer:
 

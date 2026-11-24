@@ -303,13 +303,19 @@
     <string name="data_checked">kontrollerat %1$s</string>
     <string name="points">Poäng</string>
     <string name="hand_score">Handens värde</string>
-    <string name="rows_count">%1$d rader</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d rad</item>
+        <item quantity="other">%1$d rader</item>
+    </plurals>
     <string name="seconds_short">%1$d s</string>
     <string name="account_created_reset_sent">Kontot har skapats. Firebase skickade e-post för att återställa lösenordet till %1$s.</string>
     <string name="user_disabled">%1$s är inaktiverad.</string>
     <string name="user_deleted">%1$s är raderad.</string>
     <string name="user_enabled">%1$s är aktiverad.</string>
-    <string name="accounts_count_summary">%1$d av %2$d konton</string>
+    <plurals name="accounts_count_summary">
+        <item quantity="one">%1$d av %2$d konto</item>
+        <item quantity="other">%1$d av %2$d konton</item>
+    </plurals>
     <string name="password_reset_sent_to">E-post för att återställa lösenordet skickad till %1$s.</string>
     <string name="user_status_disabled">Inaktiverad</string>
     <string name="user_status_active">Aktiv</string>
@@ -319,7 +325,10 @@
     <string name="ema_player_n">EMA-spelare: %1$s</string>
     <string name="ema_needed_for_player">Ett spelarkonto behöver ett EMA-ID.</string>
     <string name="no_tournaments_assigned">Inga turneringar tilldelade</string>
-    <string name="tournaments_selected">%1$d turneringar valda</string>
+    <plurals name="tournaments_selected">
+        <item quantity="one">%1$d turnering vald</item>
+        <item quantity="other">%1$d turneringar valda</item>
+    </plurals>
     <string name="plus_more">+%1$d till</string>
     <string name="enable_account">Aktivera konto</string>
     <string name="disable_account_action">Inaktivera konto</string>
@@ -530,7 +539,6 @@
     <string name="this_player">den här spelaren</string>
     <string name="photo_choose">Välj foto</string>
     <string name="photo_choose_new">Välj nytt foto</string>
-    <string name="player_base_summary">%1$d spelare · %2$d länder</string>
     <plurals name="country_players_count">
         <item quantity="one">%1$s · %2$d spelare</item>
         <item quantity="other">%1$s · %2$d spelare</item>
@@ -610,7 +618,10 @@
     <string name="send_reminder">Påminn</string>
     <string name="send_password_reset_count">Skicka lösenordsåterställning (%1$d)</string>
     <string name="password_resets_confirm_title">Skicka e-post för att återställa lösenord?</string>
-    <string name="password_resets_confirm_text">Appen skickar e-post till %1$d konton.\n\nVarje person får en länk för att välja ett nytt lösenord.</string>
+    <plurals name="password_resets_confirm_text">
+        <item quantity="one">Appen skickar e-post till %1$d konto.\n\nPersonen får en länk för att välja ett nytt lösenord.</item>
+        <item quantity="other">Appen skickar e-post till %1$d konton.\n\nVarje person får en länk för att välja ett nytt lösenord.</item>
+    </plurals>
     <string name="password_resets_partial_title">Alla e-postmeddelanden skickades inte</string>
     <string name="reset_failure_line">• %1$s: %2$s</string>
     <string name="reset_failure_not_found">Kontot finns inte.</string>
@@ -643,7 +654,10 @@
     <string name="import_state_removed">Borttagen</string>
     <string name="import_state_unchanged">Ingen ändring</string>
     <string name="app_errors">Appfel</string>
-    <string name="errors_summary">%1$d av %2$d problem</string>
+    <plurals name="errors_summary">
+        <item quantity="one">%1$d av %2$d problem</item>
+        <item quantity="other">%1$d av %2$d problem</item>
+    </plurals>
     <string name="errors_kpi_problems">Problem</string>
     <string name="errors_kpi_occurrences">Förekomster</string>
     <string name="errors_kpi_crashes">Krascher</string>
@@ -688,7 +702,10 @@
     <string name="errors_report_reason">Orsak: %1$s</string>
     <string name="errors_loading_detail">Laddar detaljerna…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
-    <string name="errors_loading_count">Laddar… %1$d problem hittills</string>
+    <plurals name="errors_loading_count">
+        <item quantity="one">Laddar… %1$d problem hittills</item>
+        <item quantity="other">Laddar… %1$d problem hittills</item>
+    </plurals>
     <string name="errors_load_more_reports">Ladda fler rapporter</string>
     <string name="public_tournament">Offentlig turnering</string>
     <string name="public_tournament_description">Vem som helst kan se turneringen, dess resultat och statistik utan konto.\nStäng av det för en testturnering: då ser bara personalen den.</string>
@@ -706,7 +723,10 @@
     <string name="activity_only_person">Visa bara den här personen</string>
     <string name="activity_load_more">Ladda fler</string>
     <string name="activity_none">Inga ändringar registrerade</string>
-    <string name="activity_loaded_count">%1$d ändringar laddade</string>
+    <plurals name="activity_loaded_count">
+        <item quantity="one">%1$d ändring laddad</item>
+        <item quantity="other">%1$d ändringar laddade</item>
+    </plurals>
     <string name="activity_col_when">När</string>
     <string name="activity_col_who">Vem</string>
     <string name="activity_col_what">Vad</string>
@@ -715,7 +735,10 @@
     <string name="activity_from_player">Spelarappen</string>
     <string name="activity_from_system">Automatiskt</string>
     <string name="activity_table">Omgång %1$d · Bord %2$d</string>
-    <string name="activity_changes_count">%1$d värden ändrade</string>
+    <plurals name="activity_changes_count">
+        <item quantity="one">%1$d värde ändrat</item>
+        <item quantity="other">%1$d värden ändrade</item>
+    </plurals>
     <string name="activity_hand">Hand %1$d</string>
     <string name="activity_changes">Ändringar</string>
     <string name="activity_details">Detaljer</string>
@@ -834,7 +857,10 @@
     <string name="round_control_table_status">Status</string>
     <string name="delete_selected_count">Radera (%1$d)</string>
     <string name="users_delete_confirm_title">Radera konton?</string>
-    <string name="users_delete_confirm_text">%1$d konton raderas för gott: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelarna och turneringsresultaten finns kvar.\n\nDetta kan inte ångras.</string>
+    <plurals name="users_delete_confirm_text">
+        <item quantity="one">%1$d konto raderas för gott: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelaren och turneringsresultaten finns kvar.\n\nDetta kan inte ångras.</item>
+        <item quantity="other">%1$d konton raderas för gott: inloggningen, e-postadressen, aliaset och fotot.\n\nEMA-spelarna och turneringsresultaten finns kvar.\n\nDetta kan inte ångras.</item>
+    </plurals>
     <string name="delete_failure_self">Du kan inte radera ditt eget konto.</string>
     <string name="delete_failure_last_admin">Det är den sista aktiva administratören.</string>
     <string name="delete_failure_unknown">Kontot raderades inte. Försök igen.</string>
@@ -1047,7 +1073,10 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_closes_on_optional">Sista anmälningsdag (valfritt)</string>
     <string name="reg_link_name">Namn på den publika länken</string>
     <string name="reg_import_title">Importera Google-formuläret</string>
-    <string name="reg_import_ready">%1$d rader importeras.</string>
+    <plurals name="reg_import_ready">
+        <item quantity="one">%1$d rad importeras.</item>
+        <item quantity="other">%1$d rader importeras.</item>
+    </plurals>
     <string name="reg_import_with_problems">Rader med problem importeras också, markerade i listan, så att du kan rätta dem där.</string>
     <string name="reg_file_ema">I filen: %1$s</string>
     <string name="reg_choose_ema">Välj rätt person</string>
@@ -1057,7 +1086,10 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
         <item quantity="other">Filen ersätter den nuvarande listan: de %1$d personer som är anmälda nu tas bort, utan e-post.</item>
     </plurals>
     <string name="reg_import_apply">Importera %1$d</string>
-    <string name="reg_import_result">%1$d personer importerades.</string>
+    <plurals name="reg_import_result">
+        <item quantity="one">%1$d person importerades.</item>
+        <item quantity="other">%1$d personer importerades.</item>
+    </plurals>
     <string name="reg_problem_invalid_ema">EMA-numret är ogiltigt.</string>
     <string name="reg_problem_duplicate_ema">EMA-numret finns två gånger i filen.</string>
     <string name="reg_problem_invalid_email">E-postadressen är ogiltig.</string>
@@ -1112,9 +1144,18 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_change">Ändra</string>
     <string name="pc_now">Nu: %1$d spelare, %2$d bord per omgång.</string>
     <string name="pc_empty_slot">#%1$d · ingen spelare</string>
-    <string name="pc_new_slots">%1$d nya platser, tomma tills du tilldelar dem under Spelare.</string>
-    <string name="pc_new_teams">%1$d nya lag, tomma tills du tilldelar dem under Lag.</string>
-    <string name="pc_waiting_title">Väntelista: upp till %1$d personer (valfritt)</string>
+    <plurals name="pc_new_slots">
+        <item quantity="one">%1$d ny plats, tom tills du tilldelar den under Spelare.</item>
+        <item quantity="other">%1$d nya platser, tomma tills du tilldelar dem under Spelare.</item>
+    </plurals>
+    <plurals name="pc_new_teams">
+        <item quantity="one">%1$d nytt lag, tomt tills du tilldelar det under Lag.</item>
+        <item quantity="other">%1$d nya lag, tomma tills du tilldelar dem under Lag.</item>
+    </plurals>
+    <plurals name="pc_waiting_title">
+        <item quantity="one">Väntelista: upp till %1$d person (valfritt)</item>
+        <item quantity="other">Väntelista: upp till %1$d personer (valfritt)</item>
+    </plurals>
     <string name="pc_waiting_none">Ingen står på väntelistan.</string>
     <string name="pc_no_match">Ingen matchar sökningen.</string>
     <string name="pc_continue">Fortsätt</string>
@@ -1134,8 +1175,14 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_team_changes">Personerna som byter lag:</string>
     <string name="pc_removed_registrations">Deras anmälningar.</string>
     <string name="pc_added_label">Läggs till:</string>
-    <string name="pc_added_slots">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</string>
-    <string name="pc_added_teams">%1$d nya lag.</string>
+    <plurals name="pc_added_slots">
+        <item quantity="one">%1$d tom plats, numrerad efter den högsta, att tilldela senare.</item>
+        <item quantity="other">%1$d tomma platser, numrerade efter det högsta, att tilldela senare.</item>
+    </plurals>
+    <plurals name="pc_added_teams">
+        <item quantity="one">%1$d nytt lag.</item>
+        <item quantity="other">%1$d nya lag.</item>
+    </plurals>
     <string name="pc_added_waiting">Från väntelistan, som nu får en plats:</string>
     <string name="pc_kept_label">Behålls:</string>
     <string name="pc_kept_people">Övriga spelare, med sitt nummer, sin EMA-spelare, sitt konto och sin e-post.</string>
@@ -1149,7 +1196,10 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_saving">Sparar den nya lottningen…</string>
     <string name="pc_done_title">Klart</string>
     <string name="pc_done_text">Turneringen har nu %1$d spelare och en ny lottning.</string>
-    <string name="pc_emails_sent">%1$d personer har fått ett mejl.</string>
+    <plurals name="pc_emails_sent">
+        <item quantity="one">%1$d person har fått ett mejl.</item>
+        <item quantity="other">%1$d personer har fått ett mejl.</item>
+    </plurals>
     <string name="pc_emails_none">Utan mejl, meddela dem själv:</string>
     <string name="pc_emails_failed">Mejlet misslyckades, meddela dem själv:</string>
     <string name="pc_locked_title">Antalet spelare kan inte ändras</string>
@@ -1173,4 +1223,12 @@ Antalet spelare kan bara ändras före den första given.</string>
     <string name="table_qr_card_size">Storlek på varje kort: %1$s</string>
     <string name="table_qr_hint">Skanna koden för att komma till ditt bord.</string>
     <string name="table_qr_open_app">Eller öppna bara appen:</string>
+    <plurals name="player_base_players">
+        <item quantity="one">%1$d spelare</item>
+        <item quantity="other">%1$d spelare</item>
+    </plurals>
+    <plurals name="player_base_countries">
+        <item quantity="one">%1$d land</item>
+        <item quantity="other">%1$d länder</item>
+    </plurals>
 </resources>

@@ -230,6 +230,9 @@
     <string name="entry_seats_first">Распределите места за столом, чтобы начать вводить раздачи.</string>
     <string name="round_starts_at">Начало в</string>
     <string name="round_clock_remaining">Осталось: %1$s</string>
+    <string name="table_hand_announce_new">Новая раздача %1$d</string>
+    <string name="table_hand_announce_edited">Раздача %1$d исправлена</string>
+    <string name="table_hand_announce_deleted">Раздача %1$d удалена</string>
     <string name="round_clock_paused">Пауза · Осталось: %1$s</string>
     <string name="round_clock_over">Время игры вышло.</string>
     <string name="filter_table_search">Номер стола или игрок</string>
@@ -255,7 +258,12 @@
     <string name="preg_open_detail">Зарегистрироваться может любой человек с номером EMA.</string>
     <string name="preg_closed_detail">Сейчас регистрация недоступна.\nОрганизаторы опубликуют здесь жеребьёвку.</string>
     <string name="preg_places_value">Занято %1$d из %2$d мест</string>
-    <string name="preg_places_value_no_limit">Зарегистрировано: %1$d, без ограничения мест</string>
+    <plurals name="preg_places_value_no_limit">
+        <item quantity="one">Зарегистрирован %1$d человек, без ограничения мест</item>
+        <item quantity="few">Зарегистрировано %1$d человека, без ограничения мест</item>
+        <item quantity="many">Зарегистрировано %1$d человек, без ограничения мест</item>
+        <item quantity="other">Зарегистрировано %1$d человека, без ограничения мест</item>
+    </plurals>
     <string name="preg_waiting_value">В листе ожидания: %1$d</string>
     <string name="preg_waiting_none">Лист ожидания пуст</string>
     <string name="preg_closes_until">До %1$s включительно</string>

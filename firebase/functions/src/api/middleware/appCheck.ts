@@ -13,6 +13,7 @@ import { HttpError } from "../httpError";
 export type AppCheckMode = "off" | "monitor" | "enforce";
 
 export const APP_CHECK_HEADER = "x-firebase-appcheck";
+export const CLIENT_HEADER = "x-mts-client";
 
 export function appCheckModeFromEnv(value: string | undefined = process.env.APP_CHECK_MODE): AppCheckMode {
   const mode = value?.trim().toLowerCase();
@@ -51,7 +52,16 @@ export function appCheck(options: {
       next(new HttpError(401, "app_check_failed", "The request does not come from a known app."));
       return;
     }
-    console.warn("App Check failed", { reason, method: req.method, path: req.path });
+    // The Android and desktop apps say who they are and the state of their App Check (X-MTS-Client), so the logs tell
+    // a script from an app whose token failed. A signed-in request says so too: enforce could spare them later.
+    console.warn("App Check failed", {
+      reason,
+      method: req.method,
+      path: req.path,
+      client: req.header(CLIENT_HEADER)?.slice(0, 120) ?? null,
+      userAgent: req.header("user-agent")?.slice(0, 120) ?? null,
+      signedIn: (req.header("authorization") ?? "").startsWith("Bearer "),
+    });
     next();
   };
 }

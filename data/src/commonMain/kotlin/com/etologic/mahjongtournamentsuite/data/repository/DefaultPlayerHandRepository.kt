@@ -98,7 +98,7 @@ class DefaultPlayerHandRepository(
                 // A 409 means that the table is not what the player saw. The app must load it again.
                 val conflict = (throwable as? BackendHttpException)
                     ?.takeIf { it.status == HttpStatusCode.Conflict }
-                    ?.let { AppError.Conflict(message = it.responseBody.backendMessage()) }
+                    ?.let { it.codedConflictOrNull() ?: AppError.Conflict(message = it.responseBody.backendMessage()) }
                 AppResult.Failure(conflict ?: throwable.toRepositoryAppError())
             },
         )
