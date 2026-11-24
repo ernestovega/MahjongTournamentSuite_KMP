@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
@@ -87,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -369,6 +373,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
     // Each player's table in every round, in round order.
     val roundTablesByPlayerId = remember(tables) { roundTablesByPlayer(tables) }
+    // The players whose tables per round are open. All of them start closed.
+    var expandedTablesSlotIds by remember(tournamentId) { mutableStateOf(emptySet<Int>()) }
     // The search still finds a player by a table number.
     val tableNumbersByPlayerId = remember(roundTablesByPlayerId) {
         roundTablesByPlayerId.mapValues { (_, roundTables) -> roundTables.joinToString(" · ") { it.tableId.toString() } }
@@ -1045,15 +1051,25 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         isLoading = loading || savingId != null,
         showBackgroundLogo = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },
-        actions = {
+        // The cards and the list to print, the teams and the invitations, left of the title. On a phone they go first in the menu.
+        leadingActions = {
             AppTopBarActions(
                 onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
+                onTeams = if (isTeamsTournament) {
+                    { navController.navigate(TeamsRoute(tournamentId)) }
+                } else {
+                    null
+                },
                 onPlayerAccounts = {
                     accountError = null
                     accountResults = emptyList()
                     bulkAccountsOpen = true
                 },
+            )
+        },
+        actions = {
+            AppTopBarActions(
                 onImportPlayers = { importDialogOpen = true },
                 importLocked = tournamentStarted,
                 onExportPlayers = exportPlayers,
@@ -1164,6 +1180,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_tournament_players_match), compact = true)
                 }
                 val compact = LocalCompactLayout.current
+                // The column of the button that opens the tables, the same in the header and in every row.
+                val anyRoundTables = roundTablesByPlayerId.isNotEmpty()
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val tablesToggleLabel = !compact && maxWidth >= TablesToggleLabelMinWidth
+                val tablesToggleWidth = if (tablesToggleLabel) TablesToggleLabeledWidth else TablesToggleIconWidth
                 Column(Modifier.fillMaxWidth()) {
                     if (!compact) {
                         DataTableHeaderRow {
@@ -1171,10 +1192,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
                             TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
                             TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
-                            TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1.2f))
-                            if (isTeamsTournament) {
-                                TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
+                            // The name and the team at the left. The space that is left over stays before the menu.
+                            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                TournamentPlayerHeader(stringResource(Res.string.name), TournamentPlayerNameModifier(), TextAlign.Start)
+                                if (isTeamsTournament) {
+                                    TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier(), TextAlign.Start)
+                                }
                             }
+                            if (anyRoundTables) Spacer(Modifier.width(tablesToggleWidth))
                             Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                         }
                     }
@@ -1259,6 +1284,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             columnWidth = TournamentPlayerPhotoColumnWidth,
                                         )
                                     }
+                                    // The name and the team at the left. The space that is left over stays before the menu.
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
                                     // The whole name on one line. A very long name wraps to a second line.
                                     Text(
                                         if (assigned == null) {
@@ -1268,8 +1299,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
-                                        modifier = Modifier.weight(1.2f),
-                                        textAlign = TextAlign.Center,
+                                        modifier = TournamentPlayerNameModifier(),
+                                        textAlign = TextAlign.Start,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -1277,11 +1308,30 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         Text(
                                             text = teamNamesById[slot.team] ?: teamLabel(slot.team),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
-                                            textAlign = TextAlign.Center,
+                                            modifier = TournamentPlayerTeamModifier(),
+                                            textAlign = TextAlign.Start,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                         )
+                                    }
+                                    }
+                                }
+                                // The tables of every round open under the player. They start closed, so the list stays short.
+                                if (anyRoundTables) {
+                                    Box(Modifier.width(tablesToggleWidth), contentAlignment = Alignment.Center) {
+                                    if (roundTables.isNotEmpty()) {
+                                    PlayerRoundTablesToggle(
+                                        expanded = slot.id in expandedTablesSlotIds,
+                                        showLabel = tablesToggleLabel,
+                                        onToggle = {
+                                            expandedTablesSlotIds = if (slot.id in expandedTablesSlotIds) {
+                                                expandedTablesSlotIds - slot.id
+                                            } else {
+                                                expandedTablesSlotIds + slot.id
+                                            }
+                                        },
+                                    )
+                                    }
                                     }
                                 }
                                 Box(
@@ -1420,7 +1470,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 }
                             }
                             // A second line under the player: the table of every round, side by side.
-                            if (roundTables.isNotEmpty()) {
+                            if (roundTables.isNotEmpty() && slot.id in expandedTablesSlotIds) {
                                 PlayerRoundTablesStrip(
                                     roundTables = roundTables,
                                     titleWidth = if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth,
@@ -1430,6 +1480,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             DataTableDivider()
                         }
                     }
+                }
                 }
             }
         }
@@ -1442,8 +1493,25 @@ private val TournamentPlayerCountryColumnWidth = 64.dp
 private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 96.dp
 
-// The team gives up width first: the name of the player has priority.
-private val TournamentPlayerTeamColumnWidth = 120.dp
+// The widths of the name and the team when there is room. The space left over stays before the menu.
+private val TournamentPlayerNameMaxWidth = 300.dp
+private val TournamentPlayerTeamColumnWidth = 180.dp
+
+// The button that opens the tables of a player shows its text from this width of the list, and only the arrow below it.
+private val TablesToggleLabelMinWidth = 1000.dp
+private val TablesToggleLabeledWidth = 112.dp
+private val TablesToggleIconWidth = 48.dp
+
+/**
+ * Inside the row of the name and the team: the same width in the header and in every row, so the columns line up.
+ * Not filled: the fixed width, or less when the row is narrower. Never the width of the text.
+ * On a narrow screen the name keeps two thirds of the room and the team one third.
+ */
+@Composable
+private fun RowScope.TournamentPlayerNameModifier(): Modifier = Modifier.weight(2f, fill = false).width(TournamentPlayerNameMaxWidth)
+
+@Composable
+private fun RowScope.TournamentPlayerTeamModifier(): Modifier = Modifier.weight(1f, fill = false).width(TournamentPlayerTeamColumnWidth)
 
 // The photo column of a phone. The tables title below it takes the same width.
 private val TournamentPlayerCompactLeadingWidth = 44.dp
@@ -1463,6 +1531,27 @@ internal fun roundTablesByPlayer(tables: List<TournamentTable>): Map<Int, List<P
  * The table is as wide as the row: the cells share the free width. When the rounds do not fit, the title and the
  * table scroll sideways from one edge of the row to the other, with a scrollbar on desktop and web.
  */
+@Composable
+private fun PlayerRoundTablesToggle(
+    expanded: Boolean,
+    showLabel: Boolean,
+    onToggle: () -> Unit,
+) {
+    val label = stringResource(Res.string.tables)
+    val icon = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore
+    if (showLabel) {
+        TextButton(onClick = onToggle, modifier = Modifier.testTag(PlayerRoundTablesToggleTag)) {
+            Text(label, maxLines = 1)
+            Spacer(Modifier.width(4.dp))
+            Icon(icon, contentDescription = null)
+        }
+    } else {
+        IconButton(onClick = onToggle, modifier = Modifier.testTag(PlayerRoundTablesToggleTag)) {
+            Icon(icon, contentDescription = label)
+        }
+    }
+}
+
 @Composable
 private fun PlayerRoundTablesStrip(
     roundTables: List<PlayerRoundTable>,
@@ -1542,6 +1631,7 @@ private fun PlayerRoundTablesStrip(
 
 /** Test tag of each player's round and table strip. */
 internal const val PlayerRoundTablesTag = "playerRoundTables"
+internal const val PlayerRoundTablesToggleTag = "playerRoundTablesToggle"
 private val RoundTableStripPadding = 12.dp
 private val RoundTableStripGap = 12.dp
 private val RoundTableLabelWidth = 60.dp

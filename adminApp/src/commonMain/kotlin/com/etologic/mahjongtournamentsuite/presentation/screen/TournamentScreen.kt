@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Tune
@@ -40,7 +39,6 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -92,7 +90,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_button
-import mahjongtournamentsuite.adminapp.generated.resources.teams
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -109,7 +106,6 @@ private sealed class RoundEditorAction {
     /** Opens the next table that needs data. It runs after the current table is saved. */
     data class NextTable(val fromTableId: Int) : RoundEditorAction()
     data object Players : RoundEditorAction()
-    data object Teams : RoundEditorAction()
     data object Rankings : RoundEditorAction()
     data object Statistics : RoundEditorAction()
     data object Timer : RoundEditorAction()
@@ -386,7 +382,6 @@ fun TournamentScreen(
             )?.takeIf { it in tableEditors } ?: selectedTableId
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
             RoundEditorAction.TableQr -> tablesIdsOpen = true
-            RoundEditorAction.Teams -> navController.navigate(TeamsRoute(tournamentId))
             RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
             RoundEditorAction.Statistics -> {
                 val round = selectedRoundId
@@ -550,14 +545,6 @@ fun TournamentScreen(
             }
             // The screens that are not used during the rounds, in one menu so that the top bar stays light.
             AppTopBarMoreMenu {
-                if (tournament?.isTeams == true) {
-                    AppTopBarButton(
-                        text = stringResource(Res.string.teams),
-                        icon = Icons.Default.Groups,
-                        onClick = { requestAction(RoundEditorAction.Teams) },
-                        enabled = !isLoading,
-                    )
-                }
                 AppTopBarButton(
                     text = stringResource(Res.string.players),
                     icon = Icons.Default.People,

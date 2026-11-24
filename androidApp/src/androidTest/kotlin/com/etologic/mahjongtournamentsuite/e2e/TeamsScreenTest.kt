@@ -7,10 +7,12 @@ class TeamsScreenTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         c.waitForAnyText("Players & results", "Tournament players")
-        // A tournament with open slots opens on the players screen. Back leads to the tournament screen.
-        if (c.isOnScreen("Tournament players")) c.clickButton("Back")
-        c.waitForText("Players & results")
-        c.clickMoreMenuButton("Teams")
+        // A tournament with open slots opens on the players screen. Teams opens from its top bar.
+        if (!c.isOnScreen("Tournament players")) {
+            c.clickMoreMenuButton("Players")
+            c.waitForText("Tournament players")
+        }
+        c.clickButton("Teams")
         c.waitForText("Tournament teams")
     }
 
@@ -61,5 +63,13 @@ class TeamsScreenTest : AdminE2eTest() {
         openTeams()
         c.clickButton("Back")
         c.waitForText("Players & results")
+    }
+
+    @Test
+    fun teamsHasNoImportOrExport() {
+        openTeams()
+        c.waitForText("Back")
+        c.assertNoText("Import")
+        c.assertNoText("Export")
     }
 }
