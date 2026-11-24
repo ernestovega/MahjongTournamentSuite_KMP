@@ -504,7 +504,7 @@ private fun SeatCardFrame(seat: SeatDisplay, modifier: Modifier, onPlayerClick: 
 /**
  * The final result of a finished table: a podium with the second, the first and the third place, each on a step of
  * the color of its medal and of a height that follows the place, and the fourth below it. The winner is the biggest.
- * The steps carry the place and the table points in white; the players stand on them with their score (Ernesto,
+ * The steps carry the table points in white; the players stand on them with their score (Ernesto,
  * 2026-11-25).
  */
 @Composable
@@ -596,16 +596,10 @@ private fun PodiumPlace(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                "$place",
-                style = (if (first) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineSmall).inTextFont(),
-                fontWeight = FontWeight.Black,
-                color = Color.White,
-            )
             if (seat.points.isNotBlank()) {
                 Text(
                     stringResource(Res.string.points_short, formatPoints(seat.points)),
-                    style = MaterialTheme.typography.labelLarge.inTextFont(),
+                    style = (if (first) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge).inTextFont(),
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
