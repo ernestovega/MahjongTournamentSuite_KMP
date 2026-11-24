@@ -562,7 +562,10 @@ export async function register(params: {
   if (food !== "" && !params.consent) throw badRequest("The food restrictions need the consent", { code: "CONSENT_REQUIRED" });
   // Allowed, for example a parent who registers a child, but the email tells it: one email has only one account.
   const sharedEmail = email !== "" && (await listStored(tournament)).some((other) => other.emaId !== person.emaId && other.email === email);
-  const token = existing?.manageToken || newToken();
+  // A pending registration that another email asks for again gets a new link: the link of the first email must never
+  // reach a second address, or whoever types any email could manage the registration of another person.
+  const sameAddress = existing != null && existing.email === email;
+  const token = (sameAddress ? existing?.manageToken : null) || newToken();
   const base = {
     emaId: person.emaId,
     name: person.name,
