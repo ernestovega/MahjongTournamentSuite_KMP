@@ -46,8 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.contentDescription
@@ -463,25 +465,9 @@ private fun SeatCard(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             item.wind?.let { WindIcon(it, size = 22.dp) }
-            // The place icon of a complete table is at the side of the score.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                if (place != null) {
-                    if (place <= 3) PositionTrophy(place, size = 24.dp) else LastPlaceIcon(size = 24.dp)
-                }
-                SeatScore(seat.score, item.score)
-            }
-            if (showPoints && seat.points.isNotBlank()) {
-                // The table points are the result of a finished table, so they are big and have the color of the place.
-                Text(
-                    stringResource(Res.string.points_short, formatPoints(seat.points)),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = place?.let { positionColor(it) } ?: Color.Unspecified,
-                )
-            }
-            if (seat.penalty != 0) {
-                Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-            }
+            // Under the wind, the flag and the number of the player in the tournament (as in the hand dialogs), then the
+            // name with the whole width of the card, then the score (Ernesto, 2026-11-24).
+            PlayerFlagAndNumber(seat.country, seat.slotId)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 SeatLevelMedal(seat)
                 Text(
@@ -495,12 +481,39 @@ private fun SeatCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            // The flag is under the name, so a long name has the whole width of the card. The number of the player in the
-            // tournament is beside the flag, as in the hand dialogs.
-            PlayerFlagAndNumber(seat.country, seat.slotId)
+            // The place icon of a complete table is at the side of the score.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                if (place != null) {
+                    if (place <= 3) PositionTrophy(place, size = 24.dp) else LastPlaceIcon(size = 24.dp)
+                }
+                SeatScore(seat.score, item.score)
+            }
+            if (showPoints && seat.points.isNotBlank()) {
+                // The table points are the result of a finished table, so they are big and have the color of the place.
+                SeatPoints(stringResource(Res.string.points_short, formatPoints(seat.points)), place)
+            }
+            if (seat.penalty != 0) {
+                Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+            }
             seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
             if (showDiffs) DiffsTable(diffs)
         }
+    }
+}
+
+/**
+ * The table points of a seat, big and in the color of its place. Gold and silver are light on the white card, so they
+ * get a thin darker outline of their own color (Ernesto, 2026-11-24).
+ */
+@Composable
+private fun SeatPoints(text: String, place: Int?) {
+    val color = place?.let { positionColor(it) } ?: MaterialTheme.colorScheme.onSurface
+    val style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+    Box {
+        if (place == 1 || place == 2) {
+            Text(text, style = style.copy(drawStyle = Stroke(width = 2f, join = StrokeJoin.Round)), color = lerp(color, Color.Black, 0.3f))
+        }
+        Text(text, style = style, color = color)
     }
 }
 
