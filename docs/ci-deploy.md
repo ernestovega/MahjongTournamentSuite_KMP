@@ -24,10 +24,15 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
 
 - **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
 
+### Every night
+
+Every night at 02:30 UTC (03:30 in Madrid) the five checks run on `main` and nothing is deployed. GitHub emails the
+owner when the run fails. This keeps the tests honest until the gate is on.
+
 ### The gate before production
 
 The repository variable `PROD_DEPLOY_GATE` turns the gate on (Settings > Secrets and variables > Actions > Variables,
-value `on`). Then each push to `main`:
+value `on`; planned for 23-dec-2026, Ernesto). Then each push to `main`:
 
 1. runs the five checks of **Build and test** (without the version check: a push has no base branch);
 2. deploys `main` to staging (**Deploy to staging first**, the deploy job of `staging.yml`);
