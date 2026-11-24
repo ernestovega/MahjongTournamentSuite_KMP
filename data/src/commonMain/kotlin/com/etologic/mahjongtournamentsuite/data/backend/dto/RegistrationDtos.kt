@@ -78,6 +78,7 @@ data class OwnRegistrationDto(
     val email: String = "",
     val foodRestrictions: String = "",
     val manageToken: String = "",
+    val sharedEmail: Boolean = false,
 )
 
 @Serializable

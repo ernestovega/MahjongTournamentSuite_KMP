@@ -336,6 +336,7 @@ private fun OwnRegistrationDto.toDomain() = OwnRegistration(
     email = email,
     foodRestrictions = foodRestrictions,
     manageToken = manageToken,
+    sharedEmail = sharedEmail,
 )
 
 /**

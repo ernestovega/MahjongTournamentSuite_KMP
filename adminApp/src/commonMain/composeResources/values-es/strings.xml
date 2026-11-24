@@ -1029,7 +1029,6 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="reg_state_open">Inscripciones abiertas</string>
     <string name="reg_state_closed">Inscripciones cerradas</string>
     <string name="reg_add">Añadir persona</string>
-    <string name="reg_without_team">Sin equipo</string>
     <string name="reg_no_account">Sin cuenta</string>
     <string name="reg_shared_email">Otra persona usa este email. Una cuenta no puede compartirlo.</string>
     <string name="reg_food">Restricciones alimentarias</string>

@@ -272,6 +272,8 @@
     <string name="preg_food_hint">Allergies, intolerances or diets. Private: only the organization sees it.</string>
     <string name="preg_consent">I agree that the organization keeps this information to prepare the food of the tournament.</string>
     <string name="preg_manage_title">My registration</string>
+    <string name="preg_shared_email_note">Another registration of this tournament also uses %1$s. That is fine, for example for a parent and a child.
+But one email can have only one account in the app: whoever wants their own account needs their own email. Many providers, such as Gmail, take an alias with +, for example name+child@gmail.com, which reaches the same inbox.</string>
     <string name="preg_save">Save</string>
     <string name="preg_team">Team</string>
     <string name="preg_team_info">A team has %1$d people.\n• The captain creates it and adds the others, who must be registered.\n• The others create nothing: they wait to be added.</string>

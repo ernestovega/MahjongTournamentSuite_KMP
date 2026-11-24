@@ -330,6 +330,22 @@ describe("registrations", () => {
     assert.deepEqual((await adminList(id)).registrations.map((item) => item.sharedEmail), [true, true]);
   });
 
+  it("lets a person register with the email of another registration, and tells that one email has one account", async () => {
+    const id = await createTournament();
+    await adminAdd(id, await newEma(), { email: "family@example.test" });
+    sent.length = 0;
+    const response = await server.request("POST", `/registrations/${id}`, { body: { emaId: await newEma(), email: "family@example.test", language: "en" } });
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(sent.length, 1);
+    assert.match(sent[0].text, /one email can have only one account/);
+    const confirmed = await server.request("POST", `/registrations/${id}/confirm`, { body: { token: tokenOf(linkIn(sent[0])) } });
+    assert.equal((confirmed.body as Own & { sharedEmail: boolean }).sharedEmail, true);
+    // An email that nobody else uses has no note.
+    sent.length = 0;
+    await server.request("POST", `/registrations/${id}`, { body: { emaId: await newEma(), email: "alone@example.test", language: "en" } });
+    assert.doesNotMatch(sent[0].text, /only one account/);
+  });
+
   it("lets editors of the tournament manage the list, but not other editors or players", async () => {
     const id = await createTournament();
     editor = await createAccount({ role: "EDITOR", memberOf: [id] });

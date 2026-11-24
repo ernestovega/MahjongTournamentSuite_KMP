@@ -1029,7 +1029,6 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_state_open">Anmälan öppen</string>
     <string name="reg_state_closed">Anmälan stängd</string>
     <string name="reg_add">Lägg till person</string>
-    <string name="reg_without_team">Utan lag</string>
     <string name="reg_no_account">Inget konto</string>
     <string name="reg_shared_email">En annan person använder den här adressen. Ett konto kan inte dela den.</string>
     <string name="reg_food">Matrestriktioner</string>

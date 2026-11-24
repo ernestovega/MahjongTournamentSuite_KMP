@@ -1029,7 +1029,6 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_state_open">Registrations open</string>
     <string name="reg_state_closed">Registrations closed</string>
     <string name="reg_add">Add a person</string>
-    <string name="reg_without_team">Without a team</string>
     <string name="reg_no_account">No account</string>
     <string name="reg_shared_email">Another person uses this email. One account cannot share it.</string>
     <string name="reg_food">Food restrictions</string>

@@ -121,6 +121,8 @@ export type OwnRegistration = Omit<PublicRegistration, "status"> & {
   foodRestrictions: string;
   /** The token of the links of the emails. The app keeps it to manage the registration without an account. */
   manageToken: string;
+  /** Another registration of the tournament has the same email: the app tells the person that one email has one account. */
+  sharedEmail: boolean;
 };
 
 const REGISTRATIONS = "registrations";
@@ -508,6 +510,8 @@ export async function register(params: {
     ? account?.email ?? ""
     : account?.email ?? normalizedEmail(params.email);
   if (food !== "" && !params.consent) throw badRequest("The food restrictions need the consent", { code: "CONSENT_REQUIRED" });
+  // Allowed, for example a parent who registers a child, but the email tells it: one email has only one account.
+  const sharedEmail = email !== "" && (await listStored(tournament)).some((other) => other.emaId !== person.emaId && other.email === email);
   const token = existing?.manageToken || newToken();
   const base = {
     emaId: person.emaId,
@@ -529,7 +533,7 @@ export async function register(params: {
     await logChange(tournament, "registered", person);
     await sendSafely(email, registeredEmail(params.language, {
       tournament: tournament.name, person: person.name, link: manageLink(tournament.ref.id, token),
-      waitingPosition: placed.status === "WAITING" ? placed.position : null,
+      waitingPosition: placed.status === "WAITING" ? placed.position : null, sharedEmail,
     }));
     return { status: placed.status, position: placed.position, emailHint: emailHint(email), manageToken: token };
   }
@@ -544,7 +548,7 @@ export async function register(params: {
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
   const sent = await sendSafely(email, verifyEmail(params.language, {
-    tournament: tournament.name, person: person.name, link: manageLink(tournament.ref.id, token),
+    tournament: tournament.name, person: person.name, link: manageLink(tournament.ref.id, token), sharedEmail,
   }));
   if (!sent) throw new HttpError(502, "email_failed", "The email could not be sent. Try again.");
   return { status: "PENDING", position: null, emailHint: emailHint(email), manageToken: null };
@@ -585,6 +589,7 @@ async function ownView(tournament: TournamentForRegistrations, registration: Sto
     email: registration.email,
     foodRestrictions: pendingFood ?? await foodRestrictionsOf(registration.emaId),
     manageToken: registration.manageToken,
+    sharedEmail: registration.email !== "" && all.some((other) => other.emaId !== registration.emaId && other.email === registration.email),
   };
 }
 

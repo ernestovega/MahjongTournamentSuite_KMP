@@ -209,7 +209,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_team_optional
 import mahjongtournamentsuite.adminapp.generated.resources.reg_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_and_pending
 import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_section
-import mahjongtournamentsuite.adminapp.generated.resources.reg_without_team
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
@@ -932,7 +931,7 @@ private fun RegistrationFilters(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                modifier = if (compact) Modifier.fillMaxWidth().horizontalScrollWithIndicators().padding(bottom = MtsTheme.spacing.sm) else Modifier.weight(1f),
+                modifier = if (compact) Modifier.fillMaxWidth().horizontalScrollWithIndicators().padding(bottom = MtsTheme.spacing.sm) else Modifier.weight(1f).horizontalScrollWithIndicators(),
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -1046,7 +1045,8 @@ private fun RegistrationRow(
     onRemove: () -> Unit,
 ) {
     val compact = LocalCompactLayout.current
-    val team = if (isTeams) teamName ?: stringResource(Res.string.reg_without_team) else null
+    // Without a team: a dash in the column of a wide screen, nothing on a phone.
+    val team = if (isTeams) teamName ?: "—" else null
     DataTableRow(
         modifier = Modifier.testTag("registration-${registration.emaId}"),
         onClick = if (enabled) onEdit else null,
@@ -1065,7 +1065,7 @@ private fun RegistrationRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 NameLine(displayName, registration.country)
                 Text(
-                    listOfNotNull("EMA ${registration.shownEmaId}", team).joinToString(" · "),
+                    listOfNotNull("EMA ${registration.shownEmaId}", teamName.takeIf { isTeams }).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

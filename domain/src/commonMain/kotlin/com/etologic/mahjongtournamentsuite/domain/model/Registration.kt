@@ -128,6 +128,8 @@ data class OwnRegistration(
     val foodRestrictions: String = "",
     /** The token of the links of the emails. The app keeps it to manage the registration without an account. */
     val manageToken: String = "",
+    /** Another registration of the tournament has the same email: allowed, but one email has only one account. */
+    val sharedEmail: Boolean = false,
 )
 
 data class RegisterRequest(
