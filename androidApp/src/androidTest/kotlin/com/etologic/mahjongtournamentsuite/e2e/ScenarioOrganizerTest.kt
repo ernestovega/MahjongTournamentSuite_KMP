@@ -477,9 +477,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val name = byHand.getString("name")
         // The app opens on In play when the account plays a tournament now (an earlier game day, for example), and
         // that tab leaves out this tournament: it is in the All tab. The app can switch to In play once the list has
-        // loaded, after a first tap on All, so the tap is repeated until the tournament shows.
+        // loaded, after a first tap on All, so the tap is repeated until the tournament shows. The list of the app
+        // can come from before the tournament existed: it refreshes every 5 minutes (PollSchedule.LIST_IDLE).
         c.waitForText("My tournaments", timeoutMs = 60_000)
-        c.waitUntil(120_000) {
+        c.waitUntil(420_000) {
             if (c.isOnScreen(name)) return@waitUntil true
             if (c.isOnScreen("In play")) runCatching { c.onAllNodes(hasText("All") and hasClickAction()).onFirst().performClick() }
             c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
