@@ -17,7 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +38,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -336,17 +338,21 @@ fun TableSeatsView(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
         // The row above the seats: the leading content on the left and the Diffs switch with its info on the right.
         // Without the Diffs switch, the leading content is in the middle.
         if (diffsAvailable) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { leading?.invoke() }
-                DiffsInfo()
-                // The space between the info icon and the label is the same as between the label and the switch (Ernesto, 2026-11-25).
-                MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }, gap = 12.dp) {
-                    Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+            // The row is low, with little space above and below the switch (Ernesto, 2026-11-25). The label is part of
+            // the switch, so the touch target stays wide.
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 36.dp) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) { leading?.invoke() }
+                    DiffsInfo()
+                    // The space between the info icon and the label is the same as between the label and the switch (Ernesto, 2026-11-25).
+                    MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }, gap = MtsTheme.spacing.sm) {
+                        Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         } else if (leading != null) {
@@ -354,7 +360,7 @@ fun TableSeatsView(
         }
         // A finished table is a list from the first place to the last, with the points of each player (Ernesto, 2026-11-25).
         if (showPoints) {
-            SeatsPodium(placed, diffs, showDiffs && diffsAvailable, onPlayerClick)
+            SeatsPodium(placed, onPlayerClick)
         } else {
             SeatsCross(placed, diffs, centerLabel, showDiffs && diffsAvailable, animateScoreChanges, onPlayerClick)
         }
@@ -508,12 +514,7 @@ private fun SeatCardFrame(seat: SeatDisplay, modifier: Modifier, onPlayerClick: 
  * 2026-11-25).
  */
 @Composable
-private fun SeatsPodium(
-    placed: List<PlacedSeat>,
-    diffs: List<SeatDiffs>,
-    showDiffs: Boolean,
-    onPlayerClick: (Int) -> Unit,
-) {
+private fun SeatsPodium(placed: List<PlacedSeat>, onPlayerClick: (Int) -> Unit) {
     val ranked = rankedSeatIndices(placed)
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -525,12 +526,12 @@ private fun SeatsPodium(
                 // Second on the left, first in the middle and third on the right, as on a podium.
                 listOf(2, 1, 3).forEach { place ->
                     val index = ranked[place - 1]
-                    PodiumPlace(placed[index], diffs[index], place, showDiffs, onPlayerClick, Modifier.weight(if (place == 1) 1.15f else 1f))
+                    PodiumPlace(placed[index], place, onPlayerClick, Modifier.weight(if (place == 1) 1.15f else 1f))
                 }
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             val last = ranked[3]
-            FourthPlace(placed[last], diffs[last], showDiffs, onPlayerClick)
+            FourthPlace(placed[last], onPlayerClick)
         }
     }
 }
@@ -539,9 +540,7 @@ private fun SeatsPodium(
 @Composable
 private fun PodiumPlace(
     item: PlacedSeat,
-    diffs: SeatDiffs,
     place: Int,
-    showDiffs: Boolean,
     onPlayerClick: (Int) -> Unit,
     modifier: Modifier,
 ) {
@@ -578,15 +577,15 @@ private fun PodiumPlace(
             )
             SeatScore(seat.score, item.score, big = first)
             SeatExtras(seat)
-            if (showDiffs) DiffsTable(diffs)
         }
         // The step: as wide as the place, of the color of the medal, higher for a better place.
         Column(
             Modifier
                 .padding(top = MtsTheme.spacing.xs)
                 .fillMaxWidth()
-                .height(
-                    when (place) {
+                // A minimum height, so big text (the font size of the system) makes the step higher instead of cutting it.
+                .heightIn(
+                    min = when (place) {
                         1 -> 96.dp
                         2 -> 72.dp
                         else -> 56.dp
@@ -599,9 +598,15 @@ private fun PodiumPlace(
             if (seat.points.isNotBlank()) {
                 Text(
                     stringResource(Res.string.points_short, formatPoints(seat.points)),
-                    style = (if (first) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge).inTextFont(),
+                    // The points are as big as the place is high (Ernesto, 2026-11-25).
+                    style = when (place) {
+                        1 -> MaterialTheme.typography.headlineMedium
+                        2 -> MaterialTheme.typography.titleLarge
+                        else -> MaterialTheme.typography.titleMedium
+                    }.inTextFont(),
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -610,7 +615,7 @@ private fun PodiumPlace(
 
 /** The fourth place, under the podium: one row with the sad face, the player, the score and the points. */
 @Composable
-private fun FourthPlace(item: PlacedSeat, diffs: SeatDiffs, showDiffs: Boolean, onPlayerClick: (Int) -> Unit) {
+private fun FourthPlace(item: PlacedSeat, onPlayerClick: (Int) -> Unit) {
     val seat = item.seat
     Column(
         Modifier
@@ -646,7 +651,6 @@ private fun FourthPlace(item: PlacedSeat, diffs: SeatDiffs, showDiffs: Boolean, 
                 }
             }
         }
-        if (showDiffs) DiffsTable(diffs)
     }
 }
 
