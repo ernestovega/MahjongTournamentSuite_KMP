@@ -110,6 +110,10 @@ jobs:
         run: ./gradlew ktlintCheck --continue
 
       - name: Test Kotlin code
+        env:
+          # Ga4ValidationSmokeTest asks GA4 if it accepts every event of the app. Without the secret (a pull request
+          # from a fork, or no repository secret) the test checks nothing. See docs/telemetry.md.
+          MTS_GA4_API_SECRET: ${{ secrets.MTS_GA4_API_SECRET }}
         run: >
           ./gradlew
           :domain:jvmTest :data:jvmTest :designsystem:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest

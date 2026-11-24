@@ -223,12 +223,16 @@ Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, 
 | `AnalyticsCoverageTest` (ui) | Reads the sources of both apps: every route uses `screen<>`, every screen shows inside a route or `TrackedScreen`, every dialog and bottom sheet is in a `TrackedDialog`, every tab is a `CompactTab` or has a `TrackedTab`, every repository function that changes data is called from a function that counts it, every link uses `rememberOpenLink`, and every event and word is sent and described here. Not in CI until the release (the build skips it when `CI` is set). | `./gradlew :ui:jvmTest --tests '*AnalyticsCoverageTest*'` |
 | `telemetryJs.test.ts` (firebase/functions) | Both copies of `telemetry.js` run in a fake page with a fake SDK: consent, events, crash reports, limits. The crash body passes `parseErrorReport` of the server. | `cd firebase/functions && npm test` |
 | `DesktopTelemetryTest` (data) | The desktop app posts the right body to a local server, only after consent. | `./gradlew :data:jvmTest` |
-| `Ga4ValidationSmokeTest` (data) | Google accepts every event of the app. It uses the validation address of the Measurement Protocol, which stores nothing. | See below. It does nothing without the variables. |
+| `Ga4ValidationSmokeTest` (data) | Google accepts every event of the app. It uses the validation address of the Measurement Protocol, which stores nothing. | `./gradlew :data:jvmTest`. It does nothing without the API secret. |
 
-Run the smoke test after you add or change an event:
+The smoke test uses the settings of the desktop app: the public measurement id, and the API secret from
+`mts.ga4.apiSecret` in local.properties or from the variable `MTS_GA4_API_SECRET`. With the secret on your computer it
+runs with the other tests of `data`. In the CI, the job "Kotlin tests" passes the repository secret `MTS_GA4_API_SECRET`
+(GitHub > Settings > Secrets and variables > Actions). Without the secret the test prints that it checks nothing.
+`MTS_GA4_MEASUREMENT_ID` checks another data stream. Run it alone after you add or change an event:
 
 ```
-MTS_GA4_MEASUREMENT_ID=G-... MTS_GA4_API_SECRET=... ./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'
+./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'
 ```
 
 A pass means that the format is valid. It does not mean that GA4 counted the event. Only DebugView (step 7) or the BigQuery export shows that.

@@ -17,17 +17,21 @@ import kotlin.test.assertEquals
 
 /**
  * Asks Google if GA4 accepts every event of the app. It uses the validation address of the Measurement Protocol,
- * which checks a message and stores nothing. It needs the network and the settings of the data stream, so it runs
- * only when both variables are set:
+ * which checks a message and stores nothing. It needs the network and the API secret of the data stream.
  *
- *     MTS_GA4_MEASUREMENT_ID=G-... MTS_GA4_API_SECRET=... ./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'
+ * It uses the same settings as the desktop app ([DesktopTelemetryConfig]): the public measurement id, and the secret
+ * that the build takes from `mts.ga4.apiSecret` in local.properties or from the variable MTS_GA4_API_SECRET. In the CI
+ * the secret comes from the repository secret MTS_GA4_API_SECRET. The variable MTS_GA4_MEASUREMENT_ID can check
+ * another data stream.
  *
- * Without the variables the test does nothing. A pass means that the format is valid. It does not mean that GA4
- * counted the event: only DebugView or the BigQuery export shows that.
+ *     ./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'
+ *
+ * Without the secret the test does nothing, and it says so in the output. A pass means that the format is valid. It
+ * does not mean that GA4 counted the event: only DebugView or the BigQuery export shows that.
  */
 class Ga4ValidationSmokeTest {
-    private val measurementId = System.getenv("MTS_GA4_MEASUREMENT_ID").orEmpty()
-    private val apiSecret = System.getenv("MTS_GA4_API_SECRET").orEmpty()
+    private val measurementId = System.getenv("MTS_GA4_MEASUREMENT_ID")?.takeIf { it.isNotBlank() } ?: DesktopTelemetryConfig.MEASUREMENT_ID
+    private val apiSecret = System.getenv("MTS_GA4_API_SECRET")?.takeIf { it.isNotBlank() } ?: DesktopTelemetryConfig.apiSecret
 
     private val properties = mapOf(
         TelemetryProperty.APP to "admin",
@@ -74,7 +78,10 @@ class Ga4ValidationSmokeTest {
 
     @Test
     fun googleAcceptsEveryEventOfTheApp() {
-        if (measurementId.isBlank() || apiSecret.isBlank()) return
+        if (apiSecret.isBlank()) {
+            println("Ga4ValidationSmokeTest: no GA4 API secret, so nothing is checked. See the comment of the class.")
+            return
+        }
         val client = HttpClient.newHttpClient()
         // Every event of the app is checked, with its own parameters or with none.
         val problems = TelemetryEvent.all.mapNotNull { event ->

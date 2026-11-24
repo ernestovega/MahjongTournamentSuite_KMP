@@ -58,7 +58,7 @@ Nothing is sent to GA4 until the settings are filled in. The apps build and run 
 | Server unit tests (include `telemetry.js`) | `cd firebase/functions && npm test` |
 | Server integration tests | `cd firebase/functions && npm run test:integration` (needs Java 21 for the emulators) |
 | Code style | `./gradlew ktlintCheck --offline` |
-| GA4 format check | `MTS_GA4_MEASUREMENT_ID=G-... MTS_GA4_API_SECRET=... ./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'` |
+| GA4 format check | `./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'` (needs the API secret, see [Telemetry](telemetry.md#tests)) |
 
 The Android instrumented tests (`androidApp/src/androidTest`) use the new "App errors" button. They were updated and compile, but nobody ran them yet.
 
