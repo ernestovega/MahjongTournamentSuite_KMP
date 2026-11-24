@@ -99,9 +99,9 @@ U = Kotlin unit or JVM UI test, S = screenshot, B = backend unit or integration 
 | 4.3 Tournament tabs: Tables, Ranking (by round, Share PNG), Players, Teams, Statistics, Info | ✅ | ✅ | ✅ | ✅ | | Share PNG only screenshot of the preview |
 | 4.4 Player page and Results, Share PNG | ✅ | ✅ | ✅ | | | No E2E |
 | 4.5 Seats | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| 4.5 Enter hands and penalties | ⚠️ | | ✅ | ✅ | ✅ | `HandEntryPanel` 60 %; win/draw/penalty/review dialogs have no screenshot |
+| 4.5 Enter hands and penalties | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | 4.5 Live animation, differences, time left | ✅ | ✅ | ✅ | ✅ | | |
-| 4.5 Completed table, hand details | ⚠️ | ✅ | | ✅ | | `HandDetails` 14 % |
+| 4.5 Completed table, hand details | ✅ | ✅ | | ✅ | | |
 | 4.6 «Go to my table» reminder and floating button | ✅ | ✅ | | ✅ | | |
 | 4.6 Tournament QR `/<slug>/my-table` | ✅ | | ✅ | | | No E2E of the link opening the table (App Links) |
 | 4.7 Statistics with filters (player, tournament, team) | ✅ | ✅ | ✅ | ✅ | | Team statistics 4 % |
@@ -160,8 +160,10 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 1. **Player web E2E in a browser.** Most players will use the web on their phone, and no test opens the Wasm app in a
    browser. A few Playwright flows against the local test backend: sign in, open the tournament, set seats, enter a
    hand, see it in the ranking, open `/<slug>/my-table`.
-2. **Hand entry of the Player** (`HandEntryPanel` 60 %, `HandDetails` 14 %): JVM UI tests of win, self-draw, draw,
-   penalty, correction and delete, and screenshots of their dialogs.
+2. ~~**Hand entry of the Player**~~: done 25 November. `HandEntryPanelUiTest` (win from a discard and self-draw,
+   chicken hand, draw, penalties, review and edit, conflicts and network errors), `HandDetailsTableUiTest`, and the
+   screenshots `dialogs/entry-*` of the Player. They found that the notice of a changed table opened under the entry
+   dialog, so a tap on it closed the entry and lost the hand (fixed).
 3. **Registrations end to end**: E2E (or web E2E) of registering without an account with the email link, the waiting
    list, cancellation, and the admin per-person edits (`RegistrationsScreen` 62 %).
 4. **Change the number of players** has unit, backend and Game day tests but no E2E through the screens.
