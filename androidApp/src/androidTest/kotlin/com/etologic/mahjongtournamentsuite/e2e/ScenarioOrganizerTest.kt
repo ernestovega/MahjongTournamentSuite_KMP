@@ -411,7 +411,11 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.clickLastButton("Save")
         // The registration now has the EMA number of the person, so its card has a new tag.
         showCard(mistyped.getString("emaId"))
-        c.waitForText("With problems (1)", timeoutMs = 60_000)
+        // The chip is at the top of the lazy list: far from the card it is not composed.
+        c.waitUntil(60_000) {
+            showSetting("registrations-filter-problems")
+            c.isOnScreen("With problems (1)")
+        }
 
         // The email with a typo.
         showCard(badEmail.getString("emaId"))
