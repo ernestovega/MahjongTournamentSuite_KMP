@@ -1123,13 +1123,13 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_from_to">De %1$d a %2$d jugadores</string>
     <string name="pc_removed_label">Se borra:</string>
     <string name="pc_removed_tables">Las mesas de las %1$d rondas. Se sortean de nuevo.</string>
-    <string name="pc_removed_people">Las personas que se van: %1$s.</string>
-    <string name="pc_broken_teams">Equipos que se quedan incompletos, con los jugadores que les quedan: %1$s. Se reorganizan después.</string>
+    <string name="pc_removed_people">Las personas que se van:</string>
+    <string name="pc_broken_teams">Equipos que se quedan incompletos, con los jugadores que les quedan. Se reorganizan después:</string>
     <string name="pc_removed_registrations">Sus inscripciones.</string>
     <string name="pc_added_label">Se añade:</string>
     <string name="pc_added_slots">%1$d huecos vacíos, numerados a partir del más alto, para asignarlos después.</string>
     <string name="pc_added_teams">%1$d equipos nuevos.</string>
-    <string name="pc_added_waiting">De la lista de espera, que pasan a tener plaza: %1$s.</string>
+    <string name="pc_added_waiting">De la lista de espera, que pasan a tener plaza:</string>
     <string name="pc_kept_label">Se mantiene:</string>
     <string name="pc_kept_people">El resto de jugadores, con su número, su jugador EMA, su cuenta y su email.</string>
     <string name="pc_kept_teams">Los equipos, con su número, su nombre y los jugadores que siguen.</string>
