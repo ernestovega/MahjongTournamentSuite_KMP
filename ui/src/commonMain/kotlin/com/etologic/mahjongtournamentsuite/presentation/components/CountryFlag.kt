@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -122,7 +123,7 @@ fun PlayerFlagAndNumber(
     number: Int?,
     modifier: Modifier = Modifier,
     flagWidth: Dp = 22.dp,
-    style: TextStyle = MaterialTheme.typography.labelLarge,
+    style: TextStyle = MaterialTheme.typography.labelLarge.inTextFont(),
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         PlayerFlag(country, width = flagWidth)

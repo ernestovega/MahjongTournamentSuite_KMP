@@ -147,7 +147,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         ) {
             ScreenColumn(
                 maxWidth = 720.dp,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 scrollable = true,
                 paddingInsideScroll = true,
@@ -508,7 +508,7 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
         Text(
             text,
             Modifier.testTag("round-clock").semantics { contentDescription = description },
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineSmall.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = color,
         )
@@ -548,7 +548,7 @@ private fun RoundStartLine(tournament: Tournament, roundId: Int) {
         horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
         Icon(Icons.Default.Schedule, contentDescription = stringResource(Res.string.round_starts_at), Modifier.size(24.dp), tint = color)
-        Text(text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
+        Text(text, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
     }
 }
 
