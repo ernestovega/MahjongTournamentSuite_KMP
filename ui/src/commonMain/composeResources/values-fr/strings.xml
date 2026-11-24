@@ -203,8 +203,7 @@
     <string name="leader_best_hand_value">Meilleure valeur moyenne de main</string>
     <string name="leader_best_win_rate">Meilleur taux de victoire</string>
     <string name="leader_lowest_deal_in">Plus faible taux de défaites sur défausse</string>
-    <string name="leader_most_self_draws">Le plus de victoires du mur</string>
-    <string name="leader_best_average_place">Meilleure place moyenne</string>
+    <string name="leader_best_self_draw_rate">Meilleur taux de victoires du mur</string>
     <string name="leaders_average_shape">La forme ombrée est le joueur moyen, face au meilleur.</string>
     <string name="tables_completed_of">%1$d sur %2$d</string>
     <string name="stat_players">Joueurs</string>

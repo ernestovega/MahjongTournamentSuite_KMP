@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
@@ -36,14 +37,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.leader_best_average_place
 import mahjongtournamentsuite.ui.generated.resources.leader_best_hand_value
+import mahjongtournamentsuite.ui.generated.resources.leader_best_self_draw_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
 import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
-import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
 import mahjongtournamentsuite.ui.generated.resources.leaders_average_shape
 import mahjongtournamentsuite.ui.generated.resources.open_player_statistics
-import mahjongtournamentsuite.ui.generated.resources.stat_highest_hand_score
 import mahjongtournamentsuite.ui.generated.resources.stats_leaders
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
@@ -86,18 +85,15 @@ private fun leaderCorners(statistics: TournamentStatistics): List<LeaderCorner> 
     // The rates need enough hands, like the leaderboards: a player with one won hand would have a win rate of 100%.
     val eligible = players.filter { it.handsPlayed >= MIN_HANDS_FOR_LEADERBOARD }
     val winners = eligible.filter { it.handsWon > 0 }
-    // The average place needs half of the tables of the player with the most, so one lucky table does not lead.
-    val minTables = ceil((players.maxOfOrNull { it.tablesPlayed } ?: 0) / 2.0).toInt().coerceAtLeast(1)
-    val placed = players.filter { it.tablesPlayed >= minTables && it.averagePosition != null }
+    // The self-draw rate counts the won hands: one won hand by self-draw would be 100%, so it needs a few of them.
+    val drawers = winners.filter { it.handsWon >= MIN_WINS_FOR_SELF_DRAW_RATE }.ifEmpty { winners }
 
     val winRate = eligible.maxByOrNull { it.winRate ?: 0.0 }
-    val handValue = winners.maxByOrNull { it.averageWinningScore ?: 0.0 }
-    val highestHand = players.filter { it.bestHand != null }.maxByOrNull { it.bestHand ?: 0 }
-    val selfDraws = players.filter { it.selfDraws > 0 }.maxByOrNull { it.selfDraws }
+    val selfDraw = drawers.maxByOrNull { it.selfDrawRate ?: 0.0 }
     val dealIn = eligible.minByOrNull { it.dealInRate ?: 1.0 }
-    val place = placed.minByOrNull { it.averagePosition ?: 4.0 }
+    val handValue = winners.maxByOrNull { it.averageWinningScore ?: 0.0 }
 
-    // Clockwise from the top.
+    // The same four skills, in the same places, as the skills chart of a player: clockwise from the top.
     return listOf(
         LeaderCorner(
             stringResource(Res.string.leader_best_win_rate),
@@ -107,25 +103,11 @@ private fun leaderCorners(statistics: TournamentStatistics): List<LeaderCorner> 
             reach(eligible.mapNotNull { it.winRate }.averageOrNull(), winRate?.winRate),
         ),
         LeaderCorner(
-            stringResource(Res.string.leader_best_hand_value),
-            handValue,
-            handValue?.averageWinningScore.decimal(),
-            handValue?.let { "(${it.handsWon})" }.orEmpty(),
-            reach(winners.mapNotNull { it.averageWinningScore }.averageOrNull(), handValue?.averageWinningScore),
-        ),
-        LeaderCorner(
-            stringResource(Res.string.stat_highest_hand_score),
-            highestHand,
-            highestHand?.bestHand?.toString() ?: "-",
-            "",
-            reach(players.mapNotNull { it.bestHand?.toDouble() }.averageOrNull(), highestHand?.bestHand?.toDouble()),
-        ),
-        LeaderCorner(
-            stringResource(Res.string.leader_most_self_draws),
-            selfDraws,
-            selfDraws?.selfDraws?.toString() ?: "-",
-            selfDraws?.let { "(${it.handsPlayed})" }.orEmpty(),
-            reach(players.filter { it.handsPlayed > 0 }.map { it.selfDraws.toDouble() }.averageOrNull(), selfDraws?.selfDraws?.toDouble()),
+            stringResource(Res.string.leader_best_self_draw_rate),
+            selfDraw,
+            selfDraw?.selfDrawRate.percent(),
+            selfDraw?.let { "(${it.selfDraws}/${it.handsWon})" }.orEmpty(),
+            reach(drawers.mapNotNull { it.selfDrawRate }.averageOrNull(), selfDraw?.selfDrawRate),
         ),
         LeaderCorner(
             stringResource(Res.string.leader_lowest_deal_in),
@@ -135,22 +117,25 @@ private fun leaderCorners(statistics: TournamentStatistics): List<LeaderCorner> 
             reach(eligible.mapNotNull { it.dealInRate }.averageOrNull(), dealIn?.dealInRate, lowerIsBetter = true),
         ),
         LeaderCorner(
-            stringResource(Res.string.leader_best_average_place),
-            place,
-            place?.averagePosition.decimal(),
-            place?.let { "(${it.tablesPlayed})" }.orEmpty(),
-            reach(placed.mapNotNull { it.averagePosition }.averageOrNull(), place?.averagePosition, lowerIsBetter = true),
+            stringResource(Res.string.leader_best_hand_value),
+            handValue,
+            handValue?.averageWinningScore.decimal(),
+            handValue?.let { "(${it.handsWon})" }.orEmpty(),
+            reach(winners.mapNotNull { it.averageWinningScore }.averageOrNull(), handValue?.averageWinningScore),
         ),
     )
 }
 
 private val AvatarSize = 44.dp
 
+/** The won hands that a player needs before the self-draw rate counts. */
+private const val MIN_WINS_FOR_SELF_DRAW_RATE = 3
+
 /**
- * The best players as a spider web with six corners. The photo of the best player of each stat sits on its corner,
+ * The best players as a spider web with four corners. The photo of the best player of each stat sits on its corner,
  * with the stat, the value and the name next to it; the photo and the name open the player.
  * The shaded shape is the average player as a share of the best one, so it shows how far the best are from the rest.
- * Outside is always better, also for the deal-in rate and the place.
+ * Outside is always better, also for the deal-in rate.
  */
 @Composable
 internal fun LeadersCard(
@@ -258,9 +243,11 @@ private fun LeadersWeb(
         val side = (0 until count).map { abs(cos(cornerAngle(it, count))) > 0.3 }
         // Wide: the side texts stand beside the photos, as wide as the longest word allows. Narrow: three columns.
         val sideLabelWidth = 150.dp.toPx()
-        val wideRadius = (width / 2f - avatarRadius - gap - sideLabelWidth) / cos(PI / 6).toFloat()
+        // The side corner that is furthest out sets how big the web can be.
+        val sideCos = (0 until count).filter { side[it] }.maxOfOrNull { abs(cos(cornerAngle(it, count))).toFloat() } ?: 1f
+        val wideRadius = (width / 2f - avatarRadius - gap - sideLabelWidth) / sideCos
         val wide = wideRadius >= 80.dp.toPx()
-        val radius = if (wide) min(wideRadius, 130.dp.toPx()) else (width / 3f) / cos(PI / 6).toFloat()
+        val radius = if (wide) min(wideRadius, 130.dp.toPx()) else (width / 3f) / sideCos
         val column = width / 3
         val labels = labelMeasurables.mapIndexed { index, label ->
             val maxWidth = when {
@@ -320,7 +307,12 @@ private fun CornerLabel(corner: LeaderCorner, names: Map<Int, String>, align: Te
         TextAlign.End -> Alignment.End
         else -> Alignment.CenterHorizontally
     }
-    Column(Modifier.padding(horizontal = 2.dp), horizontalAlignment = horizontal) {
+    // On a narrow card a side text may cross a line of the web: the color of the card behind the text hides it.
+    val card = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface)
+    Column(
+        Modifier.clip(MaterialTheme.shapes.small).background(card).padding(horizontal = 2.dp),
+        horizontalAlignment = horizontal,
+    ) {
         Text(
             corner.title,
             style = MaterialTheme.typography.labelMedium,

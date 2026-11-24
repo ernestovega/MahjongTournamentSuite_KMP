@@ -11,11 +11,10 @@ All statistics are public: every role, and a guest, sees the statistics of every
 - A hand counts when it is done (or its table is completed) and has a valid result. Rules match `handScoring.ts`.
 - The place at a table comes from the score. Equal scores share the place.
 - Rates need at least 8 hands before a leaderboard shows them.
-- **Top players** is a spider web with six corners: best win rate, best hand average value, highest hand value, most
-  self-draws, lowest deal-in rate and best average place (with at least half the tables of the player with the most).
-  The photo of the best player sits on each corner, with the stat, the value and the name beside it (photo and name open
-  the player). The shaded shape is the average player as a share of the best one (for deal-in and place, best ÷
-  average), so outside is always better.
+- **Top players** is a spider web with the four corners of the skills chart: best win rate (top), best self-draw rate
+  (right, with at least 3 won hands), lowest deal-in rate (bottom) and best hand average value (left). The photo of the
+  best player sits on each corner, with the stat, the value and the name beside it (photo and name open the player).
+  The shaded shape is the average player as a share of the best one (for deal-in, best ÷ average), so outside is always better.
 - A person is linked to the slots with the same EMA number.
 
 ## What the screens show
