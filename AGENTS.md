@@ -117,6 +117,14 @@ Run tests:
 (cd firebase/functions && npm run test:integration) # backend tests on the emulators
 ```
 
+The JVM tests compile `commonMain` for the JVM only, so a JVM-only call there (`toSortedMap`, `toSortedSet`,
+`String.format`, `java.*`...) passes them and breaks the web deploy. `CommonCodeIsMultiplatformTest` (domain) catches the
+usual ones; after changing common code, also run the Wasm compile, which is the full check:
+
+```bash
+./gradlew :domain:compileKotlinWasmJs :data:compileKotlinWasmJs :designsystem:compileKotlinWasmJs :ui:compileKotlinWasmJs :adminApp:compileKotlinWasmJs :playerApp:compileKotlinWasmJs
+```
+
 Coverage of the JVM tests: `./gradlew koverHtmlReportCoverage`. Check the style with `./gradlew ktlintCheck`; never run
 `ktlintFormat` on the whole repository.
 

@@ -575,6 +575,29 @@ class TournamentScreenUiTest {
     }
 
     @Test
+    fun theTopBarKeepsTheToolsOfTheRoundsAndTheOtherScreensWaitInMore() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            fun button(label: String) = onAllNodes(hasText(label) or hasContentDescription(label)).fetchSemanticsNodes().size
+
+            // In the bar: the projection of the QR, next to the Timer and the Ranking.
+            assertTrue(button("QR") >= 1, "No QR button in the top bar.")
+            for (label in listOf("Players", "Tables IDs", "Stats", "EMA report")) {
+                assertEquals(0, button(label), "$label is in the top bar, not in More.")
+            }
+
+            onNode(hasText("More") or hasContentDescription("More")).performClick()
+            waitForIdle()
+
+            for (label in listOf("Players", "Tables IDs", "Stats", "EMA report")) {
+                assertTrue(button(label) >= 1, "$label is not in the More menu.")
+            }
+            // Teams opens from Players since 24-nov, not from here.
+            assertEquals(0, button("Teams"), "Teams is still in the More menu.")
+        }
+    }
+
+    @Test
     fun theEmaExportChecksForNewerDataAndUsesTheHeldData() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()

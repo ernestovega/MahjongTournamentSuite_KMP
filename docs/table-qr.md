@@ -60,6 +60,14 @@ Two buttons of the top bar of the tournament screen:
   (the table ID) has the logo of the main organizer in the top left corner (a full padding from the edges, clear of the cut), the name of the tournament, the word
   "TABLE" and its number as big as the card allows on the left, and on the right one sentence, "Or just open the app:" and the main site (only the host) over the
   code; dashed lines show where to cut. Without a logo the corner shows a circle of the color of the organizer with its
-  first letter, like the app. Every card is landscape: 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm,
+  first letter, like the app (also when the logo cannot be read). The name of the tournament is grey, so the number stands out. Every card is landscape: 1 = 297 x 210 mm, 2 = 210 x 148.5 mm, 4 = 148.5 x 105 mm,
   6 = 148.5 x 70 mm, 8 = 105 x 74.25 mm; the sheet is landscape for 1, 4 and 6 cards and portrait for 2 and 8. The cards are always in English, whatever the language of the app. Before the draw the tournament has no
   tables and the PDF is not offered. The export counts `table_qr_exported`.
+
+## Tests
+
+- Backend: `tableQrService.test.ts` (link, texts, cards per sheet, landscape cards, pages, a logo that cannot be read).
+- App: `TableQrLinkPresenterTest` and `RegistrationLinkTest` (the links), `SitePagesLinkTest` (every folder and file of
+  the site goes to the browser in the Android app, and the backend refuses their names as link names),
+  `TableQrTextsTest` (main site, name for the initial), `TournamentScreenUiTest` (QR in the bar, Tables IDs in More),
+  and the screenshots `table-qr-projection` and the dialogs `tables-ids`, `tables-ids-6`, `tables-ids-8` (admin).

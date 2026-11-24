@@ -543,6 +543,30 @@ describe("registrations", () => {
       assert.equal((count.body as { details: { confirmed: number } }).details.confirmed, 17);
     });
 
+    it("refuses while a person with a place has an EMA problem of the import, and goes on once it is fixed", async () => {
+      const id = await createTournament();
+      const people: string[] = [];
+      for (let index = 0; index < 16; index++) {
+        const emaId = await newEma();
+        people.push(emaId);
+        await adminAdd(id, emaId);
+      }
+      // As an import leaves a row whose EMA number is not in the registry; an email problem does not stop the draw.
+      await db.doc(`tournaments/${id}/registrations/${people[3]}`).update({ problems: ["EMA_NOT_FOUND"] });
+      await db.doc(`tournaments/${id}/registrations/${people[4]}`).update({ problems: ["INVALID_EMAIL"] });
+      await closeAndList(id);
+      const players = people.map((_, index) => ({ id: index + 1, team: 0 }));
+      const body = { numTries: 1, players, tables: validDrawTables(16, 2), assignments: people.map((emaId, index) => ({ playerId: index + 1, emaId })) };
+      const refused = await server.request("POST", `/tournaments/${id}/draw`, { token: admin.token, body });
+      assert.equal(refused.status, 409, JSON.stringify(refused.body));
+      const details = (refused.body as { details: { code: string; emaIds: string[] } }).details;
+      assert.deepEqual([details.code, details.emaIds], ["IMPORT_PROBLEMS", [people[3]]]);
+      assert.equal((await db.doc(`tournaments/${id}`).get()).get("drawPending"), true);
+      await db.doc(`tournaments/${id}/registrations/${people[3]}`).update({ problems: [] });
+      const draw = await server.request("POST", `/tournaments/${id}/draw`, { token: admin.token, body });
+      assert.equal(draw.status, 200, JSON.stringify(draw.body));
+    });
+
     it("makes the tournament from the confirmed people: slots with EMA numbers and emails, tables and hands", async () => {
       const id = await createTournament({ maxPlayers: 16 });
       const people: string[] = [];

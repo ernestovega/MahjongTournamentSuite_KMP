@@ -1,7 +1,7 @@
 # Backend (Firebase Functions + Firestore)
 
 See [users.md](users.md) for the complete user and role system.
-Overview with diagrams and the API reference: [arquitectura/](arquitectura/README.md) and https://mts.mahjongmadrid.com/api-docs/.
+Overview with diagrams and the API reference: [architecture/](architecture/README.md) and https://mts.mahjongmadrid.com/api-docs/.
 
 This app does **not** access Firestore directly from clients.
 

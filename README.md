@@ -19,8 +19,8 @@ Web: https://mts.mahjongmadrid.com · Management: `/admin/` · Android: the «MT
 - 📝 **Registrations**: register with or without an account, places and waiting list, teams, food restrictions and cancellation. A short link per tournament (for example `/6thmmc`).
 - 🀄 **Live tables**: players set their seats and enter their own hands and penalties from the phone. Everyone sees them at once, with animations for a new or corrected hand.
 - ⏰ **My table**: a «Table N · Round R» reminder when the round comes, a floating «Go to my table» button, the time left in the round, and a tournament QR code that opens your table.
-- 📊 **Rankings** of players and teams, chicken hands and best hand, with photos.
-- 👤 **Player page**: Tables · My results (a table of every round, shareable as an image) · Statistics.
+- 📊 **Rankings** of players and teams, chicken hands and best hand, with photos, now or after any past round, shareable as an image.
+- 👤 **Player page**: Tables · My results (a table of every round with a chart of the place after each round, shareable as an image) · Statistics.
 - 📈 **Public statistics** with filters (player, rival, tournament, countries, years): skills, places, records, rivals and charts per round.
 - 📖 **Rules at hand**: the 81 MCR combinations with tile pictures, penalties and the Green Book (EN/ES/RU).
 - 🌍 **8 languages** (EN, ES, FR, IT, DE, SV, NL, RU), light and dark theme, and a profile with photo.
@@ -29,11 +29,11 @@ Web: https://mts.mahjongmadrid.com · Management: `/admin/` · Android: the «MT
 
 - 🗂️ **Tournaments**: create (individual or teams), configure, make public, organizations that own them with logo and color.
 - 🎲 **Draw** of the pairings with no repeated rivals, explained with a diagram anyone can follow.
-- 📝 **Registrations**: places, waiting list, paid, import of the Google Form, CSV export, emails and «Make the draw».
+- 📝 **Registrations**: places, waiting list, paid, import of the Google Form (it replaces the list and marks the rows with problems to fix), CSV export, emails and «Make the draw».
 - 👥 **Players and teams**: EMA registry, import, email invitations, substitutions, and changing the number of players before the start.
 - ✍️ **Round and table editor**: 16 hands per table, manual totals, penalties, and several editors at once without overwriting each other.
 - ⏱️ **Round clock** that opens and closes the tables by itself, plus a round control to close forgotten tables.
-- 📺 **For the venue**: a big-screen ranking that pages by itself, and a tournament QR code to project or print on cards for each table.
+- 📺 **For the venue**: a big-screen ranking that pages by itself, and a tournament QR code to project or print on cards for each table (1 to 8 per sheet, with the organizer's logo).
 - 🖨️ **Printing and export**: ID cards in PDF (with substitutes and staff) and the results report for the EMA.
 - 🔐 **Roles**: Super Admin, Club Admin, Editor, and custom roles with permissions one by one.
 - 🕵️ **Oversight**: activity log (who changed what), app errors, and the same statistics as the Player.
@@ -81,10 +81,10 @@ API reference (OpenAPI / Swagger UI): https://mts.mahjongmadrid.com/api-docs/ (s
 - **CI/CD with GitHub Actions**: Firebase and web deploys, Google Play uploads, staging, screenshot gallery and rehearsals.
 - **Environments**: production and staging (`mts---staging.web.app`).
 - **Versions**: separate for web, the Android app and the backend (`python3 scripts/versions.py status`).
-- **Tests**: unit and multiplatform tests (kotlin.test, Koin verify), backend tests with `node --test` and the Firebase emulators, E2E tests on Android emulators, Roborazzi screenshots (Git LFS) of every screen in all 8 languages, ktlint and Kover.
+- **Tests**: unit and multiplatform tests (kotlin.test, Koin verify), backend tests with `node --test` and the Firebase emulators, E2E tests on Android emulators, Roborazzi screenshots (Git LFS) of every screen in all 8 languages, ktlint and Kover. A source check warns when common code calls a JVM-only API that breaks the web build (`CommonCodeIsMultiplatformTest`).
 - **Game day**: bots that play whole tournaments against staging to test load and edge cases.
 
-More in [docs/arquitectura/](docs/arquitectura/README.md) (in Spanish): system diagrams, data model, deploys and versions, and the screen map.
+More in [docs/architecture/](docs/architecture/README.md): system diagrams, data model, deploys and versions, and the screen map.
 
 ## Build and run
 

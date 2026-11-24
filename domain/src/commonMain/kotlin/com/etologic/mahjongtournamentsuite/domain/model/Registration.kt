@@ -194,7 +194,7 @@ data class RegistrationImportRow(
     val registryName: String?,
     val registryCountry: String?,
     val sharedEmail: Boolean,
-    /** Codes, such as INVALID_EMA or EMA_NOT_FOUND. A row with problems is not imported. */
+    /** Codes, such as INVALID_EMA or EMA_NOT_FOUND. A row with problems is imported too, marked for the organizer to fix it. */
     val problems: List<String>,
 )
 

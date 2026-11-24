@@ -326,6 +326,48 @@ class DefaultRegistrationRepositoryTest {
     }
 
     @Test
+    fun theImportSaysHowManyItReplacesAndTheRowsWithProblemsComeBackMarkedInTheList() = runTest {
+        val import = assertIs<AppResult.Success<*>>(
+            repository { ok("""{"rows":[{"line":3,"emaId":"12x","problems":["INVALID_EMA"]}],"imported":1,"replaced":12}""") }
+                .previewImport("t-1", "registrations.csv", "x".encodeToByteArray()),
+        ).value as com.etologic.mahjongtournamentsuite.domain.model.RegistrationImport
+        assertEquals(12, import.replaced)
+        assertEquals(1, import.imported)
+
+        requests.clear()
+        val list = assertIs<AppResult.Success<*>>(
+            repository {
+                ok(
+                    """{"settings":{"status":"CLOSED"},"isTeams":false,"drawPending":true,
+                    "registrations":[{"emaId":"row-3","name":"Ana","status":"CONFIRMED","position":1,"source":"IMPORT",
+                        "problems":["INVALID_EMA","INVALID_EMAIL"],"fileEmaId":"12x"},
+                        {"emaId":"10990002","name":"Bo","status":"CONFIRMED","position":2}]}""",
+                )
+            }.loadAdminList("t-1"),
+        ).value as com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
+        with(list.registrations[0]) {
+            assertEquals(listOf("INVALID_EMA", "INVALID_EMAIL"), problems)
+            assertEquals("12x", fileEmaId)
+            assertEquals("12x", shownEmaId)
+            assertTrue(hasEmaProblem)
+        }
+        assertEquals(emptyList(), list.registrations[1].problems)
+        assertEquals(null, list.registrations[1].fileEmaId)
+    }
+
+    @Test
+    fun choosingTheRightPersonForARowOfTheImportSendsTheNewEmaNumber() = runTest {
+        val repository = repository { ok("""{"emaId":"10990001","status":"CONFIRMED"}""") }
+
+        repository.adminUpdate("t-1", "row-3", RegistrationUpdate(newEmaId = "10990001"))
+        repository.adminUpdate("t-1", "10990002", RegistrationUpdate(paid = true))
+
+        assertEquals("/functions/tournaments/t-1/registrations/row-3", requests[0].url.encodedPath)
+        assertEquals("10990001", requests[0].json["newEmaId"]?.jsonPrimitive?.content)
+        assertTrue(requests[1].json["newEmaId"].let { it == null || it is kotlinx.serialization.json.JsonNull }, "only a fix sends another EMA number")
+    }
+
+    @Test
     fun aRefusalWithACodeIsShownWithItsReasonAndItsDetails() = runTest {
         val incomplete = repository {
             HttpStatusCode.Conflict to """{"error":"Incomplete teams","details":{"code":"INCOMPLETE_TEAMS","emaIds":["1","2"]}}"""

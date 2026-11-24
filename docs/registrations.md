@@ -137,9 +137,13 @@ account of the functions can run it (`registrationHourRelay.ts`).
 - Export and import share `testdata/registrations-export.csv`: `RegistrationsCsvTest` checks that the export writes it,
   and `registrationImport.test.ts` that the import reads it.
 - Backend: `registrationSettings.test.ts`, `registrationImport.test.ts`, `registrationEmails.test.ts`,
-  `registrations.integration.test.ts`
+  `registrations.integration.test.ts` (the import that replaces the list, rows with problems and their fix, the draw
+  refused with IMPORT_PROBLEMS)
   (emulators), and the routes in `rolePermissions.integration.test.ts`.
-- Kotlin: `AssignRegistrationsToDrawTest` (domain), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest` (admin)
+- Kotlin: `AssignRegistrationsToDrawTest` (domain), `DefaultRegistrationRepositoryTest` (data: problems, fileEmaId,
+  replaced, newEmaId), `RegistrationsTabUiTest` (player), `RegistrationsCsvTest`, `RegistrationsPresenterTest` (the draw
+  refuses by name: count, EMA problems of the import, incomplete teams) and `RegistrationsProblemsUiTest` (the rows with
+  problems and the With problems filter) (admin)
   and the screenshots `registrations`, `registrations-list` and `registrations-editor` (admin), `tournament-registrations` and `tournaments-registration-guest` (player).
 - Game day: the job "Registrations before the tournament" of every scenario runs the whole process in staging
   (`scripts/rehearsal/registrations.mjs`, docs/scenarios.md).
