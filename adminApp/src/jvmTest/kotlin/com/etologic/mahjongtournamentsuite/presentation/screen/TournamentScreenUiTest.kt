@@ -598,6 +598,22 @@ class TournamentScreenUiTest {
     }
 
     @Test
+    fun theRevisionIsAtTheEndOfMoreAndInTheCornerNotUnderTheTitle() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+
+            // On a large screen: only in the bottom right corner, in small faint letters.
+            assertEquals(1, onAllNodesWithText("Results r2", substring = true).fetchSemanticsNodes().size)
+
+            onNode(hasText("More") or hasContentDescription("More")).performClick()
+            waitForIdle()
+
+            // And as the last line of the More menu.
+            assertEquals(2, onAllNodesWithText("Results r2", substring = true).fetchSemanticsNodes().size)
+        }
+    }
+
+    @Test
     fun theEmaExportChecksForNewerDataAndUsesTheHeldData() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()

@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsFixedColors
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.level
 import kotlin.math.abs
@@ -114,7 +115,7 @@ private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
             fadeEnd = 13.8f,
         ),
         IconShape("M4.6 12 A7.4 7.4 0 1 1 19.4 12 A7.4 7.4 0 1 1 4.6 12 Z", stroke = 2.8f, tint = Color.White),
-        IconShape("M5.9 12 A6.1 6.1 0 1 1 18.1 12 A6.1 6.1 0 1 1 5.9 12 Z", tint = Color(0xFF0B0B12)),
+        IconShape("M5.9 12 A6.1 6.1 0 1 1 18.1 12 A6.1 6.1 0 1 1 5.9 12 Z", tint = MtsFixedColors.blackHole),
         IconShape(
             "M-3 12 A15 15 0 0 0 27 12 H18.6 A6.6 6.6 0 0 1 5.4 12 Z",
             tint = Color.White,

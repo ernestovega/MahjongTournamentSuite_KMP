@@ -1,16 +1,21 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.top_bar_more
 import org.jetbrains.compose.resources.stringResource
@@ -39,4 +44,19 @@ fun AppTopBarMoreMenu(content: @Composable () -> Unit) {
             CompositionLocalProvider(LocalTopBarMenu provides TopBarMenuScope { open = false }) { content() }
         }
     }
+}
+
+/**
+ * A line of small grey text at the end of a More menu: information for support, such as the revision of the data.
+ * It is not a button. It takes no click and closes nothing.
+ */
+@Composable
+fun AppTopBarMenuNote(text: String) {
+    HorizontalDivider()
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = MtsSpacing.lg, vertical = MtsSpacing.sm),
+    )
 }
