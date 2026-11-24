@@ -178,6 +178,6 @@ export async function makeDrawFromRegistrations(params: {
   }
   await bumpGlobalDataVersion("tournaments");
   const result = await getTournament(tournament.ref.id);
-  if (result == null) throw conflict("The tournament disappeared");
+  if (result == null) throw conflict("The tournament disappeared", { code: "TOURNAMENT_GONE" });
   return result;
 }

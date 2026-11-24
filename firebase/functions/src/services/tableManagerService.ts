@@ -571,6 +571,7 @@ export async function saveTableState(params: SaveTableStateParams): Promise<{ ta
     if (error instanceof StaleTableVersion) {
       await logTableConflict({ ...params, expectedVersion: error.expectedVersion, actor: params.actor ?? null });
       throw conflict("Table data changed on the server", {
+        code: "TABLE_CHANGED",
         expectedVersion: error.expectedVersion,
         currentVersion: error.currentVersion,
         current: await getTableWithHands(params),

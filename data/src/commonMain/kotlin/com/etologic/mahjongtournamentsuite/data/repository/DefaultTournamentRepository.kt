@@ -1255,6 +1255,7 @@ private fun PlayerSubstitutionDto.toDomain(): PlayerSubstitution? {
 private fun Throwable.toPlayerChangeError(): AppError {
     if (this is BackendHttpException && status == HttpStatusCode.Conflict) {
         val reason = Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(responseBody)?.groupValues?.getOrNull(1)
+        codedConflictOrNull()?.let { return it }
         if (!reason.isNullOrBlank()) return AppError.Conflict(message = reason)
     }
     return toAppError()
@@ -1265,7 +1266,7 @@ private fun Throwable.toAppError(): AppError {
     if (this is BackendHttpException) {
         val body = responseBody.limitForUi()
         if (status == HttpStatusCode.Conflict) {
-            return AppError.Conflict(
+            return codedConflictOrNull() ?: AppError.Conflict(
                 message = "The server rejected this change because related data changed. Refresh and review the latest data.",
             )
         }

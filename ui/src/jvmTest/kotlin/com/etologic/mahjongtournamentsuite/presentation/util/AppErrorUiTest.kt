@@ -1,6 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
+import mahjongtournamentsuite.ui.generated.resources.conflict_assignments_missing
+import mahjongtournamentsuite.ui.generated.resources.conflict_round_not_started
+import mahjongtournamentsuite.ui.generated.resources.registration_error_tournament_completed
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.error_account_disabled
 import mahjongtournamentsuite.ui.generated.resources.error_credentials_wrong
@@ -18,6 +22,23 @@ import kotlin.test.assertEquals
 
 class AppErrorUiTest {
     private fun message(raw: String) = AppError.Unexpected(raw).toUiText()
+
+    @Test
+    fun aRefusedChangeWithACodeIsTranslatedAndWithoutOneShowsTheServerMessage() {
+        assertEquals(
+            UiText.of(Res.string.conflict_round_not_started),
+            AppError.Conflict("This round has not started yet", code = ConflictCode.ROUND_NOT_STARTED).toUiText(),
+        )
+        assertEquals(
+            UiText.of(Res.string.conflict_assignments_missing, "3"),
+            AppError.Conflict("x", code = ConflictCode.ASSIGNMENTS_MISSING, args = listOf("3")).toUiText(),
+        )
+        assertEquals(
+            UiText.of(Res.string.registration_error_tournament_completed),
+            AppError.Conflict("x", code = ConflictCode.TOURNAMENT_COMPLETED).toUiText(),
+        )
+        assertEquals(UiText.Plain("The server says no"), AppError.Conflict("The server says no").toUiText())
+    }
 
     @Test
     fun networkErrorHasItsOwnMessage() {

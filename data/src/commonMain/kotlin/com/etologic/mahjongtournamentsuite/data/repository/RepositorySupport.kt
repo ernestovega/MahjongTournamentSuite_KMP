@@ -3,10 +3,15 @@ package com.etologic.mahjongtournamentsuite.data.repository
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 internal suspend fun <T> AuthRepository.withFreshIdToken(
     block: suspend (String) -> T,
@@ -32,7 +37,7 @@ internal fun Throwable.toRepositoryAppError(
     is HttpRequestTimeoutException -> AppError.Unexpected(
         "Request timed out contacting the backend. Check VPN/firewall and try again.",
     )
-    is BackendHttpException -> AppError.Unexpected(
+    is BackendHttpException -> codedConflictOrNull() ?: AppError.Unexpected(
         "Backend error ${status.value}: ${responseBody.limitForUi()}",
     )
     else -> if (isConnectionFailure()) AppError.Network else {
@@ -40,6 +45,24 @@ internal fun Throwable.toRepositoryAppError(
         val details = message?.trim()?.takeIf(String::isNotBlank)?.let { ": $it" } ?: ""
         AppError.Unexpected(if (details.isEmpty()) fallbackMessage ?: kind else "$kind$details")
     }
+}
+
+/**
+ * A 409 with a known `details.code` becomes an [AppError.Conflict] with that code, so the screen writes the reason in the
+ * language of the user. Any other error gives null.
+ */
+internal fun Throwable.codedConflictOrNull(): AppError.Conflict? {
+    if (this !is BackendHttpException || status != HttpStatusCode.Conflict) return null
+    val body = runCatching { Json.parseToJsonElement(responseBody).jsonObject }.getOrNull() ?: return null
+    val details = runCatching { body["details"]?.jsonObject }.getOrNull() ?: return null
+    val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
+        ?.let { name -> ConflictCode.entries.firstOrNull { it.name == name } } ?: return null
+    val message = runCatching { body["message"]?.jsonPrimitive?.contentOrNull }.getOrNull().orEmpty()
+    val args = when (code) {
+        ConflictCode.ASSIGNMENTS_MISSING -> listOfNotNull(runCatching { details["missing"]?.jsonPrimitive?.contentOrNull }.getOrNull())
+        else -> emptyList()
+    }
+    return AppError.Conflict(message = message, code = code, args = args)
 }
 
 private val connectionFailureNames = listOf("ConnectException", "UnknownHost", "SocketException", "SocketTimeout", "IOException", "NoRouteToHost")

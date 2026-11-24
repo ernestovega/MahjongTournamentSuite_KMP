@@ -391,7 +391,7 @@ export async function changePlayerCount(params: {
   }
   await bumpGlobalDataVersion("tournaments");
   const tournament = await getTournament(params.tournamentId);
-  if (tournament == null) throw conflict("The tournament disappeared");
+  if (tournament == null) throw conflict("The tournament disappeared", { code: "TOURNAMENT_GONE" });
 
   // Every person affected gets an email, in the language of the registration, or of the organization.
   const staying = players.flatMap((player) => {

@@ -103,6 +103,10 @@ Always the same format:
 | 429 | `too_many_requests` | Request limit |
 | 500 | `internal` | Server failure (it shows in the logs of the function) |
 
+Every `409` has a `details.code`. The apps know each code (`ConflictCode`, `RegistrationErrorCode`,
+`ImportFileErrorCode` in the domain module) and show the reason in the language of the user, not the English
+`message`. The test `conflictCodes.test.ts` fails when a `conflict()` has no code, or a code the apps do not know.
+
 ## Limits and cache
 
 - Writes: 600/min per IP address, 120/min per token and 120/min per account.
