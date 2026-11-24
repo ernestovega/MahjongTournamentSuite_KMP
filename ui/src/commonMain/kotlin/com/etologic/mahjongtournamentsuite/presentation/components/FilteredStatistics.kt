@@ -58,6 +58,7 @@ fun FilteredStatistics(
                 TournamentStatisticsPanel(
                     statistics = data.statistics,
                     names = data.names,
+                    photos = remember(data) { data.profiles.mapValues { it.value.photoUrl } },
                     roundIds = (1..data.tournament.numRounds).toList(),
                     selectedRound = selectedRound,
                     onSelectRound = onSelectRound,
@@ -72,6 +73,7 @@ fun FilteredStatistics(
                     TournamentStatisticsPanel(
                         statistics = data.statistics,
                         names = data.names,
+                        photos = remember(data) { data.profiles.mapValues { it.value.photoUrl } },
                         tournamentCount = data.tournamentIds.size,
                         playerCount = data.profiles.size,
                         records = data.records,
