@@ -125,6 +125,9 @@ class TournamentTableStore {
         return mutex.withLock {
             val entry = entries.getOrPut(tournamentId) { Entry() }
             if (loaded != null) {
+                // A full load has every table of the tournament. A table it lacks was removed by a new draw.
+                val present = loaded.mapTo(mutableSetOf()) { TableKey(it.first.roundId, it.first.tableId) }
+                entry.tables.keys.retainAll(present)
                 loaded.forEach { value -> entry.accept(value) }
                 entry.isComplete = true
             }
