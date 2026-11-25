@@ -44,6 +44,7 @@ class MtsContrastTest {
         "inverseOnSurface on inverseSurface" to Triple(s.inverseOnSurface, s.inverseSurface, 4.5),
         "link on surface" to Triple(c.link, s.surface, 4.5),
         "link on card" to Triple(c.link, s.surfaceContainerHighest, 4.5),
+        "gain on card" to Triple(c.gain, s.surfaceContainerHighest, 4.5),
         "error text on surface" to Triple(s.error, s.surface, 4.5),
         "error text on card" to Triple(s.error, s.surfaceContainerHighest, 4.5),
         "outline on surface" to Triple(s.outline, s.surface, 3.0),

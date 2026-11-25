@@ -120,7 +120,7 @@ data class MtsColors(
      * in dark mode, so it reads at 4.5:1 on the cards. Fills (filled buttons, bars, tabs) keep the brand green, primary.
      */
     val link: Color,
-    /** A positive score or the winner of a hand. */
+    /** A positive score or the winner of a hand, as text: the green of [link], 4.5:1 on the cards (Ernesto, 2026-11-25). */
     val gain: Color,
     /** A table whose scores add up. */
     val scoreOk: Color,
@@ -193,7 +193,7 @@ private val LevelColorsByLevel = listOf(
 
 internal val LightMtsColors = MtsColors(
     link = MahjongGreenDarker,
-    gain = MahjongGreen,
+    gain = MahjongGreenDarker,
     scoreOk = MahjongGreen,
     scoreWarning = Warning,
     changed = MahjongGreenDark,
@@ -216,6 +216,7 @@ internal val LightMtsColors = MtsColors(
 /** The same palette; only the colors that follow a container of the dark scheme change. */
 internal val DarkMtsColors = LightMtsColors.copy(
     link = MahjongGreenLight,
+    gain = MahjongGreenLight,
     changed = MahjongGreenDarker,
     info = Color(0xFF4D9BFF),
     brandTitle = Color.White,
