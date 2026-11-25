@@ -40,8 +40,13 @@ jobs:
           xcodebuild -version
           xcrun simctl list devices available | grep -E "iPhone|iPad" | head -20
 
+      # The same framework that the build phase of Xcode makes, here first so its errors are easy to read.
+      - name: Link the Kotlin framework
+        run: ./gradlew :suite:linkDebugFrameworkIosSimulatorArm64
+
       - name: Build the app for the simulator
         run: |
+          mkdir -p build
           set -o pipefail
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
@@ -51,8 +56,8 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/ios \
             CODE_SIGNING_ALLOWED=NO \
-            build | tee build/xcodebuild.log | grep -E "error:|warning: .*swift|BUILD|Version " || true
-          test -d build/ios/Build/Products/Debug-iphonesimulator/iosApp.app
+            build > build/xcodebuild.log 2>&1 || { grep -nE "error|e: |FAILURE|What went wrong" -A3 build/xcodebuild.log | head -150; exit 1; }
+          grep -E "warning: .*\.swift|Version " build/xcodebuild.log || true
 
       - name: Open the app in the simulator
         run: |
@@ -76,11 +81,13 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot build/ios-screens/iphone-link.png
           xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "iosApp"' --style compact > build/ios-screens/app.log || true
 
+      - name: Keep the build log
+        if: always()
+        run: mkdir -p build/ios-screens && cp build/xcodebuild.log build/ios-screens/ 2>/dev/null || true
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-simulator
-          path: |
-            build/ios-screens/
-            build/xcodebuild.log
+          path: build/ios-screens/
           if-no-files-found: ignore
