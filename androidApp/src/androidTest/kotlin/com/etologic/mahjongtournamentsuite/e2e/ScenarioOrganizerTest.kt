@@ -805,7 +805,9 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitForText("Tables added: ${(to - from) / 4}")
         // No registrations here, so no waiting list: the new places stay empty until the import of Players fills them.
         if (plan.getBoolean("isTeams")) {
-            c.waitForText("${(to - from) / 4} new teams, empty until you assign them in Teams.")
+            // Texts with a count use plurals (e4d541bd): one table is "1 new team ... assign it".
+            val teams = (to - from) / 4
+            c.waitForText(if (teams == 1) "1 new team, empty until you assign it in Teams." else "$teams new teams, empty until you assign them in Teams.")
         } else {
             c.waitForText("${to - from} new places, empty until you assign them in Players.")
         }
