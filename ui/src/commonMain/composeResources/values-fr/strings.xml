@@ -602,9 +602,9 @@
     <string name="h2h_shared_tables">Tables partagées</string>
     <string name="h2h_table_line">%1$s · Manche %2$d · Table %3$d</string>
     <string name="h2h_alone_title">%1$s à ces tables</string>
-    <string name="h2h_info">Seules comptent les tables où les deux ont joué ensemble.
-Le meilleur chiffre de chaque ligne est en gras.</string>
-    <string name="h2h_shared_tables_info">La place de chacun à la table, et les points.</string>
+    <string name="h2h_info">Seules comptent les tables où les deux ont joué ensemble.\nLe meilleur chiffre de chaque ligne est en vert, et le moins bon en rouge.</string>
+    <string name="h2h_place">Place %1$d</string>
+    <string name="h2h_shared_tables_info">La place de chacun à la table, avec son trophée, et les points de table.\nTouchez une table pour ouvrir ses statistiques.</string>
     <string name="stats_chip_table">Table %1$d · Manche %2$d</string>
     <string name="registration_error_already_in_team">Cette personne est déjà dans une équipe.</string>
     <string name="registration_error_already_registered">Ce numéro EMA est déjà inscrit au tournoi.</string>
@@ -754,4 +754,10 @@ La première qui marche gagne</string>
     <string name="conflict_too_many_penalties">Une main a au maximum 5 pénalités.</string>
     <string name="conflict_totals_only">Cette table n'utilise que les totaux.\nUn organisateur saisit ses résultats.</string>
     <string name="conflict_tournament_gone">Le tournoi n'existe plus.</string>
+    <string name="h2h_skills_title">Compétences à ces tables</string>
+    <string name="h2h_skills_info">Les compétences des deux joueurs aux tables qu'ils ont partagées, une forme pour chaque joueur.</string>
+    <string name="h2h_ranks_title">Places dans les tournois</string>
+    <string name="h2h_ranks_info">La place finale de chacun dans les tournois où les deux ont joué. Le haut du graphique est la première place.\nTouchez un point pour voir le tournoi.</string>
+    <string name="h2h_rank_of">%1$s sur %2$d</string>
+    <string name="h2h_open_table">Ouvrir les statistiques de cette table</string>
 </resources>

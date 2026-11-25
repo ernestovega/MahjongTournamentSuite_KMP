@@ -1,39 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The self-draw: a mushroom cloud of grey smoke over a red and orange blast on a table (Ernesto, 2026-11-25). -->
+<!-- The self-draw: a mushroom cloud of grey smoke over a red and orange blast, on the table of the Tables tab
+     (Material "table_restaurant", in perspective with long legs) (Ernesto, 2026-11-25). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- The legs of the table. -->
-    <path
-        android:fillColor="#FF5D4037"
-        android:pathData="M5,19.6h1.6v3h-1.6z M17.4,19.6h1.6v3h-1.6z" />
-    <!-- The top of the table. -->
-    <path
-        android:fillColor="#FF795548"
-        android:pathData="M2.6,18.2h18.8a0.6,0.6 0,0 1,0.6 0.6v0.4a0.6,0.6 0,0 1,-0.6 0.6h-18.8a0.6,0.6 0,0 1,-0.6 -0.6v-0.4a0.6,0.6 0,0 1,0.6 -0.6z" />
+    <!-- The table. -->
+    <group
+        android:scaleX="0.85"
+        android:scaleY="0.6"
+        android:translateX="1.8"
+        android:translateY="11.2">
+        <path
+            android:fillColor="#FF795548"
+            android:pathData="M21.96,9.73l-1.43,-5C20.41,4.3 20.02,4 19.57,4H4.43C3.98,4 3.59,4.3 3.47,4.73l-1.43,5C1.86,10.36 2.33,11 2.99,11H5.2l-1.2,9h2l0.67,-5h10.67l0.66,5h2l-1.2,-9h2.21C21.67,11 22.14,10.36 21.96,9.73zM6.93,13l0.27,-2h9.6l0.27,2H6.93z" />
+    </group>
     <!-- The column of fire. -->
     <path
         android:fillColor="#FFFB8C00"
-        android:pathData="M10.1,11.8h3.8l0.7,4.6h-5.2z" />
+        android:pathData="M10.7,9.2h2.6l0.5,3.4h-3.6z" />
     <!-- The blast on the table. -->
-    <path
-        android:fillColor="#FFE53935"
-        android:pathData="M5.6,18.2c0,-1.3 1,-2.3 2.3,-2.3c0.3,-0.9 1.2,-1.5 2.2,-1.5c0.7,0 1.3,0.3 1.9,0.7c0.5,-0.4 1.2,-0.7 1.9,-0.7c1,0 1.9,0.6 2.2,1.5c1.3,0 2.3,1 2.3,2.3z" />
-    <path
-        android:fillColor="#FFFB8C00"
-        android:pathData="M8.6,18.2c0,-0.9 0.8,-1.6 1.7,-1.6c0.4,-0.4 1,-0.6 1.7,-0.6s1.3,0.2 1.7,0.6c0.9,0 1.7,0.7 1.7,1.6z" />
+    <group android:translateY="-4.6">
+        <path
+            android:fillColor="#FFE53935"
+            android:pathData="M5.6,18.2c0,-1.3 1,-2.3 2.3,-2.3c0.3,-0.9 1.2,-1.5 2.2,-1.5c0.7,0 1.3,0.3 1.9,0.7c0.5,-0.4 1.2,-0.7 1.9,-0.7c1,0 1.9,0.6 2.2,1.5c1.3,0 2.3,1 2.3,2.3z" />
+        <path
+            android:fillColor="#FFFB8C00"
+            android:pathData="M8.6,18.2c0,-0.9 0.8,-1.6 1.7,-1.6c0.4,-0.4 1,-0.6 1.7,-0.6s1.3,0.2 1.7,0.6c0.9,0 1.7,0.7 1.7,1.6z" />
+    </group>
     <!-- The cap of smoke. -->
-    <path
-        android:fillColor="#FF9E9E9E"
-        android:pathData="M12,1.8c-2.3,0 -4.1,1.4 -4.6,3.3C5.1,5.4 3.2,7.1 3.2,9.3c0,2.1 1.7,3.7 3.8,3.7h10c2.1,0 3.8,-1.6 3.8,-3.7c0,-2.2 -1.9,-3.9 -4.2,-4.2C16.1,3.2 14.3,1.8 12,1.8z" />
-    <!-- The underside of the cap. -->
-    <path
-        android:fillColor="#FF616161"
-        android:pathData="M5.2,11.6c0.5,0.9 1.5,1.4 2.6,1.4h8.4c1.1,0 2.1,-0.5 2.6,-1.4c-1.6,0.6 -4,0.9 -6.8,0.9s-5.2,-0.3 -6.8,-0.9z" />
-    <!-- Lighter smoke on top. -->
-    <path
-        android:fillColor="#FFBDBDBD"
-        android:pathData="M9.2,6.8c0,-1.3 1.2,-2.3 2.8,-2.3s2.8,1 2.8,2.3s-1.2,2.3 -2.8,2.3s-2.8,-1 -2.8,-2.3z" />
+    <group
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="2.4"
+        android:translateY="-0.7">
+        <path
+            android:fillColor="#FF9E9E9E"
+            android:pathData="M12,1.8c-2.3,0 -4.1,1.4 -4.6,3.3C5.1,5.4 3.2,7.1 3.2,9.3c0,2.1 1.7,3.7 3.8,3.7h10c2.1,0 3.8,-1.6 3.8,-3.7c0,-2.2 -1.9,-3.9 -4.2,-4.2C16.1,3.2 14.3,1.8 12,1.8z" />
+        <path
+            android:fillColor="#FF616161"
+            android:pathData="M5.2,11.6c0.5,0.9 1.5,1.4 2.6,1.4h8.4c1.1,0 2.1,-0.5 2.6,-1.4c-1.6,0.6 -4,0.9 -6.8,0.9s-5.2,-0.3 -6.8,-0.9z" />
+        <path
+            android:fillColor="#FFBDBDBD"
+            android:pathData="M9.2,6.8c0,-1.3 1.2,-2.3 2.8,-2.3s2.8,1 2.8,2.3s-1.2,2.3 -2.8,2.3s-2.8,-1 -2.8,-2.3z" />
+    </group>
 </vector>

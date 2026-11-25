@@ -36,6 +36,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.headToHead
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -56,6 +57,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutl
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadCard
+import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadPlacesCard
+import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadSkillsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LeadersCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelChangeTag
@@ -332,14 +335,15 @@ class UiComponentsScreenshotTest {
         )
     }
 
-    @Test
-    fun headToHead() = component("statistics-head-to-head", variants = componentDialogVariants) {
+    /** Two players who shared three tables in two tournaments. */
+    private fun headToHeadSample(): Triple<PersonStatisticsData, PersonStatisticsData, List<Tournament>> {
         val (first, second) = ScreenshotData.tournaments.take(2)
         val ana = ScreenshotData.players[0]
         val bea = ScreenshotData.players[1]
         fun result(t: Tournament, round: Int, table: Int, place: Int, points: Double, rival: String, behind: Int, dealIns: Int, selfDraws: Int, won: Int, best: Int) = TableResult(
             tournamentId = t.id, roundId = round, tableId = table, seat = 0, position = place, score = ((points - 2) * 25).toInt(), points = points,
             hasHands = true, handsPlayed = 16, handsWon = won, selfDraws = selfDraws, bestHand = best,
+            dealIns = dealIns + 1, winningScoreSum = won * (8 + best / 4),
             rivals = listOf(RivalTally(rival, tablesBehind = behind, discardLosses = dealIns, selfDrawLosses = 0)),
         )
         val mine = listOf(
@@ -358,9 +362,30 @@ class UiComponentsScreenshotTest {
         )
         val me = person(ana, mine)
         val rival = person(bea, theirs)
-        val h2h = headToHead(me, bea.emaId, rival)
+        return Triple(me, rival, listOf(first, second))
+    }
+
+    @Test
+    fun headToHead() = component("statistics-head-to-head", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
+        val h2h = headToHead(me, rival.emaId, rival)
         HeadToHeadCard(h2h, me.profile, rival.profile, Modifier.fillMaxWidth())
-        SharedTablesCard(h2h, Modifier.fillMaxWidth())
+        SharedTablesCard(h2h, me.profile, rival.profile, Modifier.fillMaxWidth(), onOpenTable = {})
+    }
+
+    @Test
+    fun headToHeadCharts() = component("statistics-head-to-head-charts", variants = componentDialogVariants) {
+        val (me, rival, tournaments) = headToHeadSample()
+        val (first, second) = tournaments
+        HeadToHeadSkillsCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+        HeadToHeadPlacesCard(
+            listOf(second, first),
+            mine = mapOf(second.id to Standing(rank = 4, of = 40, points = 9.0, score = 30), first.id to Standing(rank = 7, of = 60, points = 12.0, score = 80)),
+            theirs = mapOf(second.id to Standing(rank = 11, of = 40, points = 7.0, score = -10), first.id to Standing(rank = 2, of = 60, points = 17.0, score = 150)),
+            me = me.profile,
+            rival = rival.profile,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 
     @Test

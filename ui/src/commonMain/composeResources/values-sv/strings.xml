@@ -598,9 +598,9 @@
     <string name="h2h_shared_tables">Delade bord</string>
     <string name="h2h_table_line">%1$s · Rond %2$d · Bord %3$d</string>
     <string name="h2h_alone_title">%1$s vid dessa bord</string>
-    <string name="h2h_info">Bara borden där de två spelade tillsammans räknas.
-Det bättre talet på varje rad är fetstilt.</string>
-    <string name="h2h_shared_tables_info">Placeringen för var och en vid bordet, och poängen.</string>
+    <string name="h2h_info">Bara borden där de två spelade tillsammans räknas.\nDet bättre talet på varje rad är grönt, och det sämre rött.</string>
+    <string name="h2h_place">Plats %1$d</string>
+    <string name="h2h_shared_tables_info">Placeringen för var och en vid bordet, med sin pokal, och bordspoängen.\nTryck på ett bord för att öppna dess statistik.</string>
     <string name="stats_chip_table">Bord %1$d · Omgång %2$d</string>
     <string name="registration_error_already_in_team">Den personen är redan med i ett lag.</string>
     <string name="registration_error_already_registered">Det här EMA-numret är redan anmält till turneringen.</string>
@@ -750,4 +750,10 @@ Den första som fungerar vinner</string>
     <string name="conflict_too_many_penalties">En hand har högst 5 straff.</string>
     <string name="conflict_totals_only">Det här bordet använder bara summor.\nEn arrangör fyller i resultaten.</string>
     <string name="conflict_tournament_gone">Turneringen finns inte längre.</string>
+    <string name="h2h_skills_title">Färdigheter vid dessa bord</string>
+    <string name="h2h_skills_info">De två spelarnas färdigheter vid borden de delade, en form för varje spelare.</string>
+    <string name="h2h_ranks_title">Placeringar i turneringarna</string>
+    <string name="h2h_ranks_info">Slutplaceringen för var och en i turneringarna där båda spelade. Överst i diagrammet är förstaplatsen.\nTryck på en punkt för att se turneringen.</string>
+    <string name="h2h_rank_of">%1$s av %2$d</string>
+    <string name="h2h_open_table">Öppna statistiken för det här bordet</string>
 </resources>
