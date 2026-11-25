@@ -7,10 +7,10 @@ agp = "9.4.1"
 # Bump the patch with: python3 scripts/versions.py bump <web|admin|backend>
 # See the published ones with: python3 scripts/versions.py status
 # MAJOR and MINOR only change by hand, when the owner decides.
-web-versionName = "1.0.430"
-admin-versionName = "1.0.364"
-admin-versionCode = "364"
-backend-versionName = "1.0.72"
+web-versionName = "1.0.432"
+admin-versionName = "1.0.366"
+admin-versionCode = "366"
+backend-versionName = "1.0.73"
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "36"
@@ -61,6 +61,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version = "34.0.0" }

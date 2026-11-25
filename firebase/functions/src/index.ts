@@ -12,8 +12,10 @@ import {
   registrationsHourHandler,
 } from "./services/registrationHourRelay";
 import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
+import { shouldWarmUp, warmUpFirestore } from "./services/startupWarmup";
 
 const app = buildApp();
+if (shouldWarmUp(process.env)) void warmUpFirestore();
 
 /** The API runs in Madrid only. The SMTP server of the mailbox accepts connections only from some countries. */
 export const api = onRequest(
