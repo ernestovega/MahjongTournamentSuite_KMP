@@ -32,6 +32,15 @@ export async function openApp(browser, siteUrl, path = "/", { phone = true } = {
   await context.route(/googletagmanager|google-analytics|recaptcha|gstatic\.com\/recaptcha/, (route) => route.abort());
   const page = await context.newPage();
   page.setDefaultTimeout(TIMEOUT);
+  // A failed call of the API or an error of the page is printed, so a red run in GitHub says why.
+  page.on("response", (response) => {
+    if (response.url().includes("/api/") && response.status() >= 400) console.log(`# API ${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`);
+  });
+  page.on("requestfailed", (request) => console.log(`# request failed ${request.url()}: ${request.failure()?.errorText}`));
+  page.on("pageerror", (error) => console.log(`# page error ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") console.log(`# console ${message.text().slice(0, 300)}`);
+  });
   await page.goto(siteUrl + path);
   await acceptAnalyticsIfAsked(page);
   return page;
