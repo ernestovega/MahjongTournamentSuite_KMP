@@ -42,12 +42,28 @@ class HideOnScrollUiTest {
     }
 
     @Test
-    fun scrollingUpShowsTheRowsAgain() {
+    fun scrollingUpFarEnoughShowsTheRowsAgain() {
         val state = HideOnScrollState(hideDistance)
         state.scroll(-200f)
         assertFalse(state.visible)
-        state.connection.onPreScroll(Offset(0f, 10f), NestedScrollSource.UserInput)
+        state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
+        assertFalse(state.visible, "A short move back keeps the rows hidden.")
+        state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
         assertTrue(state.visible)
+    }
+
+    @Test
+    fun aSmallMoveBackAtTheEndOfALongDragDoesNotShowTheRows() {
+        val state = HideOnScrollState(hideDistance)
+        // A long drag up the screen, as far as the top bar, with the finger shaking a little on the way and as it lifts.
+        repeat(20) {
+            state.scroll(-40f)
+            state.connection.onPreScroll(Offset(0f, 3f), NestedScrollSource.UserInput)
+            state.connection.onPreScroll(Offset(0f, -40f), NestedScrollSource.UserInput)
+        }
+        state.scroll(-40f)
+        repeat(5) { state.connection.onPreScroll(Offset(0f, 8f), NestedScrollSource.UserInput) }
+        assertFalse(state.visible)
     }
 
     @Test

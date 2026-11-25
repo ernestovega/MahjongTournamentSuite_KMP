@@ -42,7 +42,8 @@ The two apps use a wider viewport (1100 dp) for the person view.
 ## One screen with filters
 Both apps show one statistics screen, without tabs: a row of filters on top (`StatisticsFilterBar`) and the statistics under it (`FilteredStatistics`), both in `:ui`. Each active filter is a chip; a tap on the chip removes it. Without filters the row says "All tournaments and players". The **Filters** button opens `StatisticsFiltersDialog`: player, rival, tournament, country of the tournaments, country of the players (with "No country") and the years from and to. Nothing changes until **Apply**; **Clear** empties the fields. The filters combine (`StatisticsFilters`) and are kept across a page refresh (`encode`/`decode`).
 - A chosen country of the players narrows the list of the players. The country and the years of the tournaments narrow the list of the tournaments.
-- The rival needs a player, and the country of the players does not apply with a player (both fields are disabled). Another player clears the rival.
+- **Tables against** (the rival) shows only with a player on the screen, and lists only the players with an EMA number who shared a table with that player (`opponentsOf`). Choosing another player in the dialog hides it until Apply. The country of the players does not apply with a player (the field is disabled). Another player clears the rival.
+- On a phone the row of filters hides with the tab rows when the statistics scroll down (`HideOnScrollTabs`) and shows again when they scroll back up by the same distance, or when the filters change. A small move back as the finger stops does not show them.
 
 What shows depends on the filters (`StatisticsFilters.view`):
 | View | Filters | Shows |

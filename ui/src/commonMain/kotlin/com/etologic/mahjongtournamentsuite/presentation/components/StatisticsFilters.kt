@@ -41,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -195,7 +196,8 @@ private const val NO_COUNTRY_KEY = "-"
 /**
  * The row of the active filters of the statistics, each one a chip that removes it, and the button that opens the
  * filters dialog. [players] and [tournaments] give the names and the choices. [slotName] is the name of the seat
- * of [StatisticsFilters.slotId].
+ * of [StatisticsFilters.slotId]. [opponents] are the EMA numbers of the players who shared a table with the person of
+ * [StatisticsFilters.emaId]: only they can be the rival. See [opponentsOf].
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -207,6 +209,7 @@ fun StatisticsFilterBar(
     modifier: Modifier = Modifier,
     slotName: String? = null,
     maxWidth: Dp = 720.dp,
+    opponents: Set<String> = emptySet(),
 ) {
     var editing by remember { mutableStateOf(false) }
     val chips = filterChips(filters, players, tournaments, slotName)
@@ -237,6 +240,7 @@ fun StatisticsFilterBar(
             filters = filters,
             players = players,
             tournaments = tournaments,
+            opponents = opponents,
             onApply = {
                 editing = false
                 onChange(it)
@@ -319,6 +323,8 @@ internal fun StatisticsFiltersDialog(
     tournaments: List<Tournament>,
     onApply: (StatisticsFilters) -> Unit,
     onDismiss: () -> Unit,
+    /** The opponents of the person of [filters]. See [StatisticsFilterBar]. */
+    opponents: Set<String> = emptySet(),
 ) {
     var draft by remember { mutableStateOf(filters) }
     val anyPlayer = stringResource(Res.string.stats_filter_any_player)
@@ -344,9 +350,13 @@ internal fun StatisticsFiltersDialog(
         listOf(SelectOption(ANY, anyPlayer)) +
             sortedOptions.filter { (player, _) -> countryOfPlayers == null || player.country.equals(countryOfPlayers, ignoreCase = true) || player.emaId == draft.emaId }.map { it.second }
     }
-    val rivalOptions = remember(sortedOptions, draft.emaId, anyRival) {
-        listOf(SelectOption(ANY, anyRival)) + sortedOptions.filter { (player, _) -> player.emaId != draft.emaId }.map { it.second }
+    // A rival is a player who shared a table with the chosen person. The opponents are known for the person on the
+    // screen, so the rival shows only while the dialog keeps that person.
+    val rivalOptions = remember(sortedOptions, opponents, draft.rivalEmaId, anyRival) {
+        listOf(SelectOption(ANY, anyRival)) +
+            sortedOptions.filter { (player, _) -> player.emaId in opponents || player.emaId == draft.rivalEmaId }.map { it.second }
     }
+    val showRival = draft.emaId != null && draft.emaId == filters.emaId && rivalOptions.size > 1
     // The country and the years of the tournaments narrow the list of the tournaments.
     val tournamentOptions = listOf(SelectOption(ANY, allTournaments)) +
         tournaments.filter { it.id == draft.tournamentId || draft.copy(tournamentId = null).keeps(it) }
@@ -381,16 +391,16 @@ internal fun StatisticsFiltersDialog(
                         // The menu composes all its items. The search finds the players that it does not show.
                         maxShown = SELECT_MAX_SHOWN,
                     )
-                    SelectField(
-                        stringResource(Res.string.stats_filter_rival),
-                        rivalOptions,
-                        draft.rivalEmaId ?: ANY,
-                        { ema -> draft = draft.copy(rivalEmaId = ema.takeIf { it != ANY }) },
-                        Modifier.fillMaxWidth(),
-                        // A rival is a rival of the chosen player.
-                        enabled = draft.emaId != null,
-                        maxShown = SELECT_MAX_SHOWN,
-                    )
+                    if (showRival) {
+                        SelectField(
+                            stringResource(Res.string.stats_filter_rival),
+                            rivalOptions,
+                            draft.rivalEmaId ?: ANY,
+                            { ema -> draft = draft.copy(rivalEmaId = ema.takeIf { it != ANY }) },
+                            Modifier.fillMaxWidth(),
+                            maxShown = SELECT_MAX_SHOWN,
+                        )
+                    }
                     SelectField(
                         stringResource(Res.string.stats_filter_tournament),
                         tournamentOptions,
@@ -453,3 +463,7 @@ internal fun StatisticsFiltersDialog(
         )
     }
 }
+
+/** The EMA numbers of the players who shared a table with the person of [data]. Guests without EMA are left out. */
+fun opponentsOf(data: PersonStatisticsData?): Set<String> =
+    data?.overall?.results.orEmpty().flatMap { it.rivals }.map { it.opponent }.filter { '#' !in it && it != data?.emaId }.toSet()

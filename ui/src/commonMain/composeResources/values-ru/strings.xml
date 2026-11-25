@@ -574,7 +574,7 @@
     <string name="stats_filter_any_player">Любой игрок</string>
     <string name="stats_filter_tournament">Турнир</string>
     <string name="stats_filter_tournament_country">Страна турниров</string>
-    <string name="stats_filter_rival">Соперник</string>
+    <string name="stats_filter_rival">Столы против</string>
     <string name="stats_filter_any_rival">Любой соперник</string>
     <string name="stats_chip_rival">против %1$s</string>
     <string name="stats_filter_player_country">Страна игроков</string>

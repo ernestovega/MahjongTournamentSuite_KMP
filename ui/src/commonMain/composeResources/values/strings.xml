@@ -572,8 +572,8 @@
     <string name="stats_filter_any_player">Any player</string>
     <string name="stats_filter_tournament">Tournament</string>
     <string name="stats_filter_tournament_country">Country of the tournaments</string>
-    <string name="stats_filter_rival">Rival</string>
-    <string name="stats_filter_any_rival">Any rival</string>
+    <string name="stats_filter_rival">Tables against</string>
+    <string name="stats_filter_any_rival">Any opponent</string>
     <string name="stats_chip_rival">vs %1$s</string>
     <string name="stats_filter_player_country">Country of the players</string>
     <string name="stats_filter_any_country">Any country</string>
