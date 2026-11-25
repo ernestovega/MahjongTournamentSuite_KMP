@@ -4,8 +4,8 @@ Store texts of the «MTS» app (`com.etologic.mahjongtournamentsuite`) in its 8 
 
 - App name (max 30): `MTS - Mahjong Tournament Suite`
 - Short description: max 80 characters. Full description: max 4,000.
-- Last update: 23 November 2026 (registrations, table QR code, table reminder, shareable results, statistics with filters).
-- When a visible feature changes, update this file and [features.md](../features.md), then paste the texts in Play Console.
+- Last update: 24 November 2026 (shareable ranking after any round, chart of the own place by round, web links that open in the app).
+- When a visible feature changes, update this file and [features.md](../features.md), then upload them with Actions > Publish · Play store listing (`scripts/play_listing.py`), which also uploads the screenshots and the feature graphic.
 
 ---
 
@@ -24,6 +24,7 @@ FOLLOW ANY TOURNAMENT, NO ACCOUNT NEEDED
 • Tournaments in play, upcoming and past, with filters by country and year.
 • Tables of every round, with each hand as it is played.
 • Live rankings of players and teams, chicken hands and best hand.
+• The ranking after any round, ready to share as an image.
 • Schedule, venue and directions, organizers and contact.
 
 REGISTER FOR TOURNAMENTS
@@ -34,11 +35,13 @@ REGISTER FOR TOURNAMENTS
 ON TOURNAMENT DAY
 • A reminder of your table and round when the round is about to start.
 • Scan the tournament QR code and your table opens.
+• Links to the MTS website open straight in the app.
 • Set the seats and enter the hands and penalties of your table from your phone.
 • See every hand appear live, with the time left in the round.
 
 YOUR RESULTS AND STATISTICS
 • My results: every round of a tournament in one table, ready to share as an image.
+• A chart of your place after each round.
 • Skills, places, records and your toughest rivals.
 • Filter by tournament, rival, country and years. All statistics are public.
 
@@ -71,6 +74,7 @@ SIGUE CUALQUIER TORNEO, SIN CUENTA
 • Torneos en juego, próximos y pasados, con filtros por país y año.
 • Mesas de cada ronda, con cada mano según se juega.
 • Clasificaciones en directo de jugadores y equipos, manos pollo y mejor mano.
+• La clasificación tras cualquier ronda, lista para compartir como imagen.
 • Horario, sede y cómo llegar, organizadores y contacto.
 
 INSCRÍBETE EN TORNEOS
@@ -81,11 +85,13 @@ INSCRÍBETE EN TORNEOS
 EL DÍA DEL TORNEO
 • Aviso de tu mesa y tu ronda cuando la ronda va a empezar.
 • Escanea el QR del torneo y se abre tu mesa.
+• Los enlaces a la web de MTS se abren directamente en la app.
 • Elige los asientos y anota las manos y penalizaciones de tu mesa desde el móvil.
 • Mira cada mano aparecer en directo, con el tiempo que queda de ronda.
 
 TUS RESULTADOS Y ESTADÍSTICAS
 • Mis resultados: todas las rondas de un torneo en una tabla, lista para compartir como imagen.
+• Una gráfica de tu puesto tras cada ronda.
 • Habilidades, puestos, récords y tus rivales más duros.
 • Filtra por torneo, rival, país y años. Todas las estadísticas son públicas.
 
@@ -118,6 +124,7 @@ SUIVEZ N'IMPORTE QUEL TOURNOI, SANS COMPTE
 • Tournois en cours, à venir et passés, avec des filtres par pays et par année.
 • Les tables de chaque manche, avec chaque main au fil du jeu.
 • Classements en direct des joueurs et des équipes, mains poulet et meilleure main.
+• Le classement après n'importe quelle manche, prêt à partager en image.
 • Horaires, lieu et itinéraire, organisateurs et contact.
 
 INSCRIVEZ-VOUS AUX TOURNOIS
@@ -128,11 +135,13 @@ INSCRIVEZ-VOUS AUX TOURNOIS
 LE JOUR DU TOURNOI
 • Un rappel de votre table et de votre manche quand la manche va commencer.
 • Scannez le QR code du tournoi et votre table s'ouvre.
+• Les liens du site MTS s'ouvrent directement dans l'app.
 • Choisissez les places et notez les mains et pénalités de votre table depuis votre téléphone.
 • Voyez chaque main apparaître en direct, avec le temps restant de la manche.
 
 VOS RÉSULTATS ET STATISTIQUES
 • Mes résultats : toutes les manches d'un tournoi dans un tableau, prêt à partager en image.
+• Un graphique de votre place après chaque manche.
 • Compétences, places, records et vos rivaux les plus coriaces.
 • Filtrez par tournoi, rival, pays et années. Toutes les statistiques sont publiques.
 
@@ -165,6 +174,7 @@ SEGUI QUALSIASI TORNEO, SENZA ACCOUNT
 • Tornei in corso, in arrivo e passati, con filtri per paese e anno.
 • I tavoli di ogni turno, con ogni mano mentre si gioca.
 • Classifiche in diretta di giocatori e squadre, mani pollo e mano migliore.
+• La classifica dopo qualsiasi turno, pronta da condividere come immagine.
 • Orari, sede e indicazioni, organizzatori e contatti.
 
 ISCRIVITI AI TORNEI
@@ -175,11 +185,13 @@ ISCRIVITI AI TORNEI
 IL GIORNO DEL TORNEO
 • Un promemoria del tuo tavolo e del tuo turno quando il turno sta per iniziare.
 • Scansiona il QR del torneo e si apre il tuo tavolo.
+• I link al sito di MTS si aprono direttamente nell'app.
 • Scegli i posti e segna le mani e le penalità del tuo tavolo dal telefono.
 • Guarda ogni mano apparire in diretta, con il tempo rimasto del turno.
 
 I TUOI RISULTATI E STATISTICHE
 • I miei risultati: tutti i turni di un torneo in una tabella, pronta da condividere come immagine.
+• Un grafico della tua posizione dopo ogni turno.
 • Abilità, piazzamenti, record e i tuoi rivali più duri.
 • Filtra per torneo, rivale, paese e anni. Tutte le statistiche sono pubbliche.
 
@@ -212,6 +224,7 @@ JEDES TURNIER VERFOLGEN, OHNE KONTO
 • Laufende, kommende und vergangene Turniere, mit Filtern nach Land und Jahr.
 • Die Tische jeder Runde, mit jeder Hand, während gespielt wird.
 • Live-Ranglisten von Spielern und Teams, Chicken Hands und beste Hand.
+• Die Rangliste nach jeder beliebigen Runde, bereit zum Teilen als Bild.
 • Zeitplan, Austragungsort und Anfahrt, Veranstalter und Kontakt.
 
 FÜR TURNIERE ANMELDEN
@@ -222,11 +235,13 @@ FÜR TURNIERE ANMELDEN
 AM TURNIERTAG
 • Eine Erinnerung an deinen Tisch und deine Runde, kurz bevor die Runde beginnt.
 • Scanne den QR-Code des Turniers und dein Tisch öffnet sich.
+• Links zur MTS-Website öffnen sich direkt in der App.
 • Lege die Sitzplätze fest und trage die Hände und Strafen deines Tisches am Handy ein.
 • Sieh jede Hand live erscheinen, mit der verbleibenden Zeit der Runde.
 
 DEINE ERGEBNISSE UND STATISTIKEN
 • Meine Ergebnisse: alle Runden eines Turniers in einer Tabelle, bereit zum Teilen als Bild.
+• Ein Diagramm deiner Platzierung nach jeder Runde.
 • Fähigkeiten, Platzierungen, Rekorde und deine härtesten Gegner.
 • Filtere nach Turnier, Gegner, Land und Jahren. Alle Statistiken sind öffentlich.
 
@@ -259,6 +274,7 @@ FÖLJ VILKEN TURNERING SOM HELST, UTAN KONTO
 • Pågående, kommande och tidigare turneringar, med filter för land och år.
 • Borden i varje omgång, med varje hand medan den spelas.
 • Ranking live för spelare och lag, chicken hands och bästa hand.
+• Rankingen efter valfri omgång, redo att delas som bild.
 • Schema, plats och vägbeskrivning, arrangörer och kontakt.
 
 ANMÄL DIG TILL TURNERINGAR
@@ -269,11 +285,13 @@ ANMÄL DIG TILL TURNERINGAR
 PÅ TURNERINGSDAGEN
 • En påminnelse om ditt bord och din omgång när omgången ska börja.
 • Skanna turneringens QR-kod så öppnas ditt bord.
+• Länkar till MTS webbplats öppnas direkt i appen.
 • Välj platser och för in händerna och straffen vid ditt bord från mobilen.
 • Se varje hand dyka upp live, med tiden som är kvar av omgången.
 
 DINA RESULTAT OCH DIN STATISTIK
 • Mina resultat: alla omgångar i en turnering i en tabell, redo att delas som bild.
+• Ett diagram över din placering efter varje omgång.
 • Färdigheter, placeringar, rekord och dina tuffaste rivaler.
 • Filtrera på turnering, rival, land och år. All statistik är offentlig.
 
@@ -306,6 +324,7 @@ VOLG ELK TOERNOOI, ZONDER ACCOUNT
 • Lopende, komende en afgelopen toernooien, met filters op land en jaar.
 • De tafels van elke ronde, met elke hand terwijl er gespeeld wordt.
 • Live klassementen van spelers en teams, chicken hands en beste hand.
+• Het klassement na elke ronde, klaar om als afbeelding te delen.
 • Schema, locatie en route, organisatoren en contact.
 
 SCHRIJF JE IN VOOR TOERNOOIEN
@@ -316,11 +335,13 @@ SCHRIJF JE IN VOOR TOERNOOIEN
 OP DE TOERNOOIDAG
 • Een herinnering aan je tafel en je ronde wanneer de ronde bijna begint.
 • Scan de QR-code van het toernooi en je tafel gaat open.
+• Links naar de MTS-website openen direct in de app.
 • Kies de plaatsen en noteer de handen en straffen van je tafel op je telefoon.
 • Zie elke hand live verschijnen, met de resterende tijd van de ronde.
 
 JOUW RESULTATEN EN STATISTIEKEN
 • Mijn resultaten: alle rondes van een toernooi in één tabel, klaar om als afbeelding te delen.
+• Een grafiek van je plaats na elke ronde.
 • Vaardigheden, plaatsen, records en je sterkste rivalen.
 • Filter op toernooi, rivaal, land en jaren. Alle statistieken zijn openbaar.
 
@@ -353,6 +374,7 @@ MTS (Mahjong Tournament Suite) — приложение, чтобы следит
 • Текущие, предстоящие и прошедшие турниры с фильтрами по стране и году.
 • Столы каждого раунда и каждая раздача по ходу игры.
 • Рейтинги игроков и команд в реальном времени, «цыплячьи» руки и лучшая рука.
+• Рейтинг после любого раунда, которым можно поделиться как картинкой.
 • Расписание, место проведения и маршрут, организаторы и контакты.
 
 РЕГИСТРИРУЙТЕСЬ НА ТУРНИРЫ
@@ -363,11 +385,13 @@ MTS (Mahjong Tournament Suite) — приложение, чтобы следит
 В ДЕНЬ ТУРНИРА
 • Напоминание о вашем столе и раунде перед его началом.
 • Отсканируйте QR-код турнира — и откроется ваш стол.
+• Ссылки на сайт MTS открываются прямо в приложении.
 • Выберите места и записывайте раздачи и штрафы своего стола с телефона.
 • Смотрите, как каждая раздача появляется в реальном времени, вместе с оставшимся временем раунда.
 
 ВАШИ РЕЗУЛЬТАТЫ И СТАТИСТИКА
 • Мои результаты: все раунды турнира в одной таблице, которой можно поделиться как картинкой.
+• График вашего места после каждого раунда.
 • Навыки, места, рекорды и ваши самые сильные соперники.
 • Фильтры по турниру, сопернику, стране и годам. Вся статистика открыта.
 

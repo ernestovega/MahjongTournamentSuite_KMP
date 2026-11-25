@@ -37,4 +37,16 @@ MTS_STORE_SCREENSHOTS=1 MTS_STORE_LANGUAGES=en,es MTS_STORE_FORMS=phone ./gradle
 Without a Linux machine at hand, run Actions > Store · Screenshots > Run workflow and take the images from its artifact.
 
 The captions of each language are in the test (`Shot.captions`). To change a shot, its caption or the frame, edit the test
-and run it again; then upload the new images in Play Console.
+and run it again; then upload the listing (below).
+
+## Uploading to Play
+
+Actions > Publish · Play store listing > Run workflow (`.github/workflows/play-listing.yml`, `scripts/play_listing.py`)
+uploads everything of the 8 languages in one Play edit: short and full description from `listing.md`, phone screenshots,
+tablet screenshots (as 7-inch and 10-inch) and feature graphic. It replaces the images on Play; the title of a language
+already on Play stays. Run it first with `check`, which changes nothing and lists what Play has now, then with `upload`.
+
+- The service account of the deploy needs the Play Console permission **Manage store presence** on the app (the
+  upload of the app only needs the testing tracks).
+- The Play API has no Chromebook screenshots: upload `tablet/<lang>/` there by hand if you want them.
+- `python3 scripts/play_listing.py check --local` checks the lengths and image sizes without Play.
