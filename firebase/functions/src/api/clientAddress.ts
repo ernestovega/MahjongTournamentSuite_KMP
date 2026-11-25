@@ -1,8 +1,9 @@
 import type { Request } from "express";
 
 /**
- * Google ranges that Firebase Hosting uses to reach the API (seen in staging: 64.233.172.44, 66.102.6.33) and other
- * front ends of Google. No customer of Google Cloud gets an address in them.
+ * Google ranges that Firebase Hosting uses to reach the API (seen in staging: 64.233.172.44, 66.102.6.33,
+ * 192.178.11.1) and other front ends of Google, from https://www.gstatic.com/ipranges/goog.json without the ranges of
+ * Google Cloud (cloud.json) and of the public DNS (8.8.x.x). No customer of Google Cloud gets an address in them.
  */
 const GOOGLE_PROXY_RANGES: Array<[string, number]> = [
   ["64.233.160.0", 19],
@@ -10,12 +11,16 @@ const GOOGLE_PROXY_RANGES: Array<[string, number]> = [
   ["66.249.64.0", 19],
   ["72.14.192.0", 18],
   ["74.125.0.0", 16],
+  ["108.170.192.0", 18],
   ["108.177.0.0", 17],
   ["130.211.0.0", 22],
   ["142.250.0.0", 15],
   ["172.217.0.0", 16],
+  ["172.253.0.0", 16],
   ["173.194.0.0", 16],
+  ["192.178.0.0", 15],
   ["209.85.128.0", 17],
+  ["216.58.192.0", 19],
   ["216.239.32.0", 19],
   ["35.191.0.0", 16],
 ];
