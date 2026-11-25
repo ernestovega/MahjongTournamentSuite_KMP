@@ -187,7 +187,7 @@ data class PlayerTournamentView(
                 listOfNotNull(
                     it.date?.ifBlank { null }?.let { date -> formatLocalizedDate(date, withWeekday = true, withYear = false) },
                     it.startTime?.ifBlank { null }?.let(::formatLocalizedTime),
-                ).joinToString(" ")
+                ).joinToString(" · ")
             }
             ?.ifBlank { null }
 }
