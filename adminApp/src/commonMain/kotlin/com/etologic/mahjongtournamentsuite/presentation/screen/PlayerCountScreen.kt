@@ -232,6 +232,7 @@ fun PlayerCountScreen(
     }
     PlayerCountFrame(
         subtitle = tournament?.name,
+        shortSubtitle = tournament?.shortName,
         step = step,
         withTeams = withTeams,
         isLoading = blocker == null && (tournament == null || loaded == null),
@@ -436,6 +437,8 @@ internal fun PlayerCountWaiting.matches(query: String): Boolean =
 @Composable
 internal fun PlayerCountFrame(
     subtitle: String?,
+    /** In place of [subtitle] when it does not fit: the short name of the tournament. */
+    shortSubtitle: String? = null,
     step: Int?,
     isLoading: Boolean = false,
     /** With the step Teams, between choosing and reviewing. */
@@ -446,6 +449,7 @@ internal fun PlayerCountFrame(
     AppScaffold(
         title = stringResource(Res.string.pc_top_bar),
         subtitle = subtitle,
+        shortSubtitle = shortSubtitle,
         isLoading = isLoading,
         onBack = onBack,
         // The ⓘ is the first control: focused at once, it would open its tooltip.

@@ -342,6 +342,7 @@ internal fun RoundControlContent(
     AppScaffold(
         title = stringResource(Res.string.round_control_title),
         subtitle = state.tournament?.name?.ifBlank { null },
+        shortSubtitle = state.tournament?.shortName,
         isLoading = state.tournament == null,
         showProgress = state.tournament == null || allTables == null || busy,
         onBack = onBack,

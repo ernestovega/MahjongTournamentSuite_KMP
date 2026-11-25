@@ -50,9 +50,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.ReportScreenLoading
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -72,6 +76,13 @@ private val AppLoadingBarHeight = 4.dp
 fun AppScaffold(
     title: String,
     subtitle: String? = null,
+    /**
+     * In place of [title] when it does not fit even at its smallest size, such as the short name of a tournament.
+     * Its tooltip still shows the full [title].
+     */
+    shortTitle: String? = null,
+    /** In place of [subtitle] when it does not fit even at its smallest size. */
+    shortSubtitle: String? = null,
     /** Drawn in place of [subtitle], for a subtitle with more than text, such as a flag. */
     subtitleContent: @Composable (() -> Unit)? = null,
     /** Left of the title and the subtitle, as tall as both, such as the photo of a player. */
@@ -128,8 +139,10 @@ fun AppScaffold(
                         // The player top bar has no extra padding. The top bar already has 4 dp, and the buttons have their own 12 dp,
                         // so the icons line up with the 16 dp of the content.
                         val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
+                        val shownTitle = TopBarText(title, shortTitle)
+                        val shownSubtitle = subtitle?.let { TopBarText(it, shortSubtitle) }
                         val titleContent: @Composable () -> Unit = {
-                            TopBarTitle(title, subtitle, subtitleContent, titleLeading, titleAction, isLoading)
+                            TopBarTitle(shownTitle, shownSubtitle, subtitleContent, titleLeading, titleAction, isLoading)
                         }
 
                         val navigationContent: @Composable () -> Unit = {
@@ -209,7 +222,7 @@ fun AppScaffold(
                                 CompositionLocalProvider(LocalTopBarLabels provides false) {
                                     CenterAlignedTopAppBar(
                                         title = if (titleActionInMenu) {
-                                            { TopBarTitle(title, subtitle, subtitleContent, titleLeading, titleAction = null, isLoading) }
+                                            { TopBarTitle(shownTitle, shownSubtitle, subtitleContent, titleLeading, titleAction = null, isLoading) }
                                         } else {
                                             titleContent
                                         },
@@ -277,11 +290,16 @@ fun AppScaffold(
     }
 }
 
+/** A text of the top bar, and the [short] one that takes its place when it does not fit. */
+private class TopBarText(val full: String, short: String?) {
+    val short: String? = short?.takeIf { it.isNotBlank() && it != full }
+}
+
 /** The title and the subtitle of the top bar, with the picture at the left and the title button at the right. */
 @Composable
 private fun TopBarTitle(
-    title: String,
-    subtitle: String?,
+    title: TopBarText,
+    subtitle: TopBarText?,
     subtitleContent: @Composable (() -> Unit)?,
     titleLeading: @Composable (() -> Unit)?,
     titleAction: @Composable (() -> Unit)?,
@@ -308,6 +326,7 @@ private fun TopBarTitle(
                         EllipsizedTitleText(
                             text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
+                            minFontSize = TopBarSubtitleMinFontSize,
                             // Same color as the title, in the light and the dark theme.
                             color = LocalContentColor.current,
                         )
@@ -350,24 +369,57 @@ private fun TopBarIconsOrMenu(maxIcons: Int, isLoading: Boolean, content: @Compo
     }
 }
 
-/** One-line text. It shows the full text in a tooltip when it is ellipsized. */
+/** The smallest sizes of the title and the subtitle of the top bar. Under them the text ends with "…". */
+private val TopBarTitleMinFontSize = 15.sp
+private val TopBarSubtitleMinFontSize = 10.sp
+private const val TopBarFontSizeStep = 0.5f
+
+/**
+ * One-line text. A long text gets smaller, down to [minFontSize]. When it still does not fit, its short text takes its place,
+ * and the text ends with "…" only when even that one does not fit. The tooltip shows the full text when it is cut or shortened.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EllipsizedTitleText(
-    text: String,
+    text: TopBarText,
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
+    minFontSize: TextUnit = TopBarTitleMinFontSize,
 ) {
-    var isEllipsized by remember(text) { mutableStateOf(false) }
-    AppTooltipBox(text, enabled = isEllipsized) {
-        Text(
-            text = text,
-            style = style,
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            onTextLayout = { isEllipsized = it.hasVisualOverflow },
-        )
+    val maxFontSize = style.fontSize.takeIf { it.isSpecified } ?: MaterialTheme.typography.titleLarge.fontSize
+    val smallest = minOf(minFontSize.value, maxFontSize.value).sp
+    BoxWithConstraints {
+        val measurer = rememberTextMeasurer()
+        val maxWidthPx = constraints.maxWidth
+        // The text and its size: the full text at the largest size that fits, else the short one, else "…" at the smallest size.
+        val (shown, fontSize) = remember(text.full, text.short, style, smallest, maxFontSize, maxWidthPx) {
+            fun widthOf(value: String, size: TextUnit) = measurer.measure(value, style.copy(fontSize = size), maxLines = 1, softWrap = false).size.width
+            fun largestSizeThatFits(value: String): TextUnit? {
+                if (!constraints.hasBoundedWidth) return maxFontSize
+                var size = maxFontSize.value
+                while (size >= smallest.value) {
+                    if (widthOf(value, size.sp) <= maxWidthPx) return size.sp
+                    size -= TopBarFontSizeStep
+                }
+                return null
+            }
+            largestSizeThatFits(text.full)?.let { text.full to it }
+                ?: text.short?.let { short -> largestSizeThatFits(short)?.let { short to it } ?: (short to smallest) }
+                ?: (text.full to smallest)
+        }
+        var isEllipsized by remember(shown) { mutableStateOf(false) }
+        AppTooltipBox(text.full, enabled = isEllipsized || shown != text.full) {
+            Text(
+                text = shown,
+                style = style,
+                fontSize = fontSize,
+                color = color,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { isEllipsized = it.hasVisualOverflow },
+            )
+        }
     }
 }
 
