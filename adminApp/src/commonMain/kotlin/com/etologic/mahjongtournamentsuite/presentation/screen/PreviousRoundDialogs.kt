@@ -1,11 +1,11 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
@@ -50,9 +50,9 @@ internal fun PreviousRoundDialogs(state: RoundTimerState, controller: RoundTimer
                     MtsDialogButtons {
                         // It closes tables of the players: a destructive action, in red.
                         Button(onClick = { scope.launch { controller.startClosingPrevious() } }, colors = MtsButtons.destructiveColors()) {
-                            Text(stringResource(Res.string.round_close_previous_confirm))
+                            ButtonText(stringResource(Res.string.round_close_previous_confirm))
                         }
-                        Button(onClick = { controller.dismissClosePrevious() }) { Text(stringResource(Res.string.cancel)) }
+                        Button(onClick = { controller.dismissClosePrevious() }) { ButtonText(stringResource(Res.string.cancel)) }
                     }
                 },
             )
