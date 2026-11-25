@@ -69,7 +69,7 @@ jobs:
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            archive > build/archive.log 2>&1 || { grep -nE "error|e: |FAILURE|What went wrong" -A3 build/archive.log | head -150; exit 1; }
+            archive > build/archive.log 2>&1 || { grep -nE ": error:|^error:|^e: |FAILURE|What went wrong|BUILD FAILED|ARCHIVE FAILED" -A3 build/archive.log | head -150 || true; exit 1; }
           grep -E "Version |Firebase: " build/archive.log || true
 
       - name: Upload to App Store Connect
