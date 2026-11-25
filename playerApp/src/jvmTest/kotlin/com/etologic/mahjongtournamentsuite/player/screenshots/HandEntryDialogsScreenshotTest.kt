@@ -58,11 +58,9 @@ private class FixedHandRepository(private val conflict: Boolean = false) : Playe
 
     override suspend fun previewHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal) = AppResult.Success(preview)
 
-    override suspend fun recordHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal, expectedVersion: Long) =
-        if (conflict) AppResult.Failure(AppError.Conflict("Another phone saved hand 7 first.")) else AppResult.Success(preview)
+    override suspend fun recordHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal, expectedVersion: Long) = if (conflict) AppResult.Failure(AppError.Conflict("Another phone saved hand 7 first.")) else AppResult.Success(preview)
 
-    override suspend fun addPenalties(tournamentId: String, roundId: Int, tableId: Int, penalties: List<PenaltyEntry>, expectedVersion: Long) =
-        AppResult.Success(Unit)
+    override suspend fun addPenalties(tournamentId: String, roundId: Int, tableId: Int, penalties: List<PenaltyEntry>, expectedVersion: Long) = AppResult.Success(Unit)
 
     override suspend fun assignSeats(tournamentId: String, roundId: Int, tableId: Int, seats: List<Int>, expectedVersion: Long) = AppResult.Success(Unit)
 }
@@ -118,8 +116,11 @@ class HandEntryDialogsScreenshotTest {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(FixedHandRepository(conflict)) } }) }) {
                     Column(Modifier.padding(16.dp)) {
                         HandEntryPanel(
-                            tournamentId = "t", roundId = 1, tableId = 1,
-                            view = view, table = view.tables.single(),
+                            tournamentId = "t",
+                            roundId = 1,
+                            tableId = 1,
+                            view = view,
+                            table = view.tables.single(),
                             now = LocalDateTime.parse("2026-10-10T11:00"),
                             onSaved = {},
                         )
@@ -129,8 +130,7 @@ class HandEntryDialogsScreenshotTest {
         }
     }
 
-    private fun ComposeUiTest.waitForText(text: String) =
-        waitUntil(timeoutMillis = 10_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    private fun ComposeUiTest.waitForText(text: String) = waitUntil(timeoutMillis = 10_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     private fun ComposeUiTest.tap(key: String) {
         waitForText(playerText(key))
@@ -176,7 +176,10 @@ class HandEntryDialogsScreenshotTest {
     }
 
     @Test
-    fun draw() = shot("entry-draw") { tap("entry_add_draw"); waitForText(playerText("entry_review")) }
+    fun draw() = shot("entry-draw") {
+        tap("entry_add_draw")
+        waitForText(playerText("entry_review"))
+    }
 
     @Test
     fun penalty() = shot("entry-penalty") {

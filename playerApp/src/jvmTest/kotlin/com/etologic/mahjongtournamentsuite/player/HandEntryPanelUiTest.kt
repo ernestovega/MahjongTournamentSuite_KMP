@@ -5,22 +5,25 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -30,14 +33,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.koin.compose.KoinApplication
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
-import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
-import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,14 +54,21 @@ private class RecordingHandRepository : PlayerHandRepository {
     var penaltyError: AppError? = null
 
     override suspend fun addPenalties(
-        tournamentId: String, roundId: Int, tableId: Int, penalties: List<PenaltyEntry>, expectedVersion: Long,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        penalties: List<PenaltyEntry>,
+        expectedVersion: Long,
     ): AppResult<Unit> {
         this.penalties += penalties
         return penaltyError?.let { AppResult.Failure(it) } ?: AppResult.Success(Unit)
     }
 
     override suspend fun previewHand(
-        tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        proposal: HandProposal,
     ): AppResult<HandPreview> {
         previews += proposal
         previewError?.let { return AppResult.Failure(it) }
@@ -78,7 +85,11 @@ private class RecordingHandRepository : PlayerHandRepository {
     }
 
     override suspend fun recordHand(
-        tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal, expectedVersion: Long,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        proposal: HandProposal,
+        expectedVersion: Long,
     ): AppResult<HandPreview> {
         recorded += proposal to expectedVersion
         recordError?.let { return AppResult.Failure(it) }
@@ -88,7 +99,11 @@ private class RecordingHandRepository : PlayerHandRepository {
     val seats = mutableListOf<List<Int>>()
 
     override suspend fun assignSeats(
-        tournamentId: String, roundId: Int, tableId: Int, seats: List<Int>, expectedVersion: Long,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        seats: List<Int>,
+        expectedVersion: Long,
     ): AppResult<Unit> {
         this.seats += seats
         return AppResult.Success(Unit)
@@ -106,8 +121,7 @@ class HandEntryPanelUiTest {
         java.util.Locale.setDefault(originalLocale)
     }
 
-    private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) =
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) = waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     /**
      * The round is planned on 2026-10-10 at 10:00, and the Timer started it then unless [started] is false.
@@ -168,8 +182,11 @@ class HandEntryPanelUiTest {
             MtsTheme(useDarkTheme = false) {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(repository) } }) }) {
                     HandEntryPanel(
-                        tournamentId = "t", roundId = 1, tableId = 1,
-                        view = view, table = view.tables.single(),
+                        tournamentId = "t",
+                        roundId = 1,
+                        tableId = 1,
+                        view = view,
+                        table = view.tables.single(),
                         now = LocalDateTime.parse("2026-10-10T$time"),
                         onSaved = {},
                     )
