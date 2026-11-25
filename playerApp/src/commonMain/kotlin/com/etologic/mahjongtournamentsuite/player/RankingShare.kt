@@ -96,8 +96,6 @@ internal fun RankingRoundButton(rounds: List<Int>, selected: Int?, onSelect: (In
             ButtonText(
                 if (selected == null) stringResource(Res.string.ranking_now) else stringResource(Res.string.round_n, selected),
                 maxLines = 1,
-                // A past ranking stands out, so nobody takes it for the one of now.
-                fontWeight = if (selected == null) null else FontWeight.Bold,
             )
             Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
         }

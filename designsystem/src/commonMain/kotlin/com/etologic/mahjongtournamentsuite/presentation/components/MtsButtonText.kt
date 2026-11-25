@@ -18,8 +18,8 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.TextUnit
 
 /*
- * The text of a button. Every button of the apps shows its text in capitals (Ernesto, 25-nov-2026), so the content of
- * a button uses this instead of `Text`. `ButtonTextConventionTest` checks it.
+ * The text of a button. Every button of the apps shows its text in bold capitals (Ernesto, 25-nov-2026), so the content
+ * of a button uses this instead of `Text`. `ButtonTextConventionTest` checks it.
  *
  * Only the drawn text is in capitals. Screen readers and the tests still get the text as it is written, because a
  * screen reader may spell a word in capitals letter by letter.
@@ -31,7 +31,7 @@ fun ButtonText(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null,
+    fontWeight: FontWeight? = FontWeight.Bold,
     fontFamily: FontFamily? = null,
     textAlign: TextAlign? = null,
     overflow: TextOverflow = TextOverflow.Clip,
@@ -65,7 +65,7 @@ fun ButtonText(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null,
+    fontWeight: FontWeight? = FontWeight.Bold,
     fontFamily: FontFamily? = null,
     textAlign: TextAlign? = null,
     overflow: TextOverflow = TextOverflow.Clip,
