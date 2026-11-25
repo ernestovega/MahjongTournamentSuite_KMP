@@ -7,12 +7,12 @@ How to move around the apps and what each role sees. The pictures are the ones o
 ```mermaid
 flowchart LR
   subgraph Android["📱 Android app «MTS» (one app)"]
-    AP["Player part<br/>(playerApp)"] -- "«Management» button<br/>(staff only)" --> AA["Management part<br/>(adminApp)"]
-    AA -- "«Player view» button / back" --> AP
+    AP["Player part<br/>(playerApp)"] -- "«Manager app» button<br/>(staff only)" --> AA["Management part<br/>(adminApp)"]
+    AA -- "«Player app» button / back" --> AP
   end
   subgraph Web["🌐 mts.mahjongmadrid.com"]
     WP["/ → player web"] -- "after signing in,<br/>staff chooses" --> WA["/admin/ → management web"]
-    WA -- "«Player view»" --> WP
+    WA -- "«Player app»" --> WP
   end
   D["🖥️ Desktop"] --> DA["management only"]
 ```
@@ -84,7 +84,7 @@ flowchart TD
 
 | Screen | Who | What it does | Picture |
 |---|---|---|---|
-| **Sign in** | Staff (Super Admin, Club Admin, editor) | On the web, a staff account chooses «Player view» or «Management». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Sign in"> |
+| **Sign in** | Staff (Super Admin, Club Admin, editor) | On the web, a staff account chooses «Player app» or «Manager app». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Sign in"> |
 | **Tournaments** | Super Admin: all · Club Admin: those of its organizations · Editor: assigned | Create (Super Admin and Club Admin), edit, open. Top bar: accounts, EMA registry, organizations, clock; DEV menu (Super Admin). | <img src="../../adminApp/screenshots/tournaments/phone-light.png" width="140" alt="Tournaments"> |
 | **Tournament (round editor)** | Staff of the tournament | Round › table: players, seats, points and the 16 hands. Top bar: Timer, Ranking, QR and Round control; Players, Tables IDs, Stats, EMA report and Activity in the More menu. | <img src="../../adminApp/screenshots/tournament/phone-light.png" width="140" alt="Tournament (round editor)"> |
 | **Registrations** | Staff of the tournament | Before the draw: public link, places, waiting list, paid, food, the import of the Google Form (it replaces the list and marks the rows with problems), settings and Make the draw. | <img src="../../adminApp/screenshots/registrations/phone-light.png" width="140" alt="Registrations"> |

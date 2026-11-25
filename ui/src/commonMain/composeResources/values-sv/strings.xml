@@ -277,8 +277,8 @@
     <string name="consent_withdraw_info">Appen stoppar analysen och frågar dig igen. Du kan inte använda appen förrän du godkänner.</string>
     <string name="stat_best_hand_points">Flest poäng på en hand</string>
     <string name="stat_average_hands_per_table">Snitt händer per bord</string>
-    <string name="app_switch_to_admin">Administration</string>
-    <string name="app_switch_to_player">Spelarvy</string>
+    <string name="app_switch_to_admin">Managerapp</string>
+    <string name="app_switch_to_player">Spelarapp</string>
     <string name="app_chooser_title">Vad vill du öppna?</string>
     <string name="app_chooser_hint">Du kan när som helst byta mellan apparna med knappen i den övre raden.</string>
     <string name="top_bar_activity">Aktivitet</string>

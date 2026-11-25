@@ -532,8 +532,8 @@
     <string name="consent_withdraw_info">L'application arrête l'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l'application tant que vous n'acceptez pas.</string>
     <string name="stat_best_hand_points">Plus de points en une main</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
-    <string name="app_switch_to_admin">Gestion</string>
-    <string name="app_switch_to_player">Vue joueur</string>
+    <string name="app_switch_to_admin">App de gestion</string>
+    <string name="app_switch_to_player">App joueur</string>
     <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
     <string name="app_chooser_hint">Vous pourrez ensuite passer d'une app à l'autre à tout moment avec le bouton de la barre du haut.</string>
     <string name="top_bar_activity">Activité</string>

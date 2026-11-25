@@ -86,7 +86,7 @@ class SignInTest : AdminE2eTest() {
         c.clickButton("Yes, sign out")
         // The player part takes over, without a session: its top bar offers the sign-in.
         c.waitForText("Sign in")
-        c.assertNoText("Management")
+        c.assertNoText("Manager app")
         // The session is gone: the admin part sends a restart to the sign-in form.
         app.close()
         app.launch()

@@ -6,8 +6,8 @@
 applications, like the web site:
 
 - It opens the player part (`playerApp`), which everyone uses, with or without an account.
-- Admins and editors see the **Management** button in the top bar, and the chooser after the sign-in. It switches to
-  the admin part (`adminApp`) inside the same app, with the same session. **Player view**, or Back on the first screen
+- Admins and editors see the **Manager app** button in the top bar, and the chooser after the sign-in. It switches to
+  the admin part (`adminApp`) inside the same app, with the same session. **Player app**, or Back on the first screen
   of the admin part, returns. Each part keeps its screens while the other one is open.
 - The admin part has no sign-in of its own: without a session, or after a sign-out, it goes to the player part, as on
   the web (`leaveAdminForPlayerApp`, `SuiteAppHost`).
