@@ -291,7 +291,7 @@
     <string name="preg_close">Закрыть</string>
     <string name="preg_done_pending">Мы отправили ссылку на %1$s.\nОткройте её, чтобы подтвердить регистрацию.\nЕсли письма нет, проверьте папку «Спам».</string>
     <string name="preg_done_place">Вы зарегистрированы, место %1$d.\nМы отправили письмо со ссылкой для управления регистрацией.</string>
-    <string name="preg_done_waiting">Мест нет.\nВы номер %1$d в листе ожидания; организаторы напишут, если место освободится.</string>
+    <string name="preg_done_waiting">Мест нет.\nВы номер %1$d в листе ожидания. Освободившееся место сразу получает первый в листе, и ему приходит письмо.</string>
     <string name="preg_no_ema_sent">Ваше сообщение отправлено организаторам.\nОни ответят по почте.</string>
     <string name="preg_register_title">Регистрация</string>
     <string name="preg_register_as">Вы регистрируетесь как %1$s (EMA %2$s).</string>

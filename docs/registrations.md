@@ -5,7 +5,7 @@ created without players and without a draw. People register from the player app 
 registrations close, the organizer makes the draw with the confirmed people, with the same algorithm as the creation of
 a tournament.
 
-Decisions of the owner (19-nov-2026): the creation without players, the waiting list with promotions by hand, no
+Decisions of the owner (19-nov-2026): the creation without players, the waiting list (by hand at first, by itself since 25-nov-2026), no
 accounts from the registrations, private food restrictions with consent, optional teams that must be complete before
 the draw, a public list without hidden people, a button to cancel, the public link of the tournament, the Players tab of
 the player app, and the import of the old Google Form.
@@ -19,7 +19,8 @@ the player app, and the import of the old Google Form.
    the tournament waits for its draw, and the tournament itself after the draw. The old links
    `/inscripcion/<slug>` still work.
 2. **Open.** People register. Each one gets a place (`CONFIRMED`) while there are places, and then goes to the
-   numbered waiting list (`WAITING`). Without a limit of places everyone gets a place.
+   numbered waiting list (`WAITING`). Without a limit of places everyone gets a place. A place that frees up goes to
+   the first of the waiting list at once (see "Waiting list" below).
 3. **Closed.** The organizer closes the registrations (Close registrations on the Registrations screen), or the hourly job closes them the day
    after the last day, in the time zone of the tournament. They can open again: nothing is lost.
 4. **Draw** (admin, Registrations > Make the draw, only when closed). The app checks the people with a place: a
@@ -41,6 +42,24 @@ the player app, and the import of the old Google Form.
   They can be health data, so the app asks for an explicit consent. They are stored in `personPrivate/{emaId}`, so they
   belong to the person and its account, and not to one tournament.
 - **Cancel:** "Cancel my registration", with a confirmation. The organization gets an email.
+
+## Waiting list
+
+Owner, 25-nov-2026: a free place goes to the waiting list by itself, and the organization and the person always get an
+email. `promoteFromWaitingList` (registrationsService.ts) does it, in a transaction, so a place is never given twice:
+
+- **When:** a person with a place cancels, an organizer removes a person with a place, or an organizer gives more
+  places. Open or closed registrations alike, but only before the draw (`drawPending`). After the draw the
+  registrations are over, and the change of the number of players fills new tables from the waiting list by hand.
+- **Who:** the first of the waiting list (the order of registration), one per free place. The team does not matter:
+  in a tournament with teams the promoted person keeps its team, or has none and sees the red warning.
+- **Not:** in a tournament without a number of places (a person waits there only because an organizer put it there),
+  and when an organizer moves a person to the waiting list by hand.
+- **Emails:** the promoted person gets "You have a place" with the link of its registration. The organization gets
+  one email: a cancellation and who took its place together, or "Place from the waiting list" after a removal or more
+  places. `registrationLog` keeps a `promoted` entry.
+
+The organizer can still give a place by hand above the limit (Give a place), as before.
 
 ## Teams
 
@@ -94,7 +113,7 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
   the EMA registry. Food restrictions are an icon with a tooltip, and a warning shows when two people share an email
   (one account cannot share an email).
 - Each person: Change (email, team, food, paid), Give a place, Move to the waiting list, Remove (with or without an
-  email to the person). The waiting list moves only by hand.
+  email to the person). The confirmation of Remove says that the first of the waiting list gets the place.
 - Export CSV (top bar): the list as a CSV file with the columns of the import (Timestamp, Email, First name, Last
   name, EMA number, Country, Team, Food restrictions), plus Status and Paid, which the import leaves out. The app makes
   it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the
@@ -111,8 +130,8 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
   its Edit gives it the EMA number, with the name and country of the registry. A new email clears INVALID_EMAIL. The
   draw refuses while a person with a place has a problem with the EMA number (IMPORT_PROBLEMS). The name and the
   country come from the EMA registry, not from the file. The import never sends emails.
-- Emails to the organization (the contact email of the tournament): each cancellation, and a weekly report on Sunday at
-  21:00 of the tournament, until the draw.
+- Emails to the organization (the contact email of the tournament): each cancellation, each place that the waiting
+  list takes, and a weekly report on Sunday at 21:00 of the tournament, until the draw.
 
 ## Data
 
@@ -160,7 +179,7 @@ it is done once. An account keeps its food restrictions in its profile.
 - Export and import share `testdata/registrations-export.csv`: `RegistrationsCsvTest` checks that the export writes it,
   and `registrationImport.test.ts` that the import reads it.
 - Backend: `registrationSettings.test.ts`, `registrationImport.test.ts`, `registrationEmails.test.ts`,
-  `registrations.integration.test.ts` (the import that replaces the list, rows with problems and their fix, the draw
+  `registrationPromotion.integration.test.ts` (the waiting list fills the free places), `registrations.integration.test.ts` (the import that replaces the list, rows with problems and their fix, the draw
   refused with IMPORT_PROBLEMS)
   (emulators), and the routes in `rolePermissions.integration.test.ts`.
 - Kotlin: `AssignRegistrationsToDrawTest` (domain), `DefaultRegistrationRepositoryTest` (data: problems, fileEmaId,

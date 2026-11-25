@@ -1043,7 +1043,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="reg_add_title">Aggiungi una persona</string>
     <string name="reg_edit_title">Modifica l'iscrizione</string>
     <string name="reg_confirm_remove_title">Togliere l'iscrizione?</string>
-    <string name="reg_confirm_remove_message">%1$s esce dall'elenco.\nLa prima persona della lista d'attesa non sale da sola: dalle il posto dall'elenco.</string>
+    <string name="reg_confirm_remove_message">%1$s esce dall'elenco.\nSe aveva un posto, la prima persona della lista d'attesa lo riceve subito, con un'email.</string>
     <string name="reg_notify">Avvisa la persona via email</string>
     <string name="reg_remove">Togli</string>
     <string name="reg_draw_title">Generare il sorteggio?</string>

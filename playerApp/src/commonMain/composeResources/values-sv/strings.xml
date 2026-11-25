@@ -283,7 +283,7 @@
     <string name="preg_close">Stäng</string>
     <string name="preg_done_pending">Vi har skickat en länk till %1$s.\nÖppna den för att bekräfta din anmälan.\nSer du inte mejlet, titta i skräpposten.</string>
     <string name="preg_done_place">Du är anmäld, med plats %1$d.\nVi har mejlat dig länken för att hantera din anmälan.</string>
-    <string name="preg_done_waiting">Platserna är fulla.\nDu är nummer %1$d på väntelistan, och arrangören hör av sig om en plats blir ledig.</string>
+    <string name="preg_done_waiting">Platserna är fulla.\nDu är nummer %1$d på väntelistan. När en plats blir ledig går den direkt till den första på listan, och du får ett mejl.</string>
     <string name="preg_no_ema_sent">Ditt meddelande har skickats till arrangören.\nDe svarar dig via e-post.</string>
     <string name="preg_register_title">Anmälan</string>
     <string name="preg_register_as">Du anmäler dig som %1$s (EMA %2$s).</string>

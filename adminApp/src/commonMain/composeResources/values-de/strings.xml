@@ -1043,7 +1043,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="reg_add_title">Person hinzufügen</string>
     <string name="reg_edit_title">Anmeldung ändern</string>
     <string name="reg_confirm_remove_title">Anmeldung entfernen?</string>
-    <string name="reg_confirm_remove_message">%1$s verlässt die Liste.\nDie erste Person der Warteliste rückt nicht von allein nach: gib ihr den Platz in der Liste.</string>
+    <string name="reg_confirm_remove_message">%1$s verlässt die Liste.\nHatte die Person einen Platz, bekommt ihn sofort die erste Person der Warteliste, mit einer E-Mail.</string>
     <string name="reg_notify">Die Person per E-Mail informieren</string>
     <string name="reg_remove">Entfernen</string>
     <string name="reg_draw_title">Auslosung erstellen?</string>
