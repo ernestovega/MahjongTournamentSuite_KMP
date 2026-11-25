@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -71,9 +72,9 @@ internal fun SeatsAssignment(
 
     val label = if (table.seatsAssigned) Res.string.seats_change else Res.string.seats_assign
     if (table.seatsAssigned) {
-        TextButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(label)) }
+        TextButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) { ButtonText(stringResource(label)) }
     } else {
-        Button(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(label)) }
+        Button(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) { ButtonText(stringResource(label)) }
     }
     message?.let { Text(it.asString(), color = MaterialTheme.colorScheme.error) }
     if (!open) return
@@ -115,7 +116,7 @@ internal fun SeatsAssignment(
                     if (!complete) {
                         left.forEach { slot ->
                             key(slot) {
-                                OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { Text(view.nameOf(slot)) }
+                                OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { ButtonText(view.nameOf(slot)) }
                             }
                         }
                     }
@@ -150,11 +151,11 @@ internal fun SeatsAssignment(
                                 close()
                             }
                         },
-                    ) { Text(stringResource(Res.string.seats_save)) }
+                    ) { ButtonText(stringResource(Res.string.seats_save)) }
 
                     // Cancel under Start again (Ernesto, 2026-11-25).
-                    if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { Text(stringResource(Res.string.seats_restart)) }
-                    TextButton(enabled = !busy, onClick = { close() }) { Text(stringResource(Res.string.action_cancel)) }
+                    if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { ButtonText(stringResource(Res.string.seats_restart)) }
+                    TextButton(enabled = !busy, onClick = { close() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

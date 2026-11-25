@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -81,9 +82,9 @@ internal fun PlayerSelectionBar(
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {
-            Text(stringResource(Res.string.select_all_shown, shownCount))
+            ButtonText(stringResource(Res.string.select_all_shown, shownCount))
         }
-        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { Text(stringResource(Res.string.clear)) }
+        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { ButtonText(stringResource(Res.string.clear)) }
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(
             enabled = selectedCount > 0 && !busy,
@@ -91,7 +92,7 @@ internal fun PlayerSelectionBar(
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
         ) {
             Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.delete_players_count, selectedCount), Modifier.padding(start = 8.dp))
+            ButtonText(stringResource(Res.string.delete_players_count, selectedCount), Modifier.padding(start = 8.dp))
         }
     }
 }
@@ -149,14 +150,14 @@ internal fun EmaPlayerDeletesConfirmDialog(
                         focusRequester = deleteFocus,
                         buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
                         colors = MtsButtons.destructiveColors(),
-                    ) { Text(stringResource(Res.string.delete_players_count, count)) }
+                    ) { ButtonText(stringResource(Res.string.delete_players_count, count)) }
 
                     FocusedTextButton(
                         onClick = onDismiss,
                         enabled = !busy,
                         focusRequester = cancelFocus,
                         buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                    ) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -214,7 +215,7 @@ internal fun EmaPlayerDeletesResultDialog(results: List<EmaPlayerDeleteResult>, 
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                    Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )

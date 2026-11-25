@@ -274,7 +274,7 @@ fun SignInForm(
                                         strokeWidth = 2.dp,
                                     )
                                 } else {
-                                    Text(stringResource(Res.string.sign_in_button))
+                                    ButtonText(stringResource(Res.string.sign_in_button))
                                 }
                             }
                             FocusedTextButton(
@@ -282,7 +282,7 @@ fun SignInForm(
                                 onClick = onForgotPassword,
                                 contentPadding = LinkButtonPadding,
                             ) {
-                                Text(stringResource(Res.string.sign_in_forgot_password))
+                                ButtonText(stringResource(Res.string.sign_in_forgot_password))
                             }
                         }
                     }

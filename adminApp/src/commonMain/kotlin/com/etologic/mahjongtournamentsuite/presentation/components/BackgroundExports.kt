@@ -203,7 +203,7 @@ private fun BackgroundExportCard(task: BackgroundExports.Task, onSave: () -> Uni
             }
             if (task.status is BackgroundExports.Status.Ready) {
                 TextButton(onClick = onSave) {
-                    Text(stringResource(Res.string.background_export_save), color = MaterialTheme.colorScheme.inversePrimary)
+                    ButtonText(stringResource(Res.string.background_export_save), color = MaterialTheme.colorScheme.inversePrimary)
                 }
             }
             if (task.status !is BackgroundExports.Status.Running) {

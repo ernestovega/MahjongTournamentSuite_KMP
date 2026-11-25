@@ -519,6 +519,7 @@ fun TournamentScreen(
     Box(modifier = Modifier.trackActivity(activity)) {
     AppScaffold(
         title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
+        shortTitle = tournament?.shortName,
         titleAction = {
             TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
         },

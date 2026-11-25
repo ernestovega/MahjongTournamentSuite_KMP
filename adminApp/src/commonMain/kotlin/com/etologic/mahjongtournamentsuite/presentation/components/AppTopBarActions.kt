@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,7 +97,7 @@ fun AppTopBarActions(
                 text = { MtsDialogText(stringResource(Res.string.import_locked_text)) },
                 confirmButton = {
                     MtsDialogButtons {
-                        Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) }
+                        Button(onClick = { lockedInfoOpen = false }) { ButtonText(stringResource(Res.string.ok)) }
                     }
                 },
             )

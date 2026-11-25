@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -579,7 +580,7 @@ internal fun TournamentCard(
                         }
                         // Already registered: no button. The stamp of the card says it (Ernesto, 21-nov).
                         if (registration.isOpen && mark != MyTournamentMark.REGISTERED && mark != MyTournamentMark.WAITING) {
-                            Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
+                            Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { ButtonText(stringResource(Res.string.preg_register)) }
                         }
                     }
                 }
@@ -656,7 +657,7 @@ internal fun TournamentCard(
                         },
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     ) {
-                        Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
+                        ButtonText(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 if (expanded) TournamentSchedule(tournament)
@@ -679,7 +680,7 @@ private fun LinkButton(icon: ImageVector, label: String, description: String? = 
     ) {
         Icon(icon, contentDescription = null, Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        ButtonText(label, style = MaterialTheme.typography.labelLarge)
     }
 }
 

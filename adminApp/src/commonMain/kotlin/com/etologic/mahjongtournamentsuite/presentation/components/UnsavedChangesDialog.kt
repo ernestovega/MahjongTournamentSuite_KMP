@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -48,7 +47,7 @@ fun UnsavedChangesDialog(
                         focusRequester = saveFocusRequester,
                         buttonModifier = Modifier.focusLoop(previous = cancelFocusRequester, next = discardFocusRequester),
                     ) {
-                        Text(stringResource(Res.string.save))
+                        ButtonText(stringResource(Res.string.save))
                     }
                     // Discarding loses the changes: a secondary destructive action, red and outlined.
                     FocusedOutlinedButton(
@@ -59,7 +58,7 @@ fun UnsavedChangesDialog(
                         colors = MtsButtons.destructiveOutlinedColors(),
                         border = MtsButtons.destructiveBorder(!isSaving),
                     ) {
-                        Text(stringResource(Res.string.discard))
+                        ButtonText(stringResource(Res.string.discard))
                     }
                     FocusedTextButton(
                         enabled = !isSaving,
@@ -67,7 +66,7 @@ fun UnsavedChangesDialog(
                         focusRequester = cancelFocusRequester,
                         buttonModifier = Modifier.focusLoop(previous = discardFocusRequester, next = saveFocusRequester),
                     ) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                 }
             },

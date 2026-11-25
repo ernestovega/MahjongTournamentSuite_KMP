@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -512,24 +513,24 @@ internal fun RoleEditorDialog(
             confirmButton = {
                 MtsDialogButtons {
                     if (draft.readOnly) {
-                        FocusedButton(onClick = onDuplicate, enabled = !saving) { Text(stringResource(Res.string.role_duplicate)) }
+                        FocusedButton(onClick = onDuplicate, enabled = !saving) { ButtonText(stringResource(Res.string.role_duplicate)) }
                     } else {
                         FocusedButton(
                             onClick = { onSave(trimmed, base, selected + catalog.required) },
                             enabled = !saving && trimmed.isNotEmpty() && !taken,
-                        ) { Text(stringResource(Res.string.save)) }
+                        ) { ButtonText(stringResource(Res.string.save)) }
                         if (draft.id != null) {
-                            FocusedOutlinedButton(onClick = onDuplicate, enabled = !saving) { Text(stringResource(Res.string.role_duplicate)) }
+                            FocusedOutlinedButton(onClick = onDuplicate, enabled = !saving) { ButtonText(stringResource(Res.string.role_duplicate)) }
                             FocusedOutlinedButton(
                                 onClick = onDelete,
                                 enabled = !saving,
                                 colors = MtsButtons.destructiveOutlinedColors(),
                                 border = MtsButtons.destructiveBorder(!saving),
-                            ) { Text(stringResource(Res.string.role_delete)) }
+                            ) { ButtonText(stringResource(Res.string.role_delete)) }
                         }
                     }
                     FocusedTextButton(onClick = onDismiss, enabled = !saving) {
-                        Text(stringResource(if (draft.readOnly) Res.string.close else Res.string.cancel))
+                        ButtonText(stringResource(if (draft.readOnly) Res.string.close else Res.string.cancel))
                     }
                 }
             },
@@ -556,9 +557,9 @@ internal fun DeleteRoleDialog(role: CustomRole, saving: Boolean, onDismiss: () -
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(onClick = onConfirm, enabled = !saving, colors = MtsButtons.destructiveColors()) {
-                        Text(stringResource(Res.string.role_delete))
+                        ButtonText(stringResource(Res.string.role_delete))
                     }
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -637,10 +638,10 @@ internal fun AccountPermissionsDialog(
                             if (managesPermissions && current != rolePermissions) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     FocusedTextButton(onClick = { permissions[level] = rolePermissions }, enabled = !saving) {
-                                        Text(stringResource(Res.string.account_permissions_reset))
+                                        ButtonText(stringResource(Res.string.account_permissions_reset))
                                     }
                                     FocusedTextButton(onClick = { onSaveAsNewRole(level, current) }, enabled = !saving) {
-                                        Text(stringResource(Res.string.account_permissions_save_as_role))
+                                        ButtonText(stringResource(Res.string.account_permissions_save_as_role))
                                     }
                                 }
                             }
@@ -655,8 +656,8 @@ internal fun AccountPermissionsDialog(
                             onSave(levels.associateWith { level -> LevelPermissions(roleIds[level], if (managesPermissions) permissions[level] else null) })
                         },
                         enabled = !saving && choosesRole,
-                    ) { Text(stringResource(Res.string.save)) }
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.save)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -696,8 +697,8 @@ internal fun NewRoleNameDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    FocusedButton(onClick = { onConfirm(trimmed) }, enabled = !saving && trimmed.isNotEmpty() && !taken) { Text(stringResource(Res.string.save)) }
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedButton(onClick = { onConfirm(trimmed) }, enabled = !saving && trimmed.isNotEmpty() && !taken) { ButtonText(stringResource(Res.string.save)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

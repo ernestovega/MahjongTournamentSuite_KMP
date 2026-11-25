@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -82,9 +83,9 @@ internal fun PasswordResetBar(
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {
-            Text(stringResource(Res.string.select_all_shown, shownCount))
+            ButtonText(stringResource(Res.string.select_all_shown, shownCount))
         }
-        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { Text(stringResource(Res.string.clear)) }
+        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { ButtonText(stringResource(Res.string.clear)) }
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (showSend) Spacer(Modifier.weight(1f))
         // On a phone the delete stays here, and the send button floats at the bottom of the screen.
@@ -95,13 +96,13 @@ internal fun PasswordResetBar(
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
                 Icon(Icons.Filled.Delete, contentDescription = null, Modifier.size(18.dp))
-                Text(stringResource(Res.string.delete_selected_count, deleteCount), Modifier.padding(start = 8.dp))
+                ButtonText(stringResource(Res.string.delete_selected_count, deleteCount), Modifier.padding(start = 8.dp))
             }
         }
         if (showSend) {
             Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
-                Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
+                ButtonText(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
             }
         }
     }
@@ -118,8 +119,8 @@ internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: (
             text = { MtsDialogText(pluralStringResource(Res.plurals.password_resets_confirm_text, count, count)) },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) }
-                    TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    Button(enabled = !busy, onClick = onConfirm) { ButtonText(stringResource(Res.string.send_password_reset_count, count)) }
+                    TextButton(enabled = !busy, onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -169,7 +170,7 @@ internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, user
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                    Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )

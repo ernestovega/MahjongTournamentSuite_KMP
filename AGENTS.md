@@ -215,6 +215,8 @@ Apply these rules to every new or changed dialog:
 - Use the `Debounced*` buttons (`DebouncedButton`, `DebouncedTextButton`, `DebouncedOutlinedButton`, `DebouncedIconButton`, `DebouncedExtendedFloatingActionButton`) for the same look and layout as the Material button.
 - Import them with an alias, for example `import ...components.DebouncedButton as Button`.
 - Never import a raw Material button. `ButtonConventionTest` fails when a source file does.
+- The text of a button is `ButtonText`, never `Text`: every button shows its text in capitals, while screen readers
+  and tests get the text as written. `ButtonTextConventionTest` fails when a button content uses `Text`.
 - Menu items, chips that toggle a filter, checkboxes and switches have no threshold on purpose. They must stay fast to use.
 
 ## Checkboxes, Switches And Radio Buttons

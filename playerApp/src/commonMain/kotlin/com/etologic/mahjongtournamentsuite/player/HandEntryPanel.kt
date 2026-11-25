@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -358,12 +360,12 @@ fun HandEntryPanel(
             onClick = { modeName = EntryMode.DRAW.name },
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_draw), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_draw), textAlign = TextAlign.Center) }
         Button(
             onClick = { modeName = EntryMode.WIN.name },
             modifier = Modifier.weight(1.4f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_win), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_win), textAlign = TextAlign.Center) }
         OutlinedButton(
             onClick = {
                 if (penaltyDrafts.isEmpty()) penaltyDrafts.add(PenaltyDraft())
@@ -371,7 +373,7 @@ fun HandEntryPanel(
             },
             modifier = Modifier.weight(1.25f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_penalty), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_penalty), textAlign = TextAlign.Center) }
     }
     // The new totals arrive after a short time. The dialog shows progress until the table has the new data.
     LaunchedEffect(progressKey, awaitingKey) {
@@ -428,10 +430,10 @@ fun HandEntryPanel(
         }
     }
     val cancelButton: @Composable () -> Unit = {
-        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+        TextButton(onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
     }
     fun backButton(to: WinStep): @Composable () -> Unit = {
-        TextButton(onClick = { winStep = to }) { Text(stringResource(Res.string.entry_back)) }
+        TextButton(onClick = { winStep = to }) { ButtonText(stringResource(Res.string.entry_back)) }
     }
     // A draw has nothing to ask: "Add draw" opens the check of the hand at once (Ernesto, 2026-11-25). An error of the
     // preview shows alone, and closing it ends the entry.
@@ -531,7 +533,7 @@ fun HandEntryPanel(
                 confirmButton = {
                     MtsDialogButtons {
                         if (winStep == WinStep.SCORE) {
-                            Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                            Button(enabled = valid && !busy, onClick = { requestPreview() }) { ButtonText(stringResource(Res.string.entry_review)) }
                         }
                         when (winStep) {
                             WinStep.WINNER -> cancelButton()
@@ -606,15 +608,15 @@ fun HandEntryPanel(
                                     busy = false
                                 }
                             },
-                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                        ) { ButtonText(stringResource(Res.string.entry_confirm_save)) }
                         // Edit goes back to the score of a win. A draw has nothing to edit. Cancel ends the entry.
                         if (!isDraw) {
                             TextButton(enabled = !saving, onClick = {
                                 preview = null
                                 message = null
-                            }) { Text(stringResource(Res.string.entry_edit)) }
+                            }) { ButtonText(stringResource(Res.string.entry_edit)) }
                         }
-                        TextButton(enabled = !saving, onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        TextButton(enabled = !saving, onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -638,8 +640,8 @@ fun HandEntryPanel(
                         Button(
                             enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
                             onClick = { penaltyReview = true },
-                        ) { Text(stringResource(Res.string.entry_review)) }
-                        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        ) { ButtonText(stringResource(Res.string.entry_review)) }
+                        TextButton(onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -685,12 +687,12 @@ fun HandEntryPanel(
                                     busy = false
                                 }
                             },
-                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                        ) { ButtonText(stringResource(Res.string.entry_confirm_save)) }
                         TextButton(enabled = !saving, onClick = {
                             penaltyReview = false
                             message = null
-                        }) { Text(stringResource(Res.string.entry_edit)) }
-                        TextButton(enabled = !saving, onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        }) { ButtonText(stringResource(Res.string.entry_edit)) }
+                        TextButton(enabled = !saving, onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -1037,15 +1039,22 @@ private fun ReviewSideBox(
         // The same room on both sides, so the text is centered in its box; the circle of the points simply goes on
         // top (Ernesto, 2026-11-25).
         val side = 8.dp + maxOf(startRoom, endRoom) * 0.75f
+        // The word at the top of every box, so the words of the two boxes line up; below it, the icon and the
+        // content in the middle of the room that is left (Ernesto, 2026-11-25).
         Column(
-            Modifier.padding(start = side, top = 12.dp, end = side, bottom = 12.dp),
+            Modifier.fillMaxHeight().padding(start = side, top = 12.dp, end = side, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
         ) {
-            // The icon goes above the word, centered (Ernesto, 2026-11-25).
-            icon?.invoke()
             Text(word, style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
-            content()
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
+            ) {
+                icon?.invoke()
+                content()
+            }
         }
     }
 }
@@ -1142,7 +1151,7 @@ private fun ReviewHand(
 
 /**
  * Every player of the table with what changes now ([changes], under [changeHeader]) and the total after it, and the
- * table points when the table ends. The players go in the order of their winds in hand [handNumber]. Used by the check
+ * table points when the table ends. The players go from the best total to the worst. Used by the check
  * of a hand and of a penalty (Ernesto, 2026-11-25).
  */
 @Composable
@@ -1156,7 +1165,11 @@ private fun ReviewScoreTable(
     points: List<String>?,
 ) {
     // The number columns are as wide as their widest text, so the name keeps the rest of the row (Ernesto, 2026-11-25).
-    val order = seats.indices.filter { seats[it] != null }.sortedBy { index -> seats[index]?.let { currentWindOf(seats, it, handNumber)?.ordinal } ?: index }
+    // From the best total to the worst, like a ranking; players with the same total keep the order of their winds
+    // (Ernesto, 2026-11-25).
+    val order = seats.indices.filter { seats[it] != null }
+        .sortedBy { index -> seats[index]?.let { currentWindOf(seats, it, handNumber)?.ordinal } ?: index }
+        .sortedByDescending { index -> totals.getOrNull(index)?.toDoubleOrNull() ?: Double.NEGATIVE_INFINITY }
     val headerStyle = MaterialTheme.typography.labelMedium
     val valueStyle = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold)
     val measurer = rememberTextMeasurer()
@@ -1287,15 +1300,16 @@ private fun ChickenCircle(modifier: Modifier) {
     Surface(
         modifier.size(ChickenCircleSize).semantics { contentDescription = label },
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        // A light warm background, so the chicken does not get lost on the grey of the screen (Ernesto, 2026-11-25).
+        color = MtsTheme.colors.warning.copy(alpha = 0.16f).compositeOver(MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MtsTheme.colors.warning),
         shadowElevation = 2.dp,
     ) {
-        Box(contentAlignment = Alignment.Center) { ChickenIcon(18.dp) }
+        Box(contentAlignment = Alignment.Center) { ChickenIcon(20.dp) }
     }
 }
 
-private val ChickenCircleSize = 28.dp
+private val ChickenCircleSize = 30.dp
 
 /** The points in a circle between the two boxes, with the short word for points below them (Ernesto, 2026-11-25). */
 @Composable
@@ -1400,7 +1414,7 @@ private fun TableChangedDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
+                    Button(onClick = onClose) { ButtonText(stringResource(Res.string.changed_close)) }
                 }
             },
         )

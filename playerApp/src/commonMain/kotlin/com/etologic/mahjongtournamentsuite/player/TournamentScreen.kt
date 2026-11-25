@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -188,6 +189,9 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
             else -> view?.tournament?.name ?: stringResource(Res.string.scope_tournament)
         },
         subtitle = if (teamOpen) view?.tournament?.name else null,
+        // The short name of the tournament when the long one does not fit.
+        shortTitle = if (teamOpen) null else view?.tournament?.shortName,
+        shortSubtitle = view?.tournament?.shortName,
         isLoading = (view == null && message == null) || ((shownTab == MainTab.STATISTICS || teamOpen) && statisticsLoading),
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },
@@ -382,7 +386,7 @@ private fun SignInPrompt(message: String, onSignIn: () -> Unit) {
         EmptyState(Icons.AutoMirrored.Filled.Login, stringResource(Res.string.sign_in_needed_title), message)
         Button(onClick = onSignIn) {
             Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.menu_sign_in), Modifier.padding(start = 8.dp))
+            ButtonText(stringResource(Res.string.menu_sign_in), Modifier.padding(start = 8.dp))
         }
     }
 }

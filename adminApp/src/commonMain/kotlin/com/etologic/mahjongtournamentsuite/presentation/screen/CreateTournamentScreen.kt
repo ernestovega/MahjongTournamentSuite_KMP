@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -902,7 +903,7 @@ fun CreateTournamentDialog(
                     }
                     MtsDialogButtons {
                         Button(onClick = ::startCreate, enabled = !isLoading) {
-                            Text(stringResource(Res.string.create))
+                            ButtonText(stringResource(Res.string.create))
                         }
                         if (!isLoading) {
                             AppTextButton(
@@ -911,7 +912,7 @@ fun CreateTournamentDialog(
                                     onDismiss()
                                 },
                             ) {
-                                Text(stringResource(Res.string.cancel))
+                                ButtonText(stringResource(Res.string.cancel))
                             }
                         }
                     }

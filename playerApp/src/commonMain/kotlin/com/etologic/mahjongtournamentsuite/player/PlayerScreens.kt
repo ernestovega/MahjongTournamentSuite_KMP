@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -11,7 +12,6 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -331,7 +331,7 @@ internal fun MyResultsButton(onClick: () -> Unit) {
     ) {
         Icon(Icons.Default.TableChart, contentDescription = null)
         Spacer(Modifier.width(MtsTheme.spacing.sm))
-        Text(stringResource(Res.string.tab_my_results))
+        ButtonText(stringResource(Res.string.tab_my_results))
     }
 }
 

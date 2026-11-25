@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -142,7 +143,7 @@ internal fun TournamentFilterBar(
                             Icon(Icons.Default.FilterAltOff, contentDescription = stringResource(Res.string.filter_clear))
                         }
                     } else {
-                        TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
+                        TextButton(onClick = { onChange(TournamentFilter()) }) { ButtonText(stringResource(Res.string.filter_clear)) }
                     }
                 }
             }

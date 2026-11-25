@@ -121,7 +121,7 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
             },
             confirmButton = {
                 MtsDialogButtons {
-                    FocusedButton(onClick = onDismiss, focusRequester = closeFocusRequester) { Text(stringResource(Res.string.close)) }
+                    FocusedButton(onClick = onDismiss, focusRequester = closeFocusRequester) { ButtonText(stringResource(Res.string.close)) }
                 }
             },
         )
@@ -169,7 +169,7 @@ fun DrawExplanationButton(onClick: () -> Unit) {
     FocusedTextButton(onClick = onClick, modifier = Modifier.testTag("drawExplanationButton")) {
         Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.width(8.dp))
-        Text(stringResource(Res.string.draw_help_button))
+        ButtonText(stringResource(Res.string.draw_help_button))
     }
 }
 
