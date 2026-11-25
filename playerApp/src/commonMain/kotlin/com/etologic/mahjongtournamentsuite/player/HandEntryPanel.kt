@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -1299,7 +1300,7 @@ private fun ChickenCircle(modifier: Modifier) {
         modifier.size(ChickenCircleSize).semantics { contentDescription = label },
         shape = CircleShape,
         // A light warm background, so the chicken does not get lost on the grey of the screen (Ernesto, 2026-11-25).
-        color = ChickenCircleColor,
+        color = MtsTheme.colors.warning.copy(alpha = 0.16f).compositeOver(MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MtsTheme.colors.warning),
         shadowElevation = 2.dp,
     ) {
@@ -1308,7 +1309,6 @@ private fun ChickenCircle(modifier: Modifier) {
 }
 
 private val ChickenCircleSize = 30.dp
-private val ChickenCircleColor = Color(0xFFFFF3D6)
 
 /** The points in a circle between the two boxes, with the short word for points below them (Ernesto, 2026-11-25). */
 @Composable
