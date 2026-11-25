@@ -169,9 +169,6 @@ data class MtsColors(
  * with the theme either.
  */
 object MtsFixedColors {
-    /** The green of the app icon (launcher, favicon, desktop): the same in both themes. */
-    val appIcon: Color = Color(0xFF00A756)
-
     /** Text on a light fill, such as a light sector of a chart: almost black. Text on a dark fill is white. */
     val inkOnLight: Color = Color(0xFF1B1B1B)
 
@@ -252,9 +249,6 @@ object MtsShapes {
 
     /** Outlined tags, like the status of a tournament: almost square corners. */
     val tag: Shape = RoundedCornerShape(2.dp)
-
-    /** The app icon: a rounded square, as favicon.png and the desktop icon. */
-    val appIcon: Shape = RoundedCornerShape(percent = 22)
 }
 
 /** The Material shapes, written out so that the scale is visible here. They are the Material defaults. */

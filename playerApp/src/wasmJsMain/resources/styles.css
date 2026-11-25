@@ -25,10 +25,14 @@ html[data-theme="dark"] {
     height: 100%;
 }
 
-/* The app icon (favicon.png): the white logo on a green rounded square, in both themes. */
 .mts-loading img {
     width: 160px;
     height: 160px;
+}
+
+/* The logo is green on light backgrounds and white on dark ones. */
+html[data-theme="dark"] .mts-loading img {
+    filter: brightness(0) invert(1);
 }
 
 .mts-loading .track {
