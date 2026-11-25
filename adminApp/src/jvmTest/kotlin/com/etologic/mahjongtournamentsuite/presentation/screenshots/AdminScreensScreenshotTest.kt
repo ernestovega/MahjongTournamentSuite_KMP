@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -14,6 +18,8 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
@@ -29,12 +35,15 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.TimerContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
@@ -240,12 +249,32 @@ class AdminScreensScreenshotTest {
     fun timer() = adminScreenshots("timer", ready = { waitForText("2:00:00") }) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
     @Test
+    fun timerRunning() = adminScreenshots("timer-running", ready = { waitForText("1:30:00") }) {
+        // Round 3 started 30 minutes ago: Pause and Stop stay faint so the clock is what the room sees.
+        val repository = remember { RunningClockTournamentRepository() }
+        val controller = remember { RoundTimerController(repository, ONGOING, initialRound = 3, deviceNowMs = { RUNNING_NOW_MS }) }
+        Surface(modifier = Modifier.fillMaxSize()) {
+            TimerContent(controller = controller, themePreference = ThemePreference.System, onToggleTheme = {}, deviceNowMs = { RUNNING_NOW_MS })
+        }
+    }
+
+    @Test
     fun timerIndependent() = adminScreenshots("timer-independent") { TimerStandaloneScreen(null) }
 
     @Test
     fun rankingStandalone() = adminScreenshots("ranking-standalone", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) {
         RankingStandaloneScreen(ONGOING, clock = FixedClock)
     }
+}
+
+/** The device and server time of the running Timer capture. */
+private const val RUNNING_NOW_MS = 1_779_000_000_000L
+
+/** Round 3 of [ONGOING] has run for 30 minutes. */
+private class RunningClockTournamentRepository : ScreenshotTournamentRepository() {
+    override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> = AppResult.Success(
+        RoundClocks(clocks = listOf(RoundClock(roundId = 3, startedAtMs = RUNNING_NOW_MS - 30 * 60_000L)), serverNowMs = RUNNING_NOW_MS),
+    )
 }
 
 /** A "loaded at" time that does not change between runs. */

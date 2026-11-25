@@ -142,6 +142,9 @@ fun TimerStandaloneScreen(
     }
 }
 
+/** Pause and Stop while the round runs: almost invisible, so the room sees only the clock. They still work. */
+private const val RUNNING_CONTROLS_ALPHA = 0.15f
+
 /** How often the Timer reads the clocks of the server, to follow a Play or a Pause on another Timer. */
 private const val CLOCK_POLL_MS = 5_000L
 
@@ -458,7 +461,7 @@ internal fun TimerContent(
                         onClick = { scope.launch { controller.pause() } },
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .alpha(0.5f),
+                            .alpha(RUNNING_CONTROLS_ALPHA),
                         buttonModifier = Modifier
                             .size(56.dp)
                             .focusLoop(previous = startPrevious, next = startNext),
@@ -500,7 +503,7 @@ internal fun TimerContent(
                         onClick = { dialog = TimerDialog.ConfirmStop },
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .alpha(0.5f),
+                            .alpha(RUNNING_CONTROLS_ALPHA),
                         buttonModifier = Modifier.focusLoop(previous = startFocusRequester, next = startFocusRequester),
                     ) {
                         Icon(
