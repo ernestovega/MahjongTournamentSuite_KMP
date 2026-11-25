@@ -45,7 +45,11 @@ export async function requireAuth(
     const now = Date.now();
     if ((revocationCheckedUntil.get(decoded.uid) ?? 0) <= now) {
       decoded = await auth.verifyIdToken(token, true);
-      if (revocationCheckedUntil.size >= MAX_CACHED_USERS) revocationCheckedUntil.clear();
+      // A full map drops the checks that are over first, so many new users do not make everybody check again.
+      if (revocationCheckedUntil.size >= MAX_CACHED_USERS) {
+        for (const [uid, until] of revocationCheckedUntil) if (until <= now) revocationCheckedUntil.delete(uid);
+        if (revocationCheckedUntil.size >= MAX_CACHED_USERS) revocationCheckedUntil.clear();
+      }
       revocationCheckedUntil.set(decoded.uid, now + REVOCATION_CHECK_TTL_MS);
     }
     res.locals.auth = decoded;

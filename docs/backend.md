@@ -55,7 +55,7 @@ Body:
 
 - `email` (required)
 
-Firebase sends password reset instructions to the email address.
+Firebase sends password reset instructions to the email address. The answer is the same for an unknown address. Each caller address may call it 30 times a minute, and one email address gets at most 5 reset emails an hour from all callers together (`PASSWORD_RESETS_PER_EMAIL_PER_HOUR`, answer 429).
 
 ### Refresh
 

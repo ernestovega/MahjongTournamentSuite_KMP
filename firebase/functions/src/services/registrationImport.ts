@@ -95,6 +95,14 @@ export function parseFormTime(value: string): number | null {
 
 export const MAX_IMPORT_ROWS = 500;
 
+/**
+ * The export of the admin app (RegistrationsCsv.kt) puts an apostrophe before a cell that starts like a formula, so a
+ * spreadsheet shows it as text. The import takes it off, so the file goes back in as it went out.
+ */
+export function withoutFormulaGuard(value: string): string {
+  return /^'[=+\-@\t\r]/.test(value) ? value.slice(1) : value;
+}
+
 /** Reads the CSV text of the form, or the cells of the form as an Excel file gives them. */
 export function readFormRows(input: string | string[][]): FormRow[] {
   const rows = (typeof input === "string" ? parseCsv(input) : input)
@@ -108,7 +116,7 @@ export function readFormRows(input: string | string[][]): FormRow[] {
     emaId: column("emaId"), country: column("country"), team: column("team"), food: column("food"),
   };
   if (indexes.emaId < 0) throw badRequest("The file has no column with the EMA number", { code: "NO_EMA_COLUMN" });
-  const cell = (cells: string[], index: number) => (index < 0 ? "" : (cells[index] ?? "").trim());
+  const cell = (cells: string[], index: number) => (index < 0 ? "" : withoutFormulaGuard((cells[index] ?? "").trim()));
   const seenEma = new Set<string>();
   return rows.slice(1).map((cells, offset) => {
     const problems: string[] = [];

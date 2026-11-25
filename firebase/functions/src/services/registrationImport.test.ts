@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { describe, it } from "node:test";
 
 import { readSpreadsheetRecords } from "./playerImport";
-import { normalizeFormEmaId, parseCsv, parseFormTime, readFormRows } from "./registrationImport";
+import { normalizeFormEmaId, parseCsv, parseFormTime, readFormRows, withoutFormulaGuard } from "./registrationImport";
 
 const FORM = [
   "Marca temporal,Dirección de correo electrónico,First name,Last name,EMA number,Country,Team,Food restrictions",
@@ -49,6 +49,16 @@ describe("import of the old Google Form", () => {
     assert.deepEqual(rows[4].problems, ["DUPLICATE_EMA"]);
     assert.equal(rows[0].line, 2);
     assert.equal(rows[0].registeredAt, Date.UTC(2026, 8, 15, 18, 28, 56));
+  });
+
+  it("takes off the apostrophe that the export puts before a cell that starts like a formula", () => {
+    assert.equal(withoutFormulaGuard("'=HYPERLINK(1)"), "=HYPERLINK(1)");
+    assert.equal(withoutFormulaGuard("'-no gluten"), "-no gluten");
+    assert.equal(withoutFormulaGuard("'Neill"), "'Neill");
+    assert.equal(withoutFormulaGuard("O'Neill"), "O'Neill");
+    const rows = readFormRows("EMA number,First name,Food restrictions\n10990039,'+Ana,'-no gluten");
+    assert.equal(rows[0].firstName, "+Ana");
+    assert.equal(rows[0].foodRestrictions, "-no gluten");
   });
 
   it("needs the EMA column and at least one answer", () => {

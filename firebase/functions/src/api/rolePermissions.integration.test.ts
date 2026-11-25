@@ -6,6 +6,7 @@ import { requireRegisteredPlayer } from "./middleware/requireRegisteredPlayer";
 import { requireAuth } from "./middleware/requireAuth";
 import type { PermissionGuard } from "./middleware/requirePermission";
 import { buildApp, MOUNTED_ROUTERS } from "./app";
+import { PASSWORD_RESETS_PER_EMAIL_PER_HOUR } from "./routes/auth.routes";
 import { seedOrganization, seedTournament } from "../testing/firestoreFixtures";
 import { getGlobalDataVersions } from "../services/dataVersionsService";
 import { setGlobalUserRole } from "../services/usersService";
@@ -955,6 +956,20 @@ describe("input checks on public and path values", () => {
     const { status } = await server.request("POST", "/auth/passwordReset", { body: { email: "nobody-here@example.test" } });
 
     assert.equal(status, 200);
+  });
+
+  it("sends at most a few password reset emails an hour to one address, from any caller", async () => {
+    process.env.MTS_ID_TOOLKIT_API_KEY ??= "test-key";
+    const email = "Flooded-Inbox@example.test";
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt <= PASSWORD_RESETS_PER_EMAIL_PER_HOUR; attempt++) {
+      const caller = `10.9.${attempt}.1`;
+      const sent = attempt % 2 === 0 ? email : email.toLowerCase();
+      statuses.push((await server.request("POST", "/auth/passwordReset", { body: { email: sent }, headers: { "x-forwarded-for": caller } })).status);
+    }
+    assert.deepEqual(statuses, [...Array(PASSWORD_RESETS_PER_EMAIL_PER_HOUR).fill(200), 429]);
+    // Another address is not counted with it.
+    assert.equal((await server.request("POST", "/auth/passwordReset", { body: { email: "other-inbox@example.test" } })).status, 200);
   });
 
   it("refuses requests without an App Check token in enforce mode, except the health check", async () => {

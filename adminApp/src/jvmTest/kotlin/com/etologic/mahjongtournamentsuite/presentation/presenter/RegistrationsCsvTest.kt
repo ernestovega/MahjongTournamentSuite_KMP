@@ -61,6 +61,17 @@ class RegistrationsCsvTest {
     }
 
     @Test
+    fun cellsThatStartLikeAFormulaBecomeText() {
+        assertEquals("\"'=HYPERLINK(\"\"x\"\")\"", RegistrationsCsv.escape("=HYPERLINK(\"x\")"))
+        assertEquals("'+34 600", RegistrationsCsv.escape("+34 600"))
+        assertEquals("'-no gluten", RegistrationsCsv.escape("-no gluten"))
+        assertEquals("'@SUM(A1)", RegistrationsCsv.escape("@SUM(A1)"))
+        assertEquals("\"'=1,2\"", RegistrationsCsv.escape("=1,2"))
+        assertEquals("Vegan - no nuts", RegistrationsCsv.escape("Vegan - no nuts"))
+        assertEquals("", RegistrationsCsv.escape(""))
+    }
+
+    @Test
     fun withoutTeamsTheTeamColumnIsEmpty() {
         val lines = RegistrationsCsv.build(SAMPLE.copy(isTeams = false), REGISTRY).trimEnd().split("\r\n").drop(1)
         assertTrue(lines.all { it.split(",")[6].isEmpty() }, lines.joinToString("\n"))

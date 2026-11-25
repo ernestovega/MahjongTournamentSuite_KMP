@@ -21,10 +21,20 @@ export function signInError(error: unknown): unknown {
   return error;
 }
 
+/** Password reset emails to one address in an hour. A person who did not get the first one tries a few times. */
+export const PASSWORD_RESETS_PER_EMAIL_PER_HOUR = 5;
+
 export function authRouter(): Router {
   const router = Router();
   // The sign-in routes are public. Each address may call them 30 times a minute.
   const publicLimit = rateLimit({ windowMs: 60_000, max: 30 });
+  // Each request sends an email to the address of the body. The limit above counts the caller, this one the address,
+  // so nobody fills the inbox of somebody else. The answer is the same for every address, known or not.
+  const resetMailLimit = rateLimit({
+    windowMs: 60 * 60_000,
+    max: PASSWORD_RESETS_PER_EMAIL_PER_HOUR,
+    key: (req) => `reset:${String(req.body?.email ?? "").trim().toLowerCase()}`,
+  });
 
   router.post("/signIn", publicLimit, async (req, res, next) => {
     try {
@@ -47,7 +57,7 @@ export function authRouter(): Router {
     }
   });
 
-  router.post("/passwordReset", publicLimit, async (req, res, next) => {
+  router.post("/passwordReset", publicLimit, resetMailLimit, async (req, res, next) => {
     try {
       const email = String(req.body?.email ?? "").trim();
       if (!email) {

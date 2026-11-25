@@ -99,7 +99,9 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
   name, EMA number, Country, Team, Food restrictions), plus Status and Paid, which the import leaves out. The app makes
   it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the
   import and goes back in as it is (it replaces the list of the tournament where it is imported). UTF-8
-  with BOM and CRLF, so Excel opens it well.
+  with BOM and CRLF, so Excel opens it well. A cell that starts like a formula (`=`, `+`, `-`, `@`, tab) gets an
+  apostrophe first, so a spreadsheet shows it as text and never runs it (names and food restrictions come from anybody
+  who registers); the import takes that apostrophe off again (`withoutFormulaGuard`).
 - Import (top bar), of the Google Form or of an exported file (CSV or Excel, up to 500 rows): opens the file picker at
   once, then a review of the rows. The file REPLACES the list: the review warns how many registrations are there now,
   and the import removes them all, and their teams, without emails. Every row is imported, also the rows with

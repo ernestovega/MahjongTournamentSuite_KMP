@@ -652,4 +652,30 @@ describe("registrations", () => {
     assert.equal(sixth.status, 429);
     assert.equal(sent.length, 5);
   });
+
+  it("does not let a captain flood a person with emails by adding and removing it again and again", async () => {
+    // Another organizer: the one of the other tests is near its limit of writes in a minute.
+    const organizer = await createAccount({ role: "SUPER_ADMIN" });
+    const id = await createTournament({ isTeams: true, token: organizer.token });
+    const away = { "x-forwarded-for": "10.7.0.3" };
+    // Its own address, so the limits of one address leave the other tests alone.
+    const captain = { account: await createAccount({ role: "PLAYER" }), emaId: await newEma() };
+    await giveEmaIdToAccount(captain.account.uid, captain.emaId);
+    const own = await server.request("POST", `/registrations/${id}`, { token: captain.account.token, body: {}, headers: away });
+    assert.equal(own.status, 200, JSON.stringify(own.body));
+    const member = await newEma();
+    const added = await server.request("POST", `/tournaments/${id}/registrations`, {
+      token: organizer.token, body: { emaId: member, email: `${member}@example.test`, notify: false }, headers: away,
+    });
+    assert.equal(added.status, 200, JSON.stringify(added.body));
+    await server.request("POST", `/registrations/${id}/me/team`, { token: captain.account.token, body: { name: "Loopers" }, headers: away });
+    sent.length = 0;
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 7; attempt++) {
+      statuses.push((await server.request("POST", `/registrations/${id}/me/team/members`, { token: captain.account.token, body: { emaId: member }, headers: away })).status);
+      await server.request("DELETE", `/registrations/${id}/me/team/members/${member}`, { token: captain.account.token, headers: away });
+    }
+    assert.ok(statuses.includes(429), JSON.stringify(statuses));
+    assert.ok(sent.length <= 5, `sent ${sent.length}`);
+  });
 });

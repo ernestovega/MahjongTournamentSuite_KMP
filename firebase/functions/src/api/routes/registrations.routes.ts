@@ -113,7 +113,8 @@ export function registrationsRouter(): Router {
     res.status(200).json(await updateOwnRegistration({ ...caller, foodRestrictions: input.foodRestrictions, consent: input.consent === true }));
   }));
 
-  router.delete("/:tournamentId/me", handle(async (_req, res, caller) => {
+  // Leaving sends an email to the person and one to the organization.
+  router.delete("/:tournamentId/me", allMailLimit, handle(async (_req, res, caller) => {
     await cancelOwnRegistration(caller);
     res.status(200).json({ ok: true });
   }));
@@ -130,7 +131,9 @@ export function registrationsRouter(): Router {
     res.status(200).json(await leaveOwnTeam(caller));
   }));
 
-  router.post("/:tournamentId/me/team/members", handle(async (req, res, caller) => {
+  // Each member that the captain adds gets an email. Adding and removing the same person again and again must not
+  // flood its inbox, so the limit of emails of one person counts here too (the EMA number of the body).
+  router.post("/:tournamentId/me/team/members", personMailLimit, allMailLimit, handle(async (req, res, caller) => {
     res.status(200).json(await addOwnTeamMember({ ...caller, emaId: body(req).emaId }));
   }));
 

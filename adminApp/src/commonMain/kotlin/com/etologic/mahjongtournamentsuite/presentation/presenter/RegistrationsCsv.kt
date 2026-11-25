@@ -65,6 +65,16 @@ object RegistrationsCsv {
             RegistrationStatus.PENDING -> "Email not confirmed"
         }
 
-    /** Quotes a cell with a comma, a semicolon, a quote or a line break, and doubles its quotes. */
-    internal fun escape(value: String): String = if (value.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + value.replace("\"", "\"\"") + "\"" else value
+    /**
+     * Quotes a cell with a comma, a semicolon, a quote or a line break, and doubles its quotes. A cell that starts
+     * like a formula gets an apostrophe first, so Excel or Sheets show it as text and never run it: the names, teams
+     * and food restrictions come from anybody who registers. The import takes the apostrophe off again.
+     */
+    internal fun escape(value: String): String {
+        val text = if (value.firstOrNull() in FORMULA_STARTS) "'$value" else value
+        return if (text.any { it == ',' || it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + text.replace("\"", "\"\"") + "\"" else text
+    }
+
+    /** The first characters that make a spreadsheet read a cell as a formula (OWASP, CSV injection). */
+    private val FORMULA_STARTS = setOf('=', '+', '-', '@', '\t', '\r')
 }
