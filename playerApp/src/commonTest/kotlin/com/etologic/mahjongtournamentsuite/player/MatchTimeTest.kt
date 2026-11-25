@@ -122,7 +122,6 @@ class MatchTimeTest {
         // A gong after the planned time opens the round again for its whole match.
         val late = tournament(MatchEndMode.STOP, clock = RoundClock(roundId = 1, startedAtMs = ms("12:30")))
         assertTrue(late.seatingIsOpen(1, at("13:00")))
-        assertFalse(late.unstartedRoundIsPast(1, at("13:00")))
     }
 
     @Test

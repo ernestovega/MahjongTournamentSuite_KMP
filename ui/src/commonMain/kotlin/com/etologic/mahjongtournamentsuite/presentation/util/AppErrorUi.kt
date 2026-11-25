@@ -26,6 +26,7 @@ import mahjongtournamentsuite.ui.generated.resources.conflict_seats_closed
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_locked
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_assigned
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_open
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_time_over
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_hand
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_penalty
