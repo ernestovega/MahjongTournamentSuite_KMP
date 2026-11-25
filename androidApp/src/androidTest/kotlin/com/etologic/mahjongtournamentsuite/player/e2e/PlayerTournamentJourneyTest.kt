@@ -69,15 +69,15 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
 
         // Round 1. The seats open a few minutes before the planned start. The player sets them before the gong.
         openMyTable(1)
-        c.waitForText("Waiting for the starting gong", substring = true)
+        c.waitForText("The hand buttons appear when the round starts.")
         c.clickButton("Set the seats")
         c.waitForText("Who sits at East?")
         listOf("South", "West", "North").forEach { next ->
             c.onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
-            c.waitForText(if (next == "North") "North:" else "Who sits at $next?", substring = next == "North")
+            c.waitForText(if (next == "North") "Seats of the table" else "Who sits at $next?")
         }
         c.clickButton("Save the seats")
-        c.waitForText("Waiting for the starting gong", substring = true)
+        c.waitForText("The hand buttons appear when the round starts.")
         c.assertNoText("Add draw")
 
         // The organizer presses Play on the Timer. The phone shows the hand buttons and the time left.

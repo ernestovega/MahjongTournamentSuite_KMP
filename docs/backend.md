@@ -184,7 +184,10 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 
 App Check proves that a request comes from one of the apps and not from a script. The API checks the header `X-Firebase-AppCheck`.
 - The variable `APP_CHECK_MODE` in `firebase/functions/.env` sets the mode: `off` (default), `monitor` or `enforce`.
-- In `monitor` mode a missing or wrong token goes to the log as `App Check failed` and the request goes on.
+- In `monitor` mode the request goes on. A missing or wrong token goes to the log as `App Check failed` only when the
+  request comes from the Android app (`X-MTS-Client: android/...`), the one client that can attest. The web, the desktop
+  app and our scripts send no token, so they are not logged.
+- Production stays in `monitor` (25-nov-2026): the web sends no token, and `enforce` would block it.
 - In `enforce` mode the API answers `401 app_check_failed`. Only `GET /health` has no check.
 - The apps always send a token when they have one. The local test backend runs with the mode `off`.
 

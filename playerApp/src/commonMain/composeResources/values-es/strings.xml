@@ -124,7 +124,7 @@
     <string name="team_member_score">Puntuación</string>
     <string name="jump_to_me">Ir a mi posición</string>
     <string name="entry_totals_only">Los organizadores solo introducen las puntuaciones finales de esta mesa. No puedes añadir manos aquí.</string>
-    <string name="entry_round_not_started">Esperando al gong inicial. Los botones para añadir manos aparecen cuando empieza la ronda.</string>
+    <string name="entry_round_not_started">Los botones para añadir manos aparecen cuando empieza la ronda.</string>
     <string name="entry_seats_not_assigned">Los asientos de esta mesa aún no están asignados. Podrás añadir manos cuando estén asignados los cuatro.</string>
     <string name="entry_closed_by_organizer">Un organizador ha cerrado por ahora la entrada de manos de esta mesa. Avisa a un árbitro si necesitas añadir una mano.</string>
     <string name="entry_time_over">El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.</string>
@@ -150,7 +150,6 @@
     <string name="entry_check_penalty">Comprobar la penalización</string>
     <string name="entry_saving_penalty">Guardando la penalización...</string>
     <string name="entry_updating_table">Actualizando la mesa...</string>
-    <string name="entry_others_each">los demás +%1$d cada uno</string>
     <string name="entry_penalized_player">Jugador penalizado</string>
     <!-- The red box of the penalized player in the check of a penalty. -->
     <string name="entry_penalized_short">Penalizado</string>
@@ -160,10 +159,8 @@
     <!-- The column of the table score after the hand, in the review of a hand. -->
     <string name="entry_review_wins">Gana</string>
     <string name="entry_review_pays">Paga</string>
-    <string name="entry_review_all_pay">Pagan los otros tres</string>
     <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">Una penalización compartida debe ser múltiplo de 3.</string>
-    <string name="entry_share">Compartirla con los demás jugadores</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
     <string name="entry_share_short">Compartida</string>
     <string name="entry_from">a</string>
