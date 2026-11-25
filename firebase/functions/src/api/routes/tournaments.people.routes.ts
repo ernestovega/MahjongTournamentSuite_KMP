@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { recordActivity } from "../../services/activityLog";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
 import { accessOf, requireTournamentPermission } from "../middleware/requirePermission";
-import { badRequest } from "../httpError";
+import { badRequest, notFound } from "../httpError";
 import { canInTournament } from "../../services/accessService";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import { readSubstitution } from "../../services/playerSubstitution";
@@ -187,6 +187,10 @@ export function registerPeopleRoutes(router: Router): void {
       try {
         // Editors get the names, so the tables do not need the whole EMA registry.
         const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withNames: true });
+        // No players can also mean no tournament: a Super Admin passes the permission check of any id.
+        if (players.length === 0 && !(await db.collection("tournaments").doc(pathParam(req, "tournamentId")).get()).exists) {
+          throw notFound("Tournament not found");
+        }
         // Emails go to the accounts that manage the tournament. The others see whether a slot has an account.
         const withEmails = await canInTournament(accessOf(res), "tournament.playerEmails", pathParam(req, "tournamentId"));
         res.status(200).json({ players: players.map((player) => (withEmails ? player : { ...player, email: null })) });

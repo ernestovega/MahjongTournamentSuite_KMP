@@ -50,6 +50,8 @@ describe("tournament routes refuse bad requests", () => {
     { what: "a team without a name", method: "PUT", path: `/tournaments/${tournamentId}/teams/1`, body: { name: "", emaIds: [] }, status: 400, message: /1 to 80/ },
     { what: "a team of five", method: "PUT", path: `/tournaments/${tournamentId}/teams/1`, body: { name: "A", emaIds: ["1", "2", "3", "4", "5"] }, status: 400, message: /four/ },
     { what: "one player in two slots", method: "PUT", path: `/tournaments/${tournamentId}/teams/1`, body: { name: "A", emaIds: ["10000001", "10000001"] }, status: 400 },
+    { what: "the players of a tournament that does not exist", method: "GET", path: "/tournaments/no-such-tournament/players", status: 404, message: /not found/ },
+    { what: "the teams of a tournament that does not exist", method: "GET", path: "/tournaments/no-such-tournament/teams", status: 404, message: /not found/ },
     { what: "the settings of a tournament that does not exist", method: "PUT", path: "/tournaments/no-such-tournament/settings", body: settings, status: 404 },
   ];
 
