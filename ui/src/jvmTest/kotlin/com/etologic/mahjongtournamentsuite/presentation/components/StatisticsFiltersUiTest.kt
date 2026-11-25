@@ -76,11 +76,11 @@ class StatisticsFiltersUiTest {
     @Test
     fun theRivalShowsOnlyWithThePlayerOnTheScreen() = runComposeUiTest {
         dialog(StatisticsFilters())
-        onNodeWithText("Any opponent").assertDoesNotExist()
+        onNodeWithText("Nobody").assertDoesNotExist()
     }
 
     @Test
-    fun theRivalListHasOnlyThePlayersWhoSharedATable() = runComposeUiTest {
+    fun anyPlayerCanBeComparedEvenWithoutASharedTable() = runComposeUiTest {
         val cara = Player(emaId = "04000003", firstName = "Cara", lastName = "Moreno", country = "ESP")
         setContent {
             MtsTheme(useDarkTheme = false) {
@@ -94,18 +94,17 @@ class StatisticsFiltersUiTest {
                 )
             }
         }
-        open("Any opponent", probe = "(04000003)")
-        assertEquals(false, shows("(04000002)"), "Bea never played with Ana.")
+        open("Nobody", probe = "(04000003)")
+        assertEquals(true, shows("(04000002)"), "Bea never played with Ana, and she can still be compared.")
     }
 
     @Test
-    fun withoutThePlayerOfTheScreenTheDialogHidesTheRival() = runComposeUiTest {
+    fun withoutAPlayerTheDialogHidesTheComparison() = runComposeUiTest {
         dialog(StatisticsFilters(emaId = ana.emaId), opponents = setOf(bea.emaId))
-        onNodeWithText("Any opponent").assertExists()
-        // Clear takes the player away in the dialog: the opponents belong to the player on the screen.
+        onNodeWithText("Nobody").assertExists()
         onNodeWithText("Clear").performClick()
         waitForIdle()
-        onNodeWithText("Any opponent").assertDoesNotExist()
+        onNodeWithText("Nobody").assertDoesNotExist()
     }
 
     @Test

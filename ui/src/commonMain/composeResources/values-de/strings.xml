@@ -568,8 +568,8 @@
     <string name="stats_filter_any_player">Alle Spieler</string>
     <string name="stats_filter_tournament">Turnier</string>
     <string name="stats_filter_tournament_country">Land der Turniere</string>
-    <string name="stats_filter_rival">Tische gegen</string>
-    <string name="stats_filter_any_rival">Jeder Gegner</string>
+    <string name="stats_filter_rival">Vergleichen mit</string>
+    <string name="stats_filter_any_rival">Niemand</string>
     <string name="stats_chip_rival">gegen %1$s</string>
     <string name="stats_filter_player_country">Land der Spieler</string>
     <string name="stats_filter_any_country">Alle Länder</string>
@@ -756,4 +756,21 @@ Die erste, die klappt, gewinnt</string>
     <string name="h2h_ranks_info">Der Endplatz von jedem in den Turnieren, die beide gespielt haben. Ganz oben ist der erste Platz.\nTippe auf einen Punkt, um das Turnier zu sehen.</string>
     <string name="h2h_rank_of">%1$s von %2$d</string>
     <string name="h2h_open_table">Die Statistiken dieses Tisches öffnen</string>
+    <string name="compare_scope_all">Alles</string>
+    <string name="compare_scope_together">Nur ihre gemeinsamen Tische</string>
+    <string name="compare_title">Vergleich</string>
+    <string name="compare_info">Alle Tische von jedem mit den Filtern der Turniere, als Quoten und Mittelwerte, weil einer viel mehr gespielt haben kann als der andere.\nDie bessere Zahl jeder Zeile ist grün, die schlechtere rot.</string>
+    <string name="compare_skills_info">Die Fähigkeiten von jedem an allen seinen Tischen, eine Form für jeden Spieler.</string>
+    <string name="compare_places_info">Der Anteil der Tische, die jeder auf jedem Platz beendet hat.</string>
+    <string name="compare_tournaments">Turniere</string>
+    <string name="compare_tables">Tische</string>
+    <string name="compare_table_wins">Gewonnene Tische</string>
+    <string name="compare_points_per_table">Punkte pro Tisch</string>
+    <string name="compare_score_per_table">Punktzahl pro Tisch</string>
+    <string name="compare_skill_score">Fähigkeitswert</string>
+    <string name="compare_best_title">Turniere</string>
+    <string name="compare_best_info">Der beste Endplatz von jedem in einem Turnier und der Platz im letzten Turnier.</string>
+    <string name="compare_best_place">Bester Platz</string>
+    <string name="compare_last_tournament">Letztes Turnier</string>
+    <string name="compare_no_place">Noch kein Endplatz</string>
 </resources>

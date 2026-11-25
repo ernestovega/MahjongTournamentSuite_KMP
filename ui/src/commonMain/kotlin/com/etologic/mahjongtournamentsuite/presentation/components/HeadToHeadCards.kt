@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.usecase.HeadToHead
 import com.etologic.mahjongtournamentsuite.domain.usecase.HeadToHeadSide
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
@@ -35,6 +36,14 @@ import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.column_points
 import mahjongtournamentsuite.ui.generated.resources.column_score
+import mahjongtournamentsuite.ui.generated.resources.compare_info
+import mahjongtournamentsuite.ui.generated.resources.compare_points_per_table
+import mahjongtournamentsuite.ui.generated.resources.compare_score_per_table
+import mahjongtournamentsuite.ui.generated.resources.compare_skill_score
+import mahjongtournamentsuite.ui.generated.resources.compare_table_wins
+import mahjongtournamentsuite.ui.generated.resources.compare_tables
+import mahjongtournamentsuite.ui.generated.resources.compare_title
+import mahjongtournamentsuite.ui.generated.resources.compare_tournaments
 import mahjongtournamentsuite.ui.generated.resources.h2h_average_place
 import mahjongtournamentsuite.ui.generated.resources.h2h_hands_won
 import mahjongtournamentsuite.ui.generated.resources.h2h_info
@@ -50,6 +59,10 @@ import mahjongtournamentsuite.ui.generated.resources.h2h_title
 import mahjongtournamentsuite.ui.generated.resources.h2h_wins_on_discard
 import mahjongtournamentsuite.ui.generated.resources.points_short
 import mahjongtournamentsuite.ui.generated.resources.rival_shared_tables
+import mahjongtournamentsuite.ui.generated.resources.skill_deal_in_rate
+import mahjongtournamentsuite.ui.generated.resources.skill_hand_value
+import mahjongtournamentsuite.ui.generated.resources.skill_self_draw
+import mahjongtournamentsuite.ui.generated.resources.skill_win_rate
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -169,9 +182,9 @@ private fun PlayerName(profile: PlayerProfile?, modifier: Modifier) {
 }
 
 @Composable
-private fun CompareRow(label: String, left: Double?, right: Double?, text: (Double) -> String) {
+private fun CompareRow(label: String, left: Double?, right: Double?, text: (Double) -> String, colored: Boolean = true) {
     // 1 when the left value is the better one, -1 when the right one is, 0 when they are equal or one is not known.
-    val compare = if (left != null && right != null) left.compareTo(right).coerceIn(-1, 1) else 0
+    val compare = if (colored && left != null && right != null) left.compareTo(right).coerceIn(-1, 1) else 0
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         CompareValue(left?.let(text) ?: EMPTY, compare, Modifier.weight(1f))
         Text(
@@ -242,5 +255,61 @@ private fun whole(value: Double): String = value.roundToInt().toString()
 
 private fun oneDecimal(value: Double): String {
     val tenths = (value * 10).roundToInt()
-    return "${tenths / 10}.${tenths % 10}"
+    val sign = if (tenths < 0) "-" else ""
+    val abs = kotlin.math.abs(tenths)
+    return "$sign${abs / 10}.${abs % 10}"
 }
+
+/**
+ * Two players side by side over all their tables, as rates and averages, because one may have played much more than
+ * the other. The better number of each row is in bold green and the worse one in red. The number of tournaments and
+ * tables only tells how much each one played, so it has no color.
+ */
+@Composable
+fun ComparisonCard(mine: PlayerStatistics, theirs: PlayerStatistics, me: PlayerProfile?, rival: PlayerProfile?, modifier: Modifier = Modifier) {
+    StatCard(stringResource(Res.string.compare_title), modifier, info = stringResource(Res.string.compare_info)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            PlayerName(me, Modifier.weight(1f))
+            Text("vs", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PlayerName(rival, Modifier.weight(1f))
+        }
+        fun perTable(s: PlayerStatistics, value: Double) = s.tablesPlayed.takeIf { it > 0 }?.let { value / it }
+        val percent: (Double) -> String = { v -> "${(v * 100).roundToInt()}%" }
+        val decimal: (Double) -> String = { v -> oneDecimal(v) }
+        // Each row: the name, the value of a player, the text of a value, and whether higher is better (null: no color).
+        val rows: List<CompareLine> = listOf(
+            CompareLine(stringResource(Res.string.compare_tournaments), { s -> s.tournamentsPlayed.toDouble() }, ::whole, null),
+            CompareLine(stringResource(Res.string.compare_tables), { s -> s.tablesPlayed.toDouble() }, ::whole, null),
+            CompareLine(stringResource(Res.string.h2h_average_place), { s -> s.averagePosition }, decimal, false),
+            CompareLine(stringResource(Res.string.compare_table_wins), { s -> s.tablesPlayed.takeIf { it > 0 }?.let { s.placeCounts[0].toDouble() / it } }, percent, true),
+            CompareLine(stringResource(Res.string.compare_points_per_table), { s -> perTable(s, s.totalPoints) }, decimal, true),
+            CompareLine(stringResource(Res.string.compare_score_per_table), { s -> perTable(s, s.totalScore.toDouble()) }, decimal, true),
+            CompareLine(stringResource(Res.string.skill_win_rate), { s -> s.winRate }, percent, true),
+            CompareLine(stringResource(Res.string.skill_self_draw), { s -> s.selfDrawRate }, percent, true),
+            CompareLine(stringResource(Res.string.skill_deal_in_rate), { s -> s.dealInRate }, percent, false),
+            CompareLine(stringResource(Res.string.skill_hand_value), { s -> s.averageWinningScore }, decimal, true),
+            CompareLine(stringResource(Res.string.compare_skill_score), { s -> s.skillScore }, ::whole, true),
+            CompareLine(stringResource(Res.string.stat_best_hand), { s -> s.bestHand?.toDouble() }, ::whole, true),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+            rows.forEachIndexed { index, line ->
+                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                val a = line.value(mine)
+                val b = line.value(theirs)
+                when (line.higherIsBetter) {
+                    null -> CompareRow(line.label, a, b, line.text, colored = false)
+                    true -> CompareRow(line.label, a, b, line.text)
+                    // CompareRow takes "higher is better", so a value where lower is better is compared negated.
+                    false -> CompareRow(line.label, a?.let { -it }, b?.let { -it }, { v -> line.text(-v) })
+                }
+            }
+        }
+    }
+}
+
+private class CompareLine(
+    val label: String,
+    val value: (PlayerStatistics) -> Double?,
+    val text: (Double) -> String,
+    val higherIsBetter: Boolean?,
+)

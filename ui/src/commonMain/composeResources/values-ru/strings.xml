@@ -574,8 +574,8 @@
     <string name="stats_filter_any_player">Любой игрок</string>
     <string name="stats_filter_tournament">Турнир</string>
     <string name="stats_filter_tournament_country">Страна турниров</string>
-    <string name="stats_filter_rival">Столы против</string>
-    <string name="stats_filter_any_rival">Любой соперник</string>
+    <string name="stats_filter_rival">Сравнить с</string>
+    <string name="stats_filter_any_rival">Ни с кем</string>
     <string name="stats_chip_rival">против %1$s</string>
     <string name="stats_filter_player_country">Страна игроков</string>
     <string name="stats_filter_any_country">Любая страна</string>
@@ -762,4 +762,21 @@
     <string name="h2h_ranks_info">Итоговое место каждого в турнирах, где играли оба. Верх графика — первое место.\nНажмите на точку, чтобы увидеть турнир.</string>
     <string name="h2h_rank_of">%1$s из %2$d</string>
     <string name="h2h_open_table">Открыть статистику этого стола</string>
+    <string name="compare_scope_all">Всё</string>
+    <string name="compare_scope_together">Только их общие столы</string>
+    <string name="compare_title">Сравнение</string>
+    <string name="compare_info">Все столы каждого с фильтрами турниров, в долях и средних, потому что один мог сыграть намного больше другого.\nЛучшее число в каждой строке зелёное, худшее — красное.</string>
+    <string name="compare_skills_info">Навыки каждого за всеми его столами, по одной фигуре на игрока.</string>
+    <string name="compare_places_info">Доля столов, которые каждый закончил на каждом месте.</string>
+    <string name="compare_tournaments">Турниры</string>
+    <string name="compare_tables">Столы</string>
+    <string name="compare_table_wins">Выигранные столы</string>
+    <string name="compare_points_per_table">Очки за стол</string>
+    <string name="compare_score_per_table">Счёт за стол</string>
+    <string name="compare_skill_score">Оценка навыков</string>
+    <string name="compare_best_title">Турниры</string>
+    <string name="compare_best_info">Лучшее итоговое место каждого в турнире и место в последнем турнире.</string>
+    <string name="compare_best_place">Лучшее место</string>
+    <string name="compare_last_tournament">Последний турнир</string>
+    <string name="compare_no_place">Итогового места пока нет</string>
 </resources>

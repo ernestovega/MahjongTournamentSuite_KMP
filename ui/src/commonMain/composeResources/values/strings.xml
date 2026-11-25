@@ -572,8 +572,8 @@
     <string name="stats_filter_any_player">Any player</string>
     <string name="stats_filter_tournament">Tournament</string>
     <string name="stats_filter_tournament_country">Country of the tournaments</string>
-    <string name="stats_filter_rival">Tables against</string>
-    <string name="stats_filter_any_rival">Any opponent</string>
+    <string name="stats_filter_rival">Compare with</string>
+    <string name="stats_filter_any_rival">Nobody</string>
     <string name="stats_chip_rival">vs %1$s</string>
     <string name="stats_filter_player_country">Country of the players</string>
     <string name="stats_filter_any_country">Any country</string>
@@ -760,4 +760,21 @@ The first one that works wins</string>
     <string name="h2h_ranks_info">The final place of each one in the tournaments where both played. The top of the chart is first place.\nTap a point to see the tournament.</string>
     <string name="h2h_rank_of">%1$s of %2$d</string>
     <string name="h2h_open_table">Open the statistics of this table</string>
+    <string name="compare_scope_all">Everything</string>
+    <string name="compare_scope_together">Only their tables together</string>
+    <string name="compare_title">Comparison</string>
+    <string name="compare_info">All the tables of each one with the filters of the tournaments, as rates and averages, because one may have played much more than the other.\nThe better number of each row is in green, and the worse one in red.</string>
+    <string name="compare_skills_info">The skills of each one over all their tables, one shape for each player.</string>
+    <string name="compare_places_info">The share of the tables that each one finished in each place.</string>
+    <string name="compare_tournaments">Tournaments</string>
+    <string name="compare_tables">Tables</string>
+    <string name="compare_table_wins">Tables won</string>
+    <string name="compare_points_per_table">Points per table</string>
+    <string name="compare_score_per_table">Score per table</string>
+    <string name="compare_skill_score">Skill score</string>
+    <string name="compare_best_title">Tournaments</string>
+    <string name="compare_best_info">The best final place of each one in a tournament, and the place in the last tournament.</string>
+    <string name="compare_best_place">Best place</string>
+    <string name="compare_last_tournament">Last tournament</string>
+    <string name="compare_no_place">No final place yet</string>
 </resources>

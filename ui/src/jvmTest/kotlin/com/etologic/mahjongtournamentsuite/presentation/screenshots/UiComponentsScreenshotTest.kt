@@ -56,6 +56,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExte
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.ComparePlacesCard
+import com.etologic.mahjongtournamentsuite.presentation.components.CompareTournamentsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ComparisonCard
 import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadCard
 import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadPlacesCard
 import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadSkillsCard
@@ -382,6 +385,26 @@ class UiComponentsScreenshotTest {
             listOf(second, first),
             mine = mapOf(second.id to Standing(rank = 4, of = 40, points = 9.0, score = 30), first.id to Standing(rank = 7, of = 60, points = 12.0, score = 80)),
             theirs = mapOf(second.id to Standing(rank = 11, of = 40, points = 7.0, score = -10), first.id to Standing(rank = 2, of = 60, points = 17.0, score = 150)),
+            me = me.profile,
+            rival = rival.profile,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    @Test
+    fun comparison() = component("statistics-comparison", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
+        ComparePlacesCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+        ComparisonCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+    }
+
+    @Test
+    fun comparisonTournaments() = component("statistics-comparison-tournaments", variants = componentDialogVariants) {
+        val (me, rival, tournaments) = headToHeadSample()
+        val (first, second) = tournaments
+        CompareTournamentsCard(
+            mine = listOf(second to Standing(rank = 4, of = 40, points = 9.0, score = 30), first to null),
+            theirs = listOf(second to Standing(rank = 11, of = 40, points = 7.0, score = -10), first to Standing(rank = 2, of = 60, points = 17.0, score = 150)),
             me = me.profile,
             rival = rival.profile,
             modifier = Modifier.fillMaxWidth(),
