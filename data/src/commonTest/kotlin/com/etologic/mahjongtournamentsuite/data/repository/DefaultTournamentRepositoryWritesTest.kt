@@ -12,6 +12,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -66,6 +68,8 @@ class DefaultTournamentRepositoryWritesTest {
                     """{"emaId":"10000001","tournaments":[{"tournamentId":"t1","playerId":7,"teamId":2}],""" +
                         """"registrations":[{"tournamentId":"t2","status":"WAITING"},{"tournamentId":"t3","status":"CONFIRMED"}]}""",
                 )
+                path.endsWith("/settings") ->
+                    jsonResponse("""{"id":"t1","name":"Madrid Open","shortName":"MO","isTeams":false,"numPlayers":4,"numRounds":1,"hostCountry":"ES"}""")
                 path == "/tournaments" -> jsonResponse("""{"tournaments":[]}""")
                 else -> jsonResponse("""{"ok":true}""")
             }
@@ -147,6 +151,51 @@ class DefaultTournamentRepositoryWritesTest {
         assertEquals(1, server.count("DELETE /tournaments/t1"))
         repository.listTournaments(RefreshMode.IF_CHANGED)
         assertEquals(3, server.count("GET /tournaments"))
+    }
+
+    @Test
+    fun theSettingsAreCleanedBeforeTheyGoAndTheTournamentsAreReadAgain() = runTest {
+        val server = Server()
+        val repository = repository(server)
+        repository.listTournaments(RefreshMode.IF_CHANGED)
+
+        val result = repository.updateTournamentSettings(
+            tournamentId = "t1",
+            name = "  Madrid Open ",
+            shortName = " MO ",
+            eventStartDate = " 2027-02-06",
+            eventEndDate = "2027-02-07 ",
+            hostCountry = " es ",
+            hostCity = " Madrid ",
+            venue = TournamentVenue(name = " Club ", address = " Calle 1 ", mapUrl = " https://maps.example/x ", contactEmail = " info@club.es "),
+            timeZone = " Europe/Madrid ",
+            isPublic = true,
+        )
+
+        assertEquals("Madrid Open", assertIs<AppResult.Success<Tournament>>(result).value.name)
+        val body = server.requests.single { it.startsWith("PUT /tournaments/t1/settings ") }
+        listOf(
+            """"name":"Madrid Open"""", """"shortName":"MO"""", """"eventStartDate":"2027-02-06"""", """"eventEndDate":"2027-02-07"""",
+            """"hostCountry":"ES"""", """"hostCity":"Madrid"""", """"venueName":"Club"""", """"venueAddress":"Calle 1"""",
+            """"venueMapUrl":"https://maps.example/x"""", """"contactEmail":"info@club.es"""", """"timeZone":"Europe/Madrid"""", """"isPublic":true""",
+        ).forEach { assertTrue(it in body, "$it in $body") }
+        repository.listTournaments(RefreshMode.IF_CHANGED)
+        assertEquals(2, server.count("GET /tournaments"))
+    }
+
+    @Test
+    fun refusedSettingsAreAFailureAndKeepTheList() = runTest {
+        val server = Server()
+        val repository = repository(server)
+        repository.listTournaments(RefreshMode.IF_CHANGED)
+        server.failWith = HttpStatusCode.Forbidden
+
+        assertIs<AppResult.Failure>(
+            repository.updateTournamentSettings("t1", "X", "X", eventStartDate = "2027-02-06", eventEndDate = "2027-02-06", hostCountry = "ES", hostCity = "Madrid"),
+        )
+        server.failWith = null
+        repository.listTournaments(RefreshMode.IF_CHANGED)
+        assertEquals(1, server.count("GET /tournaments"), "a refused change keeps the cached list")
     }
 
     @Test
