@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The staging app's icon: the white logo on orange with a STAGING band in the bottom-right corner, so it never looks like the real app. -->
+<!-- The staging app's icon: the white logo on orange, so it never looks like the real app. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="#FFF57C00" />
