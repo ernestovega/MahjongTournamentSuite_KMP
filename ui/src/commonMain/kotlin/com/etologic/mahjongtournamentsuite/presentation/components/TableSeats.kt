@@ -14,6 +14,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +38,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,8 +54,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
@@ -63,6 +69,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chicken_hand
@@ -331,22 +338,32 @@ fun TableSeatsView(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
         // The row above the seats: the leading content on the left and the Diffs switch with its info on the right.
         // Without the Diffs switch, the leading content is in the middle.
         if (diffsAvailable) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { leading?.invoke() }
-                DiffsInfo()
-                MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }) {
-                    Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+            // The row is low, with little space above and below the switch (Ernesto, 2026-11-25). The label is part of
+            // the switch, so the touch target stays wide.
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 36.dp) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) { leading?.invoke() }
+                    DiffsInfo()
+                    // The space between the info icon and the label is the same as between the label and the switch (Ernesto, 2026-11-25).
+                    MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }, gap = MtsTheme.spacing.sm) {
+                        Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         } else if (leading != null) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { leading() }
         }
-        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, animateScoreChanges, onPlayerClick)
+        // A finished table is a list from the first place to the last, with the points of each player (Ernesto, 2026-11-25).
+        if (showPoints) {
+            SeatsPodium(placed, onPlayerClick)
+        } else {
+            SeatsCross(placed, diffs, centerLabel, showDiffs && diffsAvailable, animateScoreChanges, onPlayerClick)
+        }
     }
 }
 
@@ -369,7 +386,6 @@ private fun SeatsCross(
     placed: List<PlacedSeat>,
     diffs: List<SeatDiffs>,
     centerLabel: String,
-    showPoints: Boolean,
     showDiffs: Boolean,
     animateChanges: Boolean,
     onPlayerClick: (Int) -> Unit,
@@ -379,15 +395,11 @@ private fun SeatsCross(
     // Bottom, right, top and left follow the order of the chairs.
     fun at(position: Int): PlacedSeat = placed.first { it.chair == (viewerChair + position) % 4 }
 
-    // The places only exist when the table is complete.
-    val ranked = rankedSeatIndices(placed, showPoints)
-
     @Composable
     fun card(position: Int, modifier: Modifier) {
         val item = at(position)
         val index = placed.indexOf(item)
-        val place = if (showPoints) ranked.indexOf(index) + 1 else null
-        SeatCard(item, diffs[index], place, showPoints, showDiffs, modifier, onPlayerClick)
+        SeatCard(item, diffs[index], showDiffs, modifier, onPlayerClick)
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -441,24 +453,12 @@ private fun SeatsCross(
 private fun SeatCard(
     item: PlacedSeat,
     diffs: SeatDiffs,
-    place: Int?,
-    showPoints: Boolean,
     showDiffs: Boolean,
     modifier: Modifier,
     onPlayerClick: (Int) -> Unit,
 ) {
     val seat = item.seat
-    Card(
-        modifier = modifier.then(
-            if (seat.slotId != null) Modifier.clickable { onPlayerClick(seat.slotId) } else Modifier,
-        ),
-        border = BorderStroke(
-            if (seat.isMine) 2.dp else 1.dp,
-            if (seat.isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
+    SeatCardFrame(seat, modifier, onPlayerClick) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = MtsTheme.spacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -481,17 +481,7 @@ private fun SeatCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            // The place icon of a complete table is at the side of the score.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                if (place != null) {
-                    if (place <= 3) PositionTrophy(place, size = 24.dp) else LastPlaceIcon(size = 24.dp)
-                }
-                SeatScore(seat.score, item.score)
-            }
-            if (showPoints && seat.points.isNotBlank()) {
-                // The table points are the result of a finished table, so they are big and have the color of the place.
-                SeatPoints(stringResource(Res.string.points_short, formatPoints(seat.points)), place)
-            }
+            SeatScore(seat.score, item.score)
             if (seat.penalty != 0) {
                 Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
             }
@@ -501,20 +491,176 @@ private fun SeatCard(
     }
 }
 
+/** The card of a player: white, with a green border for the viewer. A tap opens the player. */
+@Composable
+private fun SeatCardFrame(seat: SeatDisplay, modifier: Modifier, onPlayerClick: (Int) -> Unit, content: @Composable () -> Unit) {
+    Card(
+        modifier = modifier.then(
+            if (seat.slotId != null) Modifier.clickable { onPlayerClick(seat.slotId) } else Modifier,
+        ),
+        border = BorderStroke(
+            if (seat.isMine) 2.dp else 1.dp,
+            if (seat.isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) { content() }
+}
+
 /**
- * The table points of a seat, big and in the color of its place. Gold and silver are light on the white card, so they
- * get a thin darker outline of their own color (Ernesto, 2026-11-24).
+ * The final result of a finished table: a podium with the second, the first and the third place, each on a step of
+ * the color of its medal and of a height that follows the place, and the fourth below it. The winner is the biggest.
+ * The steps carry the table points in white; the players stand on them with their score (Ernesto,
+ * 2026-11-25).
  */
 @Composable
-private fun SeatPoints(text: String, place: Int?) {
-    val color = place?.let { positionColor(it) } ?: MaterialTheme.colorScheme.onSurface
-    val style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-    Box {
-        if (place == 1 || place == 2) {
-            Text(text, style = style.copy(drawStyle = Stroke(width = 2f, join = StrokeJoin.Round)), color = lerp(color, Color.Black, 0.3f))
+private fun SeatsPodium(placed: List<PlacedSeat>, onPlayerClick: (Int) -> Unit) {
+    val ranked = rankedSeatIndices(placed)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(MtsTheme.spacing.md), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                // Second on the left, first in the middle and third on the right, as on a podium.
+                listOf(2, 1, 3).forEach { place ->
+                    val index = ranked[place - 1]
+                    PodiumPlace(placed[index], place, onPlayerClick, Modifier.weight(if (place == 1) 1.15f else 1f))
+                }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            val last = ranked[3]
+            FourthPlace(placed[last], onPlayerClick)
         }
-        Text(text, style = style, color = color)
     }
+}
+
+/** A player on the podium and the step under them. */
+@Composable
+private fun PodiumPlace(
+    item: PlacedSeat,
+    place: Int,
+    onPlayerClick: (Int) -> Unit,
+    modifier: Modifier,
+) {
+    val seat = item.seat
+    val first = place == 1
+    val color = positionColor(place)
+    Column(
+        modifier
+            .clip(MaterialTheme.shapes.medium)
+            .then(if (seat.slotId != null) Modifier.clickable { onPlayerClick(seat.slotId) } else Modifier),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .then(
+                    // The viewer has the green border of the seats.
+                    if (seat.isMine) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium) else Modifier,
+                )
+                .padding(horizontal = MtsTheme.spacing.xs, vertical = MtsTheme.spacing.sm),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
+        ) {
+            PositionTrophy(place, size = if (first) 44.dp else 32.dp)
+            PlayerFlagAndNumber(seat.country, seat.slotId)
+            Text(
+                seat.name,
+                style = (if (first) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium).inTextFont(),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                // A long name takes two rows on the narrow places of a phone.
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            SeatScore(seat.score, item.score, big = first)
+            SeatExtras(seat)
+        }
+        // The step: as wide as the place, of the color of the medal, higher for a better place.
+        Column(
+            Modifier
+                .padding(top = MtsTheme.spacing.xs)
+                .fillMaxWidth()
+                // A minimum height, so big text (the font size of the system) makes the step higher instead of cutting it.
+                .heightIn(
+                    min = when (place) {
+                        1 -> 96.dp
+                        2 -> 72.dp
+                        else -> 56.dp
+                    },
+                )
+                .background(color, MaterialTheme.shapes.medium.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            if (seat.points.isNotBlank()) {
+                Text(
+                    stringResource(Res.string.points_short, formatPoints(seat.points)),
+                    // The points are as big as the place is high (Ernesto, 2026-11-25).
+                    style = when (place) {
+                        1 -> MaterialTheme.typography.headlineMedium
+                        2 -> MaterialTheme.typography.titleLarge
+                        else -> MaterialTheme.typography.titleMedium
+                    }.inTextFont(),
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+/** The fourth place, under the podium: one row with the sad face, the player, the score and the points. */
+@Composable
+private fun FourthPlace(item: PlacedSeat, onPlayerClick: (Int) -> Unit) {
+    val seat = item.seat
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .then(if (seat.isMine) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium) else Modifier)
+            .then(if (seat.slotId != null) Modifier.clickable { onPlayerClick(seat.slotId) } else Modifier)
+            .padding(horizontal = MtsTheme.spacing.sm, vertical = MtsTheme.spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+            LastPlaceIcon(size = 28.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs)) {
+                PlayerFlagAndNumber(seat.country, seat.slotId)
+                Text(
+                    seat.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                SeatExtras(seat)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                SeatScore(seat.score, item.score)
+                if (seat.points.isNotBlank()) {
+                    Text(
+                        stringResource(Res.string.points_short, formatPoints(seat.points)),
+                        style = MaterialTheme.typography.labelLarge.inTextFont(),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** The penalty and the change of level of a player, when they have one. */
+@Composable
+private fun SeatExtras(seat: SeatDisplay) {
+    if (seat.penalty != 0) {
+        Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+    }
+    seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
 }
 
 /**
@@ -522,13 +668,13 @@ private fun SeatPoints(text: String, place: Int?) {
  * its end and fades. The difference takes no space, so the score does not move.
  */
 @Composable
-private fun SeatScore(text: String, score: AnimatedScore) {
+private fun SeatScore(text: String, score: AnimatedScore, big: Boolean = false) {
     val accent = if (score.delta >= 0) MtsTheme.colors.gain else MaterialTheme.colorScheme.error
     val weight = score.accentWeight
     Box {
         Text(
             if (score.value.isRunning) "${score.value.value.roundToInt()}" else text.ifBlank { "0" },
-            style = MaterialTheme.typography.headlineMedium,
+            style = (if (big) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineMedium).inTextFont(),
             fontWeight = FontWeight.Bold,
             color = lerp(MaterialTheme.colorScheme.onSurface, accent, weight),
         )
@@ -550,7 +696,7 @@ private fun RisingDelta(score: AnimatedScore, color: Color, modifier: Modifier) 
             }
             // It appears fast, stays and fades out at the end, together with the color of the score.
             .graphicsLayer { alpha = minOf(score.rise.value * 6f, 1f) * score.accentWeight },
-        style = MaterialTheme.typography.headlineSmall,
+        style = MaterialTheme.typography.headlineSmall.inTextFont(),
         fontWeight = FontWeight.Bold,
         color = color,
         maxLines = 1,
@@ -591,8 +737,7 @@ private fun DiffsRow(label: String, self: String, him: String, other: String, he
  * The indices of the seats from the first place to the last. The table points come from the scores, so the score
  * decides. A substitute with forced 0 points has a low score sometimes, so the points come first.
  */
-@Suppress("UNUSED_PARAMETER")
-private fun rankedSeatIndices(placed: List<PlacedSeat>, showPoints: Boolean): List<Int> = placed.indices.sortedWith(
+private fun rankedSeatIndices(placed: List<PlacedSeat>): List<Int> = placed.indices.sortedWith(
     compareByDescending<Int> { placed[it].seat.points.replace(',', '.').trim().toDoubleOrNull() ?: 0.0 }
         .thenByDescending { placed[it].seat.score.trim().toIntOrNull() ?: 0 },
 )

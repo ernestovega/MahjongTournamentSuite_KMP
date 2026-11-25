@@ -147,7 +147,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         ) {
             ScreenColumn(
                 maxWidth = 720.dp,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 scrollable = true,
                 paddingInsideScroll = true,
@@ -169,8 +169,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                     },
                     showPoints = complete,
                     windsKnown = table.seatsAssigned,
-                    // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
-                    diffsAvailable = view.tournament.showTableDiffs,
+                    // The switch shows whenever the tournament allows the differences, also before the first hand, but not on a
+                    // finished table: there is nothing left to catch up (Ernesto, 2026-11-25).
+                    diffsAvailable = view.tournament.showTableDiffs && !complete,
                     // The time left of the round is at the top left, above the seats.
                     leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
                     animateScoreChanges = change != null,
@@ -508,7 +509,7 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
         Text(
             text,
             Modifier.testTag("round-clock").semantics { contentDescription = description },
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineSmall.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = color,
         )
@@ -548,7 +549,7 @@ private fun RoundStartLine(tournament: Tournament, roundId: Int) {
         horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
         Icon(Icons.Default.Schedule, contentDescription = stringResource(Res.string.round_starts_at), Modifier.size(24.dp), tint = color)
-        Text(text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
+        Text(text, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
     }
 }
 
