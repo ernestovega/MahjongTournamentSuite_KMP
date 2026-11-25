@@ -18,6 +18,7 @@ what is still untested, in order of priority. The last part lists the test tourn
 | Game day (bots on staging) | `scripts/rehearsal`, `.github/workflows/scenario.yml`, `rehearsal.yml` | Actions > Test · Game day | By hand |
 | Tests of the Game day scripts | `scripts/rehearsal/test/*.test.mjs` | `node --test scripts/rehearsal/test/*.test.mjs` | By hand |
 | Project rules | `scoringCases` (server, admin, player share `testdata/scoring-cases.json`), `clientContract.test` (app calls match API routes), `CommonCodeIsMultiplatformTest` (no JVM-only APIs in `commonMain`), `AnalyticsCoverageTest`, `LocalizationParityTest`, `DesignTokenRatchetTest`, `ButtonConventionTest`, `ScrollIndicatorsConventionTest` | With the Kotlin and backend tests | Same |
+| Web E2E (Playwright, Chromium) | `e2e/web/tests/*.test.mjs`: the Wasm Player against the local test backend | `e2e/web/README.md` | Every night at 03:30 UTC (Actions > Test · Web E2E) and by hand |
 | Smoke test of a deploy | `scripts/smoke/smoke.mjs`, its tests in `scripts/smoke/test/` | `node scripts/smoke/smoke.mjs` (`MTS_SITE_URL` for staging) | At the end of every deploy to production and to staging |
 | Performance | `benchmarks/`, `.github/workflows/benchmark.yml` | Actions | Every morning against production |
 | Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | By hand |
@@ -73,7 +74,7 @@ Lowest files:
 
 | File | Lines | Branches | What is missing |
 | --- | ---: | ---: | --- |
-| `api/routes/support.routes.ts` | 65 % | | `POST /support/message` (Contact form) has no route test |
+| `api/routes/support.routes.ts` | 65 % | | `POST /support/message` tested since 25 November (`support.integration.test.ts`) |
 | `services/featureFlagsService.ts` | 52 % | 40 % | Flags read from Firestore and their cache |
 | `services/firebaseAuthRest.ts` | 57 % | | Password sign in and refresh through the Auth REST API |
 | `services/versionsPage.ts` | 57 % | | The versions page |
@@ -87,6 +88,7 @@ Lowest files:
 ## 3. Features and screen flows against their tests
 
 U = Kotlin unit or JVM UI test, S = screenshot, B = backend unit or integration test, E = Android E2E, G = Game day.
+The web E2E tests (`e2e/web`) are in the notes.
 "Gap" says what has no test.
 
 ### Player
@@ -103,13 +105,13 @@ U = Kotlin unit or JVM UI test, S = screenshot, B = backend unit or integration 
 | 4.5 Live animation, differences, time left | ✅ | ✅ | ✅ | ✅ | | |
 | 4.5 Completed table, hand details | ✅ | ✅ | | ✅ | | |
 | 4.6 «Go to my table» reminder and floating button | ✅ | ✅ | | ✅ | | |
-| 4.6 Tournament QR `/<slug>/my-table` | ✅ | | ✅ | | | No E2E of the link opening the table (App Links) |
+| 4.6 Tournament QR `/<slug>/my-table` | ✅ | | ✅ | | | Web E2E opens the table from `/t/<id>/my-table`; no Android E2E of App Links |
 | 4.7 Statistics with filters (player, tournament, team) | ✅ | ✅ | ✅ | ✅ | | Team statistics 4 % |
 | 4.8 Combinations, Penalties | ✅ | ✅ | | | | |
 | 4.8 Green Book (download on Android) | ⚠️ | | | | | Only the link is tested; the Android download and the offline copy are not |
-| 4.8 Contact form | | ✅ | ⚠️ | | | `POST /support/message` untested |
+| 4.8 Contact form | | ✅ | ✅ | | | |
 | 4.9 Sign in, password recovery | ✅ | ✅ | ✅ | ✅ | | Choosing the new password from the email (see «Gaps without an emulator test») |
-| 4.9 Profile: photo, alias, theme, language, delete account, withdraw consent | ⚠️ | ✅ | ⚠️ | ⚠️ | | Photo crop 0 %, `DELETE /me` untested, only the theme is in E2E |
+| 4.9 Profile: photo, alias, theme, language, delete account, withdraw consent | ⚠️ | ✅ | ⚠️ | ⚠️ | | Photo crop 0 %, only the theme is in E2E; `DELETE /me` has a backend test |
 | 4.9 8 languages, AI translation notice | ✅ | ✅ | | | | |
 | 4.9 Refresh rhythms | ✅ | | | | ✅ | |
 
@@ -157,9 +159,11 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 **Priority 1**
 
-1. **Player web E2E in a browser.** Most players will use the web on their phone, and no test opens the Wasm app in a
-   browser. A few Playwright flows against the local test backend: sign in, open the tournament, set seats, enter a
-   hand, see it in the ranking, open `/<slug>/my-table`.
+1. ~~**Player web E2E in a browser**~~: done 25 November, `e2e/web` (Playwright in Chromium against the local test
+   backend, every night): a guest opens a tournament from the list and from its link, a player signs in, goes to the
+   table and saves a hand, and the QR link `/t/<id>/my-table` opens the table of the player. They found that the QR
+   link opened My tables but never the table: the start screen closed before the table was found (fixed). Next flows:
+   set the seats, a win, the ranking after a hand, the registrations (item 3).
 2. ~~**Hand entry of the Player**~~: done 25 November. `HandEntryPanelUiTest` (win from a discard and self-draw,
    chicken hand, draw, penalties, review and edit, conflicts and network errors), `HandDetailsTableUiTest`, and the
    screenshots `dialogs/entry-*` of the Player. They found that the notice of a changed table opened under the entry
@@ -174,8 +178,10 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 6. **Admin Players and Teams screens** (54 % and 49 %): substitution, clear slot, team edit, drag of members.
 7. **`DefaultTournamentRepository` and `FunctionsBackendApi`** (48 % and 62 %): request and response of the calls
    without tests, with the existing `TestBackendApi`.
-8. **Account self-service**: `DELETE /me`, own photo upload and crop, withdraw consent (backend and UI).
-9. **Contact form** `POST /support/message` (limits and mail).
+8. **Account self-service**: own photo upload and crop, withdraw consent (UI). The backend of `DELETE /me` and of the
+   sign-in is tested since 25 November (`ownAccount.integration.test.ts`).
+9. ~~**Contact form** `POST /support/message`~~: done 25 November (`support.integration.test.ts`: mail, honeypot,
+   bad input, no mailbox, limit per address).
 10. **Club Admin and custom roles in E2E**: what the list shows and what is refused.
 11. **Load test** of hand saves and ranking polls for 60 players beyond Game day, to know the margin.
 

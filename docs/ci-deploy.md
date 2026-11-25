@@ -42,6 +42,7 @@ Every test runs on `main` every night (the game day once a week), and GitHub ema
 | 02:45 | Test · Screenshots | Compares every screen with its reference image. |
 | 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
 | 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `main` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
+| 03:30 | Test · Web E2E | The Player web app in Chromium (Playwright) against the local test backend. See [e2e/web/README.md](../e2e/web/README.md). |
 | 05:00 | Check · Production benchmark | The times of production (see [benchmark.md](benchmark.md)). |
 
 Two tests guard the lists themselves: `testList.test.ts` fails when a unit test of the functions is not in `npm test`,
