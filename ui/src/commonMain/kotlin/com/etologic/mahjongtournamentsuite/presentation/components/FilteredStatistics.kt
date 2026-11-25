@@ -31,14 +31,12 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.compare_scope_all
 import mahjongtournamentsuite.ui.generated.resources.compare_scope_together
-import mahjongtournamentsuite.ui.generated.resources.compare_skills_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_alone_title
 import mahjongtournamentsuite.ui.generated.resources.stats_empty_message
 import mahjongtournamentsuite.ui.generated.resources.stats_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_message
 import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_player_tournaments
-import mahjongtournamentsuite.ui.generated.resources.stats_skills
 import org.jetbrains.compose.resources.stringResource
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -243,15 +241,7 @@ private fun GeneralComparison(
     }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
         if (kept.overall.tablesWithHands > 0 && theirs.overall.tablesWithHands > 0) {
-            HeadToHeadSkillsCard(
-                kept.overall,
-                theirs.overall,
-                kept.profile,
-                rivalProfile,
-                cardModifier,
-                title = stringResource(Res.string.stats_skills),
-                info = stringResource(Res.string.compare_skills_info),
-            )
+            CompareSkillsCard(kept.overall, theirs.overall, kept.profile, rivalProfile, cardModifier)
         }
         ComparePlacesCard(kept.overall, theirs.overall, kept.profile, rivalProfile, cardModifier)
         places?.let { (mine, their) -> HeadToHeadPlacesCard(common, mine, their, kept.profile, rivalProfile, cardModifier) }

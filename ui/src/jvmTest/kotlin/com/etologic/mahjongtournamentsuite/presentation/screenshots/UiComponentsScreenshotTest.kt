@@ -57,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutl
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ComparePlacesCard
+import com.etologic.mahjongtournamentsuite.presentation.components.CompareSkillsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.CompareTournamentsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.ComparisonCard
 import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadCard
@@ -394,7 +395,13 @@ class UiComponentsScreenshotTest {
     @Test
     fun comparison() = component("statistics-comparison", variants = componentDialogVariants) {
         val (me, rival) = headToHeadSample()
+        CompareSkillsCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
         ComparePlacesCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+    }
+
+    @Test
+    fun comparisonTable() = component("statistics-comparison-table", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
         ComparisonCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
     }
 

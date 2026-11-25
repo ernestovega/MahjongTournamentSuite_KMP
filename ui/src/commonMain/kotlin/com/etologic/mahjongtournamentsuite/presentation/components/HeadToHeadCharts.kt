@@ -42,12 +42,14 @@ import mahjongtournamentsuite.ui.generated.resources.compare_best_title
 import mahjongtournamentsuite.ui.generated.resources.compare_last_tournament
 import mahjongtournamentsuite.ui.generated.resources.compare_no_place
 import mahjongtournamentsuite.ui.generated.resources.compare_places_info
+import mahjongtournamentsuite.ui.generated.resources.compare_skills_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_rank_of
 import mahjongtournamentsuite.ui.generated.resources.h2h_ranks_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_ranks_title
 import mahjongtournamentsuite.ui.generated.resources.h2h_skills_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_skills_title
 import mahjongtournamentsuite.ui.generated.resources.stats_places
+import mahjongtournamentsuite.ui.generated.resources.stats_skills
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -81,6 +83,20 @@ fun HeadToHeadSkillsCard(
             Modifier.fillMaxWidth().height(300.dp),
         )
     }
+}
+
+/** The skills of the two players over all their tables, one radar shape over the other. */
+@Composable
+fun CompareSkillsCard(mine: PlayerStatistics, theirs: PlayerStatistics, me: PlayerProfile?, rival: PlayerProfile?, modifier: Modifier = Modifier) {
+    HeadToHeadSkillsCard(
+        mine,
+        theirs,
+        me,
+        rival,
+        modifier,
+        title = stringResource(Res.string.stats_skills),
+        info = stringResource(Res.string.compare_skills_info),
+    )
 }
 
 /**
@@ -196,26 +212,46 @@ private fun LegendName(profile: PlayerProfile?, color: Color) {
 
 private fun firstName(profile: PlayerProfile?): String = profile?.name?.substringBefore(' ')?.ifBlank { null } ?: profile?.name ?: EMPTY
 
-/** The share of the tables that each of the two players finished in each place: two bars for each place. */
+/**
+ * The share of the tables that each of the two players finished in each place: a line with a point for each place,
+ * one line for each player, and the shares of each place under the chart.
+ */
 @Composable
 fun ComparePlacesCard(mine: PlayerStatistics, theirs: PlayerStatistics, me: PlayerProfile?, rival: PlayerProfile?, modifier: Modifier = Modifier) {
     val (myColors, theirColors) = headToHeadColors()
     val names = placeNames()
+    var selected by remember { mutableStateOf<Int?>(null) }
     StatCard(stringResource(Res.string.stats_places), modifier, info = stringResource(Res.string.compare_places_info)) {
         Legend(me, rival)
-        // The longest bar fills the room, so small differences show.
-        val longest = (0 until 4).flatMap { listOf(share(mine, it), share(theirs, it)) }.maxOf { it ?: 0.0 }.takeIf { it > 0 } ?: 1.0
-        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+        val myShares = (0 until 4).map { share(mine, it) }
+        val theirShares = (0 until 4).map { share(theirs, it) }
+        // The top of the scale is the biggest share, rounded up to the next ten, so small differences show.
+        val top = ((myShares + theirShares).maxOf { it ?: 0.0 } * 10).let { kotlin.math.ceil(it) / 10 }.coerceIn(0.1, 1.0)
+        val tooltip = selected?.let { index ->
+            listOf(
+                names[index],
+                "${firstName(me)}: ${myShares[index].percent()}",
+                "${firstName(rival)}: ${theirShares[index].percent()}",
+            ).joinToString("\n")
+        }
+        RoundLineChart(
+            names = names,
+            series = listOf(LineSeries(myShares, myColors.fill), LineSeries(theirShares, theirColors.fill)),
+            minValue = 0.0,
+            maxValue = top,
+            selected = selected,
+            onSelect = { selected = it },
+            format = { "${(it * 100).roundToInt()}%" },
+            tooltip = tooltip,
+            axisValues = true,
+        )
+        // The shares of each place, in the color of each player, under its place in the chart.
+        Row(Modifier.fillMaxWidth()) {
             (0 until 4).forEach { place ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                    Row(Modifier.width(56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.position(place + 1, MaterialTheme.colorScheme.error))
-                        Text(names[place], style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-                        PlaceBar(share(mine, place), longest, myColors)
-                        PlaceBar(share(theirs, place), longest, theirColors)
-                    }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs)) {
+                    Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.position(place + 1, MaterialTheme.colorScheme.error))
+                    Text(myShares[place].percent(), style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold, color = myColors.text)
+                    Text(theirShares[place].percent(), style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold, color = theirColors.text)
                 }
             }
         }
@@ -223,27 +259,6 @@ fun ComparePlacesCard(mine: PlayerStatistics, theirs: PlayerStatistics, me: Play
 }
 
 private fun share(statistics: PlayerStatistics, place: Int): Double? = statistics.tablesPlayed.takeIf { it > 0 }?.let { statistics.placeCounts[place].toDouble() / it }
-
-/** One bar of [ComparePlacesCard], as long as the share, with the share at its end. */
-@Composable
-private fun PlaceBar(value: Double?, longest: Double, colors: HeadToHeadColors) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-        Box(Modifier.weight(1f).height(14.dp)) {
-            Box(
-                Modifier.fillMaxWidth(((value ?: 0.0) / longest).toFloat().coerceIn(0.01f, 1f)).height(14.dp)
-                    .background(colors.fill, MaterialTheme.shapes.extraSmall),
-            )
-        }
-        Text(
-            value.percent(),
-            Modifier.width(44.dp),
-            style = MaterialTheme.typography.bodyMedium.inTextFont(),
-            fontWeight = FontWeight.Bold,
-            color = colors.text,
-            textAlign = TextAlign.End,
-        )
-    }
-}
 
 /**
  * The best final place of each of the two players in a tournament, and the place in the last tournament.
