@@ -44,6 +44,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
@@ -66,9 +69,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import mahjongtournamentsuite.playerapp.generated.resources.summary_share
 import mahjongtournamentsuite.playerapp.generated.resources.summary_share_error
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The test tags of the ranking by round and of its sharing. */
 internal const val RANKING_ROUND_BUTTON_TAG = "ranking-round"
@@ -119,7 +119,7 @@ internal fun RankingShareButton(showLabel: Boolean, onClick: () -> Unit) {
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.testTag(RANKING_SHARE_BUTTON_TAG)) {
-            Icon(Icons.Default.Share, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Default.Share, contentDescription = title, tint = MtsTheme.colors.link)
         }
     }
 }

@@ -66,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -264,7 +265,7 @@ private fun PermissionRow(label: String, hint: String?, checked: Boolean, enable
             Column(Modifier.weight(1f)) {
                 Text(label)
                 if (hint != null) {
-                    Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    Text(hint, style = MaterialTheme.typography.bodySmall, color = MtsTheme.colors.link)
                 }
             }
         }

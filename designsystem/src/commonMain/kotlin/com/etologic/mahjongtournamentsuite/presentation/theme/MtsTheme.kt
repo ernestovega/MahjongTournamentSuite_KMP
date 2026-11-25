@@ -46,10 +46,14 @@ fun MtsTheme(
 }
 
 internal val MahjongGreen = Color(0xFF00B16A)
-private val MahjongGreenLight = Color(0xFF3DE6A3)
+internal val MahjongGreenLight = Color(0xFF3DE6A3)
 internal val MahjongGreenDark = Color(0xFF00934C)
 internal val MahjongGreenDarker = Color(0xFF00752E)
 private val MahjongRed = Color(0xFFFA6868)
+
+/** The red of error texts and icons: darker than the red of the fills in light mode, lighter in dark mode (4.5:1). */
+private val ErrorTextLight = Color(0xFFC62828)
+private val ErrorTextDark = Color(0xFFFF8A80)
 private val MahjongAccent = Color(0xFFFF00A7)
 private val AppDarkGray = Color(0xFF414141)
 internal val AppDarkGraySurface = Color(0xFF363636)
@@ -67,7 +71,8 @@ private val LightColors = lightColorScheme(
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFFA5EFCF),
     onTertiaryContainer = Color(0xFF002115),
-    error = MahjongRed,
+    // Error texts and icons. Fills of destructive buttons use errorContainer, the red of the brand.
+    error = ErrorTextLight,
     onError = Color.White,
     errorContainer = MahjongRed,
     onErrorContainer = Color.White,
@@ -107,7 +112,7 @@ private val DarkColors = darkColorScheme(
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFF004A32),
     onTertiaryContainer = Color(0xFFB8F5DA),
-    error = MahjongRed,
+    error = ErrorTextDark,
     onError = Color.White,
     errorContainer = MahjongRed,
     onErrorContainer = Color.White,
@@ -117,7 +122,8 @@ private val DarkColors = darkColorScheme(
     onSurface = Color.White,
     surfaceVariant = AppDarkGrayVariant,
     onSurfaceVariant = Color(0xFFE0E0E0),
-    outline = Color(0xFF7B7B7B),
+    // The border of fields: 3:1 on the dark surfaces.
+    outline = Color(0xFF9E9E9E),
     outlineVariant = Color(0xFF5A5A5A),
     scrim = Color(0xFF000000),
     inverseSurface = Color(0xFFB8F5DA),
@@ -126,6 +132,11 @@ private val DarkColors = darkColorScheme(
     surfaceTint = MahjongGreen,
 )
 
+/**
+ * Gang of Three only where it reads well and looks good: the big titles of screens, dialogs and sections (display,
+ * headline, titleLarge and titleMedium). Content and actions are in the text font (Ernesto, 2026-11-25): small titles,
+ * buttons, chips, tabs, fields, numbers and names. A title style that shows data, like a score, uses [inTextFont].
+ */
 private fun gangOfThreeTypography(fontFamily: androidx.compose.ui.text.font.FontFamily): Typography {
     val base = Typography()
 
@@ -140,12 +151,12 @@ private fun gangOfThreeTypography(fontFamily: androidx.compose.ui.text.font.Font
         headlineSmall = base.headlineSmall.withFont(),
         titleLarge = base.titleLarge.withFont(),
         titleMedium = base.titleMedium.withFont(),
-        titleSmall = base.titleSmall.withFont(),
+        titleSmall = base.titleSmall,
         bodyLarge = base.bodyLarge,
         bodyMedium = base.bodyMedium,
         bodySmall = base.bodySmall,
-        labelLarge = base.labelLarge.withFont(),
-        labelMedium = base.labelMedium.withFont(),
+        labelLarge = base.labelLarge,
+        labelMedium = base.labelMedium,
         labelSmall = base.labelSmall,
     )
 }

@@ -24,11 +24,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -54,7 +56,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.sending_title
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** A check for a player with an account and a cross for a player without one. The description names the state for screen readers. */
 @Composable
@@ -62,7 +63,7 @@ internal fun AccountStateIcon(hasAccount: Boolean, modifier: Modifier = Modifier
     Icon(
         imageVector = if (hasAccount) Icons.Outlined.Check else Icons.Outlined.Close,
         contentDescription = stringResource(if (hasAccount) Res.string.account_has else Res.string.account_none),
-        tint = if (hasAccount) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+        tint = if (hasAccount) MtsTheme.colors.link else MaterialTheme.colorScheme.error,
         modifier = modifier,
     )
 }

@@ -63,6 +63,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -148,10 +152,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_table
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** A penalty that the player is writing. The amount is a positive number. The app shows the minus sign. */
 private data class PenaltyDraft(val seat: Int? = null, val amount: String = "", val shared: Boolean = false) {
@@ -748,7 +748,7 @@ private fun ScoreNumpad(value: String, onChange: (String) -> Unit) {
                                     contentDescription = stringResource(Res.string.entry_numpad_delete),
                                     Modifier.size(24.dp),
                                 )
-                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
                                 else -> Text(key, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
                             }
                         }
@@ -778,7 +778,7 @@ const val PLAYER_CHOICE_TAG = "player-choice"
 /** The question of a step of a win. */
 @Composable
 private fun StepQuestion(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(text, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
 }
 
 /** What the steps before chose: the winner, and on the score step who discarded or Self-draw. */
@@ -822,7 +822,7 @@ private fun SelfDrawButton(label: String, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
                 SelfDrawIcon(24.dp)
-                Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(label, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
     }

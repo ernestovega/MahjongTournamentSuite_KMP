@@ -10,6 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -114,6 +115,11 @@ data class MtsLevelColors(val fill: Color, val rim: Color, val content: Color)
 /** The colors of the domain, which the Material color scheme has no role for. */
 @Immutable
 data class MtsColors(
+    /**
+     * The green of the brand as text or a thin icon (text buttons, links, small marks): darker in light mode and lighter
+     * in dark mode, so it reads at 4.5:1 on the cards. Fills (filled buttons, bars, tabs) keep the brand green, primary.
+     */
+    val link: Color,
     /** A positive score or the winner of a hand. */
     val gain: Color,
     /** A table whose scores add up. */
@@ -186,6 +192,7 @@ private val LevelColorsByLevel = listOf(
 )
 
 internal val LightMtsColors = MtsColors(
+    link = MahjongGreenDarker,
     gain = MahjongGreen,
     scoreOk = MahjongGreen,
     scoreWarning = Warning,
@@ -208,6 +215,7 @@ internal val LightMtsColors = MtsColors(
 
 /** The same palette; only the colors that follow a container of the dark scheme change. */
 internal val DarkMtsColors = LightMtsColors.copy(
+    link = MahjongGreenLight,
     changed = MahjongGreenDarker,
     info = Color(0xFF4D9BFF),
     brandTitle = Color.White,
@@ -226,7 +234,7 @@ data class MtsTypography(
     companion object {
         fun from(material: Typography): MtsTypography = MtsTypography(
             score = material.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum", textAlign = TextAlign.End),
-            scoreLarge = material.headlineMedium.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+            scoreLarge = material.headlineMedium.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
             emphasis = material.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
         )
     }

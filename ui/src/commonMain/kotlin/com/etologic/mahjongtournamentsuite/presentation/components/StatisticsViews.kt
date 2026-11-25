@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import mahjongtournamentsuite.ui.generated.resources.logo_of
-import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,8 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -55,9 +51,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
+import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import kotlin.math.roundToInt
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chart_no_data
 import mahjongtournamentsuite.ui.generated.resources.column_deal_ins
@@ -66,6 +64,7 @@ import mahjongtournamentsuite.ui.generated.resources.column_player
 import mahjongtournamentsuite.ui.generated.resources.column_points
 import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.column_wins
+import mahjongtournamentsuite.ui.generated.resources.logo_of
 import mahjongtournamentsuite.ui.generated.resources.photo_of
 import mahjongtournamentsuite.ui.generated.resources.player_photo_none
 import mahjongtournamentsuite.ui.generated.resources.rival_ema
@@ -86,6 +85,7 @@ import mahjongtournamentsuite.ui.generated.resources.table_not_completed
 import mahjongtournamentsuite.ui.generated.resources.table_result
 import mahjongtournamentsuite.ui.generated.resources.table_score_after_hand
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 /** The icon of every statistics button and tab in both apps. Rankings keep their own icon. */
 val StatisticsIcon: ImageVector get() = Icons.Default.Insights
@@ -156,7 +156,7 @@ fun StatSection(title: String, modifier: Modifier = Modifier, content: @Composab
         Text(
             title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = MtsTheme.colors.link,
             modifier = Modifier.padding(bottom = 4.dp),
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.primary)

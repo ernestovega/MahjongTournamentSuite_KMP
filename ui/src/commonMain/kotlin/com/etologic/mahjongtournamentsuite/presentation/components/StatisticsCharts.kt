@@ -497,7 +497,7 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
             }
             skills.forEachIndexed { index, skill ->
                 val highlighted = index == highlight
-                val labelColor = if (highlighted) MaterialTheme.colorScheme.primary else Color.Unspecified
+                val labelColor = if (highlighted) MtsTheme.colors.link else Color.Unspecified
                 AppTooltipBox(skill.explanation) {
                     Column(
                         Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),

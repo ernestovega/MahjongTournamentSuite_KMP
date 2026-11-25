@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.close
 import mahjongtournamentsuite.ui.generated.resources.draw_backup_how
@@ -139,7 +140,7 @@ fun DrawBackupRunningNote() {
     Text(
         stringResource(Res.string.draw_backup_running),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.primary,
+        color = MtsTheme.colors.link,
         modifier = Modifier.testTag("drawBackupRunning"),
     )
 }
@@ -147,12 +148,12 @@ fun DrawBackupRunningNote() {
 @Composable
 private fun HelpSection(title: String, body: String) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        Text(title, style = MaterialTheme.typography.titleSmall, color = MtsTheme.colors.link)
         // Each line is its own paragraph. A bullet line hangs, so its text lines up under the first word.
         body.split("\n").filter { it.isNotBlank() }.forEach { line ->
             if (line.startsWith("• ")) {
                 Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
-                    Text("•", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(16.dp))
+                    Text("•", style = MaterialTheme.typography.bodyMedium, color = MtsTheme.colors.link, modifier = Modifier.width(16.dp))
                     Text(line.removePrefix("• "), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 }
             } else {

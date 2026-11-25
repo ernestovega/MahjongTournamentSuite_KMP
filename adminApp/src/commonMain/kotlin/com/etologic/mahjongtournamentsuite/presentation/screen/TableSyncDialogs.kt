@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
@@ -29,6 +31,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitl
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -55,8 +58,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_notice_where
 import mahjongtournamentsuite.adminapp.generated.resources.table_updated
 import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** Where one notice happened: its round and table. */
 internal fun TableUpdateNotice.where(): UiText = UiText.of(Res.string.table_notice_where, key.roundId, key.tableId)
@@ -95,7 +96,7 @@ internal fun TableUpdatesDialog(
                             Text(
                                 notice.where().asString(),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 textAlign = TextAlign.Center,
                             )
                             Text(notice.headline().asString(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)

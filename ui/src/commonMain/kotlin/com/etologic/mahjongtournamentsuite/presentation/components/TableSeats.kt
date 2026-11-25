@@ -13,36 +13,34 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -53,24 +51,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chicken_hand
 import mahjongtournamentsuite.ui.generated.resources.diffs_about
@@ -80,8 +81,8 @@ import mahjongtournamentsuite.ui.generated.resources.diffs_label
 import mahjongtournamentsuite.ui.generated.resources.diffs_other
 import mahjongtournamentsuite.ui.generated.resources.diffs_self
 import mahjongtournamentsuite.ui.generated.resources.icon_chicken
-import mahjongtournamentsuite.ui.generated.resources.icon_self_draw
 import mahjongtournamentsuite.ui.generated.resources.icon_sad_face
+import mahjongtournamentsuite.ui.generated.resources.icon_self_draw
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy_bronze
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy_silver
@@ -99,7 +100,6 @@ import mahjongtournamentsuite.ui.generated.resources.wind_east
 import mahjongtournamentsuite.ui.generated.resources.wind_north
 import mahjongtournamentsuite.ui.generated.resources.wind_south
 import mahjongtournamentsuite.ui.generated.resources.wind_west
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -249,7 +249,7 @@ fun RankTrophy(rank: Int, size: Dp = 28.dp) {
 
 /** The color of the result of a position at a table. It matches the trophy. The fourth place is red. */
 @Composable
-fun positionColor(position: Int): Color = MtsTheme.colors.position(position, MaterialTheme.colorScheme.error)
+fun positionColor(position: Int): Color = MtsTheme.colors.position(position, MaterialTheme.colorScheme.errorContainer)
 
 /** The sad face of the player who finished fourth at a table. */
 @Composable

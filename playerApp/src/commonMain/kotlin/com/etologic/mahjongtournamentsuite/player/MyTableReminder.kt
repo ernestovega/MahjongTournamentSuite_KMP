@@ -48,6 +48,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderMoment
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -56,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateSto
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDateTime
@@ -70,7 +72,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.my_table_title
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 
 /** Where a round of the player is in time, for the reminder of the own table. */
 sealed interface RoundMoment {
@@ -382,7 +383,7 @@ internal fun MyTableReminderDialog(
                     Text(
                         myTableReminderTime(moment),
                         // The time is what the player must see first, so it is the biggest text.
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.inTextFont(),
                         // The accent of the brand, like a table in play.
                         color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,

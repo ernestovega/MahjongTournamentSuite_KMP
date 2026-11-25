@@ -35,7 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.add_penalty_to_hand
@@ -50,7 +52,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.winner
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 /**
  * One hand on a phone. The wide table row does not fit, so the hand is a small card:
@@ -104,7 +105,7 @@ internal fun CompactHandCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "#${index + 1}",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (rowEnabled) 1f else 0.6f),
             )

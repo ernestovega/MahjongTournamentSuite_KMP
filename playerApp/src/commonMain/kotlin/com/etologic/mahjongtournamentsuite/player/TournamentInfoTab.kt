@@ -45,12 +45,15 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -74,8 +77,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.progress_tables_labe
 import mahjongtournamentsuite.playerapp.generated.resources.progress_title
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** One day of the agenda. A null [date] holds the items that have no date yet. */
 data class AgendaDay(val date: String?, val items: List<TournamentAgendaItem>)
@@ -198,7 +199,7 @@ private fun OrganizersCard(organizers: List<TournamentOrganizer>) {
             ) {
                 OrganizationLogo(organizer, size = 48.dp)
                 Column(Modifier.weight(1f)) {
-                    Text(organizer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(organizer.name, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.SemiBold)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (organizer.country.isNotBlank()) CountryFlag(code = organizer.country, width = 16.dp)
                         val type = stringResource(
@@ -238,7 +239,7 @@ private fun InfoCard(title: String, icon: ImageVector, content: @Composable () -
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
-                Icon(icon, contentDescription = null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, contentDescription = null, Modifier.size(28.dp), tint = MtsTheme.colors.link)
                 Text(
                     title,
                     style = MaterialTheme.typography.titleLarge,

@@ -80,6 +80,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -466,7 +468,7 @@ private fun RoundStrip(
                         Icon(
                             Icons.Default.PlayArrow,
                             contentDescription = stringResource(Res.string.round_control_round_in_play),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MtsTheme.colors.link,
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -513,7 +515,7 @@ private fun ClockCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         ) {
-            Text(formatHms(remaining), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = color)
+            Text(formatHms(remaining), style = MaterialTheme.typography.headlineMedium.inTextFont(), fontWeight = FontWeight.SemiBold, color = color)
             Text(
                 stringResource(status),
                 style = MaterialTheme.typography.titleMedium,

@@ -76,6 +76,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -134,8 +136,6 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
 fun TournamentsScreen(navController: NavHostController) {
@@ -562,7 +562,7 @@ internal fun TournamentCard(
                 // A tournament before its draw shows its registrations. The button opens the tournament on its Players tab.
                 tournament.registration?.takeIf { tournament.inRegistration }?.let { registration ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.link)
                         Column(Modifier.weight(1f)) {
                             Text(
                                 stringResource(if (registration.isOpen) Res.string.preg_open else Res.string.preg_closed),
@@ -583,7 +583,7 @@ internal fun TournamentCard(
                 // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
                 if (hasCity || mapLink != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.link)
                         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (tournament.hostCity.isNotBlank()) {
                                 Text(

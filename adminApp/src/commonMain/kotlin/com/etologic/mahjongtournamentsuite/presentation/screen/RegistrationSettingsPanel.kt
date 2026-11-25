@@ -45,6 +45,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.presentation.components.DateField
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -76,7 +77,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_status_closed_det
 import mahjongtournamentsuite.adminapp.generated.resources.reg_status_label
 import mahjongtournamentsuite.adminapp.generated.resources.reg_waiting_and_pending
 import org.jetbrains.compose.resources.stringResource
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 /**
  * The settings of the registrations as the rows of one card: status (with Close/Open and Make the draw), places, last
@@ -125,7 +125,7 @@ internal fun RegistrationSettingsPanel(
                     }
                 },
             ) {
-                val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                val color = if (settings.isOpen) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(
@@ -229,7 +229,7 @@ internal fun RegistrationSettingsPanel(
                             Text(
                                 data.publicLink,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 maxLines = if (compact) 2 else 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.testTag("registrations-link-value"),

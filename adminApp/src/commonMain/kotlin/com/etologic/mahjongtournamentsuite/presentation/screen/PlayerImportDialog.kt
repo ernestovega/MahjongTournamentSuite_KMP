@@ -1,8 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Groups
@@ -67,10 +66,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
@@ -135,8 +137,6 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {
@@ -494,8 +494,8 @@ private fun ImportNote(icon: ImageVector, text: String, color: Color) {
 @Composable
 private fun ImportResultContent(result: PlayerImportResult) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_players, result.players), MaterialTheme.colorScheme.primary)
-        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_changed, result.changedSlots), MaterialTheme.colorScheme.primary)
+        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_players, result.players), MtsTheme.colors.link)
+        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_changed, result.changedSlots), MtsTheme.colors.link)
         if (result.emptiedSlots > 0) {
             ImportResultLine(Icons.Filled.SkipNext, stringResource(Res.string.import_result_emptied, result.emptiedSlots), MaterialTheme.colorScheme.onSurfaceVariant)
         }

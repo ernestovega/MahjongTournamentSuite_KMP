@@ -51,6 +51,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
@@ -71,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -130,7 +132,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Instant
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 private const val MILLIS_PER_HOUR = 3_600_000L
 private val PERIOD_HOURS = listOf(24, 24 * 7, 24 * 30)
@@ -290,7 +291,7 @@ private fun KpiTile(label: String, value: String, valueColor: androidx.compose.u
         val compact = LocalCompactLayout.current
         Column(Modifier.fillMaxWidth().padding(screenLayout.cardPadding), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(value, style = (if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium).inTextFont(), fontWeight = FontWeight.Bold, color = valueColor)
         }
     }
 }

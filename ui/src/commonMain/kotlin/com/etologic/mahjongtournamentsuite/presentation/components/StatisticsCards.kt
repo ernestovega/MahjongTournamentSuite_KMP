@@ -171,7 +171,7 @@ internal fun CardTitle(
     text: String,
     modifier: Modifier = Modifier,
     info: String? = null,
-    style: TextStyle = MaterialTheme.typography.headlineMedium,
+    style: TextStyle = MaterialTheme.typography.headlineMedium.inTextFont(),
     bottomGap: Dp = 12.dp,
 ) {
     Row(
@@ -214,7 +214,7 @@ fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info:
                 if (info != null) InfoTip(info)
             }
             Spacer(Modifier.weight(1f))
-            val valueStyle = MaterialTheme.typography.headlineMedium
+            val valueStyle = MaterialTheme.typography.headlineMedium.inTextFont()
             Text(
                 buildAnnotatedString {
                     append(value)
@@ -347,7 +347,7 @@ private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
             style = MaterialTheme.typography.titleLarge.inTextFont(),
             fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,
-            color = if (open != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+            color = if (open != null) MtsTheme.colors.link else Color.Unspecified,
             textDecoration = if (open != null) TextDecoration.Underline else null,
         )
     }

@@ -67,6 +67,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
@@ -88,6 +89,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import kotlinx.coroutines.flow.map
@@ -114,7 +116,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** The width of the tab rows and of the tabs of a tournament, except the statistics, on a wide screen. */
 internal val TournamentColumnWidth = 720.dp
@@ -495,7 +496,7 @@ private fun RoundHeader(roundId: Int, start: String?) {
             Text(
                 start,
                 if (largeText) Modifier.weight(1f, fill = false) else Modifier,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
                 color = colors.onSurfaceVariant,
             )
         }
@@ -621,7 +622,7 @@ internal fun TableSummaryCard(
                             Text(
                                 formatPoints(seat.points),
                                 Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.inTextFont(),
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface,
                                 maxLines = 1,
@@ -631,7 +632,7 @@ internal fun TableSummaryCard(
                     Text(
                         seat.score.ifBlank { "-" },
                         Modifier.width(56.dp),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.inTextFont(),
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface,
                         textAlign = TextAlign.End,

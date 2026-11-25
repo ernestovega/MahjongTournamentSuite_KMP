@@ -68,6 +68,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -318,8 +319,8 @@ private fun RankingRows(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
                             ) {
-                                Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                                Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                                Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.link)
+                                Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MtsTheme.colors.link, maxLines = 1)
                             }
                         }
                         // The dropdown does not filter the list. Choosing a line scrolls the list to it.
@@ -449,7 +450,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
                 if (row.chipChicken) ChickenIcon()
                 Text(
                     row.chip,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.inTextFont(),
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface,
                 )
@@ -459,7 +460,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
             Text(
                 it,
                 Modifier.widthIn(min = if (narrow) 44.dp else 56.dp),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.inTextFont(),
                 color = colors.onSurface,
                 textAlign = TextAlign.End,
             )
