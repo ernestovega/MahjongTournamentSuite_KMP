@@ -589,6 +589,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     AppScaffold(
         title = stringResource(Res.string.tournament_players),
         subtitle = tournaments.firstOrNull { it.id == tournamentId }?.name?.ifBlank { null },
+        shortSubtitle = tournaments.firstOrNull { it.id == tournamentId }?.shortName,
         isLoading = loading || savingId != null,
         showBackgroundLogo = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },

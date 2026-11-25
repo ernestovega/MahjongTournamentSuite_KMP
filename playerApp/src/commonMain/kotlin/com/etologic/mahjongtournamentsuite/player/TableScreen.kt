@@ -145,6 +145,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             // The round and the table are the title. The tournament is the subtitle.
             title = stringResource(Res.string.stats_round_table, roundId, tableId),
             subtitle = view?.tournament?.name,
+            shortSubtitle = view?.tournament?.shortName,
             isLoading = view == null && message == null,
             autoFocusFirst = false,
             onBack = { navController.popBackStack() },

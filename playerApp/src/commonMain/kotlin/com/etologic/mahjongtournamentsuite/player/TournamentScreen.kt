@@ -189,6 +189,9 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
             else -> view?.tournament?.name ?: stringResource(Res.string.scope_tournament)
         },
         subtitle = if (teamOpen) view?.tournament?.name else null,
+        // The short name of the tournament when the long one does not fit.
+        shortTitle = if (teamOpen) null else view?.tournament?.shortName,
+        shortSubtitle = view?.tournament?.shortName,
         isLoading = (view == null && message == null) || ((shownTab == MainTab.STATISTICS || teamOpen) && statisticsLoading),
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },

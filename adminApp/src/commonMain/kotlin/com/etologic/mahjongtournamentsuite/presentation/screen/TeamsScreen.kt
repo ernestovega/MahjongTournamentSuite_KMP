@@ -280,6 +280,7 @@ fun TeamsScreen(
     AppScaffold(
         title = stringResource(Res.string.tournament_teams),
         subtitle = tournaments.firstOrNull { it.id == tournamentId }?.name?.ifBlank { null },
+        shortSubtitle = tournaments.firstOrNull { it.id == tournamentId }?.shortName,
         isLoading = loading || saving,
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },

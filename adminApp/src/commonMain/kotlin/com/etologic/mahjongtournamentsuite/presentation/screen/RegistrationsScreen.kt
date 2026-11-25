@@ -217,6 +217,7 @@ fun RegistrationsScreen(
     AppScaffold(
         title = stringResource(Res.string.reg_title),
         subtitle = tournament?.name,
+        shortSubtitle = tournament?.shortName,
         isLoading = loading || saving,
         showBackgroundLogo = loading && current == null,
         onBack = { navController.popBackStack() },
