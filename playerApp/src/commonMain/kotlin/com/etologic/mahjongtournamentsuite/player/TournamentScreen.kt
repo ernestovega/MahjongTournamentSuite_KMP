@@ -53,7 +53,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -481,24 +480,30 @@ private fun RoundHeader(roundId: Int, start: String?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // The round name keeps its whole width: the start takes the rest, aligned to the end, and wraps when it does not fit.
         Text(
             stringResource(Res.string.round_n, roundId),
-            Modifier.weight(1f),
+            maxLines = 1,
+            softWrap = false,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface,
         )
         if (start != null) {
-            Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(20.dp), tint = colors.onSurfaceVariant)
-            // With the large text of the accessibility settings the start is weighted too, so it wraps instead of squeezing
-            // the round name into a column. With normal text it keeps one line.
-            val largeText = LocalDensity.current.fontScale >= 1.3f
-            Text(
-                start,
-                if (largeText) Modifier.weight(1f, fill = false) else Modifier,
-                style = MaterialTheme.typography.titleMedium.inTextFont(),
-                color = colors.onSurfaceVariant,
-            )
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            ) {
+                Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(20.dp), tint = colors.onSurfaceVariant)
+                Text(
+                    start,
+                    Modifier.weight(1f, fill = false),
+                    style = MaterialTheme.typography.titleMedium.inTextFont(),
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
+            }
         }
     }
 }
