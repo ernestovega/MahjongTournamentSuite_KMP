@@ -67,7 +67,6 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -104,6 +103,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 enum class SeatWind {
     EAST,

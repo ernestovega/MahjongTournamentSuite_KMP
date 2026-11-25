@@ -45,8 +45,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
@@ -77,6 +75,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.progress_tables_labe
 import mahjongtournamentsuite.playerapp.generated.resources.progress_title
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** One day of the agenda. A null [date] holds the items that have no date yet. */
 data class AgendaDay(val date: String?, val items: List<TournamentAgendaItem>)

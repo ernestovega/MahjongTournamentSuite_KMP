@@ -88,10 +88,6 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryRegistratio
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
@@ -188,6 +184,10 @@ import mahjongtournamentsuite.playerapp.generated.resources.preg_without_team
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * A link of the web that opens a tournament: `/<slug>` (the public link, the registrations before the draw) or

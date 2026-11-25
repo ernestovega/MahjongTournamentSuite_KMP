@@ -68,8 +68,6 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
@@ -96,6 +94,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * One of the 81 combinations (fan) of the Mahjong Competition Rules. [tiles] is an example hand in [TileNotation].

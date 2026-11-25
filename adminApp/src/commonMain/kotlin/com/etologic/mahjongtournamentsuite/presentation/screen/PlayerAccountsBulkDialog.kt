@@ -51,8 +51,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DialogButtonRow
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -93,6 +91,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.send_count_label
 import mahjongtournamentsuite.adminapp.generated.resources.send_summary
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The groups an editor can filter by. [hasAccount] null shows every player. */
 internal enum class AccountFilter(val label: StringResource, val icon: ImageVector, val hasAccount: Boolean?) {

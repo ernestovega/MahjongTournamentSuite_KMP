@@ -76,8 +76,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -136,6 +134,8 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
 fun TournamentsScreen(navController: NavHostController) {

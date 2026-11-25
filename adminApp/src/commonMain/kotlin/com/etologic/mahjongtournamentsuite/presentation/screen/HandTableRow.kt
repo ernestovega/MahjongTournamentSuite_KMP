@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
@@ -46,6 +45,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.entry_penalty_n
 import mahjongtournamentsuite.adminapp.generated.resources.hand_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.remove_penalty_of_hand
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 /** One hand as a table row. The penalty rows open below it and use the same columns as the seat totals. */
 @Composable

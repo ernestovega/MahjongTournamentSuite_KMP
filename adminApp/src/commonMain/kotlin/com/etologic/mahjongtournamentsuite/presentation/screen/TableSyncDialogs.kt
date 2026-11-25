@@ -22,8 +22,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
@@ -58,6 +56,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_notice_where
 import mahjongtournamentsuite.adminapp.generated.resources.table_updated
 import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** Where one notice happened: its round and table. */
 internal fun TableUpdateNotice.where(): UiText = UiText.of(Res.string.table_notice_where, key.roundId, key.tableId)

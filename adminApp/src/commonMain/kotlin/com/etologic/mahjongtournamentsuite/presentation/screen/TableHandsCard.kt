@@ -42,7 +42,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
@@ -74,6 +73,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.unfold_hands
 import mahjongtournamentsuite.adminapp.generated.resources.when_on_mark_the_table_complete
 import mahjongtournamentsuite.adminapp.generated.resources.winner
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 @Composable
 internal fun TableHandsCard(

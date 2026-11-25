@@ -66,7 +66,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
@@ -115,6 +114,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** The width of the tab rows and of the tabs of a tournament, except the statistics, on a wide screen. */
 internal val TournamentColumnWidth = 720.dp

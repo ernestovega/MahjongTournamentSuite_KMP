@@ -21,7 +21,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -40,6 +39,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_status_not_sta
 import mahjongtournamentsuite.playerapp.generated.resources.table_status_playing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 /** The state of a table, as the color of its card shows it. */
 internal enum class TableStatus(val label: StringResource) {

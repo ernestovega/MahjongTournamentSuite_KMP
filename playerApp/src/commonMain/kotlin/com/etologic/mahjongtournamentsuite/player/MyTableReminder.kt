@@ -48,7 +48,6 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderMoment
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -72,6 +71,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.my_table_title
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 
 /** Where a round of the player is in time, for the reminder of the own table. */
 sealed interface RoundMoment {

@@ -66,8 +66,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -137,6 +135,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {

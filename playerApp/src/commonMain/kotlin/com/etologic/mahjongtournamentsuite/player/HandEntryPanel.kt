@@ -65,10 +65,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -153,6 +149,10 @@ import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
 import mahjongtournamentsuite.playerapp.generated.resources.hand_penalty
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** A penalty that the player is writing. The amount is a positive number. The app shows the minus sign. */
 private data class PenaltyDraft(val seat: Int? = null, val amount: String = "", val shared: Boolean = false) {

@@ -24,7 +24,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
@@ -56,6 +55,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.sending_title
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** A check for a player with an account and a cross for a player without one. The description names the state for screen readers. */
 @Composable

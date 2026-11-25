@@ -71,10 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawBackupRunningNote
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
@@ -173,6 +170,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /**
  * The change of the number of players of a tournament before its first hand (docs/player-count-change.md), on its

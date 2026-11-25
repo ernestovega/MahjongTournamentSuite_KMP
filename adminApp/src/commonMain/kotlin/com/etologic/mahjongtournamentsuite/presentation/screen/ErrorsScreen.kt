@@ -51,7 +51,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
@@ -132,6 +131,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Instant
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 private const val MILLIS_PER_HOUR = 3_600_000L
 private val PERIOD_HOURS = listOf(24, 24 * 7, 24 * 30)
