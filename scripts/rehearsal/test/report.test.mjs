@@ -175,3 +175,60 @@ test("a table taken out passes when every round has the new tables with each pla
   assert.ok(ok(backIn), backIn.join("\n"));
   assert.ok(backIn[0].includes("took 2 tables out (4 players) and added 1 back"), backIn[0]);
 });
+
+test("the pause passes when the clock was paused long enough, the phones saw it and hands were saved meanwhile", () => {
+  const plan = planOf({ kind: "pause", round: 2, table: 0, atMinutes: 1.5, seconds: 60 });
+  const clocks = (pausedMs) => checkWith({}, { roundClocks: [{ roundId: 2, startedAtMs: 0, pausedMs, adjustMs: 0, pausedAtMs: null }] });
+  const seen = [event("clock-paused-seen", { round: 2 }), event("clock-resumed-seen", { round: 2 })];
+  const meanwhile = event("hand-while-paused", { table: "2_3", handId: 4 });
+  assert.ok(ok(cornerCaseVerdicts(plan, run([...seen, meanwhile]), clocks(61_000))));
+
+  // Too short a pause, or no hand during it, or the phones never saw it.
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([...seen, meanwhile]), clocks(20_000))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run(seen), clocks(61_000))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([meanwhile]), clocks(61_000))));
+});
+
+test("Set time passes when the phones see each change of the end, give or take the seconds of whole minutes", () => {
+  const plan = planOf({ kind: "set-time", round: 2, table: 0, steps: [{ atMinutes: 3, change: 2 }, { atMinutes: 5, change: -1 }] });
+  const change = (ms) => event("clock-adjusted-seen", { round: 2, endChangeMs: ms });
+  assert.ok(ok(cornerCaseVerdicts(plan, run([change(118_000), change(-58_000), change(-300_000)]), checkWith())));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([change(118_000)]), checkWith())));
+  // A change of another round does not count.
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([change(118_000), { ...change(-58_000), round: 1 }]), checkWith())));
+});
+
+test("one round at a time passes when no hand of a round comes after the first hand of the next one", () => {
+  const plan = planOf({ kind: "overlap", round: 3, table: 0, atMinutes: 5.5 });
+  const check = checkWith({}, { roundClocks: [{ roundId: 2, startedAtMs: 0 }, { roundId: 3, startedAtMs: 1 }] });
+  const hand = (table, at) => ({ table, handId: 1, at, hand: {} });
+  assert.ok(ok(cornerCaseVerdicts(plan, run([], [hand("2_1", "2026-11-19T10:00:00Z"), hand("3_1", "2026-11-19T10:05:00Z")]), check)));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([], [hand("2_1", "2026-11-19T10:06:00Z"), hand("3_1", "2026-11-19T10:05:00Z")]), check)));
+  // Round 3 never started.
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), checkWith({}, { roundClocks: [{ roundId: 2, startedAtMs: 0 }] }))));
+});
+
+test("the Stop passes when the end moved in, the late hand was refused and no hand came after the Stop", () => {
+  const plan = { ...planOf({ kind: "stop", round: 2, table: 5, atMinutes: 7 }), matchDurationMinutes: 8, matchExtraMinutes: 3 };
+  const start = Date.parse("2026-11-19T10:00:00Z");
+  // Stopped after 7 minutes of play: the match time is 7 - 3 minutes, so the end plus the extra time is the Stop.
+  const check = checkWith({}, { roundClocks: [{ roundId: 2, startedAtMs: start, pausedMs: 0, adjustMs: -4 * 60_000, pausedAtMs: null }] });
+  const pulled = event("clock-adjusted-seen", { round: 2, endChangeMs: -300_000 });
+  const refused = event("hand-after-stop", { table: "2_5", status: 409, message: "This table is already completed", atMs: start + 7 * 60_000 + 3_000 });
+  const before = { table: "2_1", handId: 5, at: "2026-11-19T10:06:30Z", hand: {} };
+  assert.ok(ok(cornerCaseVerdicts(plan, run([pulled, refused], [before]), check)));
+
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([pulled, { ...refused, status: 200 }], [before]), check)));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([pulled, refused], [before, { ...before, at: "2026-11-19T10:07:30Z" }]), check)));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([refused], [before]), check)));
+  // The table closed with its 16 hands before the Stop: its refused hand says nothing of the Stop.
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([pulled, { ...refused, atMs: start + 5 * 60_000 }], [before]), check)));
+});
+
+test("a table opened again passes when it ends completed and the next round started", () => {
+  const plan = planOf({ kind: "reopen", round: 2, table: 6 });
+  const started = { roundClocks: [{ roundId: 3, startedAtMs: 0 }] };
+  assert.ok(ok(cornerCaseVerdicts(plan, run([]), checkWith({ "2_6": { table: { isCompleted: true }, hands: [] } }, started))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), checkWith({ "2_6": { table: { isCompleted: false }, hands: [] } }, started))));
+  assert.ok(!ok(cornerCaseVerdicts(plan, run([]), checkWith({ "2_6": { table: { isCompleted: true }, hands: [] } }))));
+});

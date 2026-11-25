@@ -74,6 +74,7 @@ export function registerRoundAndTableRoutes(router: Router): void {
           roundId,
           action: parseRoundClockAction(req.body),
           force: req.body?.force === true,
+          closePrevious: req.body?.closePrevious === true,
           actor: actorFromToken(res.locals.auth),
         });
         res.status(200).json(answer);

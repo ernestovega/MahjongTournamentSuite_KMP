@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -110,7 +111,7 @@ internal fun RegistrationEditDialog(
                 Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (registration == null) {
                         OutlinedButton(onClick = { picking = true }, modifier = Modifier.fillMaxWidth()) {
-                            Text(person?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: stringResource(Res.string.reg_pick_person))
+                            ButtonText(person?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: stringResource(Res.string.reg_pick_person))
                         }
                     } else {
                         val shown = person?.takeIf { it.emaId != registration.emaId }
@@ -126,7 +127,7 @@ internal fun RegistrationEditDialog(
                                 }
                             }
                             OutlinedButton(onClick = { picking = true }, modifier = Modifier.fillMaxWidth().testTag("registration-choose-ema")) {
-                                Text(stringResource(Res.string.reg_choose_ema))
+                                ButtonText(stringResource(Res.string.reg_choose_ema))
                             }
                         }
                     }
@@ -163,8 +164,8 @@ internal fun RegistrationEditDialog(
                     FocusedButton(
                         enabled = person != null,
                         onClick = { person?.let { onSave(it.emaId, email, team, food, paid, notify) } },
-                    ) { Text(stringResource(Res.string.reg_save)) }
-                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.reg_save)) }
+                    FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -259,9 +260,9 @@ internal fun RegistrationImportDialog(
                                     busy = false
                                 }
                             },
-                        ) { Text(stringResource(Res.string.reg_import_apply, ready)) }
+                        ) { ButtonText(stringResource(Res.string.reg_import_apply, ready)) }
                     }
-                    FocusedTextButton(enabled = !busy, onClick = { onDone(null) }) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(enabled = !busy, onClick = { onDone(null) }) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

@@ -37,10 +37,10 @@ test("the rounds start an hour later in Madrid, and at 23:59 when that is tomorr
   assert.deepEqual(plannedStart(new Date("2026-07-01T21:30:00Z")), { date: "2026-07-01", time: "23:59" });
 });
 
-test("the corners plan has every corner case in round 1, and the slow and abandoned tables in the last round", async () => {
+test("the corners plan has every corner case in round 1, the clock in round 2, and the slow and abandoned tables in the last round", async () => {
   const { plan } = await planFor({ scenario: "corners" });
   assert.equal(plan.players, 28);
-  assert.equal(plan.rounds, 2);
+  assert.equal(plan.rounds, 3);
   assert.equal(plan.matchDurationMinutes, 8);
   const at = (kind) => plan.cornerCases.filter((item) => item.kind === kind).map((item) => `${item.round}_${item.table}`);
   assert.deepEqual(at("race"), ["1_1"]);
@@ -48,10 +48,19 @@ test("the corners plan has every corner case in round 1, and the slow and abando
   assert.deepEqual(at("late"), ["1_3"]);
   assert.deepEqual(at("substitution"), ["1_3"]);
   assert.deepEqual(at("seat-change"), ["1_4"]);
-  assert.deepEqual(at("extra-time"), ["2_1"]);
-  assert.deepEqual(at("abandoned"), ["2_2"]);
-  assert.deepEqual(at("manual-totals"), ["2_3"]);
-  assert.deepEqual(at("offline"), ["2_4"]);
+  assert.deepEqual(at("extra-time"), ["3_1"]);
+  assert.deepEqual(at("abandoned"), ["3_2"]);
+  assert.deepEqual(at("manual-totals"), ["3_3"]);
+  assert.deepEqual(at("offline"), ["3_4"]);
+  // Round 2: the organizer pauses, gives more time and takes some back, tries round 3 too early, stops the round and
+  // opens a table again. Only the Stop and the reopen have a table.
+  assert.deepEqual(at("pause"), ["2_0"]);
+  assert.deepEqual(at("set-time"), ["2_0"]);
+  assert.deepEqual(at("overlap"), ["3_0"]);
+  assert.deepEqual(at("stop"), ["2_5"]);
+  assert.deepEqual(at("reopen"), ["2_6"]);
+  const steps = plan.cornerCases.find((item) => item.kind === "set-time").steps.map((step) => step.change);
+  assert.deepEqual(steps, [2, -1]);
   // Table 7 of round 1 has no other case: its players finish level.
   assert.deepEqual(at("tie"), ["1_7"]);
   // The editor never plays at the late table.
@@ -71,6 +80,7 @@ test("every scenario plays the editor in round 2, the extra time and the abandon
     for (const item of plan.cornerCases.filter((each) => each.kind === "delete" || each.kind === "edit")) assert.equal(item.round, 2);
     for (const kind of ["extra-time", "abandoned", "manual-totals", "offline"]) assert.equal(plan.cornerCases.find((item) => item.kind === kind).round, plan.rounds);
     assert.equal(plan.cornerCases.some((item) => item.kind === "tie"), false, "the tie is in corners only");
+    assert.equal(plan.cornerCases.some((item) => ["pause", "set-time", "overlap", "stop", "reopen"].includes(item.kind)), false, "the clock cases are in corners only");
     assert.equal(plan.cornerCases.some((item) => item.kind === "player-count"), false, "the change of the number of players is in corners only");
     assert.equal(plan.createWith, undefined);
     assert.ok(plan.roundSchedules.every((round) => round.date === plan.roundSchedules[0].date), "every round on one day");

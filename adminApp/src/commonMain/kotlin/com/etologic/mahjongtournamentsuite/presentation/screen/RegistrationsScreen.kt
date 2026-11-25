@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -251,7 +252,7 @@ fun RegistrationsScreen(
                     AlertDialog(
                         onDismissRequest = { info = null },
                         text = { MtsDialogText(message.asString()) },
-                        confirmButton = { MtsDialogButtons { FocusedButton(onClick = { info = null }) { Text(stringResource(Res.string.ok)) } } },
+                        confirmButton = { MtsDialogButtons { FocusedButton(onClick = { info = null }) { ButtonText(stringResource(Res.string.ok)) } } },
                     )
                 }
             }
@@ -434,8 +435,8 @@ fun RegistrationsScreen(
                                 change { presenter.remove(tournamentId, registration.emaId, notify) }
                             },
                             colors = MtsButtons.destructiveColors(),
-                        ) { Text(stringResource(Res.string.reg_remove)) }
-                        FocusedTextButton(onClick = { removing = null }) { Text(stringResource(Res.string.cancel)) }
+                        ) { ButtonText(stringResource(Res.string.reg_remove)) }
+                        FocusedTextButton(onClick = { removing = null }) { ButtonText(stringResource(Res.string.cancel)) }
                     }
                 },
             )
@@ -529,8 +530,8 @@ internal fun MakeDrawDialog(
                         Spacer(Modifier.height(8.dp))
                     }
                     MtsDialogButtons {
-                        FocusedButton(enabled = tries == null, onClick = onConfirm) { Text(stringResource(Res.string.reg_draw_confirm)) }
-                        if (tries == null) FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                        FocusedButton(enabled = tries == null, onClick = onConfirm) { ButtonText(stringResource(Res.string.reg_draw_confirm)) }
+                        if (tries == null) FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                     }
                 }
             },
@@ -554,7 +555,7 @@ internal fun LabeledIconButton(text: String, icon: androidx.compose.ui.graphics.
     } else {
         FocusedTextButton(onClick = onClick, enabled = enabled, modifier = modifier) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(text, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            ButtonText(text, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
         }
     }
 }

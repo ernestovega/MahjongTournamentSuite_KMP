@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +78,7 @@ fun TournamentIdCardPreviewButton(
         if (isGenerating) {
             CircularProgressIndicator(strokeWidth = 2.dp)
         } else {
-            Text(stringResource(Res.string.generate_id_card_preview))
+            ButtonText(stringResource(Res.string.generate_id_card_preview))
         }
     }
 }

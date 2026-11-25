@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +17,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -165,7 +165,7 @@ private fun ShareSummaryButton(layer: GraphicsLayer, fileName: String, showLabel
         TextButton(onClick = onClick, modifier = modifier.testTag(SHARE_RESULTS_TAG), colors = ButtonDefaults.textButtonColors(contentColor = color)) {
             Icon(Icons.Default.Share, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(MtsTheme.spacing.sm))
-            Text(title)
+            ButtonText(title)
         }
     } else {
         IconButton(onClick = onClick, modifier = modifier.testTag(SHARE_RESULTS_TAG)) {

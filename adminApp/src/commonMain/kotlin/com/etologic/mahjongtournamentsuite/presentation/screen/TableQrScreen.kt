@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -210,9 +211,9 @@ internal fun TablesIdsDialogContent(
                         onClick = { onDownload(perSheet) },
                         modifier = Modifier.testTag("table_qr_download"),
                     ) {
-                        Text(stringResource(Res.string.create_pdf))
+                        ButtonText(stringResource(Res.string.create_pdf))
                     }
-                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

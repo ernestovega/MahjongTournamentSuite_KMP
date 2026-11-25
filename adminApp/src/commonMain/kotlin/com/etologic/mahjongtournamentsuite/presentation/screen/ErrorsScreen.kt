@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -324,12 +325,12 @@ private fun ErrorFiltersBar(
                 label = { Text(stringResource(Res.string.search)) },
                 singleLine = true,
                 trailingIcon = {
-                    if (query.isNotEmpty()) IconButton(onClick = { onQueryChange("") }) { Text("×") }
+                    if (query.isNotEmpty()) IconButton(onClick = { onQueryChange("") }) { ButtonText("×") }
                 },
                 modifier = Modifier.weight(1f),
             )
             FocusedButton(onClick = onReload, enabled = reloadEnabled, focusRequester = reloadFocusRequester) {
-                Text(stringResource(Res.string.errors_reload))
+                ButtonText(stringResource(Res.string.errors_reload))
             }
         }
         if (LocalCompactLayout.current) {
@@ -584,7 +585,7 @@ private fun ErrorGroupDialog(
                             }
                             loaded.nextReportCursor?.let { next ->
                                 FocusedOutlinedButton(onClick = { load(next) }, enabled = !loadingMore) {
-                                    Text(stringResource(Res.string.errors_load_more_reports))
+                                    ButtonText(stringResource(Res.string.errors_load_more_reports))
                                 }
                             }
                         }
@@ -597,7 +598,7 @@ private fun ErrorGroupDialog(
                         onClick = onDismiss,
                         focusRequester = closeFocus,
                         buttonModifier = Modifier.focusLoop(previous = copyFocus, next = copyFocus),
-                    ) { Text(stringResource(Res.string.close)) }
+                    ) { ButtonText(stringResource(Res.string.close)) }
 
                     FocusedTextButton(
                         onClick = {
@@ -606,7 +607,7 @@ private fun ErrorGroupDialog(
                         enabled = detail?.stackTrace?.isNotBlank() == true,
                         focusRequester = copyFocus,
                         buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
-                    ) { Text(stringResource(Res.string.errors_copy_stack)) }
+                    ) { ButtonText(stringResource(Res.string.errors_copy_stack)) }
                 }
             },
         )

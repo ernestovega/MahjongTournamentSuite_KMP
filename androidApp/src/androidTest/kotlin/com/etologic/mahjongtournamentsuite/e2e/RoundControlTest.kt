@@ -121,6 +121,48 @@ class RoundControlTest : AdminE2eTest() {
         c.waitForText("Stop the round")
     }
 
+    private fun hasClock(round: Int): Boolean {
+        val list = clocks(LIVE_ID)
+        return (0 until list.length()).any { list.getJSONObject(it).getInt("roundId") == round }
+    }
+
+    /** One round at a time: round 5 cannot start while round 4 is in play, and the screen says to stop it first. */
+    @Test
+    fun aStartWhileTheRoundBeforePlaysIsRefusedAndSaysWhy() {
+        openRoundControl()
+        c.onNodeWithTag("round_chip_5").performScrollTo().performClick()
+        c.waitForText("Not started")
+        c.clickButton("Start")
+        c.waitForText("Round 4 is still in play. Stop it before starting the next round.")
+        c.clickButton("OK")
+        check(!hasClock(5)) { "Round 5 started while round 4 played" }
+    }
+
+    /**
+     * After a Stop the server closes the tables of round 4 with hands. Tables 8 (seats only), 9 and 10 (empty) stay
+     * open: the Start of round 5 lists them, and "Close them and start" completes them and starts the round.
+     */
+    @Test
+    fun afterAStopTheStartOfTheNextRoundClosesTheOpenTablesFirst() {
+        openRoundControl()
+        c.waitForText("Stop the round")
+        c.clickButton("Stop the round")
+        c.waitForText("Stop the round?")
+        c.clickButton("Stop")
+        c.waitUntil(SERVER_WAIT_MS) { isCompleted(4, 5) }
+        check(!isCompleted(4, 9)) { "Table 9 of round 4 has no hands and should stay open after the Stop" }
+
+        c.onNodeWithTag("round_chip_5").performScrollTo().performClick()
+        c.waitForText("Not started")
+        c.clickButton("Start")
+        c.waitForText("Start round 5?")
+        c.waitForText("Round 4 still has open tables: 8, 9, 10.", substring = true)
+        c.clickButton("Close them and start")
+        c.waitUntil(SERVER_WAIT_MS) { hasClock(5) }
+        listOf(8, 9, 10).forEach { table -> check(isCompleted(4, table)) { "Table $table of round 4 is still open" } }
+        c.waitForText("Stop the round")
+    }
+
     @Test
     fun anEditorOfTheTournamentHasRoundControl() {
         // The editors of a tournament also open and close its rounds (tournament.roundControl, docs/user-roles-matrix.md).

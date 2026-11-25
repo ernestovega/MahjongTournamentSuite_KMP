@@ -720,6 +720,8 @@ Die erste, die klappt, gewinnt</string>
     <string name="conflict_account_has_other_ema">Dieses Konto gehört zu einem anderen EMA-Spieler.</string>
     <string name="conflict_all_hands_done">Alle Hände dieses Tisches sind gespielt.</string>
     <string name="conflict_assignments_missing">Weise vor dem Erstellen der Ausweise alle Spieler des Turniers zu.\nEs fehlen: %1$s.</string>
+    <string name="conflict_previous_round_in_play">Runde %1$s läuft noch. Beende sie, bevor die nächste beginnt.</string>
+    <string name="conflict_previous_round_open_tables">Runde %1$s hat noch offene Tische: %2$s.\nSchließe sie, bevor die nächste beginnt.</string>
     <string name="conflict_clock_not_started">Die Uhr dieser Runde läuft noch nicht.</string>
     <string name="conflict_duplicate_tournament">Dasselbe Turnier steht zweimal in der Liste.</string>
     <string name="conflict_ema_already_in_tournament">Dieser EMA-Spieler ist bereits in diesem Turnier.</string>

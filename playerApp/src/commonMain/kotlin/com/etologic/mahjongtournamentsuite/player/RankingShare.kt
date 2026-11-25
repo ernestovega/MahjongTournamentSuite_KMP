@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,7 +93,7 @@ internal fun RankingRoundButton(rounds: List<Int>, selected: Int?, onSelect: (In
             modifier = Modifier.height(44.dp).testTag(RANKING_ROUND_BUTTON_TAG),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 12.dp, end = 4.dp),
         ) {
-            Text(
+            ButtonText(
                 if (selected == null) stringResource(Res.string.ranking_now) else stringResource(Res.string.round_n, selected),
                 maxLines = 1,
                 // A past ranking stands out, so nobody takes it for the one of now.
@@ -115,7 +116,7 @@ internal fun RankingShareButton(showLabel: Boolean, onClick: () -> Unit) {
         TextButton(onClick = onClick, modifier = Modifier.testTag(RANKING_SHARE_BUTTON_TAG)) {
             Icon(Icons.Default.Share, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(MtsTheme.spacing.sm))
-            Text(title, maxLines = 1)
+            ButtonText(title, maxLines = 1)
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.testTag(RANKING_SHARE_BUTTON_TAG)) {
@@ -195,9 +196,9 @@ internal fun RankingShareDialog(
                     FocusedButton(onClick = share) {
                         Icon(Icons.Default.Share, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(MtsTheme.spacing.sm))
-                        Text(title)
+                        ButtonText(title)
                     }
-                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.ranking_close)) }
+                    FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.ranking_close)) }
                 }
             },
         )

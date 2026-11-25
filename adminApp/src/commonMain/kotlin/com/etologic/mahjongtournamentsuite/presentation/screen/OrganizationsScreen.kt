@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -292,7 +293,7 @@ fun OrganizationsScreen(navController: NavHostController) {
                                 ) {
                                     CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("$code ($count)")
+                                    ButtonText("$code ($count)")
                                 }
                             }
                         }
@@ -547,7 +548,7 @@ internal fun OrganizationEditorDialog(
                             TournamentLogoPreview(model = logoModel, onImageInfo = {}, modifier = Modifier.size(120.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 FocusedButton(onClick = logoPicker::launch, enabled = !saving) {
-                                    Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
+                                    ButtonText(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
                                 }
                                 if (logoModel != null) {
                                     FocusedTextButton(
@@ -556,7 +557,7 @@ internal fun OrganizationEditorDialog(
                                             removeLogo = organization?.logoUrl != null
                                         },
                                         enabled = !saving,
-                                    ) { Text(stringResource(Res.string.remove)) }
+                                    ) { ButtonText(stringResource(Res.string.remove)) }
                                 }
                             }
                         }
@@ -584,16 +585,16 @@ internal fun OrganizationEditorDialog(
                             }
                         },
                         enabled = !saving,
-                    ) { Text(stringResource(Res.string.save)) }
+                    ) { ButtonText(stringResource(Res.string.save)) }
                     if (onDelete != null) {
                         FocusedOutlinedButton(
                             onClick = onDelete,
                             enabled = !saving,
                             colors = MtsButtons.destructiveOutlinedColors(),
                             border = MtsButtons.destructiveBorder(!saving),
-                        ) { Text(stringResource(Res.string.delete)) }
+                        ) { ButtonText(stringResource(Res.string.delete)) }
                     }
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -635,9 +636,9 @@ internal fun DeleteOrganizationDialog(organization: Organization, saving: Boolea
             confirmButton = {
                 MtsDialogButtons {
                     FocusedButton(onClick = onConfirm, enabled = !saving, colors = MtsButtons.destructiveColors()) {
-                        Text(stringResource(Res.string.delete))
+                        ButtonText(stringResource(Res.string.delete))
                     }
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

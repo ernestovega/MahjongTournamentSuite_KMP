@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -105,7 +106,7 @@ internal fun OpenTablesReviewDialog(
                         // An invisible copy of the button, so the header columns line up with the rows.
                         Box(Modifier.alpha(0f).clearAndSetSemantics {}) {
                             FocusedOutlinedButton(onClick = {}, enabled = false) {
-                                Text(stringResource(Res.string.round_control_finished_go), maxLines = 1, softWrap = false)
+                                ButtonText(stringResource(Res.string.round_control_finished_go), maxLines = 1, softWrap = false)
                             }
                         }
                     }
@@ -129,7 +130,7 @@ internal fun OpenTablesReviewDialog(
                                         onClick = { onGoTo(table) },
                                         enabled = !busy,
                                         buttonModifier = Modifier.testTag("open_table_${table.roundId}_${table.tableId}_go"),
-                                    ) { Text(stringResource(Res.string.round_control_finished_go), maxLines = 1, softWrap = false) }
+                                    ) { ButtonText(stringResource(Res.string.round_control_finished_go), maxLines = 1, softWrap = false) }
                                 }
                             }
                         }
@@ -152,11 +153,11 @@ internal fun OpenTablesReviewDialog(
                             )
                             Spacer(Modifier.width(8.dp))
                         }
-                        Text(stringResource(Res.string.round_control_finished_close_selected))
+                        ButtonText(stringResource(Res.string.round_control_finished_close_selected))
                     }
 
                     FocusedTextButton(onClick = onDismiss, buttonModifier = Modifier.testTag("open_tables_dismiss")) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                 }
             },

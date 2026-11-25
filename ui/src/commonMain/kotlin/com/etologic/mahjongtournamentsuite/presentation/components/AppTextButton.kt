@@ -30,7 +30,7 @@ fun AppTextButton(
 private fun AppTextButtonPreview() {
     MtsTheme(useDarkTheme = false) {
         AppTextButton(onClick = {}) {
-            Text("Text button")
+            ButtonText("Text button")
         }
     }
 }

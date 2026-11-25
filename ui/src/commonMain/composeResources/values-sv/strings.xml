@@ -720,6 +720,8 @@ Den första som fungerar vinner</string>
     <string name="conflict_account_has_other_ema">Det här kontot tillhör en annan EMA-spelare.</string>
     <string name="conflict_all_hands_done">Alla händer vid det här bordet är spelade.</string>
     <string name="conflict_assignments_missing">Tilldela alla spelare i turneringen innan du skapar namnbrickorna.\nSaknas: %1$s.</string>
+    <string name="conflict_previous_round_in_play">Runda %1$s pågår fortfarande. Stoppa den innan nästa börjar.</string>
+    <string name="conflict_previous_round_open_tables">Runda %1$s har fortfarande öppna bord: %2$s.\nStäng dem innan nästa börjar.</string>
     <string name="conflict_clock_not_started">Klockan för den här rundan har inte startat än.</string>
     <string name="conflict_duplicate_tournament">Samma turnering finns två gånger i listan.</string>
     <string name="conflict_ema_already_in_tournament">Den här EMA-spelaren är redan med i turneringen.</string>

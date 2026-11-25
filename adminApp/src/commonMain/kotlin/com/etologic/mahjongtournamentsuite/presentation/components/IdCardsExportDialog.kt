@@ -249,7 +249,7 @@ fun IdCardsExportDialog(
                     } else {
                         FocusedTextButton(onClick = restore) {
                             Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text(restoreLabel, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                            ButtonText(restoreLabel, modifier = Modifier.padding(start = MtsTheme.spacing.sm))
                         }
                     }
                 }
@@ -405,10 +405,10 @@ fun IdCardsExportDialog(
                         enabled = !widthInvalid && !heightInvalid && !staffNamesInvalid,
                         onClick = { onExport(exported) },
                     ) {
-                        Text(stringResource(Res.string.create_pdf))
+                        ButtonText(stringResource(Res.string.create_pdf))
                     }
 
-                    FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -566,7 +566,7 @@ private fun StaffNames(
             enabled = names.size < IdCardSheetLayout.MAX_STAFF_NAMES,
         ) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(stringResource(Res.string.add_person), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+            ButtonText(stringResource(Res.string.add_person), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
         }
         if (printedSheets > chosenSheets) {
             Text(

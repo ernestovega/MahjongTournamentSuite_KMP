@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -159,16 +160,16 @@ fun PlayerSubstitutionDialog(
                     Button(
                         enabled = !busy,
                         onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
-                    ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
+                    ) { ButtonText(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
                     if (current != null) {
                         OutlinedButton(
                             enabled = !busy,
                             onClick = onRemove,
                             colors = MtsButtons.destructiveOutlinedColors(),
                             border = MtsButtons.destructiveBorder(!busy),
-                        ) { Text(stringResource(Res.string.remove_substitution)) }
+                        ) { ButtonText(stringResource(Res.string.remove_substitution)) }
                     }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

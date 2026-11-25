@@ -724,6 +724,8 @@ The first one that works wins</string>
     <string name="conflict_account_has_other_ema">This account belongs to another EMA player.</string>
     <string name="conflict_all_hands_done">All hands of this table are done.</string>
     <string name="conflict_assignments_missing">Assign every player of the tournament before making the ID cards.\nMissing: %1$s.</string>
+    <string name="conflict_previous_round_in_play">Round %1$s is still in play. Stop it before starting the next round.</string>
+    <string name="conflict_previous_round_open_tables">Round %1$s still has open tables: %2$s.\nClose them before starting the next round.</string>
     <string name="conflict_clock_not_started">The clock of this round has not started yet.</string>
     <string name="conflict_duplicate_tournament">The same tournament is in the list twice.</string>
     <string name="conflict_ema_already_in_tournament">This EMA player is already in this tournament.</string>

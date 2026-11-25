@@ -726,6 +726,8 @@
     <string name="conflict_account_has_other_ema">Эта учётная запись принадлежит другому игроку EMA.</string>
     <string name="conflict_all_hands_done">Все руки за этим столом сыграны.</string>
     <string name="conflict_assignments_missing">Назначьте всех игроков турнира, прежде чем создавать бейджи.\nНе хватает: %1$s.</string>
+    <string name="conflict_previous_round_in_play">Раунд %1$s ещё идёт. Остановите его, прежде чем начинать следующий.</string>
+    <string name="conflict_previous_round_open_tables">В раунде %1$s ещё есть открытые столы: %2$s.\nЗакройте их, прежде чем начинать следующий.</string>
     <string name="conflict_clock_not_started">Часы этого раунда ещё не запущены.</string>
     <string name="conflict_duplicate_tournament">Один и тот же турнир указан в списке дважды.</string>
     <string name="conflict_ema_already_in_tournament">Этот игрок EMA уже участвует в турнире.</string>

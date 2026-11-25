@@ -153,6 +153,19 @@ read it, so each one knows its part.
   last draw of the server with 7 tables and each of the 28 players once. During the tournament, once a table has a
   hand, the organizer opens Number of players again and the screen says the number cannot change; the late player of
   round 1 is replaced with Substitute instead.
+- The clock of a round: a pause, more and less time, a Stop, and one round at a time.
+
+  Done (plan.cornerCases kinds pause, set-time, overlap, stop and reopen, corners only, round 2). The organizer opens
+  Round control on round 2 while the bots play. At 1:30 of play time it pauses the clock for a minute and resumes it;
+  the tables go on saving hands in the pause. At 2:30 Set time gives 2 minutes more, and at 4:00 it takes 1 back. At
+  5:00 it tries Start on round 3: the server refuses while round 2 plays, and the screen says to stop round 2 first.
+  At 6:00 (before the 16 hands of a table) it stops round 2 (before its end, and without extra time): the server closes the tables with hands. The scorer
+  of table 5 still sends a hand after the Stop. Then the organizer opens table 6 again (a pending table) and goes back.
+  Play of round 3 on the Timer asks to close the open table of round 2 first ("Close them and start"), and the
+  organizer confirms. The bots note what the phones see of the clock (pause, resume and each change of the time). The
+  checks want a pause of about a minute seen by the phones with hands saved in it, each change of Set time seen
+  (give or take 45 s, as the dialog takes whole minutes), the hand after the Stop refused and no hand saved after it,
+  table 6 completed, and no hand of a round saved after the first hand of the next one.
 - `small` only: a private championship, a disabled user, editors and admins added, changed and removed in the middle,
   a change of branding and of venue in the middle.
 
@@ -204,12 +217,12 @@ run. See docs/benchmark.md, "Cost".
 
 ## Corners: the corner cases in minutes
 
-`corners` is a small tournament of 28 players with 2 rounds of 8 minutes, and every corner case in round 1. The race,
+`corners` is a small tournament of 28 players with 3 rounds of 8 minutes, and every corner case in round 1. The race,
 the penalties and the draw are at table 1, the late table and its substitution at table 3, the seat change at table 4,
 the deleted and edited hands at tables 2, 4, 5 and 6, and the tie at table 7. Before round 1 the organizer takes a
-table out (created with 32 players, played with 28). The slow table of the extra time, the
-abandoned table, the manual totals and the phone without network are at tables 1 to 4 of round 2, the last one. It takes about
-45 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
+table out (created with 32 players, played with 28). Round 2 plays the clock in Round control: pause, Set time, an
+early Start of round 3, Stop and a table opened again. The slow table of the extra time, the abandoned table, the
+manual totals and the phone without network are at tables 1 to 4 of round 3, the last one. It takes about 55 minutes. Turn off "Deploy main to staging first" when only the tests changed, to save about 9 more minutes. When the
 organizer fails, the whole run stops, so the bots do not play on for nothing. The full scenarios stay as they are.
 
 ## The registrations

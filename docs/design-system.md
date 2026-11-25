@@ -62,6 +62,7 @@ In `designsystem/.../presentation/components`:
 | `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
 | `Modifier.scrollIndicators`, `verticalScrollWithIndicators`, `horizontalScrollWithIndicators` | The fading edges and the always visible scrollbar of every list (see below). |
 | `MtsCheckboxRow`, `MtsSwitchRow`, `MtsRadioRow` | A checkbox, switch or radio button with its text, where the whole line is the control (see the rules). |
+| `ButtonText` | The text of a button, drawn in capitals. Screen readers and tests get the text as written. |
 
 `MtsCatalog` (same folder as the tokens) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
 **DEV > Design system** in the top bar of the tournament list (`DesignSystemRoute`).
@@ -73,6 +74,8 @@ In `designsystem/.../presentation/components`:
 - Paddings and gaps use the spacing scale or the layout tokens. Sizes of things (icons, widths) can stay in dp.
 - A value with a sign uses `signedText` and `signedColor`, not its own `if (value > 0) "+$value"`.
 - Buttons are `Debounced*` or `Focused*` (`ButtonConventionTest`).
+- The text of every button is in capitals (Ernesto, 2026-11-25): the content of a button uses `ButtonText`, never `Text`
+  (`ButtonTextConventionTest`). Write the strings in normal case; only the drawn text is in capitals.
 - Every list, column or row that scrolls (lazy or not, vertical or horizontal, also a strip of chips) has its scroll
   indicators: `Modifier.scrollIndicators(state)` before the scroll, or `verticalScrollWithIndicators()` /
   `horizontalScrollWithIndicators()` instead of `verticalScroll()` / `horizontalScroll()`.

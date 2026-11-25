@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -176,7 +177,7 @@ internal fun SendSummaryDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                    Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )
@@ -200,7 +201,7 @@ fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                    Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )

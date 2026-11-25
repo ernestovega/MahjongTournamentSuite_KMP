@@ -143,6 +143,8 @@ export async function checkTournament(api, tournamentId, botReports = []) {
   const raceDuplicates = races.filter((event) => event.statuses.filter((status) => status === 200).length > 1);
 
   const sorted = [...ranking.values()].sort((a, b) => b.points - a.points || b.score - a.score);
+  // The clocks of the rounds, for the corner cases of the clock (pause, Set time, Stop, one round at a time).
+  const clocks = await api.call("GET", `/public/tournaments/${tournamentId}/round-clocks`, { label: "GET round-clocks" });
   const result = {
     tournamentId,
     tables: tables.length,
@@ -159,6 +161,7 @@ export async function checkTournament(api, tournamentId, botReports = []) {
     substitutions: Object.fromEntries(substitutionOf),
     chickenBySlot: Object.fromEntries(chickenBySlot),
     bestBySlotTable,
+    roundClocks: clocks.status === 200 ? (clocks.json?.roundClocks ?? []) : [],
   };
   // The tables as the server has them, for the corner cases. Not in the JSON of the check: it would be too large.
   Object.defineProperty(result, "tablesByKey", { value: byKey, enumerable: false });
@@ -242,6 +245,7 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
     lines.push(`  Seen at ${key}: ${seen.join(", ") || "nothing"}.`);
   };
   const cases = plan?.cornerCases ?? [];
+  const clockOf = (round) => (check?.roundClocks ?? []).find((clock) => clock.roundId === round) ?? null;
   const planned = new Set(cases.filter((item) => item.kind === "delete" || item.kind === "edit").map((item) => `${item.round}_${item.table}`));
   for (const item of cases) {
     const key = `${item.round}_${item.table}`;
@@ -369,6 +373,56 @@ export function cornerCaseVerdicts(plan, botReports, check = null) {
       const ok = rounds.size === plan.rounds && wrong.length === 0;
       add(ok,
         `The tournament was created with ${item.from} players and before the first hand the organizer ${item.via == null ? "took a table out" : `took ${(item.from - item.via) / 4} tables out (${item.via} players) and added ${(item.to - item.via) / 4} back`}: the last draw has ${item.to / 4} tables in each of its ${rounds.size} rounds, with the ${item.to} players once each${wrong.length ? ` (wrong in round ${wrong.join(", ")})` : ""}.`);
+    } else if (item.kind === "pause") {
+      const clock = clockOf(item.round);
+      const paused = events.filter((event) => event.kind === "clock-paused-seen" && event.round === item.round);
+      const resumed = events.filter((event) => event.kind === "clock-resumed-seen" && event.round === item.round);
+      const meanwhile = events.filter((event) => event.kind === "hand-while-paused" && event.table?.startsWith(`${item.round}_`));
+      const pausedSeconds = Math.round((clock?.pausedMs ?? 0) / 1000);
+      const ok = clock != null && pausedSeconds >= item.seconds * 0.8 && paused.length > 0 && resumed.length > 0 && meanwhile.length > 0;
+      add(ok,
+        `Round ${item.round}: the organizer paused the clock for ${pausedSeconds} s and resumed it, the phones saw both (${paused.length} and ${resumed.length}), and the tables saved ${meanwhile.length} hands during the pause.`);
+    } else if (item.kind === "set-time") {
+      // Set time gives the remaining time in whole minutes, so each change is its minutes give or take 45 s.
+      const changes = events.filter((event) => event.kind === "clock-adjusted-seen" && event.round === item.round).map((event) => event.endChangeMs);
+      const seen = item.steps.map((step) => changes.find((change) => Math.abs(change - step.change * 60_000) <= 45_000));
+      const ok = seen.every((change) => change != null);
+      add(ok,
+        `Round ${item.round}: the organizer changed the time with Set time (${item.steps.map((step) => `${step.change > 0 ? "+" : ""}${step.change} min`).join(", then ")}) and the phones saw the end move (${seen.map((change) => (change == null ? "not seen" : `${change > 0 ? "+" : ""}${Math.round(change / 1000)} s`)).join(", ")}).`);
+    } else if (item.kind === "overlap") {
+      // The organizer tried to start the round while the round before played: the organizer app checks the refusal on
+      // its screen. Here no two rounds played at the same time: no hand of a round was saved after the first hand of
+      // the next round. (Not the start of the clock: a Stop in the first minutes moves the start back.)
+      const hands = botReports.flatMap((report) => report.hands ?? []);
+      const roundOf = (hand) => Number(hand.table.split("_")[0]);
+      const firstOf = new Map();
+      for (const hand of hands) firstOf.set(roundOf(hand), Math.min(firstOf.get(roundOf(hand)) ?? Infinity, Date.parse(hand.at)));
+      const late = hands.filter((hand) => Date.parse(hand.at) > (firstOf.get(roundOf(hand) + 1) ?? Infinity) + 2_000);
+      const ok = clockOf(item.round) != null && late.length === 0;
+      add(ok,
+        `Round ${item.round} started only after round ${item.round - 1} ended: one round at a time (${late.length} hands of a round saved after the next round started${late.length ? `: ${late.slice(0, 5).map((hand) => `${hand.table}#${hand.handId}`).join(", ")}` : ""}).`);
+    } else if (item.kind === "stop") {
+      const clock = clockOf(item.round);
+      const tried = at("hand-after-stop")[0];
+      // The instant of the Stop: a stopped round has no extra time left, so its end plus the extra time is the Stop.
+      const stoppedAt = clock == null ? null : clock.startedAtMs + (clock.pausedMs ?? 0) + (plan.matchDurationMinutes + (plan.matchExtraMinutes ?? 0)) * 60_000 + (clock.adjustMs ?? 0);
+      const pulled = events.some((event) => event.kind === "clock-adjusted-seen" && event.round === item.round && event.endChangeMs < -60_000);
+      const after = botReports.flatMap((report) => report.hands ?? [])
+        .filter((hand) => hand.table.startsWith(`${item.round}_`) && stoppedAt != null && Date.parse(hand.at) > stoppedAt + 2_000);
+      // The hand of the scorer comes after the Stop, not after 16 hands that closed the table first.
+      const afterTheStop = tried != null && stoppedAt != null && tried.atMs >= stoppedAt - 2_000;
+      const ok = tried != null && tried.status !== 200 && afterTheStop && pulled && after.length === 0;
+      add(ok,
+        `Round ${item.round}: the organizer stopped the round before its end, a player of table ${key} still sent a hand and was refused (answer ${tried?.status ?? "none"}${tried?.message ? `, "${tried.message}"` : ""}), and no hand of the round was saved after the Stop (${after.length}).`);
+      if (!ok) detail(key);
+    } else if (item.kind === "reopen") {
+      // The organizer opened the table again after the Stop, and the Play of the next round closed it (the dialog
+      // "Close them and start" of the organizer app).
+      const table = check?.tablesByKey?.get(key)?.table;
+      const next = clockOf(item.round + 1);
+      const ok = table?.isCompleted === true && next != null;
+      add(ok,
+        `Table ${key}: the organizer opened it again after the Stop, and the Play of round ${item.round + 1} closed it before starting (${table?.isCompleted ? "completed" : "open"}, round ${item.round + 1} ${next == null ? "not started" : "started"}).`);
     } else if (item.kind === "edit") {
       const scorer = at("hand-corrected-seen").filter((event) => !event.watcher);
       const watchers = at("hand-corrected-seen").filter((event) => event.watcher);

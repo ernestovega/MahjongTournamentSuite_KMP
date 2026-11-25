@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -209,7 +210,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
                     OutlinedButton(onClick = { navController.navigate(SignInRoute()) }, Modifier.fillMaxWidth()) {
                         Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
-                        Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
+                        ButtonText(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
                     }
                 }
                 HandHistory(view, table, details, change) { details = it }

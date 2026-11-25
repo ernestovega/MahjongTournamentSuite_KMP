@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -385,7 +386,7 @@ private fun SignInPrompt(message: String, onSignIn: () -> Unit) {
         EmptyState(Icons.AutoMirrored.Filled.Login, stringResource(Res.string.sign_in_needed_title), message)
         Button(onClick = onSignIn) {
             Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.menu_sign_in), Modifier.padding(start = 8.dp))
+            ButtonText(stringResource(Res.string.menu_sign_in), Modifier.padding(start = 8.dp))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -411,7 +412,7 @@ internal fun AssignEmaPlayerDialog(
                                     else -> false
                                 }
                             },
-                    ) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -495,7 +496,7 @@ internal fun ClearAssignmentDialog(
                                         else -> false
                                     }
                                 },
-                        ) { Text(stringResource(Res.string.clear_assignment_2)) }
+                        ) { ButtonText(stringResource(Res.string.clear_assignment_2)) }
                     }
 
                     Box(
@@ -536,7 +537,7 @@ internal fun ClearAssignmentDialog(
                                         else -> false
                                     }
                                 },
-                        ) { Text(stringResource(Res.string.cancel)) }
+                        ) { ButtonText(stringResource(Res.string.cancel)) }
                     }
                 }
             },

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.telemetry
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,10 +104,10 @@ private fun ConsentScreen(onAccept: () -> Unit) {
                 }
                 Spacer(Modifier.height(4.dp))
                 FocusedButton(onClick = onAccept, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(Res.string.consent_accept))
+                    ButtonText(stringResource(Res.string.consent_accept))
                 }
                 FocusedOutlinedButton(onClick = { declined = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(Res.string.consent_decline))
+                    ButtonText(stringResource(Res.string.consent_decline))
                 }
             }
         }

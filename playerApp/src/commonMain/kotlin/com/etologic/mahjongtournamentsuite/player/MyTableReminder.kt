@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -309,7 +310,7 @@ internal fun MyTableButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Icon(Icons.Default.TableRestaurant, contentDescription = null)
         Spacer(Modifier.width(MtsTheme.spacing.sm))
-        Text(stringResource(Res.string.my_table_go))
+        ButtonText(stringResource(Res.string.my_table_go))
     }
 }
 
@@ -406,7 +407,7 @@ internal fun MyTableReminderDialog(
                         focusRequester = openRequester,
                         buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
                     ) {
-                        Text(stringResource(Res.string.my_table_go))
+                        ButtonText(stringResource(Res.string.my_table_go))
                     }
                     FocusedTextButton(
                         onClick = onDismiss,
@@ -415,7 +416,7 @@ internal fun MyTableReminderDialog(
                         focusRequester = laterRequester,
                         buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
                     ) {
-                        Text(stringResource(Res.string.my_table_dismiss))
+                        ButtonText(stringResource(Res.string.my_table_dismiss))
                     }
                 }
             },

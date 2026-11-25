@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
 import androidx.compose.foundation.background
@@ -707,7 +708,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     ) {
                                         CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("$code ($count)")
+                                        ButtonText("$code ($count)")
                                     }
                                 }
                             }
@@ -919,7 +920,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                             else -> false
                                                         }
                                                     },
-                                            ) { Text(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
+                                            ) { ButtonText(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
                                         }
                                     }
                                     if (slot.isAssigned) {

@@ -783,6 +783,10 @@
     <string name="timer_reset_confirm_title">Reset the round clock?</string>
     <string name="timer_reset_confirm_message">This resets the clock of the round. Saved hands stay, but the players cannot add more until you press Start again. To keep the time played, use “The round started earlier” when you start it.</string>
     <string name="timer_reset_confirm">Reset</string>
+    <string name="round_close_previous_title">Start round %1$s?</string>
+    <string name="round_close_previous_message">Round %1$s still has open tables: %2$s.\nThey will be closed with the hands they have. You can correct them later in the table editor.</string>
+    <string name="round_close_previous_never_started">Round %1$s was never started. Its tables %2$s will be closed without results.</string>
+    <string name="round_close_previous_confirm">Close them and start</string>
     <string name="timer_tournament_completed">The tournament is completed. Its clocks cannot change.</string>
     <string name="timer_late_start">The round should have started at %1$s.\nPress Start when the gong sounds. Until then, players cannot add hands.</string>
     <string name="timer_stop">Stop the round</string>

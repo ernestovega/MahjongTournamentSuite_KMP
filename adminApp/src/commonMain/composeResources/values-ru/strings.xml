@@ -801,6 +801,10 @@
     <string name="timer_reset_confirm_title">Сбросить часы раунда?</string>
     <string name="timer_reset_confirm_message">Часы раунда будут сброшены. Сохранённые раздачи останутся, но игроки не смогут добавлять новые, пока вы снова не нажмёте «Старт». Чтобы сохранить сыгранное время, при запуске используйте «Раунд начался раньше».</string>
     <string name="timer_reset_confirm">Сбросить</string>
+    <string name="round_close_previous_title">Начать раунд %1$s?</string>
+    <string name="round_close_previous_message">В раунде %1$s ещё есть открытые столы: %2$s.\nОни будут закрыты с уже записанными раздачами. Исправить их можно позже в редакторе столов.</string>
+    <string name="round_close_previous_never_started">Раунд %1$s так и не начался. Его столы %2$s будут закрыты без результатов.</string>
+    <string name="round_close_previous_confirm">Закрыть и начать</string>
     <string name="timer_tournament_completed">Турнир завершён. Его часы нельзя изменить.</string>
     <string name="timer_late_start">Раунд должен был начаться в %1$s.\nНажмите «Старт», когда прозвучит гонг. До этого игроки не могут добавлять раздачи.</string>
     <string name="timer_stop">Остановить раунд</string>

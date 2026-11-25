@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -359,12 +360,12 @@ fun HandEntryPanel(
             onClick = { modeName = EntryMode.DRAW.name },
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_draw), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_draw), textAlign = TextAlign.Center) }
         Button(
             onClick = { modeName = EntryMode.WIN.name },
             modifier = Modifier.weight(1.4f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_win), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_win), textAlign = TextAlign.Center) }
         OutlinedButton(
             onClick = {
                 if (penaltyDrafts.isEmpty()) penaltyDrafts.add(PenaltyDraft())
@@ -372,7 +373,7 @@ fun HandEntryPanel(
             },
             modifier = Modifier.weight(1.25f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        ) { Text(stringResource(Res.string.entry_add_penalty), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(Res.string.entry_add_penalty), textAlign = TextAlign.Center) }
     }
     // The new totals arrive after a short time. The dialog shows progress until the table has the new data.
     LaunchedEffect(progressKey, awaitingKey) {
@@ -429,10 +430,10 @@ fun HandEntryPanel(
         }
     }
     val cancelButton: @Composable () -> Unit = {
-        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+        TextButton(onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
     }
     fun backButton(to: WinStep): @Composable () -> Unit = {
-        TextButton(onClick = { winStep = to }) { Text(stringResource(Res.string.entry_back)) }
+        TextButton(onClick = { winStep = to }) { ButtonText(stringResource(Res.string.entry_back)) }
     }
     // A draw has nothing to ask: "Add draw" opens the check of the hand at once (Ernesto, 2026-11-25). An error of the
     // preview shows alone, and closing it ends the entry.
@@ -532,7 +533,7 @@ fun HandEntryPanel(
                 confirmButton = {
                     MtsDialogButtons {
                         if (winStep == WinStep.SCORE) {
-                            Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                            Button(enabled = valid && !busy, onClick = { requestPreview() }) { ButtonText(stringResource(Res.string.entry_review)) }
                         }
                         when (winStep) {
                             WinStep.WINNER -> cancelButton()
@@ -607,15 +608,15 @@ fun HandEntryPanel(
                                     busy = false
                                 }
                             },
-                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                        ) { ButtonText(stringResource(Res.string.entry_confirm_save)) }
                         // Edit goes back to the score of a win. A draw has nothing to edit. Cancel ends the entry.
                         if (!isDraw) {
                             TextButton(enabled = !saving, onClick = {
                                 preview = null
                                 message = null
-                            }) { Text(stringResource(Res.string.entry_edit)) }
+                            }) { ButtonText(stringResource(Res.string.entry_edit)) }
                         }
-                        TextButton(enabled = !saving, onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        TextButton(enabled = !saving, onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -639,8 +640,8 @@ fun HandEntryPanel(
                         Button(
                             enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
                             onClick = { penaltyReview = true },
-                        ) { Text(stringResource(Res.string.entry_review)) }
-                        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        ) { ButtonText(stringResource(Res.string.entry_review)) }
+                        TextButton(onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -686,12 +687,12 @@ fun HandEntryPanel(
                                     busy = false
                                 }
                             },
-                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                        ) { ButtonText(stringResource(Res.string.entry_confirm_save)) }
                         TextButton(enabled = !saving, onClick = {
                             penaltyReview = false
                             message = null
-                        }) { Text(stringResource(Res.string.entry_edit)) }
-                        TextButton(enabled = !saving, onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+                        }) { ButtonText(stringResource(Res.string.entry_edit)) }
+                        TextButton(enabled = !saving, onClick = { finishEntry() }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -1413,7 +1414,7 @@ private fun TableChangedDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
+                    Button(onClick = onClose) { ButtonText(stringResource(Res.string.changed_close)) }
                 }
             },
         )

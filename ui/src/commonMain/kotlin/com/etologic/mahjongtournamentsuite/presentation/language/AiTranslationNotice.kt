@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.language
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,7 +47,7 @@ fun AiTranslationNotice(onContact: () -> Unit) {
                         onClick = controller.onAiNoticeSeen,
                         focusRequester = okFocus,
                         buttonModifier = Modifier.focusLoop(contactFocus, contactFocus),
-                    ) { Text(stringResource(Res.string.action_ok)) }
+                    ) { ButtonText(stringResource(Res.string.action_ok)) }
 
                     FocusedTextButton(
                         onClick = {
@@ -55,7 +56,7 @@ fun AiTranslationNotice(onContact: () -> Unit) {
                         },
                         focusRequester = contactFocus,
                         buttonModifier = Modifier.focusLoop(okFocus, okFocus),
-                    ) { Text(stringResource(Res.string.ai_translation_contact)) }
+                    ) { ButtonText(stringResource(Res.string.ai_translation_contact)) }
                 }
             },
         )

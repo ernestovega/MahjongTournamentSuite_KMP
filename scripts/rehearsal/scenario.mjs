@@ -21,7 +21,7 @@ export const SCENARIOS = {
   // The corner cases only, to try a change in minutes: 2 short rounds, and every case in round 1. Its 7 tables leave
   // table 7 of round 1 for the tie in the ranking.
   // It is created with a table more (32 players), and the organizer takes that table out before the first hand.
-  corners: { players: 28, rounds: 2, minutes: 8, cornerRound: 1, tie: true, byHand: true, tableOut: true },
+  corners: { players: 28, rounds: 3, minutes: 8, cornerRound: 1, clockRound: 2, tie: true, byHand: true, tableOut: true },
 };
 
 /** Minutes of a round: the emulator that writes the hands takes about 70 s per hand, a bot about 40 s. */
@@ -278,6 +278,19 @@ export async function makePlan(args) {
       // has a hand, the screen says the number of players cannot change any more (the substitution covers the changes
       // during the tournament).
       ...(size.tableOut ? [{ kind: "player-count", round: 0, table: 0, from: size.players + 4, via: size.players - 4, to: size.players }] : []),
+      // Corners only: the clock of round 2, in Round control (docs/scenarios.md). The minutes are of play time (the
+      // clock without its pause). The organizer pauses the clock for [seconds] and the tables go on saving hands, gives
+      // the round 2 more minutes and then takes one back with Set time, tries to start round 3 while round 2 plays (the
+      // server refuses: one round at a time), and stops round 2 before its end. The scorer of [table] tries a hand after
+      // the Stop (refused). Then the organizer opens table [table] of the reopen case again (a pending table), and the
+      // Play of round 3 offers to close it first: the organizer closes it and starts.
+      ...(size.clockRound ? [
+        { kind: "pause", round: size.clockRound, table: 0, atMinutes: 1.5, seconds: 60 },
+        { kind: "set-time", round: size.clockRound, table: 0, steps: [{ atMinutes: 2.5, change: 2 }, { atMinutes: 4, change: -1 }] },
+        { kind: "overlap", round: size.clockRound + 1, table: 0, atMinutes: 5 },
+        { kind: "stop", round: size.clockRound, table: 5, atMinutes: 6 },
+        { kind: "reopen", round: size.clockRound, table: 6 },
+      ] : []),
       { kind: "delete", round: fix, table: fixTables[0], which: "last", minHands: 4 },
       { kind: "delete", round: fix, table: fixTables[1], which: "older", minHands: 6, back: 3 },
       { kind: "edit", round: fix, table: fixTables[2], which: "last", minHands: 4 },

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -490,7 +491,7 @@ fun TeamsScreen(
                                                 else -> false
                                             }
                                         },
-                                    ) { Text(stringResource(Res.string.edit)) }
+                                    ) { ButtonText(stringResource(Res.string.edit)) }
                                 }
                             }
                             DataTableDivider()
@@ -657,9 +658,9 @@ private fun TeamEditorDialog(
                     FocusedButton(
                         onClick = { onSave(name.trim(), selectedEmaIds.toList()) },
                         enabled = !saving && name.trim().isNotEmpty() && (!assignmentsLocked || !membershipChanged),
-                    ) { Text(stringResource(Res.string.save_team)) }
+                    ) { ButtonText(stringResource(Res.string.save_team)) }
 
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -760,9 +761,9 @@ private fun PlayerPickerDialog(
                     FocusedButton(
                         onClick = onClear,
                         enabled = !saving && selectedEmaId != null,
-                    ) { Text(stringResource(Res.string.clear_slot)) }
+                    ) { ButtonText(stringResource(Res.string.clear_slot)) }
 
-                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+                    FocusedTextButton(onClick = onDismiss, enabled = !saving) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

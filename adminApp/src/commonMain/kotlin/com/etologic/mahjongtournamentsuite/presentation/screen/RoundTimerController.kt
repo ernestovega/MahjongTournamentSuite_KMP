@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
@@ -48,6 +49,10 @@ data class RoundTimerState(
     val pending: PendingClockAction? = null,
     /** The server refused a reset because the round has hands. The screen asks for a confirmation. */
     val confirmReset: Boolean = false,
+    /** The server refused a Play because the round before has open tables. The screen offers to close them and start. */
+    val closePrevious: PreviousRoundOpen? = null,
+    /** The server refused a Play because the round before is still in play. The screen says so. */
+    val refusal: AppError? = null,
     val loadFailed: Boolean = false,
     /** A Timer opened without a tournament. Its clock lives only on this device and touches no data. */
     val independent: Boolean = false,
@@ -233,6 +238,17 @@ class RoundTimerController(
 
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
+    /** "Close them and start": the server completes the open tables of the round before, then starts the round. */
+    suspend fun startClosingPrevious() {
+        val ask = mutableState.value.closePrevious ?: return
+        mutableState.update { it.copy(closePrevious = null) }
+        perform(RoundClockAction.Start(agoSeconds = ask.agoSeconds, closePrevious = true))
+    }
+
+    fun dismissClosePrevious() = mutableState.update { it.copy(closePrevious = null) }
+
+    fun dismissRefusal() = mutableState.update { it.copy(refusal = null) }
+
     private suspend fun perform(action: RoundClockAction) {
         followRunningRound = false
         track(action)
@@ -279,7 +295,23 @@ class RoundTimerController(
             }
             is AppResult.Failure -> when (val error = result.error) {
                 is AppError.Conflict -> mutableState.update {
-                    it.copy(pending = null, confirmReset = error.message == ROUND_HAS_HANDS && action is RoundClockAction.Reset)
+                    // A round starts only once the round before is closed (Ernesto, 2026-11-25).
+                    val openBefore = if (action is RoundClockAction.Start && error.code == ConflictCode.PREVIOUS_ROUND_OPEN_TABLES) {
+                        PreviousRoundOpen(
+                            roundId = error.args.getOrNull(0)?.toIntOrNull() ?: (pending.roundId - 1),
+                            tables = error.args.getOrNull(1).orEmpty(),
+                            started = error.args.getOrNull(2) != "false",
+                            agoSeconds = action.agoSeconds,
+                        )
+                    } else {
+                        null
+                    }
+                    it.copy(
+                        pending = null,
+                        confirmReset = error.message == ROUND_HAS_HANDS && action is RoundClockAction.Reset,
+                        closePrevious = openBefore,
+                        refusal = error.takeIf { error.code == ConflictCode.PREVIOUS_ROUND_IN_PLAY },
+                    )
                 }
                 // The first failure shows the action at once. A later failure keeps what the screen shows.
                 AppError.Network -> mutableState.update { state ->
@@ -341,3 +373,6 @@ internal fun List<RoundClock>.applyLocally(
     }
     return (others + listOfNotNull(updated)).sortedBy { it.roundId }
 }
+
+/** The round before a Play that still has open tables ([tables], "3, 5"). [started] is false for a round never started. */
+data class PreviousRoundOpen(val roundId: Int, val tables: String, val started: Boolean, val agoSeconds: Long)

@@ -211,8 +211,12 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 
+    /** The refusal of the server to a Play, such as a round before that is not closed. Null starts the round. */
+    var startRefusal: ((roundId: Int, action: RoundClockAction.Start) -> AppError?)? = null
+
     override suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> {
         clockError?.let { return AppResult.Failure(it) }
+        if (action is RoundClockAction.Start) startRefusal?.invoke(roundId, action)?.let { return AppResult.Failure(it) }
         clockActions += roundId to action
         val current = roundClocks.firstOrNull { it.roundId == roundId }
         val duration = tournaments.firstOrNull { it.id == tournamentId }?.matchDurationMinutes ?: 120

@@ -297,11 +297,11 @@ fun TournamentColorPickerDialog(
                         enabled = hexValue.text.toRgbColorOrNull() != null,
                         onClick = { onColorSelected(hexValue.text.uppercase()) },
                     ) {
-                        Text(stringResource(Res.string.ok))
+                        ButtonText(stringResource(Res.string.ok))
                     }
 
                     FocusedTextButton(onClick = onDismiss) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                 }
             },
@@ -527,12 +527,12 @@ fun TournamentDatePickerDialog(
                         state.selectedDateMillis?.let { onDateSelected(epochMillisToDisplayDate(it)) }
                     },
                 ) {
-                    Text(stringResource(Res.string.ok))
+                    ButtonText(stringResource(Res.string.ok))
                 }
             },
             dismissButton = {
                 FocusedTextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel))
+                    ButtonText(stringResource(Res.string.cancel))
                 }
             },
         ) {
@@ -602,11 +602,11 @@ fun TournamentTimePickerDialog(
                         },
                         focusRequester = confirmFocusRequester,
                     ) {
-                        Text(stringResource(Res.string.ok))
+                        ButtonText(stringResource(Res.string.ok))
                     }
 
                     FocusedTextButton(onClick = onDismiss) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                 }
             },
@@ -735,7 +735,7 @@ fun TournamentDateRangePickerDialog(
                             horizontalArrangement = Arrangement.End,
                         ) {
                             FocusedTextButton(onClick = onDismiss) {
-                                Text(stringResource(Res.string.cancel))
+                                ButtonText(stringResource(Res.string.cancel))
                             }
                             FocusedTextButton(
                                 enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
@@ -750,7 +750,7 @@ fun TournamentDateRangePickerDialog(
                                     }
                                 },
                             ) {
-                                Text(stringResource(Res.string.ok))
+                                ButtonText(stringResource(Res.string.ok))
                             }
                         }
                     }

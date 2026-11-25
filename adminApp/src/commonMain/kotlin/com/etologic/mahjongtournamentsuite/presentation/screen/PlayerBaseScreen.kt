@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -547,7 +548,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 contentColor = MaterialTheme.colorScheme.onTertiary,
                             ),
                         ) {
-                            Text(stringResource(Res.string.save))
+                            ButtonText(stringResource(Res.string.save))
                         }
 
                         TextButton(
@@ -562,7 +563,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 next = confirmFocusRequester,
                             ),
                         ) {
-                            Text(stringResource(Res.string.cancel))
+                            ButtonText(stringResource(Res.string.cancel))
                         }
                     }
                 },
@@ -640,7 +641,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 maxHeight = 220.dp,
                             )
                             Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
-                                Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
+                                ButtonText(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
                             }
                             newPhoto?.let {
                                 Text(
@@ -654,9 +655,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 },
                 confirmButton = {
                     MtsDialogButtons {
-                        Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
+                        Button(enabled = !saving, onClick = ::createPlayer) { ButtonText(stringResource(Res.string.add_player)) }
 
-                        TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
+                        TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { ButtonText(stringResource(Res.string.cancel)) }
                     }
                 },
             )
@@ -807,7 +808,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 ) {
                                     CountryFlag(code = code)
                                     Spacer(Modifier.width(4.dp))
-                                    Text("$code ($countryPlayerCount)")
+                                    ButtonText("$code ($countryPlayerCount)")
                                 }
                             }
                         }
@@ -1023,7 +1024,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                     contentColor = MaterialTheme.colorScheme.onTertiary,
                                                 ),
                                             ) {
-                                                Text(stringResource(Res.string.save))
+                                                ButtonText(stringResource(Res.string.save))
                                             }
                                         }
                                     } else if (!canEdit) {

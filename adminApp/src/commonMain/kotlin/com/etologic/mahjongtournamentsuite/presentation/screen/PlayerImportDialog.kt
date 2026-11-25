@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -248,12 +249,12 @@ fun PlayerImportDialog(
                             Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
                             Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-                                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                                TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+                                TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
+                                TextButton(onClick = picker::launch) { ButtonText(stringResource(Res.string.import_choose_other_file)) }
                                 Button(
                                     enabled = preview.canApply,
                                     onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
-                                ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+                                ) { ButtonText(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
                             }
                         }
                     }
@@ -268,8 +269,8 @@ fun PlayerImportDialog(
                         text = { MtsDialogText(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
                         confirmButton = {
                             MtsDialogButtons {
-                                Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) }
-                                TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) }
+                                Button(onClick = { apply(current) }) { ButtonText(stringResource(Res.string.import_confirm_button)) }
+                                TextButton(onClick = { confirming = false }) { ButtonText(stringResource(Res.string.cancel)) }
                             }
                         },
                     )
@@ -285,7 +286,7 @@ fun PlayerImportDialog(
                 text = { ImportResultContent(current.result) },
                 confirmButton = {
                     MtsDialogButtons {
-                        Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                        Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.close)) }
                     }
                 },
             )

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -354,7 +355,7 @@ internal fun RegistrationsTab(tournament: Tournament) {
             AlertDialog(
                 onDismissRequest = { done = null },
                 text = { MtsDialogText(message.asString()) },
-                confirmButton = { MtsDialogButtons { TextButton(onClick = { done = null }) { Text(stringResource(Res.string.preg_close)) } } },
+                confirmButton = { MtsDialogButtons { TextButton(onClick = { done = null }) { ButtonText(stringResource(Res.string.preg_close)) } } },
             )
         }
     }
@@ -603,7 +604,7 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     if (own != null && own.status != RegistrationStatus.PENDING) {
                         Button(onClick = onManage, modifier = Modifier.testTag("registration-manage")) {
                             Icon(Icons.Default.Edit, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.preg_edit), Modifier.padding(start = MtsTheme.spacing.sm))
+                            ButtonText(stringResource(Res.string.preg_edit), Modifier.padding(start = MtsTheme.spacing.sm))
                         }
                     }
                 }
@@ -623,9 +624,9 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     ) {
                         Button(onClick = onRegister, modifier = Modifier.testTag("registration-register")) {
                             Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
+                            ButtonText(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
                         }
-                        TextButton(onClick = onNoEma) { Text(stringResource(Res.string.preg_no_ema)) }
+                        TextButton(onClick = onNoEma) { ButtonText(stringResource(Res.string.preg_no_ema)) }
                     }
                 }
             }
@@ -652,7 +653,7 @@ private fun TeamMissingCard(onSetUp: () -> Unit) {
                     modifier = Modifier.padding(top = 4.dp).testTag("registration-set-up-team"),
                 ) {
                     Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(18.dp))
-                    Text(stringResource(Res.string.preg_team_missing_action), Modifier.padding(start = 8.dp))
+                    ButtonText(stringResource(Res.string.preg_team_missing_action), Modifier.padding(start = 8.dp))
                 }
             }
         }
@@ -761,7 +762,7 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 CountryFlag(code = chosen.country, width = 20.dp)
                                 Text("${chosen.displayName} · ${chosen.emaId}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { picked = null }) { Text(stringResource(Res.string.action_cancel)) }
+                                TextButton(onClick = { picked = null }) { ButtonText(stringResource(Res.string.action_cancel)) }
                             }
                         } else {
                             OutlinedTextField(
@@ -823,8 +824,8 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
                             }
                         },
                         modifier = Modifier.testTag("registration-submit"),
-                    ) { Text(stringResource(Res.string.preg_register)) }
-                    TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(Res.string.action_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_register)) }
+                    TextButton(onClick = onDismiss, enabled = !busy) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )
@@ -902,8 +903,8 @@ private fun ManageRegistrationDialog(
                                     }
                                 }
                             },
-                        ) { Text(stringResource(Res.string.preg_cancel_confirm)) }
-                        TextButton(onClick = { confirmCancel = false }) { Text(stringResource(Res.string.action_cancel)) }
+                        ) { ButtonText(stringResource(Res.string.preg_cancel_confirm)) }
+                        TextButton(onClick = { confirmCancel = false }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -930,7 +931,7 @@ private fun ManageRegistrationDialog(
                     TextButton(
                         enabled = !busy && (food.isBlank() || consent) && food != own.foodRestrictions,
                         onClick = { run { presenter.saveFood(tournamentId, food, consent) } },
-                    ) { Text(stringResource(Res.string.preg_save)) }
+                    ) { ButtonText(stringResource(Res.string.preg_save)) }
                     if (list?.isTeams == true) {
                         HorizontalDivider()
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -948,11 +949,11 @@ private fun ManageRegistrationDialog(
                         )
                         if (team == null) {
                             TextButton(enabled = !busy && teamName.isNotBlank(), onClick = { run { presenter.createTeam(tournamentId, teamName) } }) {
-                                Text(stringResource(Res.string.preg_create_team))
+                                ButtonText(stringResource(Res.string.preg_create_team))
                             }
                         } else {
                             if (isCaptain && teamName.isNotBlank() && teamName != team.name) {
-                                TextButton(enabled = !busy, onClick = { run { presenter.renameTeam(tournamentId, teamName) } }) { Text(stringResource(Res.string.preg_rename_team)) }
+                                TextButton(enabled = !busy, onClick = { run { presenter.renameTeam(tournamentId, teamName) } }) { ButtonText(stringResource(Res.string.preg_rename_team)) }
                             }
                             team.members.forEach { emaId ->
                                 val name = list.registrations.firstOrNull { it.emaId == emaId }?.name ?: emaId
@@ -963,7 +964,7 @@ private fun ManageRegistrationDialog(
                                     )
                                     if (isCaptain && emaId != own.emaId) {
                                         TextButton(enabled = !busy, onClick = { run { presenter.removeMember(tournamentId, emaId) } }) {
-                                            Text(stringResource(Res.string.preg_remove_member))
+                                            ButtonText(stringResource(Res.string.preg_remove_member))
                                         }
                                     }
                                 }
@@ -981,22 +982,22 @@ private fun ManageRegistrationDialog(
                                     val emaId = member
                                     member = ""
                                     run { presenter.addMember(tournamentId, emaId) }
-                                }) { Text(stringResource(Res.string.preg_add_member)) }
+                                }) { ButtonText(stringResource(Res.string.preg_add_member)) }
                             }
-                            TextButton(enabled = !busy, onClick = { run { presenter.leaveTeam(tournamentId) } }) { Text(stringResource(Res.string.preg_leave_team)) }
+                            TextButton(enabled = !busy, onClick = { run { presenter.leaveTeam(tournamentId) } }) { ButtonText(stringResource(Res.string.preg_leave_team)) }
                         }
                     }
                 }
             },
             confirmButton = {
                 MtsDialogButtons {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.preg_close)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.preg_close)) }
                     OutlinedButton(
                         onClick = { confirmCancel = true },
                         colors = MtsButtons.destructiveOutlinedColors(),
                         border = MtsButtons.destructiveBorder(),
                         modifier = Modifier.testTag("registration-cancel"),
-                    ) { Text(stringResource(Res.string.preg_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_cancel)) }
                 }
             },
         )
@@ -1028,8 +1029,8 @@ private fun NoEmaNumberDialog(onSend: (NoEmaNumberRequest) -> Unit, onDismiss: (
                     Button(
                         enabled = name.trim().length >= 2 && email.contains('@'),
                         onClick = { onSend(NoEmaNumberRequest(name, country, email, message)) },
-                    ) { Text(stringResource(Res.string.preg_send)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_send)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

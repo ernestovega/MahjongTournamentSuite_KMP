@@ -29,6 +29,19 @@ class RepositorySupportTest {
     }
 
     @Test
+    fun aPlayRefusedByTheRoundBeforeCarriesItsRoundAndOpenTables() {
+        val error = BackendHttpException(
+            HttpStatusCode.Conflict,
+            """{"message":"Round 1 has open tables","details":{"code":"PREVIOUS_ROUND_OPEN_TABLES","roundId":1,"tables":[3,5],"started":false}}""",
+        ).toRepositoryAppError()
+
+        assertEquals(
+            AppError.Conflict("Round 1 has open tables", code = ConflictCode.PREVIOUS_ROUND_OPEN_TABLES, args = listOf("1", "3, 5", "false")),
+            error,
+        )
+    }
+
+    @Test
     fun aConflictWithoutAKnownCodeStaysAnUnexpectedError() {
         val unknown = BackendHttpException(HttpStatusCode.Conflict, """{"message":"x","details":{"code":"SOMETHING_NEW"}}""")
         val plain = BackendHttpException(HttpStatusCode.Conflict, """{"message":"x"}""")

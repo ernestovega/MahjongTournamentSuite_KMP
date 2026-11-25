@@ -141,12 +141,12 @@ fun ImageCropDialog(
                         if (isCropping) {
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                         } else {
-                            Text(stringResource(Res.string.crop_use))
+                            ButtonText(stringResource(Res.string.crop_use))
                         }
                     }
 
                     FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
-                        Text(stringResource(Res.string.action_cancel))
+                        ButtonText(stringResource(Res.string.action_cancel))
                     }
                 }
             },

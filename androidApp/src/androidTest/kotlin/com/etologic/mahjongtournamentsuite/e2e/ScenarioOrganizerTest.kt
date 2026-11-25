@@ -27,6 +27,7 @@ import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
@@ -996,6 +997,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             substituteALatePlayer(tournamentId, round)
             correctTheHands(tournamentId, round)
             typeTheManualTotals(tournamentId, round)
+            // A round stopped in Round control keeps a table opened again: the Play of the next round closes it.
+            if (playTheClock(tournamentId, round)) continue
             val deadline = System.currentTimeMillis() + (minutes + 2) * 60_000L
             while (System.currentTimeMillis() < deadline && openTables(tournamentId, round) > 0) idle(30_000)
             log("round $round: ${openTables(tournamentId, round)} tables open at the end")
@@ -1003,6 +1006,132 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // The last round has no next round: its clock with the extra time is over, so its open tables show in the review.
         closeOpenTablesOfEndedRounds()
         log("play done")
+    }
+
+    // The corner cases of the clock (corners, round 2): the organizer pauses and resumes the clock in Round control, gives
+    // more time and takes some back with Set time, tries to start the next round too early (refused: one round at a
+    // time), stops the round before its end and opens a table of it again. The bots play on meanwhile.
+
+    private fun cornerCase(kind: String, round: Int): JSONObject? {
+        val cases = plan.optJSONArray("cornerCases") ?: return null
+        return (0 until cases.length()).map { cases.getJSONObject(it) }.firstOrNull { it.getString("kind") == kind && it.getInt("round") == round }
+    }
+
+    private fun clockOf(tournamentId: String, round: Int): JSONObject? {
+        val reply = runCatching { E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks") }.getOrNull()
+        if (reply?.status != 200) return null
+        val clocks = reply.json().getJSONArray("roundClocks")
+        return (0 until clocks.length()).map { clocks.getJSONObject(it) }.firstOrNull { it.getInt("roundId") == round }
+    }
+
+    /** The play time of the round in ms: the time of the clock, without its pauses. */
+    private fun playedMs(clock: JSONObject): Long {
+        val now = if (clock.isNull("pausedAtMs")) System.currentTimeMillis() else clock.getLong("pausedAtMs")
+        return now - clock.getLong("startedAtMs") - clock.optLong("pausedMs")
+    }
+
+    private fun waitForPlayTime(tournamentId: String, round: Int, minutes: Double) {
+        val target = (minutes * 60_000).toLong()
+        while (true) {
+            val clock = checkNotNull(clockOf(tournamentId, round)) { "Round $round has no clock" }
+            val left = target - playedMs(clock)
+            if (left <= 0) return
+            idle(minOf(left, 15_000))
+        }
+    }
+
+    private fun waitForClock(tournamentId: String, round: Int, what: String, test: (JSONObject) -> Boolean) {
+        val until = System.currentTimeMillis() + 60_000
+        while (true) {
+            val clock = clockOf(tournamentId, round)
+            if (clock != null && test(clock)) return
+            check(System.currentTimeMillis() < until) { "Round $round: the clock did not $what: $clock" }
+            idle(2_000)
+        }
+    }
+
+    private fun openRoundControl(round: Int) {
+        c.clickButton("Round control")
+        c.waitForText("Round control", timeoutMs = 60_000)
+        c.waitUntil(60_000) { c.onAllNodes(hasTestTag("round_chip_$round")).fetchSemanticsNodes().isNotEmpty() }
+        c.onNodeWithTag("round_chip_$round").tap()
+        c.waitForText("Set time", timeoutMs = 60_000)
+    }
+
+    /** Returns true when the round ended with Stop: its table opened again waits for the Play of the next round. */
+    private fun playTheClock(tournamentId: String, round: Int): Boolean {
+        val pause = cornerCase("pause", round)
+        val setTime = cornerCase("set-time", round)
+        val overlap = cornerCase("overlap", round + 1)
+        val stop = cornerCase("stop", round)
+        val reopen = cornerCase("reopen", round)
+        if (pause == null && setTime == null && overlap == null && stop == null) return false
+        openRoundControl(round)
+        if (pause != null) {
+            waitForPlayTime(tournamentId, round, pause.getDouble("atMinutes"))
+            c.clickButton("Pause timer")
+            waitForClock(tournamentId, round, "pause") { !it.isNull("pausedAtMs") }
+            log("round $round: the clock is paused")
+            idle(pause.getInt("seconds") * 1_000L)
+            c.clickButton("Resume")
+            waitForClock(tournamentId, round, "resume") { it.isNull("pausedAtMs") }
+            log("round $round: the clock runs again after ${pause.getInt("seconds")} s")
+        }
+        val steps = setTime?.getJSONArray("steps")
+        for (index in 0 until (steps?.length() ?: 0)) {
+            val step = steps!!.getJSONObject(index)
+            waitForPlayTime(tournamentId, round, step.getDouble("atMinutes"))
+            val clock = checkNotNull(clockOf(tournamentId, round))
+            val remainingMs = plan.getInt("matchDurationMinutes") * 60_000L + clock.optLong("adjustMs") - playedMs(clock)
+            // The dialog shows the remaining time in whole minutes, rounded up: the organizer adds or takes away from it.
+            val minutes = (remainingMs + 59_999) / 60_000 + step.getInt("change")
+            c.clickButton("Set time")
+            c.waitForText("Remaining time")
+            c.onNode(hasSetTextAction()).performTextReplacement(minutes.toString())
+            c.clickButton("Set")
+            val before = clock.optLong("adjustMs")
+            waitForClock(tournamentId, round, "take the new time") { it.optLong("adjustMs") != before }
+            log("round $round: Set time to $minutes minutes (${if (step.getInt("change") > 0) "+" else ""}${step.getInt("change")})")
+        }
+        if (overlap != null) {
+            waitForPlayTime(tournamentId, round, overlap.getDouble("atMinutes"))
+            // The next round cannot start while this one plays: the server refuses, and the screen says why.
+            c.onNodeWithTag("round_chip_${round + 1}").tap()
+            c.waitForText("Start", timeoutMs = 30_000)
+            c.clickButton("Start")
+            c.waitForText("Round $round is still in play. Stop it before starting the next round.", timeoutMs = 30_000)
+            c.clickButton("OK")
+            check(clockOf(tournamentId, round + 1) == null) { "Round ${round + 1} started while round $round played" }
+            log("round ${round + 1}: Start refused while round $round plays")
+            c.onNodeWithTag("round_chip_$round").tap()
+            c.waitForText("Set time", timeoutMs = 30_000)
+        }
+        if (stop != null) {
+            waitForPlayTime(tournamentId, round, stop.getDouble("atMinutes"))
+            c.clickButton("Stop the round")
+            c.waitForText("Stop the round?")
+            c.clickButton("Stop")
+            val extraMs = plan.getInt("matchExtraMinutes") * 60_000L
+            waitForClock(tournamentId, round, "stop") { playedMs(it) >= plan.getInt("matchDurationMinutes") * 60_000L + it.optLong("adjustMs") + extraMs - 1_000 }
+            // The server closes the tables with hands at once.
+            val until = System.currentTimeMillis() + 180_000
+            while (System.currentTimeMillis() < until && openTables(tournamentId, round) > 0) idle(5_000)
+            log("round $round: stopped, ${openTables(tournamentId, round)} tables open")
+        }
+        if (reopen != null) {
+            // A table with a problem: the organizer opens it again. The Play of the next round offers to close it.
+            val table = reopen.getInt("table")
+            c.onNodeWithTag("table_${table}_in_play").performScrollTo().tap()
+            val until = System.currentTimeMillis() + 60_000
+            while (tableData(tournamentId, round, table)?.optJSONObject("table")?.optBoolean("isCompleted") != false) {
+                check(System.currentTimeMillis() < until) { "Table $table of round $round did not open again" }
+                idle(2_000)
+            }
+            log("round $round: table $table is open again")
+        }
+        shell("input keyevent KEYCODE_BACK")
+        c.waitForText("Players & results", timeoutMs = 60_000)
+        return stop != null
     }
 
     // The corner cases of the editor: a player calls the organization, and the editor deletes or corrects a hand in the
@@ -1467,6 +1596,14 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             if (runCatching { timerAction("Start timer") }.isSuccess) break
             log("the tap on Start timer was refused, attempt $attempt")
             Thread.sleep(1_000)
+        }
+        // One round at a time: a round before with open tables asks first, and the organizer closes them and starts.
+        c.waitForAnyText("Pause timer", "Close them and start", timeoutMs = 60_000)
+        if (c.isOnScreen("Close them and start")) {
+            log("round $round: the Play asks to close the open tables of round ${round - 1} first, the organizer closes them")
+            timerAction("Close them and start")
+            c.waitForText("Pause timer", timeoutMs = 60_000)
+            check(openTables(tournamentId, round - 1) == 0) { "Round ${round - 1} still has open tables after the dialog" }
         }
         c.waitForText("Pause timer")
         val clocks = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks").json().getJSONArray("roundClocks")

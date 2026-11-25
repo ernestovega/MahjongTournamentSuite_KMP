@@ -246,8 +246,8 @@ fun ProfileDialog(
                     // Save and Close share one line, also on a phone, so the dialog stays short. They belong to the alias, so they
                     // come right after the fields.
                     MtsDialogButtons(stacked = false) {
-                        FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-                        FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                        FocusedButton(enabled = canSave, onClick = { save() }) { ButtonText(stringResource(Res.string.action_save)) }
+                        FocusedTextButton(enabled = !saving, onClick = onDismiss) { ButtonText(stringResource(Res.string.action_close)) }
                     }
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
@@ -296,7 +296,7 @@ private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Bo
             modifier = Modifier.fillMaxWidth(),
             buttonModifier = Modifier.fillMaxWidth(),
             colors = MtsButtons.destructiveColors(),
-        ) { Text(stringResource(text), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(text), textAlign = TextAlign.Center) }
     } else {
         // A low text button: these rare actions take little height.
         FocusedTextButton(
@@ -306,7 +306,7 @@ private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Bo
             buttonModifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
             contentPadding = PaddingValues(horizontal = 12.dp),
             colors = MtsButtons.destructiveTextColors(),
-        ) { Text(stringResource(text), textAlign = TextAlign.Center) }
+        ) { ButtonText(stringResource(text), textAlign = TextAlign.Center) }
     }
 }
 
@@ -340,14 +340,14 @@ private fun DeleteOwnAccountDialog(
                         focusRequester = deleteFocus,
                         buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
                         colors = MtsButtons.destructiveColors(),
-                    ) { Text(stringResource(Res.string.profile_delete_account_confirm)) }
+                    ) { ButtonText(stringResource(Res.string.profile_delete_account_confirm)) }
 
                     FocusedTextButton(
                         onClick = onDismiss,
                         enabled = !deleting,
                         focusRequester = cancelFocus,
                         buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                    ) { Text(stringResource(Res.string.action_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       scenario:
-        description: "The tournament: small (24 players, 4 rounds), medium (64 players, 7 rounds), large (240 players, 11 rounds), or corners (28 players, 2 rounds of 8 minutes: the corner cases only, about 45 min)."
+        description: "The tournament: small (24 players, 4 rounds), medium (64 players, 7 rounds), large (240 players, 11 rounds), or corners (28 players, 3 rounds of 8 minutes: the corner cases only, about 55 min)."
         type: choice
         options: [small, medium, large, corners]
         default: small
