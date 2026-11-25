@@ -23,22 +23,12 @@ async function start() {
   return async () => (await getToken(appCheck, false)).token;
 }
 
-// It starts when the page loads, not with the first request of the app: loading the SDK and reCAPTCHA and getting the
-// first token take a few seconds on a phone, and they now happen while the app itself downloads and starts. Every
-// request of the app waits for the token, so before this the first screen waited for all of it after the app started.
-let ready = start();
-let firstToken = ready.then((read) => (read ? read() : null)).catch(() => null);
+let ready = null;
 
 // A failure gives null. The server decides what a missing token means.
 window.mtsAppCheckToken = async () => {
   try {
-    // The token that the page asked for at load, for the first requests. Later ones ask the SDK, which keeps it fresh.
-    if (firstToken) {
-      const token = await firstToken;
-      firstToken = null;
-      if (token) return token;
-    }
-    ready = ready.catch(() => start());
+    ready = ready ?? start();
     const read = await ready;
     return read ? await read() : null;
   } catch (_) {
