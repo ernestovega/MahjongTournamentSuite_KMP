@@ -1,6 +1,7 @@
 // A staging API in memory for the tests of the rehearsal scripts: the routes that the bots and the report call, with
-// the rules of the server that the corner cases of a game day try (versions, seats, penalties, the extra time), an
-// organizer that starts the rounds and closes an abandoned table, and an editor that deletes and corrects hands.
+// the rules of the server that the corner cases of a game day try (versions, seats, penalties, the extra time, the clock),
+// an organizer that starts the rounds, closes an abandoned table and plays the clock in Round control (pause, Set time,
+// Stop, a table opened again), and an editor that deletes and corrects hands.
 // It is not the server: it is just enough of it to run the bots against it in a few seconds.
 const SEATS = ["East", "South", "West", "North"];
 
@@ -34,6 +35,10 @@ function totals(table) {
   return { scores, tablePoints };
 }
 
+const PAUSE_MS = 300;
+const STEP_MS = 150;
+const STOP_HANDS = 5;
+
 export class FakeStaging {
   /**
    * [draws] has the tables of each round: draws[round - 1][table - 1] is the list of four slots. [minutes] is the
@@ -58,6 +63,7 @@ export class FakeStaging {
     this.editorDone = new Set();
     this.editorDue = new Map();
     this.edits = [];
+    this.clockSteps = [];
     this.startRound(1);
     // The organizer substitutes the player of a late table in Players (the corner case "substitution").
     for (const item of plan.cornerCases.filter((each) => each.kind === "substitution")) {
@@ -66,13 +72,35 @@ export class FakeStaging {
     }
   }
 
+  /** Play: as the server, a round starts only once the round before is over, so its clock stops first. */
   startRound(roundId) {
+    const previous = this.clockOf(roundId - 1);
+    if (previous != null && !previous.stopped) this.stop(roundId - 1);
     this.clocks.push({ roundId, startedAtMs: Date.now(), pausedMs: 0, adjustMs: 0, pausedAtMs: null });
   }
 
+  clockOf(roundId) {
+    return this.clocks.find((item) => item.roundId === roundId) ?? null;
+  }
+
+  /** Stop, as the server: the match time becomes what was played minus the extra time, so both are over now. */
+  stop(roundId) {
+    const clock = this.clockOf(roundId);
+    const extraMs = (this.plan.matchExtraMinutes ?? 0) * 60_000;
+    if (clock.pausedAtMs != null) {
+      clock.pausedMs += Date.now() - clock.pausedAtMs;
+      clock.pausedAtMs = null;
+    }
+    const played = Math.max(0, Date.now() - clock.startedAtMs - clock.pausedMs);
+    clock.startedAtMs -= Math.max(0, extraMs - played);
+    clock.adjustMs = Math.max(played, extraMs) - extraMs - this.minutes[roundId - 1] * 60_000;
+    clock.stopped = true;
+  }
+
   matchEnd(roundId) {
-    const clock = this.clocks.find((item) => item.roundId === roundId);
-    return clock == null ? null : clock.startedAtMs + this.minutes[roundId - 1] * 60_000;
+    const clock = this.clockOf(roundId);
+    if (clock == null || clock.pausedAtMs != null) return null;
+    return clock.startedAtMs + clock.pausedMs + this.minutes[roundId - 1] * 60_000 + clock.adjustMs;
   }
 
   roundTables(roundId) {
@@ -114,7 +142,9 @@ export class FakeStaging {
       return [200, { tournaments: [{ tournamentId: "t1", playerId: slot }] }];
     }
     if (method === "GET" && route === "/public/tournaments/t1") return [200, { id: "t1", isCompleted: this.allDone }];
-    if (method === "GET" && route === "/public/tournaments/t1/round-clocks") return [200, { roundClocks: this.clocks.map((clock) => ({ ...clock })) }];
+    if (method === "GET" && route === "/public/tournaments/t1/round-clocks") {
+      return [200, { roundClocks: this.clocks.map(({ stopped, ...clock }) => ({ ...clock })) }];
+    }
     if (method === "GET" && route === "/public/tournaments/t1/players") return [200, { players: this.players.map((player) => ({ ...player })) }];
     if (method === "GET" && route === "/public/tournaments/t1/sync/manifest") {
       return [200, { tableVersions: Object.fromEntries([...this.tables].map(([key, table]) => [key, table.version])) }];
@@ -149,6 +179,7 @@ export class FakeStaging {
       return [200, { tableVersion: table.version }];
     }
     if (table.seats == null) return [409, { message: "The seats of this table are not assigned yet" }];
+    if (kind !== "seats" && this.clockOf(table.roundId)?.stopped) return [409, { message: "The time of this match is over" }];
     if (kind === "hands/preview") return [200, { tableVersion: table.version }];
     if (body.expectedVersion !== table.version) return [409, { message: "The table changed after the review. Check the new totals and confirm again" }];
     if (next == null) return [409, { message: "All hands of this table are done" }];
@@ -215,6 +246,74 @@ export class FakeStaging {
       this.edits.push({ kind: item.kind, table: key, handId: target.handId, newest });
     }
     const current = Math.max(...this.clocks.map((clock) => clock.roundId));
+    if (this.playTheClock(current)) return;
     if (current < this.rounds && this.roundTables(current).every((table) => table.isCompleted)) this.startRound(current + 1);
+  }
+
+  /**
+   * The organizer in Round control, in the round of the clock cases of the plan: a pause, then Set time, then the Stop
+   * when the table of the Stop has played [STOP_HANDS] hands, then a table opened again. The Play of the next round
+   * closes that table first (the dialog "Close them and start"). The waits are short: a pause of [PAUSE_MS] counts as
+   * the seconds of the plan. Returns true while the next round must wait.
+   */
+  playTheClock(roundId) {
+    const cases = this.plan.cornerCases.filter((item) => item.round === roundId);
+    const pause = cases.find((item) => item.kind === "pause");
+    const stop = cases.find((item) => item.kind === "stop");
+    if (pause == null && stop == null) return false;
+    const clock = this.clockOf(roundId);
+    const hands = this.roundTables(roundId).reduce((total, table) => total + table.hands.filter((hand) => hand.isDone).length, 0);
+    if (pause != null && clock.pausedAtMs == null && clock.pausedMs === 0 && hands >= 4) {
+      clock.pausedAtMs = Date.now();
+      return true;
+    }
+    if (clock.pausedAtMs != null) {
+      if (Date.now() - clock.pausedAtMs < PAUSE_MS) return true;
+      // The pause counts as the seconds of the plan: the clock starts as much earlier, so the play time stays true.
+      clock.startedAtMs -= pause.seconds * 1_000 - (Date.now() - clock.pausedAtMs);
+      clock.pausedAtMs = null;
+      clock.pausedMs = pause.seconds * 1_000;
+      this.resumedAt = Date.now();
+      return true;
+    }
+    const steps = cases.find((item) => item.kind === "set-time")?.steps ?? [];
+    if (this.clockSteps.length < steps.length) {
+      const due = Date.now() - (this.clockSteps.at(-1) ?? this.resumedAt ?? clock.startedAtMs) >= STEP_MS;
+      if (due) {
+        clock.adjustMs += steps[this.clockSteps.length].change * 60_000;
+        this.clockSteps.push(Date.now());
+      }
+      return true;
+    }
+    if (stop == null) return false;
+    // The phones see each change of the time before the next one.
+    if (!clock.stopped && Date.now() - (this.clockSteps.at(-1) ?? 0) < STEP_MS) return true;
+    if (!clock.stopped) {
+      const table = this.tables.get(`${roundId}_${stop.table}`);
+      if (!table.isCompleted && table.hands.filter((hand) => hand.isDone).length < STOP_HANDS) return true;
+      this.stop(roundId);
+      this.stoppedAt = Date.now();
+      // The server closes the tables with hands at once.
+      for (const each of this.roundTables(roundId).filter((item) => !item.isCompleted && item.hands.some((hand) => hand.isDone))) {
+        each.isCompleted = true;
+        each.version += 1;
+      }
+      const reopen = cases.find((item) => item.kind === "reopen");
+      if (reopen != null) {
+        const again = this.tables.get(`${roundId}_${reopen.table}`);
+        again.isCompleted = false;
+        again.version += 1;
+      }
+      return true;
+    }
+    if (Date.now() - this.stoppedAt < STEP_MS) return true;
+    if (roundId < this.rounds && this.clockOf(roundId + 1) == null) {
+      for (const each of this.roundTables(roundId).filter((item) => !item.isCompleted)) {
+        each.isCompleted = true;
+        each.version += 1;
+      }
+      this.startRound(roundId + 1);
+    }
+    return true;
   }
 }

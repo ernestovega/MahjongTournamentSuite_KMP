@@ -71,22 +71,51 @@ function seatsOf(table) {
 
 /** Shared by the bots of one process: what the tournament looks like now, read at most every few seconds. */
 class Tournament {
-  constructor(api, id, clockCacheMs = 5_000) {
+  constructor(api, id, clockCacheMs = 5_000, metrics = null) {
     this.api = api;
     this.id = id;
     this.clockCacheMs = clockCacheMs;
+    this.metrics = metrics;
     this.tablesByRound = new Map();
     this.clocks = { at: 0, value: null };
     this.info = { at: 0, value: null };
   }
 
-  async roundClocks() {
-    if (Date.now() - this.clocks.at > this.clockCacheMs) {
+  async roundClocks(fresh = false) {
+    if (fresh || Date.now() - this.clocks.at > this.clockCacheMs) {
       this.clocks.at = Date.now();
       const reply = await this.api.call("GET", `/public/tournaments/${this.id}/round-clocks`, { label: "GET round-clocks" });
-      if (reply.status === 200) this.clocks.value = reply.json;
+      if (reply.status === 200) {
+        this.noteClockChanges(this.clocks.value, reply.json);
+        this.clocks.value = reply.json;
+      }
     }
     return this.clocks.value;
+  }
+
+  /**
+   * What the phones see of the organizer in Round control: a pause, a resume and a change of the time (Set time, Stop).
+   * Each change is an event once per process, with the round and the change of the end in ms.
+   */
+  noteClockChanges(before, after) {
+    if (this.metrics == null || before == null) return;
+    for (const clock of after?.roundClocks ?? []) {
+      const old = (before.roundClocks ?? []).find((item) => item.roundId === clock.roundId);
+      if (old == null) continue;
+      const round = clock.roundId;
+      if (old.pausedAtMs == null && clock.pausedAtMs != null) this.metrics.event("clock-paused-seen", { round, atMs: Date.now() });
+      if (old.pausedAtMs != null && clock.pausedAtMs == null) this.metrics.event("clock-resumed-seen", { round, atMs: Date.now(), pausedMs: clock.pausedMs ?? 0 });
+      // Set time and Stop change the match time (adjustMs). A pause moves the end too, but by itself (pausedMs).
+      if ((old.adjustMs ?? 0) !== (clock.adjustMs ?? 0)) {
+        this.metrics.event("clock-adjusted-seen", { round, atMs: Date.now(), from: old.adjustMs ?? 0, to: clock.adjustMs ?? 0, endChangeMs: (clock.adjustMs ?? 0) - (old.adjustMs ?? 0) });
+      }
+    }
+  }
+
+  /** True when the clock of the round is paused now, read again from the server. */
+  async isPaused(roundId) {
+    const clock = ((await this.roundClocks(true))?.roundClocks ?? []).find((item) => item.roundId === roundId);
+    return clock?.pausedAtMs != null;
   }
 
   /** The instant of the end of the match time of a round (as clockEndMs of the server), or null. */
@@ -290,6 +319,7 @@ class PlayerBot {
       const deleted = this.noteCorrections(key, data);
       if (data.table.isCompleted) {
         this.metrics.event("table-completed", { table: key, hands: data.hands.filter((hand) => hand.isDone).length });
+        if (this.stopTables.has(key)) await this.handAfterTheStop(roundId, table, key, seatsOf(data.table));
         return;
       }
       if (deleted) {
@@ -462,6 +492,10 @@ class PlayerBot {
         this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString(), ...(kind === "reentry" ? { reentry: true } : {}) });
         if (kind === "reentry") this.metrics.event("hand-reentered", { table: key, handId: reply.json.handId, slot: this.slotNumber });
         if (kind === "draw") this.metrics.event("planned-draw", { table: key, handId: reply.json.handId });
+        // The corner case of the pause: the players go on saving hands while the organizer has the clock paused.
+        if (this.pauseRounds.has(roundId) && (await this.tournament.isPaused(roundId))) {
+          this.metrics.event("hand-while-paused", { table: key, handId: reply.json.handId, atMs: Date.now() });
+        }
         if (kind === "offline") await this.loseTheNetwork(key, path, body, reply.json.handId, roundId, table.tableId);
         if (kind === "extra") {
           const end = await this.tournament.matchEnd(roundId, this.matchMinutes);
@@ -473,6 +507,22 @@ class PlayerBot {
       this.metrics.event("version-conflict", { table: key, attempt });
     }
     return "wait";
+  }
+
+  /**
+   * The corner case of the Stop: the organizer stopped the round and the server closed the table, but a player of it
+   * still sends a hand, as a phone that did not look again. The server must refuse it.
+   */
+  async handAfterTheStop(roundId, table, key, seats) {
+    this.stopTables.delete(key);
+    const path = `/player/tournaments/${this.tournament.id}/tables/${roundId}/${table.tableId}/hands`;
+    const hand = randomHand(seats ?? table.playerIds.map(String));
+    const token = await this.session.bearer();
+    const preview = await this.api.call("POST", `${path}/preview`, { token, body: hand, label: "POST hand preview (after the Stop)" });
+    const reply = preview.status !== 200 ? preview
+      : await this.api.call("POST", path, { token, body: { ...hand, expectedVersion: Number(preview.json?.tableVersion ?? 0) }, label: "POST hand (after the Stop)" });
+    if (reply.status === 200) this.handLog.push({ table: key, handId: reply.json.handId, hand, ms: Math.round(reply.ms), at: new Date().toISOString() });
+    this.metrics.event("hand-after-stop", { table: key, status: reply.status, message: reply.json?.message ?? "", atMs: Date.now() });
   }
 
   /**
@@ -606,7 +656,7 @@ export async function runBots(options) {
   const startedAt = new Date().toISOString();
   const metrics = options.metrics ?? new Metrics();
   const api = options.api ?? new Api(options.apiBase ?? STAGING_API, metrics);
-  const tournament = new Tournament(api, options.tournamentId, options.clockCacheMs);
+  const tournament = new Tournament(api, options.tournamentId, options.clockCacheMs, metrics);
   const ownSlots = new Set(options.slots);
   const context = {
     api, metrics, tournament, ownSlots,
@@ -648,6 +698,9 @@ export async function runBots(options) {
     backgroundDone: new Set(),
     // The table of round 1 whose players finish level: it plays only draws, and so do their tables of the next rounds.
     tieTable: options.tieTable ?? null,
+    // The round whose clock the organizer pauses, and the table whose scorer tries a hand after the Stop.
+    pauseRounds: new Set(options.pauseRounds ?? []),
+    stopTables: new Set(options.stopTables ?? []),
     matchMinutes: options.matchMinutes ?? null,
     raceSessions: new Map(),
     raced: new Set(),
@@ -783,6 +836,8 @@ export function planOptions(plan, args = {}) {
     offlineTables: Object.fromEntries((plan?.cornerCases ?? []).filter((item) => item.kind === "offline")
       .map((item) => [`${item.round}_${item.table}`, { afterHands: item.afterHands, seconds: item.seconds }])),
     tieTable: (plan?.cornerCases ?? []).filter((item) => item.kind === "tie").map((item) => `${item.round}_${item.table}`)[0] ?? null,
+    pauseRounds: (plan?.cornerCases ?? []).filter((item) => item.kind === "pause").map((item) => item.round),
+    stopTables: (plan?.cornerCases ?? []).filter((item) => item.kind === "stop").map((item) => `${item.round}_${item.table}`),
     matchMinutes: plan?.matchDurationMinutes ?? null,
   };
 }

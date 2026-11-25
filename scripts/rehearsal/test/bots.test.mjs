@@ -16,16 +16,21 @@ async function cornersPlan() {
   return plan;
 }
 
-/** Round 1: slots 1-4 at table 1, 5-8 at table 2... Round 2: table t has slots t, t+6, t+12 and t+18. */
+/**
+ * Round 1: slots 1-4 at table 1, 5-8 at table 2... Round 2: table t has slots t, t+7, t+14 and t+21. Round 3: as round
+ * 2, with seat s moved 2s tables further, so no player of the tie (slots 25-28) sits at the table of manual totals.
+ */
 function draws(players) {
   const tables = players / 4;
   return [
     Array.from({ length: tables }, (_, table) => [1, 2, 3, 4].map((seat) => table * 4 + seat)),
     Array.from({ length: tables }, (_, table) => [0, 1, 2, 3].map((seat) => table + 1 + seat * tables)),
+    Array.from({ length: tables }, (_, table) => [0, 1, 2, 3].map((seat) => ((table + 2 * seat) % tables) + 1 + seat * tables)),
   ];
 }
 
-async function play(plan, { minutes = [60, 0.05] } = {}) {
+// The rounds before the last one have the match time of the plan, so the report reads their clocks as the server's.
+async function play(plan, { minutes = [plan.matchDurationMinutes, plan.matchDurationMinutes, 0.05] } = {}) {
   const metrics = new Metrics();
   const staging = new FakeStaging({ metrics, draws: draws(plan.players), minutes, plan });
   let doneAt = null;
@@ -55,7 +60,7 @@ async function play(plan, { minutes = [60, 0.05] } = {}) {
     // The phone without network is away 0.2 s instead of a minute.
     offlineTables: Object.fromEntries(Object.entries(planOptions(plan).offlineTables).map(([key, item]) => [key, { ...item, seconds: 0.2 }])),
     lateMs: 300,
-    matchMinutes: minutes[1],
+    matchMinutes: minutes.at(-1),
   });
   const check = await checkTournament(staging, "t1", [report]);
   return { report, check, staging };
@@ -158,7 +163,7 @@ test("a phone that lost the network sends the hand again and is refused, and a p
   const back = report.events.find((event) => event.kind === "offline-back");
   const caughtUp = report.events.find((event) => event.kind === "background-back");
 
-  assert.equal(lost.table, "2_4");
+  assert.equal(lost.table, `${plan.rounds}_4`);
   assert.equal(back.status, 409);
   assert.equal(back.shown, 1);
   assert.ok(caughtUp.after >= caughtUp.before);
@@ -172,4 +177,23 @@ test("the players of the tie table finish level: their tables play only draws", 
   assert.equal(rows.length, 4);
   assert.ok(rows.every((row) => row.points === rows[0].points && row.score === 0));
   assert.ok(report.events.filter((event) => event.kind === "tie-table").length >= 4, "the tables of round 2 with those players play draws too");
+});
+
+test("round 2 plays the clock: a pause with hands saved meanwhile, Set time twice, a Stop and a table opened again", async () => {
+  const { report, check } = game;
+  const of = (kind) => report.events.filter((event) => event.kind === kind);
+  const clock = check.roundClocks.find((item) => item.roundId === 2);
+
+  assert.ok(of("clock-paused-seen").some((event) => event.round === 2));
+  assert.ok(of("clock-resumed-seen").some((event) => event.round === 2));
+  assert.ok(of("hand-while-paused").length > 0, "the tables save hands during the pause");
+  assert.equal(clock.pausedMs, 60_000);
+  const changes = of("clock-adjusted-seen").filter((event) => event.round === 2).map((event) => event.endChangeMs);
+  assert.deepEqual(changes.slice(0, 2), [120_000, -60_000]);
+  assert.ok(changes[2] < -60_000, "the Stop pulls the end in");
+  const tried = of("hand-after-stop")[0];
+  assert.equal(tried.table, "2_5");
+  assert.equal(tried.status, 409);
+  assert.equal(check.tablesByKey.get("2_6").table.isCompleted, true);
+  assert.ok(check.roundClocks.some((item) => item.roundId === 3));
 });
