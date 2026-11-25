@@ -20,6 +20,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -27,6 +28,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsFixedColors
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsShapes
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.app_logo_description
@@ -94,7 +97,36 @@ fun AppBackground(showLogo: Boolean = true, content: @Composable () -> Unit) {
 }
 
 /**
- * The logo with a progress below it, in the middle of the screen. It looks like the loading page of the web
+ * The app icon: the white logo on a green rounded square, the same in both themes. It matches favicon.png, which
+ * the loading page of the web shows. Without the white logo it falls back to [AppLogo].
+ */
+@Composable
+fun AppIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 160.dp,
+) {
+    val whiteLogo = LocalAppLogoOnDark.current ?: return AppLogo(modifier, size)
+    val logoDescription = stringResource(Res.string.app_logo_description)
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(MtsShapes.appIcon)
+            .background(MtsFixedColors.appIcon)
+            .semantics { contentDescription = logoDescription },
+        contentAlignment = Alignment.Center,
+    ) {
+        // The logo takes 5/6 of the icon, as in favicon.png and the launcher icon.
+        Image(
+            painter = whiteLogo,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(size * 0.85f),
+        )
+    }
+}
+
+/**
+ * The app icon with a progress below it, in the middle of the screen. It looks like the loading page of the web
  * (index.html), so a reload goes from one to the other without a jump. It paints the background of the theme:
  * on the web the canvas of the app is white until something draws on it.
  */
@@ -105,7 +137,7 @@ fun AppLoading(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MtsSpacing.xxl, Alignment.CenterVertically),
     ) {
-        AppLogo(size = 160.dp)
+        AppIcon(size = 160.dp)
         CircularProgressIndicator()
     }
 }
