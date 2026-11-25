@@ -171,8 +171,13 @@ def upload() -> int:
         edits.validate(packageName=PACKAGE, editId=edit_id).execute()
         edits.commit(packageName=PACKAGE, editId=edit_id).execute()
     except BaseException:
-        edits.delete(packageName=PACKAGE, editId=edit_id).execute()
-        print("Nothing was changed on Play: the edit was thrown away.")
+        # Play throws an edit away by itself when another one commits on the app meanwhile (an app upload, say).
+        try:
+            edits.delete(packageName=PACKAGE, editId=edit_id).execute()
+        except Exception:
+            pass
+        print("Nothing was changed on Play: the edit was thrown away. 'This Edit has been deleted' means that another")
+        print("edit of the app (an upload of the app, Play Console) ran at the same time: run this again on its own.")
         raise
     print("\nDone: the listing is on Play (it may wait for Google's review before it shows).")
     return 0
