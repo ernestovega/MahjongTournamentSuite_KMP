@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">Une pénalité partagée doit être un multiple de 3.</string>
     <string name="entry_others_get">Les autres joueurs reçoivent +%1$d chacun.</string>
     <string name="entry_share">Partager avec les autres joueurs</string>
-    <string name="entry_wins">gagne %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">gagne avec %1$d point</item>
+        <item quantity="other">gagne avec %1$d points</item>
+    </plurals>
     <string name="entry_from">de</string>
     <string name="changed_title">La table a changé</string>
     <string name="changed_not_saved">Votre main n'est pas enregistrée. Vérifiez ci-dessous les données du serveur.</string>

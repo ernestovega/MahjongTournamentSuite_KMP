@@ -422,6 +422,12 @@ class PlayerScreensScreenshotTest {
         TableScreen(nav, ONGOING, roundId = 3, tableId = 1)
     }
 
+    // A table of a round that has not started: the start time and the Diffs switch are in the row above the seats.
+    @Test
+    fun tableNotStarted() = playerScreenshots("table-not-started", ready = { waitForText("PIERRE MOREAU", substring = true) }) { nav ->
+        TableScreen(nav, ONGOING, roundId = 4, tableId = 1)
+    }
+
     @Test
     fun combinations() = playerScreenshots("combinations", ready = { waitForText(playerText("comb_pure_double_chow")) }) { nav -> CombinationsScreen(nav) }
 

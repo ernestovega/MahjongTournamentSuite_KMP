@@ -528,7 +528,7 @@ class HandEntryPanelUiTest {
         enterWin("Player 2", "Player 4", "24")
         onNodeWithText("Review").performClick()
         awaitText("Check hand")
-        onNodeWithText("wins 24").assertIsDisplayed()
+        onNodeWithText("wins with 24 points").assertIsDisplayed()
         onNodeWithText("Confirm").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.recorded.isNotEmpty() }
 

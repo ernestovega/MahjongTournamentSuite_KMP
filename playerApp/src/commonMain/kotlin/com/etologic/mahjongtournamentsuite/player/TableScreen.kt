@@ -156,36 +156,40 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             ) {
                 MessageDialog(message)
                 if (view == null || table == null) return@ScreenColumn
-                // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.
-                HandChangeAnnouncement(changes.latest)
                 val complete = view.isFinished(table, now)
                 val handNumber = minOf(table.doneHands + 1, 16)
-                TableSeatsView(
-                    seats = table.seatsFor(view, withLevelChange = true),
-                    handNumber = handNumber,
-                    // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
-                    centerLabel = when {
-                        complete -> ""
-                        view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
-                        else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
-                    },
-                    showPoints = complete,
-                    windsKnown = table.seatsAssigned,
-                    // The switch shows whenever the tournament allows the differences, also before the first hand, but not on a
-                    // finished table: there is nothing left to catch up (Ernesto, 2026-11-25).
-                    diffsAvailable = view.tournament.showTableDiffs && !complete,
-                    // The time left of the round is at the top left, above the seats.
-                    leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
-                    animateScoreChanges = change != null,
-                    // On a table that takes hands, a tap on a player starts a hand won by that player.
-                    onPlayerClick = { slot ->
-                        if (view.canAddHands(table, now)) {
-                            preselectWinner = slot
-                        } else {
-                            navController.navigate(TournamentPlayerRoute(tournamentId, slot))
-                        }
-                    },
-                )
+                // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.
+                // The announcer shares a box with the seats: alone it would be one more item of the column, with its
+                // 16 dp gap above the row of the time left (Ernesto, 2026-11-25).
+                Box {
+                    HandChangeAnnouncement(changes.latest)
+                    TableSeatsView(
+                        seats = table.seatsFor(view, withLevelChange = true),
+                        handNumber = handNumber,
+                        // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
+                        centerLabel = when {
+                            complete -> ""
+                            view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
+                            else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
+                        },
+                        showPoints = complete,
+                        windsKnown = table.seatsAssigned,
+                        // The switch shows whenever the tournament allows the differences, also before the first hand, but not on a
+                        // finished table: there is nothing left to catch up (Ernesto, 2026-11-25).
+                        diffsAvailable = view.tournament.showTableDiffs && !complete,
+                        // The time left of the round is at the top left, above the seats.
+                        leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
+                        animateScoreChanges = change != null,
+                        // On a table that takes hands, a tap on a player starts a hand won by that player.
+                        onPlayerClick = { slot ->
+                            if (view.canAddHands(table, now)) {
+                                preselectWinner = slot
+                            } else {
+                                navController.navigate(TournamentPlayerRoute(tournamentId, slot))
+                            }
+                        },
+                    )
+                }
                 HandEntryPanel(
                     tournamentId = tournamentId,
                     roundId = roundId,

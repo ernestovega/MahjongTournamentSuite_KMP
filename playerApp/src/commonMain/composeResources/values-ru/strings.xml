@@ -167,7 +167,12 @@
     <string name="entry_shared_multiple">Разделённый штраф должен быть кратен 3.</string>
     <string name="entry_others_get">Остальные игроки получают по +%1$d.</string>
     <string name="entry_share">Разделить между остальными игроками</string>
-    <string name="entry_wins">выигрывает %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">выигрывает с %1$d очком</item>
+        <item quantity="few">выигрывает с %1$d очками</item>
+        <item quantity="many">выигрывает с %1$d очками</item>
+        <item quantity="other">выигрывает с %1$d очками</item>
+    </plurals>
     <string name="entry_from">от</string>
     <string name="changed_title">Стол изменился</string>
     <string name="changed_not_saved">Ваша раздача не сохранена. Проверьте данные сервера ниже.</string>

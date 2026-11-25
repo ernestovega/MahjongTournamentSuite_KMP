@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">Una penalità condivisa deve essere un multiplo di 3.</string>
     <string name="entry_others_get">Gli altri giocatori ricevono +%1$d ciascuno.</string>
     <string name="entry_share">Dividila con gli altri giocatori</string>
-    <string name="entry_wins">vince %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">vince con %1$d punto</item>
+        <item quantity="other">vince con %1$d punti</item>
+    </plurals>
     <string name="entry_from">da</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>

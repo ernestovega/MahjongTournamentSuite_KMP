@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">A shared penalty must be a multiple of 3.</string>
     <string name="entry_others_get">The other players get +%1$d each.</string>
     <string name="entry_share">Share it with the other players</string>
-    <string name="entry_wins">wins %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">wins with %1$d point</item>
+        <item quantity="other">wins with %1$d points</item>
+    </plurals>
     <string name="entry_from">from</string>
     <string name="changed_title">The table changed</string>
     <string name="changed_not_saved">Your hand is not saved. Check the data of the server below.</string>

@@ -25,6 +25,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -45,6 +47,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -68,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
 import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
@@ -137,9 +142,10 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_time_over
 import mahjongtournamentsuite.playerapp.generated.resources.entry_totals_only
 import mahjongtournamentsuite.playerapp.generated.resources.entry_updating_table
 import mahjongtournamentsuite.playerapp.generated.resources.entry_winner
-import mahjongtournamentsuite.playerapp.generated.resources.entry_wins
+import mahjongtournamentsuite.playerapp.generated.resources.entry_wins_points
 import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
 import mahjongtournamentsuite.playerapp.generated.resources.scope_table
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
@@ -762,7 +768,8 @@ const val SCORE_NUMPAD_TAG = "score-numpad"
 /** The number of the hand in the title of the dialogs, without the wind: "#5". */
 @Composable
 private fun HandNumberLabel(handId: Int) {
-    Text("#$handId", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    // In the text font, like every number of the table and its dialogs (Ernesto, 2026-11-25).
+    Text("#$handId", color = MaterialTheme.colorScheme.onSurfaceVariant, style = LocalTextStyle.current.inTextFont())
 }
 
 /** The tag of each player to choose in the dialogs of a hand, for the tests. */
@@ -957,6 +964,42 @@ private fun CheckRow(
     }
 }
 
+/** A player in the summary of the review: an optional word before ("from"), the name in bold and the number, muted. */
+@Composable
+private fun ReviewPlayerLine(name: String, slot: Int?, prefix: String? = null) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        // The words around the name are the color of the card, softer, so they read on the colored card.
+        val soft = LocalContentColor.current.copy(alpha = 0.75f)
+        prefix?.let { Text(it, style = MaterialTheme.typography.titleMedium.inTextFont(), color = soft) }
+        Text(
+            name,
+            Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.titleLarge.inTextFont(),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        slot?.let {
+            Text(playerNumber(it), style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold, color = soft)
+        }
+    }
+}
+
+/** "wins with 16 points", with the number larger and in bold. */
+@Composable
+private fun ReviewWinsLine(score: Int) {
+    val text = pluralStringResource(Res.plurals.entry_wins_points, score, score)
+    val number = score.toString()
+    val start = text.indexOf(number)
+    val numberStyle = SpanStyle(fontSize = MaterialTheme.typography.headlineMedium.fontSize, fontWeight = FontWeight.Bold)
+    val annotated = buildAnnotatedString {
+        append(text)
+        if (start >= 0) addStyle(numberStyle, start, start + number.length)
+    }
+    Text(annotated, style = MaterialTheme.typography.titleMedium.inTextFont(), textAlign = TextAlign.Center)
+}
+
 /**
  * Shows the result clearly so that the player can show it to the table before saving.
  * The table points show only when the table ends with this hand.
@@ -994,26 +1037,31 @@ private fun ReviewHand(
             color = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlayerFlagAndNumber(view.players[winner]?.country, winner, flagWidth = 26.dp, style = MaterialTheme.typography.titleMedium.inTextFont())
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                    Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
-                    if (chicken) ChickenIcon(32.dp)
-                }
-                // Who paid is as large as who won, so both read at a glance.
+            // Who won, how many points, and from whom: three short centered lines, with no flags, so it reads at a glance
+            // when the player shows it to the table. A chicken hand is a small note below (Ernesto, 2026-11-25).
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                ReviewPlayerLine(view.firstNameOf(winner), winner)
+                ReviewWinsLine(score)
                 if (selfDraw) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
                         SelfDrawIcon(24.dp)
                         Text(stringResource(Res.string.entry_self_draw), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                        Text(stringResource(Res.string.entry_from), style = MaterialTheme.typography.titleLarge.inTextFont())
-                        PlayerFlagAndNumber(view.players[loser]?.country, loser, flagWidth = 26.dp, style = MaterialTheme.typography.titleMedium.inTextFont())
-                        Text(view.firstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                    ReviewPlayerLine(view.firstNameOf(loser), loser, prefix = stringResource(Res.string.entry_from))
+                }
+                if (chicken) {
+                    Row(
+                        Modifier.padding(top = MtsTheme.spacing.sm),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                    ) {
+                        ChickenIcon(18.dp)
+                        Text(stringResource(Res.string.chicken_hand), style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.85f))
                     }
                 }
             }
@@ -1030,13 +1078,13 @@ private fun ReviewHand(
         val slot = preview.seatSlotIds[index]
         val change = preview.handScores.getOrNull(index) ?: 0
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.weight(1.8f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-            ) {
-                currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
-                PlayerFlagAndNumber(view.players[slot]?.country, slot)
+            // The wind, the flag and the number on one line and the name below, so the name has the whole width of the
+            // column (Ernesto, 2026-11-25).
+            Column(Modifier.weight(1.8f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
+                    PlayerFlagAndNumber(view.players[slot]?.country, slot)
+                }
                 Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(

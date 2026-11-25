@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">Ett delat straff måste vara en multipel av 3.</string>
     <string name="entry_others_get">De andra spelarna får +%1$d var.</string>
     <string name="entry_share">Dela med de andra spelarna</string>
-    <string name="entry_wins">vinner %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">vinner med %1$d poäng</item>
+        <item quantity="other">vinner med %1$d poäng</item>
+    </plurals>
     <string name="entry_from">från</string>
     <string name="changed_title">Bordet har ändrats</string>
     <string name="changed_not_saved">Din hand är inte sparad. Kontrollera serverns data nedan.</string>
