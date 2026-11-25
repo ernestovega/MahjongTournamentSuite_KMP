@@ -10,7 +10,7 @@ import org.junit.After
 import org.junit.Test
 
 /**
- * Round control, the plan B of the Timer: an admin runs the clock of a round from a dialog of the tournament screen,
+ * Round control, the plan B of the Timer: an admin runs the clock of a round from a screen opened from the tournament,
  * decides by hand what the players can do, and marks tables as completed or in play.
  */
 class RoundControlTest : AdminE2eTest() {

@@ -70,8 +70,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleDraft
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleEditorDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
-import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialogContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendSummaryDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
@@ -372,31 +370,6 @@ class AdminDialogsScreenshotTest {
     @Test
     fun tableUpdates() = dialog("table-updates") {
         TableUpdatesDialog(listOf(TableUpdateNotice(TableKey(3, 2), emptyList(), saveRejected = true)), onDismiss = {})
-    }
-
-    @Test
-    fun roundControl() = adminScreenshots("dialogs/round-control", variants = dialogVariants, ready = { waitForText("2:00:00") }) {
-        RoundControlDialog(ONGOING, initialRound = 3, onDismiss = {})
-    }
-
-    @Test
-    fun roundControlOpenTablesOfFinishedRounds() = adminScreenshots(
-        "dialogs/round-control-open-tables",
-        variants = dialogVariants,
-        ready = { waitForText("2:00:00") },
-    ) {
-        // Round 2 is over (round 3 is in play) but two of its tables stayed open: badge on its chip and the close button.
-        val repository = koinInject<TournamentRepository>()
-        val controller = remember { RoundTimerController(repository, ONGOING, initialRound = 3) }
-        val tables = remember {
-            ScreenshotData.tables(ONGOING).map { if (it.roundId == 2 && it.tableId in setOf(1, 3)) it.copy(isCompleted = false) else it }
-        }
-        RoundControlDialogContent(
-            controller = controller,
-            loadTables = { AppResult.Success(tables) },
-            loadRoundHands = { roundId -> openRoundHands(roundId) },
-            onDismiss = {},
-        )
     }
 
     @Test
