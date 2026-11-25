@@ -37,6 +37,20 @@ class PublicReadsRoutingTest {
     }
 
     @Test
+    fun guestTournamentListWithARevisionPutsItInTheAddress() = runTest {
+        // The CDN keeps the list up to a minute: a new revision is a new address, so it never answers an old list.
+        val request = requestOf("{\"tournaments\":[]}") { listTournaments(PUBLIC_TOKEN, revision = 42) }
+
+        assertEquals("$base/public/tournaments?revision=42", request.url.toString())
+        assertNull(request.headers[HttpHeaders.Authorization])
+    }
+
+    @Test
+    fun signedInTournamentListIgnoresTheRevision() = runTest {
+        assertEquals("$base/tournaments", requestOf("{\"tournaments\":[]}") { listTournaments("token-1", revision = 42) }.url.toString())
+    }
+
+    @Test
     fun guestTournamentContentUsesThePublicRoute() = runTest {
         assertEquals(
             "$base/public/tournaments/t-1/players",

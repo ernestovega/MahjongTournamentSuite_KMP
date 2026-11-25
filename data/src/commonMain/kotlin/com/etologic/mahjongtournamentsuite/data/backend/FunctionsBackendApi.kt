@@ -139,6 +139,7 @@ class FunctionsBackendApi(
     private fun readUrl(path: String, idToken: String?): String = url(if (idToken == PUBLIC_TOKEN) publicPath(path) else path)
 
     private fun publicPath(path: String): String = when {
+        path.startsWith("/tournaments?revision=") -> "/public" + path
         path == "/tournaments" || path.startsWith("/tournaments?") -> "/public/tournaments"
         path.startsWith("/tournaments/statistics/") -> "/public/statistics/" + path.removePrefix("/tournaments/statistics/")
         path == "/ema-player-registry" -> "/public/players"
@@ -388,7 +389,16 @@ class FunctionsBackendApi(
         return response.requireSuccessBody()
     }
 
-    suspend fun listTournaments(idToken: String, playerScope: Boolean = false): TournamentsResponseDto = get(path = if (playerScope) "/tournaments?scope=player" else "/tournaments", idToken = idToken)
+    /**
+     * The tournament list. A public read with [revision] (the "tournaments" revision of the manifest) asks for
+     * /public/tournaments?revision=N: the CDN keeps the list up to a minute, and a new revision is a new address,
+     * so the answer is never older than the revision that the cache saves with it.
+     */
+    suspend fun listTournaments(idToken: String, playerScope: Boolean = false, revision: Long? = null): TournamentsResponseDto = when {
+        idToken == PUBLIC_TOKEN && revision != null -> get(path = "/tournaments?revision=$revision", idToken = idToken)
+        playerScope -> get(path = "/tournaments?scope=player", idToken = idToken)
+        else -> get(path = "/tournaments", idToken = idToken)
+    }
 
     suspend fun createTournament(
         idToken: String,

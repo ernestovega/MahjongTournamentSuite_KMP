@@ -109,7 +109,12 @@ class DefaultTournamentRepository(
             if (publicReads) "$GLOBAL_TOURNAMENTS_CACHE_KEY:public" else GLOBAL_TOURNAMENTS_CACHE_KEY,
             TournamentsResponseDto.serializer(),
         ),
-        fetch = { idToken -> backendApi.listTournaments(idToken) },
+        // The public list goes through the CDN, which keeps it up to a minute while the manifest is newer. The revision
+        // in the address (the same shared manifest that the cache just read) makes the answer as new as that revision.
+        fetch = { idToken ->
+            val revision = if (publicReads) runCatching { globalManifest(idToken).resources["tournaments"]?.revision }.getOrNull() else null
+            backendApi.listTournaments(idToken, revision = revision)
+        },
         map = { response ->
             response.tournaments.map { it.toDomain() }.sortedRecentFirst()
         },
