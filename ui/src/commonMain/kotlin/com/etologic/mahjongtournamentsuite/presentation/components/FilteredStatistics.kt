@@ -145,11 +145,12 @@ private fun PersonContent(
             }
         }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
-            HeadToHeadCard(headToHead, data.profile, rivalProfile, cardModifier)
+            // The charts first, then the lists of numbers (Ernesto, 2026-11-25).
             if (theirKept != null && kept.overall.tablesWithHands > 0 && theirKept.overall.tablesWithHands > 0) {
                 HeadToHeadSkillsCard(kept.overall, theirKept.overall, data.profile, rivalProfile, cardModifier)
             }
             places?.let { (mine, theirs) -> HeadToHeadPlacesCard(together, mine, theirs, data.profile, rivalProfile, cardModifier) }
+            HeadToHeadCard(headToHead, data.profile, rivalProfile, cardModifier)
             SharedTablesCard(headToHead, data.profile, rivalProfile, cardModifier) { table ->
                 // A table opens with its own statistics, like a table of the tournament view.
                 onFiltersChange(StatisticsFilters(tournamentId = table.tournament.id, roundId = table.mine.roundId, tableId = table.mine.tableId))
