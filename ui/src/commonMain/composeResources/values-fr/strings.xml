@@ -724,6 +724,8 @@ La première qui marche gagne</string>
     <string name="conflict_account_has_other_ema">Ce compte appartient à un autre joueur EMA.</string>
     <string name="conflict_all_hands_done">Toutes les mains de cette table sont terminées.</string>
     <string name="conflict_assignments_missing">Attribuez tous les joueurs du tournoi avant de créer les badges.\nManquants : %1$s.</string>
+    <string name="conflict_previous_round_in_play">La manche %1$s est toujours en cours. Arrêtez-la avant de commencer la suivante.</string>
+    <string name="conflict_previous_round_open_tables">La manche %1$s a encore des tables ouvertes : %2$s.\nFermez-les avant de commencer la suivante.</string>
     <string name="conflict_clock_not_started">L'horloge de cette manche n'a pas encore démarré.</string>
     <string name="conflict_duplicate_tournament">Le même tournoi figure deux fois dans la liste.</string>
     <string name="conflict_ema_already_in_tournament">Ce joueur EMA participe déjà à ce tournoi.</string>

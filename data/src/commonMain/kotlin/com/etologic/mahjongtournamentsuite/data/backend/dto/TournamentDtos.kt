@@ -613,4 +613,5 @@ data class RoundClockActionRequestDto(
     val agoSeconds: Long? = null,
     val remainingSeconds: Long? = null,
     val force: Boolean? = null,
+    val closePrevious: Boolean? = null,
 )

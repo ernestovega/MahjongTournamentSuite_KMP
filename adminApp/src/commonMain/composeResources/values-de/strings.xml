@@ -783,6 +783,10 @@
     <string name="timer_reset_confirm_title">Rundenuhr zurücksetzen?</string>
     <string name="timer_reset_confirm_message">Damit wird die Uhr der Runde zurückgesetzt. Gespeicherte Hände bleiben, aber die Spieler können keine weiteren eintragen, bis du wieder Start drückst. Um die gespielte Zeit zu behalten, nutze beim Starten „Die Runde hat früher begonnen“.</string>
     <string name="timer_reset_confirm">Zurücksetzen</string>
+    <string name="round_close_previous_title">Runde %1$s starten?</string>
+    <string name="round_close_previous_message">Runde %1$s hat noch offene Tische: %2$s.\nSie werden mit ihren Händen geschlossen. Du kannst sie später im Tisch-Editor korrigieren.</string>
+    <string name="round_close_previous_never_started">Runde %1$s wurde nie gestartet. Ihre Tische %2$s werden ohne Ergebnisse geschlossen.</string>
+    <string name="round_close_previous_confirm">Schließen und starten</string>
     <string name="timer_tournament_completed">Das Turnier ist abgeschlossen. Seine Uhren können sich nicht ändern.</string>
     <string name="timer_late_start">Die Runde sollte um %1$s beginnen.\nDrücke Start, wenn der Gong ertönt. Bis dahin können die Spieler keine Hände eintragen.</string>
     <string name="timer_stop">Runde beenden</string>

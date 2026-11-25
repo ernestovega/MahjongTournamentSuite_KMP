@@ -57,8 +57,12 @@ data class RoundClocks(
 
 /** What a Timer asks the server to do with the clock of a round. */
 sealed interface RoundClockAction {
-    /** Play. [agoSeconds] is how long ago the round really started: the press, or "started N minutes ago". */
-    data class Start(val agoSeconds: Long = 0) : RoundClockAction
+    /**
+     * Play. [agoSeconds] is how long ago the round really started: the press, or "started N minutes ago".
+     * A round starts only once the round before is closed. With [closePrevious] the server completes the open tables of
+     * the round before first (its time must be over).
+     */
+    data class Start(val agoSeconds: Long = 0, val closePrevious: Boolean = false) : RoundClockAction
 
     /** [agoSeconds] is how long ago the button was pressed, for a press that could not reach the server at once. */
     data class Pause(val agoSeconds: Long = 0) : RoundClockAction

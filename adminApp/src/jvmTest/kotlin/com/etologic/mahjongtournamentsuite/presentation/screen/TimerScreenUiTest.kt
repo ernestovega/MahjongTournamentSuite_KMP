@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -62,6 +63,54 @@ class TimerScreenUiTest {
         onNodeWithText("Start").assertExists()
         onNodeWithContentDescription("Reset timer").assertIsNotEnabled()
         onNodeWithContentDescription("The round started earlier").assertIsEnabled()
+    }
+
+    @Test
+    fun aPlayWhoseRoundBeforeHasOpenTablesOffersToCloseThemAndStart() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min))
+        server.startRefusal = { _, action ->
+            if (action.closePrevious) {
+                null
+            } else {
+                AppError.Conflict("open", code = ConflictCode.PREVIOUS_ROUND_OPEN_TABLES, args = listOf("1", "3, 5", "true"))
+            }
+        }
+        show(server, round = 2)
+
+        onNodeWithContentDescription("Start timer").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Start round 2?").assertExists()
+        onNodeWithText("Round 1 still has open tables: 3, 5.", substring = true).assertExists()
+        onNodeWithText("Close them and start").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        assertEquals(
+            listOf<Pair<Int, RoundClockAction>>(2 to RoundClockAction.Start(closePrevious = true)),
+            server.clockActions.toList(),
+        )
+        onNodeWithText("Start round 2?").assertDoesNotExist()
+        onNodeWithContentDescription("Pause timer").assertExists()
+    }
+
+    @Test
+    fun aPlayWhoseRoundBeforeIsStillInPlaySaysToStopItFirst() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min))
+        server.startRefusal = { _, _ -> AppError.Conflict("in play", code = ConflictCode.PREVIOUS_ROUND_IN_PLAY, args = listOf("1", "2", "true")) }
+        // The Timer opens on the round in play; the organizer goes to round 2.
+        val controller = show(server, round = 2)
+        controller.selectRound(2)
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        onNodeWithContentDescription("Start timer").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        onNodeWithText("Round 1 is still in play. Stop it before starting the next round.").assertExists()
+        assertEquals(emptyList(), server.clockActions.toList())
+        onNodeWithContentDescription("Start timer").assertExists()
     }
 
     @Test

@@ -6,7 +6,7 @@ import { recordActivity } from "./activityLog";
 import type { ChangeActor } from "./changeLog";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
 import { closeRoundsEndedByChange } from "./matchTimeCloseService";
-import { matchTimeOfTournament } from "./matchTime";
+import { matchPhaseAt, matchTimeOfTournament } from "./matchTime";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { readStoredMatchDuration } from "./tournamentSchedule";
 import {
@@ -52,17 +52,85 @@ async function roundHasHands(tournamentId: string, roundId: number): Promise<boo
  * time, so the clocks of the devices do not matter. Then it plans the close of the round at the new end.
  * A reset of a round with saved hands needs [force]: the hands stay, but the players cannot add more until the next Play.
  */
+/**
+ * A round starts only once the round before it is closed (Ernesto, 2026-11-25): its time is over (or it was stopped) and
+ * every table of it is completed. While it plays, is paused or is in its extra time, the Play is refused: Stop ends it.
+ * When only open tables remain, the Play is refused with their numbers, and [closePrevious] completes them first, as
+ * the review of Round control does. A round before that was never started is refused the same way, with its tables.
+ */
+async function closePreviousRoundBeforePlay(params: {
+  tournamentId: string;
+  roundId: number;
+  closePrevious: boolean;
+  actor: ChangeActor | null;
+  nowMs: number;
+}): Promise<void> {
+  if (params.roundId <= 1) return;
+  const snapshot = await db.doc(`tournaments/${params.tournamentId}`).get();
+  if (!snapshot.exists) throw notFound("Tournament not found");
+  const tournament = snapshot.data() ?? {};
+  // Play twice changes nothing, so a round that already started is never refused. An unknown round or a completed
+  // tournament gets its own refusal from the clock.
+  if (readStoredRoundClocks(tournament).has(params.roundId)) return;
+  if (tournament.isCompleted === true || params.roundId > Number(tournament.numRounds ?? 0)) return;
+  const previous = params.roundId - 1;
+  const { rules, clock } = matchTimeOfTournament(tournament, previous);
+  const tables = await db.collection(`tournaments/${params.tournamentId}/tables`).where("roundId", "==", previous).get();
+  const open = tables.docs
+    .filter((table) => table.get("isCompleted") !== true)
+    .map((table) => Number(table.get("tableId")))
+    .filter((tableId) => Number.isInteger(tableId))
+    .sort((a, b) => a - b);
+  if (clock != null && matchPhaseAt(clock, rules, params.nowMs) !== "OVER") {
+    if (open.length > 0) {
+      throw conflict(`Round ${previous} is still in play. Stop it before starting round ${params.roundId}`, {
+        code: "PREVIOUS_ROUND_IN_PLAY",
+        roundId: previous,
+        tables: open,
+      });
+    }
+    // Every table finished before the time: the round before ends now, as with Stop, and the next one starts.
+    await updateRoundClock({ tournamentId: params.tournamentId, roundId: previous, action: { kind: "stop" }, actor: params.actor, nowMs: params.nowMs });
+    return;
+  }
+  if (open.length === 0) return;
+  if (!params.closePrevious) {
+    throw conflict(`Round ${previous} has open tables. Close them before starting round ${params.roundId}`, {
+      code: "PREVIOUS_ROUND_OPEN_TABLES",
+      roundId: previous,
+      tables: open,
+      started: clock != null,
+    });
+  }
+  await completeTables({
+    tournamentId: params.tournamentId,
+    tables: open.map((tableId) => ({ roundId: previous, tableId })),
+    actor: params.actor,
+  });
+}
+
 export async function updateRoundClock(params: {
   tournamentId: string;
   roundId: number;
   action: RoundClockAction;
   force?: boolean;
+  /** With a Play: complete the open tables of the round before, so the round can start. */
+  closePrevious?: boolean;
   actor: ChangeActor | null;
   nowMs?: number;
 }): Promise<RoundClocksAnswer> {
   const ref = db.doc(`tournaments/${params.tournamentId}`);
   if (params.action.kind === "reset" && params.force !== true && await roundHasHands(params.tournamentId, params.roundId)) {
     throw conflict("This round has saved hands. Confirm to reset its clock", { code: "ROUND_HAS_HANDS" });
+  }
+  if (params.action.kind === "start") {
+    await closePreviousRoundBeforePlay({
+      tournamentId: params.tournamentId,
+      roundId: params.roundId,
+      closePrevious: params.closePrevious === true,
+      actor: params.actor,
+      nowMs: params.nowMs ?? Date.now(),
+    });
   }
   const result = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);

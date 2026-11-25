@@ -724,6 +724,8 @@ Gana el primero que sale bien</string>
     <string name="conflict_account_has_other_ema">Esta cuenta pertenece a otro jugador EMA.</string>
     <string name="conflict_all_hands_done">Todas las manos de esta mesa están hechas.</string>
     <string name="conflict_assignments_missing">Asigna todos los jugadores del torneo antes de crear las acreditaciones.\nFaltan: %1$s.</string>
+    <string name="conflict_previous_round_in_play">La ronda %1$s sigue en juego. Párala antes de empezar la siguiente.</string>
+    <string name="conflict_previous_round_open_tables">La ronda %1$s aún tiene mesas abiertas: %2$s.\nCiérralas antes de empezar la siguiente.</string>
     <string name="conflict_clock_not_started">El reloj de esta ronda aún no ha empezado.</string>
     <string name="conflict_duplicate_tournament">El mismo torneo está dos veces en la lista.</string>
     <string name="conflict_ema_already_in_tournament">Este jugador EMA ya está en este torneo.</string>

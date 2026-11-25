@@ -327,6 +327,7 @@ internal fun RoundControlContent(
             onDismiss = { reviewing = false },
         )
     }
+    PreviousRoundDialogs(state, controller)
     if (state.confirmReset) {
         ConfirmDialog(
             name = "RoundControlConfirmReset",

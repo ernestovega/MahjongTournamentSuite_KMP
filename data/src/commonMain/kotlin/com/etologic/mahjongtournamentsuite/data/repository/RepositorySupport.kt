@@ -10,6 +10,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -60,6 +61,12 @@ internal fun Throwable.codedConflictOrNull(): AppError.Conflict? {
     val message = runCatching { body["message"]?.jsonPrimitive?.contentOrNull }.getOrNull().orEmpty()
     val args = when (code) {
         ConflictCode.ASSIGNMENTS_MISSING -> listOfNotNull(runCatching { details["missing"]?.jsonPrimitive?.contentOrNull }.getOrNull())
+        // The round before, its open tables and whether it started: "2", "3, 5", "true".
+        ConflictCode.PREVIOUS_ROUND_IN_PLAY, ConflictCode.PREVIOUS_ROUND_OPEN_TABLES -> listOf(
+            runCatching { details["roundId"]?.jsonPrimitive?.contentOrNull }.getOrNull().orEmpty(),
+            runCatching { details["tables"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content } }.getOrNull().orEmpty(),
+            runCatching { details["started"]?.jsonPrimitive?.contentOrNull }.getOrNull() ?: "true",
+        )
         else -> emptyList()
     }
     return AppError.Conflict(message = message, code = code, args = args)

@@ -269,6 +269,8 @@ internal fun TimerContent(
         null -> Unit
     }
 
+    PreviousRoundDialogs(state, controller)
+
     if (state.confirmReset) {
         TrackedDialog("ConfirmRoundReset") {
             AlertDialog(
