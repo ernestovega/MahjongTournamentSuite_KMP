@@ -415,8 +415,11 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
             if (hand.isChickenHand) ChickenHandMark()
             // The scores of all the hands form a column, each one centered in it (Ernesto, 2026-11-25).
             Box(Modifier.widthIn(min = ScoreColumnWidth), contentAlignment = Alignment.Center) {
+                // A draw has no points: a dash in their place (Ernesto, 2026-11-25).
                 if (kind != HandKind.DRAW) {
                     ScoreValue(hand.handScore, MaterialTheme.colorScheme.onSurface, withPoints = true)
+                } else {
+                    ScoreValue("-", MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

@@ -46,12 +46,14 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -142,11 +145,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_review
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_pays
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_wins
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
-import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_open_soon
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_not_assigned
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_open_soon
 import mahjongtournamentsuite.playerapp.generated.resources.entry_self_draw
 import mahjongtournamentsuite.playerapp.generated.resources.entry_share_short
 import mahjongtournamentsuite.playerapp.generated.resources.entry_shared_multiple
@@ -923,7 +926,13 @@ private fun PenaltyForm(
             stringResource(Res.string.entry_share_short),
             draft.shared,
             boxLast = true,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
+            // The touch target of the line keeps room below the box; without it, the space down to the first button
+            // is the same as the space up to the field (Ernesto, 2026-11-25).
+            modifier = Modifier.align(Alignment.CenterHorizontally).layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                val trim = PenaltyShareTrim.roundToPx().coerceAtMost(placeable.height)
+                layout(placeable.width, placeable.height - trim) { placeable.place(0, 0) }
+            },
             fillWidth = false,
         ) { onChange(draft.copy(shared = it)) }
     }
@@ -990,7 +999,7 @@ private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: In
                     color = MtsTheme.colors.selfPick,
                     word = stringResource(Res.string.entry_self_draw),
                     startRoom = circleRoom,
-                    icon = { SelfDrawIcon(20.dp) },
+                    icon = { SelfDrawIcon(28.dp) },
                 ) {}
             } else if (loser != null) {
                 ReviewSideBox(
@@ -1029,10 +1038,9 @@ private fun ReviewSideBox(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-                icon?.invoke()
-                Text(word, style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
-            }
+            // The icon goes above the word, centered (Ernesto, 2026-11-25).
+            icon?.invoke()
+            Text(word, style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
             content()
         }
     }
@@ -1043,29 +1051,33 @@ private fun ReviewSideBox(
  * does not fit, the name takes a smaller size (Ernesto, 2026-11-25).
  */
 @Composable
-private fun ReviewSideName(name: String, small: Boolean = false, oneLine: Boolean = false) {
+private fun ReviewSideName(name: String, small: Boolean = false) {
+    val label = MaterialTheme.typography.labelSmall
     val sizes = listOfNotNull(
         MaterialTheme.typography.titleMedium.takeIf { !small },
         MaterialTheme.typography.titleSmall,
         MaterialTheme.typography.labelLarge,
         MaterialTheme.typography.labelMedium,
-        MaterialTheme.typography.labelSmall,
+        label,
+        label.copy(fontSize = 10.sp, lineHeight = 12.sp),
+        label.copy(fontSize = 9.sp, lineHeight = 11.sp),
     ).map { it.inTextFont().copy(fontWeight = FontWeight.Bold) }
-    // The boxes measure their content for their common height, so the name cannot ask for its width: it uses the
-    // narrowest width a box has on a phone, beside the circle or not.
-    val measurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    val maxWidthPx = with(density) { (if (small) 88.dp else 120.dp).roundToPx() }
-    // On one line the whole name must fit; on two lines, its longest word.
-    val measured = if (oneLine) name else name.split(' ').maxByOrNull { it.length }.orEmpty()
-    val style = sizes.firstOrNull { measurer.measure(measured, it, softWrap = false).size.width <= maxWidthPx } ?: sizes.last()
+    // The real layout decides: while a line breaks inside a word, the name takes the next smaller size.
+    var index by remember(name, small) { mutableStateOf(0) }
     Text(
         name,
-        style = style,
+        style = sizes[index],
         textAlign = TextAlign.Center,
-        maxLines = if (oneLine) 1 else 2,
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis,
+        onTextLayout = { layout -> if (index < sizes.lastIndex && (layout.hasVisualOverflow || layout.breaksAWord(name))) index++ },
     )
+}
+
+/** True when a line of the text ends in the middle of a word. */
+private fun TextLayoutResult.breaksAWord(text: String): Boolean = (0 until lineCount - 1).any { line ->
+    val end = getLineEnd(line)
+    end in 1 until text.length && !text[end - 1].isWhitespace() && !text[end].isWhitespace()
 }
 
 /** The flag and the number of a player, small and not bold: they help but are not the message (Ernesto, 2026-11-25). */
@@ -1230,7 +1242,7 @@ private fun ReviewPenalty(penalties: List<PenaltyEntry>, view: PlayerTournamentV
                 endRoom = if (penalty.shared) CircleRoom else 0.dp,
             ) {
                 SmallFlagAndNumber(view.players[slot]?.country, slot)
-                ReviewSideName(view.firstNameOf(slot), small = penalty.shared, oneLine = true)
+                ReviewSideName(view.firstNameOf(slot), small = penalty.shared)
                 if (!penalty.shared) {
                     Text(
                         "-${penalty.amount} ${stringResource(Res.string.entry_points_abbr)}",
@@ -1260,6 +1272,7 @@ private fun ReviewPenalty(penalties: List<PenaltyEntry>, view: PlayerTournamentV
 
 /** The size of [ScoreCircle], and the room each box leaves for it on its inner side. */
 private val ScoreFieldWidth = 180.dp
+private val PenaltyShareTrim = 16.dp
 private val CircleSize = 60.dp
 private val CircleRoom = 22.dp
 
