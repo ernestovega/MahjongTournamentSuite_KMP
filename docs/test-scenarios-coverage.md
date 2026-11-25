@@ -207,7 +207,10 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
     and the photo menu has a name and 48 dp), and `securityRules.test.ts` (Firestore and Storage refuse everything, and
     the Firebase configs deploy those files). Known gaps: the green and the red as text on cards (2.8 and 2.9:1 light,
     about 4.3:1 dark) and the field borders in dark mode (2.9:1).
-15. Green Book download on Android, EMA report and ID cards files in E2E.
+15. ~~Green Book, EMA report and ID cards files in E2E~~: done 25 November in the web E2E
+    (`e2e/web/tests/documents.test.mjs`): the PDFs open with their pages, the workbooks hold the players and their EMA
+    numbers, and the Green Book link of the Player serves the PDF. The download on Android has no automatic test: it
+    was checked by hand on the Mac emulator on 16 November.
 
 ---
 

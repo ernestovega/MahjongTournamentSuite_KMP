@@ -51,6 +51,9 @@ from the Actions tab.
 - `tests/admin-player-count.test.mjs`: the admin changes the number of players of a drawn team tournament from 28 to
   24 before it starts (team 1 leaves). The draw runs in the browser; the test checks the players, the 6 tables of
   every round and the emails.
+- `tests/documents.test.mjs`: the ID cards (one card per page and the sheet layout) and the table QR cards are PDFs
+  with their pages; the ID list and the EMA report are workbooks with the names and the EMA numbers; the Player opens
+  the Green Book (`/green-book/GreenBook_EN.pdf`) from its Rules menu.
 - `tests/admin-roles.test.mjs`: `club@e2e.test` is the Club Admin of the club of `test-last-table`. The server and the
   admin app give it only that tournament and refuse the rest; after a super admin takes away "Create tournaments"
   from this person, the New tournament button goes and the server refuses the call.
