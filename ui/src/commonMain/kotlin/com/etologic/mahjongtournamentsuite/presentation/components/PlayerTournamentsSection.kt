@@ -290,8 +290,8 @@ private fun SummaryValue(label: String, value: String) {
 @Composable
 private fun TitledBlock(title: String, modifier: Modifier, content: @Composable () -> Unit) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // A little smaller than the titles of the cards of "Me".
-        CardTitle(title, style = MaterialTheme.typography.headlineSmall)
+        // A little smaller than the titles of the cards of "Me", and in the text font: it is a title inside a card (Ernesto, 2026-11-25).
+        CardTitle(title, style = MaterialTheme.typography.headlineSmall.inTextFont())
         content()
     }
 }

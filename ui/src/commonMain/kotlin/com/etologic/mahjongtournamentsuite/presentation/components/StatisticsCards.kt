@@ -171,7 +171,7 @@ internal fun CardTitle(
     text: String,
     modifier: Modifier = Modifier,
     info: String? = null,
-    style: TextStyle = MaterialTheme.typography.headlineMedium.inTextFont(),
+    style: TextStyle = MaterialTheme.typography.headlineMedium,
     bottomGap: Dp = 12.dp,
 ) {
     Row(
