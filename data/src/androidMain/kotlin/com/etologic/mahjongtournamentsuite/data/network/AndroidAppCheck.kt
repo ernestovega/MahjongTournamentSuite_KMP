@@ -20,6 +20,9 @@ object AndroidAppCheck {
     private const val APP_NAME = "mts-app-check"
     private const val PROJECT_ID = "mahjong-tournament-suite"
 
+    /** The Play Integrity provider reads the project number from the sender ID. Without it, every token request fails. */
+    private const val PROJECT_NUMBER = "827074322474"
+
     @Volatile
     private var appCheck: FirebaseAppCheck? = null
 
@@ -45,7 +48,12 @@ object AndroidAppCheck {
             val app = runCatching { FirebaseApp.getInstance(APP_NAME) }.getOrElse {
                 FirebaseApp.initializeApp(
                     context,
-                    FirebaseOptions.Builder().setApplicationId(appId).setApiKey(apiKey).setProjectId(PROJECT_ID).build(),
+                    FirebaseOptions.Builder()
+                        .setApplicationId(appId)
+                        .setApiKey(apiKey)
+                        .setProjectId(PROJECT_ID)
+                        .setGcmSenderId(PROJECT_NUMBER)
+                        .build(),
                     APP_NAME,
                 )
             }
