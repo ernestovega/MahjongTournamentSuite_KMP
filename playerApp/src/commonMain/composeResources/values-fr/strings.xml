@@ -124,7 +124,7 @@
     <string name="team_member_score">Score</string>
     <string name="jump_to_me">Aller à moi</string>
     <string name="entry_totals_only">Les organisateurs saisissent seulement les scores finaux de cette table. Vous ne pouvez pas ajouter de mains ici.</string>
-    <string name="entry_round_not_started">En attente du gong de départ. Les boutons pour ajouter des mains apparaissent au début du tour.</string>
+    <string name="entry_round_not_started">Les boutons pour ajouter des mains apparaissent au début du tour.</string>
     <string name="entry_seats_not_assigned">Les places de cette table ne sont pas encore attribuées. Vous pourrez ajouter des mains quand les quatre places seront attribuées.</string>
     <string name="entry_closed_by_organizer">Un organisateur a fermé pour l'instant la saisie des mains de cette table. Appelez un arbitre si vous devez ajouter une main.</string>
     <string name="entry_time_over">Le temps de cette partie est écoulé. Vous ne pouvez plus ajouter de mains. Les organisateurs saisissent les données manquantes.</string>
@@ -150,20 +150,17 @@
     <string name="entry_check_penalty">Vérifier la pénalité</string>
     <string name="entry_saving_penalty">Enregistrement de la pénalité...</string>
     <string name="entry_updating_table">Mise à jour de la table...</string>
-    <string name="entry_others_each">les autres +%1$d chacun</string>
     <string name="entry_penalized_player">Joueur pénalisé</string>
     <!-- The red box of the penalized player in the check of a penalty. -->
     <string name="entry_penalized_short">Pénalisé</string>
     <string name="entry_points">Points</string>
     <string name="entry_review_wins">Gagne</string>
     <string name="entry_review_pays">Paie</string>
-    <string name="entry_review_all_pay">Les trois autres paient</string>
     <!-- Short for points, under the score of a hand in its review. -->
     <string name="entry_points_abbr">pts</string>
     <!-- The column of the table score after the hand, in the review of a hand. -->
     <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">Une pénalité partagée doit être un multiple de 3.</string>
-    <string name="entry_share">Partager avec les autres joueurs</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
     <string name="entry_share_short">Partagée</string>
     <string name="entry_from">de</string>

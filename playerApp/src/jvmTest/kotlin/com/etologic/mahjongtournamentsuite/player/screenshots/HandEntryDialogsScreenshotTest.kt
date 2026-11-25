@@ -201,7 +201,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
     }
 
     @Test
@@ -209,7 +209,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
         tap("entry_review")
         waitForText(playerText("entry_confirm_save"))
     }

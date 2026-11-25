@@ -48,6 +48,7 @@ import com.etologic.mahjongtournamentsuite.player.RoundMoment
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
+import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
 import com.etologic.mahjongtournamentsuite.player.TableScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentCard
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
@@ -422,9 +423,27 @@ class PlayerScreensScreenshotTest {
         TableScreen(nav, ONGOING, roundId = 3, tableId = 1)
     }
 
-    // A table of a round that has not started: the start time and the Diffs switch are in the row above the seats.
+    // A table of a round that has not started: the start time above the seats, and no Diffs switch until the gong.
     @Test
     fun tableNotStarted() = playerScreenshots("table-not-started", ready = { waitForText("PIERRE MOREAU", substring = true) }) { nav ->
+        TableScreen(nav, ONGOING, roundId = 4, tableId = 1)
+    }
+
+    // The seats dialog with two seats picked: the picked players on the left with the icon of their wind, and Cancel
+    // under Start again.
+    @Test
+    fun seatsDialog() = playerScreenshots(
+        "seats-dialog",
+        ready = {
+            waitForText("PIERRE MOREAU", substring = true)
+            onAllNodesWithText(playerText("seats_change")).onFirst().performClick()
+            repeat(2) {
+                waitUntil(timeoutMillis = 10_000) { onAllNodesWithTag(SEAT_OPTION_TAG).fetchSemanticsNodes().isNotEmpty() }
+                onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
+            }
+            waitForText(playerText("seats_restart"))
+        },
+    ) { nav ->
         TableScreen(nav, ONGOING, roundId = 4, tableId = 1)
     }
 

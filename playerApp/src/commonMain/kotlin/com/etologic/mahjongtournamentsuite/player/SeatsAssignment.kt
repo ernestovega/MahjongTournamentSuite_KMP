@@ -121,10 +121,15 @@ internal fun SeatsAssignment(
                     }
                     // The seats already set grow below the names, above the buttons of the dialog.
                     if (picks.isNotEmpty() && !complete) HorizontalDivider(modifier = Modifier.padding(vertical = MtsTheme.spacing.xs))
+                    // On the left, with only the icon of the wind: the icon says it (Ernesto, 2026-11-25).
                     picks.forEachIndexed { index, slot ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+                        ) {
                             WindIcon(SeatWind.entries[index], size = 20.dp)
-                            Text("${SeatWind.entries[index].label()}: ${view.nameOf(slot)}")
+                            Text(view.nameOf(slot))
                         }
                     }
                 }
@@ -146,10 +151,9 @@ internal fun SeatsAssignment(
                         },
                     ) { Text(stringResource(Res.string.seats_save)) }
 
-                    Row {
-                        if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { Text(stringResource(Res.string.seats_restart)) }
-                        TextButton(enabled = !busy, onClick = { close() }) { Text(stringResource(Res.string.action_cancel)) }
-                    }
+                    // Cancel under Start again (Ernesto, 2026-11-25).
+                    if (picks.isNotEmpty()) TextButton(enabled = !busy, onClick = { picks.clear() }) { Text(stringResource(Res.string.seats_restart)) }
+                    TextButton(enabled = !busy, onClick = { close() }) { Text(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

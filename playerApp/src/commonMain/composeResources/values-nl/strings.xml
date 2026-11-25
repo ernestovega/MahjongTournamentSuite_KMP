@@ -124,7 +124,7 @@
     <string name="team_member_score">Score</string>
     <string name="jump_to_me">Naar mij</string>
     <string name="entry_totals_only">De organisatoren voeren voor deze tafel alleen de eindscores in. Je kunt hier geen handen toevoegen.</string>
-    <string name="entry_round_not_started">Wachten op de startgong. De knoppen voor handen verschijnen zodra de ronde begint.</string>
+    <string name="entry_round_not_started">De knoppen voor handen verschijnen zodra de ronde begint.</string>
     <string name="entry_seats_not_assigned">De plaatsen aan deze tafel zijn nog niet vastgelegd. Je kunt handen toevoegen zodra alle vier plaatsen vastliggen.</string>
     <string name="entry_closed_by_organizer">Een organisator heeft het invoeren van handen aan deze tafel voorlopig gesloten. Vraag een scheidsrechter als je een hand moet toevoegen.</string>
     <string name="entry_time_over">De tijd van deze partij is om. Je kunt nu geen handen meer toevoegen. De organisatoren vullen de ontbrekende gegevens in.</string>
@@ -150,20 +150,17 @@
     <string name="entry_check_penalty">Straf controleren</string>
     <string name="entry_saving_penalty">Straf opslaan...</string>
     <string name="entry_updating_table">Tafel bijwerken...</string>
-    <string name="entry_others_each">anderen elk +%1$d</string>
     <string name="entry_penalized_player">Gestrafte speler</string>
     <!-- The red box of the penalized player in the check of a penalty. -->
     <string name="entry_penalized_short">Bestraft</string>
     <string name="entry_points">Punten</string>
     <string name="entry_review_wins">Wint</string>
     <string name="entry_review_pays">Betaalt</string>
-    <string name="entry_review_all_pay">De andere drie betalen</string>
     <!-- Short for points, under the score of a hand in its review. -->
     <string name="entry_points_abbr">ptn</string>
     <!-- The column of the table score after the hand, in the review of a hand. -->
     <string name="entry_total">Totaal</string>
     <string name="entry_shared_multiple">Een gedeelde straf moet een veelvoud van 3 zijn.</string>
-    <string name="entry_share">Delen met de andere spelers</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
     <string name="entry_share_short">Gedeeld</string>
     <string name="entry_from">van</string>
