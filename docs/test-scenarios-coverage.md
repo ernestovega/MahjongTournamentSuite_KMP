@@ -75,13 +75,13 @@ Lowest files:
 | File | Lines | Branches | What is missing |
 | --- | ---: | ---: | --- |
 | `api/routes/support.routes.ts` | 65 % | | `POST /support/message` tested since 25 November (`support.integration.test.ts`) |
-| `services/featureFlagsService.ts` | 52 % | 40 % | Flags read from Firestore and their cache |
-| `services/firebaseAuthRest.ts` | 57 % | | Password sign in and refresh through the Auth REST API |
+| `services/featureFlagsService.ts` | covered 25 Nov | | `featureFlagsService.test.ts` |
+| `services/firebaseAuthRest.ts` | covered 25 Nov | | `firebaseAuthRest.test.ts` |
 | `services/versionsPage.ts` | 57 % | | The versions page |
 | `api/routes/auth.routes.ts` | 72 % | 64 % | Own photo upload and delete, `DELETE /me` (delete own account) |
 | `services/registrationHourRelay.ts` | 79 % | | The hourly relay from Belgium to Madrid |
 | `api/routes/tournaments.routes.ts` | 86 % | 69 % | Error branches (404, 409, invalid bodies) of many routes |
-| `api/middleware/requirePermission.ts` | 86 % | 60 % | Refusals for some permission kinds |
+| `api/middleware/requirePermission.ts` | covered 25 Nov | | `requirePermission.test.ts` |
 
 `services/handSynthesis.ts` and `services/googlePlayTester.ts` only serve the seed scripts and are not measured.
 
@@ -199,7 +199,9 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 12. ~~Restore the last screen after a reload (`RoutePersistence`), team statistics, keyboard navigation of hand
     rows~~: done 25 November (`RoutePersistenceUiTest` in both apps, `TeamStatisticsTabUiTest`, `HandRowKeyboardUiTest`).
-13. Error branches of `tournaments.routes.ts`, `requirePermission`, feature flags, versions page, Auth REST.
+13. ~~Error branches~~: done 25 November. `routeErrors.integration.test.ts` (22 refused requests of the tournament
+    routes, and a refused change changes nothing), `requirePermission.test.ts`, `featureFlagsService.test.ts` and
+    `firebaseAuthRest.test.ts`. The versions page keeps its own test.
 14. Accessibility checks (contrast, touch size, TalkBack labels) and a guard that the Firestore and Storage rules stay
     «deny everything».
 15. Green Book download on Android, EMA report and ID cards files in E2E.
