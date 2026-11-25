@@ -996,7 +996,8 @@ private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: In
             if (selfDraw) {
                 ReviewSideBox(
                     Modifier.weight(1f).fillMaxHeight(),
-                    color = MtsTheme.colors.selfPick,
+                    // Red as the box of who pays: the other three pay (Ernesto, 2026-11-25).
+                    color = MaterialTheme.colorScheme.error,
                     word = stringResource(Res.string.entry_self_draw),
                     startRoom = circleRoom,
                     icon = { SelfDrawIcon(28.dp) },
@@ -1033,8 +1034,11 @@ private fun ReviewSideBox(
     content: @Composable () -> Unit,
 ) {
     Surface(modifier, shape = MaterialTheme.shapes.medium, color = color.copy(alpha = 0.12f), border = BorderStroke(1.dp, color.copy(alpha = 0.5f))) {
+        // The same room on both sides, so the text is centered in its box; the circle of the points simply goes on
+        // top (Ernesto, 2026-11-25).
+        val side = 8.dp + maxOf(startRoom, endRoom) * 0.75f
         Column(
-            Modifier.padding(start = 8.dp + startRoom, top = 12.dp, end = 8.dp + endRoom, bottom = 12.dp),
+            Modifier.padding(start = side, top = 12.dp, end = side, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
         ) {
@@ -1284,7 +1288,7 @@ private fun ChickenCircle(modifier: Modifier) {
         modifier.size(ChickenCircleSize).semantics { contentDescription = label },
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shadowElevation = 2.dp,
     ) {
         Box(contentAlignment = Alignment.Center) { ChickenIcon(18.dp) }
@@ -1300,7 +1304,7 @@ private fun ScoreCircle(score: String, modifier: Modifier) {
         modifier.size(CircleSize),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shadowElevation = 2.dp,
     ) {
         // A little overlap of the two lines: "pts" sits close under the number (Ernesto, 2026-11-25).
