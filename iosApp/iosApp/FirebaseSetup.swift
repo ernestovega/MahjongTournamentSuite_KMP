@@ -40,13 +40,12 @@ private final class MtsAppCheckProviderFactory: NSObject, AppCheckProviderFactor
 }
 
 private final class FirebaseAppCheckBridge: NSObject, MtsAppCheck {
-    // Kotlin hands the callback over as a block that returns KotlinUnit.
-    func token(completion: @escaping (String?, String?) -> KotlinUnit) {
+    func token(completion: @escaping (String?, String?) -> Void) {
         AppCheck.appCheck().token(forcingRefresh: false) { token, error in
             if let token {
-                _ = completion(token.token, nil)
+                completion(token.token, nil)
             } else {
-                _ = completion(nil, error.map { String(describing: type(of: $0)) + ":" + $0.localizedDescription } ?? "unknown")
+                completion(nil, error.map { String(describing: type(of: $0)) + ":" + $0.localizedDescription } ?? "unknown")
             }
         }
     }
