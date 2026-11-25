@@ -9,8 +9,13 @@ const CONFIG = {
 };
 const SDK = "https://www.gstatic.com/firebasejs/11.0.2/";
 
+// Off on the web since 25-nov-2026 (Ernesto). The server is in App Check monitor mode, so the token blocked nobody, and
+// getting it (Firebase SDK, reCAPTCHA Enterprise, token exchange) held the first requests of a page about 2.8 s on a
+// phone whenever the browser had no saved token. Android keeps App Check. Set to true to send the token again.
+const ENABLED = false;
+
 async function start() {
-  if (!CONFIG.siteKey || !CONFIG.apiKey || !CONFIG.appId) return null;
+  if (!ENABLED || !CONFIG.siteKey || !CONFIG.apiKey || !CONFIG.appId) return null;
   const { initializeApp } = await import(SDK + "firebase-app.js");
   const { initializeAppCheck, ReCaptchaEnterpriseProvider, getToken } = await import(SDK + "firebase-app-check.js");
   // On localhost the SDK prints a debug token in the console. Register it in the Firebase console.
