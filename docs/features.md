@@ -121,7 +121,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 
 ### 4.7 Statistics (all public)
 
-- **One screen with a row of filters**: player, rival, tournament, country of the tournaments, country of the players (or «No country») and years from/to. The filters survive a reload.
+- **One screen with a row of filters**: player, tables against a rival (only players that the player met), tournament, country of the tournaments, country of the players (or «No country») and years from/to. The filters survive a reload.
 - **Player**
   - **Skills** radar: win rate, self-draw rate, deal-in rate and average hand value.
   - **Places**: ring, average place and a chart of the last 10/20/50/all tables, colored by tournament.

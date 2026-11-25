@@ -334,6 +334,7 @@ class UiComponentsScreenshotTest {
             tournaments = ScreenshotData.tournaments,
             onApply = {},
             onDismiss = {},
+            opponents = ScreenshotData.players.drop(1).take(3).map { it.emaId }.toSet(),
         )
     }
 

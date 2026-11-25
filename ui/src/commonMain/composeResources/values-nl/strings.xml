@@ -568,7 +568,7 @@
     <string name="stats_filter_any_player">Alle spelers</string>
     <string name="stats_filter_tournament">Toernooi</string>
     <string name="stats_filter_tournament_country">Land van de toernooien</string>
-    <string name="stats_filter_rival">Tegenstander</string>
+    <string name="stats_filter_rival">Tafels tegen</string>
     <string name="stats_filter_any_rival">Elke tegenstander</string>
     <string name="stats_chip_rival">tegen %1$s</string>
     <string name="stats_filter_player_country">Land van de spelers</string>

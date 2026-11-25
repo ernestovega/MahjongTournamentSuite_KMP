@@ -28,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
@@ -39,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsView
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
+import com.etologic.mahjongtournamentsuite.presentation.components.opponentsOf
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
@@ -267,13 +269,17 @@ internal fun FilteredStatisticsTab(
     // Other filters start at the top.
     ResetScrollOnChange(scroll, filters)
     Column(Modifier.fillMaxSize()) {
-        StatisticsFilterBar(
-            filters = filters,
-            onChange = setFilters,
-            players = players,
-            tournaments = tournaments,
-            slotName = filters.slotId?.let { tournament?.names?.get(it) },
-        )
+        // The filters hide with the tab rows when the statistics scroll down, and show again with another filter.
+        HideOnScrollTabs(filters) {
+            StatisticsFilterBar(
+                filters = filters,
+                onChange = setFilters,
+                players = players,
+                tournaments = tournaments,
+                slotName = filters.slotId?.let { tournament?.names?.get(it) },
+                opponents = remember(person, filters.emaId) { opponentsOf(person?.takeIf { it.emaId == filters.emaId }) },
+            )
+        }
         val shown = tournament
         if (view == StatisticsView.TOURNAMENT && shown != null) {
             // The chips of the rounds stay above the statistics while they scroll. Every card shows the chosen round.
