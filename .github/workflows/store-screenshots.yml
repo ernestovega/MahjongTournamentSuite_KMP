@@ -30,9 +30,13 @@ jobs:
         run: ./gradlew :playerApp:jvmTest --tests '*StoreScreenshotsTest*' --rerun
 
       - name: Upload the images
+        # Also when some shot fails: the good ones, the not-ready images and the test report that says why.
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: store-screenshots
           path: |
             docs/play-store/phone/**/*.png
             docs/play-store/tablet/**/*.png
+            playerApp/build/outputs/store-not-ready/**
+            playerApp/build/test-results/jvmTest/*StoreScreenshots*.xml
