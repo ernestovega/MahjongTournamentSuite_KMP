@@ -205,7 +205,7 @@ fun <K> SelectField(
     val icon = leadingIcon ?: selectedOption?.leadingIcon
     val canOpen = enabled || openWhenDisabled
     val expanded = state.expanded && canOpen
-    val scroll = rememberMenuScrollState(expanded, options.indexOfFirst { it.key == selected }.takeIf { it >= 0 }, defaultIndex)
+    val scroll = rememberMenuScrollState(expanded, shownIndexOf(options, selected, maxShown), defaultIndex)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (canOpen) state.request(it) }, modifier = modifier) {
         SelectFieldBox(
             label = label,
@@ -269,7 +269,7 @@ fun <K> SelectMenu(
     maxShown: Int = Int.MAX_VALUE,
     defaultIndex: Int = 0,
 ) {
-    val scroll = rememberMenuScrollState(state.expanded, options.indexOfFirst { it.key == selected }.takeIf { it >= 0 }, defaultIndex)
+    val scroll = rememberMenuScrollState(state.expanded, shownIndexOf(options, selected, maxShown), defaultIndex)
     DropdownMenu(expanded = state.expanded, onDismissRequest = state::close, modifier = modifier, scrollState = scroll) {
         SelectMenuItems(options, selected, scroll, searchable, maxShown, fontFamily = null) {
             state.choose()
@@ -384,6 +384,30 @@ private fun SelectLabel(text: String, required: Boolean) {
     }
 }
 
+/**
+ * The options that a menu composes: the ones that match [query], [maxShown] at most. A menu composes all of its items
+ * at once, so a list of thousands of players takes seconds to open on a phone. Without a search, a [selected] option
+ * that falls out of the first ones takes the second place, so the menu still shows it.
+ */
+internal fun <K> shownOptions(options: List<SelectOption<K>>, selected: K?, query: String, maxShown: Int): List<SelectOption<K>> {
+    val matching = if (query.isEmpty()) options else options.filter { it.label.matchesSearch(query) || it.searchText.matchesSearch(query) }
+    if (matching.size <= maxShown) return matching
+    val first = matching.take(maxShown)
+    if (query.isNotEmpty() || selected == null || first.any { it.key == selected }) return first
+    val chosen = matching.firstOrNull { it.key == selected } ?: return first
+    return first.take(1) + chosen + first.drop(1).take(maxShown - 2)
+}
+
+/** The place of [selected] in the menu without a search, or null when the menu does not show it. */
+private fun <K> shownIndexOf(options: List<SelectOption<K>>, selected: K?, maxShown: Int): Int? {
+    val index = options.indexOfFirst { it.key == selected }
+    return when {
+        index < 0 -> null
+        index < maxShown || options.size <= maxShown -> index
+        else -> 1
+    }
+}
+
 /** The content of every select menu: an optional sticky search field, then the options. */
 @Composable
 private fun <K> ColumnScope.SelectMenuItems(
@@ -398,10 +422,7 @@ private fun <K> ColumnScope.SelectMenuItems(
     // The menu content leaves the composition when the menu closes, so the query starts empty at each opening.
     var query by remember { mutableStateOf("") }
     val trimmed = query.trim()
-    val shown = remember(options, trimmed) {
-        val matching = if (trimmed.isEmpty()) options else options.filter { it.label.matchesSearch(trimmed) || it.searchText.matchesSearch(trimmed) }
-        matching.take(maxShown)
-    }
+    val shown = remember(options, selected, trimmed, maxShown) { shownOptions(options, selected, trimmed, maxShown) }
     LaunchedEffect(trimmed) { if (trimmed.isNotEmpty()) scroll.scrollTo(0) }
     if (searchable) {
         SelectSearchRow(query, { query = it }, scroll) { shown.firstOrNull { it.enabled }?.let { option -> onSelect(option.key) } }
