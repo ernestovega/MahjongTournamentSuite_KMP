@@ -613,7 +613,7 @@ fun ProfileInfo(
     // Outlives the confirmation dialog, so that the sign out is not cancelled when the dialog closes.
     val coroutineScope = rememberCoroutineScope()
     profile?.let { user ->
-        Spacer(modifier = Modifier.width(16.dp))
+        // No spacer before it: the button's own padding already lines the photo up with the other top bar buttons.
         ProfileTopBarButton(
             profile = user,
             name = user.alias.trim().ifBlank { user.toUiName() },
