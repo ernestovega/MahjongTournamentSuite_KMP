@@ -202,8 +202,11 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 13. ~~Error branches~~: done 25 November. `routeErrors.integration.test.ts` (22 refused requests of the tournament
     routes, and a refused change changes nothing), `requirePermission.test.ts`, `featureFlagsService.test.ts` and
     `firebaseAuthRest.test.ts`. The versions page keeps its own test.
-14. Accessibility checks (contrast, touch size, TalkBack labels) and a guard that the Firestore and Storage rules stay
-    «deny everything».
+14. ~~Accessibility checks and the deny-all rules guard~~: done 25 November. `MtsContrastTest` (text 4.5:1 and field
+    borders 3:1 in both themes, with the known gaps listed), `AccessibilityChecksUiTest` (every control of the profile
+    and the photo menu has a name and 48 dp), and `securityRules.test.ts` (Firestore and Storage refuse everything, and
+    the Firebase configs deploy those files). Known gaps: the green and the red as text on cards (2.8 and 2.9:1 light,
+    about 4.3:1 dark) and the field borders in dark mode (2.9:1).
 15. Green Book download on Android, EMA report and ID cards files in E2E.
 
 ---
