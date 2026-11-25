@@ -50,7 +50,7 @@ Open it on the Mac with `open iosApp/iosApp.xcodeproj`, choose an iPhone simulat
 
 ## Universal links
 
-The site serves `/.well-known/apple-app-site-association` (`playerApp/src/wasmJsMain/resources`, rewrite and content
+The site serves `/.well-known/apple-app-site-association` (`apple-app-site-association.json` in `playerApp/src/wasmJsMain/resources`, rewrite and content
 type in `firebase.json`). Every address of the site opens the app, like the App Links of Android, except the pages
 that are not the app (privacy policy, Green Book, API, files). `IosSuite.openUrl` turns the address into the start of
 the app with the same rules as Android (`suiteStartOf`). Replace `TEAMID` in the file with the Team ID before the

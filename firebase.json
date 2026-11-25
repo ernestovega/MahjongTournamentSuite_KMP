@@ -59,7 +59,7 @@
         },
         {
           "source": "/.well-known/apple-app-site-association",
-          "destination": "/apple-app-site-association"
+          "destination": "/apple-app-site-association.json"
         },
         {
           "source": "/admin/**",
@@ -93,7 +93,7 @@
           ]
         },
         {
-          "source": "/apple-app-site-association",
+          "source": "/apple-app-site-association.json",
           "headers": [
             {
               "key": "Content-Type",
