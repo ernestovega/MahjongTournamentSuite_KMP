@@ -75,7 +75,12 @@ The backend stays in App Check `monitor` mode (docs/backend.md). The client tag 
 ## CI
 
 `.github/workflows/ios.yml` (Build · iOS) builds the app for the simulator on a macOS runner, opens it and keeps
-screenshots as an artifact. It checks nothing. The upload to TestFlight comes with the App Store Connect API key.
+screenshots as an artifact. It checks nothing.
+
+`.github/workflows/testflight.yml` (Publish · TestFlight), only by hand: archives the Release configuration and uploads
+it to App Store Connect (app "Mahjong Tournament Suite", SKU `mahjongtournamentsuite`). It signs automatically with
+the App Store Connect API key (Admin access; Key ID and Issuer ID in the workflow, the `.p8` in the secret
+`APP_STORE_CONNECT_API_KEY`). App Store Connect refuses a build number it already has, so bump the versions first.
 
 ## App Store
 
