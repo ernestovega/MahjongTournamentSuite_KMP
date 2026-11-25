@@ -81,6 +81,13 @@ jobs:
           sleep 8
           xcrun simctl io "$DEVICE" screenshot build/ios-screens/iphone-link.png
           xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "iosApp"' --style compact > build/ios-screens/app.log || true
+          # A short report in the log of the job: is the app still running, what it logged, and how many colours each
+          # screenshot has (a blank or black screen has one or two).
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q com.etologic.mahjongtournamentsuite; then echo "App running"; else echo "App NOT running"; fi
+          grep -iE "error|exception|terminat|crash|fatal" build/ios-screens/app.log | tail -40 || true
+          for shot in build/ios-screens/*.png; do
+            echo "$shot: $(sips -g pixelWidth -g pixelHeight "$shot" | tail -2 | awk '{print $2}' | xargs)"
+          done
 
       - name: Keep the build log
         if: always()
