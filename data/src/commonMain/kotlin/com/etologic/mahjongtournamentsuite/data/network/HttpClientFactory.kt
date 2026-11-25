@@ -32,7 +32,14 @@ fun createHttpClient(
 
     configureDefaultRequest(languageTag)
     configureAppCheck(appCheckToken, clientTag)
+    configureCompression()
 }
+
+/**
+ * Asks for compressed answers where the engine does not do it by itself. The browser and OkHttp (Android) already
+ * ask for gzip and unpack it; the CIO engine of the desktop app does not, so there the app does it.
+ */
+internal expect fun HttpClientConfig<*>.configureCompression()
 
 /**
  * Every request asks for JSON and tells the server the language of the app. The server writes the emails in that
