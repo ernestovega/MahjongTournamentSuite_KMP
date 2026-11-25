@@ -94,7 +94,10 @@
     <string name="diffs_label">Abstände</string>
     <string name="diffs_explanation">Die Tabelle zeigt den Handwert, den ein Spieler braucht, um einen höheren Platz zu erreichen. Es gibt drei Arten zu gewinnen:\n• Selbst: Der Spieler gewinnt mit einem selbst gezogenen Stein.\n• Er: Der Spieler gewinnt durch einen Abwurf des Spielers, den er überholen will.\n• Anderer: Der Spieler gewinnt durch den Abwurf eines anderen Spielers.</string>
     <string name="diffs_about">Über die Abstände</string>
-    <string name="points_short">%1$s Pkt</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s Pkt</item>
+        <item quantity="other">%1$s Pkt</item>
+    </plurals>
     <string name="penalty_n">Strafe %1$d</string>
     <string name="place_1st">1.</string>
     <string name="place_2nd">2.</string>

@@ -101,6 +101,7 @@ import mahjongtournamentsuite.ui.generated.resources.wind_south
 import mahjongtournamentsuite.ui.generated.resources.wind_west
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -597,7 +598,7 @@ private fun PodiumPlace(
         ) {
             if (seat.points.isNotBlank()) {
                 Text(
-                    stringResource(Res.string.points_short, formatPoints(seat.points)),
+                    tablePointsText(seat.points),
                     // The points are as big as the place is high (Ernesto, 2026-11-25).
                     style = when (place) {
                         1 -> MaterialTheme.typography.headlineMedium
@@ -643,7 +644,7 @@ private fun FourthPlace(item: PlacedSeat, onPlayerClick: (Int) -> Unit) {
                 SeatScore(seat.score, item.score)
                 if (seat.points.isNotBlank()) {
                     Text(
-                        stringResource(Res.string.points_short, formatPoints(seat.points)),
+                        tablePointsText(seat.points),
                         style = MaterialTheme.typography.labelLarge.inTextFont(),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error,
@@ -652,6 +653,15 @@ private fun FourthPlace(item: PlacedSeat, onPlayerClick: (Int) -> Unit) {
             }
         }
     }
+}
+
+/** The table points of a player, short: "1 pt", "2 pts", "0.5 pts" (Ernesto, 2026-11-25: one point is singular). */
+@Composable
+private fun tablePointsText(points: String): String {
+    val value = points.replace(',', '.').trim().toDoubleOrNull()
+    // A whole number picks its plural form. A decimal one takes the general form, like 0 or 2.
+    val quantity = if (value != null && value == kotlin.math.floor(value)) kotlin.math.abs(value).toInt() else 0
+    return pluralStringResource(Res.plurals.points_short, quantity, formatPoints(points))
 }
 
 /** The penalty and the change of level of a player, when they have one. */

@@ -94,7 +94,12 @@
     <string name="diffs_label">Разница</string>
     <string name="diffs_explanation">Таблица показывает стоимость руки, которая нужна игроку, чтобы подняться выше. Выиграть можно тремя способами:\n• Сам: игрок выигрывает, взяв тайл со стены.\n• Он: игрок выигрывает на сбросе игрока, которого нужно обогнать.\n• Другой: игрок выигрывает на сбросе другого игрока.</string>
     <string name="diffs_about">О разнице</string>
-    <string name="points_short">%1$s очк.</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s очк.</item>
+        <item quantity="few">%1$s очк.</item>
+        <item quantity="many">%1$s очк.</item>
+        <item quantity="other">%1$s очк.</item>
+    </plurals>
     <string name="penalty_n">Штраф %1$d</string>
     <string name="place_1st">1-е</string>
     <string name="place_2nd">2-е</string>

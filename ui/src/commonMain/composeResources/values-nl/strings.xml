@@ -94,7 +94,10 @@
     <string name="diffs_label">Verschillen</string>
     <string name="diffs_explanation">De tabel toont de handwaarde die een speler nodig heeft om een hogere plaats te halen. Er zijn drie manieren om te winnen:\n• Zelf: de speler wint met een zelf getrokken steen.\n• Hem: de speler wint op een afgooi van de speler die hij wil inhalen.\n• Ander: de speler wint op een afgooi van een andere speler.</string>
     <string name="diffs_about">Over de verschillen</string>
-    <string name="points_short">%1$s pnt</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s pnt</item>
+        <item quantity="other">%1$s pnt</item>
+    </plurals>
     <string name="penalty_n">Straf %1$d</string>
     <string name="place_1st">1e</string>
     <string name="place_2nd">2e</string>

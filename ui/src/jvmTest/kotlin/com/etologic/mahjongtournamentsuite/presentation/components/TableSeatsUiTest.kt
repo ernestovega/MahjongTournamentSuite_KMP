@@ -120,6 +120,9 @@ class TableSeatsUiTest {
         // Whole points show with no decimal part.
         assertTrue(onAllNodesWithText("4.0 pts").fetchSemanticsNodes().isEmpty())
         assertTrue(onAllNodesWithText("4 pts").fetchSemanticsNodes().isNotEmpty())
+        // One point is singular.
+        assertTrue(onAllNodesWithText("1 pt").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(onAllNodesWithText("1 pts").fetchSemanticsNodes().isEmpty())
         snapshot("seats_complete_dark", onRoot().captureToImage())
     }
 

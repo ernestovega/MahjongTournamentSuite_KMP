@@ -95,7 +95,10 @@
     <string name="diffs_label">Diffs</string>
     <string name="diffs_explanation">The table shows the hand score that a player needs to reach a higher place. There are three ways to win:\n• Self: the player wins by self-pick.\n• Him: the player wins on a discard of the player to overtake.\n• Other: the player wins on a discard of another player.</string>
     <string name="diffs_about">About differences</string>
-    <string name="points_short">%1$s pts</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s pt</item>
+        <item quantity="other">%1$s pts</item>
+    </plurals>
     <string name="penalty_n">Penalty %1$d</string>
     <string name="place_1st">1st</string>
     <string name="place_2nd">2nd</string>

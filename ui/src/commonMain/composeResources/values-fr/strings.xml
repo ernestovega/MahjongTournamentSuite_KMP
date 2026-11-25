@@ -95,7 +95,10 @@
     <string name="diffs_label">Écarts</string>
     <string name="diffs_explanation">Le tableau montre le score de main dont un joueur a besoin pour atteindre une meilleure place. Il y a trois façons de gagner :\n• Soi : le joueur gagne du mur.\n• Lui : le joueur gagne sur une défausse du joueur à dépasser.\n• Autre : le joueur gagne sur une défausse d'un autre joueur.</string>
     <string name="diffs_about">À propos des écarts</string>
-    <string name="points_short">%1$s pts</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s pt</item>
+        <item quantity="other">%1$s pts</item>
+    </plurals>
     <string name="penalty_n">Pénalité %1$d</string>
     <string name="place_1st">1er</string>
     <string name="place_2nd">2e</string>

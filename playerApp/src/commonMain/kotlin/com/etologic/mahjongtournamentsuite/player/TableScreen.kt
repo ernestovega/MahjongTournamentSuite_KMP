@@ -370,13 +370,20 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WinTypePill(kind, kind.accent())
+                // A discard shows only its icon before the player who discarded, with no pill (Ernesto, 2026-11-25).
+                if (kind != HandKind.DISCARD) WinTypePill(kind, kind.accent())
                 if (kind == HandKind.DISCARD) {
                     Row(
                         Modifier.weight(1f, fill = false),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
+                        Icon(
+                            kind.icon(),
+                            contentDescription = stringResource(Res.string.hand_discard),
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error,
+                        )
                         Text(
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),

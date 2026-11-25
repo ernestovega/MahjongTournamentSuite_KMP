@@ -94,7 +94,10 @@
     <string name="diffs_label">Skillnader</string>
     <string name="diffs_explanation">Tabellen visar handvärdet som en spelare behöver för att nå en högre placering. Det finns tre sätt att vinna:\n• Själv: spelaren vinner på en självdragen bricka.\n• Honom: spelaren vinner på ett kast från spelaren som ska passeras.\n• Annan: spelaren vinner på ett kast från en annan spelare.</string>
     <string name="diffs_about">Om skillnaderna</string>
-    <string name="points_short">%1$s p</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s p</item>
+        <item quantity="other">%1$s p</item>
+    </plurals>
     <string name="penalty_n">Straff %1$d</string>
     <string name="place_1st">1:a</string>
     <string name="place_2nd">2:a</string>

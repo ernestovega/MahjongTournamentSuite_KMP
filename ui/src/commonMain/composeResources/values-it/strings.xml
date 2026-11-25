@@ -95,7 +95,10 @@
     <string name="diffs_label">Differenze</string>
     <string name="diffs_explanation">La tabella mostra il punteggio di mano che serve a un giocatore per raggiungere un posto più alto. Ci sono tre modi di vincere:\n• Da sé: il giocatore vince dal muro.\n• Da lui: il giocatore vince su uno scarto del giocatore da superare.\n• Da altri: il giocatore vince su uno scarto di un altro giocatore.</string>
     <string name="diffs_about">Informazioni sulle differenze</string>
-    <string name="points_short">%1$s pt</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s pt</item>
+        <item quantity="other">%1$s pt</item>
+    </plurals>
     <string name="penalty_n">Penalità %1$d</string>
     <string name="place_1st">1°</string>
     <string name="place_2nd">2°</string>

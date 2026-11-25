@@ -95,7 +95,10 @@
     <string name="diffs_label">Diferencias</string>
     <string name="diffs_explanation">La tabla muestra la puntuación de mano que necesita un jugador para llegar a un puesto más alto. Hay tres formas de ganar:\n• Muro: el jugador gana del muro.\n• Él: el jugador gana con un descarte del jugador al que quiere adelantar.\n• Otro: el jugador gana con un descarte de otro jugador.</string>
     <string name="diffs_about">Sobre las diferencias</string>
-    <string name="points_short">%1$s pts</string>
+    <plurals name="points_short">
+        <item quantity="one">%1$s pt</item>
+        <item quantity="other">%1$s pts</item>
+    </plurals>
     <string name="penalty_n">Penalización %1$d</string>
     <string name="place_1st">1º</string>
     <string name="place_2nd">2º</string>
