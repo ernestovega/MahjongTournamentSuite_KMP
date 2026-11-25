@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -181,7 +182,7 @@ private fun VenueButton(icon: ImageVector, label: String, description: String, o
     ) {
         Icon(icon, contentDescription = null, Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        ButtonText(label, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -220,7 +221,7 @@ private fun ContactCard(email: String) {
     InfoCard(stringResource(Res.string.info_contact), Icons.Default.Email) {
         TextButton(onClick = { openEmail("mailto:$email") }) {
             // The app font has no @ sign, so the email uses the system font.
-            Text(email, fontFamily = FontFamily.Default)
+            ButtonText(email, fontFamily = FontFamily.Default)
         }
     }
 }

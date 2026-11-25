@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -613,8 +614,8 @@ internal fun ColumnScope.ChooseContent(
             onClick = onContinue,
             enabled = complete,
             buttonModifier = Modifier.testTag("playerCountContinue"),
-        ) { Text(stringResource(Res.string.pc_continue)) }
-        TextButton(onClick = onCancel) { Text(stringResource(Res.string.cancel)) }
+        ) { ButtonText(stringResource(Res.string.pc_continue)) }
+        TextButton(onClick = onCancel) { ButtonText(stringResource(Res.string.cancel)) }
     }
 }
 
@@ -797,13 +798,13 @@ internal fun ColumnScope.TeamsContent(
                 onClick = { onFormChange(form.copy(teamMoves = PlayerCountRules.proposeTeams(players, form.chosen, form.teamMoves))) },
                 enabled = open.size >= 2,
                 buttonModifier = Modifier.testTag("playerCountPropose"),
-            ) { Text(stringResource(Res.string.pc_teams_propose)) }
+            ) { ButtonText(stringResource(Res.string.pc_teams_propose)) }
             InfoTooltipIcon(stringResource(Res.string.pc_teams_propose_info))
             TextButton(
                 onClick = { onFormChange(form.copy(teamMoves = emptyMap())) },
                 enabled = form.teamMoves.isNotEmpty(),
                 modifier = Modifier.testTag("playerCountTeamsReset"),
-            ) { Text(stringResource(Res.string.pc_teams_reset)) }
+            ) { ButtonText(stringResource(Res.string.pc_teams_reset)) }
         }
         after.forEach { (team, members) ->
             val from = dragged?.let { id -> after.entries.first { id in it.value }.key }
@@ -902,8 +903,8 @@ internal fun ColumnScope.TeamsContent(
             onClick = onContinue,
             enabled = open.isEmpty(),
             buttonModifier = Modifier.testTag("playerCountTeamsContinue"),
-        ) { Text(stringResource(Res.string.pc_continue)) }
-        TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountTeamsBack")) { Text(stringResource(Res.string.pc_back)) }
+        ) { ButtonText(stringResource(Res.string.pc_continue)) }
+        TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountTeamsBack")) { ButtonText(stringResource(Res.string.pc_back)) }
     }
 }
 
@@ -915,7 +916,7 @@ private fun TeamPicker(slotId: Int, current: Int, options: List<Pair<Int, Int>>,
         OutlinedButton(
             onClick = { open = true },
             buttonModifier = Modifier.testTag("playerCountMove-$slotId"),
-        ) { Text(nameOf(current)) }
+        ) { ButtonText(nameOf(current)) }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             options.forEach { (team, count) ->
                 DropdownMenuItem(
@@ -1008,8 +1009,8 @@ internal fun ColumnScope.ReviewContent(
             onClick = onConfirm,
             colors = MtsButtons.destructiveColors(),
             buttonModifier = Modifier.testTag("playerCountConfirmButton"),
-        ) { Text(stringResource(Res.string.pc_confirm)) }
-        TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountBack")) { Text(stringResource(Res.string.pc_back)) }
+        ) { ButtonText(stringResource(Res.string.pc_confirm)) }
+        TextButton(onClick = onBack, modifier = Modifier.testTag("playerCountBack")) { ButtonText(stringResource(Res.string.pc_back)) }
     }
     if (showDrawExplanation) {
         DrawExplanationDialog(onDismiss = { showDrawExplanation = false })
@@ -1031,8 +1032,8 @@ internal fun SureDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                         onClick = onConfirm,
                         colors = MtsButtons.destructiveColors(),
                         buttonModifier = Modifier.testTag("playerCountSureButton"),
-                    ) { Text(stringResource(Res.string.pc_confirm)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.pc_confirm)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -1111,7 +1112,7 @@ internal fun ColumnScope.DoneContent(
         if (emailFailed.isNotEmpty()) BulletGroup(stringResource(Res.string.pc_emails_failed), emailFailed, "playerCountEmailFailed")
     }
     MtsDialogButtons {
-        Button(onClick = onClose, buttonModifier = Modifier.testTag("playerCountClose")) { Text(stringResource(Res.string.close)) }
+        Button(onClick = onClose, buttonModifier = Modifier.testTag("playerCountClose")) { ButtonText(stringResource(Res.string.close)) }
     }
 }
 
@@ -1141,6 +1142,6 @@ internal fun ColumnScope.LockedContent(blocker: PlayerCountBlocker, onClose: () 
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(MtsTheme.spacing.sm))
-        OutlinedButton(onClick = onClose) { Text(stringResource(Res.string.close)) }
+        OutlinedButton(onClick = onClose) { ButtonText(stringResource(Res.string.close)) }
     }
 }

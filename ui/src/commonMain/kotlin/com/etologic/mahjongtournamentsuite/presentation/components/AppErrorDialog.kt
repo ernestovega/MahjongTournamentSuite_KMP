@@ -99,7 +99,7 @@ private fun AppMessageDialog(
                             next = dismissFocusRequester,
                         ),
                     ) {
-                        Text(stringResource(Res.string.action_ok))
+                        ButtonText(stringResource(Res.string.action_ok))
                     }
                 }
             },

@@ -188,7 +188,7 @@ private fun SectionCardPreview() {
             subtitle = "Section subtitle",
             actions = {
                 AppTextButton(onClick = {}) {
-                    Text("Action")
+                    ButtonText("Action")
                 }
             },
         ) {

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -546,37 +547,37 @@ private fun ClockCard(
                 !state.isStarted -> {
                     buttonRow {
                         FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
-                            Text(stringResource(Res.string.timer_gong_start))
+                            ButtonText(stringResource(Res.string.timer_gong_start))
                         }
                     }
                     buttonRow {
                         FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.StartedAgo) }) {
-                            Text(stringResource(Res.string.timer_started_ago))
+                            ButtonText(stringResource(Res.string.timer_started_ago))
                         }
                     }
                 }
                 !finished -> buttonRow {
                     if (state.isRunning) {
                         FocusedButton(enabled = canClock, onClick = { scope.launch { controller.pause() } }) {
-                            Text(stringResource(Res.string.timer_pause))
+                            ButtonText(stringResource(Res.string.timer_pause))
                         }
                     } else {
                         FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
-                            Text(stringResource(Res.string.timer_gong_resume))
+                            ButtonText(stringResource(Res.string.timer_gong_resume))
                         }
                     }
                     FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.ConfirmStop) }) {
-                        Text(stringResource(Res.string.timer_stop))
+                        ButtonText(stringResource(Res.string.timer_stop))
                     }
                 }
             }
             if (state.isStarted) {
                 buttonRow {
                     FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.SetTime) }) {
-                        Text(stringResource(Res.string.set_time))
+                        ButtonText(stringResource(Res.string.set_time))
                     }
                     FocusedOutlinedButton(enabled = canClock, onClick = { scope.launch { controller.askReset() } }) {
-                        Text(stringResource(Res.string.reset_timer))
+                        ButtonText(stringResource(Res.string.reset_timer))
                     }
                 }
             }
@@ -814,7 +815,7 @@ private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, o
                 modifier = Modifier.weight(1f),
             )
             FocusedButton(enabled = enabled, onClick = onReview) {
-                Text(stringResource(Res.string.round_control_finished_review))
+                ButtonText(stringResource(Res.string.round_control_finished_review))
             }
         }
     }
@@ -849,8 +850,8 @@ private fun ConfirmDialog(
             text = { MtsDialogText(message) },
             confirmButton = {
                 MtsDialogButtons {
-                    FocusedButton(onClick = onConfirm) { Text(confirm) }
-                    FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    FocusedButton(onClick = onConfirm) { ButtonText(confirm) }
+                    FocusedButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

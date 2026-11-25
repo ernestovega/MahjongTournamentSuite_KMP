@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -146,7 +147,7 @@ internal fun EmaPlayerPickerDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -662,7 +663,7 @@ private fun ActivityTable(
         if (hasMore) {
             item {
                 FocusedOutlinedButton(onClick = onLoadMore, enabled = !loading, modifier = Modifier.padding(12.dp)) {
-                    Text(stringResource(Res.string.activity_load_more))
+                    ButtonText(stringResource(Res.string.activity_load_more))
                 }
             }
         }
@@ -722,14 +723,14 @@ private fun ActivityEntryDialog(
                         onClick = onDismiss,
                         focusRequester = closeFocus,
                         buttonModifier = if (canFilterByPerson) Modifier.focusLoop(previous = personFocus, next = personFocus) else Modifier,
-                    ) { Text(stringResource(Res.string.close)) }
+                    ) { ButtonText(stringResource(Res.string.close)) }
 
                     if (canFilterByPerson) {
                         FocusedTextButton(
                             onClick = onFilterByPerson,
                             focusRequester = personFocus,
                             buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
-                        ) { Text(stringResource(Res.string.activity_only_person)) }
+                        ) { ButtonText(stringResource(Res.string.activity_only_person)) }
                     }
                 }
             },

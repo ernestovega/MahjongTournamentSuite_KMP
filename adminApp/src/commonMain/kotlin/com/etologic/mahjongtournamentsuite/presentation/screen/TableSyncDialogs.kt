@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -116,7 +117,7 @@ internal fun TableUpdatesDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
+                    FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )
@@ -149,8 +150,8 @@ internal fun HandsNotDoneDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onSave, modifier = Modifier.testTag("handsNotDoneSave")) { Text(stringResource(Res.string.hands_not_done_save)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    Button(onClick = onSave, modifier = Modifier.testTag("handsNotDoneSave")) { ButtonText(stringResource(Res.string.hands_not_done_save)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -200,8 +201,8 @@ internal fun ResetTableDialog(
                         onClick = onConfirm,
                         modifier = Modifier.testTag("resetTableConfirm"),
                         colors = MtsButtons.destructiveColors(),
-                    ) { Text(stringResource(Res.string.reset_table)) }
-                    TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.reset_table)) }
+                    TextButton(enabled = !busy, onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

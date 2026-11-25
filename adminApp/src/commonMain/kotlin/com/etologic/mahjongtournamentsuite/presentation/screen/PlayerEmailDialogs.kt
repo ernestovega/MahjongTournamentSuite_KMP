@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -93,16 +94,16 @@ internal fun SlotEmailDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { Text(confirmLabel) }
+                    Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { ButtonText(confirmLabel) }
                     if (hasEmail) {
                         OutlinedButton(
                             enabled = !busy,
                             onClick = onRemove,
                             colors = MtsButtons.destructiveOutlinedColors(),
                             border = MtsButtons.destructiveBorder(!busy),
-                        ) { Text(stringResource(Res.string.remove_email)) }
+                        ) { ButtonText(stringResource(Res.string.remove_email)) }
                     }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -167,10 +168,10 @@ internal fun MissingEmailsDialog(
             confirmButton = {
                 MtsDialogButtons {
                     Button(enabled = filled.isNotEmpty() && allValid && !busy, onClick = { onConfirm(filled) }) {
-                        Text("$confirmLabel (${filled.size})")
+                        ButtonText("$confirmLabel (${filled.size})")
                     }
 
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )

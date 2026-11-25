@@ -93,7 +93,7 @@ fun AppTopBarButton(
             } else {
                 iconContent()
             }
-            if (labelVisible) Text(text = text, color = textColor)
+            if (labelVisible) ButtonText(text = text, color = textColor)
         }
     }
 }

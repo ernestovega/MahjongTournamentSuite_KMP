@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -215,9 +216,9 @@ fun PlayerAccountsBulkDialog(
                                         TextButton(
                                             enabled = shown.isNotEmpty() && !busy,
                                             onClick = { selected = shown.map { it.id }.toSet() },
-                                        ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
+                                        ) { ButtonText(stringResource(Res.string.select_all_shown, shown.size)) }
                                         TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
-                                            Text(stringResource(Res.string.clear))
+                                            ButtonText(stringResource(Res.string.clear))
                                         }
                                         Text(
                                             stringResource(Res.string.selected_count, chosen.size),
@@ -293,14 +294,14 @@ fun PlayerAccountsBulkDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.close)) }
                     Button(
                         enabled = chosen.isNotEmpty() && !busy,
                         onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(Res.string.send_count, chosen.size))
+                        ButtonText(stringResource(Res.string.send_count, chosen.size))
                     }
                 }
             },

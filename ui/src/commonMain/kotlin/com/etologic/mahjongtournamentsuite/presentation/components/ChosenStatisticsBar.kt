@@ -84,7 +84,7 @@ fun ChosenStatisticsBar(
         ) {
             Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(changeLabel, maxLines = 1, softWrap = false)
+            ButtonText(changeLabel, maxLines = 1, softWrap = false)
         }
     }
 }
@@ -149,7 +149,7 @@ fun ChosenTournamentBar(
             },
             Modifier.weight(1f),
         )
-        DebouncedTextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
+        DebouncedTextButton(onClick = { changing = false }) { ButtonText(stringResource(Res.string.action_cancel)) }
     }
 }
 

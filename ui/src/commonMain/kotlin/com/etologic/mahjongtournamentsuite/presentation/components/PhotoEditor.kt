@@ -164,10 +164,10 @@ fun PhotoEditor(
         if (!editBadge) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
-                    Text(stringResource(Res.string.photo_edit))
+                    ButtonText(stringResource(Res.string.photo_edit))
                 }
                 if (hasOwnPhoto) {
-                    FocusedTextButton(enabled = !saving, onClick = { remove() }) { Text(stringResource(Res.string.photo_remove)) }
+                    FocusedTextButton(enabled = !saving, onClick = { remove() }) { ButtonText(stringResource(Res.string.photo_remove)) }
                 }
                 if (saving) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
             }

@@ -231,7 +231,7 @@ fun StatisticsFilterBar(
             DebouncedOutlinedButton(onClick = { editing = true }) {
                 Icon(Icons.Default.FilterList, contentDescription = null, Modifier.size(18.dp))
                 Spacer(Modifier.width(MtsTheme.spacing.sm))
-                Text(stringResource(Res.string.stats_filters), maxLines = 1)
+                ButtonText(stringResource(Res.string.stats_filters), maxLines = 1)
             }
         }
     }
@@ -456,8 +456,8 @@ internal fun StatisticsFiltersDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    DebouncedButton(onClick = { onApply(draft) }) { Text(stringResource(Res.string.stats_filter_apply)) }
-                    DebouncedTextButton(onClick = { draft = StatisticsFilters() }) { Text(stringResource(Res.string.stats_filter_clear)) }
+                    DebouncedButton(onClick = { onApply(draft) }) { ButtonText(stringResource(Res.string.stats_filter_apply)) }
+                    DebouncedTextButton(onClick = { draft = StatisticsFilters() }) { ButtonText(stringResource(Res.string.stats_filter_clear)) }
                 }
             },
         )
