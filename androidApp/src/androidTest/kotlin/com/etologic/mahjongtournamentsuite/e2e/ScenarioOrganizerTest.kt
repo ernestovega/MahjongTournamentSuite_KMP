@@ -20,6 +20,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
@@ -480,13 +481,24 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         // loaded, after a first tap on All, so the tap is repeated until the tournament shows. The list of the app
         // can come from before the tournament existed: it refreshes every 5 minutes (PollSchedule.LIST_IDLE).
         c.waitForText("My tournaments", timeoutMs = 60_000)
-        c.waitUntil(420_000) {
-            if (c.isOnScreen(name)) return@waitUntil true
-            if (c.isOnScreen("In play")) runCatching { c.onAllNodes(hasText("All") and hasClickAction()).onFirst().performClick() }
-            c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
-                runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(name)) }
+        val found = runCatching {
+            c.waitUntil(420_000) {
+                if (c.isOnScreen(name)) return@waitUntil true
+                if (c.isOnScreen("In play")) runCatching { c.onAllNodes(hasText("All") and hasClickAction()).onFirst().performClick() }
+                c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
+                    runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(name)) }
+                }
+                c.isOnScreen(name)
             }
-            c.isOnScreen(name)
+        }
+        if (found.isFailure) {
+            // What the server lists, and the top of the list (tabs and filters) for the screen of the failure report.
+            val listed = runCatching { tournamentIdOf(name) }.isSuccess
+            val message = "The player app does not show '$name'. The public list of the API ${if (listed) "has" else "does not have"} it."
+            log(message)
+            runCatching { c.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToIndex(0) }
+            c.settle()
+            throw AssertionError(message, found.exceptionOrNull())
         }
         val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
         c.waitUntil(60_000) { c.onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
