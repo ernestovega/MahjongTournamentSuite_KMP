@@ -1,0 +1,12 @@
+{
+  "name": "mts-web-e2e",
+  "private": true,
+  "type": "module",
+  "description": "E2E tests of the web apps in Chromium against the local test backend. See README.md.",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

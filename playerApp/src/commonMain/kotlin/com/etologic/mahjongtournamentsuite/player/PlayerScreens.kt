@@ -2,10 +2,8 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContactSupport
 import androidx.compose.material.icons.filled.MoreVert
@@ -52,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -90,7 +89,9 @@ fun SplashScreen(
             navController.navigate(SupportRoute())
         } else if (openRegistration != null) {
             // The registrations of the tournament. The link of the emails also confirms the email.
-            openRegistrationLink(openRegistration)
+            // The splash leaves the screen as soon as the tournaments open, which would cancel this effect half way:
+            // the QR link then opened My tables but never the table of the player (found by the web E2E tests).
+            withContext(NonCancellable) { openRegistrationLink(openRegistration) }
         } else if (signInFirst) {
             navController.navigate(SignInRoute())
         } else if (restored.isNotEmpty()) {
