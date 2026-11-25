@@ -1043,7 +1043,8 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="reg_add_title">Lägg till en person</string>
     <string name="reg_edit_title">Ändra anmälan</string>
     <string name="reg_confirm_remove_title">Ta bort anmälan?</string>
-    <string name="reg_confirm_remove_message">%1$s lämnar listan.\nOm personen hade en plats får den första på väntelistan den direkt, med ett mejl.</string>
+    <string name="reg_confirm_remove_message">%1$s lämnar listan.</string>
+    <string name="reg_confirm_remove_next">Platsen går direkt till %1$s, den första på väntelistan, som får ett mejl.</string>
     <string name="reg_notify">Meddela personen via e-post</string>
     <string name="reg_remove">Ta bort</string>
     <string name="reg_draw_title">Göra lottningen?</string>

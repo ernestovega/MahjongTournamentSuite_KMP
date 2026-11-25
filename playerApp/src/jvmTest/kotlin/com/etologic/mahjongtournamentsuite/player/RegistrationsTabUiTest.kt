@@ -238,7 +238,8 @@ class RegistrationsTabUiTest {
     fun aPersonOnTheWaitingListSeesItsNumberAndNoWarningWithItsTeam() = runComposeUiTest {
         show(FakeRegistrations(own = OwnRegistration("10990003", "CARLA GIL", "FR", RegistrationStatus.WAITING, 1, teamId = "dragons")))
         waitUntil { onAllNodesWithTextExists("You are number 1 on the waiting list") }
-        onNodeWithText("The organization will write to you if a place frees up.").assertIsDisplayed()
+        // A free place goes to the waiting list by itself (docs/registrations.md, "Waiting list").
+        onNodeWithText("When a place frees up, it goes to the first of the list at once, and you get an email.").assertIsDisplayed()
         onNodeWithTag("registration-team-missing").assertDoesNotExist()
         onNodeWithTag("registration-manage").assertIsDisplayed()
     }

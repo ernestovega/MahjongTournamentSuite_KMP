@@ -87,6 +87,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.reg_add_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_message
+import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_next
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirm_remove_title
 import mahjongtournamentsuite.adminapp.generated.resources.reg_confirmed_section
 import mahjongtournamentsuite.adminapp.generated.resources.reg_draw_calculating
@@ -412,6 +413,13 @@ fun RegistrationsScreen(
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         MtsDialogText(stringResource(Res.string.reg_confirm_remove_message, registration.name))
+                        // The place goes by itself to the first of the waiting list: the organizer reads who gets it.
+                        current?.takesThePlaceOf(registration)?.let { next ->
+                            MtsDialogText(
+                                stringResource(Res.string.reg_confirm_remove_next, next.name.ifBlank { next.emaId }),
+                                modifier = Modifier.testTag("registration-remove-next"),
+                            )
+                        }
                         if (registration.email.isNotBlank()) {
                             MtsCheckboxRow(text = stringResource(Res.string.reg_notify), checked = notify, onCheckedChange = { notify = it })
                         }

@@ -118,6 +118,19 @@ data class AdminRegistrations(
     val teams: List<RegistrationTeam>,
 ) {
     fun teamOf(registration: AdminRegistration): RegistrationTeam? = teams.firstOrNull { it.id == registration.teamId }
+
+    /**
+     * Who takes the place of [registration] when it leaves: the first of the waiting list, as the server does
+     * (docs/registrations.md, "Waiting list"). Null when the person has no place, the tournament has no number of
+     * places, or nobody waits.
+     */
+    fun takesThePlaceOf(registration: AdminRegistration): AdminRegistration? {
+        if (registration.status != RegistrationStatus.CONFIRMED) return null
+        val places = settings.maxPlayers ?: return null
+        val placed = registrations.count { it.status == RegistrationStatus.CONFIRMED }
+        if (placed - 1 >= places) return null
+        return registrations.filter { it.status == RegistrationStatus.WAITING }.minByOrNull { it.position }
+    }
 }
 
 /** The registration of the person who uses the app: by the account, or by the link of the emails. */

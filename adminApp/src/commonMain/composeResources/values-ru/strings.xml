@@ -1075,7 +1075,8 @@
     <string name="reg_add_title">Добавить участника</string>
     <string name="reg_edit_title">Изменить регистрацию</string>
     <string name="reg_confirm_remove_title">Удалить регистрацию?</string>
-    <string name="reg_confirm_remove_message">%1$s удаляется из списка.\nЕсли у человека было место, его сразу получает первый в листе ожидания, и ему приходит письмо.</string>
+    <string name="reg_confirm_remove_message">%1$s удаляется из списка.</string>
+    <string name="reg_confirm_remove_next">Место сразу переходит к %1$s, первому в листе ожидания, и ему приходит письмо.</string>
     <string name="reg_notify">Сообщить участнику по email</string>
     <string name="reg_remove">Удалить</string>
     <string name="reg_draw_title">Провести жеребьёвку?</string>

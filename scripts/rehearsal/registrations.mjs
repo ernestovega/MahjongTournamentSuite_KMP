@@ -7,8 +7,8 @@
 // - People register: with their account (players of earlier game days), or with an email and the link that comes in
 //   it. One person never opens the link and stays pending, out of the public list. One person writes "I have no EMA
 //   number". The last ones go to the waiting list.
-// - A person with a place cancels: the organization gets the email, and the organizer gives the place to the first of
-//   the waiting list.
+// - A person with a place cancels: the first of the waiting list gets the place by itself (docs/registrations.md,
+//   "Waiting list"), and both that person and the organization get an email.
 // - With teams, four captains create their teams and add three people each.
 // - The organizer closes the registrations and makes the draw, as the admin app does.
 //
@@ -18,7 +18,7 @@
 // The output never prints an email.
 import fs from "node:fs";
 import { Api, Metrics, parseArgs, rehearsalEmail, Session, sleep, STAGING_API } from "./api.mjs";
-import { Mailbox } from "./mail.mjs";
+import { Mailbox, waitForEmail } from "./mail.mjs";
 
 export const PLACES = 16;
 export const TEAM_SIZE = 4;
@@ -153,12 +153,22 @@ export function hasEmail(json) {
   return /[^\s"@]+@[^\s"@]+\.[a-z]{2,}/i.test(JSON.stringify(json ?? null));
 }
 
+/** Waits until an address has [count] emails since [sinceDate], up to [waitMs]. Returns how many it has. */
+async function waitForCount(mailbox, to, sinceDate, count, pause, waitMs) {
+  for (let waited = 0; ; waited += 15_000) {
+    const found = (await mailbox.search(to, sinceDate)).length;
+    if (found >= count || waited + 15_000 > waitMs) return found;
+    await pause(15_000);
+  }
+}
+
 /**
  * Runs the registrations. [signIn] gives a token for an email, or null. [openMailbox] opens the mailbox of the people.
  * Returns the report: the tournament, the steps with their outcome, and the counts.
  */
 export async function runRegistrations({
   api, plan, adminToken, signIn, openMailbox, organizerEmail, minutes = 20, pause = sleep, random = Math.random, now = new Date(),
+  mailWaitMs = 300_000,
 }) {
   const steps = [];
   const step = (name, ok, detail = "") => {
@@ -302,20 +312,39 @@ export async function runRegistrations({
     step("The pending person is not in the public list", !listed.some((row) => row.emaId === roles.pendingForever.emaId));
     step("The public list has no email", !hasEmail(list.json));
 
-    // 5. A person with a place cancels, and the organizer gives the place to the first of the waiting list.
-    const leaving = listed.find((row) => row.status === "CONFIRMED" && access.has(row.emaId));
-    if (leaving != null) {
-      const who = access.get(leaving.emaId);
-      const cancelled = await person("DELETE", `/registrations/${tournamentId}/me`, { token: who.token, registration: who.registration, label: "DELETE me" });
-      step("A person cancels its registration", cancelled.status === 200);
-      access.delete(leaving.emaId);
-    } else {
-      step("A person cancels its registration", false, "nobody with a place can sign in");
-    }
+    // 5. A person with a place cancels, and the first of the waiting list gets the place by itself, with an email to it
+    //    and one to the organization that says who took the place.
     const firstWaiting = listed.filter((row) => row.status === "WAITING").sort((a, b) => a.position - b.position)[0];
-    if (firstWaiting != null) {
-      const promoted = await admin("PUT", `/tournaments/${tournamentId}/registrations/${firstWaiting.emaId}`, { status: "CONFIRMED", paid: true }, "PUT give place");
-      step("The organizer gives the place to the first of the waiting list", promoted.status === 200 && promoted.json.status === "CONFIRMED");
+    const promotedEmail = plan.slots.find((slot) => slot.emaId === firstWaiting?.emaId)?.email ?? "";
+    const mails = await openMailbox();
+    try {
+      const before = promotedEmail === "" ? 0 : (await mails.search(promotedEmail, startedAt)).length;
+      const leaving = listed.find((row) => row.status === "CONFIRMED" && access.has(row.emaId));
+      if (leaving != null) {
+        const who = access.get(leaving.emaId);
+        const cancelled = await person("DELETE", `/registrations/${tournamentId}/me`, { token: who.token, registration: who.registration, label: "DELETE me" });
+        step("A person cancels its registration", cancelled.status === 200);
+        access.delete(leaving.emaId);
+      } else {
+        step("A person cancels its registration", false, "nobody with a place can sign in");
+      }
+      if (firstWaiting != null) {
+        const after = (await api.call("GET", `/public/tournaments/${tournamentId}/registrations`, { label: "registrations public GET list" })).json?.registrations ?? [];
+        const promoted = after.find((row) => row.emaId === firstWaiting.emaId);
+        const placed = after.filter((row) => row.status === "CONFIRMED").length;
+        step("The first of the waiting list gets the place by itself", promoted?.status === "CONFIRMED" && placed === PLACES,
+          `${promoted?.status ?? "gone"}, ${placed} with a place`);
+        const toOrganization = await waitForEmail(mails, organizerEmail, {
+          sinceDate: startedAt, timeoutMs: mailWaitMs, matches: (email) => String(email.text ?? "").includes(`(${firstWaiting.emaId})`),
+        });
+        step("The organization reads who took the place", toOrganization != null);
+        const toPerson = promotedEmail === "" ? 0 : await waitForCount(mails, promotedEmail, startedAt, before + 1, pause, mailWaitMs);
+        step("The person who gets the place gets an email", toPerson > before, `${toPerson - before} new`);
+        const paid = await admin("PUT", `/tournaments/${tournamentId}/registrations/${firstWaiting.emaId}`, { paid: true }, "PUT paid");
+        step("The organizer marks the new place as paid", paid.status === 200 && paid.json.paid === true);
+      }
+    } finally {
+      mails?.close();
     }
 
     // 6. Teams: four captains create their teams and add three people each.
