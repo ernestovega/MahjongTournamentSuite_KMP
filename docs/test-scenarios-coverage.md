@@ -180,7 +180,9 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 6. **Admin Players and Teams screens** (54 % and 49 %): substitution, clear slot, team edit, drag of members.
 7. **`DefaultTournamentRepository` and `FunctionsBackendApi`** (48 % and 62 %): request and response of the calls
-   without tests, with the existing `TestBackendApi`.
+   without tests, with the existing `TestBackendApi`. Since 25 November `DefaultTournamentRepositoryWritesTest` covers
+   members, teams, player numbers, rename, delete, closing tables and refused writes; still missing: settings, round
+   clocks and controls, substitutions, the ID card and QR files.
 8. **Account self-service**: own photo upload and crop, withdraw consent (UI). The backend of `DELETE /me` and of the
    sign-in is tested since 25 November (`ownAccount.integration.test.ts`).
 9. ~~**Contact form** `POST /support/message`~~: done 25 November (`support.integration.test.ts`: mail, honeypot,
