@@ -58,7 +58,7 @@ Files with the most untested lines:
 | `playerApp/.../HandDetails.kt` | 14 % | 162 | Hand details table of a completed table (`HandDetailsTable`, `resultChange`) |
 | `data/.../FunctionsBackendApi.kt` | 62 % | 157 | Calls with no test of their request or response |
 | `data/.../DefaultAdminRepository.kt` | 43 % | 142 | Accounts, roles, EMA registry writes |
-| `ui/.../ImageCropDialog.kt` | 0 % | 134 | Photo crop when uploading a photo |
+| `ui/.../ImageCropDialog.kt` | covered 25 Nov | – | `PhotoCropAndConsentUiTest` |
 | `data/.../DefaultAuthRepository.kt` | 40 % | 81 | Sign in, sign out, password change, delete own account |
 | `playerApp/.../TeamStatistics.kt` | 4 % | 67 | Team statistics in the Player |
 | `adminApp/.../CreateTournamentPresenter.kt` | 63 % | 52 | Error paths of the create flow and the registrations variant |
@@ -111,7 +111,7 @@ The web E2E tests (`e2e/web`) are in the notes.
 | 4.8 Green Book (download on Android) | ⚠️ | | | | | Only the link is tested; the Android download and the offline copy are not |
 | 4.8 Contact form | | ✅ | ✅ | | | |
 | 4.9 Sign in, password recovery | ✅ | ✅ | ✅ | ✅ | | Choosing the new password from the email (see «Gaps without an emulator test») |
-| 4.9 Profile: photo, alias, theme, language, delete account, withdraw consent | ⚠️ | ✅ | ⚠️ | ⚠️ | | Photo crop 0 %, only the theme is in E2E; `DELETE /me` has a backend test |
+| 4.9 Profile: photo, alias, theme, language, delete account, withdraw consent | ⚠️ | ✅ | ⚠️ | ⚠️ | | Crop, remove photo and withdraw consent have UI tests (25 Nov); only the theme is in E2E; `DELETE /me` has a backend test |
 | 4.9 8 languages, AI translation notice | ✅ | ✅ | | | | |
 | 4.9 Refresh rhythms | ✅ | | | | ✅ | |
 
@@ -182,9 +182,12 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 7. **`DefaultTournamentRepository` and `FunctionsBackendApi`** (48 % and 62 %): request and response of the calls
    without tests, with the existing `TestBackendApi`. Since 25 November `DefaultTournamentRepositoryWritesTest` covers
    members, teams, player numbers, rename, delete, closing tables, substitutions, the Timer (clocks and controls), the
-   own tournaments, the table cards and ID list files, and refused calls. Still missing: the tournament settings.
-8. **Account self-service**: own photo upload and crop, withdraw consent (UI). The backend of `DELETE /me` and of the
-   sign-in is tested since 25 November (`ownAccount.integration.test.ts`).
+   own tournaments, the table cards and ID list files, the tournament settings (cleaned values, list read again) and
+   refused calls.
+8. ~~**Account self-service**~~: done 25 November. `CropSelectedImageTest` (the desktop crop: position, zoom, 512 px,
+   PNG, bad file) and `PhotoCropAndConsentUiTest` (crop dialog, remove an own photo, failed remove, withdraw consent).
+   The backend of `DELETE /me` and of the sign-in is in `ownAccount.integration.test.ts`. The image picker itself is
+   native and stays manual.
 9. ~~**Contact form** `POST /support/message`~~: done 25 November (`support.integration.test.ts`: mail, honeypot,
    bad input, no mailbox, limit per address).
 10. **Club Admin and custom roles in E2E**: what the list shows and what is refused.
