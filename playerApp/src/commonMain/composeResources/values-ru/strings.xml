@@ -269,7 +269,7 @@
     <string name="preg_closes_until">До %1$s включительно</string>
     <string name="preg_mine_place">Ваше место: %1$d</string>
     <string name="preg_mine_waiting">Ваш номер в листе ожидания: %1$d</string>
-    <string name="preg_mine_waiting_detail">Организаторы напишут вам, если освободится место.</string>
+    <string name="preg_mine_waiting_detail">Освободившееся место сразу получает первый в листе, и ему приходит письмо.</string>
     <string name="preg_mine_pending">Подтвердите e-mail</string>
     <string name="preg_join_title">Хотите играть?</string>
     <string name="preg_join_detail">Зарегистрируйтесь с вашим номером EMA.\nВы получите письмо со ссылкой для управления регистрацией.</string>

@@ -197,13 +197,22 @@ class FakeServer {
       const registration = this.own(options);
       if (registration == null) return { status: 404, json: {} };
       this.registrations.delete(registration.emaId);
+      // As the server: the first of the waiting list takes the free place, and gets an email.
+      const first = registration.status === "CONFIRMED"
+        ? [...this.registrations.values()].filter((each) => each.status === "WAITING").sort((a, b) => a.position - b.position)[0] : null;
+      if (first != null) {
+        first.status = "CONFIRMED";
+        first.position = Number.MAX_SAFE_INTEGER;
+        this.outbox.push({ to: first.email, subject: "You have a place", text: "", links: [] });
+      }
       this.renumber();
-      this.outbox.push({ to: this.tournament.contactEmail, links: [] });
+      this.outbox.push({ to: this.tournament.contactEmail, text: first == null ? "" : `• ${first.name} (${first.emaId})`, links: [] });
       return ok({ ok: true });
     }
     let match = /^PUT \/tournaments\/:id\/registrations\/(\d+)$/.exec(route);
     if (match) {
       const registration = this.registrations.get(match[1]);
+      if (body.paid !== undefined) registration.paid = body.paid === true;
       if (body.status === "CONFIRMED") {
         const confirmed = [...this.registrations.values()].filter((each) => each.status === "CONFIRMED").length;
         Object.assign(registration, { status: "CONFIRMED", position: confirmed + 1 });
@@ -273,6 +282,8 @@ for (const isTeams of [false, true]) {
       }),
       organizerEmail: "box+gd-org@example.test",
       pause: async () => {},
+      mailWaitMs: 0,
+    mailWaitMs: 0,
       random: seeded(isTeams ? 7 : 8),
     });
     const failed = report.steps.filter((step) => !step.ok);
@@ -305,8 +316,44 @@ test("a refused draw fails the registrations and says why", async () => {
     }),
     organizerEmail: "org@example.test",
     pause: async () => {},
+    mailWaitMs: 0,
     random: seeded(1),
   });
   assert.equal(report.ok, false);
   assert.match(report.steps.find((step) => !step.ok).detail, /BAD_DRAW/);
+});
+
+test("the game day fails when the first of the waiting list does not get the free place", async () => {
+  const plan = { tag: "gd", name: "Game day", shortName: "GD", isTeams: false, slots: slots(24, 3) };
+  const accounts = new Map(plan.slots.filter((slot) => slot.returning).map((slot) => [`id-${slot.email}`, slot.emaId]));
+  const server = new FakeServer({ accounts });
+  const original = server.call.bind(server);
+  // A server without the promotion: the cancellation only removes the person.
+  server.call = async (method, path, options) => {
+    if (method === "DELETE" && path.endsWith("/me")) {
+      const registration = server.own(options);
+      server.registrations.delete(registration.emaId);
+      server.renumber();
+      return { status: 200, json: { ok: true } };
+    }
+    return original(method, path, options);
+  };
+  const report = await runRegistrations({
+    api: server,
+    plan,
+    adminToken: async () => "admin",
+    signIn: async (email) => `id-${email}`,
+    openMailbox: async () => ({
+      search: async (to) => server.outbox.map((email, index) => (email.to === to ? index : -1)).filter((index) => index >= 0),
+      read: async (index) => server.outbox[index],
+      close: () => {},
+    }),
+    organizerEmail: "box+gd-org@example.test",
+    pause: async () => {},
+    mailWaitMs: 0,
+    random: seeded(2),
+  });
+  assert.equal(report.ok, false);
+  const failed = report.steps.filter((step) => !step.ok).map((step) => step.name);
+  assert.ok(failed.includes("The first of the waiting list gets the place by itself"), failed.join(", "));
 });

@@ -261,7 +261,7 @@
     <string name="preg_closes_until">Tot en met %1$s</string>
     <string name="preg_mine_place">Je hebt plaats %1$d</string>
     <string name="preg_mine_waiting">Je bent nummer %1$d op de wachtlijst</string>
-    <string name="preg_mine_waiting_detail">De organisatie schrijft je als er een plaats vrijkomt.</string>
+    <string name="preg_mine_waiting_detail">Komt er een plaats vrij, dan gaat die meteen naar de eerste van de lijst, en je krijgt een e-mail.</string>
     <string name="preg_mine_pending">Bevestig je e-mail</string>
     <string name="preg_join_title">Wil je meespelen?</string>
     <string name="preg_join_detail">Schrijf je in met je EMA-nummer.\nJe krijgt een e-mail met de link om je inschrijving te beheren.</string>

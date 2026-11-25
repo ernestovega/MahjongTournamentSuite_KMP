@@ -59,7 +59,14 @@ email. `promoteFromWaitingList` (registrationsService.ts) does it, in a transact
   one email: a cancellation and who took its place together, or "Place from the waiting list" after a removal or more
   places. `registrationLog` keeps a `promoted` entry.
 
-The organizer can still give a place by hand above the limit (Give a place), as before.
+The organizer can still give a place by hand above the limit (Give a place), as before. The player app tells a person
+on the waiting list that a free place comes by itself, with an email.
+
+Tests: `registrationPromotion.integration.test.ts` and `registrationEmails.test.ts` (backend),
+`WaitingListPromotionTest` (domain), `RegistrationsProblemsUiTest` (admin: the Remove dialog names who gets the place),
+`RegistrationsTabUiTest` (player), the web E2E `e2e/web/tests/registrations.test.mjs` (a person cancels on the web and
+the one who waited sees its place) and the game day (`scripts/rehearsal/registrations.mjs`: the place, the email of the
+organization and the email of the person, in staging).
 
 ## Teams
 
@@ -113,7 +120,8 @@ Admin app, Registrations (opens from the tournament while `drawPending`):
   the EMA registry. Food restrictions are an icon with a tooltip, and a warning shows when two people share an email
   (one account cannot share an email).
 - Each person: Change (email, team, food, paid), Give a place, Move to the waiting list, Remove (with or without an
-  email to the person). The confirmation of Remove says that the first of the waiting list gets the place.
+  email to the person). The confirmation of Remove of a person with a place names who of the waiting list gets
+  it (`AdminRegistrations.takesThePlaceOf`, the same rule as the server).
 - Export CSV (top bar): the list as a CSV file with the columns of the import (Timestamp, Email, First name, Last
   name, EMA number, Country, Team, Food restrictions), plus Status and Paid, which the import leaves out. The app makes
   it from the list it shows (`RegistrationsCsv`), in the order places, waiting list, pending. It is the example of the

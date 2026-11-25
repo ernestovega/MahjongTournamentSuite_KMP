@@ -261,7 +261,7 @@
     <string name="preg_closes_until">Until %1$s, included</string>
     <string name="preg_mine_place">You have place %1$d</string>
     <string name="preg_mine_waiting">You are number %1$d on the waiting list</string>
-    <string name="preg_mine_waiting_detail">The organization will write to you if a place frees up.</string>
+    <string name="preg_mine_waiting_detail">When a place frees up, it goes to the first of the list at once, and you get an email.</string>
     <string name="preg_mine_pending">Confirm your email</string>
     <string name="preg_join_title">Do you want to play?</string>
     <string name="preg_join_detail">Register with your EMA number.\nYou will get an email with the link to manage your registration.</string>

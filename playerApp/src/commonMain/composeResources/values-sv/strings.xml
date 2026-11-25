@@ -261,7 +261,7 @@
     <string name="preg_closes_until">Till och med %1$s</string>
     <string name="preg_mine_place">Du har plats %1$d</string>
     <string name="preg_mine_waiting">Du är nummer %1$d på väntelistan</string>
-    <string name="preg_mine_waiting_detail">Organisationen skriver till dig om en plats blir ledig.</string>
+    <string name="preg_mine_waiting_detail">När en plats blir ledig går den direkt till den första på listan, och du får ett mejl.</string>
     <string name="preg_mine_pending">Bekräfta din e-post</string>
     <string name="preg_join_title">Vill du spela?</string>
     <string name="preg_join_detail">Anmäl dig med ditt EMA-nummer.\nDu får ett e-postmeddelande med länken för att hantera din anmälan.</string>

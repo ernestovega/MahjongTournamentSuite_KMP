@@ -1043,7 +1043,8 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="reg_add_title">Ajouter une personne</string>
     <string name="reg_edit_title">Modifier l'inscription</string>
     <string name="reg_confirm_remove_title">Retirer l'inscription ?</string>
-    <string name="reg_confirm_remove_message">%1$s quitte la liste.\nSi la personne avait une place, la première personne de la liste d'attente la reçoit tout de suite, avec un e-mail.</string>
+    <string name="reg_confirm_remove_message">%1$s quitte la liste.</string>
+    <string name="reg_confirm_remove_next">Sa place va tout de suite à %1$s, la première personne de la liste d'attente, qui reçoit un e-mail.</string>
     <string name="reg_notify">Prévenir la personne par e-mail</string>
     <string name="reg_remove">Retirer</string>
     <string name="reg_draw_title">Faire le tirage ?</string>

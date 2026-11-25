@@ -261,7 +261,7 @@
     <string name="preg_closes_until">Jusqu'au %1$s inclus</string>
     <string name="preg_mine_place">Vous avez la place %1$d</string>
     <string name="preg_mine_waiting">Vous êtes le numéro %1$d sur la liste d'attente</string>
-    <string name="preg_mine_waiting_detail">L'organisation vous écrira si une place se libère.</string>
+    <string name="preg_mine_waiting_detail">Quand une place se libère, elle va tout de suite au premier de la liste, et vous recevez un e-mail.</string>
     <string name="preg_mine_pending">Confirmez votre e-mail</string>
     <string name="preg_join_title">Vous voulez jouer ?</string>
     <string name="preg_join_detail">Inscrivez-vous avec votre numéro EMA.\nVous recevrez un e-mail avec le lien pour gérer votre inscription.</string>

@@ -4,7 +4,9 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -13,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.screenshots.adminModules
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
@@ -79,5 +82,19 @@ class RegistrationsProblemsUiTest {
         waitForIdle()
 
         check(shown(people[0].emaId)) { "All did not bring back the people without problems." }
+    }
+
+    @Test
+    fun removingAPersonWithAPlaceSaysWhoOfTheWaitingListGetsIt() = runComposeUiTest {
+        show()
+        // The fake list has 14 people with a place of 16 and two on the waiting list, the 15th person first.
+        val leaving = people[0]
+        onNodeWithContentDescription("More actions for ${leaving.firstName} ${leaving.lastName}".trim()).performClick()
+        waitForIdle()
+        onNodeWithText("Remove").performClick()
+        waitForIdle()
+        onNodeWithTag("registration-remove-next")
+            .assertTextContains(people[14].displayName, substring = true)
+            .assertTextContains("the first of the waiting list, who gets an email", substring = true)
     }
 }
