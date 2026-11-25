@@ -186,6 +186,12 @@ fun ChickenIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
     )
 }
 
+/** [ChickenIcon] that says what it is on a touch, a long touch or a hover. */
+@Composable
+fun ChickenHandMark(size: Dp = 22.dp) {
+    AppTooltipBox(stringResource(Res.string.chicken_hand), alignEnd = true) { ChickenIcon(size) }
+}
+
 /** The explosion of a self-draw. A label beside it says the words, so it has no description of its own. */
 @Composable
 fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {

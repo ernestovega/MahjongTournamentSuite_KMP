@@ -71,6 +71,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
+import com.etologic.mahjongtournamentsuite.presentation.components.BestHandMark
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenHandMark
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
@@ -384,10 +386,11 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error,
                         )
+                        // A little smaller than the winner above (Ernesto, 2026-11-25).
                         Text(
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),
-                            style = MaterialTheme.typography.titleSmall.inTextFont(),
+                            style = MaterialTheme.typography.bodyMedium.inTextFont(),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.error,
                             maxLines = 1,
@@ -406,8 +409,9 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
             }
             if (hand.isChickenHand || bestHandRank != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (hand.isChickenHand) ChickenIcon()
-                    bestHandRank?.let { BestHandIcon(it, size = 24.dp) }
+                    // Each mark says what it is on a touch, a long touch or a hover (Ernesto, 2026-11-25).
+                    if (hand.isChickenHand) ChickenHandMark()
+                    bestHandRank?.let { BestHandMark(it, size = 24.dp) }
                 }
             }
         }
@@ -438,18 +442,26 @@ private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean
     }
 }
 
-/** The way the hand was won. Only this pill has color, so the type reads at once without coloring the whole item. */
+/**
+ * The way the hand was won: its icon and its name in its color, with no background (Ernesto, 2026-11-25). Only this
+ * has color, so the type reads at once without coloring the whole item.
+ */
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
-    MtsTintedChip(
-        kind.icon(),
-        when (kind) {
-            HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
-            HandKind.DISCARD -> stringResource(Res.string.hand_discard)
-            HandKind.DRAW -> stringResource(Res.string.hand_draw)
-        },
-        accent,
-    )
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
+        Text(
+            when (kind) {
+                HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
+                HandKind.DISCARD -> stringResource(Res.string.hand_discard)
+                HandKind.DRAW -> stringResource(Res.string.hand_draw)
+            },
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = accent,
+            maxLines = 1,
+        )
+    }
 }
 
 /** Green for a self-pick, the error red for a discard and grey for a draw. */
