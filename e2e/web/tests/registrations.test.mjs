@@ -3,10 +3,10 @@
 // and the organization gives it to the first on the waiting list (the waiting list moves only by hand). Each run creates its own tournament with open registrations, as the admin app does.
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { after, before, describe, it } from "node:test";
+import { after, afterEach, before, describe, it } from "node:test";
 
 import { startSite } from "../server.mjs";
-import { API, PASSWORD, ROOT, launch, openApp, seeText, tapButton, typeIn } from "../support.mjs";
+import { API, PASSWORD, ROOT, launch, openApp, seeText, tapButton, typeIn, saveOpenPages } from "../support.mjs";
 
 const PLACES = 4;
 
@@ -86,6 +86,7 @@ describe("Registrations web", () => {
     assert.equal(people.length, PLACES + 1);
     await fetch(`${API}/__e2e/mail`, { method: "DELETE" });
   });
+  afterEach(async (t) => saveOpenPages(t.name));
   after(async () => {
     if (tournamentId) await fetch(`${API}/api/tournaments/${tournamentId}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
     await browser?.close();

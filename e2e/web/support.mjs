@@ -9,6 +9,25 @@ export const API = process.env.MTS_E2E_API ?? "http://127.0.0.1:5055";
 export const ROOT = process.env.MTS_E2E_WEB_ROOT ?? new URL("../../playerApp/build/dist/wasmJs/productionExecutable", import.meta.url).pathname;
 const TIMEOUT = 30_000;
 
+const openPages = new Set();
+
+/**
+ * Saves a screenshot and the accessibility tree of every page still open, in `failures/`. A test closes its pages when
+ * it passes, so after a test only the pages of a failure are left. GitHub keeps the folder of a red run.
+ */
+export async function saveOpenPages(label) {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const folder = new URL("./failures/", import.meta.url).pathname;
+  let index = 0;
+  for (const page of openPages) {
+    await mkdir(folder, { recursive: true });
+    const name = `${label.replace(/[^a-z0-9]+/gi, "-").slice(0, 60)}-${index++}`;
+    await page.screenshot({ path: `${folder}${name}.png` }).catch(() => {});
+    await writeFile(`${folder}${name}.txt`, `${page.url()}\n${await screenText(page)}`).catch(() => {});
+    await page.context().close().catch(() => {});
+  }
+}
+
 /** Puts back the test tournaments that a test changes. */
 export async function resetTournaments(...ids) {
   const response = await fetch(`${API}/__e2e/reset?only=${ids.join(",")}`, { method: "POST" });
@@ -28,15 +47,22 @@ export async function openApp(browser, siteUrl, path = "/", { phone = true } = {
   await context.addInitScript(() => {
     localStorage.setItem("mts.a11y", "on");
   });
-  // No Analytics and no App Check from the tests.
-  await context.route(/googletagmanager|google-analytics|recaptcha|gstatic\.com\/recaptcha/, (route) => route.abort());
+  // Only the local site: no Analytics, no App Check and no other Google script. In GitHub those load (here a proxy
+  // stops them), and the App Check of the Firebase scripts then holds back every call of the API.
+  await context.route((url) => !["127.0.0.1", "localhost"].includes(url.hostname), (route) => route.abort());
   const page = await context.newPage();
   page.setDefaultTimeout(TIMEOUT);
   // A failed call of the API or an error of the page is printed, so a red run in GitHub says why.
+  openPages.add(page);
+  page.on("close", () => openPages.delete(page));
   page.on("response", (response) => {
-    if (response.url().includes("/api/") && response.status() >= 400) console.log(`# API ${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`);
+    if (response.url().includes("/api/") && (response.status() >= 400 || process.env.MTS_E2E_VERBOSE)) console.log(`# API ${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`);
   });
-  page.on("requestfailed", (request) => console.log(`# request failed ${request.url()}: ${request.failure()?.errorText}`));
+  page.on("requestfailed", (request) => {
+    // ERR_ABORTED is a request cut by a new page or a closed one; other sites are blocked on purpose (openApp).
+    const local = ["127.0.0.1", "localhost"].includes(new URL(request.url()).hostname);
+    if (local && request.failure()?.errorText !== "net::ERR_ABORTED") console.log(`# request failed ${request.url()}: ${request.failure()?.errorText}`);
+  });
   page.on("pageerror", (error) => console.log(`# page error ${error.message}`));
   page.on("console", (message) => {
     if (message.type() === "error") console.log(`# console ${message.text().slice(0, 300)}`);

@@ -58,7 +58,17 @@ jobs:
           exit 1
 
       - name: Run the web E2E tests
+        env:
+          MTS_E2E_VERBOSE: "1"
         run: npm test --prefix e2e/web
+
+      - name: Keep the screens of the failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-e2e-failures
+          path: e2e/web/failures/
+          if-no-files-found: ignore
 
       - name: Show the backend log
         if: failure()

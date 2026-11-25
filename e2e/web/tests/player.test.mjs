@@ -4,10 +4,10 @@
 //   cd e2e/web && npm ci && npx playwright install chromium && npm test
 // See e2e/web/README.md.
 import assert from "node:assert/strict";
-import { after, before, describe, it } from "node:test";
+import { after, afterEach, before, describe, it } from "node:test";
 
 import { startSite } from "../server.mjs";
-import { API, ROOT, button, freshTree, launch, openApp, resetTournaments, screenText, seeText, signIn, tap, tapButton, typeIn } from "../support.mjs";
+import { API, ROOT, button, freshTree, launch, openApp, resetTournaments, screenText, seeText, signIn, tap, tapButton, typeIn, saveOpenPages } from "../support.mjs";
 
 const LIVE = "test-live-ongoing";
 
@@ -20,6 +20,7 @@ describe("Player web", () => {
     browser = await launch();
     await resetTournaments(LIVE);
   });
+  afterEach(async (t) => saveOpenPages(t.name));
   after(async () => {
     await resetTournaments(LIVE);
     await browser?.close();
