@@ -48,7 +48,7 @@ Both apps show one statistics screen, without tabs: a row of filters on top (`St
 What shows depends on the filters (`StatisticsFilters.view`):
 | View | Filters | Shows |
 | --- | --- | --- |
-| Person | a player | The player cards over the kept tournaments, then one card for each tournament. With a rival, only the tables against that rival count (`PersonStatisticsData.only`). |
+| Person | a player | The player cards over the kept tournaments, then one card for each tournament. With a rival the screen compares first: **Head to head** (`HeadToHeadCard`, both players side by side with the better number in bold) and **Shared tables** (`SharedTablesCard`, place and points of each one, newest first), from `headToHead()`, which loads the rival too; then the player cards over only the tables against that rival (`PersonStatisticsData.only`), without the tournament list. |
 | Table | a tournament, a round and a table | The table. Only a table entry point sets round and table. |
 | Seat | a tournament and a seat | The standing, the place after each round and the player cards of that tournament. A tap on a player of a tournament opens it. |
 | Tournament | a tournament, no country of the players | The tournament, with the round chips. |

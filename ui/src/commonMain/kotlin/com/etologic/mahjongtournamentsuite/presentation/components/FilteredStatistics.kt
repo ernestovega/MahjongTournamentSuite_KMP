@@ -3,23 +3,31 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.headToHead
 import com.etologic.mahjongtournamentsuite.domain.usecase.only
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.h2h_alone_title
 import mahjongtournamentsuite.ui.generated.resources.stats_empty_message
 import mahjongtournamentsuite.ui.generated.resources.stats_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_message
@@ -30,7 +38,8 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The statistics of [filters], the same in both apps. The screen loads the data of [StatisticsFilters.view]:
  * [person] for PERSON, [tournament] for TOURNAMENT, TABLE and SLOT, [group] for GROUP. Nothing shows while it is null.
- * A tap on a player or a rival changes the filters through [onFiltersChange].
+ * A tap on a player or a rival changes the filters through [onFiltersChange]. With a rival, [loadPerson] loads the
+ * rival too, for the numbers of both players side by side.
  */
 @Composable
 fun FilteredStatistics(
@@ -44,10 +53,11 @@ fun FilteredStatistics(
     /** The round of the tournament view, when the screen shows [TournamentRoundChips] itself. */
     selectedRound: Int? = null,
     onSelectRound: ((Int?) -> Unit)? = null,
+    loadPerson: (suspend (emaId: String) -> PersonStatisticsData?)? = null,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
         when (filters.view) {
-            StatisticsView.PERSON -> person?.let { PersonContent(it, filters, onFiltersChange, loadStandings) }
+            StatisticsView.PERSON -> person?.let { PersonContent(it, filters, onFiltersChange, loadStandings, loadPerson) }
             StatisticsView.TABLE -> tournament?.let { data ->
                 data.statistics.tables.firstOrNull { it.roundId == filters.roundId && it.tableId == filters.tableId }
                     ?.let { TableStatisticsPanel(it, data.names) }
@@ -97,6 +107,7 @@ private fun PersonContent(
     filters: StatisticsFilters,
     onFiltersChange: (StatisticsFilters) -> Unit,
     loadStandings: suspend (String, List<String>) -> Map<String, Standing>,
+    loadPerson: (suspend (String) -> PersonStatisticsData?)?,
 ) {
     val kept = remember(data, filters) { data.only(filters::keeps, filters.rivalEmaId) }
     if (kept.tournaments.isEmpty()) {
@@ -105,6 +116,26 @@ private fun PersonContent(
         } else {
             NoStatistics()
         }
+        return
+    }
+    val rival = filters.rivalEmaId
+    if (rival != null) {
+        // Against a rival the screen compares the two players first. The numbers of the person alone come after.
+        val rivalData by produceState<PersonStatisticsData?>(null, rival) { value = loadPerson?.invoke(rival) }
+        val headToHead = remember(data, rivalData, filters) { headToHead(data, rival, rivalData, filters::keeps) }
+        val rivalProfile = rivalData?.profile ?: PlayerProfile(data.rivalNames[rival] ?: "EMA $rival", rival, "", null)
+        val cardModifier = Modifier.widthIn(max = 720.dp).fillMaxWidth()
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
+            HeadToHeadCard(headToHead, data.profile, rivalProfile, cardModifier)
+            SharedTablesCard(headToHead, cardModifier)
+        }
+        Text(stringResource(Res.string.h2h_alone_title, data.profile?.name ?: "EMA ${data.emaId}"), style = MaterialTheme.typography.titleLarge)
+        PlayerStatisticsPanel(
+            kept.overall,
+            tournaments = kept.tournaments.map { it.first },
+            rivalNames = kept.rivalNames,
+            onOpenRival = { ema -> onFiltersChange(filters.withPerson(ema)) },
+        )
         return
     }
     PlayerStatisticsPanel(

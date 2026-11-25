@@ -588,6 +588,19 @@
     <string name="stats_group_empty_title">Ingen statistik med dessa filter</string>
     <string name="stats_group_empty_message">Inget avslutat bord matchar dem.\nÄndra eller ta bort ett filter.</string>
     <string name="stats_player_tournaments">Turneringar</string>
+    <string name="h2h_title">Inbördes möten</string>
+    <string name="h2h_tables_above">Före den andra</string>
+    <string name="h2h_table_wins">Vunna bord</string>
+    <string name="h2h_average_place">Snittplacering</string>
+    <string name="h2h_hands_won">Vunna händer</string>
+    <string name="h2h_wins_on_discard">Vinster på den andras kast</string>
+    <string name="h2h_self_draws">Självdrag</string>
+    <string name="h2h_shared_tables">Delade bord</string>
+    <string name="h2h_table_line">%1$s · Rond %2$d · Bord %3$d</string>
+    <string name="h2h_alone_title">%1$s vid dessa bord</string>
+    <string name="h2h_info">Bara borden där de två spelade tillsammans räknas.
+Det bättre talet på varje rad är fetstilt.</string>
+    <string name="h2h_shared_tables_info">Placeringen för var och en vid bordet, och poängen.</string>
     <string name="stats_chip_table">Bord %1$d · Omgång %2$d</string>
     <string name="registration_error_already_in_team">Den personen är redan med i ett lag.</string>
     <string name="registration_error_already_registered">Det här EMA-numret är redan anmält till turneringen.</string>

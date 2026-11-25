@@ -146,6 +146,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     tournament = tournament,
                     group = group,
                     loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
+                    loadPerson = { ema -> (presenter.person(ema) as? AppResult.Success)?.value },
                 )
             }
         }

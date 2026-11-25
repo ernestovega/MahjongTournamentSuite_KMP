@@ -142,6 +142,7 @@ class HandEntryPanelUiTest {
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")),
             roundClocks = if (started) listOf(RoundClock(roundId = 1, startedAtMs = start)) else emptyList(),
             matchDurationMinutes = 120, matchEndMode = mode, matchExtraMinutes = 15, roundControls = controls,
+            timeZone = TimeZone.currentSystemDefault().id,
         )
         val seatIds = if (seats) listOf("1", "2", "3", "4") else listOf("", "", "", "")
         val table = TableState(

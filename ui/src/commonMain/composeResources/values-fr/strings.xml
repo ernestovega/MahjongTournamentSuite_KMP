@@ -592,6 +592,19 @@
     <string name="stats_group_empty_title">Aucune statistique avec ces filtres</string>
     <string name="stats_group_empty_message">Aucune table terminée ne leur correspond.\nModifiez ou retirez un filtre.</string>
     <string name="stats_player_tournaments">Tournois</string>
+    <string name="h2h_title">Face-à-face</string>
+    <string name="h2h_tables_above">Devant l'autre</string>
+    <string name="h2h_table_wins">Tables gagnées</string>
+    <string name="h2h_average_place">Place moyenne</string>
+    <string name="h2h_hands_won">Mains gagnées</string>
+    <string name="h2h_wins_on_discard">Gagnées sur la défausse de l'autre</string>
+    <string name="h2h_self_draws">Gagnées à la pioche</string>
+    <string name="h2h_shared_tables">Tables partagées</string>
+    <string name="h2h_table_line">%1$s · Manche %2$d · Table %3$d</string>
+    <string name="h2h_alone_title">%1$s à ces tables</string>
+    <string name="h2h_info">Seules comptent les tables où les deux ont joué ensemble.
+Le meilleur chiffre de chaque ligne est en gras.</string>
+    <string name="h2h_shared_tables_info">La place de chacun à la table, et les points.</string>
     <string name="stats_chip_table">Table %1$d · Manche %2$d</string>
     <string name="registration_error_already_in_team">Cette personne est déjà dans une équipe.</string>
     <string name="registration_error_already_registered">Ce numéro EMA est déjà inscrit au tournoi.</string>
