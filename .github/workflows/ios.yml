@@ -58,7 +58,7 @@ jobs:
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             build > build/xcodebuild.log 2>&1 || { grep -nE "error|e: |FAILURE|What went wrong" -A3 build/xcodebuild.log | head -150; exit 1; }
-          grep -E "warning: .*\.swift|Version " build/xcodebuild.log || true
+          grep -E "warning: .*\.swift|Version |Firebase: " build/xcodebuild.log || true
 
       - name: Open the app in the simulator
         run: |

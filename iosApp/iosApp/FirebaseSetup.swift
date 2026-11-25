@@ -8,7 +8,7 @@ import FirebaseCore
 #endif
 
 /// Firebase App Check (App Attest) and Analytics, which only exist as Swift SDKs. They hand themselves to the shared
-/// code through `IosSuite`. Until the Firebase packages and `GoogleService-Info.plist` are in the project, the app
+/// code through `IosSuite`. Without a `GoogleService-Info.plist` for the configuration (iosApp/Firebase), the app
 /// works without them: it sends no App Check token and no Analytics. See docs/ios-release.md.
 enum FirebaseSetup {
     static func configure() {
@@ -40,12 +40,13 @@ private final class MtsAppCheckProviderFactory: NSObject, AppCheckProviderFactor
 }
 
 private final class FirebaseAppCheckBridge: NSObject, MtsAppCheck {
-    func token(completion: @escaping (String?, String?) -> Void) {
+    // Kotlin hands the callback over as a block that returns KotlinUnit.
+    func token(completion: @escaping (String?, String?) -> KotlinUnit) {
         AppCheck.appCheck().token(forcingRefresh: false) { token, error in
             if let token {
-                completion(token.token, nil)
+                _ = completion(token.token, nil)
             } else {
-                completion(nil, error.map { String(describing: type(of: $0)) + ":" + $0.localizedDescription } ?? "unknown")
+                _ = completion(nil, error.map { String(describing: type(of: $0)) + ":" + $0.localizedDescription } ?? "unknown")
             }
         }
     }

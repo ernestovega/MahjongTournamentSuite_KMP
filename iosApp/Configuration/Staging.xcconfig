@@ -9,3 +9,4 @@ SLASH = /
 MTS_BACKEND_URL = https:$(SLASH)$(SLASH)europe-southwest1-mts---staging.cloudfunctions.net/api
 MTS_ENVIRONMENT = staging
 KOTLIN_FRAMEWORK_BUILD_TYPE = release
+APP_ATTEST_ENVIRONMENT = production

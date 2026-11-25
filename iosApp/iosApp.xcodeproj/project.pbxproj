@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F9A20674BA71B872C4A53655 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 24A7B9339BD41E67C9C812D0 /* FirebaseCore */; };
+		9BC3F8FAF9D45796BA10F4AD /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = C7CA5036BE87AD6BD8FE12C5 /* FirebaseAppCheck */; };
+		FFA9E13E4257956354CD32F2 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F1DEF90BCAC12DD4C3D9BE65 /* FirebaseAnalytics */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		BBBA66EA3DE1908A2B6F4EA1 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1F310B1F734F5D9037555F9 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
@@ -41,6 +47,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F9A20674BA71B872C4A53655 /* FirebaseCore in Frameworks */,
+				9BC3F8FAF9D45796BA10F4AD /* FirebaseAppCheck in Frameworks */,
+				FFA9E13E4257956354CD32F2 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,7 +95,7 @@
 				38C7C31221323A8A0D2CF356 /* Sources */,
 				E13757687307ABB0B4D10215 /* Frameworks */,
 				3BF4497F46DE30E2D5DEC35B /* Resources */,
-				7C5381DFBB3E96B9D41CDEC5 /* Set version */,
+				7C5381DFBB3E96B9D41CDEC5 /* Set version and Firebase */,
 			);
 			buildRules = (
 			);
@@ -97,6 +106,9 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				24A7B9339BD41E67C9C812D0 /* FirebaseCore */,
+				C7CA5036BE87AD6BD8FE12C5 /* FirebaseAppCheck */,
+				F1DEF90BCAC12DD4C3D9BE65 /* FirebaseAnalytics */,
 			);
 			productName = iosApp;
 			productReference = BBBA66EA3DE1908A2B6F4EA1 /* iosApp.app */;
@@ -133,6 +145,9 @@
 			);
 			mainGroup = 17752B5588182B02BB7DD95C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				91082070EC9A412FF0027942 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5A604B0DFC2B97074C3432A9 /* Products */;
 			projectDirPath = "";
@@ -173,7 +188,7 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :suite:embedAndSignAppleFrameworkForXcode\n";
 		};
-		7C5381DFBB3E96B9D41CDEC5 /* Set version */ = {
+		7C5381DFBB3E96B9D41CDEC5 /* Set version and Firebase */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -183,14 +198,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Set version";
+			name = "Set version and Firebase";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# The version of the app comes from gradle/libs.versions.toml, like the Android app: admin-versionName and\n# admin-versionCode. See docs/versioning.md.\nCATALOG=\"$SRCROOT/../gradle/libs.versions.toml\"\nNAME=$(sed -n 's/^admin-versionName *= *\"\\(.*\\)\"/\\1/p' \"$CATALOG\")\nCODE=$(sed -n 's/^admin-versionCode *= *\"\\(.*\\)\"/\\1/p' \"$CATALOG\")\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $NAME\" \"$PLIST\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $CODE\" \"$PLIST\"\necho \"Version $NAME ($CODE)\"\n";
+			shellScript = "# The version of the app comes from gradle/libs.versions.toml, like the Android app: admin-versionName and\n# admin-versionCode. See docs/versioning.md.\nCATALOG=\"$SRCROOT/../gradle/libs.versions.toml\"\nNAME=$(sed -n 's/^admin-versionName *= *\"\\(.*\\)\"/\\1/p' \"$CATALOG\")\nCODE=$(sed -n 's/^admin-versionCode *= *\"\\(.*\\)\"/\\1/p' \"$CATALOG\")\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $NAME\" \"$PLIST\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $CODE\" \"$PLIST\"\necho \"Version $NAME ($CODE)\"\n# Firebase: the GoogleService-Info.plist of the project of each configuration (Staging: mts---staging).\nif [ \"$CONFIGURATION\" = \"Staging\" ]; then FIREBASE=\"$SRCROOT/Firebase/Staging/GoogleService-Info.plist\"; else FIREBASE=\"$SRCROOT/Firebase/GoogleService-Info.plist\"; fi\nif [ -f \"$FIREBASE\" ]; then cp \"$FIREBASE\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist\"; echo \"Firebase: $FIREBASE\"; else echo \"Firebase: no GoogleService-Info.plist for $CONFIGURATION\"; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -491,6 +506,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		91082070EC9A412FF0027942 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		24A7B9339BD41E67C9C812D0 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91082070EC9A412FF0027942 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		C7CA5036BE87AD6BD8FE12C5 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91082070EC9A412FF0027942 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		F1DEF90BCAC12DD4C3D9BE65 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91082070EC9A412FF0027942 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 97E02AEB3BC5BB6FD0E4AF1C /* Project object */;
 }

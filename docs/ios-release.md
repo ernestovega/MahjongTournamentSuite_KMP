@@ -58,14 +58,17 @@ the app with the same rules as Android (`suiteStartOf`). The app ID in the file 
 ## Firebase
 
 `FirebaseSetup.swift` turns on App Check (App Attest, DeviceCheck on old devices, the debug provider in Debug) and
-Analytics, and hands them to the shared code. It does nothing until the project has:
+Analytics, and hands them to the shared code. The project has:
 
-1. The iOS apps in the Firebase consoles of `mahjong-tournament-suite` and `mts---staging`, with the two bundle IDs.
-   The production `GoogleService-Info.plist` goes to `iosApp/iosApp`. The staging one needs a build phase that copies it
-   in for the Staging configuration (to do). They are not secret, like `google-services.json`.
-2. The Swift packages of `firebase-ios-sdk` in the project: `FirebaseAppCheck` and the Analytics product without the
-   advertising ID.
-3. App Attest registered in the Firebase console (App Check) with the Team ID, and the App Attest capability in Xcode.
+1. The Swift package `firebase-ios-sdk` (13.x): `FirebaseCore`, `FirebaseAppCheck` and `FirebaseAnalytics` (without
+   `FirebaseAnalyticsIdentitySupport`, so no advertising ID).
+2. `iosApp/Firebase/GoogleService-Info.plist` (iOS app of `mahjong-tournament-suite`, for Debug and Release) and
+   `iosApp/Firebase/Staging/GoogleService-Info.plist` (iOS app of `mts---staging`). The build phase "Set version and
+   Firebase" copies the one of the configuration into the app; without it the app runs without Firebase. They are not
+   secret, like `google-services.json`.
+3. The App Attest entitlement (`development` in Debug, `production` in Release and Staging) and the App IDs with
+   Associated Domains and App Attest in the Apple Developer account. App Attest also has to be registered in the
+   Firebase console (App Check) with the Team ID.
 
 The backend stays in App Check `monitor` mode (docs/backend.md). The client tag of the app is `ios/<version>`.
 
