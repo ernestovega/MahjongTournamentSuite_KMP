@@ -602,9 +602,9 @@
     <string name="h2h_shared_tables">Tavoli condivisi</string>
     <string name="h2h_table_line">%1$s · Turno %2$d · Tavolo %3$d</string>
     <string name="h2h_alone_title">%1$s in questi tavoli</string>
-    <string name="h2h_info">Contano solo i tavoli in cui i due hanno giocato insieme.
-Il numero migliore di ogni riga è in grassetto.</string>
-    <string name="h2h_shared_tables_info">La posizione di ciascuno al tavolo, e i punti.</string>
+    <string name="h2h_info">Contano solo i tavoli in cui i due hanno giocato insieme.\nIl numero migliore di ogni riga è in verde, e il peggiore in rosso.</string>
+    <string name="h2h_place">Posizione %1$d</string>
+    <string name="h2h_shared_tables_info">La posizione di ciascuno al tavolo, con il suo trofeo, e i punti del tavolo.\nTocca un tavolo per aprire le sue statistiche.</string>
     <string name="stats_chip_table">Tavolo %1$d · Turno %2$d</string>
     <string name="registration_error_already_in_team">Questa persona è già in una squadra.</string>
     <string name="registration_error_already_registered">Questo numero EMA è già iscritto al torneo.</string>
@@ -754,4 +754,10 @@ Vince la prima che riesce</string>
     <string name="conflict_too_many_penalties">Una mano ha al massimo 5 penalità.</string>
     <string name="conflict_totals_only">Questo tavolo usa solo i totali.\nUn organizzatore inserisce i risultati.</string>
     <string name="conflict_tournament_gone">Il torneo non esiste più.</string>
+    <string name="h2h_skills_title">Abilità a questi tavoli</string>
+    <string name="h2h_skills_info">Le abilità dei due giocatori ai tavoli che hanno condiviso, una forma per ogni giocatore.</string>
+    <string name="h2h_ranks_title">Posizioni nei tornei</string>
+    <string name="h2h_ranks_info">La posizione finale di ciascuno nei tornei in cui hanno giocato entrambi. In cima al grafico c'è il primo posto.\nTocca un punto per vedere il torneo.</string>
+    <string name="h2h_rank_of">%1$s di %2$d</string>
+    <string name="h2h_open_table">Apri le statistiche di questo tavolo</string>
 </resources>

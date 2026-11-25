@@ -604,9 +604,9 @@
     <string name="h2h_shared_tables">Общие столы</string>
     <string name="h2h_table_line">%1$s · Раунд %2$d · Стол %3$d</string>
     <string name="h2h_alone_title">%1$s за этими столами</string>
-    <string name="h2h_info">Считаются только столы, за которыми оба играли вместе.
-Лучшее число в каждой строке выделено жирным.</string>
-    <string name="h2h_shared_tables_info">Место каждого за столом и очки.</string>
+    <string name="h2h_info">Считаются только столы, за которыми оба играли вместе.\nЛучшее число в каждой строке зелёное, худшее — красное.</string>
+    <string name="h2h_place">Место %1$d</string>
+    <string name="h2h_shared_tables_info">Место каждого за столом, с кубком, и очки стола.\nНажмите на стол, чтобы открыть его статистику.</string>
     <string name="stats_chip_table">Стол %1$d · Раунд %2$d</string>
     <string name="registration_error_already_in_team">Этот человек уже в команде.</string>
     <string name="registration_error_already_registered">Этот номер EMA уже зарегистрирован на турнир.</string>
@@ -756,4 +756,10 @@
     <string name="conflict_too_many_penalties">В одной руке не больше 5 штрафов.</string>
     <string name="conflict_totals_only">Этот стол использует только итоги.\nРезультаты вносит организатор.</string>
     <string name="conflict_tournament_gone">Турнир больше не существует.</string>
+    <string name="h2h_skills_title">Навыки за этими столами</string>
+    <string name="h2h_skills_info">Навыки двух игроков за общими столами, по одной фигуре на игрока.</string>
+    <string name="h2h_ranks_title">Места в турнирах</string>
+    <string name="h2h_ranks_info">Итоговое место каждого в турнирах, где играли оба. Верх графика — первое место.\nНажмите на точку, чтобы увидеть турнир.</string>
+    <string name="h2h_rank_of">%1$s из %2$d</string>
+    <string name="h2h_open_table">Открыть статистику этого стола</string>
 </resources>
