@@ -44,12 +44,13 @@ async function createRegistrationTournament(token, slug) {
   return created.id;
 }
 
-/** The path of the link of the last email to [to], to open on the local site. */
+/** The emails to [to] that the test backend sent. */
 async function mailTo(to) {
   const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
   return emails.filter((it) => it.to === to);
 }
 
+/** The path of the link of the last email to [to], to open on the local site. */
 async function linkOfMailTo(to) {
   const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
   const email = emails.filter((it) => it.to === to).at(-1);
@@ -139,9 +140,8 @@ describe("Registrations web", () => {
     assert.equal(list.registrations.find((it) => it.emaId === next.emaId)?.status, "CONFIRMED");
 
     // 5. Emails: the person who waited has a place, and the organization reads who took it.
-    const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
-    assert.ok(emails.some((it) => it.to === nextEmail && /You have a place/.test(it.subject)), "the promoted person gets an email");
-    const organization = emails.filter((it) => it.to === "org@example.test");
+    assert.ok((await mailTo(nextEmail)).some((it) => /You have a place/.test(it.subject)), "the promoted person gets an email");
+    const organization = await mailTo("org@example.test");
     assert.equal(organization.length, 1, "one email to the organization");
     assert.ok(organization[0].text.includes(`(${next.emaId})`), "the organization reads who took the place");
 
