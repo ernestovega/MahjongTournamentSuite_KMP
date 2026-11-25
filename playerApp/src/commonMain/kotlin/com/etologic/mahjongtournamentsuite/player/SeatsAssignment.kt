@@ -121,15 +121,16 @@ internal fun SeatsAssignment(
                     }
                     // The seats already set grow below the names, above the buttons of the dialog.
                     if (picks.isNotEmpty() && !complete) HorizontalDivider(modifier = Modifier.padding(vertical = MtsTheme.spacing.xs))
-                    // On the left, with only the icon of the wind: the icon says it (Ernesto, 2026-11-25).
-                    picks.forEachIndexed { index, slot ->
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
-                        ) {
-                            WindIcon(SeatWind.entries[index], size = 20.dp)
-                            Text(view.nameOf(slot))
+                    // A block in the middle, its lines on the left, with only the icon of the wind: the icon says it
+                    // (Ernesto, 2026-11-25).
+                    if (picks.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                            picks.forEachIndexed { index, slot ->
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                                    WindIcon(SeatWind.entries[index], size = 20.dp)
+                                    Text(view.nameOf(slot))
+                                }
+                            }
                         }
                     }
                 }

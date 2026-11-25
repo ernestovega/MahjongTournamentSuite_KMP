@@ -168,7 +168,7 @@
     <string name="entry_total">Итого</string>
     <string name="entry_shared_multiple">Разделённый штраф должен быть кратен 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Поровну</string>
+    <string name="entry_share_short">Выплачивается остальным</string>
     <string name="entry_from">от</string>
     <string name="changed_title">Стол изменился</string>
     <string name="changed_not_saved">Ваша раздача не сохранена. Проверьте данные сервера ниже.</string>

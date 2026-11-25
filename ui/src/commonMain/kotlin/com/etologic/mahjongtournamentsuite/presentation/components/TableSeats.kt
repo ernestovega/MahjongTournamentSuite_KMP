@@ -192,9 +192,9 @@ fun ChickenHandMark(size: Dp = 22.dp) {
     AppTooltipBox(stringResource(Res.string.chicken_hand), alignEnd = true) { ChickenIcon(size) }
 }
 
-/** The self-draw: a filled mushroom cloud in one color (Ernesto, 2026-11-25). A label beside it says the words, so it has no description of its own. */
+/** The self-draw: a mushroom cloud in a few warm colors, its own colors unless [tint] (Ernesto, 2026-11-25). A label beside it says the words, so it has no description of its own. */
 @Composable
-fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier, tint: Color = MtsTheme.colors.selfPick) {
+fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
     Icon(
         painter = painterResource(Res.drawable.icon_self_draw),
         contentDescription = null,

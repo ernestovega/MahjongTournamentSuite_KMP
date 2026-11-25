@@ -162,7 +162,7 @@
     <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">A shared penalty must be a multiple of 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Shared</string>
+    <string name="entry_share_short">Paid to the others</string>
     <string name="entry_from">from</string>
     <string name="changed_title">The table changed</string>
     <string name="changed_not_saved">Your hand is not saved. Check the data of the server below.</string>

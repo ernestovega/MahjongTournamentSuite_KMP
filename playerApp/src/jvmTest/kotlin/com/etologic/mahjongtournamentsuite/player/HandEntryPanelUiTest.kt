@@ -671,7 +671,7 @@ class HandEntryPanelUiTest {
         onNodeWithText("Review").assertIsNotEnabled()
         onAllNodesWithText("Player 3").onFirst().performClick()
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("10")
-        onNodeWithText("Shared").performClick()
+        onNodeWithText("Paid to the others").performClick()
         // A shared penalty is split in three.
         onNodeWithText("A shared penalty must be a multiple of 3.").assertIsDisplayed()
         onNodeWithText("Review").assertIsNotEnabled()

@@ -162,7 +162,7 @@
     <string name="entry_total">Totalt</string>
     <string name="entry_shared_multiple">Ett delat straff måste vara en multipel av 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Delad</string>
+    <string name="entry_share_short">Betalas till de andra</string>
     <string name="entry_from">från</string>
     <string name="changed_title">Bordet har ändrats</string>
     <string name="changed_not_saved">Din hand är inte sparad. Kontrollera serverns data nedan.</string>

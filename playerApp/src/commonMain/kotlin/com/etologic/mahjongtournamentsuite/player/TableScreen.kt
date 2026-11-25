@@ -481,14 +481,15 @@ private fun TextStyle.tight(): TextStyle = copy(
 private fun WinTypePill(kind: HandKind, accent: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         // A self-draw shows the explosion, the same as in the dialogs of a hand (Ernesto, 2026-11-25).
-        if (kind == HandKind.SELF_PICK) SelfDrawIcon(18.dp, tint = accent) else Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
+        if (kind == HandKind.SELF_PICK) SelfDrawIcon(18.dp) else Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
         Text(
             when (kind) {
                 HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
                 HandKind.DISCARD -> stringResource(Res.string.hand_discard)
                 HandKind.DRAW -> stringResource(Res.string.hand_draw)
             },
-            style = MaterialTheme.typography.labelLarge,
+            // The text font, as the player who discarded: the decorative font looked too heavy here (Ernesto, 2026-11-25).
+            style = MaterialTheme.typography.bodyMedium.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = accent,
             maxLines = 1,

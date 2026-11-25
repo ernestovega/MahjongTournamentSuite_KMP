@@ -162,7 +162,7 @@
     <string name="entry_total">Totale</string>
     <string name="entry_shared_multiple">Una penalità condivisa deve essere un multiplo di 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Condivisa</string>
+    <string name="entry_share_short">Pagata agli altri</string>
     <string name="entry_from">da</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>

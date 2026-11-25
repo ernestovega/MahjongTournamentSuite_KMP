@@ -162,7 +162,7 @@
     <string name="entry_total">Gesamt</string>
     <string name="entry_shared_multiple">Eine geteilte Strafe muss ein Vielfaches von 3 sein.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Geteilt</string>
+    <string name="entry_share_short">An die anderen gezahlt</string>
     <string name="entry_from">von</string>
     <string name="changed_title">Der Tisch hat sich geändert</string>
     <string name="changed_not_saved">Deine Hand ist nicht gespeichert. Prüfe unten die Daten des Servers.</string>

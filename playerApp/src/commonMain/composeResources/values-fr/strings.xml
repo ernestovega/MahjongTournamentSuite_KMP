@@ -162,7 +162,7 @@
     <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">Une pénalité partagée doit être un multiple de 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Partagée</string>
+    <string name="entry_share_short">Payée aux autres</string>
     <string name="entry_from">de</string>
     <string name="changed_title">La table a changé</string>
     <string name="changed_not_saved">Votre main n'est pas enregistrée. Vérifiez ci-dessous les données du serveur.</string>

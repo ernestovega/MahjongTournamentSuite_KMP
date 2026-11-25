@@ -69,16 +69,16 @@
     <string name="standing_title_ranking">Clasificación</string>
     <string name="standing_title_team">Equipo</string>
     <string name="standing_title_best_hand">Mejor mano</string>
-    <string name="standing_title_chicken">Manos de pollo</string>
+    <string name="standing_title_chicken">Manos del pollo</string>
     <string name="standing_place">• Puesto: %1$d</string>
     <string name="standing_place_of_players">• Puesto: %1$d de %2$d jugadores</string>
     <string name="standing_place_of_teams">• Puesto: %1$d de %2$d equipos</string>
     <string name="standing_place_of_best_hands">• Puesto: %1$d de %2$d mejores manos</string>
-    <string name="standing_place_of_chicken">• Puesto: %1$d de %2$d jugadores con manos de pollo</string>
+    <string name="standing_place_of_chicken">• Puesto: %1$d de %2$d jugadores con manos del pollo</string>
     <string name="standing_points">• Puntos: %1$s</string>
     <string name="standing_score">• Puntuación: %1$d</string>
     <string name="standing_hand_value">• Valor: %1$d puntos</string>
-    <string name="standing_chicken_hands">• Manos de pollo: %1$d</string>
+    <string name="standing_chicken_hands">• Manos del pollo: %1$d</string>
     <string name="standing_show_details">Ver los detalles</string>
     <string name="contact_send_email">Enviar un correo a los organizadores</string>
     <string name="schedule_hide">Ocultar horario</string>
@@ -97,7 +97,7 @@
     <string name="ranking_empty">La clasificación aparece cuando se completa la primera mesa.</string>
     <string name="ranking_empty_title">Aún no hay clasificación</string>
     <string name="ranking_teams">Equipos</string>
-    <string name="ranking_chicken_hands">Manos de pollo</string>
+    <string name="ranking_chicken_hands">Manos del pollo</string>
     <string name="ranking_chicken_short">Pollo</string>
     <string name="ranking_best_hands">Mejores manos</string>
     <string name="ranking_best_short">Mejor mano</string>
@@ -136,8 +136,8 @@
     <string name="entry_self_draw">Del muro</string>
     <string name="entry_loser">¿Quién descartó?</string>
     <string name="entry_hand_score">Puntuación de la mano</string>
-    <string name="entry_chicken_limit">Una mano de pollo tiene 12 puntos o menos.</string>
-    <string name="chicken_hand">Mano de pollo</string>
+    <string name="entry_chicken_limit">Una mano del pollo tiene 12 puntos o menos.</string>
+    <string name="chicken_hand">Mano del pollo</string>
     <string name="entry_last_hand">Última mano de la mesa</string>
     <string name="entry_back">Atrás</string>
     <string name="entry_numpad_delete">Borrar</string>
@@ -162,7 +162,7 @@
     <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">Una penalización compartida debe ser múltiplo de 3.</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Compartida</string>
+    <string name="entry_share_short">Pagada a los demás</string>
     <string name="entry_from">a</string>
     <string name="changed_title">La mesa ha cambiado</string>
     <string name="changed_not_saved">Tu mano no se ha guardado. Comprueba abajo los datos del servidor.</string>
@@ -174,7 +174,7 @@
     <string name="changed_your_hand">Tu mano, sin guardar</string>
     <string name="changed_entered_from">%1$s ganó con %2$d a %3$s</string>
     <string name="changed_entered_self">%1$s ganó con %2$d (del muro)</string>
-    <string name="changed_entered_chicken">%1$s - mano de pollo</string>
+    <string name="changed_entered_chicken">%1$s - mano del pollo</string>
     <string name="changed_already">Si la mano ya está en la mesa, no la introduzcas otra vez.</string>
     <string name="changed_call_staff">Puedes llamar a un miembro del personal para que compruebe la mesa, o cerrar esta ventana y seguir.</string>
     <string name="changed_close">Cerrar y continuar</string>
