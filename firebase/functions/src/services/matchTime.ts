@@ -200,9 +200,12 @@ export function unstartedRoundIsPast(tournament: Data, roundId: number, nowMs: n
   if (tournament.isCompleted === true) return true;
   const clocks = readStoredRoundClocks(tournament);
   if ([...clocks.keys()].some((other) => other > roundId)) return true;
+  // Without a planned instant (no date or no time zone) only the clocks of the other rounds close it: the end of the
+  // round before alone says nothing about when this one was meant to start.
+  const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
+  if (roundStartMs(schedule, rules.timeZone) == null) return false;
   const start = expectedStartMs(tournament, roundId, nowMs);
   if (start == null || start === "LATER") return false;
-  const { rules } = matchTimeOfTournament(tournament, roundId);
   return nowMs >= start + fullMatchMs(rules);
 }
 

@@ -83,6 +83,9 @@ fun Tournament.remainingMs(roundId: Int, now: LocalDateTime): Long? =
 /** Milliseconds of the extra time after the match time, with FINISH_HAND. */
 private fun Tournament.extraMs(): Long = if (matchEndMode == MatchEndMode.FINISH_HAND) matchExtraMinutes * 60_000L else 0L
 
+/** True when the tournament has a valid time zone, so its planned times are instants, as on the server. */
+private fun Tournament.hasVenueZone(): Boolean = timeZone?.let { id -> runCatching { TimeZone.of(id) }.isSuccess } == true
+
 /** What [expectedStartMs] knows about the start of a round that has no clock. */
 private sealed interface ExpectedStart {
     data class At(val epochMs: Long?) : ExpectedStart
@@ -96,7 +99,9 @@ private sealed interface ExpectedStart {
  * end of the round before when that one ends later (a late round pushes the next ones).
  */
 private fun Tournament.expectedStartMs(roundId: Int, nowMs: Long, depth: Int = 0): ExpectedStart {
-    val planned = roundStartTime(roundId)?.let { epochMsAt(it) }
+    // Like the server, a tournament without a valid time zone has no planned instant: the zone of the device is no
+    // venue time, so only the clocks of the rounds close a round then.
+    val planned = if (hasVenueZone()) roundStartTime(roundId)?.let { epochMsAt(it) } else null
     if (roundId <= 1 || depth > 100) return ExpectedStart.At(planned)
     val before = clockOf(roundId - 1)
     val previousEnd: Long? = if (before != null) {
@@ -122,6 +127,9 @@ private fun Tournament.expectedStartMs(roundId: Int, nowMs: Long, depth: Int = 0
 fun Tournament.unstartedRoundIsPast(roundId: Int, now: LocalDateTime): Boolean {
     if (isCompleted) return true
     if (roundClocks.any { it.roundId > roundId }) return true
+    // Without a planned instant (no date or no valid time zone) only the clocks of the other rounds close it, as on the
+    // server: the end of the round before alone says nothing about when this one was meant to start.
+    if (!hasVenueZone() || roundStartTime(roundId) == null) return false
     val nowMs = epochMsAt(now)
     val start = (expectedStartMs(roundId, nowMs) as? ExpectedStart.At)?.epochMs ?: return false
     return nowMs >= start + matchDurationMinutes * 60_000L + extraMs()

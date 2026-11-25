@@ -28,6 +28,7 @@ class MatchTimeTest {
         id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1,
         roundSchedules = if (schedule) listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")) else emptyList(),
         roundClocks = listOfNotNull(clock),
+        timeZone = TimeZone.currentSystemDefault().id,
         matchDurationMinutes = minutes,
         matchEndMode = mode,
         matchExtraMinutes = 15,
@@ -132,6 +133,34 @@ class MatchTimeTest {
         assertEquals(SeatingState.OVER, laterStarted.seatingState(1, at("10:05")))
         assertEquals(SeatingState.OVER, noSchedule.copy(isCompleted = true).seatingState(1, at("10:05")))
         assertFalse(noSchedule.unstartedRoundIsPast(1, at("23:00")))
+    }
+
+    @Test
+    fun theWindowFollowsTheChangesOfTheOrganizers() {
+        val zone = TimeZone.currentSystemDefault().id
+        val waiting = tournament(MatchEndMode.STOP, clock = null).copy(timeZone = zone)
+        assertEquals(SeatingState.OVER, waiting.seatingState(1, at("12:00")))
+        // The round moves to 11:00: open again from 10:50 until 12:55.
+        val moved = waiting.copy(roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "11:00")))
+        assertTrue(moved.seatingIsOpen(1, at("12:00")))
+        assertEquals(SeatingState.OVER, moved.seatingState(1, at("12:55")))
+        // A longer match keeps it open longer.
+        assertTrue(waiting.copy(matchDurationMinutes = 180).seatingIsOpen(1, at("12:00")))
+        // Time added on the Timer and a pause keep the started round open after its planned end.
+        val added = tournament(MatchEndMode.STOP, clock = RoundClock(roundId = 1, startedAtMs = ms("10:00"), adjustMs = 30 * 60_000L))
+        assertTrue(added.seatingIsOpen(1, at("12:20")))
+        assertEquals(SeatingState.OVER, added.seatingState(1, at("12:25")))
+        val paused = tournament(MatchEndMode.STOP, clock = RoundClock(roundId = 1, startedAtMs = ms("10:00"), pausedAtMs = ms("10:30")))
+        assertTrue(paused.seatingIsOpen(1, at("20:00")))
+        // A tournament without a valid time zone has no planned instant, as on the server: only the clocks close it.
+        val noZone = tournament(MatchEndMode.STOP, clock = null).copy(timeZone = null)
+        assertFalse(noZone.unstartedRoundIsPast(1, at("23:00")))
+        val twoRoundsNoZone = noZone.copy(
+            numRounds = 2,
+            roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00"), TournamentRoundSchedule(2, "2026-10-10", "15:00")),
+            roundClocks = listOf(RoundClock(roundId = 1, startedAtMs = ms("10:00"))),
+        )
+        assertFalse(twoRoundsNoZone.unstartedRoundIsPast(2, at("14:50")))
     }
 
     @Test

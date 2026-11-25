@@ -127,6 +127,24 @@ test("the seats open 10 minutes before the planned start and close when the time
   assert.equal(seatingIsOpen(pastDay, 1, planned + 24 * 60 * MIN), false);
   assert.equal(seatingIsOpen(pastDay, 2, planned + 24 * 60 * MIN), false);
   assert.equal(seatingIsOpen(pastDay, 2, planned + 130 * MIN), true);
+  // The window follows the changes of the organizers: a new planned time, a longer match, time added, a pause.
+  const moved = { ...tournament, roundSchedules: [{ roundId: 1, date: "2026-10-10", startTime: "11:00" }] };
+  assert.equal(seatingIsOpen(tournament, 1, planned + 125 * MIN), false);
+  assert.equal(seatingIsOpen(moved, 1, planned + 125 * MIN), true);
+  assert.equal(seatingIsOpen(moved, 1, planned + 180 * MIN), false);
+  assert.equal(seatingIsOpen({ ...tournament, matchDurationMinutes: 180 }, 1, planned + 125 * MIN), true);
+  const added = { ...tournament, roundClocks: { 1: clockAt(planned, { adjustMs: 30 * MIN }) } };
+  assert.equal(seatingIsOpen(added, 1, planned + 145 * MIN), true);
+  assert.equal(seatingIsOpen(added, 1, planned + 150 * MIN), false);
+  const pausedClock = { ...tournament, roundClocks: { 1: clockAt(planned, { pausedAtMs: planned + 30 * MIN }) } };
+  assert.equal(seatingIsOpen(pausedClock, 1, planned + 600 * MIN), true);
+  // Another time zone moves the planned instant: 10:00 in Madrid (UTC+2) is 08:00 UTC, so it ends at 10:00 UTC.
+  const madrid = { ...tournament, timeZone: "Europe/Madrid" };
+  assert.equal(seatingIsOpen(madrid, 1, planned - 1 * MIN), true);
+  assert.equal(seatingIsOpen(madrid, 1, planned), false);
+  // Without a time zone the planned time is no instant: the end of the round before does not close the next one.
+  const noZone = { ...pushed, timeZone: null };
+  assert.equal(seatingIsOpen(noZone, 2, planned + 600 * MIN), true);
   // A completed tournament takes no seats.
   assert.equal(seatingIsOpen({ ...tournament, isCompleted: true }, 1, planned), false);
 });
