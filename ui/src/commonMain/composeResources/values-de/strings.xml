@@ -598,9 +598,9 @@
     <string name="h2h_shared_tables">Gemeinsame Tische</string>
     <string name="h2h_table_line">%1$s · Runde %2$d · Tisch %3$d</string>
     <string name="h2h_alone_title">%1$s an diesen Tischen</string>
-    <string name="h2h_info">Es zählen nur die Tische, an denen beide zusammen gespielt haben.
-Die bessere Zahl jeder Zeile ist fett.</string>
-    <string name="h2h_shared_tables_info">Der Platz von jedem am Tisch und die Punkte.</string>
+    <string name="h2h_info">Es zählen nur die Tische, an denen beide zusammen gespielt haben.\nDie bessere Zahl jeder Zeile ist grün, die schlechtere rot.</string>
+    <string name="h2h_place">Platz %1$d</string>
+    <string name="h2h_shared_tables_info">Der Platz von jedem am Tisch, mit seinem Pokal, und die Tischpunkte.\nTippe auf einen Tisch, um seine Statistiken zu öffnen.</string>
     <string name="stats_chip_table">Tisch %1$d · Runde %2$d</string>
     <string name="registration_error_already_in_team">Diese Person ist schon in einem Team.</string>
     <string name="registration_error_already_registered">Diese EMA-Nummer ist schon für das Turnier angemeldet.</string>
@@ -750,4 +750,10 @@ Die erste, die klappt, gewinnt</string>
     <string name="conflict_too_many_penalties">Eine Hand hat höchstens 5 Strafen.</string>
     <string name="conflict_totals_only">Dieser Tisch verwendet nur Summen.\nEin Organisator trägt die Ergebnisse ein.</string>
     <string name="conflict_tournament_gone">Das Turnier existiert nicht mehr.</string>
+    <string name="h2h_skills_title">Fähigkeiten an diesen Tischen</string>
+    <string name="h2h_skills_info">Die Fähigkeiten der beiden Spieler an den gemeinsamen Tischen, eine Form für jeden Spieler.</string>
+    <string name="h2h_ranks_title">Plätze in den Turnieren</string>
+    <string name="h2h_ranks_info">Der Endplatz von jedem in den Turnieren, die beide gespielt haben. Ganz oben ist der erste Platz.\nTippe auf einen Punkt, um das Turnier zu sehen.</string>
+    <string name="h2h_rank_of">%1$s von %2$d</string>
+    <string name="h2h_open_table">Die Statistiken dieses Tisches öffnen</string>
 </resources>

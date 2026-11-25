@@ -602,9 +602,9 @@
     <string name="h2h_shared_tables">Shared tables</string>
     <string name="h2h_table_line">%1$s · Round %2$d · Table %3$d</string>
     <string name="h2h_alone_title">%1$s at these tables</string>
-    <string name="h2h_info">Only the tables where the two played together count.
-The better number of each row is in bold.</string>
-    <string name="h2h_shared_tables_info">The place of each one at the table, and the points.</string>
+    <string name="h2h_info">Only the tables where the two played together count.\nThe better number of each row is in green, and the worse one in red.</string>
+    <string name="h2h_place">Place %1$d</string>
+    <string name="h2h_shared_tables_info">The place of each one at the table, with its trophy, and the table points.\nTap a table to open its statistics.</string>
     <string name="stats_chip_table">Table %1$d · Round %2$d</string>
     <string name="registration_error_already_in_team">That person is already in a team.</string>
     <string name="registration_error_already_registered">This EMA number is already registered in the tournament.</string>
@@ -754,4 +754,10 @@ The first one that works wins</string>
     <string name="conflict_too_many_penalties">A hand has at most 5 penalties.</string>
     <string name="conflict_totals_only">This table uses totals only.\nAn organizer enters its results.</string>
     <string name="conflict_tournament_gone">The tournament no longer exists.</string>
+    <string name="h2h_skills_title">Skills at these tables</string>
+    <string name="h2h_skills_info">The skills of the two players over the tables that they shared, one shape for each player.</string>
+    <string name="h2h_ranks_title">Tournament places</string>
+    <string name="h2h_ranks_info">The final place of each one in the tournaments where both played. The top of the chart is first place.\nTap a point to see the tournament.</string>
+    <string name="h2h_rank_of">%1$s of %2$d</string>
+    <string name="h2h_open_table">Open the statistics of this table</string>
 </resources>

@@ -602,9 +602,9 @@
     <string name="h2h_shared_tables">Mesas compartidas</string>
     <string name="h2h_table_line">%1$s · Ronda %2$d · Mesa %3$d</string>
     <string name="h2h_alone_title">%1$s en estas mesas</string>
-    <string name="h2h_info">Solo cuentan las mesas en las que jugaron los dos juntos.
-El mejor número de cada fila va en negrita.</string>
-    <string name="h2h_shared_tables_info">El puesto de cada uno en la mesa, y los puntos.</string>
+    <string name="h2h_info">Solo cuentan las mesas en las que jugaron los dos juntos.\nEl mejor número de cada fila va en verde, y el peor en rojo.</string>
+    <string name="h2h_place">Puesto %1$d</string>
+    <string name="h2h_shared_tables_info">El puesto de cada uno en la mesa, con su trofeo, y los puntos de mesa.\nToca una mesa para abrir sus estadísticas.</string>
     <string name="stats_chip_table">Mesa %1$d · Ronda %2$d</string>
     <string name="registration_error_already_in_team">Esa persona ya está en un equipo.</string>
     <string name="registration_error_already_registered">Este número EMA ya está inscrito en el torneo.</string>
@@ -754,4 +754,10 @@ Gana el primero que sale bien</string>
     <string name="conflict_too_many_penalties">Una mano tiene como máximo 5 penalizaciones.</string>
     <string name="conflict_totals_only">Esta mesa solo usa totales.\nUn organizador introduce sus resultados.</string>
     <string name="conflict_tournament_gone">El torneo ya no existe.</string>
+    <string name="h2h_skills_title">Habilidades en estas mesas</string>
+    <string name="h2h_skills_info">Las habilidades de los dos jugadores en las mesas que compartieron, una forma para cada jugador.</string>
+    <string name="h2h_ranks_title">Puestos en los torneos</string>
+    <string name="h2h_ranks_info">El puesto final de cada uno en los torneos en los que jugaron los dos. Arriba del todo es el primer puesto.\nToca un punto para ver el torneo.</string>
+    <string name="h2h_rank_of">%1$s de %2$d</string>
+    <string name="h2h_open_table">Abrir las estadísticas de esta mesa</string>
 </resources>

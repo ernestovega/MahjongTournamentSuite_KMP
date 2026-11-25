@@ -34,6 +34,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_message
 import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_player_tournaments
 import org.jetbrains.compose.resources.stringResource
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The statistics of [filters], the same in both apps. The screen loads the data of [StatisticsFilters.view]:
@@ -125,9 +126,34 @@ private fun PersonContent(
         val headToHead = remember(data, rivalData, filters) { headToHead(data, rival, rivalData, filters::keeps) }
         val rivalProfile = rivalData?.profile ?: PlayerProfile(data.rivalNames[rival] ?: "EMA $rival", rival, "", null)
         val cardModifier = Modifier.widthIn(max = 720.dp).fillMaxWidth()
+        // The skills of each one at these tables, and the tournaments where both played, with the place of each one.
+        val theirKept = remember(rivalData, filters) { rivalData?.only(filters::keeps, data.emaId) }
+        val together = remember(data, rivalData, filters) {
+            val theirs = rivalData?.tournaments.orEmpty().map { it.first.id }.toSet()
+            data.tournaments.map { it.first }.filter { it.id in theirs && filters.keeps(it) }
+        }
+        val places by produceState<Pair<Map<String, Standing>, Map<String, Standing>>?>(null, together, rival) {
+            value = together.map { it.id }.takeIf { it.isNotEmpty() }?.let { ids ->
+                try {
+                    loadStandings(data.emaId, ids) to loadStandings(rival, ids)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    // Without the places the card does not show. The other cards do not need them.
+                    null
+                }
+            }
+        }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
             HeadToHeadCard(headToHead, data.profile, rivalProfile, cardModifier)
-            SharedTablesCard(headToHead, cardModifier)
+            if (theirKept != null && kept.overall.tablesWithHands > 0 && theirKept.overall.tablesWithHands > 0) {
+                HeadToHeadSkillsCard(kept.overall, theirKept.overall, data.profile, rivalProfile, cardModifier)
+            }
+            places?.let { (mine, theirs) -> HeadToHeadPlacesCard(together, mine, theirs, data.profile, rivalProfile, cardModifier) }
+            SharedTablesCard(headToHead, data.profile, rivalProfile, cardModifier) { table ->
+                // A table opens with its own statistics, like a table of the tournament view.
+                onFiltersChange(StatisticsFilters(tournamentId = table.tournament.id, roundId = table.mine.roundId, tableId = table.mine.tableId))
+            }
         }
         Text(stringResource(Res.string.h2h_alone_title, data.profile?.name ?: "EMA ${data.emaId}"), style = MaterialTheme.typography.titleLarge)
         PlayerStatisticsPanel(
