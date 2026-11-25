@@ -1,0 +1,38 @@
+# Store screenshots of Google Play (StoreScreenshotsTest, playerApp jvmTest) in the 8 languages, on Linux.
+# Only by hand: Actions > Store · Screenshots > Run workflow. The images come in the artifact; copy them to
+# docs/play-store/ and upload them in Play Console. See docs/play-store/README.md.
+name: Store · Screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-screenshots:
+    name: Store screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Make the store screenshots
+        env:
+          MTS_STORE_SCREENSHOTS: "1"
+        run: ./gradlew :playerApp:jvmTest --tests '*StoreScreenshotsTest*' --rerun
+
+      - name: Upload the images
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-screenshots
+          path: |
+            docs/play-store/phone/**/*.png
+            docs/play-store/tablet/**/*.png

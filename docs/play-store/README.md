@@ -34,5 +34,7 @@ MTS_STORE_SCREENSHOTS=1 MTS_STORE_LANGUAGES=en,es MTS_STORE_FORMS=phone ./gradle
 | 7 | Tournament info (progress, organizers, venue) | ✅ | |
 | 8 | The 81 MCR combinations | ✅ | |
 
+Without a Linux machine at hand, run Actions > Store · Screenshots > Run workflow and take the images from its artifact.
+
 The captions of each language are in the test (`Shot.captions`). To change a shot, its caption or the frame, edit the test
 and run it again; then upload the new images in Play Console.
