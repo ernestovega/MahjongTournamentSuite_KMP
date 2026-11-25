@@ -142,6 +142,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_review
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_pays
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_wins
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_open_soon
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
@@ -302,10 +303,22 @@ fun HandEntryPanel(
     // The players set the seats from a few minutes before the planned start until the first hand or penalty.
     val seatsEditable = table.doneHands == 0 && table.penaltyCount == 0 && view.tournament.seatingIsOpen(table.roundId, now)
     if (phase == MatchPhase.NOT_STARTED) {
+        // A round that never got its gong and whose time is over was not played in time: nothing can change any more,
+        // unless an organizer opened the seats by hand.
+        if (!seatsEditable && view.tournament.unstartedRoundIsPast(table.roundId, now)) {
+            RoundNotStartedNote(stringResource(Res.string.entry_time_over))
+            return
+        }
+        val seatsSoon = !seatsEditable && !seatsAssigned && view.tournament.seatingState(table.roundId, now) == SeatingState.NOT_YET
+        val note = if (seatsSoon) {
+            stringResource(Res.string.entry_round_not_started) + "\n" + stringResource(Res.string.entry_seats_open_soon)
+        } else {
+            stringResource(Res.string.entry_round_not_started)
+        }
         // No gap of the column between the note and the seats button: the button has room of its own around its text,
         // so the note has the same space above and below (Ernesto, 2026-11-25).
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            RoundNotStartedNote()
+            RoundNotStartedNote(note)
             if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
         }
         return
@@ -1379,7 +1392,7 @@ private fun TableChangedDialog(
 
 /** Before the gong, a centered warning chip says when the hand buttons appear (Ernesto, 2026-11-25). */
 @Composable
-private fun RoundNotStartedNote() {
+private fun RoundNotStartedNote(text: String) {
     val warning = MtsTheme.colors.warning
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(
@@ -1395,7 +1408,7 @@ private fun RoundNotStartedNote() {
             ) {
                 Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(18.dp), tint = warning)
                 Text(
-                    stringResource(Res.string.entry_round_not_started),
+                    text,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f, fill = false),

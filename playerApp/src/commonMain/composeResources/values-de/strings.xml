@@ -125,6 +125,7 @@
     <string name="jump_to_me">Zu mir springen</string>
     <string name="entry_totals_only">Die Veranstalter tragen für diesen Tisch nur die Endergebnisse ein. Du kannst hier keine Hände hinzufügen.</string>
     <string name="entry_round_not_started">Die Hand-Schaltflächen erscheinen, wenn die Runde beginnt.</string>
+    <string name="entry_seats_open_soon">Du kannst die Sitzplätze ab 10 Minuten vor Beginn der Runde festlegen.</string>
     <string name="entry_seats_not_assigned">Die Plätze dieses Tisches sind noch nicht festgelegt. Du kannst Hände hinzufügen, sobald alle vier Plätze festgelegt sind.</string>
     <string name="entry_closed_by_organizer">Ein Veranstalter hat die Handeingabe dieses Tisches vorerst geschlossen. Frag einen Schiedsrichter, wenn du eine Hand hinzufügen musst.</string>
     <string name="entry_time_over">Die Zeit dieses Spiels ist abgelaufen. Du kannst jetzt keine Hände mehr hinzufügen. Die Veranstalter tragen die fehlenden Daten ein.</string>

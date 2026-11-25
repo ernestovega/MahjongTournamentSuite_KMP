@@ -131,6 +131,7 @@
     <string name="jump_to_me">Ко мне</string>
     <string name="entry_totals_only">Для этого стола организаторы вносят только итоговые результаты. Добавлять раздачи здесь нельзя.</string>
     <string name="entry_round_not_started">Кнопки раздач появятся, когда начнётся раунд.</string>
+    <string name="entry_seats_open_soon">Рассадку можно указать за 10 минут до начала раунда.</string>
     <string name="entry_seats_not_assigned">Места за этим столом ещё не распределены. Раздачи можно добавлять, когда заданы все четыре места.</string>
     <string name="entry_closed_by_organizer">Организатор временно закрыл ввод раздач для этого стола. Если нужно добавить раздачу, обратитесь к судье.</string>
     <string name="entry_time_over">Время этой игры вышло. Добавлять раздачи уже нельзя. Недостающие данные внесут организаторы.</string>

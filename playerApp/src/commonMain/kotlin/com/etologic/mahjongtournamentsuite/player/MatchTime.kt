@@ -80,22 +80,78 @@ fun Tournament.clockPhase(roundId: Int, now: LocalDateTime): MatchPhase {
 fun Tournament.remainingMs(roundId: Int, now: LocalDateTime): Long? =
     clockOf(roundId)?.remainingMs(matchDurationMinutes, epochMsAt(now))
 
+/** Milliseconds of the extra time after the match time, with FINISH_HAND. */
+private fun Tournament.extraMs(): Long = if (matchEndMode == MatchEndMode.FINISH_HAND) matchExtraMinutes * 60_000L else 0L
+
+/** What [expectedStartMs] knows about the start of a round that has no clock. */
+private sealed interface ExpectedStart {
+    data class At(val epochMs: Long?) : ExpectedStart
+
+    /** The round before is still played or paused, so the start is not known yet. */
+    data object Later : ExpectedStart
+}
+
 /**
- * True when the players of a round can set the seats of their tables at [now]: from [SEATING_LEAD_MINUTES] before the
- * planned start, or as soon as the round started, until its time is over. The first hand of a table closes its seats.
+ * The instant at which a round that has no clock can start at the earliest, as on the server: its planned start, or the
+ * end of the round before when that one ends later (a late round pushes the next ones).
  */
-fun Tournament.seatingIsOpen(roundId: Int, now: LocalDateTime): Boolean {
+private fun Tournament.expectedStartMs(roundId: Int, nowMs: Long, depth: Int = 0): ExpectedStart {
+    val planned = roundStartTime(roundId)?.let { epochMsAt(it) }
+    if (roundId <= 1 || depth > 100) return ExpectedStart.At(planned)
+    val before = clockOf(roundId - 1)
+    val previousEnd: Long? = if (before != null) {
+        val elapsed = before.elapsedMs(nowMs)
+        val full = before.durationMs(matchDurationMinutes) + extraMs()
+        if (elapsed < full) return ExpectedStart.Later
+        nowMs - (elapsed - full)
+    } else {
+        when (val start = expectedStartMs(roundId - 1, nowMs, depth + 1)) {
+            ExpectedStart.Later -> return ExpectedStart.Later
+            is ExpectedStart.At -> start.epochMs?.let { it + matchDurationMinutes * 60_000L + extraMs() }
+        }
+    }
+    return ExpectedStart.At(if (planned == null || previousEnd == null) planned ?: previousEnd else maxOf(planned, previousEnd))
+}
+
+/**
+ * True when the time of a round that never got its starting gong has passed, as on the server: the tournament is
+ * completed, a later round already started, or its match time (with the extra time of FINISH_HAND) is over, counted
+ * from its planned start or from the end of the round before when that one ended later. Such a round was not played in
+ * time, so its players cannot touch its tables any more. Only the organizers can.
+ */
+fun Tournament.unstartedRoundIsPast(roundId: Int, now: LocalDateTime): Boolean {
+    if (isCompleted) return true
+    if (roundClocks.any { it.roundId > roundId }) return true
+    val nowMs = epochMsAt(now)
+    val start = (expectedStartMs(roundId, nowMs) as? ExpectedStart.At)?.epochMs ?: return false
+    return nowMs >= start + matchDurationMinutes * 60_000L + extraMs()
+}
+
+/** Whether the players of a round can set the seats of their tables now, will be able to soon, or no more. */
+enum class SeatingState { OPEN, NOT_YET, OVER }
+
+/**
+ * When the players of a round can set the seats of their tables at [now]: from [SEATING_LEAD_MINUTES] before the
+ * planned start, or as soon as the round started, until its time is over. A round without a gong closes when its planned
+ * time is over ([unstartedRoundIsPast]). The first hand of a table closes its seats. A manual control of an admin wins.
+ */
+fun Tournament.seatingState(roundId: Int, now: LocalDateTime): SeatingState {
     when (roundControls.of(roundId).seats) {
-        ControlMode.OPEN -> return true
-        ControlMode.CLOSED -> return false
+        ControlMode.OPEN -> return SeatingState.OPEN
+        ControlMode.CLOSED -> return SeatingState.OVER
         ControlMode.AUTO -> Unit
     }
     val phase = clockPhase(roundId, now)
-    if (phase == MatchPhase.OVER) return false
-    if (phase != MatchPhase.NOT_STARTED) return true
-    val planned = roundStartTime(roundId) ?: return true
-    return epochMsAt(now) >= epochMsAt(planned) - SEATING_LEAD_MINUTES * 60_000L
+    if (phase == MatchPhase.OVER) return SeatingState.OVER
+    if (phase != MatchPhase.NOT_STARTED) return SeatingState.OPEN
+    if (unstartedRoundIsPast(roundId, now)) return SeatingState.OVER
+    val planned = roundStartTime(roundId) ?: return SeatingState.OPEN
+    val opens = epochMsAt(planned) - SEATING_LEAD_MINUTES * 60_000L
+    return if (epochMsAt(now) >= opens) SeatingState.OPEN else SeatingState.NOT_YET
 }
+
+/** True when the players of a round can set the seats of their tables at [now] ([seatingState]). */
+fun Tournament.seatingIsOpen(roundId: Int, now: LocalDateTime): Boolean = seatingState(roundId, now) == SeatingState.OPEN
 
 /**
  * Marks as completed the tables with played hands whose time is over. The table keeps its hands.

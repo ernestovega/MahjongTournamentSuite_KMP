@@ -725,6 +725,7 @@ Den första som fungerar vinner</string>
     <string name="conflict_seats_locked">Platserna kan inte ändras efter första handen eller straffet.</string>
     <string name="conflict_seats_not_assigned">Platserna vid det här bordet är inte tilldelade än.</string>
     <string name="conflict_seats_not_open">Platserna öppnar några minuter innan rundan börjar.</string>
+    <string name="conflict_seats_time_over">Tiden för den här rundan är slut. Arrangörerna anger platserna.</string>
     <string name="conflict_table_changed">Bordet har ändrats på servern.\nKontrollera det och spara igen.</string>
     <string name="conflict_table_changed_hand">Bordet har ändrats.\nGranska handen igen.</string>
     <string name="conflict_table_changed_penalty">Bordet har ändrats.\nKontrollera bordet och lägg till straffet igen.</string>

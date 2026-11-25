@@ -158,18 +158,76 @@ export function tournamentMatchPhase(tournament: Data, roundId: number, nowMs: n
   return matchPhaseAt(clock, rules, nowMs);
 }
 
+/** Milliseconds of the match time of a round plus its extra time with FINISH_HAND. */
+function fullMatchMs(rules: MatchTimeRules): number {
+  return rules.durationMinutes * 60_000 + (rules.endMode === "FINISH_HAND" ? rules.extraMinutes * 60_000 : 0);
+}
+
 /**
- * True when the players of a round can set the seats of their tables: from [SEATING_LEAD_MINUTES] before the planned
- * start, or as soon as the round started, until the match time is over. A round without a planned time is always open.
+ * The instant at which a round that has no clock can start at the earliest: its planned start, or the end of the round
+ * before it when that one ends later (a late round pushes the next ones). The end of a round without a clock counts
+ * from its own expected start. Null without a planned time and without an end before it, or while the round before
+ * is still played or paused (its end is not known yet).
+ */
+function expectedStartMs(tournament: Data, roundId: number, nowMs: number, depth = 0): number | null | "LATER" {
+  const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
+  const planned = roundStartMs(schedule, rules.timeZone);
+  if (roundId <= 1 || depth > 100) return planned;
+  const before = matchTimeOfTournament(tournament, roundId - 1);
+  let previousEnd: number | null;
+  if (before.clock != null) {
+    if (matchPhaseAt(before.clock, before.rules, nowMs) !== "OVER") return "LATER";
+    // The clock ended (elapsed - full match) ago.
+    previousEnd = nowMs - (clockElapsedMs(before.clock, nowMs) - clockDurationMs(before.clock, before.rules.durationMinutes)
+      - (fullMatchMs(before.rules) - before.rules.durationMinutes * 60_000));
+  } else {
+    const start = expectedStartMs(tournament, roundId - 1, nowMs, depth + 1);
+    if (start === "LATER") return "LATER";
+    previousEnd = start == null ? null : start + fullMatchMs(before.rules);
+  }
+  if (planned == null) return previousEnd;
+  if (previousEnd == null) return planned;
+  return Math.max(planned, previousEnd);
+}
+
+/**
+ * True when the time of a round that never got its starting gong has passed: the tournament is completed, a later round
+ * already started, or its match time (with the extra time of FINISH_HAND) is over, counted from its planned start or
+ * from the end of the round before when that one ended later. Such a round was not played in time, so its players
+ * cannot touch its tables any more. Only the organizers can.
+ */
+export function unstartedRoundIsPast(tournament: Data, roundId: number, nowMs: number): boolean {
+  if (tournament.isCompleted === true) return true;
+  const clocks = readStoredRoundClocks(tournament);
+  if ([...clocks.keys()].some((other) => other > roundId)) return true;
+  const start = expectedStartMs(tournament, roundId, nowMs);
+  if (start == null || start === "LATER") return false;
+  const { rules } = matchTimeOfTournament(tournament, roundId);
+  return nowMs >= start + fullMatchMs(rules);
+}
+
+/** Whether the players of a round can set the seats of their tables now, will be able to soon, or no more. */
+export type SeatingState = "OPEN" | "NOT_YET" | "OVER";
+
+/**
+ * When the players of a round can set the seats of their tables: from [SEATING_LEAD_MINUTES] before the planned start,
+ * or as soon as the round started, until the match time is over. A round without a gong closes when its planned time
+ * is over ([unstartedRoundIsPast]); a round without a planned time is open until then.
  * The first hand of a table closes its seats; the caller checks that.
  */
-export function seatingIsOpen(tournament: Data, roundId: number, nowMs: number): boolean {
+export function seatingState(tournament: Data, roundId: number, nowMs: number): SeatingState {
   const { rules, schedule, clock } = matchTimeOfTournament(tournament, roundId);
   const phase = matchPhaseAt(clock, rules, nowMs);
-  if (phase === "OVER") return false;
-  if (phase !== "NOT_STARTED") return true;
+  if (phase === "OVER") return "OVER";
+  if (phase !== "NOT_STARTED") return "OPEN";
+  if (unstartedRoundIsPast(tournament, roundId, nowMs)) return "OVER";
   const planned = roundStartMs(schedule, rules.timeZone);
-  return planned == null || nowMs >= planned - SEATING_LEAD_MINUTES * 60_000;
+  return planned == null || nowMs >= planned - SEATING_LEAD_MINUTES * 60_000 ? "OPEN" : "NOT_YET";
+}
+
+/** True when the players of a round can set the seats of their tables now ([seatingState]). */
+export function seatingIsOpen(tournament: Data, roundId: number, nowMs: number): boolean {
+  return seatingState(tournament, roundId, nowMs) === "OPEN";
 }
 
 /**

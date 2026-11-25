@@ -729,6 +729,7 @@ The first one that works wins</string>
     <string name="conflict_seats_locked">The seats cannot change after the first hand or penalty.</string>
     <string name="conflict_seats_not_assigned">The seats of this table are not assigned yet.</string>
     <string name="conflict_seats_not_open">The seats open a few minutes before the round starts.</string>
+    <string name="conflict_seats_time_over">The time of this round is over. The organizers set the seats.</string>
     <string name="conflict_table_changed">The table changed on the server.\nCheck it and save again.</string>
     <string name="conflict_table_changed_hand">The table changed.\nReview the hand again.</string>
     <string name="conflict_table_changed_penalty">The table changed.\nCheck the table and add the penalty again.</string>

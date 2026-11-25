@@ -109,6 +109,54 @@ class MatchTimeTest {
     }
 
     @Test
+    fun aRoundWithoutGongClosesWhenItsPlannedTimeIsOver() {
+        val stop = tournament(MatchEndMode.STOP, clock = null)
+        val finishHand = tournament(MatchEndMode.FINISH_HAND, clock = null)
+
+        assertEquals(SeatingState.NOT_YET, stop.seatingState(1, at("09:49")))
+        assertTrue(stop.seatingIsOpen(1, at("11:54")))
+        assertEquals(SeatingState.OVER, stop.seatingState(1, at("11:55")))
+        assertTrue(stop.unstartedRoundIsPast(1, at("11:55")))
+        assertTrue(finishHand.seatingIsOpen(1, at("12:09")))
+        assertEquals(SeatingState.OVER, finishHand.seatingState(1, at("12:10")))
+        // A gong after the planned time opens the round again for its whole match.
+        val late = tournament(MatchEndMode.STOP, clock = RoundClock(roundId = 1, startedAtMs = ms("12:30")))
+        assertTrue(late.seatingIsOpen(1, at("13:00")))
+        assertFalse(late.unstartedRoundIsPast(1, at("13:00")))
+    }
+
+    @Test
+    fun aLaterRoundOrACompletedTournamentClosesARoundWithoutGong() {
+        val noSchedule = tournament(MatchEndMode.STOP, schedule = false, clock = null)
+        val laterStarted = noSchedule.copy(numRounds = 2, roundClocks = listOf(RoundClock(roundId = 2, startedAtMs = ms("10:00"))))
+
+        assertEquals(SeatingState.OVER, laterStarted.seatingState(1, at("10:05")))
+        assertEquals(SeatingState.OVER, noSchedule.copy(isCompleted = true).seatingState(1, at("10:05")))
+        assertFalse(noSchedule.unstartedRoundIsPast(1, at("23:00")))
+    }
+
+    @Test
+    fun aLateRoundPushesTheTimeOfTheNextOne() {
+        // Both rounds planned at 10:00 for 115 minutes. Round 1 started at 10:00 and ended at 11:55.
+        val pushed = tournament(MatchEndMode.STOP).copy(
+            numRounds = 2,
+            roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00"), TournamentRoundSchedule(2, "2026-10-10", "10:00")),
+        )
+
+        assertTrue(pushed.seatingIsOpen(2, at("13:00")))
+        assertTrue(pushed.seatingIsOpen(2, at("13:49")))
+        assertEquals(SeatingState.OVER, pushed.seatingState(2, at("13:50")))
+        // While round 1 is paused, round 2 never closes.
+        val paused = pushed.copy(roundClocks = listOf(RoundClock(roundId = 1, startedAtMs = ms("10:00"), pausedAtMs = ms("10:30"))))
+        assertTrue(paused.seatingIsOpen(2, at("22:00")))
+        // A past day that nobody started: every round is over.
+        val pastDay = pushed.copy(roundClocks = emptyList())
+        assertTrue(pastDay.unstartedRoundIsPast(1, at("23:00")))
+        assertTrue(pastDay.unstartedRoundIsPast(2, at("23:00")))
+        assertFalse(pastDay.unstartedRoundIsPast(2, at("12:00")))
+    }
+
+    @Test
     fun expiredTableWithHandsIsMarkedCompleted() {
         val t = tournament(MatchEndMode.STOP)
 

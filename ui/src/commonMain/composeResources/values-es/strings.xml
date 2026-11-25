@@ -729,6 +729,7 @@ Gana el primero que sale bien</string>
     <string name="conflict_seats_locked">Los asientos no pueden cambiar después de la primera mano o penalización.</string>
     <string name="conflict_seats_not_assigned">Los asientos de esta mesa aún no están asignados.</string>
     <string name="conflict_seats_not_open">Los asientos se abren unos minutos antes de que empiece la ronda.</string>
+    <string name="conflict_seats_time_over">El tiempo de esta ronda ha terminado. Los organizadores asignan los asientos.</string>
     <string name="conflict_table_changed">La mesa ha cambiado en el servidor.\nRevísala y guarda otra vez.</string>
     <string name="conflict_table_changed_hand">La mesa ha cambiado.\nRevisa la mano otra vez.</string>
     <string name="conflict_table_changed_penalty">La mesa ha cambiado.\nRevisa la mesa y añade la penalización otra vez.</string>

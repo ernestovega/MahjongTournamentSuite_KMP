@@ -729,6 +729,7 @@ La première qui marche gagne</string>
     <string name="conflict_seats_locked">Les places ne peuvent plus changer après la première main ou pénalité.</string>
     <string name="conflict_seats_not_assigned">Les places de cette table ne sont pas encore attribuées.</string>
     <string name="conflict_seats_not_open">Les places s'ouvrent quelques minutes avant le début de la manche.</string>
+    <string name="conflict_seats_time_over">Le temps de cette manche est écoulé. Les organisateurs attribuent les places.</string>
     <string name="conflict_table_changed">La table a changé sur le serveur.\nVérifiez-la et enregistrez à nouveau.</string>
     <string name="conflict_table_changed_hand">La table a changé.\nVérifiez à nouveau la main.</string>
     <string name="conflict_table_changed_penalty">La table a changé.\nVérifiez la table et ajoutez à nouveau la pénalité.</string>

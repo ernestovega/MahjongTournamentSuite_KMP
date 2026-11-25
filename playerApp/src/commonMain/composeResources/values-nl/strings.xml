@@ -125,6 +125,7 @@
     <string name="jump_to_me">Naar mij</string>
     <string name="entry_totals_only">De organisatoren voeren voor deze tafel alleen de eindscores in. Je kunt hier geen handen toevoegen.</string>
     <string name="entry_round_not_started">De knoppen voor handen verschijnen zodra de ronde begint.</string>
+    <string name="entry_seats_open_soon">Je kunt de plaatsen vanaf 10 minuten voor het begin van de ronde toewijzen.</string>
     <string name="entry_seats_not_assigned">De plaatsen aan deze tafel zijn nog niet vastgelegd. Je kunt handen toevoegen zodra alle vier plaatsen vastliggen.</string>
     <string name="entry_closed_by_organizer">Een organisator heeft het invoeren van handen aan deze tafel voorlopig gesloten. Vraag een scheidsrechter als je een hand moet toevoegen.</string>
     <string name="entry_time_over">De tijd van deze partij is om. Je kunt nu geen handen meer toevoegen. De organisatoren vullen de ontbrekende gegevens in.</string>

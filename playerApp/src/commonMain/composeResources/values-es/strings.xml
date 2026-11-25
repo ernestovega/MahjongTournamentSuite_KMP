@@ -125,6 +125,7 @@
     <string name="jump_to_me">Ir a mi posición</string>
     <string name="entry_totals_only">Los organizadores solo introducen las puntuaciones finales de esta mesa. No puedes añadir manos aquí.</string>
     <string name="entry_round_not_started">Los botones para añadir manos aparecen cuando empieza la ronda.</string>
+    <string name="entry_seats_open_soon">Podrás asignar los asientos desde 10 minutos antes de que empiece la ronda.</string>
     <string name="entry_seats_not_assigned">Los asientos de esta mesa aún no están asignados. Podrás añadir manos cuando estén asignados los cuatro.</string>
     <string name="entry_closed_by_organizer">Un organizador ha cerrado por ahora la entrada de manos de esta mesa. Avisa a un árbitro si necesitas añadir una mano.</string>
     <string name="entry_time_over">El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.</string>

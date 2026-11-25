@@ -90,14 +90,45 @@ test("the seats open 10 minutes before the planned start and close when the time
 
   assert.equal(seatingIsOpen(tournament, 1, planned - 11 * MIN), false);
   assert.equal(seatingIsOpen(tournament, 1, planned - 10 * MIN), true);
-  // A late round stays open until the Play.
+  // A late round stays open until the Play, but only during its planned match time.
   assert.equal(seatingIsOpen(tournament, 1, planned + 60 * MIN), true);
+  assert.equal(seatingIsOpen(tournament, 1, planned + 119 * MIN), true);
+  assert.equal(seatingIsOpen(tournament, 1, planned + 120 * MIN), false);
+  // With FINISH_HAND the extra time counts too.
+  const finishHand = { ...tournament, matchEndMode: "FINISH_HAND", matchExtraMinutes: 15 };
+  assert.equal(seatingIsOpen(finishHand, 1, planned + 134 * MIN), true);
+  assert.equal(seatingIsOpen(finishHand, 1, planned + 135 * MIN), false);
+  // A gong after the planned time opens the seats again for the whole match.
+  const late = { ...tournament, roundClocks: { 1: clockAt(planned + 150 * MIN) } };
+  assert.equal(seatingIsOpen(late, 1, planned + 200 * MIN), true);
   // A round that started early is open at once.
   const early = { ...tournament, roundClocks: { 1: clockAt(planned - 60 * MIN) } };
   assert.equal(seatingIsOpen(early, 1, planned - 59 * MIN), true);
   assert.equal(seatingIsOpen(early, 1, planned + 61 * MIN), false);
-  // Without a planned time the seats are always open before the end.
+  // Without a planned time the seats are open until a later round starts.
   assert.equal(seatingIsOpen({ ...tournament, timeZone: null }, 1, 0), true);
+  const twoRounds = { ...tournament, numRounds: 2, timeZone: null, roundClocks: { 2: clockAt(planned) } };
+  assert.equal(seatingIsOpen(twoRounds, 1, planned + MIN), false);
+  // A late round pushes the next one: its time counts from the end of the round before.
+  const pushed = {
+    ...tournament,
+    numRounds: 2,
+    roundSchedules: [{ roundId: 1, date: "2026-10-10", startTime: "10:00" }, { roundId: 2, date: "2026-10-10", startTime: "10:00" }],
+    roundClocks: { 1: clockAt(planned) },
+  };
+  assert.equal(seatingIsOpen(pushed, 2, planned + 60 * MIN), true);
+  assert.equal(seatingIsOpen(pushed, 2, planned + 200 * MIN), true);
+  assert.equal(seatingIsOpen(pushed, 2, planned + 240 * MIN), false);
+  // While the round before is still played, the next one never closes.
+  const running = { ...pushed, roundClocks: { 1: clockAt(planned, { pausedAtMs: planned + 30 * MIN }) } };
+  assert.equal(seatingIsOpen(running, 2, planned + 600 * MIN), true);
+  // Rounds of a past day that nobody started are all over.
+  const pastDay = { ...pushed, roundClocks: {} };
+  assert.equal(seatingIsOpen(pastDay, 1, planned + 24 * 60 * MIN), false);
+  assert.equal(seatingIsOpen(pastDay, 2, planned + 24 * 60 * MIN), false);
+  assert.equal(seatingIsOpen(pastDay, 2, planned + 130 * MIN), true);
+  // A completed tournament takes no seats.
+  assert.equal(seatingIsOpen({ ...tournament, isCompleted: true }, 1, planned), false);
 });
 
 test("one close task is planned for each running round whose end is in the future", () => {

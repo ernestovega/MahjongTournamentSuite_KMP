@@ -347,8 +347,20 @@ class HandEntryPanelUiTest {
     fun longBeforeThePlannedStartTheSeatsAreClosed() = runComposeUiTest {
         show(MatchEndMode.STOP, "09:00", started = false, seats = false)
 
-        onNodeWithText("The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.", substring = true).assertIsDisplayed()
+        onNodeWithText("You can set the seats from 10 minutes before the round starts.", substring = true).assertIsDisplayed()
         onNodeWithText("Set the seats").assertDoesNotExist()
+    }
+
+    @Test
+    fun aPastRoundWithoutGongTakesNoSeatsAndNoHands() = runComposeUiTest {
+        // Planned 10:00 for 120 minutes, and nobody pressed Play: at 12:00 the round is over for the players.
+        show(MatchEndMode.STOP, "12:00", started = false, seats = false)
+
+        onNodeWithText("The time of this match is over. You cannot add hands now. The organizers enter the missing data.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.", substring = true).assertDoesNotExist()
+        onNodeWithText("Set the seats").assertDoesNotExist()
+        onNodeWithText("Add win").assertDoesNotExist()
     }
 
     @Test
