@@ -52,11 +52,11 @@ export function appCheck(options: {
       next(new HttpError(401, "app_check_failed", "The request does not come from a known app."));
       return;
     }
-    // Only the Android app can attest (Play Integrity). The web and the desktop app send no token, and nor do our own
-    // scripts, so logging them would bury the one useful signal: an Android app whose token failed. The Android app
-    // says who it is and the state of its App Check in X-MTS-Client.
+    // Only the mobile apps can attest (Play Integrity on Android, App Attest on iOS). The web and the desktop app send
+    // no token, and nor do our own scripts, so logging them would bury the one useful signal: a mobile app whose token
+    // failed. The apps say who they are and the state of their App Check in X-MTS-Client.
     const client = req.header(CLIENT_HEADER);
-    if (!client?.startsWith("android/")) {
+    if (!client?.startsWith("android/") && !client?.startsWith("ios/")) {
       next();
       return;
     }

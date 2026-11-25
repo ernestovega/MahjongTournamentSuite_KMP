@@ -53,6 +53,23 @@ describe("appCheck", () => {
     }]);
   });
 
+  it("logs the iOS app too, which attests with App Attest", async () => {
+    const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
+    const headers: Record<string, string> = { "x-mts-client": "ios/1.0.410; appcheck=failed:AppAttestError" };
+    const req = { method: "GET", path: "/tournaments", header: (name: string) => headers[name.toLowerCase()] } as unknown as Request;
+    const logged: unknown[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => { logged.push(args[1]); };
+    try {
+      await middleware(req, {} as never, () => undefined);
+    } finally {
+      console.warn = original;
+    }
+    assert.deepEqual(logged, [{
+      reason: "missing", method: "GET", path: "/tournaments", client: "ios/1.0.410; appcheck=failed:AppAttestError", userAgent: null, signedIn: false,
+    }]);
+  });
+
   it("logs nothing for the web, the desktop app or a script, which send no token", async () => {
     const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
     const logged: unknown[] = [];
