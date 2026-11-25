@@ -168,8 +168,10 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
    chicken hand, draw, penalties, review and edit, conflicts and network errors), `HandDetailsTableUiTest`, and the
    screenshots `dialogs/entry-*` of the Player. They found that the notice of a changed table opened under the entry
    dialog, so a tap on it closed the entry and lost the hand (fixed).
-3. **Registrations end to end**: E2E (or web E2E) of registering without an account with the email link, the waiting
-   list, cancellation, and the admin per-person edits (`RegistrationsScreen` 62 %).
+3. **Registrations end to end**: the web E2E covers since 25 November registering without an account from the
+   public link, the email link, the waiting list, cancelling and a place given by hand (`registrations.test.mjs`).
+   Still missing: registering with an account, food and team in My registration, and the admin per-person edits
+   through the screens (`RegistrationsScreen` 62 %).
 4. **Change the number of players** has unit, backend and Game day tests but no E2E through the screens.
 5. ~~**Production smoke check after each deploy**~~: done, `scripts/smoke/smoke.mjs` (25 November).
 

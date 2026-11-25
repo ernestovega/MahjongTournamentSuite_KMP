@@ -80,6 +80,8 @@ export async function typeIn(page, index, value) {
   const field = page.getByRole("textbox").nth(index);
   await tap(field);
   await page.keyboard.type(value);
+  // The app takes the text on the next frames; a button that depends on it is enabled a moment later.
+  await page.waitForTimeout(500);
 }
 
 export async function signIn(page, email) {

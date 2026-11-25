@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
 import { startSite } from "../server.mjs";
-import { API, ROOT, button, freshTree, launch, openApp, resetTournaments, screenText, seeText, signIn, tap, tapButton } from "../support.mjs";
+import { API, ROOT, button, freshTree, launch, openApp, resetTournaments, screenText, seeText, signIn, tap, tapButton, typeIn } from "../support.mjs";
 
 const LIVE = "test-live-ongoing";
 
@@ -29,6 +29,8 @@ describe("Player web", () => {
   it("a guest sees the public tournaments and opens one", async () => {
     const page = await openApp(browser, site.url, "/");
     await tapButton(page, "All");
+    // The list is lazy and its order follows the dates of the seed: search, so the card is on screen.
+    await typeIn(page, 0, "Live ongoing");
     const card = page.getByRole("button").filter({ hasText: "Test - Live ongoing tournament" }).first();
     await tap(card.getByRole("button", { name: "Open", exact: true }));
 

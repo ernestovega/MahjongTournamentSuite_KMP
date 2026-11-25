@@ -38,9 +38,12 @@ from the Actions tab.
   app keeps the screen of the address and the session.
 - The text nodes of the tree have no size, so `seeText` reads the tree (`ariaSnapshot`) instead of waiting for a
   visible element.
-- The tab buttons of the tournament screen have no accessible name yet.
 
 ## Tests
 
 - `tests/player.test.mjs`: a guest opens a public tournament from the list and from its link; a player signs in,
   goes to the own table and saves a draw.
+- `tests/registrations.test.mjs`: creates a tournament with 4 places and open registrations. A person without an
+  account registers from its public link and confirms with the link of the email, the organization fills the places,
+  the next person goes to the waiting list, the first one cancels, and the organization gives the place to the one who
+  waited (the waiting list moves only by hand). The emails come from `GET /__e2e/mail` of the test backend.
