@@ -355,7 +355,11 @@ internal class FakeTournamentRepository : TournamentRepository {
         val tournament = Tournament(id = request.tournamentId, name = "Open", isTeams = false, numPlayers = request.players.size, numRounds = 1, numTries = request.numTries)
         return writeResult(playerCountEmails.copy(tournament = tournament))
     }
-    override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = writeResult(Unit)
+
+    /** The writes of players and teams, as "assign 3 10000001", "substitution 3 LATE 2" or "team 1 Aces [a, b]". */
+    val writes = mutableListOf<String>()
+
+    override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = writeResult(Unit).also { writes += "team $teamId $name $emaIds" }
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = AppResult.Success(countries)
     override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = AppResult.Success(ResolvedVenueLink(url, null))
 
@@ -363,9 +367,12 @@ internal class FakeTournamentRepository : TournamentRepository {
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-    ) = writeResult(Unit)
+    ) = writeResult(Unit).also { writes += "assign $tournamentPlayerId $emaId" }
 
-    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = writeResult(Unit)
+    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = writeResult(Unit).also {
+        writes += "substitution $tournamentPlayerId " +
+            (substitution?.let { "${it.reason} ${it.fromRound}${if (it.duringSession) " during" else ""}" } ?: "none")
+    }
 
     private fun <T> writeResult(value: T): AppResult<T> = if (writesSucceed) AppResult.Success(value) else unusedFakeResult()
 
