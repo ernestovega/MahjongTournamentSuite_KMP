@@ -261,7 +261,7 @@ of the scenario, in the phase setup of `ScenarioOrganizerTest`):
   the shared email is no problem. Add a person (the 17th) from the EMA registry: the waiting list.
 - A player (`+mts-cal01`) signs in to the player app, opens the tournament, registers (number 2 of the waiting list)
   and cancels in My registration.
-- The club admin removes the first person and gives the place to the person of the waiting list.
+- The club admin removes the first person, and the place goes by itself to the person of the waiting list.
 - The club admin closes the registrations and tries the draw: it is refused, with the name of the person whose EMA
   number is not in the registry. In that registration, Choose the right person picks the EMA player, and the email
   with the typo is corrected: the chip of problems goes away, and the registrations open again.

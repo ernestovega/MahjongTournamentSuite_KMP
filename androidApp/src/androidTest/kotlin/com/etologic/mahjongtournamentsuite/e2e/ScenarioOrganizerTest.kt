@@ -563,7 +563,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         }
     }
 
-    /** A person with a place leaves: the club admin removes it, and gives the place to the first of the waiting list. */
+    /**
+     * A person with a place leaves: the club admin removes it, and the place goes by itself to the first of the waiting
+     * list (docs/registrations.md, Waiting list). The person added by hand then has a place.
+     */
     private fun removeAndGiveThePlace(removed: String, added: String) {
         val count = byHand.getJSONArray("form").length()
         c.waitUntil(60_000) { textOf("registrations-places-value").isNotEmpty() }
@@ -572,10 +575,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         cardMenu(removed, "Remove")
         c.waitForText("Remove the registration?")
         c.clickLastButton("Remove")
-        waitForCounts(count - 1, 1)
-        cardMenu(added, "Give a place")
+        // Still every place taken and nobody waiting: the person of the waiting list has the place.
         waitForCounts(count, 0)
-        log("a person removed, and the place given to the waiting list: ${counts()}")
+        showCard(added)
+        log("a person removed, and the place went by itself to the waiting list: ${counts()}")
     }
 
     /**
