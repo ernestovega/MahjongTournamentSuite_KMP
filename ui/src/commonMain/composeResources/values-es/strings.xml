@@ -532,8 +532,8 @@
     <string name="consent_withdraw_info">La aplicación detiene la analítica y te lo pregunta de nuevo. No puedes usar la aplicación hasta que aceptes.</string>
     <string name="stat_best_hand_points">Más puntos en una mano</string>
     <string name="stat_average_hands_per_table">Media de manos por mesa</string>
-    <string name="app_switch_to_admin">Gestión</string>
-    <string name="app_switch_to_player">Vista jugador</string>
+    <string name="app_switch_to_admin">App de gestión</string>
+    <string name="app_switch_to_player">App de jugador</string>
     <string name="app_chooser_title">¿Qué quieres abrir?</string>
     <string name="app_chooser_hint">Luego podrás cambiar de una app a otra cuando quieras con el botón de la barra superior.</string>
     <string name="top_bar_activity">Actividad</string>

@@ -200,7 +200,8 @@ class StoreScreenshotsTest {
                     ),
                 )
             },
-            ready = { waitForText("04010002", substring = true) },
+            // The status card and the own place push the list under the fold: wait for the places line, which is on screen.
+            ready = { waitForText("14", substring = true) },
         ) { nav -> TournamentScreen(nav, UPCOMING) },
         Shot(
             7,

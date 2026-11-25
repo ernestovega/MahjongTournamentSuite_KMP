@@ -82,7 +82,7 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun playerSessionGoesBackToThePlayerPart() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
-        c.assertNoText("Management")
+        c.assertNoText("Manager app")
         c.assertNoText(PROFILE_BUTTON)
         c.assertNoText("New tournament")
         c.assertNoText("App errors")

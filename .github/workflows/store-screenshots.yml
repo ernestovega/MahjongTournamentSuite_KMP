@@ -1,13 +1,15 @@
 # Store screenshots of Google Play (StoreScreenshotsTest, playerApp jvmTest) in the 8 languages, on Linux.
 # Only by hand: Actions > Store · Screenshots > Run workflow. The images come in the artifact; copy them to
-# docs/play-store/ and upload them in Play Console. See docs/play-store/README.md.
+# docs/play-store/ (they are also pushed to the branch store-screenshots, with the reason of any failed shot in
+# docs/play-store/why/) and upload them in Play Console. See docs/play-store/README.md.
 name: Store · Screenshots
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # Pushes the images to the branch store-screenshots, so they can be taken without downloading the artifact.
+  contents: write
 
 jobs:
   store-screenshots:
@@ -16,6 +18,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
 
       - uses: actions/setup-java@v6
         with:
@@ -30,9 +34,26 @@ jobs:
         run: ./gradlew :playerApp:jvmTest --tests '*StoreScreenshotsTest*' --rerun
 
       - name: Upload the images
+        # Also when some shot fails: the good ones, the not-ready images and the test report that says why.
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: store-screenshots
           path: |
             docs/play-store/phone/**/*.png
             docs/play-store/tablet/**/*.png
+            playerApp/build/outputs/store-not-ready/**
+            playerApp/build/test-results/jvmTest/*StoreScreenshots*.xml
+
+      - name: Push the images to the branch store-screenshots
+        if: always()
+        run: |
+          mkdir -p docs/play-store/why
+          cp -r playerApp/build/outputs/store-not-ready docs/play-store/why/ 2>/dev/null || true
+          cp playerApp/build/test-results/jvmTest/*StoreScreenshots*.xml docs/play-store/why/ 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B store-screenshots
+          git add -A docs/play-store
+          git commit -m "Store screenshots from run ${{ github.run_id }}" || exit 0
+          git push -f origin store-screenshots

@@ -532,8 +532,8 @@
     <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
     <string name="stat_best_hand_points">Most points from one hand</string>
     <string name="stat_average_hands_per_table">Avg. hands per table</string>
-    <string name="app_switch_to_admin">Management</string>
-    <string name="app_switch_to_player">Player view</string>
+    <string name="app_switch_to_admin">Manager app</string>
+    <string name="app_switch_to_player">Player app</string>
     <string name="app_chooser_title">What do you want to open?</string>
     <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
     <string name="top_bar_activity">Activity</string>

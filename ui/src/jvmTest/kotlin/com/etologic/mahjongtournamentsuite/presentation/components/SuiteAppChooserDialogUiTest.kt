@@ -24,15 +24,15 @@ class SuiteAppChooserDialogUiTest {
     fun offersBothAppsAndSaysTheTopBarSwitchesLater() = runComposeUiTest {
         show()
         onNodeWithText("What do you want to open?").assertExists()
-        onNodeWithText("Player view").assertExists()
-        onNodeWithText("Management").assertExists()
+        onNodeWithText("Player app").assertExists()
+        onNodeWithText("Manager app").assertExists()
         onNodeWithText("You can switch between the apps at any time with the button in the top bar.").assertExists()
     }
 
     @Test
     fun choosingManagementOpensTheAdminApp() = runComposeUiTest {
         show()
-        onNodeWithText("Management").performClick()
+        onNodeWithText("Manager app").performClick()
         waitForIdle()
         assertEquals(listOf(SuiteApp.ADMIN), chosen)
     }
@@ -40,7 +40,7 @@ class SuiteAppChooserDialogUiTest {
     @Test
     fun choosingPlayerViewStaysInThePlayerApp() = runComposeUiTest {
         show()
-        onNodeWithText("Player view").performClick()
+        onNodeWithText("Player app").performClick()
         waitForIdle()
         assertEquals(listOf(SuiteApp.PLAYER), chosen)
     }

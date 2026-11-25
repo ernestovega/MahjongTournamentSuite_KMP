@@ -122,14 +122,14 @@ class AccountButtonUiTest {
         show(session = SignedIn)
         waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Pat")).fetchSemanticsNodes().isNotEmpty() }
         waitForIdle()
-        onNodeWithText("Management").assertDoesNotExist()
+        onNodeWithText("Manager app").assertDoesNotExist()
     }
 
     @Test
     fun anEditorSeesTheManagementButtonAndItOpensTheAdminApp() = runComposeUiTest {
         show(session = SignedIn, roles = setOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER))
-        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Management")).fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText("Management").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(androidx.compose.ui.test.hasText("Manager app")).fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Manager app").performClick()
         waitForIdle()
         assertEquals(listOf(SuiteApp.ADMIN), opened)
     }

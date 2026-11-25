@@ -277,8 +277,8 @@
     <string name="consent_withdraw_info">De app stopt de analyse en vraagt het je opnieuw. Je kunt de app pas weer gebruiken als je akkoord gaat.</string>
     <string name="stat_best_hand_points">Meeste punten uit één hand</string>
     <string name="stat_average_hands_per_table">Gem. handen per tafel</string>
-    <string name="app_switch_to_admin">Beheer</string>
-    <string name="app_switch_to_player">Spelersweergave</string>
+    <string name="app_switch_to_admin">Beheer-app</string>
+    <string name="app_switch_to_player">Speler-app</string>
     <string name="app_chooser_title">Wat wil je openen?</string>
     <string name="app_chooser_hint">Je kunt altijd tussen de apps wisselen met de knop in de bovenbalk.</string>
     <string name="top_bar_activity">Activiteit</string>

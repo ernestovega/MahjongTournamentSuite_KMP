@@ -283,8 +283,8 @@
     <string name="consent_withdraw_info">Приложение остановит аналитику и спросит вас снова. Пользоваться приложением можно будет только после согласия.</string>
     <string name="stat_best_hand_points">Больше всего очков за одну руку</string>
     <string name="stat_average_hands_per_table">Ср. раздач за столом</string>
-    <string name="app_switch_to_admin">Управление</string>
-    <string name="app_switch_to_player">Вид игрока</string>
+    <string name="app_switch_to_admin">Приложение менеджера</string>
+    <string name="app_switch_to_player">Приложение игрока</string>
     <string name="app_chooser_title">Что вы хотите открыть?</string>
     <string name="app_chooser_hint">Переключаться между приложениями можно в любой момент кнопкой на верхней панели.</string>
     <string name="top_bar_activity">Активность</string>

@@ -277,8 +277,8 @@
     <string name="consent_withdraw_info">Die App beendet die Analyse und fragt dich erneut. Du kannst die App erst wieder nutzen, wenn du zustimmst.</string>
     <string name="stat_best_hand_points">Meiste Punkte mit einer Hand</string>
     <string name="stat_average_hands_per_table">Ø Hände pro Tisch</string>
-    <string name="app_switch_to_admin">Verwaltung</string>
-    <string name="app_switch_to_player">Spieleransicht</string>
+    <string name="app_switch_to_admin">Manager-App</string>
+    <string name="app_switch_to_player">Spieler-App</string>
     <string name="app_chooser_title">Was möchtest du öffnen?</string>
     <string name="app_chooser_hint">Du kannst jederzeit mit der Schaltfläche in der oberen Leiste zwischen den Apps wechseln.</string>
     <string name="top_bar_activity">Aktivität</string>

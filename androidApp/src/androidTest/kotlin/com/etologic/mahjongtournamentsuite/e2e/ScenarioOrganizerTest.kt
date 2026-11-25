@@ -135,8 +135,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         app.launch()
         c.signIn(email, password)
         // An account that is a player and staff chooses the part of the app after the sign-in.
-        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
-        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
+        c.waitForAnyText("Manager app", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Manager app")
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
         // The players of earlier game days have their account already.
         slots.filter { it.accountBefore && !it.returning }.forEach { createAccountInUsers(it) }
@@ -237,8 +237,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
 
     private fun signInToTheAdmin(account: String) {
         c.signIn(account, password)
-        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
-        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
+        c.waitForAnyText("Manager app", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Manager app")
         c.waitForText(PROFILE_BUTTON, timeoutMs = 60_000)
         c.waitForText("New tournament", timeoutMs = 60_000)
     }
@@ -985,8 +985,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun play() {
         app.launch()
         c.signIn(email, password)
-        c.waitForAnyText("Management", PROFILE_BUTTON, timeoutMs = 60_000)
-        if (c.isOnScreen("What do you want to open?")) c.clickButton("Management")
+        c.waitForAnyText("Manager app", PROFILE_BUTTON, timeoutMs = 60_000)
+        if (c.isOnScreen("What do you want to open?")) c.clickButton("Manager app")
         val name = plan.getString("name")
         c.openTournament(name)
         c.waitForText("Players & results", timeoutMs = 60_000)

@@ -19,8 +19,8 @@ The two apps are on the same origin, so they share the session in `localStorage`
 (`mahjongTournamentSuite.authSession`). The site has one sign-in, the one of the player app:
 
 - After the sign-in, an admin or an editor chooses between the player app and the admin app (`SuiteAppChooserDialog`,
-  two square buttons: "Player view" and "Management"). The dialog says that the top bar switches later.
-- The player app shows a "Management" button to admins and editors. The admin app shows a "Player view" button.
+  two square buttons: "Player app" and "Manager app"). The dialog says that the top bar switches later.
+- The player app shows a "Manager app" button to admins and editors. The admin app shows a "Player app" button.
 - The admin app on the site has no sign-in screen. Without a session it sends the user to `/?signin=1`, which opens
   the player sign-in. A player account that opens `/admin/` goes to `/` and keeps the session. Signing out in the admin
   app goes to `/`.
