@@ -14,6 +14,7 @@ of their file names. The title of a language that is already on Play stays as it
 commits the edit at the end, so Play shows all of it or nothing. The Chromebook screenshots have no place in the API:
 upload those by hand in Play Console.
 
+In GitHub Actions it runs in Deploy · Production when its box "Also upload the Play store listing" is ticked.
 It signs in with Application Default Credentials (google-github-actions/auth in the workflow). The service account
 needs the Play Console permission "Manage store presence" on the app. See docs/play-store/README.md.
 """

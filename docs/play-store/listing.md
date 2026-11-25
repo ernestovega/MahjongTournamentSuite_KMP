@@ -5,7 +5,7 @@ Store texts of the «MTS» app (`com.etologic.mahjongtournamentsuite`) in its 8 
 - App name (max 30): `MTS - Mahjong Tournament Suite`
 - Short description: max 80 characters. Full description: max 4,000.
 - Last update: 24 November 2026 (shareable ranking after any round, chart of the own place by round, web links that open in the app).
-- When a visible feature changes, update this file and [features.md](../features.md), then upload them with Actions > Publish · Play store listing (`scripts/play_listing.py`), which also uploads the screenshots and the feature graphic.
+- When a visible feature changes, update this file and [features.md](../features.md), then upload them with Actions > Deploy · Production and its box "Also upload the Play store listing" (`scripts/play_listing.py`), which also uploads the screenshots and the feature graphic.
 
 ---
 

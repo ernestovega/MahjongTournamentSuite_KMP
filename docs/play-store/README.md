@@ -41,15 +41,13 @@ and run it again; then upload the listing (below).
 
 ## Uploading to Play
 
-Actions > Publish · Play store listing > Run workflow (`.github/workflows/play-listing.yml`, `scripts/play_listing.py`)
-uploads everything of the 8 languages in one Play edit: short and full description from `listing.md`, phone screenshots,
-tablet screenshots (as 7-inch and 10-inch) and feature graphic. It replaces the images on Play; the title of a language
-already on Play stays. Run it first with `check`, which changes nothing and lists what Play has now, then with `upload`.
+Run Actions > Deploy · Production > Run workflow on main with the box **Also upload the Play store listing**. After the
+app, the same job runs `scripts/play_listing.py upload`, which uploads everything of the 8 languages in one Play edit:
+short and full description from `listing.md`, phone screenshots, tablet screenshots (as 7-inch and 10-inch) and feature
+graphic. It replaces the images on Play; the title of a language already on Play stays. Both go one after the other
+because Play keeps one edit of the app at a time and throws the other away ("This Edit has been deleted").
 
 - The service account of the deploy needs the Play Console permission **Manage store presence** on the app (the
   upload of the app only needs the testing tracks).
 - The Play API has no Chromebook screenshots: upload `tablet/<lang>/` there by hand if you want them.
-- Deploy · Production run by hand has the box **Also upload the Play store listing**: it uploads the listing right after
-  the app, in the same job. Never run both workflows at the same time: Play keeps one edit of the app at a time and
-  throws the other away ("This Edit has been deleted").
 - `python3 scripts/play_listing.py check --local` checks the lengths and image sizes without Play.
