@@ -572,8 +572,8 @@
     <string name="stats_filter_any_player">Cualquier jugador</string>
     <string name="stats_filter_tournament">Torneo</string>
     <string name="stats_filter_tournament_country">País de los torneos</string>
-    <string name="stats_filter_rival">Mesas contra</string>
-    <string name="stats_filter_any_rival">Cualquier rival</string>
+    <string name="stats_filter_rival">Comparar con</string>
+    <string name="stats_filter_any_rival">Nadie</string>
     <string name="stats_chip_rival">contra %1$s</string>
     <string name="stats_filter_player_country">País de los jugadores</string>
     <string name="stats_filter_any_country">Cualquier país</string>
@@ -762,4 +762,21 @@ Gana el primero que sale bien</string>
     <string name="h2h_ranks_info">El puesto final de cada uno en los torneos en los que jugaron los dos. Arriba del todo es el primer puesto.\nToca un punto para ver el torneo.</string>
     <string name="h2h_rank_of">%1$s de %2$d</string>
     <string name="h2h_open_table">Abrir las estadísticas de esta mesa</string>
+    <string name="compare_scope_all">Todo</string>
+    <string name="compare_scope_together">Solo sus mesas juntos</string>
+    <string name="compare_title">Comparación</string>
+    <string name="compare_info">Todas las mesas de cada uno con los filtros de los torneos, en tasas y medias, porque uno puede haber jugado mucho más que el otro.\nEl mejor número de cada fila va en verde, y el peor en rojo.</string>
+    <string name="compare_skills_info">Las habilidades de cada uno en todas sus mesas, una forma para cada jugador.</string>
+    <string name="compare_places_info">La parte de las mesas que cada uno terminó en cada puesto.</string>
+    <string name="compare_tournaments">Torneos</string>
+    <string name="compare_tables">Mesas</string>
+    <string name="compare_table_wins">Mesas ganadas</string>
+    <string name="compare_points_per_table">Puntos por mesa</string>
+    <string name="compare_score_per_table">Puntuación por mesa</string>
+    <string name="compare_skill_score">Puntuación de habilidad</string>
+    <string name="compare_best_title">Torneos</string>
+    <string name="compare_best_info">El mejor puesto final de cada uno en un torneo, y el puesto en el último torneo.</string>
+    <string name="compare_best_place">Mejor puesto</string>
+    <string name="compare_last_tournament">Último torneo</string>
+    <string name="compare_no_place">Aún sin puesto final</string>
 </resources>

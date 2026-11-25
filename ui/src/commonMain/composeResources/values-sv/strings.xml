@@ -568,8 +568,8 @@
     <string name="stats_filter_any_player">Alla spelare</string>
     <string name="stats_filter_tournament">Turnering</string>
     <string name="stats_filter_tournament_country">Turneringarnas land</string>
-    <string name="stats_filter_rival">Bord mot</string>
-    <string name="stats_filter_any_rival">Alla motståndare</string>
+    <string name="stats_filter_rival">Jämför med</string>
+    <string name="stats_filter_any_rival">Ingen</string>
     <string name="stats_chip_rival">mot %1$s</string>
     <string name="stats_filter_player_country">Spelarnas land</string>
     <string name="stats_filter_any_country">Alla länder</string>
@@ -758,4 +758,21 @@ Den första som fungerar vinner</string>
     <string name="h2h_ranks_info">Slutplaceringen för var och en i turneringarna där båda spelade. Överst i diagrammet är förstaplatsen.\nTryck på en punkt för att se turneringen.</string>
     <string name="h2h_rank_of">%1$s av %2$d</string>
     <string name="h2h_open_table">Öppna statistiken för det här bordet</string>
+    <string name="compare_scope_all">Allt</string>
+    <string name="compare_scope_together">Bara deras bord tillsammans</string>
+    <string name="compare_title">Jämförelse</string>
+    <string name="compare_info">Alla bord för var och en med turneringsfiltren, som andelar och medelvärden, eftersom den ena kan ha spelat mycket mer än den andra.\nDet bättre talet på varje rad är grönt, och det sämre rött.</string>
+    <string name="compare_skills_info">Var och ens färdigheter vid alla sina bord, en form för varje spelare.</string>
+    <string name="compare_places_info">Andelen bord som var och en slutade på varje plats.</string>
+    <string name="compare_tournaments">Turneringar</string>
+    <string name="compare_tables">Bord</string>
+    <string name="compare_table_wins">Vunna bord</string>
+    <string name="compare_points_per_table">Poäng per bord</string>
+    <string name="compare_score_per_table">Resultat per bord</string>
+    <string name="compare_skill_score">Färdighetspoäng</string>
+    <string name="compare_best_title">Turneringar</string>
+    <string name="compare_best_info">Var och ens bästa slutplacering i en turnering, och placeringen i den senaste turneringen.</string>
+    <string name="compare_best_place">Bästa placering</string>
+    <string name="compare_last_tournament">Senaste turnering</string>
+    <string name="compare_no_place">Ingen slutplacering än</string>
 </resources>

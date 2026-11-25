@@ -68,7 +68,7 @@ class PlayerStatisticsTest : PlayerE2eTest() {
         c.assertNoText("All tournaments and players")
         c.clickButton("Filters")
         c.waitForText("Filter the stats")
-        listOf("Player", "Tables against", "Tournament").forEach { c.waitForText(it) }
+        listOf("Player", "Compare with", "Tournament").forEach { c.waitForText(it) }
     }
 
     @Test

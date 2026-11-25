@@ -568,8 +568,8 @@
     <string name="stats_filter_any_player">Alle spelers</string>
     <string name="stats_filter_tournament">Toernooi</string>
     <string name="stats_filter_tournament_country">Land van de toernooien</string>
-    <string name="stats_filter_rival">Tafels tegen</string>
-    <string name="stats_filter_any_rival">Elke tegenstander</string>
+    <string name="stats_filter_rival">Vergelijken met</string>
+    <string name="stats_filter_any_rival">Niemand</string>
     <string name="stats_chip_rival">tegen %1$s</string>
     <string name="stats_filter_player_country">Land van de spelers</string>
     <string name="stats_filter_any_country">Alle landen</string>
@@ -758,4 +758,21 @@ De eerste die lukt, wint</string>
     <string name="h2h_ranks_info">De eindplaats van elk in de toernooien waar beiden speelden. Bovenaan de grafiek is de eerste plaats.\nTik op een punt om het toernooi te zien.</string>
     <string name="h2h_rank_of">%1$s van %2$d</string>
     <string name="h2h_open_table">De statistieken van deze tafel openen</string>
+    <string name="compare_scope_all">Alles</string>
+    <string name="compare_scope_together">Alleen hun tafels samen</string>
+    <string name="compare_title">Vergelijking</string>
+    <string name="compare_info">Alle tafels van elk met de filters van de toernooien, als percentages en gemiddelden, want de een kan veel meer gespeeld hebben dan de ander.\nHet betere getal van elke rij is groen, en het slechtere rood.</string>
+    <string name="compare_skills_info">De vaardigheden van elk over al hun tafels, één vorm per speler.</string>
+    <string name="compare_places_info">Het deel van de tafels dat elk op elke plaats eindigde.</string>
+    <string name="compare_tournaments">Toernooien</string>
+    <string name="compare_tables">Tafels</string>
+    <string name="compare_table_wins">Gewonnen tafels</string>
+    <string name="compare_points_per_table">Punten per tafel</string>
+    <string name="compare_score_per_table">Score per tafel</string>
+    <string name="compare_skill_score">Vaardigheidsscore</string>
+    <string name="compare_best_title">Toernooien</string>
+    <string name="compare_best_info">De beste eindplaats van elk in een toernooi, en de plaats in het laatste toernooi.</string>
+    <string name="compare_best_place">Beste plaats</string>
+    <string name="compare_last_tournament">Laatste toernooi</string>
+    <string name="compare_no_place">Nog geen eindplaats</string>
 </resources>

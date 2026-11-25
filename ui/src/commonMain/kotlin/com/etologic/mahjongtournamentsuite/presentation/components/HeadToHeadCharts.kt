@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,11 +36,18 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.compare_best_info
+import mahjongtournamentsuite.ui.generated.resources.compare_best_place
+import mahjongtournamentsuite.ui.generated.resources.compare_best_title
+import mahjongtournamentsuite.ui.generated.resources.compare_last_tournament
+import mahjongtournamentsuite.ui.generated.resources.compare_no_place
+import mahjongtournamentsuite.ui.generated.resources.compare_places_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_rank_of
 import mahjongtournamentsuite.ui.generated.resources.h2h_ranks_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_ranks_title
 import mahjongtournamentsuite.ui.generated.resources.h2h_skills_info
 import mahjongtournamentsuite.ui.generated.resources.h2h_skills_title
+import mahjongtournamentsuite.ui.generated.resources.stats_places
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -57,9 +67,11 @@ fun HeadToHeadSkillsCard(
     me: PlayerProfile?,
     rival: PlayerProfile?,
     modifier: Modifier = Modifier,
+    title: String = stringResource(Res.string.h2h_skills_title),
+    info: String = stringResource(Res.string.h2h_skills_info),
 ) {
     val (myColors, theirColors) = headToHeadColors()
-    StatCard(stringResource(Res.string.h2h_skills_title), modifier, info = stringResource(Res.string.h2h_skills_info)) {
+    StatCard(title, modifier, info = info) {
         Legend(me, rival)
         RadarChartOf(
             listOf(
@@ -183,3 +195,116 @@ private fun LegendName(profile: PlayerProfile?, color: Color) {
 }
 
 private fun firstName(profile: PlayerProfile?): String = profile?.name?.substringBefore(' ')?.ifBlank { null } ?: profile?.name ?: EMPTY
+
+/** The share of the tables that each of the two players finished in each place: two bars for each place. */
+@Composable
+fun ComparePlacesCard(mine: PlayerStatistics, theirs: PlayerStatistics, me: PlayerProfile?, rival: PlayerProfile?, modifier: Modifier = Modifier) {
+    val (myColors, theirColors) = headToHeadColors()
+    val names = placeNames()
+    StatCard(stringResource(Res.string.stats_places), modifier, info = stringResource(Res.string.compare_places_info)) {
+        Legend(me, rival)
+        // The longest bar fills the room, so small differences show.
+        val longest = (0 until 4).flatMap { listOf(share(mine, it), share(theirs, it)) }.maxOf { it ?: 0.0 }.takeIf { it > 0 } ?: 1.0
+        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+            (0 until 4).forEach { place ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Row(Modifier.width(56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                        Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.position(place + 1, MaterialTheme.colorScheme.error))
+                        Text(names[place], style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                        PlaceBar(share(mine, place), longest, myColors)
+                        PlaceBar(share(theirs, place), longest, theirColors)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun share(statistics: PlayerStatistics, place: Int): Double? = statistics.tablesPlayed.takeIf { it > 0 }?.let { statistics.placeCounts[place].toDouble() / it }
+
+/** One bar of [ComparePlacesCard], as long as the share, with the share at its end. */
+@Composable
+private fun PlaceBar(value: Double?, longest: Double, colors: HeadToHeadColors) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        Box(Modifier.weight(1f).height(14.dp)) {
+            Box(
+                Modifier.fillMaxWidth(((value ?: 0.0) / longest).toFloat().coerceIn(0.01f, 1f)).height(14.dp)
+                    .background(colors.fill, MaterialTheme.shapes.extraSmall),
+            )
+        }
+        Text(
+            value.percent(),
+            Modifier.width(44.dp),
+            style = MaterialTheme.typography.bodyMedium.inTextFont(),
+            fontWeight = FontWeight.Bold,
+            color = colors.text,
+            textAlign = TextAlign.End,
+        )
+    }
+}
+
+/**
+ * The best final place of each of the two players in a tournament, and the place in the last tournament.
+ * [mine] and [theirs] are the tournaments of each one in play order, with the final place, null when not known yet.
+ */
+@Composable
+fun CompareTournamentsCard(
+    mine: List<Pair<Tournament, Standing?>>,
+    theirs: List<Pair<Tournament, Standing?>>,
+    me: PlayerProfile?,
+    rival: PlayerProfile?,
+    modifier: Modifier = Modifier,
+) {
+    val (myColors, theirColors) = headToHeadColors()
+    fun best(list: List<Pair<Tournament, Standing?>>) = list.filter { it.second != null }
+        .minWithOrNull(compareBy<Pair<Tournament, Standing?>> { it.second!!.rank.toDouble() / it.second!!.of }.thenBy { it.second!!.rank })
+    StatCard(stringResource(Res.string.compare_best_title), modifier, info = stringResource(Res.string.compare_best_info)) {
+        Legend(me, rival)
+        val rows = listOf(
+            stringResource(Res.string.compare_best_place) to (best(mine) to best(theirs)),
+            stringResource(Res.string.compare_last_tournament) to (mine.lastOrNull() to theirs.lastOrNull()),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+            rows.forEachIndexed { index, (label, pair) ->
+                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Text(
+                    label,
+                    Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                    TournamentPlace(pair.first, myColors, Modifier.weight(1f))
+                    TournamentPlace(pair.second, theirColors, Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TournamentPlace(entry: Pair<Tournament, Standing?>?, colors: HeadToHeadColors, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        val standing = entry?.second
+        Text(
+            when {
+                entry == null -> EMPTY
+                standing == null -> stringResource(Res.string.compare_no_place)
+                else -> stringResource(Res.string.h2h_rank_of, standing.rank.toString(), standing.of)
+            },
+            style = if (standing != null) MaterialTheme.typography.titleLarge.inTextFont() else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (standing != null) FontWeight.Bold else null,
+            color = colors.text,
+            textAlign = TextAlign.Center,
+        )
+        entry?.first?.let { tournament ->
+            Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs), verticalAlignment = Alignment.CenterVertically) {
+                CountryFlag(tournament.hostCountry, width = 20.dp)
+                Text(tournament.name, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
