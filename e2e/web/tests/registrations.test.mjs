@@ -45,6 +45,11 @@ async function createRegistrationTournament(token, slug) {
 }
 
 /** The path of the link of the last email to [to], to open on the local site. */
+async function mailTo(to) {
+  const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
+  return emails.filter((it) => it.to === to);
+}
+
 async function linkOfMailTo(to) {
   const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
   const email = emails.filter((it) => it.to === to).at(-1);

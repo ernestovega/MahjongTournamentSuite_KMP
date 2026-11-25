@@ -20,7 +20,7 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersListsEveryAccountWithRoleAndStatus() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("11 of 11 accounts")
+        c.waitForText("12 of 12 accounts")
         // The list is lazy, so the test scrolls to each account.
         listOf("admin@e2e.test", "editor@e2e.test", "outsider@e2e.test", "disabled@e2e.test", "player@e2e.test", "stranger@e2e.test")
             .forEach { c.scrollListTo(it) }
@@ -42,10 +42,10 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersSearchFiltersByEmail() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("11 of 11 accounts")
+        c.waitForText("12 of 12 accounts")
         // The search also matches the role, so "editor" would find every editor. "outsider" is only in one email.
         c.field("Search").performTextInputText("outsider@")
-        c.waitForText("1 of 11 accounts")
+        c.waitForText("1 of 12 accounts")
         c.waitForText("outsider@e2e.test")
         c.assertNoText("admin@e2e.test")
     }

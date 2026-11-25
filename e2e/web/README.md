@@ -46,8 +46,11 @@ from the Actions tab.
   goes to the own table and saves a draw.
 - `tests/registrations.test.mjs`: creates a tournament with 4 places and open registrations. A person without an
   account registers from its public link and confirms with the link of the email, the organization fills the places,
-  the next person goes to the waiting list, the first one cancels, and the organization gives the place to the one who
-  waited (the waiting list moves only by hand). The emails come from `GET /__e2e/mail` of the test backend.
+  the next person goes to the waiting list, the first one cancels, and the free place goes by itself to the one who
+  waited, who gets an email. The emails come from `GET /__e2e/mail` of the test backend.
 - `tests/admin-player-count.test.mjs`: the admin changes the number of players of a drawn team tournament from 28 to
   24 before it starts (team 1 leaves). The draw runs in the browser; the test checks the players, the 6 tables of
   every round and the emails.
+- `tests/admin-roles.test.mjs`: `club@e2e.test` is the Club Admin of the club of `test-last-table`. The server and the
+  admin app give it only that tournament and refuse the rest; after a super admin takes away "Create tournaments"
+  from this person, the New tournament button goes and the server refuses the call.

@@ -25,6 +25,8 @@ export const E2E_ACCOUNTS = {
   editor: { uid: SEED_EDITOR_UID, email: "editor@e2e.test" },
   outsider: { uid: "e2e-editor-outsider", email: "outsider@e2e.test" },
   disabled: { uid: "e2e-disabled", email: "disabled@e2e.test" },
+  /** Club Admin of the club of test-last-table (seed-org-broken-logo): sees only the tournaments of that club. */
+  clubAdmin: { uid: "e2e-club-admin", email: "club@e2e.test" },
   /** Sits at a table of the live tournament that has 11 hands. */
   playerActive: { uid: "e2e-player-active", email: "player@e2e.test" },
   /** Sits at a table of the live tournament that has seats and no hands. */
@@ -89,17 +91,23 @@ async function main(): Promise<void> {
   seedTournaments();
 
   console.log("Creating the accounts.");
-  async function account(entry: { uid: string; email: string }, role: "SUPER_ADMIN" | "CLUB_ADMIN" | "EDITOR" | "PLAYER", disabled = false): Promise<void> {
+  async function account(
+    entry: { uid: string; email: string },
+    role: "SUPER_ADMIN" | "CLUB_ADMIN" | "EDITOR" | "PLAYER",
+    disabled = false,
+    organizations: string[] = [],
+  ): Promise<void> {
     await auth.createUser({ uid: entry.uid, email: entry.email, password: PASSWORD, emailVerified: true });
     await createUserProfile(entry.uid, entry.email, entry.email.split("@")[0]);
     if (role === "PLAYER") await auth.setCustomUserClaims(entry.uid, { player: true });
-    else await setGlobalUserRole(entry.uid, role);
+    else await setGlobalUserRole(entry.uid, role, organizations);
     if (disabled) await auth.updateUser(entry.uid, { disabled: true });
   }
   await account(E2E_ACCOUNTS.admin, "SUPER_ADMIN");
   await account(E2E_ACCOUNTS.editor, "EDITOR");
   await account(E2E_ACCOUNTS.outsider, "EDITOR");
   await account(E2E_ACCOUNTS.disabled, "EDITOR", true);
+  await account(E2E_ACCOUNTS.clubAdmin, "CLUB_ADMIN", false, ["seed-org-broken-logo"]);
   for (const key of ["playerActive", "playerSeated", "playerWaiting", "playerDone", "playerStranger", "playerExtraTime", "playerTimeOver"] as const) {
     await account(E2E_ACCOUNTS[key], "PLAYER");
   }
