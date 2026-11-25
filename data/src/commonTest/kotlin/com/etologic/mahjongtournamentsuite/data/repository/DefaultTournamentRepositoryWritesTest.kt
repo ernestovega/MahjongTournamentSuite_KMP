@@ -6,11 +6,18 @@ import com.etologic.mahjongtournamentsuite.data.backend.mockBackendApi
 import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
+import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -20,6 +27,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
 
@@ -41,7 +49,8 @@ class DefaultTournamentRepositoryWritesTest {
         backendApi = mockBackendApi { request ->
             val path = request.url.encodedPath.removePrefix("/functions")
             val body = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()?.decodeToString().orEmpty()
-            server.requests += "${request.method.value} $path $body".trim()
+            val query = request.url.encodedQuery.takeIf { it.isNotEmpty() }?.let { "?$it" }.orEmpty()
+            server.requests += "${request.method.value} $path$query $body".trim()
             server.failWith?.let { return@mockBackendApi respond(ByteReadChannel("""{"error":"refused"}"""), it) }
             when {
                 path.endsWith("/sync/manifest") -> jsonResponse("""{"resources":{},"globalResources":{},"tableVersions":{}}""")
@@ -50,6 +59,13 @@ class DefaultTournamentRepositoryWritesTest {
                 path.endsWith("/players") -> jsonResponse("""{"players":[{"id":5,"name":"P5","team":0}]}""")
                 path.endsWith("/rounds") -> jsonResponse("""{"rounds":[{"roundId":1},{"roundId":2}]}""")
                 path.endsWith("/complete-open-tables") -> jsonResponse("""{"completed":3}""")
+                path.endsWith("/clock") || path.endsWith("/control") || path.endsWith("/round-clocks") -> jsonResponse(CLOCKS)
+                path.endsWith("/table-qr-codes") || path.endsWith("/id-list") ->
+                    respond(ByteReadChannel("%PDF $path"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/pdf"))
+                path == "/me" -> jsonResponse(
+                    """{"emaId":"10000001","tournaments":[{"tournamentId":"t1","playerId":7,"teamId":2}],""" +
+                        """"registrations":[{"tournamentId":"t2","status":"WAITING"},{"tournamentId":"t3","status":"CONFIRMED"}]}""",
+                )
                 path == "/tournaments" -> jsonResponse("""{"tournaments":[]}""")
                 else -> jsonResponse("""{"ok":true}""")
             }
@@ -160,5 +176,99 @@ class DefaultTournamentRepositoryWritesTest {
         assertIs<AppResult.Failure>(repository.renameTournament("t1", "X"))
         assertIs<AppResult.Failure>(repository.deleteTournament("t1"))
         assertIs<AppResult.Failure>(repository.completeTables("t1", emptyList()))
+    }
+
+    @Test
+    fun aSubstitutionIsSentOrRemovedAndThePlayersAreReadAgain() = runTest {
+        val server = Server()
+        val repository = repository(server)
+        repository.listTournamentPlayers("t1", RefreshMode.IF_CHANGED)
+
+        val substitution = PlayerSubstitution(SubstitutionReason.LATE, fromRound = 2, duringSession = true)
+        assertIs<AppResult.Success<Unit>>(repository.setPlayerSubstitution("t1", 5, substitution))
+        assertIs<AppResult.Success<Unit>>(repository.setPlayerSubstitution("t1", 5, null))
+
+        assertEquals(
+            listOf(
+                """PUT /tournaments/t1/players/5/substitution {"reason":"LATE","fromRound":2,"duringSession":true}""",
+                "DELETE /tournaments/t1/players/5/substitution",
+            ),
+            server.requests.filter { "/substitution" in it },
+        )
+        repository.listTournamentPlayers("t1", RefreshMode.IF_CHANGED)
+        assertEquals(2, server.count("GET /tournaments/t1/players"))
+    }
+
+    @Test
+    fun theTimerSendsItsActionAndGetsTheClocksBack() = runTest {
+        val server = Server()
+        val repository = repository(server)
+
+        val started = assertIs<AppResult.Success<*>>(repository.updateRoundClock("t1", 2, RoundClockAction.Start(agoSeconds = 30))).value
+            as com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+        repository.updateRoundClock("t1", 2, RoundClockAction.Stop)
+
+        assertEquals(1_000L, started.of(2)?.startedAtMs)
+        assertEquals(9_000L, started.serverNowMs)
+        val sent = server.requests.filter { it.startsWith("POST /tournaments/t1/rounds/2/clock") }
+        assertEquals(2, sent.size)
+        assertTrue(""""action":"start"""" in sent[0] && """"agoSeconds":30""" in sent[0], sent[0])
+        assertTrue(""""action":"stop"""" in sent[1], sent[1])
+    }
+
+    @Test
+    fun theRoundControlIsSentAndReadBack() = runTest {
+        val server = Server()
+        val repository = repository(server)
+
+        val clocks = assertIs<AppResult.Success<*>>(
+            repository.updateRoundControl("t1", 2, RoundControlChange(hands = ControlMode.CLOSED, completeTables = listOf(4))),
+        ).value as com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+
+        assertEquals(ControlMode.CLOSED, clocks.controls.single().hands)
+        val sent = server.requests.single { it.startsWith("POST /tournaments/t1/rounds/2/control") }
+        assertTrue(""""completeTables":[4]""" in sent, sent)
+        val read = assertIs<AppResult.Success<*>>(repository.getRoundClocks("t1")).value as com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
+        assertEquals(listOf(2), read.clocks.map { it.roundId })
+    }
+
+    @Test
+    fun theOwnTournamentsGiveTheSlotsAndTheWaitingRegistrations() = runTest {
+        val repository = repository(Server())
+
+        val mine = assertIs<AppResult.Success<*>>(repository.listMyTournaments()).value as com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
+        assertEquals(listOf(Triple("t1", 7, 2)), mine.slots.map { Triple(it.tournamentId, it.playerId, it.teamId) })
+        assertEquals(listOf("t2" to true, "t3" to false), mine.registrations.map { it.tournamentId to it.waiting })
+        assertEquals(mine.slots, assertIs<AppResult.Success<*>>(repository.listMyTournamentSlots()).value)
+    }
+
+    @Test
+    fun refusedTimerAndSubstitutionCallsAreFailures() = runTest {
+        val repository = repository(Server().apply { failWith = HttpStatusCode.Forbidden })
+
+        assertIs<AppResult.Failure>(repository.updateRoundClock("t1", 1, RoundClockAction.Stop))
+        assertIs<AppResult.Failure>(repository.updateRoundControl("t1", 1, RoundControlChange(seats = ControlMode.OPEN)))
+        assertIs<AppResult.Failure>(repository.getRoundClocks("t1"))
+        assertIs<AppResult.Failure>(repository.setPlayerSubstitution("t1", 5, null))
+        assertIs<AppResult.Failure>(repository.listMyTournaments())
+    }
+
+    @Test
+    fun theTableCardsAndTheIdListAreDownloadedOnceUntilTheirDataChanges() = runTest {
+        val server = Server()
+        val repository = repository(server)
+
+        val cards = assertIs<AppResult.Success<ByteArray>>(repository.generateTableQrCodes("t1", perSheet = 4)).value
+        assertIs<AppResult.Success<ByteArray>>(repository.generateTableQrCodes("t1", perSheet = 4))
+        val list = assertIs<AppResult.Success<ByteArray>>(repository.generateTournamentIdList("t1")).value
+
+        assertEquals("%PDF /tournaments/t1/table-qr-codes", cards.decodeToString())
+        assertEquals("%PDF /tournaments/t1/id-list", list.decodeToString())
+        assertEquals(listOf("GET /tournaments/t1/table-qr-codes?perSheet=4"), server.requests.filter { "table-qr-codes" in it })
+    }
+
+    private companion object {
+        const val CLOCKS = """{"roundClocks":[{"roundId":2,"startedAtMs":1000}],"serverNowMs":9000,""" +
+            """"roundControls":[{"roundId":2,"hands":"closed"}]}"""
     }
 }
