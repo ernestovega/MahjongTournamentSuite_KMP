@@ -26,10 +26,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassTop
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -473,7 +473,7 @@ private fun HandKind.accent(): Color = when (this) {
 }
 
 private fun HandKind.icon(): ImageVector = when (this) {
-    HandKind.SELF_PICK -> Icons.Default.Bolt
+    HandKind.SELF_PICK -> Icons.Default.LocalFireDepartment
     HandKind.DISCARD -> Icons.Default.SwapHoriz
     HandKind.DRAW -> Icons.Default.HorizontalRule
 }
