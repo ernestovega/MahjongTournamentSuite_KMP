@@ -327,18 +327,26 @@ internal fun StatisticsFiltersDialog(
     val allTournaments = stringResource(Res.string.stats_all_tournaments)
     val noCountry = stringResource(Res.string.no_country)
     val anyRival = stringResource(Res.string.stats_filter_any_rival)
-    val sortedPlayers = remember(players) { players.sortedBy { it.displayName.lowercase() } }
-    fun playerOption(player: Player) = SelectOption(
-        player.emaId,
-        "${player.displayName} (${player.emaId})",
-        searchText = player.emaId,
-        leadingIcon = { CountryFlag(player.country, width = 20.dp) },
-    )
+    // There are thousands of players. Their options are built once, not at each change of the dialog.
+    val sortedOptions = remember(players) {
+        players.sortedBy { it.displayName.lowercase() }.map { player ->
+            player to SelectOption(
+                player.emaId,
+                "${player.displayName} (${player.emaId})",
+                searchText = player.emaId,
+                leadingIcon = { CountryFlag(player.country, width = 20.dp) },
+            )
+        }
+    }
     // A chosen country of the players narrows the list of the players. The chosen ones always stay in their lists.
     val countryOfPlayers = draft.playerCountry
-    val playerOptions = listOf(SelectOption(ANY, anyPlayer)) +
-        sortedPlayers.filter { countryOfPlayers == null || it.country.equals(countryOfPlayers, ignoreCase = true) || it.emaId == draft.emaId }.map(::playerOption)
-    val rivalOptions = listOf(SelectOption(ANY, anyRival)) + sortedPlayers.filter { it.emaId != draft.emaId }.map(::playerOption)
+    val playerOptions = remember(sortedOptions, countryOfPlayers, draft.emaId, anyPlayer) {
+        listOf(SelectOption(ANY, anyPlayer)) +
+            sortedOptions.filter { (player, _) -> countryOfPlayers == null || player.country.equals(countryOfPlayers, ignoreCase = true) || player.emaId == draft.emaId }.map { it.second }
+    }
+    val rivalOptions = remember(sortedOptions, draft.emaId, anyRival) {
+        listOf(SelectOption(ANY, anyRival)) + sortedOptions.filter { (player, _) -> player.emaId != draft.emaId }.map { it.second }
+    }
     // The country and the years of the tournaments narrow the list of the tournaments.
     val tournamentOptions = listOf(SelectOption(ANY, allTournaments)) +
         tournaments.filter { it.id == draft.tournamentId || draft.copy(tournamentId = null).keeps(it) }
@@ -348,7 +356,7 @@ internal fun StatisticsFiltersDialog(
     val tournamentCountryOptions = listOf(SelectOption(ANY, anyCountry)) +
         tournamentCountries.map { code -> SelectOption(code, countryDisplayName(code), searchText = code, leadingIcon = { CountryFlag(code, width = 20.dp) }) }
             .sortedBy { it.label.lowercase() }
-    val playerCountries = players.map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct()
+    val playerCountries = remember(players) { players.map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct() }
     val playerCountryOptions = listOf(SelectOption(ANY, anyCountry), SelectOption(NO_COUNTRY_KEY, noCountry, leadingIcon = { CountryFlag("", width = 20.dp) })) +
         playerCountries.map { code -> SelectOption(code, countryDisplayName(code), searchText = code, leadingIcon = { CountryFlag(code, width = 20.dp) }) }
             .sortedBy { it.label.lowercase() }
@@ -370,6 +378,8 @@ internal fun StatisticsFiltersDialog(
                         draft.emaId ?: ANY,
                         { ema -> draft = if (ema == ANY) draft.copy(emaId = null, rivalEmaId = null) else draft.withPerson(ema) },
                         Modifier.fillMaxWidth(),
+                        // The menu composes all its items. The search finds the players that it does not show.
+                        maxShown = SELECT_MAX_SHOWN,
                     )
                     SelectField(
                         stringResource(Res.string.stats_filter_rival),
@@ -379,6 +389,7 @@ internal fun StatisticsFiltersDialog(
                         Modifier.fillMaxWidth(),
                         // A rival is a rival of the chosen player.
                         enabled = draft.emaId != null,
+                        maxShown = SELECT_MAX_SHOWN,
                     )
                     SelectField(
                         stringResource(Res.string.stats_filter_tournament),
