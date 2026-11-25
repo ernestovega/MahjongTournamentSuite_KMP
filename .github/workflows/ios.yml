@@ -55,6 +55,7 @@ jobs:
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/ios \
+            ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             build > build/xcodebuild.log 2>&1 || { grep -nE "error|e: |FAILURE|What went wrong" -A3 build/xcodebuild.log | head -150; exit 1; }
           grep -E "warning: .*\.swift|Version " build/xcodebuild.log || true
