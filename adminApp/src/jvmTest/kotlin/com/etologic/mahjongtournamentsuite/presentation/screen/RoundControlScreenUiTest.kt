@@ -38,7 +38,7 @@ import kotlin.test.assertTrue
  * what the players can do, for the round or for one table.
  */
 @OptIn(ExperimentalTestApi::class)
-class RoundControlDialogUiTest {
+class RoundControlScreenUiTest {
     private val now = 1_000_000_000L
     private val min = 60_000L
 
@@ -63,11 +63,11 @@ class RoundControlDialogUiTest {
         val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
         setContent {
             MtsTheme(useDarkTheme = false) {
-                RoundControlDialogContent(
+                RoundControlContent(
                     controller = controller,
                     loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
                     loadRoundHands = { roundId -> server.getRoundTablesWithHands("t1", roundId, RefreshMode.FORCE) },
-                    onDismiss = {},
+                    onBack = {},
                     deviceNowMs = { now },
                 )
             }
@@ -191,7 +191,7 @@ class RoundControlDialogUiTest {
     @Test
     fun anEndedRoundAndTheRoundInPlayAreShown() = runComposeUiTest {
         val controller = show(server(RoundClock(roundId = 1, startedAtMs = now - 130 * min), RoundClock(roundId = 2, startedAtMs = now - 10 * min)))
-        // The dialog opens at the round in play.
+        // The screen opens at the round in play.
         onNodeWithTag("round_chip_2").assertIsSelected()
         onNodeWithContentDescription("This is the round in play.", useUnmergedTree = true).assertExists()
         controller.selectRound(1)
@@ -382,7 +382,7 @@ class RoundControlDialogUiTest {
 
     @Test
     fun goToRoundClosesTheReviewAndSelectsTheRoundOfTheTable() = runComposeUiTest {
-        // Round 2 is in play, so round 1 is over. The dialog opens on round 2.
+        // Round 2 is in play, so round 1 is over. The screen opens on round 2.
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 200 * min), RoundClock(roundId = 2, startedAtMs = now - 10 * min))
         show(server, round = 2)
 

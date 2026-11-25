@@ -18,12 +18,18 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -137,12 +143,22 @@ private class ScreenHarness(
                     LocalScrollPositionStore provides scrollPositions,
                 ) {
                     MtsTheme(useDarkTheme = false) {
-                        TournamentScreen(
-                            navController = rememberNavController(),
-                            tournamentId = "t1",
-                            activity = activity,
-                            pollSchedule = schedule,
-                        )
+                        // A real graph, so the screens that the tournament screen opens (Round control) open too.
+                        val navController = rememberNavController()
+                        NavHost(navController, startDestination = TournamentRoute("t1")) {
+                            composable<TournamentRoute> {
+                                TournamentScreen(
+                                    navController = navController,
+                                    tournamentId = "t1",
+                                    activity = activity,
+                                    pollSchedule = schedule,
+                                )
+                            }
+                            composable<RoundControlRoute> { entry ->
+                                val args = entry.toRoute<RoundControlRoute>()
+                                RoundControlScreen(args.tournamentId, args.round, onBack = { navController.popBackStack() })
+                            }
+                        }
                     }
                 }
             }
@@ -196,6 +212,30 @@ class TournamentScreenUiTest {
             waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("What the players can do").fetchSemanticsNodes().isNotEmpty() }
             onNodeWithTag("round_chip_1").assertIsSelected()
             onNodeWithTag("hands_auto").assertIsSelected()
+        }
+    }
+
+    @Test
+    fun closingTheOpenTableInRoundControlShowsNoTableChangedNoticeOnTheWayBack() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            onNode(hasText("Round control") or hasContentDescription("Round control")).performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("table_1_completed").fetchSemanticsNodes().isNotEmpty() }
+
+            // Table 1 is the one open in the editor behind. Round control is a screen, so the editor is not there to
+            // notice the change while the admin works here.
+            onNodeWithTag("table_1_completed").performScrollTo().performClick()
+            waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag("table_1_completed").assertIsSelected() }.isSuccess }
+            pass(3)
+            onAllNodesWithText("Table updated").assertCountEquals(0)
+
+            onAllNodes(hasText("Back") or hasContentDescription("Back")).onFirst().performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Round 1 • Table 1").fetchSemanticsNodes().isNotEmpty() }
+            pass(5)
+
+            // Back on the table, the screen loaded the tables again: no notice about a change the admin made.
+            onAllNodesWithText("Table updated").assertCountEquals(0)
+            onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
         }
     }
 

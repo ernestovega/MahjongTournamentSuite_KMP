@@ -138,7 +138,6 @@
     <string name="entry_hand_score">Handens värde</string>
     <string name="entry_chicken_limit">En kycklinghand har 12 poäng eller mindre.</string>
     <string name="chicken_hand">Kycklinghand</string>
-    <string name="entry_draw_explanation">Ingen spelare vinner den här handen. Alla platser får noll.</string>
     <string name="entry_last_hand">Bordets sista hand</string>
     <string name="entry_back">Tillbaka</string>
     <string name="entry_numpad_delete">Radera</string>
@@ -148,23 +147,25 @@
     <string name="entry_saving_hand">Sparar handen...</string>
     <string name="entry_confirm_save">Bekräfta</string>
     <string name="entry_edit">Redigera</string>
-    <string name="entry_add_another_penalty">Lägg till ett straff till</string>
-    <string name="entry_penalty_note">Ett straff avslutar inte handen. Poängen räknas när handen sparas.</string>
     <string name="entry_check_penalty">Kontrollera straffet</string>
     <string name="entry_saving_penalty">Sparar straffet...</string>
     <string name="entry_updating_table">Uppdaterar bordet...</string>
     <string name="entry_others_each">övriga +%1$d var</string>
-    <string name="entry_penalty_n">Straff %1$d</string>
-    <string name="entry_remove_penalty">Ta bort straff %1$d</string>
     <string name="entry_penalized_player">Bestraffad spelare</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Bestraffad</string>
     <string name="entry_points">Poäng</string>
+    <string name="entry_review_wins">Vinner</string>
+    <string name="entry_review_pays">Betalar</string>
+    <string name="entry_review_all_pay">De andra tre betalar</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">p</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Totalt</string>
     <string name="entry_shared_multiple">Ett delat straff måste vara en multipel av 3.</string>
-    <string name="entry_others_get">De andra spelarna får +%1$d var.</string>
     <string name="entry_share">Dela med de andra spelarna</string>
-    <plurals name="entry_wins_points">
-        <item quantity="one">vinner med %1$d poäng</item>
-        <item quantity="other">vinner med %1$d poäng</item>
-    </plurals>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Delad</string>
     <string name="entry_from">från</string>
     <string name="changed_title">Bordet har ändrats</string>
     <string name="changed_not_saved">Din hand är inte sparad. Kontrollera serverns data nedan.</string>
@@ -180,7 +181,6 @@
     <string name="changed_already">Om handen redan finns i bordet, mata inte in den igen.</string>
     <string name="changed_call_staff">Du kan kalla på en funktionär för att kontrollera bordet, eller stänga fönstret och fortsätta.</string>
     <string name="changed_close">Stäng och fortsätt</string>
-    <string name="scope_table">Bord</string>
     <string name="tab_tables_me">Jag</string>
     <string name="tab_tables_team">Mitt lag</string>
     <string name="tab_tables_all">Alla</string>

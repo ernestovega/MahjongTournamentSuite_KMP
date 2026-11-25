@@ -39,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequest
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
@@ -712,7 +713,9 @@ class FunctionsBackendApi(
         roundId: Int,
         tableId: Int,
         request: PenaltiesRequestDto,
-    ): OkResponseDto = post(
+        // The server answers with the hand and the table version, not with { ok }. Reading { ok } failed after the
+        // penalty was saved (Ernesto, 2026-11-25).
+    ): PenaltiesResponseDto = post(
         path = "${playerTablePath(tournamentId, roundId, tableId)}/penalties",
         requestBody = request,
         idToken = idToken,

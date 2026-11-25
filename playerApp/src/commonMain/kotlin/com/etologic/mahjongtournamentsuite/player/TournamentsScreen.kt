@@ -177,11 +177,14 @@ fun TournamentsScreen(navController: NavHostController) {
     var standingsRevision by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
-        // The first load reads everything. The later checks ask for changes only. [PollSchedule.listDelay] sets how often.
-        // A hidden tab or an app in the background does not check. The return checks at once.
+        // Every check asks for changes only: the revision of the manifest says if the list saved on the device is still
+        // the last one, so a page load that finds it the same shows it after one request and not after two in a row.
+        // The server raises that revision for every change of the list (also its registrations and round clocks).
+        // [PollSchedule.listDelay] sets how often. A hidden tab or an app in the background does not check. The return
+        // checks at once.
         pollForChanges(
             isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
-            forceFirst = true,
+            forceFirst = false,
             load = { mode -> tournaments.listTournaments(mode) },
             nextDelay = { PollSchedule.listDelay(items, currentLocalDateTime()) },
         ) { result ->

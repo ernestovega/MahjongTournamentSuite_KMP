@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -12,9 +13,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -23,7 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -33,7 +33,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,14 +46,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
@@ -68,14 +65,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
-import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
@@ -87,7 +87,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
-import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.enter_remaining_time_in_minutes
 import mahjongtournamentsuite.adminapp.generated.resources.remaining_time
 import mahjongtournamentsuite.adminapp.generated.resources.reset_timer
@@ -146,29 +145,32 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 
 /**
- * Round control: the plan B of the Timer, for admins. A dialog over the tournament screen. It holds the clock buttons
- * of a round, so nobody depends on the Timer, and the manual control of what the players can do: hand entry and seats
- * for the whole round, the hand entry of one table, and whether a table is completed (the same mark as the Completed
- * switch of the table editor). A manual mode stays until an admin sets it back to automatic.
+ * Round control: the plan B of the Timer, for admins. A screen of its own, opened from the tournament screen. It holds
+ * the clock buttons of a round, so nobody depends on the Timer, and the manual control of what the players can do:
+ * hand entry and seats for the whole round, the hand entry of one table, and whether a table is completed (the same
+ * mark as the Completed switch of the table editor). A manual mode stays until an admin sets it back to automatic.
+ *
+ * It was a dialog over the tournament screen. A screen leaves the table editor behind, so a table closed here does not
+ * pop up the "table changed" notice of that editor: the tournament screen loads the tables again when the admin goes back.
  */
 @Composable
-fun RoundControlDialog(
+fun RoundControlScreen(
     tournamentId: String,
     initialRound: Int,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
 ) {
     val repository = koinInject<TournamentRepository>()
     val telemetry = LocalTelemetry.current
     val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
-    RoundControlDialogContent(
+    RoundControlContent(
         controller = controller,
         loadTables = { mode -> repository.listTournamentTables(tournamentId, null, mode) },
         loadRoundHands = { roundId -> repository.getRoundTablesWithHands(tournamentId, roundId, RefreshMode.FORCE) },
-        onDismiss = onDismiss,
+        onBack = onBack,
     )
 }
 
-/** How often the dialog reads the clocks and the tables, to follow the other admins and the players. */
+/** How often the screen reads the clocks and the tables, to follow the other admins and the players. */
 private const val ROUND_CONTROL_POLL_MS = 5_000L
 
 /** From this width the clock and the rules of the players sit side by side. */
@@ -177,13 +179,13 @@ private val TWO_COLUMNS_MIN_WIDTH = 760.dp
 private enum class RoundControlPrompt { SetTime, StartedAgo, ConfirmStop }
 
 @Composable
-internal fun RoundControlDialogContent(
+internal fun RoundControlContent(
     controller: RoundTimerController,
     /** Every table of the tournament: the round strip shows the status of each round. */
     loadTables: suspend (mode: RefreshMode) -> AppResult<List<TournamentTable>>,
     /** The tables of a round with their hands: the review of the open tables counts the hands entered. */
     loadRoundHands: suspend (roundId: Int) -> AppResult<List<Pair<TableState, List<TableHand>>>>,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
     deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
     val scope = rememberCoroutineScope()
@@ -336,83 +338,87 @@ internal fun RoundControlDialogContent(
         )
     }
 
-    val scrollState = rememberScrollState()
-    TrackedDialog("RoundControl") {
-        AlertDialog(
-            // Twice the standard width (560 dp), so the clock and the rules of the players fit side by side.
-            // A phone keeps 16 dp on each side.
-            modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 1120.dp).fillMaxWidth(),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            onDismissRequest = onDismiss,
-            title = { MtsDialogTitle(stringResource(Res.string.round_control_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Above the rounds: it is about the whole tournament, not the selected round.
-                    if (finishedOpenTables.isNotEmpty()) {
+    val compact = LocalCompactLayout.current
+    AppScaffold(
+        title = stringResource(Res.string.round_control_title),
+        subtitle = state.tournament?.name?.ifBlank { null },
+        isLoading = state.tournament == null,
+        showProgress = state.tournament == null || allTables == null || busy,
+        onBack = onBack,
+    ) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val gutter = MtsTheme.layout.screenGutter
+            // The notice and the round strip line up with the cards. The strip scrolls up to the edges of the screen.
+            val side = ((maxWidth - ROUND_CONTROL_MAX_WIDTH) / 2).coerceAtLeast(0.dp) + gutter
+            Column(Modifier.fillMaxSize()) {
+                // Above the rounds: it is about the whole tournament, not the selected round.
+                if (finishedOpenTables.isNotEmpty()) {
+                    Box(Modifier.padding(start = side, end = side, top = MtsTheme.spacing.md)) {
                         FinishedRoundsNotice(
                             openTables = finishedOpenTables,
                             enabled = !busy,
                             onReview = { reviewing = true },
                         )
                     }
-                    // The rounds stay on top while the rest scrolls.
-                    RoundStrip(
-                        numRounds = state.numRounds,
-                        selected = state.roundId,
-                        runningRound = runningRound,
-                        allTables = allTables,
-                        openTablesByRound = finishedOpenTables.groupingBy { it.roundId }.eachCount(),
-                        onSelect = controller::selectRound,
-                    )
-                    ScrollableColumnWithScrollbar(state = scrollState, modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp)) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
-                            if (state.control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
-                            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                                val clock: @Composable (Modifier) -> Unit = { modifier ->
-                                    ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
-                                }
-                                val rules: @Composable (Modifier) -> Unit = { modifier ->
-                                    PlayersCard(
-                                        state.control.hands,
-                                        state.control.seats,
-                                        enabled = !busy,
-                                        // A wide window gives each card half the width, still room for both groups.
-                                        groupsSideBySide = maxWidth >= RADIO_GROUPS_SIDE_BY_SIDE_MIN_WIDTH,
-                                        modifier = modifier,
-                                        onChange = ::change,
-                                    )
-                                }
-                                if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
-                                        clock(Modifier.weight(1f).fillMaxHeight())
-                                        rules(Modifier.weight(1f).fillMaxHeight())
-                                    }
-                                } else {
-                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        clock(Modifier.fillMaxWidth())
-                                        rules(Modifier.fillMaxWidth())
-                                    }
-                                }
-                            }
-                            TablesCard(
-                                tables = allTables?.filter { it.roundId == state.roundId }?.sortedBy { it.tableId },
-                                control = state.control,
+                }
+                // The rounds stay on top while the rest scrolls.
+                RoundStrip(
+                    numRounds = state.numRounds,
+                    selected = state.roundId,
+                    runningRound = runningRound,
+                    allTables = allTables,
+                    openTablesByRound = finishedOpenTables.groupingBy { it.roundId }.eachCount(),
+                    contentPadding = PaddingValues(horizontal = side),
+                    modifier = Modifier.padding(top = MtsTheme.spacing.md),
+                    onSelect = controller::selectRound,
+                )
+                ScreenColumn(
+                    modifier = Modifier.weight(1f),
+                    maxWidth = ROUND_CONTROL_MAX_WIDTH,
+                    contentPadding = PaddingValues(start = gutter, end = gutter, top = MtsTheme.spacing.md, bottom = MtsTheme.spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 16.dp),
+                    scrollable = true,
+                ) {
+                    if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
+                    if (state.control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val clock: @Composable (Modifier) -> Unit = { modifier ->
+                            ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
+                        }
+                        val rules: @Composable (Modifier) -> Unit = { modifier ->
+                            PlayersCard(
+                                state.control.hands,
+                                state.control.seats,
                                 enabled = !busy,
+                                // A wide window gives each card half the width, still room for both groups.
+                                groupsSideBySide = maxWidth >= RADIO_GROUPS_SIDE_BY_SIDE_MIN_WIDTH,
+                                modifier = modifier,
                                 onChange = ::change,
-                                scrollTo = scrollToTable?.takeIf { it.roundId == state.roundId }?.tableId,
-                                onScrolled = { scrollToTable = null },
                             )
                         }
+                        if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
+                                clock(Modifier.weight(1f).fillMaxHeight())
+                                rules(Modifier.weight(1f).fillMaxHeight())
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 16.dp)) {
+                                clock(Modifier.fillMaxWidth())
+                                rules(Modifier.fillMaxWidth())
+                            }
+                        }
                     }
+                    TablesCard(
+                        tables = allTables?.filter { it.roundId == state.roundId }?.sortedBy { it.tableId },
+                        control = state.control,
+                        enabled = !busy,
+                        onChange = ::change,
+                        scrollTo = scrollToTable?.takeIf { it.roundId == state.roundId }?.tableId,
+                        onScrolled = { scrollToTable = null },
+                    )
                 }
-            },
-            confirmButton = {
-                MtsDialogButtons {
-                    FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
-                }
-            },
-        )
+            }
+        }
     }
 }
 
@@ -425,6 +431,9 @@ private fun RoundStrip(
     allTables: List<TournamentTable>?,
     /** Open tables of each finished round. A round with any gets a badge with the count. */
     openTablesByRound: Map<Int, Int>,
+    /** The side space of the screen: the first chip lines up with the cards and the chips scroll up to the edges. */
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
     onSelect: (Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -436,17 +445,11 @@ private fun RoundStrip(
         if (scrolledOnce) listState.animateScrollToItem(target) else listState.scrollToItem(target)
         scrolledOnce = true
     }
-    // The strip spreads over the dialog padding, so the chips scroll up to the dialog edges.
     LazyRow(
         state = listState,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = DialogHorizontalPadding),
-        modifier = Modifier.fillMaxWidth().layout { measurable, constraints ->
-            val extra = DialogHorizontalPadding.roundToPx()
-            val width = constraints.maxWidth + 2 * extra
-            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
-            layout(constraints.maxWidth, placeable.height) { placeable.place(-extra, 0) }
-        }.scrollIndicators(listState, Orientation.Horizontal),
+        contentPadding = contentPadding,
+        modifier = modifier.fillMaxWidth().scrollIndicators(listState, Orientation.Horizontal),
     ) {
         items((1..numRounds.coerceAtLeast(1)).toList()) { round ->
             FilterChip(
@@ -698,7 +701,8 @@ private fun TablesCard(
 @Composable
 private fun SubCard(title: String, content: @Composable () -> Unit) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        // A shade darker than the white card around it.
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -776,18 +780,18 @@ private fun ModeChips(
     }
 }
 
-/** A titled block with an outline. [info] adds an info button after the title. */
+/** A white card with a centred title. [info] adds an info button after the title. */
 @Composable
 private fun Card(title: String, info: String?, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
-    OutlinedCard(modifier = modifier) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
-                info?.let { InfoTooltipIcon(it, iconSize = INFO_ICON_SIZE) }
-            }
-            content()
-        }
-    }
+    SectionCard(
+        modifier = modifier,
+        title = title,
+        titleStyle = MaterialTheme.typography.titleLarge,
+        centerTitle = true,
+        titleAction = info?.let { { InfoTooltipIcon(it, iconSize = INFO_ICON_SIZE) } },
+        verticalSpacing = 12.dp,
+        content = content,
+    )
 }
 
 /** The open tables of the rounds that are over, with the button that opens their review. About the whole tournament. */
@@ -856,8 +860,8 @@ private fun ConfirmDialog(
 /** The info icons of the sections are smaller than the default, so they do not compete with the titles. */
 private val INFO_ICON_SIZE = 18.dp
 
-/** Below this dialog content width the two radio groups of the players card go one under the other. */
+/** Below this content width the two radio groups of the players card go one under the other. */
 private val RADIO_GROUPS_SIDE_BY_SIDE_MIN_WIDTH = 440.dp
 
-/** The horizontal padding of the AlertDialog content. The round strip spreads over it. */
-private val DialogHorizontalPadding = 24.dp
+/** The widest the content gets: the clock and the rules of the players fit side by side. */
+private val ROUND_CONTROL_MAX_WIDTH = 1120.dp

@@ -19,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
@@ -65,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationsScre
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
@@ -241,6 +243,10 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         )
                     }
                     screen<ErrorsRoute> { ErrorsScreen(navController) }
+                    screen<RoundControlRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<RoundControlRoute>()
+                        RoundControlScreen(tournamentId = args.tournamentId, initialRound = args.round, onBack = { navController.popBackStack() })
+                    }
                     screen<ActivityRoute> { backStackEntry ->
                         ActivityScreen(navController, initialTournamentId = backStackEntry.toRoute<ActivityRoute>().tournamentId)
                     }

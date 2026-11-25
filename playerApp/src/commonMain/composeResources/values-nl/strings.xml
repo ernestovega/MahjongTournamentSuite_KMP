@@ -138,7 +138,6 @@
     <string name="entry_hand_score">Waarde van de hand</string>
     <string name="entry_chicken_limit">Een kippenhand heeft 12 punten of minder.</string>
     <string name="chicken_hand">Kippenhand</string>
-    <string name="entry_draw_explanation">Niemand wint deze hand. Elke plaats krijgt nul.</string>
     <string name="entry_last_hand">Laatste hand van de tafel</string>
     <string name="entry_back">Terug</string>
     <string name="entry_numpad_delete">Wissen</string>
@@ -148,23 +147,25 @@
     <string name="entry_saving_hand">Hand opslaan...</string>
     <string name="entry_confirm_save">Bevestigen</string>
     <string name="entry_edit">Bewerken</string>
-    <string name="entry_add_another_penalty">Nog een straf toevoegen</string>
-    <string name="entry_penalty_note">Een straf beëindigt de hand niet. De punten tellen zodra de hand is opgeslagen.</string>
     <string name="entry_check_penalty">Straf controleren</string>
     <string name="entry_saving_penalty">Straf opslaan...</string>
     <string name="entry_updating_table">Tafel bijwerken...</string>
     <string name="entry_others_each">anderen elk +%1$d</string>
-    <string name="entry_penalty_n">Straf %1$d</string>
-    <string name="entry_remove_penalty">Straf %1$d verwijderen</string>
     <string name="entry_penalized_player">Gestrafte speler</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Bestraft</string>
     <string name="entry_points">Punten</string>
+    <string name="entry_review_wins">Wint</string>
+    <string name="entry_review_pays">Betaalt</string>
+    <string name="entry_review_all_pay">De andere drie betalen</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">ptn</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Totaal</string>
     <string name="entry_shared_multiple">Een gedeelde straf moet een veelvoud van 3 zijn.</string>
-    <string name="entry_others_get">De andere spelers krijgen elk +%1$d.</string>
     <string name="entry_share">Delen met de andere spelers</string>
-    <plurals name="entry_wins_points">
-        <item quantity="one">wint met %1$d punt</item>
-        <item quantity="other">wint met %1$d punten</item>
-    </plurals>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Gedeeld</string>
     <string name="entry_from">van</string>
     <string name="changed_title">De tafel is gewijzigd</string>
     <string name="changed_not_saved">Je hand is niet opgeslagen. Controleer hieronder de gegevens van de server.</string>
@@ -180,7 +181,6 @@
     <string name="changed_already">Als de hand al in de tafel staat, voer hem dan niet opnieuw in.</string>
     <string name="changed_call_staff">Je kunt een medewerker roepen om de tafel te controleren, of dit venster sluiten en verdergaan.</string>
     <string name="changed_close">Sluiten en verdergaan</string>
-    <string name="scope_table">Tafel</string>
     <string name="tab_tables_me">Ik</string>
     <string name="tab_tables_team">Mijn team</string>
     <string name="tab_tables_all">Alle</string>

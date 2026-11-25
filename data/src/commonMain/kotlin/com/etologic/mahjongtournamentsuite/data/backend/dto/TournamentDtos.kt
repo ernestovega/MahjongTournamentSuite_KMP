@@ -201,6 +201,13 @@ data class OkResponseDto(
     val ok: Boolean,
 )
 
+/** The answer of the server to new penalties: the hand they belong to and the new version of the table. */
+@Serializable
+data class PenaltiesResponseDto(
+    val handId: Int,
+    val tableVersion: Long,
+)
+
 @Serializable
 data class TournamentPlayerDto(
     val id: Int,

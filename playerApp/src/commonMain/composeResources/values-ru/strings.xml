@@ -144,7 +144,6 @@
     <string name="entry_hand_score">Стоимость руки</string>
     <string name="entry_chicken_limit">Курица — это рука стоимостью 12 очков или меньше.</string>
     <string name="chicken_hand">Курица</string>
-    <string name="entry_draw_explanation">В этой раздаче никто не выигрывает. Все места получают ноль.</string>
     <string name="entry_last_hand">Последняя раздача стола</string>
     <string name="entry_back">Назад</string>
     <string name="entry_numpad_delete">Удалить</string>
@@ -154,25 +153,25 @@
     <string name="entry_saving_hand">Сохранение раздачи...</string>
     <string name="entry_confirm_save">Подтвердить</string>
     <string name="entry_edit">Изменить</string>
-    <string name="entry_add_another_penalty">Добавить ещё штраф</string>
-    <string name="entry_penalty_note">Штраф не завершает раздачу. Его очки учитываются при сохранении раздачи.</string>
     <string name="entry_check_penalty">Проверить штраф</string>
     <string name="entry_saving_penalty">Сохранение штрафа...</string>
     <string name="entry_updating_table">Обновление стола...</string>
     <string name="entry_others_each">остальным по +%1$d</string>
-    <string name="entry_penalty_n">Штраф %1$d</string>
-    <string name="entry_remove_penalty">Удалить штраф %1$d</string>
     <string name="entry_penalized_player">Оштрафованный игрок</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Штраф</string>
     <string name="entry_points">Очки</string>
+    <string name="entry_review_wins">Выигрывает</string>
+    <string name="entry_review_pays">Платит</string>
+    <string name="entry_review_all_pay">Платят остальные трое</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">очк.</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Итого</string>
     <string name="entry_shared_multiple">Разделённый штраф должен быть кратен 3.</string>
-    <string name="entry_others_get">Остальные игроки получают по +%1$d.</string>
     <string name="entry_share">Разделить между остальными игроками</string>
-    <plurals name="entry_wins_points">
-        <item quantity="one">выигрывает с %1$d очком</item>
-        <item quantity="few">выигрывает с %1$d очками</item>
-        <item quantity="many">выигрывает с %1$d очками</item>
-        <item quantity="other">выигрывает с %1$d очками</item>
-    </plurals>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Поровну</string>
     <string name="entry_from">от</string>
     <string name="changed_title">Стол изменился</string>
     <string name="changed_not_saved">Ваша раздача не сохранена. Проверьте данные сервера ниже.</string>
@@ -188,7 +187,6 @@
     <string name="changed_already">Если раздача уже есть в столе, не вводите её снова.</string>
     <string name="changed_call_staff">Можно позвать сотрудника, чтобы проверить стол, или закрыть это окно и продолжить.</string>
     <string name="changed_close">Закрыть и продолжить</string>
-    <string name="scope_table">Стол</string>
     <string name="tab_tables_me">Я</string>
     <string name="tab_tables_team">Моя команда</string>
     <string name="tab_tables_all">Все</string>

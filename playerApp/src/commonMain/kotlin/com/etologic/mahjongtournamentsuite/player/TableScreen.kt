@@ -29,7 +29,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassTop
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -71,10 +70,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
-import com.etologic.mahjongtournamentsuite.presentation.components.BestHandMark
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenHandMark
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -404,20 +403,14 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                 }
             }
         }
-        // The chicken and the best hand mark the winning hand, so they go under its score, which saves width.
-        // The best hand is a gold, silver or bronze hand for the three best hands of the tournament.
-        val bestHandRank = view.bestHandRank(hand)
+        // The chicken marks the winning hand, so it goes under its score, which saves width. The best hands of the
+        // tournament belong to the ranking, not to the hands of a table (Ernesto, 2026-11-25).
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (kind != HandKind.DRAW) {
                 ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
             }
-            if (hand.isChickenHand || bestHandRank != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Each mark says what it is on a touch, a long touch or a hover (Ernesto, 2026-11-25).
-                    if (hand.isChickenHand) ChickenHandMark()
-                    bestHandRank?.let { BestHandMark(it, size = 24.dp) }
-                }
-            }
+            // It says what it is on a touch, a long touch or a hover (Ernesto, 2026-11-25).
+            if (hand.isChickenHand) ChickenHandMark()
         }
     }
 }
@@ -453,7 +446,8 @@ private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
+        // A self-draw shows the explosion, the same as in the dialogs of a hand (Ernesto, 2026-11-25).
+        if (kind == HandKind.SELF_PICK) SelfDrawIcon(18.dp) else Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
         Text(
             when (kind) {
                 HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
@@ -476,9 +470,9 @@ private fun HandKind.accent(): Color = when (this) {
     HandKind.DRAW -> MtsTheme.colors.draw
 }
 
+/** The icon of a discard or a draw. A self-draw uses [SelfDrawIcon]. */
 private fun HandKind.icon(): ImageVector = when (this) {
-    HandKind.SELF_PICK -> Icons.Default.LocalFireDepartment
-    HandKind.DISCARD -> Icons.Default.SwapHoriz
+    HandKind.SELF_PICK, HandKind.DISCARD -> Icons.Default.SwapHoriz
     HandKind.DRAW -> Icons.Default.HorizontalRule
 }
 

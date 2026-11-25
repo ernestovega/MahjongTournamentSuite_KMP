@@ -201,7 +201,6 @@ class HandEntryPanelUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00", repository)
 
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
         // Only hand 16 and a hand in the extra time end the table. The review has no last-hand box.
         awaitText("Confirm")
@@ -217,7 +216,6 @@ class HandEntryPanelUiTest {
 
         onNodeWithText("The time is over. You can add the hand in play. After it, the table is completed.").assertIsDisplayed()
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
         // The hand in the extra time ends the table on its own.
         awaitText("Confirm")
@@ -284,9 +282,8 @@ class HandEntryPanelUiTest {
 
         awaitText("Añadir empate")
         onNodeWithText("Añadir empate").performClick()
-        awaitText("Revisar")
-        onNodeWithText("Ningún jugador gana esta mano. Todos los asientos puntúan cero.").assertIsDisplayed()
-        onNodeWithText("Revisar").assertIsDisplayed()
+        // A draw opens the check of the hand at once.
+        awaitText("Confirmar")
         onNodeWithText("Cancelar").assertIsDisplayed()
     }
 
@@ -528,7 +525,7 @@ class HandEntryPanelUiTest {
         enterWin("Player 2", "Player 4", "24")
         onNodeWithText("Review").performClick()
         awaitText("Check hand")
-        onNodeWithText("wins with 24 points").assertIsDisplayed()
+        onNodeWithText("Pays").assertIsDisplayed()
         onNodeWithText("Confirm").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.recorded.isNotEmpty() }
 
@@ -606,7 +603,6 @@ class HandEntryPanelUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00", repository)
 
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("Review").performClick()
         awaitText("Confirm")
         onNodeWithText("Confirm").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.recorded.isNotEmpty() }
@@ -681,11 +677,11 @@ class HandEntryPanelUiTest {
         onNodeWithText("Review").assertIsNotEnabled()
         onAllNodes(hasSetTextAction()).onFirst().performTextClearance()
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        onNodeWithText("The other players get +10 each.").assertIsDisplayed()
+        onNodeWithText("The other players get +10 each.").assertDoesNotExist()
         onNodeWithText("Review").performClick()
 
         awaitText("Check penalty")
-        onNodeWithText("-30").assertIsDisplayed()
+        onAllNodesWithText("-30").onFirst().assertIsDisplayed()
         onNodeWithText("others +10 each").assertIsDisplayed()
         onNodeWithText("Confirm").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.penalties.isNotEmpty() }
@@ -695,40 +691,16 @@ class HandEntryPanelUiTest {
     }
 
     @Test
-    fun severalPenaltiesGoInOneSaveAndOneCanBeRemoved() = runComposeUiTest {
-        val repository = RecordingHandRepository()
-        show(MatchEndMode.FINISH_HAND, "11:00", repository)
-
-        onNodeWithText("Add penalty").performClick()
-        awaitText("Penalty 1")
-        onAllNodesWithText("Player 1").onFirst().performClick()
-        onAllNodes(hasSetTextAction()).onFirst().performTextInput("5")
-        onNodeWithText("Add another penalty").performClick()
-        awaitText("Penalty 2")
-        // The second card is below the first one: scroll to it, or the tap lands outside the dialog and closes it.
-        onAllNodesWithText("Player 4")[1].performScrollTo().performClick()
-        onAllNodes(hasSetTextAction())[1].performScrollTo().performTextInput("20")
-        onNodeWithText("Add another penalty").performScrollTo()
-        Thread.sleep(700) // The same button again within 500 ms is taken as a double press.
-        onNodeWithText("Add another penalty").performClick()
-        awaitText("Penalty 3")
-        onNodeWithContentDescription("Remove penalty 3").performClick()
-        onNodeWithText("Penalty 3").assertDoesNotExist()
-        onNodeWithText("Review").performClick()
-        awaitText("Check penalty")
-        onNodeWithText("Confirm").performClick()
-        waitUntil(timeoutMillis = 5_000) { repository.penalties.isNotEmpty() }
-
-        assertEquals(listOf(listOf(PenaltyEntry(0, 5, false), PenaltyEntry(3, 20, false))), repository.penalties)
-    }
-
-    @Test
-    fun removingTheOnlyPenaltyClosesTheDialog() = runComposeUiTest {
+    fun aPenaltyEntryTakesOnlyOnePenalty() = runComposeUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00")
 
         onNodeWithText("Add penalty").performClick()
-        awaitText("Penalty 1")
-        onNodeWithContentDescription("Remove penalty 1").performClick()
+        awaitText("Penalized player")
+        // One penalty per entry: no second card, no explanation under the field or the form.
+        onNodeWithText("Add another penalty").assertDoesNotExist()
+        onNodeWithText("Penalty 1").assertDoesNotExist()
+        onNodeWithText("A penalty does not end the hand. Its points count when the hand is saved.").assertDoesNotExist()
+        onNodeWithText("Cancel").performClick()
         onNodeWithText("Penalized player").assertDoesNotExist()
         onNodeWithText("Add win").assertIsDisplayed()
     }

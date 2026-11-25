@@ -133,7 +133,6 @@ class RehearsalPlayerTest : PlayerE2eTest() {
         val roll = Random.nextDouble()
         if (roll < 0.1) {
             c.clickButton("Add draw")
-            c.clickButton("Review")
         } else {
             c.clickButton("Add win")
             c.waitForText("Who won?")

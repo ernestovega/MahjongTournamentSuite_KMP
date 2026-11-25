@@ -75,7 +75,7 @@ While the clock runs, the screen hides all controls except Pause. The other cont
 
 ## Round control (plan B)
 
-The "Round control" button of the tournament screen (admins and the editors of the tournament) opens a wide dialog that works without the Timer. On top, one chip per round with the status icon of its tables and a play mark on the round whose clock runs. Below, the clock (an ended round shows its time and "Time is over" in red, like the Timer), "What the players can do" (hand entry and seats: Follow the clock, Open or Closed) and the tables. Info buttons explain each part. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
+The "Round control" button of the tournament screen (admins and the editors of the tournament) opens a screen of its own that works without the Timer (it was a dialog over the table editor: a table it closed popped up the "Table updated" notice of the editor behind it; now the tournament screen loads the tables again when the admin goes back). On top, one chip per round with the status icon of its tables and a play mark on the round whose clock runs. Below, the clock (an ended round shows its time and "Time is over" in red, like the Timer), "What the players can do" (hand entry and seats: Follow the clock, Open or Closed) and the tables. Info buttons explain each part. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
 
 The control lives in the tournament document, apart from the settings:
 
@@ -126,7 +126,7 @@ Closing a Timer does not stop the round: the clock lives on the server.
 ## Main source files
 
 - `firebase/functions/src/services/roundClock.ts`, `roundClockService.ts`, `roundControl.ts`, `matchTime.ts`, `matchTimeTaskService.ts`
-- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundControlDialog.kt`
+- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundControlScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundTimerController.kt`
 - `playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTime.kt`, `SeatsAssignment.kt`, `HandEntryPanel.kt`

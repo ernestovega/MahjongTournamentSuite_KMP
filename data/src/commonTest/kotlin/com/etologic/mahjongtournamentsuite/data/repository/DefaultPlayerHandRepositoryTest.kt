@@ -87,7 +87,7 @@ class DefaultPlayerHandRepositoryTest {
 
     @Test
     fun penaltiesAreJoinedBySeat() = runTest {
-        val result = repository(body = "{\"ok\":true}").addPenalties(
+        val result = repository(body = PENALTIES_ANSWER).addPenalties(
             "t-1",
             2,
             5,
@@ -108,8 +108,16 @@ class DefaultPlayerHandRepositoryTest {
     }
 
     @Test
+    fun theAnswerOfTheServerToPenaltiesIsASuccess() = runTest {
+        // The server answers { handId, tableVersion }. The app read { ok } before, so a saved penalty showed an error.
+        val result = repository(body = PENALTIES_ANSWER).addPenalties("t-1", 2, 5, listOf(PenaltyEntry(0, 5, false)), expectedVersion = 1)
+
+        assertIs<AppResult.Success<Unit>>(result)
+    }
+
+    @Test
     fun aSeatWithoutPenaltiesSendsAnEmptyText() = runTest {
-        repository(body = "{\"ok\":true}").addPenalties("t-1", 2, 5, listOf(PenaltyEntry(0, 5, false)), expectedVersion = 1)
+        repository(body = PENALTIES_ANSWER).addPenalties("t-1", 2, 5, listOf(PenaltyEntry(0, 5, false)), expectedVersion = 1)
 
         assertEquals("", requests.single().json()["playerNorthPenalty"]?.jsonPrimitive?.content)
     }
@@ -163,3 +171,6 @@ class DefaultPlayerHandRepositoryTest {
         const val PREVIEW = """{"handId":3,"seats":["7","9","11","13"],"handScores":[32,-8,-8,-16],"tableScores":["32","-8","-8","-16"],"tablePoints":["4","2","2","0"],"tableVersion":42}"""
     }
 }
+
+/** What the server answers to new penalties (player.routes.ts, addPenalties). */
+private const val PENALTIES_ANSWER = "{\"handId\":7,\"tableVersion\":42}"

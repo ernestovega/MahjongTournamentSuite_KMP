@@ -22,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
@@ -35,6 +36,8 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlContent
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundTimerController
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
@@ -51,6 +54,7 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthReposi
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
+import org.koin.compose.koinInject
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -102,6 +106,28 @@ class AdminScreensScreenshotTest {
             waitForText("EMA report")
         },
     ) { nav -> TournamentScreen(nav, ONGOING) }
+
+    /** Round control, the plan B of the Timer, on the round in play. */
+    @Test
+    fun roundControl() = adminScreenshots("round-control", ready = { waitForText("2:00:00") }) { nav ->
+        RoundControlScreen(ONGOING, initialRound = 3, onBack = { nav.popBackStack() })
+    }
+
+    /** Round 2 is over (round 3 is in play) but two of its tables stayed open: badge on its chip and the close button. */
+    @Test
+    fun roundControlOpenTables() = adminScreenshots("round-control-open-tables", ready = { waitForText("2:00:00") }) {
+        val repository = koinInject<TournamentRepository>()
+        val controller = remember { RoundTimerController(repository, ONGOING, initialRound = 3) }
+        val tables = remember {
+            ScreenshotData.tables(ONGOING).map { if (it.roundId == 2 && it.tableId in setOf(1, 3)) it.copy(isCompleted = false) else it }
+        }
+        RoundControlContent(
+            controller = controller,
+            loadTables = { AppResult.Success(tables) },
+            loadRoundHands = { roundId -> AppResult.Success(ScreenshotData.tables(ONGOING).filter { it.roundId == roundId }.map { ScreenshotData.table(ONGOING, roundId, it.tableId) }) },
+            onBack = {},
+        )
+    }
 
     @Test
     fun players() = adminScreenshots("players", ready = { waitForText("04010001", substring = true) }) { nav -> PlayersScreen(nav, ONGOING) }
