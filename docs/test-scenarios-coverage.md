@@ -60,9 +60,9 @@ Files with the most untested lines:
 | `data/.../DefaultAdminRepository.kt` | 43 % | 142 | Accounts, roles, EMA registry writes |
 | `ui/.../ImageCropDialog.kt` | covered 25 Nov | – | `PhotoCropAndConsentUiTest` |
 | `data/.../DefaultAuthRepository.kt` | 40 % | 81 | Sign in, sign out, password change, delete own account |
-| `playerApp/.../TeamStatistics.kt` | 4 % | 67 | Team statistics in the Player |
+| `playerApp/.../TeamStatistics.kt` | covered 25 Nov | – | `TeamStatisticsTabUiTest` |
 | `adminApp/.../CreateTournamentPresenter.kt` | 63 % | 52 | Error paths of the create flow and the registrations variant |
-| `adminApp` and `playerApp` `RoutePersistence.kt` | 0 % | 87 | Restore of the last screen after a reload |
+| `adminApp` and `playerApp` `RoutePersistence.kt` | covered 25 Nov | – | `RoutePersistenceUiTest` in both apps |
 | `adminApp/.../HandRowNavigation.kt` | 42 % | 39 | Keyboard navigation between hand rows |
 | `ui/.../AppErrorUi.kt` | 42 % | 51 | Messages of each error kind |
 
@@ -147,7 +147,7 @@ The web E2E tests (`e2e/web`) are in the notes.
 | Feature | Covered by | Gap |
 | --- | --- | --- |
 | Browser back and forward | `BrowserHistoryTest`, `BrowserHistoryUiTest` | Not in a real browser |
-| Restore the last screen after a reload | | `RoutePersistence` 0 % in both apps |
+| Restore the last screen after a reload | ✅ | `RoutePersistenceUiTest` in both apps (25 Nov) |
 | App Links on Android | `SitePagesLinkTest` (which pages go to the browser) | No instrumented test of the intent filters |
 | Keyboard support on desktop | `EntryFocusAndScrollUiTest`, `KeyboardFocus` 78 % | |
 | Analytics and error log | `AnalyticsCoverageTest`, `ErrorReporterTest`, backend `errorReports` | |
@@ -197,7 +197,8 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 **Priority 3**
 
-12. Restore the last screen after a reload (`RoutePersistence`), team statistics, keyboard navigation of hand rows.
+12. ~~Restore the last screen after a reload (`RoutePersistence`), team statistics, keyboard navigation of hand
+    rows~~: done 25 November (`RoutePersistenceUiTest` in both apps, `TeamStatisticsTabUiTest`, `HandRowKeyboardUiTest`).
 13. Error branches of `tournaments.routes.ts`, `requirePermission`, feature flags, versions page, Auth REST.
 14. Accessibility checks (contrast, touch size, TalkBack labels) and a guard that the Firestore and Storage rules stay
     «deny everything».
