@@ -1,5 +1,5 @@
 # Uploads the iOS app (Release, com.etologic.mahjongtournamentsuite) to App Store Connect, where it goes to TestFlight.
-# Only by hand, from Actions > Publish · TestFlight, like the Google Play upload. The version is the one of the catalog
+# Only by hand, from Actions > Publish · TestFlight or with a tag testflight/<version>, like the Google Play upload. The version is the one of the catalog
 # (admin-versionName and admin-versionCode): App Store Connect refuses a build number it already has, so bump the
 # versions before running it again. See docs/ios-release.md.
 #
@@ -9,6 +9,10 @@ name: Publish · TestFlight
 
 on:
   workflow_dispatch:
+  # A tag testflight/<version> also starts it, for a branch whose workflow is not on main yet.
+  push:
+    tags:
+      - "testflight/*"
 
 concurrency:
   group: testflight
