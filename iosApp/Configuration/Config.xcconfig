@@ -1,0 +1,9 @@
+// Settings of every build of the iOS app. See docs/ios-release.md.
+// The Team ID of the Apple Developer account (Membership details on developer.apple.com). Empty builds only run in the
+// simulator.
+TEAM_ID =
+// The version comes from gradle/libs.versions.toml (admin-versionName and admin-versionCode): the build phase
+// "Set version" writes it into the Info.plist. These two are only what Xcode shows.
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+IPHONEOS_DEPLOYMENT_TARGET = 16.0

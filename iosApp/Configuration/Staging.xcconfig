@@ -1,0 +1,11 @@
+#include "Config.xcconfig"
+// The app of the staging Firebase project, for rehearsals (docs/staging.md): it installs next to the real app, with
+// the orange icon, and never calls the production backend.
+PRODUCT_BUNDLE_IDENTIFIER = com.etologic.mahjongtournamentsuite.staging
+APP_DISPLAY_NAME = MTS Staging
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIconStaging
+// The double slash would start a comment in an xcconfig, so the address is built from two parts.
+SLASH = /
+MTS_BACKEND_URL = https:$(SLASH)$(SLASH)europe-southwest1-mts---staging.cloudfunctions.net/api
+MTS_ENVIRONMENT = staging
+KOTLIN_FRAMEWORK_BUILD_TYPE = release

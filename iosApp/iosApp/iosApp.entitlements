@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal links: the addresses of the site open the app (docs/table-qr.md). The site serves
+	     /.well-known/apple-app-site-association with the Team ID. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:mts.mahjongmadrid.com</string>
+	</array>
+</dict>
+</plist>

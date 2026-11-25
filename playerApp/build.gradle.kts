@@ -34,6 +34,9 @@ kotlin {
     // The JVM target only runs the tests of the shared code.
     jvm()
 
+    iosArm64()
+    iosSimulatorArm64()
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()

@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -13,11 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
-import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
-import com.etologic.mahjongtournamentsuite.data.session.storedSessionUid
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.player.PlayerApp
 import com.etologic.mahjongtournamentsuite.player.RegistrationLink
+import com.etologic.mahjongtournamentsuite.player.SiteLink
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteAppHost
@@ -45,7 +44,8 @@ data class SuiteStart(
 }
 
 /**
- * Holds the player application and the admin application, one at a time, like the two apps of the web site.
+ * Holds the player application and the admin application, one at a time, like the two apps of the web site. The
+ * Android app and the iOS app show it.
  * - The player part opens first. Its top bar shows the admin button only to admins and editors.
  * - The two parts share the session, which is saved in a file of the app, so one sign-in is enough.
  * - Each part keeps its screens while the other one is open. Leaving the admin part after a sign-out, or without the
@@ -57,13 +57,17 @@ data class SuiteStart(
  */
 @Composable
 fun SuiteRoot(
-    /** Where a new activity starts. Null opens the player part. */
+    /** Where the app starts. Null opens the player part. */
     initial: SuiteStart?,
-    /** A start request that came later, with a new intent. */
+    /** A start request that came later: a link that opened the running app. */
     startRequest: SuiteStart?,
     onStartHandled: () -> Unit,
     /** Runs a change of part on the main thread. Some screens leave the admin part from a background coroutine. */
     post: (() -> Unit) -> Unit,
+    /** The account of the saved session, or null without one. */
+    storedSessionUid: () -> String?,
+    /** Tells the platform which part is on the screen (`player` or `admin`), for the telemetry of that part. */
+    onPartShown: (String) -> Unit,
 ) {
     // The first part is known before the first frame, so the other part never starts for nothing.
     var section by rememberSaveable { mutableStateOf(initial?.section ?: SuiteSection.PLAYER) }
@@ -113,14 +117,14 @@ fun SuiteRoot(
     // The buttons of the top bars switch between the two parts and keep the screens of each one.
     val switcher: (SuiteApp) -> Unit = remember { { app -> show(app.toSection(), signIn = false, fresh = false) } }
 
-    BackHandler(enabled = section == SuiteSection.ADMIN) { show(SuiteSection.PLAYER, signIn = false, fresh = false) }
+    PlatformBackHandler(enabled = section == SuiteSection.ADMIN) { show(SuiteSection.PLAYER, signIn = false, fresh = false) }
 
     CompositionLocalProvider(LocalSuiteAppSwitcher provides switcher) {
         when (section) {
             SuiteSection.PLAYER -> key(playerRun) {
                 savedParts.SaveableStateProvider(SuiteSection.PLAYER.name + playerRun) {
                     // The telemetry of each part starts with the name of the part. See AndroidTelemetry.
-                    AndroidPlatformContext.currentApp = "player"
+                    onPartShown("player")
                     // The app has one version for both parts: the admin version. See docs/versioning.md.
                     // Phones and tablets type the score of a hand on the numpad of the app, not on the system keyboard.
                     PlayerApp(
@@ -136,7 +140,7 @@ fun SuiteRoot(
             }
             SuiteSection.ADMIN -> key(adminAccount) {
                 savedParts.SaveableStateProvider(SuiteSection.ADMIN.name + adminAccount) {
-                    AndroidPlatformContext.currentApp = "admin"
+                    onPartShown("admin")
                     App(isolatedKoin = true)
                 }
             }
@@ -147,4 +151,17 @@ fun SuiteRoot(
 private fun SuiteApp.toSection(): SuiteSection = when (this) {
     SuiteApp.PLAYER -> SuiteSection.PLAYER
     SuiteApp.ADMIN -> SuiteSection.ADMIN
+}
+
+/**
+ * Where a link of the web opens (docs/table-qr.md): the tournaments, a tournament, its registration, the table of the
+ * player, the support form or the management part. Null for a page that is not the app, which goes to the browser.
+ */
+fun suiteStartOf(link: SiteLink): SuiteStart? = when (link) {
+    SiteLink.Browser -> null
+    SiteLink.Home -> SuiteStart(SuiteSection.PLAYER)
+    SiteLink.Admin -> SuiteStart(SuiteSection.ADMIN)
+    SiteLink.Support -> SuiteStart(SuiteSection.PLAYER, support = true)
+    is SiteLink.Tournament -> SuiteStart(SuiteSection.PLAYER, tournamentId = link.tournamentId)
+    is SiteLink.Registration -> SuiteStart(SuiteSection.PLAYER, link = link.link)
 }
