@@ -49,4 +49,7 @@ already on Play stays. Run it first with `check`, which changes nothing and list
 - The service account of the deploy needs the Play Console permission **Manage store presence** on the app (the
   upload of the app only needs the testing tracks).
 - The Play API has no Chromebook screenshots: upload `tablet/<lang>/` there by hand if you want them.
+- Deploy · Production run by hand has the box **Also upload the Play store listing**: it uploads the listing right after
+  the app, in the same job. Never run both workflows at the same time: Play keeps one edit of the app at a time and
+  throws the other away ("This Edit has been deleted").
 - `python3 scripts/play_listing.py check --local` checks the lengths and image sizes without Play.

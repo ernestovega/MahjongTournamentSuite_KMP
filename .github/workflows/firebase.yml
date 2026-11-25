@@ -17,6 +17,11 @@ on:
   schedule:
     - cron: "30 2 * * *"
   workflow_dispatch:
+    inputs:
+      store_listing:
+        description: "Also upload the Play store listing (texts, screenshots, feature graphic of docs/play-store/) after the app"
+        type: boolean
+        default: false
 
 concurrency:
   # Never cancel a deploy halfway. A newer push waits for the running one. A run by hand on another branch only tests:
@@ -292,6 +297,9 @@ jobs:
       PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The store images live in Git LFS.
+          lfs: ${{ inputs.store_listing == true }}
 
       - uses: actions/setup-python@v7
         with:
@@ -340,6 +348,11 @@ jobs:
       - name: Upload the app
         if: steps.pending.outputs.admin == 'true'
         run: python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab
+
+      # After the app, never at the same time: Play keeps one edit of the app at a time (scripts/play_listing.py).
+      - name: Upload the store listing
+        if: inputs.store_listing == true
+        run: python3 scripts/play_listing.py upload
 
       - name: Remove the keystores
         if: always()
