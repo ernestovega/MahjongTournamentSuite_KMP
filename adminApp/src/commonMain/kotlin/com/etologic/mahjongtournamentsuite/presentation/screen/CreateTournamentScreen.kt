@@ -518,7 +518,7 @@ fun CreateTournamentDialog(
                             Tab(
                                 selected = tab == selectedTab,
                                 onClick = { selectedTab = tab },
-                                text = { Text(stringResource(tab.title)) },
+                                text = { ButtonText(stringResource(tab.title), fontWeight = null) },
                             )
                         }
                     }
