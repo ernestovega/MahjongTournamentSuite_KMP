@@ -61,6 +61,7 @@ class HideOnScrollUiTest {
             state.connection.onPreScroll(Offset(0f, 3f), NestedScrollSource.UserInput)
             state.connection.onPreScroll(Offset(0f, -40f), NestedScrollSource.UserInput)
         }
+        assertFalse(state.visible, "The shaking finger does not stop the rows from hiding.")
         state.scroll(-40f)
         repeat(5) { state.connection.onPreScroll(Offset(0f, 8f), NestedScrollSource.UserInput) }
         assertFalse(state.visible)
@@ -70,7 +71,7 @@ class HideOnScrollUiTest {
     fun aDirectionChangeStartsTheDistanceAgain() {
         val state = HideOnScrollState(hideDistance)
         state.scroll(-80f)
-        state.connection.onPreScroll(Offset(0f, 5f), NestedScrollSource.UserInput)
+        state.connection.onPreScroll(Offset(0f, 120f), NestedScrollSource.UserInput)
         state.scroll(-80f)
         assertTrue(state.visible, "The first 80 px do not count after the user scrolled up.")
     }

@@ -45,9 +45,8 @@ class HideOnScrollState(private val hideDistancePx: Float) {
             // that hides them.
             when {
                 available.y > 0f -> {
-                    scrolledDown = 0f
                     scrolledUp += available.y
-                    if (!visible && scrolledUp > hideDistancePx) show()
+                    if (scrolledUp > hideDistancePx) show()
                 }
                 available.y < 0f -> scrolledUp = 0f
             }

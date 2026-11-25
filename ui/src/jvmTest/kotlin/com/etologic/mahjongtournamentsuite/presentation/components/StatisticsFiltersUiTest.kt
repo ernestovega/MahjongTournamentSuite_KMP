@@ -99,11 +99,11 @@ class StatisticsFiltersUiTest {
     }
 
     @Test
-    fun anotherPlayerInTheDialogHidesTheRival() = runComposeUiTest {
+    fun withoutThePlayerOfTheScreenTheDialogHidesTheRival() = runComposeUiTest {
         dialog(StatisticsFilters(emaId = ana.emaId), opponents = setOf(bea.emaId))
         onNodeWithText("Any opponent").assertExists()
-        open("Ana Lopez (04000001)", probe = "(04000002)")
-        onNode(hasText("(04000002)", substring = true) and !hasSetTextAction()).performClick()
+        // Clear takes the player away in the dialog: the opponents belong to the player on the screen.
+        onNodeWithText("Clear").performClick()
         waitForIdle()
         onNodeWithText("Any opponent").assertDoesNotExist()
     }
