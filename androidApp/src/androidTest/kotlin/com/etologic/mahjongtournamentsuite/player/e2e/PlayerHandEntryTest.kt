@@ -111,7 +111,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun penaltyDialogShowsPlayerAndPoints() {
         openActivePlayerTable()
         c.clickButton("Add penalty")
-        listOf("Penalized player", "Points", "Share it with the other players").forEach { c.waitForText(it) }
+        listOf("Penalized player", "Points", "Paid to the others").forEach { c.waitForText(it) }
     }
 
     @Test

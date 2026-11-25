@@ -80,11 +80,11 @@ import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
-import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
@@ -124,6 +124,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -1074,7 +1075,7 @@ private fun RowScope.FeatureStateCell(
         Icon(
             imageVector = if (enabled) Icons.Outlined.Check else Icons.Outlined.Close,
             contentDescription = if (enabled) enabledDescription else disabledDescription,
-            tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            tint = if (enabled) MtsTheme.colors.link else MaterialTheme.colorScheme.error,
         )
     }
 }

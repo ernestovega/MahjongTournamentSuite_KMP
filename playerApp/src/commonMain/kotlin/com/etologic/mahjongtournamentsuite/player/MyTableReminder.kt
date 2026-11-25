@@ -56,6 +56,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateSto
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDateTime
@@ -382,7 +383,7 @@ internal fun MyTableReminderDialog(
                     Text(
                         myTableReminderTime(moment),
                         // The time is what the player must see first, so it is the biggest text.
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.inTextFont(),
                         // The accent of the brand, like a table in play.
                         color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,

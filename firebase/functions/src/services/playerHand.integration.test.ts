@@ -414,6 +414,33 @@ describe("seats set by a player", () => {
     assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 0);
   });
 
+  it("refuses the seats and the hands of a past round that never got its gong", async () => {
+    const fixture = await seedTable({ seats: false, startedMinutesAgo: null });
+    await planRound(fixture.tournamentId, -24 * 60);
+
+    await assert.rejects(
+      assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 }),
+      (error: unknown) => error instanceof HttpError && (error.details as { code?: string })?.code === "SEATS_TIME_OVER",
+    );
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 0);
+    const seated = await seedTable({ startedMinutesAgo: null });
+    await planRound(seated.tournamentId, -24 * 60);
+    await assert.rejects(
+      recordHand({ ...at(seated), uid: seated.uid, input: hand("1", "4"), expectedVersion: 0 }),
+      (error: unknown) => error instanceof HttpError && (error.details as { code?: string })?.code === "ROUND_TIME_OVER",
+    );
+  });
+
+  it("refuses the seats of a round once a later round started", async () => {
+    const fixture = await seedTable({ seats: false, startedMinutesAgo: null });
+    await db.doc(`tournaments/${fixture.tournamentId}`).update({
+      numRounds: 2,
+      "roundClocks.2": { startedAtMs: Date.now() - 60_000, pausedAtMs: null, pausedMs: 0, adjustMs: 0 },
+    });
+
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 }), 409);
+  });
+
   it("accepts the seats in a round that the Timer started early", async () => {
     const fixture = await seedTable({ seats: false, startedMinutesAgo: 1 });
     await db.doc(`tournaments/${fixture.tournamentId}`).update({

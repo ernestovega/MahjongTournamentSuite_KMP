@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -62,7 +63,7 @@ internal fun AccountStateIcon(hasAccount: Boolean, modifier: Modifier = Modifier
     Icon(
         imageVector = if (hasAccount) Icons.Outlined.Check else Icons.Outlined.Close,
         contentDescription = stringResource(if (hasAccount) Res.string.account_has else Res.string.account_none),
-        tint = if (hasAccount) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+        tint = if (hasAccount) MtsTheme.colors.link else MaterialTheme.colorScheme.error,
         modifier = modifier,
     )
 }

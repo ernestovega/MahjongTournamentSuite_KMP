@@ -142,7 +142,7 @@ fun RowActionsMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val defaultButtonColors = ButtonDefaults.textButtonColors()
+    val defaultButtonColors = MtsButtons.textColors()
 
     FocusedTextButton(
         enabled = enabled,

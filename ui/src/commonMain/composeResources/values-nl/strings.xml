@@ -738,6 +738,7 @@ De eerste die lukt, wint</string>
     <string name="conflict_seats_locked">De plaatsen kunnen na de eerste hand of straf niet meer veranderen.</string>
     <string name="conflict_seats_not_assigned">De plaatsen van deze tafel zijn nog niet toegewezen.</string>
     <string name="conflict_seats_not_open">De plaatsen gaan een paar minuten voor het begin van de ronde open.</string>
+    <string name="conflict_seats_time_over">De tijd van deze ronde is voorbij. De organisatoren wijzen de plaatsen toe.</string>
     <string name="conflict_table_changed">De tafel is op de server gewijzigd.\nControleer hem en sla opnieuw op.</string>
     <string name="conflict_table_changed_hand">De tafel is gewijzigd.\nControleer de hand opnieuw.</string>
     <string name="conflict_table_changed_penalty">De tafel is gewijzigd.\nControleer de tafel en voeg de straf opnieuw toe.</string>

@@ -99,6 +99,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicat
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -406,7 +407,7 @@ internal fun RegistrationsTab(tournament: Tournament) {
                 item(key = "title-$status") {
                     RegistrationSectionTitle(
                         stringResource(if (status == RegistrationStatus.CONFIRMED) Res.string.preg_title_confirmed else Res.string.preg_title_waiting, rows.size),
-                        color = if (status == RegistrationStatus.CONFIRMED) MaterialTheme.colorScheme.primary else MtsTheme.colors.warning,
+                        color = if (status == RegistrationStatus.CONFIRMED) MtsTheme.colors.link else MtsTheme.colors.warning,
                     )
                 }
                 items(rows, key = { "$status-${it.emaId}" }) { row ->
@@ -493,7 +494,7 @@ private fun RegistrationSummaryCard(settings: RegistrationSettings?) {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 val open = settings?.isOpen == true
                 SummaryRow(stringResource(Res.string.preg_status_label), compact) {
-                    val color = if (open) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    val color = if (open) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                         Text(
@@ -565,7 +566,7 @@ private fun SummaryDetail(text: String) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onRegister: () -> Unit, onNoEma: () -> Unit) {
     // The color of the state: green with a place, amber on the waiting list.
-    val accent = if (own?.status == RegistrationStatus.WAITING) MtsTheme.colors.warning else MaterialTheme.colorScheme.primary
+    val accent = if (own?.status == RegistrationStatus.WAITING) MtsTheme.colors.warning else MtsTheme.colors.link
     Card(
         Modifier.fillMaxWidth().testTag("registration-own"),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -580,8 +581,8 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
             val (icon, tint) = when (own?.status) {
                 RegistrationStatus.CONFIRMED -> Icons.Default.CheckCircle to accent
                 RegistrationStatus.WAITING -> Icons.Default.HourglassTop to MtsTheme.colors.warning
-                RegistrationStatus.PENDING -> Icons.Default.MarkEmailUnread to MaterialTheme.colorScheme.primary
-                null -> Icons.Default.HowToReg to MaterialTheme.colorScheme.primary
+                RegistrationStatus.PENDING -> Icons.Default.MarkEmailUnread to MtsTheme.colors.link
+                null -> Icons.Default.HowToReg to MtsTheme.colors.link
             }
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(32.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
@@ -685,7 +686,7 @@ private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams
         ),
     ) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = MtsTheme.spacing.md), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
+            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium.inTextFont(), textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
             PlayerPhoto(photoUrl = row.photoUrl, name = row.name, size = RegistrationPhotoSize)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

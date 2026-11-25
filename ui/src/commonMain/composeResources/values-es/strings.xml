@@ -90,7 +90,7 @@
     <string name="wind_south">Sur</string>
     <string name="wind_west">Oeste</string>
     <string name="wind_north">Norte</string>
-    <string name="chicken_hand">Mano de pollo</string>
+    <string name="chicken_hand">Mano del pollo</string>
     <string name="position_n">Posición %1$d</string>
     <string name="diffs_label">Diferencias</string>
     <string name="diffs_explanation">La tabla muestra la puntuación de mano que necesita un jugador para llegar a un puesto más alto. Hay tres formas de ganar:\n• Muro: el jugador gana del muro.\n• Él: el jugador gana con un descarte del jugador al que quiere adelantar.\n• Otro: el jugador gana con un descarte de otro jugador.</string>
@@ -139,8 +139,8 @@
     <string name="stat_highest_penalty">Mayor penalización recibida</string>
     <string name="stat_tables_won_row">Más mesas ganadas seguidas</string>
     <string name="stat_hands_won_row">Más manos ganadas seguidas</string>
-    <string name="stat_most_chicken_hands">Más manos de pollo</string>
-    <string name="stat_chicken_hands_on_table">Más manos de pollo en una mesa</string>
+    <string name="stat_most_chicken_hands">Más manos del pollo</string>
+    <string name="stat_chicken_hands_on_table">Más manos del pollo en una mesa</string>
     <string name="stat_hands_without_dealin">Más manos seguidas sin dar mano</string>
     <string name="rivals_title">Mejores rivales</string>
     <string name="rivals_info">Los rivales se ordenan por una puntuación. Una puntuación más alta significa un rival más duro.\nSolo cuentan las mesas en las que jugaste con ese rival.\nLa puntuación suma puntos por cada uno de estos números:\n• %1$d por cada «Por delante de ti»: una mesa en la que el rival terminó por encima de ti.\n• %2$d por cada «Te ganó por descarte»: una mano en la que tú descartaste y el rival ganó.\n• %3$d por cada «Te ganó del muro»: una mano que el rival ganó del muro.\n• %4$d por cada «Ganó por descarte de otro»: una mano que el rival ganó con el descarte de otro jugador, no el tuyo.\nLa suma se divide entre las mesas compartidas para que un rival no sea el primero solo porque os habéis encontrado muchas veces.</string>
@@ -194,7 +194,7 @@
     <string name="stat_rank">Puesto</string>
     <string name="stat_best_table_score">Mejor puntuación de mesa</string>
     <string name="stat_best_hand">Mejor mano</string>
-    <string name="stat_chicken_hands">Manos de pollo</string>
+    <string name="stat_chicken_hands">Manos del pollo</string>
     <string name="stat_penalties">Penalizaciones</string>
     <string name="stat_penalties_info">Este es el número de penalizaciones.\nEl número entre paréntesis es el total de puntos perdidos.</string>
     <string name="round_n">Ronda %1$d</string>
@@ -742,6 +742,7 @@ Gana el primero que sale bien</string>
     <string name="conflict_seats_locked">Los asientos no pueden cambiar después de la primera mano o penalización.</string>
     <string name="conflict_seats_not_assigned">Los asientos de esta mesa aún no están asignados.</string>
     <string name="conflict_seats_not_open">Los asientos se abren unos minutos antes de que empiece la ronda.</string>
+    <string name="conflict_seats_time_over">El tiempo de esta ronda ha terminado. Los organizadores asignan los asientos.</string>
     <string name="conflict_table_changed">La mesa ha cambiado en el servidor.\nRevísala y guarda otra vez.</string>
     <string name="conflict_table_changed_hand">La mesa ha cambiado.\nRevisa la mano otra vez.</string>
     <string name="conflict_table_changed_penalty">La mesa ha cambiado.\nRevisa la mesa y añade la penalización otra vez.</string>

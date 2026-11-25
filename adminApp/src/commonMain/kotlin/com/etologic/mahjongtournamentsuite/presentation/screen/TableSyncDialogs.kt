@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitl
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -95,7 +96,7 @@ internal fun TableUpdatesDialog(
                             Text(
                                 notice.where().asString(),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 textAlign = TextAlign.Center,
                             )
                             Text(notice.headline().asString(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)

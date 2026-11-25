@@ -744,6 +744,7 @@
     <string name="conflict_seats_locked">Места нельзя менять после первой руки или штрафа.</string>
     <string name="conflict_seats_not_assigned">Места за этим столом ещё не распределены.</string>
     <string name="conflict_seats_not_open">Рассадка открывается за несколько минут до начала раунда.</string>
+    <string name="conflict_seats_time_over">Время этого раунда истекло. Рассадку указывают организаторы.</string>
     <string name="conflict_table_changed">Стол изменился на сервере.\nПроверьте его и сохраните снова.</string>
     <string name="conflict_table_changed_hand">Стол изменился.\nПроверьте руку ещё раз.</string>
     <string name="conflict_table_changed_penalty">Стол изменился.\nПроверьте стол и добавьте штраф снова.</string>

@@ -29,7 +29,7 @@ All of them are in `designsystem/src/commonMain/kotlin/com/etologic/mahjongtourn
 | --- | --- | --- |
 | `MaterialTheme.colorScheme` | The Material roles: primary, surface, error... | `colorScheme.onSurfaceVariant` |
 | `MtsTheme.colors` | The colors of the domain: gain, warning, info, medals, levels, text on the green header | `MtsTheme.colors.gain`, `MtsTheme.colors.level(level)` (ui) |
-| `MaterialTheme.typography` | The Material type scale (Gang of Three on titles and labels) | `typography.titleMedium` |
+| `MaterialTheme.typography` | The Material type scale: Gang of Three only on the big titles (display, headline, titleLarge, titleMedium); buttons, chips, tabs, fields, small titles and data use the text font | `typography.titleMedium` |
 | `MtsTheme.typography` | `score`, `scoreLarge` (bold, digits of equal width), `emphasis` | `MtsTheme.typography.score` |
 | `MtsTheme.spacing` | `xxs` 2, `xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32, `xxxl` 48 dp | `padding(MtsTheme.spacing.sm)` |
 | `MtsTheme.windowWidth` | `Compact` (< 600 dp), `Medium` (< 900 dp), `Expanded` | `if (MtsTheme.windowWidth.isCompact)` |

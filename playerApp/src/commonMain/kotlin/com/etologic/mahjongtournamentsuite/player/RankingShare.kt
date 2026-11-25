@@ -119,7 +119,7 @@ internal fun RankingShareButton(showLabel: Boolean, onClick: () -> Unit) {
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.testTag(RANKING_SHARE_BUTTON_TAG)) {
-            Icon(Icons.Default.Share, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Default.Share, contentDescription = title, tint = MtsTheme.colors.link)
         }
     }
 }

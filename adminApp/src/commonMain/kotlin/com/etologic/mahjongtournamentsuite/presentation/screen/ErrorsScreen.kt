@@ -71,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -290,7 +291,7 @@ private fun KpiTile(label: String, value: String, valueColor: androidx.compose.u
         val compact = LocalCompactLayout.current
         Column(Modifier.fillMaxWidth().padding(screenLayout.cardPadding), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(value, style = (if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium).inTextFont(), fontWeight = FontWeight.Bold, color = valueColor)
         }
     }
 }

@@ -94,7 +94,7 @@ private fun RoundsCardFrame(
 ) {
     val section = @Composable { view: RoundView ->
         Column(Modifier.fillMaxWidth().testTag(roundViewTag(view)), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-            Text(stringResource(view.title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(view.title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MtsTheme.colors.link)
             content(view)
         }
     }
@@ -364,7 +364,7 @@ private fun PlayerHandsView(
                 Text(
                     names[index],
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (index == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (index == selected) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (index == selected) FontWeight.Bold else null,
                 )
             }

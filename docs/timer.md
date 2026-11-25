@@ -42,7 +42,7 @@ The Timer shows an action at once and says "No connection". It sends the action 
 
 ## Seats before the round
 
-A player of a table can set the four seats from 10 minutes before the planned start, or once the round started, until the first saved hand or penalty, while the round is not over (`POST /player/tournaments/{id}/tables/{roundId}/{tableId}/seats`). The player picks East, South and West; the player who is left takes North. The button says "Change the seats" once they are set. Organizers can still set seats at any time.
+A player of a table can set the four seats from 10 minutes before the planned start, or once the round started, until the first saved hand or penalty, while the round is not over (`POST /player/tournaments/{id}/tables/{roundId}/{tableId}/seats`). A round that never got its gong is over for the players once its planned match time (plus the extra time of "Finish the hand") has passed, once a later round has started, or once the tournament is completed: the seats answer `SEATS_TIME_OVER`, the hands `ROUND_TIME_OVER`, and the table shows "The time of this match is over". Before the 10 minutes the table says when the seats open. A gong after the planned time opens the round again for its whole match. The player picks East, South and West; the player who is left takes North. The button says "Change the seats" once they are set. Organizers can still set seats at any time.
 
 ## Reminder of the own table (player app)
 

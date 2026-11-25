@@ -74,6 +74,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScr
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
@@ -630,7 +631,7 @@ internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) 
                             Modifier.fillMaxWidth(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MtsTheme.colors.link,
                             textAlign = TextAlign.Center,
                         )
                         if (combination.groups.isNotEmpty()) {

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,9 +24,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -44,14 +45,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -126,22 +134,20 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_hand_score
 import mahjongtournamentsuite.playerapp.generated.resources.entry_loser
 import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
 import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
-import mahjongtournamentsuite.playerapp.generated.resources.entry_others_each
 import mahjongtournamentsuite.playerapp.generated.resources.entry_penalized_player
 import mahjongtournamentsuite.playerapp.generated.resources.entry_penalized_short
 import mahjongtournamentsuite.playerapp.generated.resources.entry_points
 import mahjongtournamentsuite.playerapp.generated.resources.entry_points_abbr
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review
-import mahjongtournamentsuite.playerapp.generated.resources.entry_review_all_pay
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_pays
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review_wins
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_open_soon
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_not_assigned
 import mahjongtournamentsuite.playerapp.generated.resources.entry_self_draw
-import mahjongtournamentsuite.playerapp.generated.resources.entry_share
 import mahjongtournamentsuite.playerapp.generated.resources.entry_share_short
 import mahjongtournamentsuite.playerapp.generated.resources.entry_shared_multiple
 import mahjongtournamentsuite.playerapp.generated.resources.entry_time_over
@@ -297,8 +303,24 @@ fun HandEntryPanel(
     // The players set the seats from a few minutes before the planned start until the first hand or penalty.
     val seatsEditable = table.doneHands == 0 && table.penaltyCount == 0 && view.tournament.seatingIsOpen(table.roundId, now)
     if (phase == MatchPhase.NOT_STARTED) {
-        Text(stringResource(Res.string.entry_round_not_started), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
+        // A round that never got its gong and whose time is over was not played in time: nothing can change any more,
+        // unless an organizer opened the seats by hand.
+        if (!seatsEditable && view.tournament.unstartedRoundIsPast(table.roundId, now)) {
+            RoundNotStartedNote(stringResource(Res.string.entry_time_over))
+            return
+        }
+        val seatsSoon = !seatsEditable && !seatsAssigned && view.tournament.seatingState(table.roundId, now) == SeatingState.NOT_YET
+        val note = if (seatsSoon) {
+            stringResource(Res.string.entry_round_not_started) + "\n" + stringResource(Res.string.entry_seats_open_soon)
+        } else {
+            stringResource(Res.string.entry_round_not_started)
+        }
+        // No gap of the column between the note and the seats button: the button has room of its own around its text,
+        // so the note has the same space above and below (Ernesto, 2026-11-25).
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            RoundNotStartedNote(note)
+            if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
+        }
         return
     }
     if (phase == MatchPhase.OVER || phase == MatchPhase.CLOSED) {
@@ -449,7 +471,6 @@ fun HandEntryPanel(
                                     chicken = false
                                     winStep = WinStep.SCORE
                                 }
-                                HorizontalDivider()
                                 PlayerChoices(
                                     byWind(seats, handInPlay).filter { it != winner },
                                     if (selfDraw) null else loser,
@@ -481,11 +502,23 @@ fun HandEntryPanel(
                                         null
                                     },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    modifier = Modifier.fillMaxWidth().then(if (numpad) Modifier.focusProperties { canFocus = false } else Modifier),
+                                    // A short field in the middle: a score has a few digits (Ernesto, 2026-11-25).
+                                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                                    modifier = Modifier.width(ScoreFieldWidth).align(Alignment.CenterHorizontally).then(if (numpad) Modifier.focusProperties { canFocus = false } else Modifier),
                                 )
                                 // A self-drawn hand is never a chicken hand.
                                 // The box at the end of the line, where the thumb reaches it on a phone (Ernesto, 2026-11-25).
-                                if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }, boxLast = true) { chicken = it }
+                                // In the middle, under the score (Ernesto, 2026-11-25).
+                                if (!selfDraw) {
+                                    CheckRow(
+                                        stringResource(Res.string.chicken_hand),
+                                        chicken,
+                                        icon = { ChickenIcon(20.dp) },
+                                        boxLast = true,
+                                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                                        fillWidth = false,
+                                    ) { chicken = it }
+                                }
                                 if (numpad) ScoreNumpad(score) { score = it }
                             }
                         }
@@ -496,11 +529,9 @@ fun HandEntryPanel(
                     MtsDialogButtons {
                         if (winStep == WinStep.SCORE) {
                             Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
-                        } else {
-                            cancelButton()
                         }
                         when (winStep) {
-                            WinStep.WINNER -> Unit
+                            WinStep.WINNER -> cancelButton()
                             // Back goes one step back, and Cancel below it ends the whole entry (Ernesto, 2026-11-25).
                             WinStep.LOSER -> {
                                 backButton(WinStep.WINNER)()
@@ -721,7 +752,7 @@ private fun ScoreNumpad(value: String, onChange: (String) -> Unit) {
                                     contentDescription = stringResource(Res.string.entry_numpad_delete),
                                     Modifier.size(24.dp),
                                 )
-                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
                                 else -> Text(key, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
                             }
                         }
@@ -751,7 +782,7 @@ const val PLAYER_CHOICE_TAG = "player-choice"
 /** The question of a step of a win. */
 @Composable
 private fun StepQuestion(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(text, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
 }
 
 /** What the steps before chose, in the boxes of the review of the hand: who wins, and on the score step who pays. */
@@ -761,28 +792,24 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
 }
 
 /**
- * Self-draw, centered above the players who could have discarded. Green bold text with the explosion, with no fill and no
- * border, so it never looks like a player.
+ * Self-draw, above the players who could have discarded, in the same card as a player: the mushroom cloud and the word
+ * take the place of the wind, the flag and the name (Ernesto, 2026-11-25).
  */
 @Composable
 private fun SelfDrawButton(label: String, onClick: () -> Unit) {
-    val color = MtsTheme.colors.selfPick
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(
-            modifier = Modifier.widthIn(min = 200.dp).clip(MtsTheme.shapes.pill).clickable(onClick = onClick),
-            shape = MtsTheme.shapes.pill,
-            // No fill and no border: the explosion and the green bold text set it apart from the players.
-            color = Color.Transparent,
-            contentColor = color,
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                Modifier.padding(horizontal = MtsTheme.spacing.xl, vertical = MtsTheme.spacing.md),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            ) {
-                SelfDrawIcon(24.dp)
-                Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
-            }
+            SelfDrawIcon(22.dp)
+            Text(label, fontWeight = FontWeight.Bold, color = MtsTheme.colors.selfPick, maxLines = 1)
         }
     }
 }
@@ -830,10 +857,13 @@ private fun PlayerChoices(
                         ) {
                             // The wind of the player in this hand, then the flag with the number of the player and the
                             // name, as on the table.
-                            if (seats != null) {
-                                currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 20.dp) }
+                            // The wind glyph has its own room on the right, so the flag sits in the middle.
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (seats != null) {
+                                    currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 20.dp) }
+                                }
+                                PlayerFlagAndNumber(view.players[slot]?.country, slot)
                             }
-                            PlayerFlagAndNumber(view.players[slot]?.country, slot)
                             Text(
                                 view.firstNameOf(slot),
                                 fontWeight = FontWeight.Bold,
@@ -873,7 +903,8 @@ private fun PenaltyForm(
             value = draft.amount,
             onValueChange = { onChange(draft.copy(amount = it.filter(Char::isDigit).take(3))) },
             label = { Text(stringResource(Res.string.entry_points)) },
-            prefix = { Text("-") },
+            // The minus goes with the number, in the middle of the field.
+            visualTransformation = MinusPrefix,
             singleLine = true,
             isError = notSplittable,
             // Only the error goes under the field, no explanation (Ernesto, 2026-11-25).
@@ -883,9 +914,18 @@ private fun PenaltyForm(
                 null
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
+            // A short field in the middle, and the box on the right with its short label (Ernesto, 2026-11-25).
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            modifier = Modifier.width(ScoreFieldWidth).align(Alignment.CenterHorizontally),
         )
-        CheckRow(stringResource(Res.string.entry_share), draft.shared) { onChange(draft.copy(shared = it)) }
+        // The short line goes in the middle, under the field (Ernesto, 2026-11-25).
+        CheckRow(
+            stringResource(Res.string.entry_share_short),
+            draft.shared,
+            boxLast = true,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            fillWidth = false,
+        ) { onChange(draft.copy(shared = it)) }
     }
 }
 
@@ -896,42 +936,39 @@ private fun CheckRow(
     hint: String? = null,
     icon: (@Composable () -> Unit)? = null,
     boxLast: Boolean = false,
+    modifier: Modifier = Modifier,
+    fillWidth: Boolean = true,
     onChange: (Boolean) -> Unit,
 ) {
     MtsCheckboxRow(
         checked = checked,
         onCheckedChange = onChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = if (fillWidth) modifier.fillMaxWidth() else modifier,
         gap = MtsTheme.spacing.none,
         contentPadding = if (boxLast) PaddingValues(start = MtsTheme.spacing.md) else PaddingValues(),
         boxLast = boxLast,
+        // No gray background on the line after a tap, only the box changes (Ernesto, 2026-11-25).
+        indication = null,
     ) {
-        Column(Modifier.weight(1f)) {
+        // With the box at the end, the icon, the text and the box go together on the right (Ernesto, 2026-11-25).
+        Column(if (fillWidth) Modifier.weight(1f) else Modifier, horizontalAlignment = if (boxLast) Alignment.End else Alignment.Start) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                if (boxLast) icon?.invoke()
                 Text(label)
-                icon?.invoke()
+                if (!boxLast) icon?.invoke()
             }
             hint?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }
 
-/** The chicken hand, a small note under the summary. */
-@Composable
-private fun ReviewChickenNote() {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-        ChickenIcon(18.dp)
-        Text(stringResource(Res.string.chicken_hand), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
 /**
  * Who wins and who pays, side by side: a green box "Wins" on the left and a red box "Pays" on the right (or a
- * self-draw, that the other three pay). With [score], the score goes in a circle between them, as in the review of a
+ * self-draw, with its mushroom cloud). With [score], the score goes in a circle between them, as in the review of a
  * hand; the steps of a win show the boxes without it (Ernesto, 2026-11-25). No step shows a box with nothing chosen.
  */
 @Composable
-private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: Int?, selfDraw: Boolean, score: Int?) {
+private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: Int?, selfDraw: Boolean, score: Int?, chicken: Boolean = false) {
     val winnerSlot = winner ?: return
     val hasSecond = selfDraw || loser != null
     // The boxes keep room for the circle in their inner side.
@@ -954,13 +991,7 @@ private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: In
                     word = stringResource(Res.string.entry_self_draw),
                     startRoom = circleRoom,
                     icon = { SelfDrawIcon(20.dp) },
-                ) {
-                    Text(
-                        stringResource(Res.string.entry_review_all_pay),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                ) {}
             } else if (loser != null) {
                 ReviewSideBox(
                     Modifier.weight(1f).fillMaxHeight(),
@@ -973,7 +1004,11 @@ private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: In
                 }
             }
         }
-        if (score != null && hasSecond) ScoreCircle("$score", Modifier.align(Alignment.Center))
+        if (score != null && hasSecond) {
+            ScoreCircle("$score", Modifier.align(Alignment.Center))
+            // A chicken hand adds a small circle with the chicken under the score (Ernesto, 2026-11-25).
+            if (chicken) ChickenCircle(Modifier.align(Alignment.Center).offset(y = CircleSize / 2 + ChickenCircleSize / 2 - 6.dp))
+        }
     }
 }
 
@@ -1008,25 +1043,27 @@ private fun ReviewSideBox(
  * does not fit, the name takes a smaller size (Ernesto, 2026-11-25).
  */
 @Composable
-private fun ReviewSideName(name: String, small: Boolean = false) {
+private fun ReviewSideName(name: String, small: Boolean = false, oneLine: Boolean = false) {
     val sizes = listOfNotNull(
         MaterialTheme.typography.titleMedium.takeIf { !small },
         MaterialTheme.typography.titleSmall,
         MaterialTheme.typography.labelLarge,
         MaterialTheme.typography.labelMedium,
+        MaterialTheme.typography.labelSmall,
     ).map { it.inTextFont().copy(fontWeight = FontWeight.Bold) }
     // The boxes measure their content for their common height, so the name cannot ask for its width: it uses the
     // narrowest width a box has on a phone, beside the circle or not.
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val maxWidthPx = with(density) { (if (small) 96.dp else 120.dp).roundToPx() }
-    val longestWord = name.split(' ').maxByOrNull { it.length }.orEmpty()
-    val style = sizes.firstOrNull { measurer.measure(longestWord, it, softWrap = false).size.width <= maxWidthPx } ?: sizes.last()
+    val maxWidthPx = with(density) { (if (small) 88.dp else 120.dp).roundToPx() }
+    // On one line the whole name must fit; on two lines, its longest word.
+    val measured = if (oneLine) name else name.split(' ').maxByOrNull { it.length }.orEmpty()
+    val style = sizes.firstOrNull { measurer.measure(measured, it, softWrap = false).size.width <= maxWidthPx } ?: sizes.last()
     Text(
         name,
         style = style,
         textAlign = TextAlign.Center,
-        maxLines = 2,
+        maxLines = if (oneLine) 1 else 2,
         overflow = TextOverflow.Ellipsis,
     )
 }
@@ -1073,8 +1110,7 @@ private fun ReviewHand(
         }
     } else {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-            WinnerPayerBoxes(view, winner, loser, selfDraw, score)
-            if (chicken) ReviewChickenNote()
+            WinnerPayerBoxes(view, winner, loser, selfDraw, score, chicken)
         }
     }
     ReviewScoreTable(
@@ -1128,15 +1164,17 @@ private fun ReviewScoreTable(
         order.forEach { index ->
             val slot = seats[index] ?: return@forEach
             val change = changes.getOrNull(index) ?: 0
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(columnGap)) {
+            // The numbers sit on the line of the name, not in the middle of the two lines (Ernesto, 2026-11-25).
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(columnGap)) {
                 // Small and above the name, the wind, the flag and the number: they help to find the player but are not
                 // the message. The name has the whole width of the column (Ernesto, 2026-11-25).
                 Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                    // The wind glyph has its own room on the right, so no gap after it: the flag sits in the middle.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 14.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                         SmallFlagAndNumber(view.players[slot]?.country, slot)
                     }
-                    Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Text(
                     signedText(change),
@@ -1192,7 +1230,7 @@ private fun ReviewPenalty(penalties: List<PenaltyEntry>, view: PlayerTournamentV
                 endRoom = if (penalty.shared) CircleRoom else 0.dp,
             ) {
                 SmallFlagAndNumber(view.players[slot]?.country, slot)
-                ReviewSideName(view.firstNameOf(slot), small = penalty.shared)
+                ReviewSideName(view.firstNameOf(slot), small = penalty.shared, oneLine = true)
                 if (!penalty.shared) {
                     Text(
                         "-${penalty.amount} ${stringResource(Res.string.entry_points_abbr)}",
@@ -1203,13 +1241,8 @@ private fun ReviewPenalty(penalties: List<PenaltyEntry>, view: PlayerTournamentV
                 }
             }
             if (penalty.shared) {
-                ReviewSideBox(Modifier.weight(1f).fillMaxHeight(), color = MtsTheme.colors.gain, word = stringResource(Res.string.entry_share_short), startRoom = CircleRoom) {
-                    Text(
-                        stringResource(Res.string.entry_others_each, penalty.amount / 3),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                // The table below shows what each of the others gets, so the box only says that it is shared (Ernesto, 2026-11-25).
+                ReviewSideBox(Modifier.weight(1f).fillMaxHeight(), color = MtsTheme.colors.gain, word = stringResource(Res.string.entry_share_short), startRoom = CircleRoom) {}
             }
         }
         if (penalty.shared) ScoreCircle("-${penalty.amount}", Modifier.align(Alignment.Center))
@@ -1226,8 +1259,26 @@ private fun ReviewPenalty(penalties: List<PenaltyEntry>, view: PlayerTournamentV
 }
 
 /** The size of [ScoreCircle], and the room each box leaves for it on its inner side. */
+private val ScoreFieldWidth = 180.dp
 private val CircleSize = 60.dp
 private val CircleRoom = 22.dp
+
+/** The chicken of a chicken hand in a small circle, under the circle of the points. */
+@Composable
+private fun ChickenCircle(modifier: Modifier) {
+    val label = stringResource(Res.string.chicken_hand)
+    Surface(
+        modifier.size(ChickenCircleSize).semantics { contentDescription = label },
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 2.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) { ChickenIcon(18.dp) }
+    }
+}
+
+private val ChickenCircleSize = 28.dp
 
 /** The points in a circle between the two boxes, with the short word for points below them (Ernesto, 2026-11-25). */
 @Composable
@@ -1239,11 +1290,13 @@ private fun ScoreCircle(score: String, modifier: Modifier) {
         border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
         shadowElevation = 2.dp,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text(score, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
+        // A little overlap of the two lines: "pts" sits close under the number (Ernesto, 2026-11-25).
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy((-3).dp, Alignment.CenterVertically)) {
+            // The lines are trimmed to their letters, so "pts" sits right under the number (Ernesto, 2026-11-25).
+            Text(score, style = MaterialTheme.typography.headlineSmall.inTextFont().tight(), fontWeight = FontWeight.Bold)
             Text(
                 stringResource(Res.string.entry_points_abbr),
-                style = MaterialTheme.typography.labelSmall.inTextFont(),
+                style = MaterialTheme.typography.labelSmall.inTextFont().tight(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -1332,6 +1385,55 @@ private fun TableChangedDialog(
                 MtsDialogButtons {
                     Button(onClick = onClose) { Text(stringResource(Res.string.changed_close)) }
                 }
+            },
+        )
+    }
+}
+
+/** Before the gong, a centered warning chip says when the hand buttons appear (Ernesto, 2026-11-25). */
+@Composable
+private fun RoundNotStartedNote(text: String) {
+    val warning = MtsTheme.colors.warning
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = warning.copy(alpha = 0.16f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = BorderStroke(1.dp, warning.copy(alpha = 0.6f)),
+        ) {
+            Row(
+                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(18.dp), tint = warning)
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+        }
+    }
+}
+
+/** A style whose line is as tall as its letters, without the room above and below. */
+private fun TextStyle.tight(): TextStyle = copy(
+    lineHeight = fontSize,
+    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+)
+
+/** Shows a minus before a number that is typed, so a penalty reads as "-30" in the middle of its field. */
+private val MinusPrefix = VisualTransformation { text ->
+    if (text.isEmpty()) {
+        TransformedText(text, OffsetMapping.Identity)
+    } else {
+        TransformedText(
+            AnnotatedString("-") + text,
+            object : OffsetMapping {
+                override fun originalToTransformed(offset: Int) = offset + 1
+                override fun transformedToOriginal(offset: Int) = (offset - 1).coerceIn(0, text.length)
             },
         )
     }

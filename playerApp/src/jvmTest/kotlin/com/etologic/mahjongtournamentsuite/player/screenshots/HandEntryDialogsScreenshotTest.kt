@@ -179,6 +179,20 @@ class HandEntryDialogsScreenshotTest {
         waitForText(playerText("entry_confirm_save"))
     }
 
+    // A chicken hand: a small circle with the chicken under the score.
+    @Test
+    fun checkChickenHand() = shot("entry-check-hand-chicken") {
+        tap("entry_add_win")
+        choose(2)
+        waitForText(playerText("entry_self_draw"))
+        choose(2)
+        waitForText(playerText("entry_hand_score"))
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("8")
+        tap("chicken_hand")
+        tap("entry_review")
+        waitForText(playerText("entry_confirm_save"))
+    }
+
     @Test
     fun checkSelfDraw() = shot("entry-check-hand-self-draw") {
         tap("entry_add_win")
@@ -201,7 +215,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
     }
 
     @Test
@@ -209,7 +223,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
         tap("entry_review")
         waitForText(playerText("entry_confirm_save"))
     }

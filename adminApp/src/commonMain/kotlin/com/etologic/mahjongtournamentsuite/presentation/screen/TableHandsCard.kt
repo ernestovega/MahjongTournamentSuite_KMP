@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.at_least_one_hand_is_invalid
@@ -347,7 +348,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
         if (chickenHandCount > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 ChickenIcon(contentDescription = stringResource(Res.string.chicken_hands))
-                Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge)
+                Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge.inTextFont())
             }
         }
         bestHands.forEach { (score, winnerId) ->
@@ -355,7 +356,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
             val place = tournamentScores.count { it > score } + 1
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 BestHandIcon(place, contentDescription = stringResource(Res.string.tournament_best_hand_n, place))
-                Text("$score", style = MaterialTheme.typography.titleLarge)
+                Text("$score", style = MaterialTheme.typography.titleLarge.inTextFont())
                 winnerId?.let {
                     Text(
                         "#$it",

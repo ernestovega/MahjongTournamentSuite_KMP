@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.CheckCircle
@@ -53,13 +55,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -67,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
@@ -88,6 +94,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import kotlinx.coroutines.flow.map
@@ -114,7 +121,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
 /** The width of the tab rows and of the tabs of a tournament, except the statistics, on a wide screen. */
 internal val TournamentColumnWidth = 720.dp
@@ -480,23 +486,33 @@ private fun RoundHeader(roundId: Int, start: String?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // The round name keeps its whole width: the start takes the rest, aligned to the end, and wraps when it does not fit.
         Text(
             stringResource(Res.string.round_n, roundId),
-            Modifier.weight(1f),
+            maxLines = 1,
+            softWrap = false,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface,
         )
         if (start != null) {
-            Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(20.dp), tint = colors.onSurfaceVariant)
-            // With the large text of the accessibility settings the start is weighted too, so it wraps instead of squeezing
-            // the round name into a column. With normal text it keeps one line.
-            val largeText = LocalDensity.current.fontScale >= 1.3f
+            // The clock is part of the text, so it stays next to the start also when the start wraps to two lines.
+            val clock = "clock"
             Text(
-                start,
-                if (largeText) Modifier.weight(1f, fill = false) else Modifier,
-                style = MaterialTheme.typography.titleMedium,
+                buildAnnotatedString {
+                    appendInlineContent(clock, "\u23F0")
+                    append("\u00A0")
+                    append(start)
+                },
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
                 color = colors.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                inlineContent = mapOf(
+                    clock to InlineTextContent(Placeholder(1.25.em, 1.25.em, PlaceholderVerticalAlign.TextCenter)) {
+                        Icon(Icons.Default.Schedule, contentDescription = null, Modifier.fillMaxSize(), tint = colors.onSurfaceVariant)
+                    },
+                ),
             )
         }
     }
@@ -621,7 +637,7 @@ internal fun TableSummaryCard(
                             Text(
                                 formatPoints(seat.points),
                                 Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.inTextFont(),
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface,
                                 maxLines = 1,
@@ -631,7 +647,7 @@ internal fun TableSummaryCard(
                     Text(
                         seat.score.ifBlank { "-" },
                         Modifier.width(56.dp),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.inTextFont(),
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface,
                         textAlign = TextAlign.End,

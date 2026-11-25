@@ -74,7 +74,7 @@ internal fun PlayerLinesSection(
     icon: ImageVector,
     title: String,
     lines: List<PlayerLine>,
-    color: Color = MaterialTheme.colorScheme.primary,
+    color: Color = MtsTheme.colors.link,
     detailColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     maxHeight: Dp = 200.dp,
 ) {

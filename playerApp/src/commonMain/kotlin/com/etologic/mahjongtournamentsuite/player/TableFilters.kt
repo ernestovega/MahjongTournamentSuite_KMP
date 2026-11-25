@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_rounds
@@ -52,7 +53,7 @@ internal enum class TableStatus(val label: StringResource) {
 internal fun TableStatus.color(): Color = when (this) {
     TableStatus.NOT_STARTED -> MaterialTheme.colorScheme.onSurfaceVariant
     TableStatus.PLAYING -> MaterialTheme.colorScheme.tertiary
-    TableStatus.FINISHED -> MaterialTheme.colorScheme.primary
+    TableStatus.FINISHED -> MtsTheme.colors.link
 }
 
 internal val PlayerTable.status: TableStatus

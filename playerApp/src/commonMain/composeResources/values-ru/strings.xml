@@ -130,7 +130,8 @@
     <string name="team_member_score">Счёт</string>
     <string name="jump_to_me">Ко мне</string>
     <string name="entry_totals_only">Для этого стола организаторы вносят только итоговые результаты. Добавлять раздачи здесь нельзя.</string>
-    <string name="entry_round_not_started">Ожидание стартового гонга. Кнопки раздач появятся, когда начнётся раунд.</string>
+    <string name="entry_round_not_started">Кнопки раздач появятся, когда начнётся раунд.</string>
+    <string name="entry_seats_open_soon">Рассадку можно указать за 10 минут до начала раунда.</string>
     <string name="entry_seats_not_assigned">Места за этим столом ещё не распределены. Раздачи можно добавлять, когда заданы все четыре места.</string>
     <string name="entry_closed_by_organizer">Организатор временно закрыл ввод раздач для этого стола. Если нужно добавить раздачу, обратитесь к судье.</string>
     <string name="entry_time_over">Время этой игры вышло. Добавлять раздачи уже нельзя. Недостающие данные внесут организаторы.</string>
@@ -156,22 +157,19 @@
     <string name="entry_check_penalty">Проверить штраф</string>
     <string name="entry_saving_penalty">Сохранение штрафа...</string>
     <string name="entry_updating_table">Обновление стола...</string>
-    <string name="entry_others_each">остальным по +%1$d</string>
     <string name="entry_penalized_player">Оштрафованный игрок</string>
     <!-- The red box of the penalized player in the check of a penalty. -->
     <string name="entry_penalized_short">Штраф</string>
     <string name="entry_points">Очки</string>
     <string name="entry_review_wins">Выигрывает</string>
     <string name="entry_review_pays">Платит</string>
-    <string name="entry_review_all_pay">Платят остальные трое</string>
     <!-- Short for points, under the score of a hand in its review. -->
     <string name="entry_points_abbr">очк.</string>
     <!-- The column of the table score after the hand, in the review of a hand. -->
     <string name="entry_total">Итого</string>
     <string name="entry_shared_multiple">Разделённый штраф должен быть кратен 3.</string>
-    <string name="entry_share">Разделить между остальными игроками</string>
     <!-- The green box of a shared penalty in its check: the other three get a part. -->
-    <string name="entry_share_short">Поровну</string>
+    <string name="entry_share_short">Выплачивается остальным</string>
     <string name="entry_from">от</string>
     <string name="changed_title">Стол изменился</string>
     <string name="changed_not_saved">Ваша раздача не сохранена. Проверьте данные сервера ниже.</string>

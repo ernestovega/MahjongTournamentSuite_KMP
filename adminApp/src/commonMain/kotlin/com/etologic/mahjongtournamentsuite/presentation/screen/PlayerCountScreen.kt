@@ -634,7 +634,7 @@ private fun NowAndAfter(current: Int, target: Int) {
                     stringResource(Res.string.pc_after, target, target / PlayerCountRules.STEP),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (target != current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    color = if (target != current) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.testTag("playerCountTarget"),
                 )
             }
@@ -669,7 +669,7 @@ private fun MarkedStatus(current: Int, marked: Int) {
         fontWeight = FontWeight.SemiBold,
         color = when {
             marked == 0 -> MaterialTheme.colorScheme.onSurfaceVariant
-            fit.fits -> MaterialTheme.colorScheme.primary
+            fit.fits -> MtsTheme.colors.link
             else -> MaterialTheme.colorScheme.error
         },
         modifier = Modifier.testTag("playerCountChosen"),
@@ -789,7 +789,7 @@ internal fun ColumnScope.TeamsContent(
             if (open.isEmpty()) stringResource(Res.string.pc_teams_complete) else stringResource(Res.string.pc_teams_incomplete, open.size),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = if (open.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            color = if (open.isEmpty()) MtsTheme.colors.link else MaterialTheme.colorScheme.error,
             modifier = Modifier.testTag("playerCountTeamsStatus"),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
@@ -821,7 +821,7 @@ internal fun ColumnScope.TeamsContent(
                     stringResource(Res.string.pc_team_count, nameOf(team), members.size),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (members.size < PlayerCountRules.STEP) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    color = if (members.size < PlayerCountRules.STEP) MaterialTheme.colorScheme.error else MtsTheme.colors.link,
                 )
                 members.forEach { id ->
                     key(id) {

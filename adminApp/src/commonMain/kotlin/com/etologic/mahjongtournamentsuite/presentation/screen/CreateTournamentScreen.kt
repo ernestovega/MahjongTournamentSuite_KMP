@@ -98,6 +98,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -120,9 +121,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.create
 import mahjongtournamentsuite.adminapp.generated.resources.create_heavy_info
 import mahjongtournamentsuite.adminapp.generated.resources.create_intro
 import mahjongtournamentsuite.adminapp.generated.resources.create_players_placeholder
+import mahjongtournamentsuite.adminapp.generated.resources.create_required_note
 import mahjongtournamentsuite.adminapp.generated.resources.create_rounds_blocks
 import mahjongtournamentsuite.adminapp.generated.resources.create_rounds_maybe_blocks
-import mahjongtournamentsuite.adminapp.generated.resources.create_required_note
 import mahjongtournamentsuite.adminapp.generated.resources.create_teams_info
 import mahjongtournamentsuite.adminapp.generated.resources.date_to
 import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
@@ -960,7 +961,7 @@ internal fun RepeatRoundsNotice(players: Int?, rounds: Int?, isTeams: Boolean) {
     Text(
         text,
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = MtsTheme.colors.link,
         modifier = Modifier.fillMaxWidth().testTag("createRoundsNotice"),
     )
 }

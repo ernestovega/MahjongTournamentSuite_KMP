@@ -1,9 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
-import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
@@ -56,9 +54,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DialogButtonRow
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
@@ -395,7 +396,7 @@ private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult
         result.outcome == PlayerAccountOutcome.REMINDED -> stringResource(Res.string.outcome_label_reminded)
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
-    val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MtsTheme.colors.link
     Column(Modifier.width(width), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text, color = color, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         // Only an email that went out has a time. A failure shows its reason alone.

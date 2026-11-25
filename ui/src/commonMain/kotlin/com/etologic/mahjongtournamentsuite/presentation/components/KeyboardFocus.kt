@@ -10,13 +10,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
@@ -25,26 +24,25 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
@@ -226,7 +224,7 @@ fun FocusedOutlinedButton(
     buttonModifier: Modifier = Modifier,
     enabled: Boolean = true,
     shape: Shape = ButtonDefaults.outlinedShape,
-    colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
+    colors: ButtonColors = MtsButtons.outlinedColors(),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
@@ -266,7 +264,7 @@ fun FocusedTextButton(
     buttonModifier: Modifier = Modifier,
     enabled: Boolean = true,
     shape: Shape = ButtonDefaults.textShape,
-    colors: ButtonColors = ButtonDefaults.textButtonColors(),
+    colors: ButtonColors = MtsButtons.textColors(),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding,

@@ -314,7 +314,7 @@ class HandEntryPanelUiTest {
         val repository = RecordingHandRepository()
         show(MatchEndMode.STOP, "09:55", repository, started = false, seats = false)
 
-        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.").assertIsDisplayed()
         onNodeWithText("Add win").assertDoesNotExist()
         onNodeWithText("Set the seats").performClick()
         // East, South and West are asked. North takes the player who is left.
@@ -347,15 +347,27 @@ class HandEntryPanelUiTest {
     fun longBeforeThePlannedStartTheSeatsAreClosed() = runComposeUiTest {
         show(MatchEndMode.STOP, "09:00", started = false, seats = false)
 
-        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.", substring = true).assertIsDisplayed()
+        onNodeWithText("You can set the seats from 10 minutes before the round starts.", substring = true).assertIsDisplayed()
         onNodeWithText("Set the seats").assertDoesNotExist()
+    }
+
+    @Test
+    fun aPastRoundWithoutGongTakesNoSeatsAndNoHands() = runComposeUiTest {
+        // Planned 10:00 for 120 minutes, and nobody pressed Play: at 12:00 the round is over for the players.
+        show(MatchEndMode.STOP, "12:00", started = false, seats = false)
+
+        onNodeWithText("The time of this match is over. You cannot add hands now. The organizers enter the missing data.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.", substring = true).assertDoesNotExist()
+        onNodeWithText("Set the seats").assertDoesNotExist()
+        onNodeWithText("Add win").assertDoesNotExist()
     }
 
     @Test
     fun aLateRoundStaysWaitingUntilThePlay() = runComposeUiTest {
         show(MatchEndMode.STOP, "11:00", started = false)
 
-        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.").assertIsDisplayed()
         onNodeWithText("Add win").assertDoesNotExist()
         onNodeWithText("Change the seats").assertIsDisplayed()
     }
@@ -464,7 +476,7 @@ class HandEntryPanelUiTest {
     fun anOpenRoundLetsThePlayersAddHandsBeforeTheGong() = runComposeUiTest {
         show(MatchEndMode.STOP, "09:00", started = false, controls = listOf(RoundControl(1, hands = ControlMode.OPEN)))
 
-        onNodeWithText("Waiting for the starting gong", substring = true).assertDoesNotExist()
+        onNodeWithText("The hand buttons appear when the round starts.").assertDoesNotExist()
         onNodeWithText("Add win").assertIsDisplayed()
     }
 
@@ -495,7 +507,7 @@ class HandEntryPanelUiTest {
     fun closedSeatsHideTheSeatButtonsBeforeTheGong() = runComposeUiTest {
         show(MatchEndMode.STOP, "09:55", started = false, seats = false, controls = listOf(RoundControl(1, seats = ControlMode.CLOSED)))
 
-        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("The hand buttons appear when the round starts.").assertIsDisplayed()
         onNodeWithText("Set the seats").assertDoesNotExist()
     }
 
@@ -671,7 +683,7 @@ class HandEntryPanelUiTest {
         onNodeWithText("Review").assertIsNotEnabled()
         onAllNodesWithText("Player 3").onFirst().performClick()
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("10")
-        onNodeWithText("Share it with the other players").performClick()
+        onNodeWithText("Paid to the others").performClick()
         // A shared penalty is split in three.
         onNodeWithText("A shared penalty must be a multiple of 3.").assertIsDisplayed()
         onNodeWithText("Review").assertIsNotEnabled()
@@ -682,7 +694,8 @@ class HandEntryPanelUiTest {
 
         awaitText("Check penalty")
         onAllNodesWithText("-30").onFirst().assertIsDisplayed()
-        onNodeWithText("others +10 each").assertIsDisplayed()
+        // The table of the check shows what each of the others gets.
+        onAllNodesWithText("+10").onFirst().assertIsDisplayed()
         onNodeWithText("Confirm").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.penalties.isNotEmpty() }
 

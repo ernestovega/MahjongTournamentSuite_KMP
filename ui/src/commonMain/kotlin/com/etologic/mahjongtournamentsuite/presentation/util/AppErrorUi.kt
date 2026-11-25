@@ -26,6 +26,7 @@ import mahjongtournamentsuite.ui.generated.resources.conflict_seats_closed
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_locked
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_assigned
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_open
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_time_over
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_hand
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_penalty
@@ -192,6 +193,7 @@ private fun conflictText(code: ConflictCode, args: List<String>): UiText = when 
     ConflictCode.SEATS_LOCKED -> UiText.of(Res.string.conflict_seats_locked)
     ConflictCode.SEATS_NOT_ASSIGNED -> UiText.of(Res.string.conflict_seats_not_assigned)
     ConflictCode.SEATS_NOT_OPEN -> UiText.of(Res.string.conflict_seats_not_open)
+    ConflictCode.SEATS_TIME_OVER -> UiText.of(Res.string.conflict_seats_time_over)
     ConflictCode.TABLE_CHANGED -> UiText.of(Res.string.conflict_table_changed)
     ConflictCode.TABLE_CHANGED_HAND -> UiText.of(Res.string.conflict_table_changed_hand)
     ConflictCode.TABLE_CHANGED_PENALTY -> UiText.of(Res.string.conflict_table_changed_penalty)

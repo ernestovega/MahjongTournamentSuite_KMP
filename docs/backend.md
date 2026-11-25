@@ -184,13 +184,18 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 
 App Check proves that a request comes from one of the apps and not from a script. The API checks the header `X-Firebase-AppCheck`.
 - The variable `APP_CHECK_MODE` in `firebase/functions/.env` sets the mode: `off` (default), `monitor` or `enforce`.
-- In `monitor` mode a missing or wrong token goes to the log as `App Check failed` and the request goes on.
+- In `monitor` mode the request goes on. A missing or wrong token goes to the log as `App Check failed` only when the
+  request comes from the Android app (`X-MTS-Client: android/...`), the one client that can attest. The web, the desktop
+  app and our scripts send no token, so they are not logged.
+- Production stays in `monitor` (25-nov-2026): the web sends no token, and `enforce` would block it.
 - In `enforce` mode the API answers `401 app_check_failed`. Only `GET /health` has no check.
 - The apps always send a token when they have one. The local test backend runs with the mode `off`.
 
 Turn it on in this order:
 1. In the Firebase console, open App Check. Register the web app with reCAPTCHA Enterprise (Fraud Defense; the classic reCAPTCHA v3 is deprecated there). Register the Android app with Play Integrity and add the SHA-256 of the signing key.
 2. Web: fill in `siteKey`, `apiKey` and `appId` at the top of `adminApp/src/webMain/resources/appcheck.js` and `playerApp/src/wasmJsMain/resources/appcheck.js`.
+   The web is off since 25-nov-2026 (`ENABLED = false` in both files): waiting for the token held the first requests
+   of a page about 2.8 s on a phone. Set `ENABLED = true` to send it again.
 3. Android: fill in `mts.appCheck.appId` and `mts.appCheck.apiKey` in the manifest of `androidApp`.
 4. Set `APP_CHECK_MODE=monitor`, then deploy the API and both web sites. Publish the Android app.
 5. Read the log for a few days. When no real app fails, set `APP_CHECK_MODE=enforce` and deploy the API.

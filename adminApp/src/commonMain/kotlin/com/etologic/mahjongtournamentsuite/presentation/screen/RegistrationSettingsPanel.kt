@@ -125,7 +125,7 @@ internal fun RegistrationSettingsPanel(
                     }
                 },
             ) {
-                val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                val color = if (settings.isOpen) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(
@@ -229,7 +229,7 @@ internal fun RegistrationSettingsPanel(
                             Text(
                                 data.publicLink,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 maxLines = if (compact) 2 else 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.testTag("registrations-link-value"),

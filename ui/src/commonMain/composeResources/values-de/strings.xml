@@ -738,6 +738,7 @@ Die erste, die klappt, gewinnt</string>
     <string name="conflict_seats_locked">Die Sitzplätze können sich nach der ersten Hand oder Strafe nicht mehr ändern.</string>
     <string name="conflict_seats_not_assigned">Die Sitzplätze dieses Tisches sind noch nicht vergeben.</string>
     <string name="conflict_seats_not_open">Die Sitzplätze öffnen einige Minuten vor Beginn der Runde.</string>
+    <string name="conflict_seats_time_over">Die Zeit dieser Runde ist vorbei. Die Organisatoren legen die Sitzplätze fest.</string>
     <string name="conflict_table_changed">Der Tisch hat sich auf dem Server geändert.\nPrüfe ihn und speichere erneut.</string>
     <string name="conflict_table_changed_hand">Der Tisch hat sich geändert.\nPrüfe die Hand erneut.</string>
     <string name="conflict_table_changed_penalty">Der Tisch hat sich geändert.\nPrüfe den Tisch und füge die Strafe erneut hinzu.</string>

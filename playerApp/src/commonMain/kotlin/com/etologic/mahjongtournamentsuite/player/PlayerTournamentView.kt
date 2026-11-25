@@ -185,9 +185,9 @@ data class PlayerTournamentView(
         tournament.roundSchedules.firstOrNull { it.roundId == roundId }
             ?.let {
                 listOfNotNull(
-                    it.date?.ifBlank { null }?.let { date -> formatLocalizedDate(date, withWeekday = true, withYear = false, fullNames = true) },
+                    it.date?.ifBlank { null }?.let { date -> formatLocalizedDate(date, withWeekday = true, withYear = false) },
                     it.startTime?.ifBlank { null }?.let(::formatLocalizedTime),
-                ).joinToString(" ")
+                ).joinToString(" · ")
             }
             ?.ifBlank { null }
 }
