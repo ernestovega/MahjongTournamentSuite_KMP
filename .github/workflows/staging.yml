@@ -164,6 +164,8 @@ jobs:
       - name: Smoke test of staging
         env:
           MTS_SITE_URL: https://${{ env.STAGING }}.web.app
+          # At its *.web.app address staging answers /.well-known/assetlinks.json with an empty list, not with our file.
+          MTS_SMOKE_APP_LINKS: "off"
         run: node scripts/smoke/smoke.mjs
 
       - name: Show the addresses

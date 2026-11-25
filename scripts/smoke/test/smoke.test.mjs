@@ -96,3 +96,11 @@ test("the expected versions come from the version catalog", async () => {
   assert.match(versions.web, /^\d+\.\d+\.\d+$/);
   assert.match(versions.backend, /^\d+\.\d+\.\d+$/);
 });
+
+test("an empty App Links file fails, unless the check is off as on staging", async () => {
+  const empty = { "/.well-known/assetlinks.json": ["application/json", "[]"] };
+  assert.deepEqual(failures(await run(site(empty))), ["Android App Links file is served: no app in it: []"]);
+  const results = await run(site(empty), { appLinks: false });
+  assert.deepEqual(failures(results), []);
+  assert.ok(!results.some((r) => r.name.includes("App Links")));
+});

@@ -26,7 +26,8 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
   their scripts, that `/version.json` and `/api/health` give the versions of `main`, that `/api/public/tournaments` has
   data and that the App Links file is served. Each check tries again for up to two minutes while Hosting and the API
   take the new version. A failure makes the run red (GitHub emails the owner) but does not undo the deploy. The
-  staging deploy runs the same check against staging. By hand: `node scripts/smoke/smoke.mjs`
+  staging deploy runs the same check against staging, without the App Links file (`MTS_SMOKE_APP_LINKS=off`: at its
+  `*.web.app` address staging answers it with an empty list, and the staging app has its own package). By hand: `node scripts/smoke/smoke.mjs`
   (`MTS_SITE_URL=https://mts---staging.web.app` for staging).
 
 - **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Deploy · Production > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).

@@ -43,8 +43,12 @@ export function ownScripts(html, pageUrl) {
     .map((url) => url.href);
 }
 
-/** The checks, each a name and a function that throws when the site fails it. */
-export function checks(site, expected) {
+/**
+ * The checks, each a name and a function that throws when the site fails it. Without [appLinks] there is no check of
+ * the App Links file: staging is served at its *.web.app address, where Firebase Hosting answers
+ * /.well-known/assetlinks.json itself with the apps of the staging project (none, so `[]`), not with our file.
+ */
+export function checks(site, expected, { appLinks = true } = {}) {
   const page = (name, address) => ({
     name,
     run: async (request) => {
@@ -92,23 +96,23 @@ export function checks(site, expected) {
         if (tournaments.some((tournament) => typeof tournament.id !== "string")) throw new Error("a tournament has no id");
       },
     },
-    {
+    ...(appLinks ? [{
       name: "Android App Links file is served",
       run: async (request) => {
         const answer = await request(`${site}/.well-known/assetlinks.json`);
         if (answer.status !== 200) throw new Error(`HTTP ${answer.status}`);
         const links = json(answer, "assetlinks.json");
-        if (!Array.isArray(links) || links.length === 0) throw new Error("empty");
+        if (!Array.isArray(links) || links.length === 0) throw new Error(`no app in it: ${answer.body.slice(0, 80)}`);
       },
-    },
+    }] : []),
   ];
 }
 
 /** Runs every check, trying a failed one again until it passes or the time is over. Returns the results. */
-export async function smoke({ site, expected, fetchImpl = fetch, tries = 8, waitMs = 15000, timeoutMs = 20000, log = console.log }) {
+export async function smoke({ site, expected, appLinks = true, fetchImpl = fetch, tries = 8, waitMs = 15000, timeoutMs = 20000, log = console.log }) {
   const request = (url) => get(fetchImpl, url, timeoutMs);
   const results = [];
-  for (const check of checks(site.replace(/\/$/, ""), expected)) {
+  for (const check of checks(site.replace(/\/$/, ""), expected, { appLinks })) {
     let error = null;
     for (let attempt = 1; attempt <= tries; attempt++) {
       try {
@@ -130,7 +134,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const site = process.env.MTS_SITE_URL ?? "https://mts.mahjongmadrid.com";
   const expected = await expectedVersions();
   console.log(`Smoke test of ${site} (web ${expected.web}, backend ${expected.backend})`);
-  const results = await smoke({ site, expected });
+  const results = await smoke({ site, expected, appLinks: process.env.MTS_SMOKE_APP_LINKS !== "off" });
   const failed = results.filter((result) => !result.ok);
   if (process.env.GITHUB_STEP_SUMMARY) {
     const lines = [`### Smoke test of ${site}`, "", ...results.map((r) => `- ${r.ok ? "✅" : "❌"} ${r.name}${r.ok ? "" : `: ${r.error}`}`)];
