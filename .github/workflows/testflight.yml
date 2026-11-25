@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  ASC_KEY_ID: 9PB52BW2Y6
+  ASC_KEY_ID: S8GAZ32F4X
   ASC_ISSUER_ID: 9ec15174-5e83-4917-9dd6-6fb152d6d888
   TEAM_ID: PG2F9TPVFV
 
