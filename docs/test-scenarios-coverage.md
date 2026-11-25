@@ -127,7 +127,7 @@ The web E2E tests (`e2e/web`) are in the notes.
 | 5.3 Automatic emails and jobs (close, weekly report, team reminder) | | | ✅ | | | Hourly relay 79 % |
 | 5.4 Tournament players, substitutions, tables per round | ⚠️ | ✅ | ✅ | ✅ | ✅ | `PlayersScreen` 54 % |
 | 5.4 Invitations | ✅ | ✅ | ✅ | ✅ | | |
-| 5.4 Change the number of players (teams step included) | ✅ | ✅ | ✅ | | ✅ | No E2E |
+| 5.4 Change the number of players (teams step included) | ✅ | ✅ | ✅ | | ✅ | Web E2E removes a whole team; no E2E of the Teams step |
 | 5.4 Teams | ⚠️ | ✅ | ✅ | ✅ | | `TeamsScreen` 49 %, edit only by E2E |
 | 5.4 EMA registry (photo, hide, create, delete) | ✅ | ✅ | ✅ | ✅ | | Photo upload, see 4.9 |
 | 5.4 Accounts and per-person permissions | ⚠️ | ✅ | ✅ | ✅ | | `GlobalUsersScreen` 64 %; create or edit an account is not in E2E |
@@ -172,7 +172,8 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
    public link, the email link, the waiting list, cancelling and a place given by hand (`registrations.test.mjs`).
    Still missing: registering with an account, food and team in My registration, and the admin per-person edits
    through the screens (`RegistrationsScreen` 62 %).
-4. **Change the number of players** has unit, backend and Game day tests but no E2E through the screens.
+4. ~~**Change the number of players** through the screens~~: done 25 November for a tournament not started, in the
+   web E2E of the admin (`admin-player-count.test.mjs`: 28 to 24, the draw in the browser, tables and emails).
 5. ~~**Production smoke check after each deploy**~~: done, `scripts/smoke/smoke.mjs` (25 November).
 
 **Priority 2**

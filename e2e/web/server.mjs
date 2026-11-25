@@ -3,7 +3,8 @@
 //   import { startSite } from "./server.mjs";
 //   const site = await startSite({ root: "playerApp/build/dist/wasmJs/productionExecutable", api: "http://127.0.0.1:5055" });
 //
-// Unknown paths get index.html, like the rewrite of the site, so /t/<id> and /<slug>/my-table open the app.
+// Unknown paths get index.html, like the rewrite of the site, so /t/<id> and /<slug>/my-table open the app, and
+// unknown paths under /admin/ get the index.html of the admin app.
 import http from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -20,8 +21,10 @@ async function body(request) {
   return Buffer.concat(chunks);
 }
 
-export async function startSite({ root, api, port = 0 }) {
-  const base = path.resolve(root);
+/** [admin] is the folder of the built admin app, served at /admin/ as on the site. */
+export async function startSite({ root, admin, api, port = 0 }) {
+  const playerBase = path.resolve(root);
+  const adminBase = admin ? path.resolve(admin) : null;
   const server = http.createServer(async (request, response) => {
     try {
       if (request.url.startsWith("/api/")) {
@@ -38,6 +41,9 @@ export async function startSite({ root, api, port = 0 }) {
         return;
       }
       let file = decodeURIComponent(request.url.split("?")[0]);
+      const inAdmin = adminBase != null && (file === "/admin" || file.startsWith("/admin/"));
+      const base = inAdmin ? adminBase : playerBase;
+      if (inAdmin) file = file.slice("/admin".length) || "/";
       if (file.endsWith("/")) file += "index.html";
       const resolved = path.join(base, path.normalize(file));
       let data;

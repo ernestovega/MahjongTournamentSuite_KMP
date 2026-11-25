@@ -1,4 +1,4 @@
-# Web E2E tests: the Wasm Player in Chromium (Playwright) against the local test backend on the Firebase emulators.
+# Web E2E tests: the Wasm Player and admin in Chromium (Playwright) against the local test backend on the Firebase emulators.
 # Nothing touches production or staging. See e2e/web/README.md.
 name: Test · Web E2E
 
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   web-e2e:
-    name: Web E2E (Player)
+    name: Web E2E (Player and admin)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -35,8 +35,8 @@ jobs:
             firebase/functions/package-lock.json
             e2e/web/package-lock.json
 
-      - name: Build the Player web app
-        run: ./gradlew :playerApp:wasmJsBrowserDistribution
+      - name: Build the web apps
+        run: ./gradlew :playerApp:wasmJsBrowserDistribution :adminApp:wasmJsBrowserDistribution
 
       - name: Install the backend and Playwright
         run: |

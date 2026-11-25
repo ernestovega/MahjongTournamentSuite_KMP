@@ -7,6 +7,7 @@ import { chromium } from "playwright";
 export const PASSWORD = "Passw0rd!-e2e";
 export const API = process.env.MTS_E2E_API ?? "http://127.0.0.1:5055";
 export const ROOT = process.env.MTS_E2E_WEB_ROOT ?? new URL("../../playerApp/build/dist/wasmJs/productionExecutable", import.meta.url).pathname;
+export const ADMIN_ROOT = process.env.MTS_E2E_ADMIN_ROOT ?? new URL("../../adminApp/build/dist/wasmJs/productionExecutable", import.meta.url).pathname;
 const TIMEOUT = 30_000;
 
 const openPages = new Set();
@@ -65,7 +66,9 @@ export async function openApp(browser, siteUrl, path = "/", { phone = true } = {
   });
   page.on("pageerror", (error) => console.log(`# page error ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") console.log(`# console ${message.text().slice(0, 300)}`);
+    // Blocked sites (openApp) and a warning of the Kotlin runtime are expected.
+    const expected = /Failed to load resource: net::ERR_FAILED|Accessing `memory` via `wasmExports`/;
+    if (message.type() === "error" && !expected.test(message.text())) console.log(`# console ${message.text().slice(0, 300)}`);
   });
   await page.goto(siteUrl + path);
   await acceptAnalyticsIfAsked(page);
@@ -124,6 +127,20 @@ export async function signIn(page, email) {
   await typeIn(page, 0, email);
   await typeIn(page, 1, PASSWORD);
   await page.keyboard.press("Enter");
+}
+
+/**
+ * Signs in [email] on the site (one sign-in for both apps) and opens the admin app on [routes], the screens it would
+ * restore after a reload (adminApp RoutePersistence), from the first to the last. Opening a screen this way gives it a
+ * fresh accessibility tree: after several screens and dialogs Compose keeps showing an old one.
+ */
+export async function openAdmin(browser, siteUrl, email, routes) {
+  const page = await openApp(browser, siteUrl, "/", { phone: false });
+  await signIn(page, email);
+  await page.waitForTimeout(3000);
+  await page.evaluate((value) => sessionStorage.setItem("adminApp.routes", value), routes.join("\n"));
+  await page.goto(`${siteUrl}/admin/`);
+  return page;
 }
 
 /**
