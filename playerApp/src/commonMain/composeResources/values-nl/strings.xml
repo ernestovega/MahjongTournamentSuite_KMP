@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">Een gedeelde straf moet een veelvoud van 3 zijn.</string>
     <string name="entry_others_get">De andere spelers krijgen elk +%1$d.</string>
     <string name="entry_share">Delen met de andere spelers</string>
-    <string name="entry_wins">wint %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">wint met %1$d punt</item>
+        <item quantity="other">wint met %1$d punten</item>
+    </plurals>
     <string name="entry_from">van</string>
     <string name="changed_title">De tafel is gewijzigd</string>
     <string name="changed_not_saved">Je hand is niet opgeslagen. Controleer hieronder de gegevens van de server.</string>

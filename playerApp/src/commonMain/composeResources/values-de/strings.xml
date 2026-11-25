@@ -161,7 +161,10 @@
     <string name="entry_shared_multiple">Eine geteilte Strafe muss ein Vielfaches von 3 sein.</string>
     <string name="entry_others_get">Die anderen Spieler erhalten je +%1$d.</string>
     <string name="entry_share">Mit den anderen Spielern teilen</string>
-    <string name="entry_wins">gewinnt %1$d</string>
+    <plurals name="entry_wins_points">
+        <item quantity="one">gewinnt mit %1$d Punkt</item>
+        <item quantity="other">gewinnt mit %1$d Punkten</item>
+    </plurals>
     <string name="entry_from">von</string>
     <string name="changed_title">Der Tisch hat sich geändert</string>
     <string name="changed_not_saved">Deine Hand ist nicht gespeichert. Prüfe unten die Daten des Servers.</string>

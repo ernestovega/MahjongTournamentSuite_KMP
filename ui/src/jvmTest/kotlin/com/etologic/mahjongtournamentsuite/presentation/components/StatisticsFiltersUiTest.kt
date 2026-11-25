@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -126,6 +127,39 @@ class StatisticsFiltersUiTest {
         }
         waitUntil(timeoutMillis = 5_000) { shows("All tournaments and players") }
         onNodeWithText("Filters").assertExists()
+    }
+
+    /** Thousands of EMA players: the menu composes only [SELECT_MAX_SHOWN] of them, and the search finds the rest. */
+    private val many = (1..3_000).map { Player(emaId = "%08d".format(10_000_000 + it), firstName = "P%04d".format(it), lastName = "Many", country = "ESP") }
+
+    private fun ComposeUiTest.manyDialog(filters: StatisticsFilters) = setContent {
+        MtsTheme(useDarkTheme = false) {
+            StatisticsFiltersDialog(filters = filters, players = many, tournaments = tournaments, onApply = {}, onDismiss = {})
+        }
+    }
+
+    private fun ComposeUiTest.shownPlayers() = onAllNodes(hasText("MANY (", substring = true) and !hasSetTextAction()).fetchSemanticsNodes().size
+
+    @Test
+    fun aLongListOfPlayersOpensWithTheFirstOnesOnly() = runComposeUiTest {
+        manyDialog(StatisticsFilters())
+        open("Any player", probe = "P0001 MANY")
+        assertEquals(SELECT_MAX_SHOWN - 1, shownPlayers())
+        assertEquals(false, shows("P2999 MANY"))
+        onNode(hasSetTextAction()).performTextInput("P2999")
+        waitUntil(timeoutMillis = 5_000) { shows("P2999 MANY") }
+    }
+
+    @Test
+    fun aChosenPlayerFarDownTheListStillShowsInTheMenu() = runComposeUiTest {
+        val chosen = many[2_500]
+        manyDialog(StatisticsFilters(emaId = chosen.emaId))
+        onNodeWithText("${chosen.firstName} MANY (${chosen.emaId})").performClick()
+        waitUntil(timeoutMillis = 5_000) { shownPlayers() > 1 }
+        waitForIdle()
+        // The field and the menu show it: the menu has "Any player", the chosen one and the first others.
+        assertEquals(2, onAllNodes(hasText(chosen.emaId, substring = true) and !hasSetTextAction()).fetchSemanticsNodes().size)
+        assertEquals(1 + SELECT_MAX_SHOWN - 1, shownPlayers())
     }
 
     private fun Player.displayNameForTest() = "$firstName $lastName"
