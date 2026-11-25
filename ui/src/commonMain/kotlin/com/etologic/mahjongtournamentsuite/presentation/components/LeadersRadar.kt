@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -288,16 +287,37 @@ private fun CornerBlock(corner: LeaderCorner, names: Map<Int, String>, photos: M
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-            Text(corner.value, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
-            if (corner.calculation.isNotEmpty()) {
-                Text(
-                    corner.calculation,
-                    Modifier.padding(bottom = 3.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        CenteredValue(corner.value, corner.calculation)
+    }
+}
+
+/**
+ * The value in the middle of its block, and the calculation in brackets to its right. The calculation takes the same
+ * room on the left too, so it does not push the value off the middle.
+ */
+@Composable
+private fun CenteredValue(value: String, calculation: String) {
+    val gapSize = MtsTheme.spacing.xs
+    Layout(
+        content = {
+            Text(value, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+            if (calculation.isNotEmpty()) {
+                Text(calculation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, softWrap = false, maxLines = 1)
             }
+        },
+    ) { measurables, constraints ->
+        val gap = gapSize.roundToPx()
+        val valueText = measurables[0].measure(constraints.copy(minWidth = 0))
+        // The calculation keeps one line.
+        val side = measurables.getOrNull(1)?.measure(Constraints())
+        val sideRoom = side?.let { it.width + gap } ?: 0
+        val width = (valueText.width + 2 * sideRoom).coerceIn(constraints.minWidth, max(constraints.minWidth, constraints.maxWidth))
+        layout(width, valueText.height) {
+            // In the middle; in a block too narrow for that, as far right as the calculation lets it.
+            val x = ((width - valueText.width) / 2).coerceAtMost(max(0, width - valueText.width - sideRoom))
+            valueText.place(x, 0)
+            // On the line of the value, at its foot.
+            side?.place(x + valueText.width + gap, valueText.height - side.height - 3.dp.roundToPx())
         }
     }
 }
