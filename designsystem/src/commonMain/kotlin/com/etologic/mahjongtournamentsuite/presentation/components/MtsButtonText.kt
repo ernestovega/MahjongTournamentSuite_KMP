@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
 
@@ -82,7 +81,7 @@ fun ButtonText(
     style: TextStyle = LocalTextStyle.current,
 ) = ScaledButtonText(
     written = text,
-    shown = text.toUpperCase(),
+    shown = buttonCaps(text),
     modifier = modifier,
     color = color,
     fontSize = fontSize,
@@ -161,3 +160,16 @@ internal fun TextLayoutResult.splitsAWord(): Boolean {
 
 /** The capitals of a button text. Independent of the device language, so "ß" becomes "SS" and "i" stays "I" everywhere. */
 fun buttonCaps(text: String): String = text.uppercase()
+
+/**
+ * The capitals of a text with styles. The styles stay when the capitals have the same length; a letter like "ß" turns
+ * into two ("SS"), and then the text keeps no styles, because they would fall on the wrong letters.
+ */
+fun buttonCaps(text: AnnotatedString): AnnotatedString {
+    val caps = buttonCaps(text.text)
+    return if (caps.length == text.length) {
+        AnnotatedString(caps, text.spanStyles, text.paragraphStyles)
+    } else {
+        AnnotatedString(caps)
+    }
+}
