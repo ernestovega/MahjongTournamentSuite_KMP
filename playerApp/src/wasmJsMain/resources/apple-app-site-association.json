@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.com.etologic.mahjongtournamentsuite"],
+        "appIDs": ["PG2F9TPVFV.com.etologic.mahjongtournamentsuite"],
         "components": [
           { "/": "/privacy/*", "exclude": true, "comment": "The privacy policy opens in the browser." },
           { "/": "/green-book/*", "exclude": true, "comment": "The Green Book PDFs." },

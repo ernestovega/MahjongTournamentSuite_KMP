@@ -36,8 +36,8 @@ same version (`admin-versionName` and `admin-versionCode` in `gradle/libs.versio
   | Staging | `com.etologic.mahjongtournamentsuite.staging` | MTS Staging | orange | `mts---staging` |
 
   Schemes: `iosApp` (Debug to run, Release to archive) and `iosApp Staging`.
-- `TEAM_ID` in `Configuration/Config.xcconfig` is the Team ID of the Apple Developer account. Without it the app builds
-  only for the simulator.
+- `TEAM_ID` in `Configuration/Config.xcconfig` is the Team ID of the Apple Developer account (`PG2F9TPVFV`, an
+  individual account). The CI builds for the simulator without signing.
 - Minimum iOS 16, iPhone and iPad.
 - `Info.plist`: the 8 languages of the app, no export compliance questions (`ITSAppUsesNonExemptEncryption` false,
   only HTTPS), Analytics off until the user accepts, the launch screen (logo without background on the background of
@@ -53,8 +53,7 @@ Open it on the Mac with `open iosApp/iosApp.xcodeproj`, choose an iPhone simulat
 The site serves `/.well-known/apple-app-site-association` (`apple-app-site-association.json` in `playerApp/src/wasmJsMain/resources`, rewrite and content
 type in `firebase.json`). Every address of the site opens the app, like the App Links of Android, except the pages
 that are not the app (privacy policy, Green Book, API, files). `IosSuite.openUrl` turns the address into the start of
-the app with the same rules as Android (`suiteStartOf`). Replace `TEAMID` in the file with the Team ID before the
-release.
+the app with the same rules as Android (`suiteStartOf`). The app ID in the file is `<Team ID>.<bundle ID>`.
 
 ## Firebase
 
