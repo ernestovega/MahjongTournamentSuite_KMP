@@ -138,6 +138,15 @@ class PlayerTournamentPresenter(
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<PlayerTournamentView> = coroutineScope {
+        // The tournament list can be a minute old. The clocks come fresh, so the hand buttons appear soon after the Play.
+        // They need no revision, so they go out at the same time as the revisions and not one round trip later.
+        val clocksRequest = async {
+            if (refreshMode == RefreshMode.CACHED) {
+                null
+            } else {
+                (tournamentRepository.getRoundClocks(tournamentId) as? AppResult.Success)?.also { ServerTime.learn(it.value.serverNowMs) }
+            }
+        }
         // One request answers the revision checks of all the reads below, so it goes first. CACHED reads do not check.
         if (refreshMode != RefreshMode.CACHED) tournamentRepository.prefetchRevisions(tournamentId)
         val tournamentsRequest = async { tournamentRepository.listTournaments(refreshMode) }
@@ -147,14 +156,6 @@ class PlayerTournamentPresenter(
         // Without an account nobody is marked as the own player.
         val meRequest = async { if (authRepository.currentSession() == null) null else authRepository.getMe(refreshMode) }
 
-        // The tournament list can be a minute old. The clocks come fresh, so the hand buttons appear soon after the Play.
-        val clocksRequest = async {
-            if (refreshMode == RefreshMode.CACHED) {
-                null
-            } else {
-                (tournamentRepository.getRoundClocks(tournamentId) as? AppResult.Success)?.also { ServerTime.learn(it.value.serverNowMs) }
-            }
-        }
         val listed = when (val result = tournamentsRequest.await()) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
                 ?: return@coroutineScope AppResult.Failure(AppError.Unexpected("Tournament not found"))
