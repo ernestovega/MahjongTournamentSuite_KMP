@@ -997,7 +997,8 @@ private fun WinnerPayerBoxes(view: PlayerTournamentView, winner: Int?, loser: In
             if (selfDraw) {
                 ReviewSideBox(
                     Modifier.weight(1f).fillMaxHeight(),
-                    color = MtsTheme.colors.selfPick,
+                    // Red as the box of who pays: the other three pay (Ernesto, 2026-11-25).
+                    color = MaterialTheme.colorScheme.error,
                     word = stringResource(Res.string.entry_self_draw),
                     startRoom = circleRoom,
                     icon = { SelfDrawIcon(28.dp) },
@@ -1034,15 +1035,25 @@ private fun ReviewSideBox(
     content: @Composable () -> Unit,
 ) {
     Surface(modifier, shape = MaterialTheme.shapes.medium, color = color.copy(alpha = 0.12f), border = BorderStroke(1.dp, color.copy(alpha = 0.5f))) {
+        // The same room on both sides, so the text is centered in its box; the circle of the points simply goes on
+        // top (Ernesto, 2026-11-25).
+        val side = 8.dp + maxOf(startRoom, endRoom) * 0.75f
+        // The word at the top of every box, so the words of the two boxes line up; below it, the icon and the
+        // content in the middle of the room that is left (Ernesto, 2026-11-25).
         Column(
-            Modifier.padding(start = 8.dp + startRoom, top = 12.dp, end = 8.dp + endRoom, bottom = 12.dp),
+            Modifier.fillMaxHeight().padding(start = side, top = 12.dp, end = side, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
         ) {
-            // The icon goes above the word, centered (Ernesto, 2026-11-25).
-            icon?.invoke()
             Text(word, style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
-            content()
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs, Alignment.CenterVertically),
+            ) {
+                icon?.invoke()
+                content()
+            }
         }
     }
 }
@@ -1139,7 +1150,7 @@ private fun ReviewHand(
 
 /**
  * Every player of the table with what changes now ([changes], under [changeHeader]) and the total after it, and the
- * table points when the table ends. The players go in the order of their winds in hand [handNumber]. Used by the check
+ * table points when the table ends. The players go from the best total to the worst. Used by the check
  * of a hand and of a penalty (Ernesto, 2026-11-25).
  */
 @Composable
@@ -1153,7 +1164,11 @@ private fun ReviewScoreTable(
     points: List<String>?,
 ) {
     // The number columns are as wide as their widest text, so the name keeps the rest of the row (Ernesto, 2026-11-25).
-    val order = seats.indices.filter { seats[it] != null }.sortedBy { index -> seats[index]?.let { currentWindOf(seats, it, handNumber)?.ordinal } ?: index }
+    // From the best total to the worst, like a ranking; players with the same total keep the order of their winds
+    // (Ernesto, 2026-11-25).
+    val order = seats.indices.filter { seats[it] != null }
+        .sortedBy { index -> seats[index]?.let { currentWindOf(seats, it, handNumber)?.ordinal } ?: index }
+        .sortedByDescending { index -> totals.getOrNull(index)?.toDoubleOrNull() ?: Double.NEGATIVE_INFINITY }
     val headerStyle = MaterialTheme.typography.labelMedium
     val valueStyle = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold)
     val measurer = rememberTextMeasurer()
@@ -1284,15 +1299,17 @@ private fun ChickenCircle(modifier: Modifier) {
     Surface(
         modifier.size(ChickenCircleSize).semantics { contentDescription = label },
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+        // A light warm background, so the chicken does not get lost on the grey of the screen (Ernesto, 2026-11-25).
+        color = ChickenCircleColor,
+        border = BorderStroke(1.dp, MtsTheme.colors.warning),
         shadowElevation = 2.dp,
     ) {
-        Box(contentAlignment = Alignment.Center) { ChickenIcon(18.dp) }
+        Box(contentAlignment = Alignment.Center) { ChickenIcon(20.dp) }
     }
 }
 
-private val ChickenCircleSize = 28.dp
+private val ChickenCircleSize = 30.dp
+private val ChickenCircleColor = Color(0xFFFFF3D6)
 
 /** The points in a circle between the two boxes, with the short word for points below them (Ernesto, 2026-11-25). */
 @Composable
@@ -1301,7 +1318,7 @@ private fun ScoreCircle(score: String, modifier: Modifier) {
         modifier.size(CircleSize),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shadowElevation = 2.dp,
     ) {
         // A little overlap of the two lines: "pts" sits close under the number (Ernesto, 2026-11-25).
