@@ -55,7 +55,6 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
 
     private fun addDraw() {
         c.clickButton("Add draw")
-        c.clickButton("Review")
         c.waitForText("Check hand")
         c.clickButton("Confirm")
     }

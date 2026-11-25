@@ -138,7 +138,6 @@
     <string name="entry_hand_score">Punteggio della mano</string>
     <string name="entry_chicken_limit">Una mano pollo ha 12 punti o meno.</string>
     <string name="chicken_hand">Mano pollo</string>
-    <string name="entry_draw_explanation">Nessun giocatore vince questa mano. Ogni posto segna zero.</string>
     <string name="entry_last_hand">Ultima mano del tavolo</string>
     <string name="entry_back">Indietro</string>
     <string name="entry_numpad_delete">Cancella</string>
@@ -148,23 +147,25 @@
     <string name="entry_saving_hand">Salvataggio della mano...</string>
     <string name="entry_confirm_save">Conferma</string>
     <string name="entry_edit">Modifica</string>
-    <string name="entry_add_another_penalty">Aggiungi un'altra penalità</string>
-    <string name="entry_penalty_note">Una penalità non termina la mano. I suoi punti contano quando la mano viene salvata.</string>
     <string name="entry_check_penalty">Controlla la penalità</string>
     <string name="entry_saving_penalty">Salvataggio della penalità...</string>
     <string name="entry_updating_table">Aggiornamento del tavolo...</string>
     <string name="entry_others_each">gli altri +%1$d ciascuno</string>
-    <string name="entry_penalty_n">Penalità %1$d</string>
-    <string name="entry_remove_penalty">Rimuovi la penalità %1$d</string>
     <string name="entry_penalized_player">Giocatore penalizzato</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Penalizzato</string>
     <string name="entry_points">Punti</string>
+    <string name="entry_review_wins">Vince</string>
+    <string name="entry_review_pays">Paga</string>
+    <string name="entry_review_all_pay">Pagano gli altri tre</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">pti</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Totale</string>
     <string name="entry_shared_multiple">Una penalità condivisa deve essere un multiplo di 3.</string>
-    <string name="entry_others_get">Gli altri giocatori ricevono +%1$d ciascuno.</string>
     <string name="entry_share">Dividila con gli altri giocatori</string>
-    <plurals name="entry_wins_points">
-        <item quantity="one">vince con %1$d punto</item>
-        <item quantity="other">vince con %1$d punti</item>
-    </plurals>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Condivisa</string>
     <string name="entry_from">da</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>
@@ -180,7 +181,6 @@
     <string name="changed_already">Se la mano è già nel tavolo, non inserirla di nuovo.</string>
     <string name="changed_call_staff">Puoi chiamare un membro dello staff per controllare il tavolo, oppure chiudere questa finestra e continuare.</string>
     <string name="changed_close">Chiudi e continua</string>
-    <string name="scope_table">Tavolo</string>
     <string name="tab_tables_me">Io</string>
     <string name="tab_tables_team">La mia squadra</string>
     <string name="tab_tables_all">Tutti</string>

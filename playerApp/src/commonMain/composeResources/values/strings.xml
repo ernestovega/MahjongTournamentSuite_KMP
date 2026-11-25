@@ -138,7 +138,6 @@
     <string name="entry_hand_score">Hand score</string>
     <string name="entry_chicken_limit">A chicken hand has 12 points or less.</string>
     <string name="chicken_hand">Chicken hand</string>
-    <string name="entry_draw_explanation">No player wins this hand. Every seat scores zero.</string>
     <string name="entry_last_hand">Last hand of the table</string>
     <string name="entry_back">Back</string>
     <string name="entry_numpad_delete">Delete</string>
@@ -148,23 +147,25 @@
     <string name="entry_saving_hand">Saving the hand...</string>
     <string name="entry_confirm_save">Confirm</string>
     <string name="entry_edit">Edit</string>
-    <string name="entry_add_another_penalty">Add another penalty</string>
-    <string name="entry_penalty_note">A penalty does not end the hand. Its points count when the hand is saved.</string>
     <string name="entry_check_penalty">Check penalty</string>
     <string name="entry_saving_penalty">Saving the penalty...</string>
     <string name="entry_updating_table">Updating the table...</string>
     <string name="entry_others_each">others +%1$d each</string>
-    <string name="entry_penalty_n">Penalty %1$d</string>
-    <string name="entry_remove_penalty">Remove penalty %1$d</string>
     <string name="entry_penalized_player">Penalized player</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Penalized</string>
     <string name="entry_points">Points</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">pts</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_review_wins">Wins</string>
+    <string name="entry_review_pays">Pays</string>
+    <string name="entry_review_all_pay">The other three pay</string>
+    <string name="entry_total">Total</string>
     <string name="entry_shared_multiple">A shared penalty must be a multiple of 3.</string>
-    <string name="entry_others_get">The other players get +%1$d each.</string>
     <string name="entry_share">Share it with the other players</string>
-    <plurals name="entry_wins_points">
-        <item quantity="one">wins with %1$d point</item>
-        <item quantity="other">wins with %1$d points</item>
-    </plurals>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Shared</string>
     <string name="entry_from">from</string>
     <string name="changed_title">The table changed</string>
     <string name="changed_not_saved">Your hand is not saved. Check the data of the server below.</string>
@@ -180,7 +181,6 @@
     <string name="changed_already">If the hand is already in the table, do not enter it again.</string>
     <string name="changed_call_staff">You can call a staff member to check the table, or close this window and go on.</string>
     <string name="changed_close">Close and continue</string>
-    <string name="scope_table">Table</string>
     <string name="tab_tables_me">Me</string>
     <string name="tab_tables_team">My team</string>
     <string name="tab_tables_all">All</string>

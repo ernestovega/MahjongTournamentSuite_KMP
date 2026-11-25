@@ -53,7 +53,8 @@ private val SwitchHeight = 32.dp
 
 /**
  * A checkbox with its text. [content] is the text (and anything else that belongs to the line); a tap anywhere on the
- * line changes the value. [onCheckedChange] null makes the line read-only.
+ * line changes the value. [onCheckedChange] null makes the line read-only. [boxLast] puts the box after the text, at
+ * the end of the line, where a thumb reaches it on a phone.
  */
 @Composable
 fun MtsCheckboxRow(
@@ -68,6 +69,7 @@ fun MtsCheckboxRow(
     contentPadding: PaddingValues = PaddingValues(),
     checkboxModifier: Modifier = Modifier,
     controlPadding: Dp = touchTargetPadding(SmallControlSize),
+    boxLast: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     Row(
@@ -91,14 +93,18 @@ fun MtsCheckboxRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(gap),
     ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = null,
-            enabled = enabled,
-            colors = colors,
-            modifier = checkboxModifier.padding(controlPadding),
-        )
+        val box: @Composable () -> Unit = {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                colors = colors,
+                modifier = checkboxModifier.padding(controlPadding),
+            )
+        }
+        if (!boxLast) box()
         content()
+        if (boxLast) box()
     }
 }
 
