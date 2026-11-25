@@ -594,6 +594,19 @@
     <string name="stats_group_empty_title">Нет статистики с этими фильтрами</string>
     <string name="stats_group_empty_message">Ни один завершённый стол им не соответствует.\nИзмените или уберите фильтр.</string>
     <string name="stats_player_tournaments">Турниры</string>
+    <string name="h2h_title">Личные встречи</string>
+    <string name="h2h_tables_above">Выше соперника</string>
+    <string name="h2h_table_wins">Выигранные столы</string>
+    <string name="h2h_average_place">Среднее место</string>
+    <string name="h2h_hands_won">Выигранные руки</string>
+    <string name="h2h_wins_on_discard">Победы на сбросе соперника</string>
+    <string name="h2h_self_draws">Победы со стены</string>
+    <string name="h2h_shared_tables">Общие столы</string>
+    <string name="h2h_table_line">%1$s · Раунд %2$d · Стол %3$d</string>
+    <string name="h2h_alone_title">%1$s за этими столами</string>
+    <string name="h2h_info">Считаются только столы, за которыми оба играли вместе.
+Лучшее число в каждой строке выделено жирным.</string>
+    <string name="h2h_shared_tables_info">Место каждого за столом и очки.</string>
     <string name="stats_chip_table">Стол %1$d · Раунд %2$d</string>
     <string name="registration_error_already_in_team">Этот человек уже в команде.</string>
     <string name="registration_error_already_registered">Этот номер EMA уже зарегистрирован на турнир.</string>

@@ -588,6 +588,19 @@
     <string name="stats_group_empty_title">Keine Statistiken mit diesen Filtern</string>
     <string name="stats_group_empty_message">Kein beendeter Tisch passt zu ihnen.\nÄndere oder entferne einen Filter.</string>
     <string name="stats_player_tournaments">Turniere</string>
+    <string name="h2h_title">Direktvergleich</string>
+    <string name="h2h_tables_above">Vor dem anderen</string>
+    <string name="h2h_table_wins">Gewonnene Tische</string>
+    <string name="h2h_average_place">Durchschnittsplatz</string>
+    <string name="h2h_hands_won">Gewonnene Hände</string>
+    <string name="h2h_wins_on_discard">Siege auf Abwurf des anderen</string>
+    <string name="h2h_self_draws">Selbstgezogen</string>
+    <string name="h2h_shared_tables">Gemeinsame Tische</string>
+    <string name="h2h_table_line">%1$s · Runde %2$d · Tisch %3$d</string>
+    <string name="h2h_alone_title">%1$s an diesen Tischen</string>
+    <string name="h2h_info">Es zählen nur die Tische, an denen beide zusammen gespielt haben.
+Die bessere Zahl jeder Zeile ist fett.</string>
+    <string name="h2h_shared_tables_info">Der Platz von jedem am Tisch und die Punkte.</string>
     <string name="stats_chip_table">Tisch %1$d · Runde %2$d</string>
     <string name="registration_error_already_in_team">Diese Person ist schon in einem Team.</string>
     <string name="registration_error_already_registered">Diese EMA-Nummer ist schon für das Turnier angemeldet.</string>

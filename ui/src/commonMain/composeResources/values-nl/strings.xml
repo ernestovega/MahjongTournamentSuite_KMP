@@ -588,6 +588,19 @@
     <string name="stats_group_empty_title">Geen statistieken met deze filters</string>
     <string name="stats_group_empty_message">Geen afgeronde tafel past erbij.\nWijzig of verwijder een filter.</string>
     <string name="stats_player_tournaments">Toernooien</string>
+    <string name="h2h_title">Onderling</string>
+    <string name="h2h_tables_above">Boven de ander</string>
+    <string name="h2h_table_wins">Gewonnen tafels</string>
+    <string name="h2h_average_place">Gemiddelde plaats</string>
+    <string name="h2h_hands_won">Gewonnen handen</string>
+    <string name="h2h_wins_on_discard">Gewonnen op afgooi van de ander</string>
+    <string name="h2h_self_draws">Zelf getrokken</string>
+    <string name="h2h_shared_tables">Gedeelde tafels</string>
+    <string name="h2h_table_line">%1$s · Ronde %2$d · Tafel %3$d</string>
+    <string name="h2h_alone_title">%1$s aan deze tafels</string>
+    <string name="h2h_info">Alleen de tafels waar de twee samen speelden tellen.
+Het betere getal van elke rij is vet.</string>
+    <string name="h2h_shared_tables_info">De plaats van elk aan tafel, en de punten.</string>
     <string name="stats_chip_table">Tafel %1$d · Ronde %2$d</string>
     <string name="registration_error_already_in_team">Deze persoon zit al in een team.</string>
     <string name="registration_error_already_registered">Dit EMA-nummer is al ingeschreven voor het toernooi.</string>

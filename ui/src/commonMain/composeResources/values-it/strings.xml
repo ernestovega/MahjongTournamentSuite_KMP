@@ -592,6 +592,19 @@
     <string name="stats_group_empty_title">Nessuna statistica con questi filtri</string>
     <string name="stats_group_empty_message">Nessun tavolo concluso li soddisfa.\nCambia o rimuovi un filtro.</string>
     <string name="stats_player_tournaments">Tornei</string>
+    <string name="h2h_title">Testa a testa</string>
+    <string name="h2h_tables_above">Davanti all'altro</string>
+    <string name="h2h_table_wins">Tavoli vinti</string>
+    <string name="h2h_average_place">Posizione media</string>
+    <string name="h2h_hands_won">Mani vinte</string>
+    <string name="h2h_wins_on_discard">Vinte sullo scarto dell'altro</string>
+    <string name="h2h_self_draws">Vinte dal muro</string>
+    <string name="h2h_shared_tables">Tavoli condivisi</string>
+    <string name="h2h_table_line">%1$s · Turno %2$d · Tavolo %3$d</string>
+    <string name="h2h_alone_title">%1$s in questi tavoli</string>
+    <string name="h2h_info">Contano solo i tavoli in cui i due hanno giocato insieme.
+Il numero migliore di ogni riga è in grassetto.</string>
+    <string name="h2h_shared_tables_info">La posizione di ciascuno al tavolo, e i punti.</string>
     <string name="stats_chip_table">Tavolo %1$d · Turno %2$d</string>
     <string name="registration_error_already_in_team">Questa persona è già in una squadra.</string>
     <string name="registration_error_already_registered">Questo numero EMA è già iscritto al torneo.</string>

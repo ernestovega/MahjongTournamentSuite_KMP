@@ -298,6 +298,7 @@ internal fun FilteredStatisticsTab(
                 tournament = tournament,
                 group = group,
                 loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
+                loadPerson = { ema -> (presenter.person(ema, track = false) as? AppResult.Success)?.value },
                 selectedRound = round,
                 onSelectRound = { round = it },
             )
