@@ -1,6 +1,6 @@
 // Web E2E of the registrations (docs/registrations.md): a person without an account registers from the public link of
 // a tournament, confirms with the link of the email, the next one waits, and the person who cancels frees the place,
-// and the organization gives it to the first on the waiting list (the waiting list moves only by hand). Each run creates its own tournament with open registrations, as the admin app does.
+// which goes by itself to the first on the waiting list (since 25 November). Each run creates its own tournament with open registrations, as the admin app does.
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, afterEach, before, describe, it } from "node:test";
@@ -44,6 +44,11 @@ async function createRegistrationTournament(token, slug) {
 }
 
 /** The path of the link of the last email to [to], to open on the local site. */
+async function mailTo(to) {
+  const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
+  return emails.filter((it) => it.to === to);
+}
+
 async function linkOfMailTo(to) {
   const { emails } = await (await fetch(`${API}/__e2e/mail`)).json();
   const email = emails.filter((it) => it.to === to).at(-1);
@@ -93,7 +98,7 @@ describe("Registrations web", () => {
     await site?.close();
   });
 
-  it("registers without an account, waits when it is full, cancels, and the place goes to the waiting list by hand", async () => {
+  it("registers without an account, waits when it is full, cancels, and the place goes to the waiting list", async () => {
     // 1. The first person registers and confirms with the link of the email.
     const first = people[0];
     const firstEmail = `first-${slug}@e2e.test`;
@@ -120,18 +125,18 @@ describe("Registrations web", () => {
     await seeText(page, "waiting list");
     await page.context().close();
 
-    // 4. The first person cancels from the link of the email. The place stays free: the waiting list moves by hand.
+    // 4. The first person cancels from the link of the email. The free place goes to the first of the waiting list.
     page = await openApp(browser, site.url, firstLink);
     await tapButton(page, "My registration");
     await tapButton(page, "Cancel my registration");
     await tapButton(page, "Cancel registration");
     await page.context().close();
-    let list = await call("GET", `/public/tournaments/${tournamentId}/registrations`);
-    assert.deepEqual([list.settings.confirmed, list.settings.waiting], [PLACES - 1, 1]);
+    const list = await call("GET", `/public/tournaments/${tournamentId}/registrations`);
+    assert.deepEqual([list.settings.confirmed, list.settings.waiting], [PLACES, 0]);
     assert.ok(!list.registrations.some((it) => it.emaId === first.emaId), "the cancelled person left the list");
 
-    // 5. The organization gives the free place to the person who waited, who sees it with the same link.
-    await call("PUT", `/tournaments/${tournamentId}/registrations/${next.emaId}`, token, { status: "CONFIRMED" });
+    // 5. The person who waited sees the place with the same link, and gets an email about it.
+    assert.ok((await mailTo(nextEmail)).length >= 2, "the promoted person gets an email");
     page = await openApp(browser, site.url, nextLink);
     await seeText(page, `You have place ${PLACES}`);
     await page.context().close();

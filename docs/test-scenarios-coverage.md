@@ -119,7 +119,7 @@ The web E2E tests (`e2e/web`) are in the notes.
 
 | Feature | U | S | B | E | G | Gap |
 | --- | :-: | :-: | :-: | :-: | :-: | --- |
-| 5.1 Tournament list by role | ✅ | ✅ | ✅ | ✅ | | No E2E as Club Admin |
+| 5.1 Tournament list by role | ✅ | ✅ | ✅ | ✅ | | Web E2E as Club Admin (`admin-roles.test.mjs`, 25 Nov) |
 | 5.1 Create tournament (with or without registrations), settings | ✅ | ✅ | ✅ | ✅ | ✅ | No E2E of «Open registrations» |
 | 5.1 Organizations, club venue (Places) | ✅ | ✅ | ✅ | | | No E2E |
 | 5.2 Draw (both methods, blocks), «How does the draw work?» | ✅ | ✅ | ✅ | ✅ | ✅ | |
@@ -190,7 +190,8 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
    native and stays manual.
 9. ~~**Contact form** `POST /support/message`~~: done 25 November (`support.integration.test.ts`: mail, honeypot,
    bad input, no mailbox, limit per address).
-10. **Club Admin and custom roles in E2E**: what the list shows and what is refused.
+10. ~~**Club Admin and custom roles in E2E**~~: done 25 November. `e2e/web/tests/admin-roles.test.mjs` with the new
+    test account `club@e2e.test`: the list, refused calls, and a permission taken away from one person.
 11. **Load test** of hand saves and ranking polls for 60 players beyond Game day, to know the margin.
 
 **Priority 3**
