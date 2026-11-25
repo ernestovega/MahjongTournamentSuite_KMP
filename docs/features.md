@@ -76,7 +76,8 @@ Organizations: each tournament has a main organizer and co-organizers. The tourn
 ### 4.2 Registrations (before the draw)
 
 - Only the Players and Info tabs show.
-- **Places and a numbered waiting list**, visible to everyone: name, flag, EMA number, status and team.
+- **Places and a numbered waiting list**, visible to everyone: name, flag, EMA number, status and team. A place that
+  frees up goes to the first of the waiting list at once, with an email to that person and to the organization.
 - **Register**
   - With an EMA account: a place or the waiting list at once.
   - Without an account: find yourself in the EMA registry, enter your email and confirm with a link. That link manages your registration without an account.

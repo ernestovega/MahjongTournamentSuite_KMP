@@ -25,6 +25,7 @@ import {
   noEmaNumberEmail,
   organizationLanguage,
   organizationLeftEmail,
+  organizationPromotedEmail,
   promotedEmail,
   registeredEmail,
   removedEmail,
@@ -498,6 +499,56 @@ async function placeRegistration(
   return result;
 }
 
+/**
+ * Fills the free places with the waiting list, first come first served, in a transaction, so a place is never given
+ * twice. Only while the tournament waits for its draw and has a number of places: without one, a person is on the
+ * waiting list only because an organizer put it there. Each promoted person gets an email, and the organization one
+ * email with all of them, unless [organizationEmail] is false (a cancellation tells the organization in its own email).
+ */
+async function promoteFromWaitingList(
+  tournament: TournamentForRegistrations,
+  options: { organizationEmail: boolean } = { organizationEmail: true },
+): Promise<StoredRegistration[]> {
+  const promoted = await db.runTransaction(async (transaction) => {
+    const [tournamentSnapshot, all] = await Promise.all([
+      transaction.get(tournament.ref),
+      transaction.get(tournament.ref.collection(REGISTRATIONS)),
+    ]);
+    if (tournamentSnapshot.get("drawPending") !== true) return [];
+    const settings = readRegistrationSettings(tournamentSnapshot.get("registration"));
+    if (settings?.maxPlayers == null) return [];
+    const stored = all.docs.map(toStored);
+    const free = settings.maxPlayers - stored.filter((registration) => registration.status === "CONFIRMED").length;
+    if (free <= 0) return [];
+    const chosen = stored.filter((registration) => registration.status === "WAITING").sort(byOrder).slice(0, free);
+    for (const registration of chosen) {
+      transaction.update(tournament.ref.collection(REGISTRATIONS).doc(registration.emaId), {
+        status: "CONFIRMED", promotedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    return chosen;
+  });
+  if (promoted.length === 0) return [];
+  const settings = await refreshCounters(tournament);
+  for (const registration of promoted) await logChange(tournament, "promoted", registration);
+  await Promise.all(promoted.map((registration) => sendSafely(registration.email, promotedEmail(registration.language, {
+    tournament: tournament.name, person: registration.name, link: manageLink(tournament.ref.id, registration.manageToken),
+  }))));
+  if (options.organizationEmail) {
+    await sendSafely(tournament.contactEmail, organizationPromotedEmail(organizationLanguage(tournament.hostCountry), {
+      tournament: tournament.name,
+      promoted: promoted.map(personLabel),
+      confirmed: settings.confirmed,
+      waiting: settings.waiting,
+    }));
+  }
+  return promoted;
+}
+
+function personLabel(registration: { name: string; emaId: string }): string {
+  return `${registration.name} (${registration.emaId})`;
+}
+
 async function sendSafely(to: string, email: { subject: string; text: string; html: string }, replyTo?: string): Promise<boolean> {
   if (to === "") return false;
   try {
@@ -709,13 +760,16 @@ export async function cancelOwnRegistration(params: { tournamentId: string; uid:
   await leaveTeamOf(tournament, registration);
   await tournament.ref.collection(REGISTRATIONS).doc(registration.emaId).delete();
   if (registration.status === "PENDING") return;
-  const settings = await refreshCounters(tournament);
   await logChange(tournament, "left", registration);
+  // The place that is free goes to the first of the waiting list: the organization reads both in one email.
+  const promoted = registration.status === "CONFIRMED" ? await promoteFromWaitingList(tournament, { organizationEmail: false }) : [];
+  const settings = await refreshCounters(tournament);
   await Promise.all([
     sendSafely(registration.email, leftEmail(registration.language, { tournament: tournament.name })),
     sendSafely(tournament.contactEmail, organizationLeftEmail(organizationLanguage(tournament.hostCountry), {
       tournament: tournament.name,
-      person: `${registration.name} (${registration.emaId})`,
+      person: personLabel(registration),
+      promoted: promoted.map(personLabel),
       confirmed: settings.confirmed,
       waiting: settings.waiting,
     })),
@@ -995,6 +1049,7 @@ export async function adminRemoveRegistration(params: { tournamentId: string; em
       tournament: tournament.name, contact: tournament.contactEmail || "—",
     }));
   }
+  if (registration.status === "CONFIRMED") await promoteFromWaitingList(tournament);
 }
 
 /** Changes the state, places, close date or link name of the registrations. */
@@ -1015,7 +1070,10 @@ export async function updateRegistrationSettings(params: {
     "registration.slug": params.slug,
     updatedAt: FieldValue.serverTimestamp(),
   });
-  return refreshCounters(await loadTournament(params.tournamentId));
+  const updated = await loadTournament(params.tournamentId);
+  // More places: the waiting list fills them at once.
+  await promoteFromWaitingList(updated);
+  return refreshCounters(updated);
 }
 
 /**

@@ -32,6 +32,8 @@ type Texts = {
   orgLeftSubject: (t: string, person: string) => string;
   orgLeftBody: (t: string, person: string) => string;
   orgCounts: (confirmed: number, waiting: number) => string;
+  orgPromotedSubject: (t: string, people: string) => string;
+  orgPromoted: string;
   reportSubject: (t: string) => string;
   reportIntro: (t: string) => string;
   reportNew: string;
@@ -71,6 +73,8 @@ const en: Texts = {
   orgLeftSubject: (t, p) => `Cancellation in ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} cancelled the registration in ${t}.`,
   orgCounts: (c, w) => `Now: ${c} with a place, ${w} on the waiting list.`,
+  orgPromotedSubject: (t, p) => `Place from the waiting list in ${t}: ${p}`,
+  orgPromoted: "The free places go to the waiting list, in its order. These people have a place now, and an email told them:",
   reportSubject: (t) => `Weekly report of the registrations of ${t}`,
   reportIntro: (t) => `The registrations of ${t} this week.`,
   reportNew: "New registrations:",
@@ -109,6 +113,8 @@ const es: Texts = {
   orgLeftSubject: (t, p) => `Baja en ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} se ha dado de baja de ${t}.`,
   orgCounts: (c, w) => `Ahora: ${c} con plaza y ${w} en lista de espera.`,
+  orgPromotedSubject: (t, p) => `Plaza desde la lista de espera en ${t}: ${p}`,
+  orgPromoted: "Las plazas libres pasan a la lista de espera, por orden. Estas personas tienen ahora plaza y les ha llegado un correo:",
   reportSubject: (t) => `Informe semanal de las inscripciones de ${t}`,
   reportIntro: (t) => `Las inscripciones de ${t} de esta semana.`,
   reportNew: "Altas:",
@@ -147,6 +153,8 @@ const fr: Texts = {
   orgLeftSubject: (t, p) => `Désinscription à ${t} : ${p}`,
   orgLeftBody: (t, p) => `${p} a annulé son inscription à ${t}.`,
   orgCounts: (c, w) => `Maintenant : ${c} avec une place et ${w} sur la liste d'attente.`,
+  orgPromotedSubject: (t, p) => `Place depuis la liste d'attente à ${t} : ${p}`,
+  orgPromoted: "Les places libres passent à la liste d'attente, dans son ordre. Ces personnes ont maintenant une place et ont reçu un e-mail :",
   reportSubject: (t) => `Rapport hebdomadaire des inscriptions de ${t}`,
   reportIntro: (t) => `Les inscriptions de ${t} cette semaine.`,
   reportNew: "Nouvelles inscriptions :",
@@ -185,6 +193,8 @@ const it: Texts = {
   orgLeftSubject: (t, p) => `Cancellazione a ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} ha annullato l'iscrizione a ${t}.`,
   orgCounts: (c, w) => `Ora: ${c} con un posto e ${w} in lista d'attesa.`,
+  orgPromotedSubject: (t, p) => `Posto dalla lista d'attesa a ${t}: ${p}`,
+  orgPromoted: "I posti liberi passano alla lista d'attesa, nel suo ordine. Queste persone ora hanno un posto e hanno ricevuto un'email:",
   reportSubject: (t) => `Rapporto settimanale delle iscrizioni di ${t}`,
   reportIntro: (t) => `Le iscrizioni di ${t} di questa settimana.`,
   reportNew: "Nuove iscrizioni:",
@@ -223,6 +233,8 @@ const de: Texts = {
   orgLeftSubject: (t, p) => `Abmeldung bei ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} hat sich von ${t} abgemeldet.`,
   orgCounts: (c, w) => `Jetzt: ${c} mit Platz und ${w} auf der Warteliste.`,
+  orgPromotedSubject: (t, p) => `Platz von der Warteliste bei ${t}: ${p}`,
+  orgPromoted: "Freie Plätze gehen der Reihe nach an die Warteliste. Diese Personen haben jetzt einen Platz und haben eine E-Mail bekommen:",
   reportSubject: (t) => `Wochenbericht der Anmeldungen für ${t}`,
   reportIntro: (t) => `Die Anmeldungen für ${t} in dieser Woche.`,
   reportNew: "Neue Anmeldungen:",
@@ -261,6 +273,8 @@ const sv: Texts = {
   orgLeftSubject: (t, p) => `Avanmälan i ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} har avanmält sig från ${t}.`,
   orgCounts: (c, w) => `Nu: ${c} med plats och ${w} på väntelistan.`,
+  orgPromotedSubject: (t, p) => `Plats från väntelistan i ${t}: ${p}`,
+  orgPromoted: "Lediga platser går till väntelistan, i dess ordning. De här personerna har nu en plats och har fått ett mejl:",
   reportSubject: (t) => `Veckorapport för anmälningarna till ${t}`,
   reportIntro: (t) => `Anmälningarna till ${t} den här veckan.`,
   reportNew: "Nya anmälningar:",
@@ -299,6 +313,8 @@ const nl: Texts = {
   orgLeftSubject: (t, p) => `Uitschrijving in ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} heeft zich uitgeschreven voor ${t}.`,
   orgCounts: (c, w) => `Nu: ${c} met een plaats en ${w} op de wachtlijst.`,
+  orgPromotedSubject: (t, p) => `Plaats van de wachtlijst in ${t}: ${p}`,
+  orgPromoted: "Vrije plaatsen gaan op volgorde naar de wachtlijst. Deze mensen hebben nu een plaats en hebben een e-mail gekregen:",
   reportSubject: (t) => `Weekverslag van de inschrijvingen voor ${t}`,
   reportIntro: (t) => `De inschrijvingen voor ${t} van deze week.`,
   reportNew: "Nieuwe inschrijvingen:",
@@ -337,6 +353,8 @@ const ru: Texts = {
   orgLeftSubject: (t, p) => `Отмена регистрации на ${t}: ${p}`,
   orgLeftBody: (t, p) => `${p} отменил(а) регистрацию на ${t}.`,
   orgCounts: (c, w) => `Сейчас: ${c} с местом и ${w} в листе ожидания.`,
+  orgPromotedSubject: (t, p) => `Место из листа ожидания на ${t}: ${p}`,
+  orgPromoted: "Свободные места переходят к листу ожидания по порядку. Эти люди теперь имеют место и получили письмо:",
   reportSubject: (t) => `Еженедельный отчёт о регистрации на ${t}`,
   reportIntro: (t) => `Регистрация на ${t} за эту неделю.`,
   reportNew: "Новые регистрации:",
@@ -444,15 +462,32 @@ export function teamReminderEmail(language: Language, p: { tournament: string; c
   });
 }
 
+/** A cancellation. [promoted] are the people of the waiting list who took the free place, if any. */
 export function organizationLeftEmail(
   language: Language,
-  p: { tournament: string; person: string; confirmed: number; waiting: number },
+  p: { tournament: string; person: string; promoted?: string[]; confirmed: number; waiting: number },
+): BuiltRegistrationEmail {
+  const t = TEXTS[language];
+  const paragraphs = [t.orgLeftBody(p.tournament, p.person)];
+  if (p.promoted != null && p.promoted.length > 0) paragraphs.push(promotedParagraph(t, p.promoted));
+  paragraphs.push(t.orgCounts(p.confirmed, p.waiting));
+  return build({ subject: t.orgLeftSubject(p.tournament, p.person), paragraphs });
+}
+
+/** People of the waiting list took free places: after an organizer removed someone, or gave more places. */
+export function organizationPromotedEmail(
+  language: Language,
+  p: { tournament: string; promoted: string[]; confirmed: number; waiting: number },
 ): BuiltRegistrationEmail {
   const t = TEXTS[language];
   return build({
-    subject: t.orgLeftSubject(p.tournament, p.person),
-    paragraphs: [t.orgLeftBody(p.tournament, p.person), t.orgCounts(p.confirmed, p.waiting)],
+    subject: t.orgPromotedSubject(p.tournament, p.promoted.join(", ")),
+    paragraphs: [promotedParagraph(t, p.promoted), t.orgCounts(p.confirmed, p.waiting)],
   });
+}
+
+function promotedParagraph(t: Texts, people: string[]): string {
+  return `${t.orgPromoted}\n${people.map((person) => `• ${person}`).join("\n")}`;
 }
 
 export function weeklyReportEmail(

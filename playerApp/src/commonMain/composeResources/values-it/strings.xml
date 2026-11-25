@@ -283,7 +283,7 @@
     <string name="preg_close">Chiudi</string>
     <string name="preg_done_pending">Abbiamo inviato un link a %1$s.\nAprilo per confermare l'iscrizione.\nSe non vedi l'email, guarda nello spam.</string>
     <string name="preg_done_place">Sei iscritto, con il posto %1$d.\nTi abbiamo inviato un'email con il link per gestire l'iscrizione.</string>
-    <string name="preg_done_waiting">I posti sono esauriti.\nSei il numero %1$d della lista d'attesa, e l'organizzazione ti scriverà se si libera un posto.</string>
+    <string name="preg_done_waiting">I posti sono esauriti.\nSei il numero %1$d della lista d'attesa. Quando si libera un posto, va subito al primo della lista, e ricevi un'email.</string>
     <string name="preg_no_ema_sent">Il tuo messaggio è stato inviato all'organizzazione.\nTi risponderanno via email.</string>
     <string name="preg_register_title">Iscrizione</string>
     <string name="preg_register_as">Ti iscrivi come %1$s (EMA %2$s).</string>

@@ -1043,7 +1043,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="reg_add_title">Add a person</string>
     <string name="reg_edit_title">Change the registration</string>
     <string name="reg_confirm_remove_title">Remove the registration?</string>
-    <string name="reg_confirm_remove_message">%1$s leaves the list.\nThe first person of the waiting list does not move up by itself: give the place in the list.</string>
+    <string name="reg_confirm_remove_message">%1$s leaves the list.\nIf the person had a place, the first person of the waiting list gets it at once, with an email.</string>
     <string name="reg_notify">Tell the person by email</string>
     <string name="reg_remove">Remove</string>
     <string name="reg_draw_title">Make the draw?</string>
