@@ -478,17 +478,21 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val name = byHand.getString("name")
         // The app opens on In play when the account plays a tournament now (an earlier game day, for example), and
         // that tab leaves out this tournament: it is in the All tab. The app can switch to In play once the list has
-        // loaded, after a first tap on All, so the tap is repeated until the tournament shows. The list of the app
-        // can come from before the tournament existed: it refreshes every 5 minutes (PollSchedule.LIST_IDLE).
+        // loaded, after a first tap on All, so the tap is repeated. In All the search field finds the tournament
+        // among many game days; scrolling the long list did not always compose it. The list of the app can come from
+        // before the tournament existed: it refreshes every 5 minutes (PollSchedule.LIST_IDLE).
         c.waitForText("My tournaments", timeoutMs = 60_000)
+        val card = hasText(name) and !hasSetTextAction()
         val found = runCatching {
             c.waitUntil(420_000) {
-                if (c.isOnScreen(name)) return@waitUntil true
+                if (c.onAllNodes(card).fetchSemanticsNodes().isNotEmpty()) return@waitUntil true
+                // The tab comes before the dropdowns of the filters, whose value is "All" too.
                 if (c.isOnScreen("In play")) runCatching { c.onAllNodes(hasText("All") and hasClickAction()).onFirst().performClick() }
-                c.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
-                    runCatching { c.onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(name)) }
+                val search = c.onAllNodes(hasSetTextAction())
+                if (search.fetchSemanticsNodes().isNotEmpty() && c.onAllNodes(hasSetTextAction() and hasText(name)).fetchSemanticsNodes().isEmpty()) {
+                    runCatching { search.onFirst().performTextReplacement(name) }
                 }
-                c.isOnScreen(name)
+                c.onAllNodes(card).fetchSemanticsNodes().isNotEmpty()
             }
         }
         if (found.isFailure) {
@@ -532,6 +536,11 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         c.waitUntil(60_000) { c.onAllNodes(hasTestTag("registration-manage")).fetchSemanticsNodes().isEmpty() }
         log("the player cancelled the registration in the player app: ${counts()}")
         c.clickButton("Back")
+        // The search of the list is kept by the app: it is cleared, so later lists show every tournament.
+        runCatching {
+            c.waitUntil(30_000) { c.onAllNodes(hasSetTextAction() and hasText(name)).fetchSemanticsNodes().isNotEmpty() }
+            c.onAllNodes(hasSetTextAction() and hasText(name)).onFirst().performTextClearance()
+        }
     }
 
     /** The text of a node of the registrations by its test tag, or "" while it is not on the screen. */
