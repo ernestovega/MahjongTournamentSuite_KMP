@@ -98,3 +98,24 @@ Tests of the scripts).
 
 The public reads take 600 calls a minute from one address (per server instance). Phones on the wifi of a venue share one
 address, and each one reads the manifest every few seconds. That is why the bots of GitHub run in three jobs.
+
+## Load ramp: the margin beyond 60 players
+
+`scripts/rehearsal/ramp.mjs` measures how many times the load of a 60-player tournament the API takes. Each stage
+multiplies the phones (60 table screens that read the manifest every 2 seconds and their table when it changes, a room
+screen and spectators that read the tables of the round every 15 seconds) and, with a writer account, a scorer that
+checks a hand with the preview call. A stage holds while every p95 stays under 1.5 s and less than 1 % of the calls
+fail; the margin is the last stage that holds.
+
+```
+node scripts/rehearsal/ramp.mjs --tournament=test-live-ongoing --stages=1,2,4,8,16 --stage-seconds=30 \
+  --writer-email=player@e2e.test --writer-password='Passw0rd!-e2e' --writer-table=5 --report=out/ramp.json
+```
+
+Without `--api` it runs against the local test backend (`npm run e2e:backend` in `firebase/functions`). It refuses
+production. In staging it needs a tournament in play, and all the calls come from one address, so the rate limit of
+the venue applies.
+
+First local run, 25 November 2026 (emulators, 4 CPUs): every stage held up to x16 (960 table screens and 112 ranking
+screens, 14,400 calls in 30 s), worst p95 461 ms. The local backend is one process without the network of Google, so
+this says the code holds; the margin of Cloud Functions and the CDN needs the run in staging.

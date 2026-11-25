@@ -192,7 +192,8 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
    bad input, no mailbox, limit per address).
 10. ~~**Club Admin and custom roles in E2E**~~: done 25 November. `e2e/web/tests/admin-roles.test.mjs` with the new
     test account `club@e2e.test`: the list, refused calls, and a permission taken away from one person.
-11. **Load test** of hand saves and ranking polls for 60 players beyond Game day, to know the margin.
+11. ~~**Load test**~~: done 25 November. `scripts/rehearsal/ramp.mjs` (docs/rehearsal.md) ramps x1 to x16 the phones
+    of a 60-player day; locally every stage held (p95 461 ms at x16). A run in staging needs a tournament in play.
 
 **Priority 3**
 
