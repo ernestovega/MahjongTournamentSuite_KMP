@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -41,6 +42,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 private class SignInAuthRepository(
     private val roles: Set<GlobalUserRole>,
@@ -71,6 +74,9 @@ private class SignInAuthRepository(
 class PlayerSignInScreenUiTest {
     private val original = Locale.getDefault()
 
+    // The buttons ignore a second press within 500 ms of real time: the test moves this clock before each press.
+    private val clock = TestTimeSource()
+
     @BeforeTest
     fun english() {
         Locale.setDefault(Locale.ENGLISH)
@@ -94,6 +100,7 @@ class PlayerSignInScreenUiTest {
                 modules(module { single { PlayerSessionPresenter(auth, Logger.withTag("ui-test")) } })
             }) {
                 CompositionLocalProvider(
+                    LocalPressTimeSource provides clock,
                     LocalSuiteAppSwitcher provides { app: SuiteApp -> opened += app },
                     LocalThemeController provides ThemeController(ThemePreference.Light, false, {}),
                 ) {
@@ -111,6 +118,7 @@ class PlayerSignInScreenUiTest {
     private fun ComposeUiTest.type(label: String, text: String) = onNode(hasSetTextAction() and hasText(label)).performTextInput(text)
 
     private fun ComposeUiTest.click(text: String) {
+        clock += 1.seconds
         onNode(hasText(text, ignoreCase = true) and hasClickAction()).performClick()
         waitForIdle()
     }

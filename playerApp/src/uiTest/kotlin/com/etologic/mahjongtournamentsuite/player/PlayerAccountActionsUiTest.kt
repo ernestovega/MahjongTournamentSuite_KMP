@@ -24,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -41,6 +42,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 import kotlin.test.assertNull
 
 private class AccountAuthRepository(
@@ -80,6 +83,9 @@ private class AccountAuthRepository(
 @OptIn(ExperimentalTestApi::class)
 class PlayerAccountActionsUiTest {
     private val original = Locale.getDefault()
+
+    // The buttons ignore a second press within 500 ms of real time: the test moves this clock before each press.
+    private val clock = TestTimeSource()
     private val opened = mutableListOf<SuiteApp>()
 
     @BeforeTest
@@ -103,6 +109,7 @@ class PlayerAccountActionsUiTest {
                 modules(module { single { PlayerSessionPresenter(auth, Logger.withTag("ui-test")) } })
             }) {
                 CompositionLocalProvider(
+                    LocalPressTimeSource provides clock,
                     LocalSuiteAppSwitcher provides { app: SuiteApp -> opened += app },
                     LocalThemeController provides ThemeController(ThemePreference.Light, false, {}),
                 ) {
@@ -123,6 +130,7 @@ class PlayerAccountActionsUiTest {
     }
 
     private fun ComposeUiTest.click(text: String) {
+        clock += 1.seconds
         onNode(hasClickAction() and (hasText(text) or hasContentDescription(text))).performClick()
         waitForIdle()
         mainClock.advanceTimeBy(700)

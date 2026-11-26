@@ -25,6 +25,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** The support form (missing fields, a failed send, a sent message) and the buttons at the left of the top bar. */
 @OptIn(ExperimentalTestApi::class)
@@ -40,8 +42,11 @@ class SupportAndTopBarUiTest {
     private val sent = mutableListOf<SupportMessage>()
     private val events = mutableListOf<String>()
 
+    // The buttons ignore a second press within 500 ms of real time: the test moves this clock before each press.
+    private val clock = TestTimeSource()
+
     private fun ComposeUiTest.showSupport(email: String, answer: AppResult<Unit>) = setContent {
-        CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {})) {
+        CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock) {
             MtsTheme(useDarkTheme = false) {
                 SupportForm(app = "player", initialEmail = email, onSend = { sent += it; answer }, onBack = { events += "back" })
             }
@@ -49,6 +54,7 @@ class SupportAndTopBarUiTest {
     }
 
     private fun ComposeUiTest.send() {
+        clock += 1.seconds
         onNode(hasText("Send", ignoreCase = true) and hasClickAction()).performClick()
         waitForIdle()
     }
