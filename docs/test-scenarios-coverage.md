@@ -13,20 +13,20 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,662 | 180 | – | – | – | – | – | 96 % | 87 % |
-| `data`: repositories, network, telemetry | 7,612 | 331 | – | – | – | – | – | 76 % | 35 % |
-| `designsystem`: theme, base components | 1,611 | – | 19 | 4 | – | – | – | 93 % | 66 % |
-| `ui`: shared Compose components | 16,110 | 81 | 209 | 19 | – | – | – | 90 % | 65 % |
-| `adminApp`: admin screens | 31,874 | 315 | 349 | 90 | – | 173 | 4 | 82 % | 60 % |
-| `playerApp`: player screens | 11,129 | 186 | 123 | 50 | – | 70 | 8 | 88 % | 64 % |
-| `androidApp`: Android entry point | 329 | – | – | – | – | – | – | – | – |
-| Backend: API routes and middleware | 3,980 | 58 | – | – | 291 | – | – | 93 % | 82 % |
-| Backend: services | 15,854 | 371 | – | – | 184 | – | – | 96 % | 87 % |
+| `domain`: business rules, use cases | 5,740 | 183 | – | – | – | – | – | 96 % | 87 % |
+| `data`: repositories, network, telemetry | 7,904 | 350 | – | – | – | – | – | 76 % | 35 % |
+| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 93 % | 66 % |
+| `ui`: shared Compose components | 17,420 | 85 | 216 | 24 | – | – | – | 90 % | 65 % |
+| `adminApp`: admin screens | 32,140 | 315 | 352 | 91 | – | 175 | 4 | 82 % | 60 % |
+| `playerApp`: player screens | 11,623 | 190 | 123 | 54 | – | 72 | 8 | 88 % | 64 % |
+| `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
+| Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 82 % |
+| Backend: services | 16,011 | 371 | – | – | 186 | – | – | 96 % | 87 % |
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
-| Backend: maintenance and seed scripts | 4,334 | 2 | – | – | – | – | – | 53 % | 63 % |
+| Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
-| Repository scripts (Game day, smoke, versions) | 6,933 | 118 | – | – | – | – | – | – | – |
-| **Total** | **105,767** | **1,674** | **700** | **163** | **475** | **243** | **12** | **88 %** | **64 %** |
+| Repository scripts (Game day, smoke, versions) | 7,342 | 124 | – | – | – | – | – | – | – |
+| **Total** | **108,868** | **1,712** | **711** | **173** | **479** | **247** | **12** | **88 %** | **64 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
