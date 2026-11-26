@@ -127,6 +127,8 @@ class StatisticsViewsUiTest {
         (1..8).forEach { onNodeWithText("Open $it").assertExists() }
         // Every card says the place under its name, folded or not.
         assertEquals(8, onAllNodesWithText("2 of 8").fetchSemanticsNodes().size)
+        // Every card starts folded, the newest too: no card shows its round chips.
+        onNodeWithText("Totals").assertDoesNotExist()
         listOf("All", "2026", "2025").forEach { onNodeWithText(it).assertExists() }
 
         // A year shows only its tournaments.
@@ -134,6 +136,8 @@ class StatisticsViewsUiTest {
         waitForIdle()
         (1..3).forEach { onNodeWithText("Open $it").assertExists() }
         (4..8).forEach { onNodeWithText("Open $it").assertDoesNotExist() }
+        // Choosing a year does not open any card.
+        onNodeWithText("Totals").assertDoesNotExist()
         // A tap on the chosen year shows all the years again.
         onNodeWithText("2025").performClick()
         waitForIdle()
@@ -177,6 +181,8 @@ class StatisticsViewsUiTest {
         // The bar shows the chosen tournament, and the list shows only that one, without the year chips.
         assertEquals(2, onAllNodesWithText("Open 2").fetchSemanticsNodes().size)
         listOf("Open 1", "Open 3", "Open 4", "2022").forEach { onNodeWithText(it).assertDoesNotExist() }
+        // The chosen tournament starts folded too.
+        onNodeWithText("Totals").assertDoesNotExist()
     }
 
     @Test
@@ -251,6 +257,10 @@ class StatisticsViewsUiTest {
                 }
             }
         }
+        waitForIdle()
+        // Even a single card starts folded. A tap on it opens it.
+        onNodeWithText("Totals").assertDoesNotExist()
+        onNodeWithText("Open 1").performClick()
         waitForIdle()
         // Totals shows the place and the score of the whole tournament.
         listOf("Totals", "R1", "R2", "R3").forEach { onNodeWithText(it).assertExists() }
