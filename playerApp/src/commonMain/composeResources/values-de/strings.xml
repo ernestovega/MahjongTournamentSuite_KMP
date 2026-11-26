@@ -84,7 +84,7 @@
     <string name="schedule_hide">Zeitplan ausblenden</string>
     <string name="action_open">Öffnen</string>
     <string name="tab_tables">Tische</string>
-    <string name="tab_ranking">Rangliste</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Dein Konto ist mit keinem Spieler dieses Turniers verknüpft. Bitte die Veranstalter, dich hinzuzufügen. Alle Tische findest du im Reiter Alle.</string>
     <string name="tables_mine_empty">Die Tische des Spielers erscheinen hier, sobald die Veranstalter die Runde auslosen.</string>
@@ -189,7 +189,7 @@
     <string name="progress_rounds_label">Runden</string>
     <string name="progress_tables_label">Tische</string>
     <string name="progress_ongoing_label">Laufend</string>
-    <string name="tab_stats">Statistik</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Anmelden</string>
     <string name="menu_contact">Support</string>
     <string name="menu_privacy">Datenschutz</string>

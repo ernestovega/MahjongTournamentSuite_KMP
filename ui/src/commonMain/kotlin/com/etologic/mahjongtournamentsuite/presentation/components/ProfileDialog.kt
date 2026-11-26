@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -169,13 +170,19 @@ fun ProfileDialog(
                     MtsDialogTitle(stringResource(Res.string.profile_title))
                     AppVersionLabel(Modifier.align(Alignment.TopStart).offset(x = (-16).dp, y = (-16).dp))
                     // A cross in the top right corner closes the dialog. It takes the place of a Close button, which made
-                    // the dialog taller on a phone (Ernesto, 2026-11-26).
-                    FocusedIconButton(
-                        onClick = onDismiss,
-                        enabled = !saving,
-                        modifier = Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-12).dp),
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.action_close))
+                    // the dialog taller on a phone (Ernesto, 2026-11-26). It does not count in the height of the title, so
+                    // the theme selector stays close to it.
+                    Box(Modifier.matchParentSize()) {
+                        FocusedIconButton(
+                            onClick = onDismiss,
+                            enabled = !saving,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                                .offset(x = 12.dp, y = (-12).dp),
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.action_close))
+                        }
                     }
                 }
             },
@@ -189,9 +196,9 @@ fun ProfileDialog(
                     // The photo is small. The EMA number, a short field, sits beside it.
                     // The preferences come first, under the title: the theme and the language. A line with room above and
                     // below keeps them apart from the profile.
-                    ThemeSelector(Modifier.padding(bottom = 8.dp))
+                    ThemeSelector(Modifier.padding(bottom = MtsTheme.spacing.md))
                     LanguageSelector(Modifier.fillMaxWidth())
-                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.lg))
                     // The photo sits beside the EMA number and the alias, centered on them. On a phone it is small. On a bigger
                     // window there is room, so it is as tall as both fields.
                     val compact = MtsTheme.windowWidth == MtsWindowWidth.Compact
@@ -253,7 +260,9 @@ fun ProfileDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     // Save belongs to the alias, so it comes right after the fields. The cross of the title closes the dialog.
-                    MtsDialogButtons(stacked = false) {
+                    // It has as much room above as below, where the line of the account actions has its own padding
+                    // (Ernesto, 2026-11-26).
+                    MtsDialogButtons(Modifier.padding(top = MtsTheme.spacing.sm), stacked = false) {
                         FocusedButton(enabled = canSave, onClick = { save() }) { ButtonText(stringResource(Res.string.action_save)) }
                     }
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.

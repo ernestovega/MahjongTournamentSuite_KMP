@@ -84,7 +84,7 @@
     <string name="schedule_hide">Masquer le programme</string>
     <string name="action_open">Ouvrir</string>
     <string name="tab_tables">Tables</string>
-    <string name="tab_ranking">Classement</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Infos</string>
     <string name="tables_not_linked">Votre compte n'est pas lié à un joueur de ce tournoi. Demandez aux organisateurs de vous ajouter. Toutes les tables sont dans l'onglet Toutes.</string>
     <string name="tables_mine_empty">Les tables du joueur s'affichent ici quand les organisateurs tirent le tour.</string>
