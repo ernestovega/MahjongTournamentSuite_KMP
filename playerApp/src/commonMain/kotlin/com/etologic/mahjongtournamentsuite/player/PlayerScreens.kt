@@ -154,16 +154,20 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         infoMessage = null
         busy = true
         scope.launch {
-            when (val result = presenter.signIn(email, password)) {
-                is AppResult.Success -> {
-                    saveBrowserCredentials(email.trim(), password)
-                    val canManage = appSwitcher != null && presenter.canManage(RefreshMode.FORCE)
-                    // The sign in suspends, and the navigation must run on the main thread, also in the UI tests.
-                    withContext(Dispatchers.Main) { if (canManage) choosingApp = true else continueInPlayerApp() }
+            val result = presenter.signIn(email, password)
+            val canManage = result is AppResult.Success && appSwitcher != null && presenter.canManage(RefreshMode.FORCE)
+            // The sign in suspends, and what follows must run on the main thread, also in the UI tests: there the
+            // coroutine comes back on a worker thread, and the error dialog that it opens cannot be made off it.
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is AppResult.Success -> {
+                        saveBrowserCredentials(email.trim(), password)
+                        if (canManage) choosingApp = true else continueInPlayerApp()
+                    }
+                    is AppResult.Failure -> errorMessage = result.error.toUiText()
                 }
-                is AppResult.Failure -> errorMessage = result.error.toUiText()
+                busy = false
             }
-            busy = false
         }
     }
 
@@ -196,12 +200,15 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         confirmingReset = false
         busy = true
         scope.launch {
-            when (val result = presenter.resetPassword(email.trim())) {
-                // A well formed email never gets an error: only a lost connection is worth telling.
-                is AppResult.Failure if result.error == AppError.Network -> errorMessage = result.error.toUiText()
-                else -> infoMessage = UiText.of(Res.string.sign_in_reset_sent)
+            val result = presenter.resetPassword(email.trim())
+            withContext(Dispatchers.Main) {
+                when {
+                    // A well formed email never gets an error: only a lost connection is worth telling.
+                    result is AppResult.Failure && result.error == AppError.Network -> errorMessage = result.error.toUiText()
+                    else -> infoMessage = UiText.of(Res.string.sign_in_reset_sent)
+                }
+                busy = false
             }
-            busy = false
         }
     }
 
