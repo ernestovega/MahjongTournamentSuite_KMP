@@ -123,8 +123,8 @@
     <string name="stats_empty_message">De statistieken verschijnen zodra de eerste tafel klaar is.</string>
     <string name="stats_hand_stats_missing">Handstatistieken hebben tafels met ingevoerde handen nodig. Geen enkele tafel hier heeft die.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">De handwaarden gebruiken %1$d van %2$d tafel.</item>
-        <item quantity="other">De handwaarden gebruiken %1$d van %2$d tafels.</item>
+        <item quantity="one">De handwaarden gebruiken %1$d van %2$d tafel. De andere hebben alleen de eindscores, zonder hun handen.</item>
+        <item quantity="other">De handwaarden gebruiken %1$d van %2$d tafels. De andere hebben alleen de eindscores, zonder hun handen.</item>
     </plurals>
     <string name="card_fold">Inklappen</string>
     <string name="card_unfold">Uitklappen</string>
@@ -556,6 +556,7 @@
     <string name="password_reset_invalid_email">Dit e-mailadres lijkt niet te kloppen.\nControleer het en probeer het opnieuw.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versies</string>
+    <string name="dev_downloads">Downloads</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Architectuur (GitHub)</string>
     <string name="dev_privacy_policy">Privacybeleid</string>
@@ -781,4 +782,6 @@ De eerste die lukt, wint</string>
     <string name="update_available_message">Versie %1$s van MTS is klaar. Download hem en installeer hem over deze heen.</string>
     <string name="update_available_download">Downloaden</string>
     <string name="update_available_later">Later</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Download de app</string>
 </resources>

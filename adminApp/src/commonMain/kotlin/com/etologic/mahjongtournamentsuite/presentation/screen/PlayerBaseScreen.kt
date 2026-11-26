@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.PersonAdd
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -38,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,7 +76,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
@@ -82,20 +84,30 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.cardFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
+import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
+import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
@@ -492,7 +504,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 playerFocusRequesters[index].requestFocus()
             } else {
                 if (selected == null && autoSelect && players.isNotEmpty()) select(players.first())
-                searchFocusRequester.requestFocus()
+                searchFocusRequester.requestFocusIfAttached()
             }
             playerFocusApplied = true
         }
@@ -590,7 +602,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScrollWithIndicators(newPlayerScrollState),
+                                .dialogVerticalScroll(newPlayerScrollState),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
@@ -710,10 +722,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        // Only super admins and club admins add players. An editor has no button here, so there is no empty
-        // three-dots menu on a phone.
-        actions = if (canCreate) {
-            { AppTopBarActions(onNewPlayer = ::openNewPlayerDialog) }
+        // Only super admins and club admins add players, with a floating button like New tournament.
+        floatingActionButton = if (canCreate) {
+            {
+                ExtendedFloatingActionButton(onClick = ::openNewPlayerDialog) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = null)
+                    ButtonText(stringResource(Res.string.new_player), Modifier.padding(start = 12.dp))
+                }
+            }
         } else {
             null
         },
@@ -721,314 +737,343 @@ fun PlayerBaseScreen(navController: NavHostController) {
         // A phone keeps about the same visible space (16 dp) above the search field, between the field, the country chips
         // and the card, and under the card. The field has 8 dp for its label above the border, and the chips some touch area.
         val compactScreen = LocalCompactLayout.current
-        ScreenColumn(
-            maxWidth = 1200.dp,
-            contentPadding = if (compactScreen) PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 16.dp) else PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp),
-        ) {
-            error?.let {
-                AppErrorDialog(
-                    message = it,
-                    onDismiss = { error = null },
-                )
-            }
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text(stringResource(Res.string.search)) },
-                singleLine = true,
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = {
-                                searchQuery = ""
-                                searchFocusRequester.requestFocus()
-                            },
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
-                        }
-                    }
+        // The search, the country filter and the selection bar hide when the list scrolls down and show when it scrolls up.
+        // Only the list moves them: the details beside it scroll on their own.
+        val hideOnScroll = rememberHideOnScrollState()
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
+            ScreenColumn(
+                maxWidth = 1200.dp,
+                // With the New player floating button the list and the details end above it, so it covers no row
+                // and not the Save button at the bottom right of the details.
+                contentPadding = if (compactScreen) {
+                    PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = if (canCreate) FabClearance else 16.dp)
                 } else {
-                    null
+                    PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (canCreate) FabClearance else 24.dp)
                 },
-                modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
-            )
-            if (existingPlayerCountryCodes.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    FullBleedRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        existingPlayerCountryCodes.forEach { code ->
-                            val countryName = countryNameOf(
-                                code,
-                                countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
-                            )
-                            val countryPlayerCount = players.count {
-                                it.country.trim().equals(code, ignoreCase = true)
-                            }
-                            val isSelected = code in selectedCountryCodes
-                            val filterDescription = stringResource(
-                                if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
-                                countryName,
-                            )
-                            AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
-                                TextButton(
-                                    onClick = {
-                                        selectedCountryCodes = if (isSelected) {
-                                            selectedCountryCodes - code
-                                        } else {
-                                            selectedCountryCodes + code
-                                        }
-                                    },
-                                    buttonModifier = Modifier.semantics {
-                                        contentDescription = filterDescription
-                                    },
-                                    shape = CircleShape,
-                                    colors = if (isSelected) {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        )
-                                    } else {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    },
-                                    border = BorderStroke(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.outline
-                                        },
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                ) {
-                                    CountryFlag(code = code)
-                                    Spacer(Modifier.width(4.dp))
-                                    ButtonText("$code ($countryPlayerCount)")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            // A phone has no room for the list and the details side by side. It shows the list, and the details
-            // instead of the list once a player is chosen. The close button of the details goes back to the list.
-            val compact = LocalCompactLayout.current
-            val showList = !compact || selected == null
-            val showDetails = !compact || selected != null
-            Row(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp),
             ) {
-                if (showList) {
-                    SectionCard(
-                        modifier = Modifier.weight(1.7f).fillMaxHeight(),
-                        title = stringResource(Res.string.player_base),
-                        subtitle = pluralStringResource(Res.plurals.player_base_players, filteredPlayers.size, filteredPlayers.size) + " · " +
-                            pluralStringResource(Res.plurals.player_base_countries, filteredCountryCount, filteredCountryCount),
-                    ) {
-                        Column(Modifier.fillMaxWidth().weight(1f)) {
-                            if (canDelete) {
-                                PlayerSelectionBar(
-                                    shownCount = filteredPlayers.size,
-                                    selectedCount = chosenEmaIds.size,
-                                    busy = saving || loading,
-                                    onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
-                                    onClear = { checkedEmaIds = emptySet() },
-                                    onDelete = { openDeleteConfirmation() },
-                                    compact = compact,
-                                )
-                                // On a phone the bar takes two rows. The space under it matches the space above it.
-                                if (compact) Spacer(Modifier.height(16.dp))
-                            }
-                            if (!compact) {
-                                DataTableHeaderRow {
-                                    if (canDelete) Spacer(Modifier.width(PlayerCheckboxColumnWidth))
-                                    PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
-                                    PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
-                                    PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                                    PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
-                                }
-                            }
-                            DataTableDivider()
-                            LazyColumnWithScrollbar(
-                                state = playersListState,
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
-                                    DataTableRow(
-                                        modifier = Modifier
-                                            .focusRequester(playerFocusRequesters[index])
-                                            .onFocusChanged {
-                                                if (it.isFocused) lastFocusedPlayerEmaId = player.emaId
-                                            },
-                                        onClick = { select(player) },
-                                        highlighted = selectedEmaId == player.emaId,
-                                    ) {
-                                        if (canDelete) {
-                                            val checkDescription = "${player.displayName} ${player.emaId}"
-                                            Checkbox(
-                                                checked = player.emaId in checkedEmaIds,
-                                                onCheckedChange = {
-                                                    checkedEmaIds = if (player.emaId in checkedEmaIds) checkedEmaIds - player.emaId else checkedEmaIds + player.emaId
-                                                },
-                                                enabled = !saving && !loading,
-                                                modifier = Modifier.width(PlayerCheckboxColumnWidth).semantics { contentDescription = checkDescription },
-                                            )
+                    ShowTabsAtTop(playersListState)
+                error?.let {
+                    AppErrorDialog(
+                        message = it,
+                        onDismiss = { error = null },
+                    )
+                }
+                    HideOnScrollTabs {
+                                Column(verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp)) {
+                                    OutlinedTextField(
+                                        value = searchQuery,
+                                        onValueChange = { searchQuery = it },
+                                        label = { Text(stringResource(Res.string.search)) },
+                                        singleLine = true,
+                                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                                            {
+                                                IconButton(
+                                                    onClick = {
+                                                        searchQuery = ""
+                                                        searchFocusRequester.requestFocus()
+                                                    },
+                                                ) {
+                                                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
+                                                }
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                                    )
+                                    if (existingPlayerCountryCodes.isNotEmpty()) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            FullBleedRow(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            ) {
+                                                existingPlayerCountryCodes.forEach { code ->
+                                                    val countryName = countryNameOf(
+                                                        code,
+                                                        countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
+                                                    )
+                                                    val countryPlayerCount = players.count {
+                                                        it.country.trim().equals(code, ignoreCase = true)
+                                                    }
+                                                    val isSelected = code in selectedCountryCodes
+                                                    val filterDescription = stringResource(
+                                                        if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
+                                                        countryName,
+                                                    )
+                                                    AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
+                                                        TextButton(
+                                                            onClick = {
+                                                                selectedCountryCodes = if (isSelected) {
+                                                                    selectedCountryCodes - code
+                                                                } else {
+                                                                    selectedCountryCodes + code
+                                                                }
+                                                            },
+                                                            buttonModifier = Modifier.semantics {
+                                                                contentDescription = filterDescription
+                                                            },
+                                                            shape = CircleShape,
+                                                            colors = if (isSelected) {
+                                                                ButtonDefaults.textButtonColors(
+                                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                                )
+                                                            } else {
+                                                                ButtonDefaults.textButtonColors(
+                                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                )
+                                                            },
+                                                            border = BorderStroke(
+                                                                width = if (isSelected) 2.dp else 1.dp,
+                                                                color = if (isSelected) {
+                                                                    MaterialTheme.colorScheme.primary
+                                                                } else {
+                                                                    MaterialTheme.colorScheme.outline
+                                                                },
+                                                            ),
+                                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                                        ) {
+                                                            CountryFlag(code = code)
+                                                            Spacer(Modifier.width(4.dp))
+                                                            ButtonText("$code ($countryPlayerCount)")
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
-                                        Box(
+                                    }
+                                }
+                    }
+                // A phone has no room for the list and the details side by side. It shows the list, and the details
+                // instead of the list once a player is chosen. The close button of the details goes back to the list.
+                val compact = LocalCompactLayout.current
+                val showList = !compact || selected == null
+                val showDetails = !compact || selected != null
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (showList) {
+                        SectionCard(
+                            modifier = Modifier.weight(1.7f).fillMaxHeight(),
+                            title = stringResource(Res.string.player_base),
+                            subtitle = pluralStringResource(Res.plurals.player_base_players, filteredPlayers.size, filteredPlayers.size) + " · " +
+                                pluralStringResource(Res.plurals.player_base_countries, filteredCountryCount, filteredCountryCount),
+                        ) {
+                            Column(Modifier.fillMaxWidth().weight(1f)) {
+                                if (canDelete) {
+                                        HideOnScrollTabs {
+                                                        Column {
+                                                            PlayerSelectionBar(
+                                                                shownCount = filteredPlayers.size,
+                                                                selectedCount = chosenEmaIds.size,
+                                                                busy = saving || loading,
+                                                                onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
+                                                                onClear = { checkedEmaIds = emptySet() },
+                                                                onDelete = { openDeleteConfirmation() },
+                                                                compact = compact,
+                                                            )
+                                                            // On a phone the bar takes two rows. The space under it matches the space above it.
+                                                            if (compact) Spacer(Modifier.height(16.dp))
+                                                        }
+                                        }
+                                    }
+                                if (!compact) {
+                                    DataTableHeaderRow {
+                                        if (canDelete) Spacer(Modifier.width(PlayerCheckboxColumnWidth))
+                                        PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
+                                        PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
+                                        PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                                        PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
+                                    }
+                                }
+                                DataTableDivider()
+                                // The list reaches the sides and the bottom of the card, so its shadows take the whole width and
+                                // the rows go out of sight at the edge; the margins of the card go inside the list.
+                                val cardPadding = screenLayout.cardPadding
+                                LazyColumnWithScrollbar(
+                                    state = playersListState,
+                                    modifier = Modifier.weight(1f).cardFullBleed(cardPadding).hideOnScroll(hideOnScroll),
+                                    contentPadding = PaddingValues(start = cardPadding, end = cardPadding, bottom = cardPadding),
+                                    scrollbar = MtsScrollbar.Overlay,
+                                ) {
+                                    itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
+                                        DataTableRow(
                                             modifier = Modifier
-                                                .width(PlayerPhotoColumnWidth)
-                                                .height(PlayerPhotoSize),
-                                            contentAlignment = Alignment.Center,
+                                                .focusRequester(playerFocusRequesters[index])
+                                                .onFocusChanged {
+                                                    if (it.isFocused) lastFocusedPlayerEmaId = player.emaId
+                                                },
+                                            onClick = { select(player) },
+                                            highlighted = selectedEmaId == player.emaId,
                                         ) {
-                                            if (player.photoUrl.isNullOrBlank()) {
-                                                PlayerPhotoPlaceholder(PlayerPhotoSize)
+                                            if (canDelete) {
+                                                val checkDescription = "${player.displayName} ${player.emaId}"
+                                                Checkbox(
+                                                    checked = player.emaId in checkedEmaIds,
+                                                    onCheckedChange = {
+                                                        checkedEmaIds = if (player.emaId in checkedEmaIds) checkedEmaIds - player.emaId else checkedEmaIds + player.emaId
+                                                    },
+                                                    enabled = !saving && !loading,
+                                                    modifier = Modifier.width(PlayerCheckboxColumnWidth).semantics { contentDescription = checkDescription },
+                                                )
+                                            }
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(PlayerPhotoColumnWidth)
+                                                    .height(PlayerPhotoSize),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                if (player.photoUrl.isNullOrBlank()) {
+                                                    PlayerPhotoPlaceholder(PlayerPhotoSize)
+                                                } else {
+                                                    AsyncImage(
+                                                        model = player.photoUrl,
+                                                        contentDescription = stringResource(Res.string.photo_of, player.displayName),
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
+                                                    )
+                                                }
+                                            }
+                                            Box(
+                                                modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CountryFlag(code = player.country)
+                                            }
+                                            if (compact) {
+                                                Column(Modifier.weight(1f)) {
+                                                    Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis, style = player.rowTextStyle())
+                                                    Text(
+                                                        "EMA ${player.emaId}",
+                                                        style = MaterialTheme.typography.bodySmall.merge(player.rowTextStyle()),
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                }
                                             } else {
-                                                AsyncImage(
-                                                    model = player.photoUrl,
-                                                    contentDescription = stringResource(Res.string.photo_of, player.displayName),
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
+                                                Text(player.displayName, modifier = Modifier.weight(1f), style = player.rowTextStyle())
+                                                Text(
+                                                    player.emaId,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    style = player.rowTextStyle(),
+                                                    modifier = Modifier.width(PlayerEmaColumnWidth),
                                                 )
                                             }
                                         }
-                                        Box(
-                                            modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            CountryFlag(code = player.country)
+                                        DataTableDivider()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (showDetails) {
+                        SectionCard(
+                            modifier = Modifier.weight(0.8f).fillMaxHeight(),
+                            title = stringResource(Res.string.player_details),
+                            actions = if (compact) {
+                                {
+                                    IconButton(onClick = { select(null) }) {
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
+                                    }
+                                }
+                            } else {
+                                null
+                            },
+                        ) {
+                            if (selected == null) {
+                                AppEmptyState(
+                                    icon = Icons.Default.PersonSearch,
+                                    title = stringResource(Res.string.no_player_selected),
+                                    message = stringResource(Res.string.choose_a_player_in_the_list),
+                                    compact = true,
+                                )
+                            } else {
+                                val detailsScrollState = rememberScrollState()
+                                // The details reach the sides and the bottom edge of the card, so their shadows take the whole
+                                // width and the content goes out of sight at the edge; the margins of the card go inside the scroll.
+                                val detailsPadding = screenLayout.cardPadding
+                                Box(modifier = Modifier.weight(1f).fillMaxWidth().cardFullBleed(detailsPadding)) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScrollWithIndicators(detailsScrollState, MtsScrollbar.Overlay)
+                                            .padding(start = detailsPadding, end = detailsPadding, bottom = detailsPadding),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        OutlinedTextField(
+                                            value = emaId,
+                                            onValueChange = { emaId = it.toDigitsInput(8) },
+                                            label = { Text(stringResource(Res.string.ema_number)) },
+                                            enabled = canEditEmaNumber && !saving,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                        OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                        OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                        EmaCountryDropdown(
+                                            selectedCode = country,
+                                            onCountrySelected = { country = it },
+                                            enabled = canEdit,
+                                            label = stringResource(Res.string.country),
+                                            allowNoCountry = true,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                        // Only a deactivated player shows it. Turning it off reactivates the player.
+                                        if (selected.disabled) {
+                                            TournamentOptionSwitch(
+                                                label = stringResource(Res.string.player_disabled),
+                                                description = stringResource(Res.string.player_disabled_description),
+                                                checked = disabled,
+                                                enabled = canDelete && !saving,
+                                                onCheckedChange = { disabled = it },
+                                            )
                                         }
-                                        if (compact) {
-                                            Column(Modifier.weight(1f)) {
-                                                Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis, style = player.rowTextStyle())
+                                        TournamentOptionSwitch(
+                                            label = stringResource(Res.string.player_hidden_from_public),
+                                            description = stringResource(Res.string.player_hidden_from_public_description),
+                                            checked = hiddenFromPublic,
+                                            enabled = canEdit && !saving,
+                                            onCheckedChange = { hiddenFromPublic = it },
+                                        )
+                                        val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
+                                        PlayerPhotoPreview(
+                                            model = photoModel,
+                                            playerName = "$firstName $lastName".trim(),
+                                            maxWidth = 280.dp,
+                                            maxHeight = 340.dp,
+                                            enabled = canEdit && !saving,
+                                            onClick = imagePicker::launch,
+                                        )
+                                        if (canEdit) {
+                                            pendingPhoto?.let {
                                                 Text(
-                                                    "EMA ${player.emaId}",
-                                                    style = MaterialTheme.typography.bodySmall.merge(player.rowTextStyle()),
+                                                    text = it.fileName,
+                                                    style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
                                             }
-                                        } else {
-                                            Text(player.displayName, modifier = Modifier.weight(1f), style = player.rowTextStyle())
-                                            Text(
-                                                player.emaId,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                style = player.rowTextStyle(),
-                                                modifier = Modifier.width(PlayerEmaColumnWidth),
-                                            )
                                         }
-                                    }
-                                    DataTableDivider()
-                                }
-                            }
-                        }
-                    }
-                }
-                if (showDetails) {
-                    SectionCard(
-                        modifier = Modifier.weight(0.8f).fillMaxHeight(),
-                        title = stringResource(Res.string.player_details),
-                        actions = if (compact) {
-                            {
-                                IconButton(onClick = { select(null) }) {
-                                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                    ) {
-                        if (selected == null) {
-                            AppEmptyState(
-                                icon = Icons.Default.PersonSearch,
-                                title = stringResource(Res.string.no_player_selected),
-                                message = stringResource(Res.string.choose_a_player_in_the_list),
-                                compact = true,
-                            )
-                        } else {
-                            val detailsScrollState = rememberScrollState()
-                            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .verticalScrollWithIndicators(detailsScrollState),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    OutlinedTextField(
-                                        value = emaId,
-                                        onValueChange = { emaId = it.toDigitsInput(8) },
-                                        label = { Text(stringResource(Res.string.ema_number)) },
-                                        enabled = canEditEmaNumber && !saving,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                    OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                                    OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                                    EmaCountryDropdown(
-                                        selectedCode = country,
-                                        onCountrySelected = { country = it },
-                                        enabled = canEdit,
-                                        label = stringResource(Res.string.country),
-                                        allowNoCountry = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                    // Only a deactivated player shows it. Turning it off reactivates the player.
-                                    if (selected.disabled) {
-                                        TournamentOptionSwitch(
-                                            label = stringResource(Res.string.player_disabled),
-                                            description = stringResource(Res.string.player_disabled_description),
-                                            checked = disabled,
-                                            enabled = canDelete && !saving,
-                                            onCheckedChange = { disabled = it },
-                                        )
-                                    }
-                                    TournamentOptionSwitch(
-                                        label = stringResource(Res.string.player_hidden_from_public),
-                                        description = stringResource(Res.string.player_hidden_from_public_description),
-                                        checked = hiddenFromPublic,
-                                        enabled = canEdit && !saving,
-                                        onCheckedChange = { hiddenFromPublic = it },
-                                    )
-                                    val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
-                                    PlayerPhotoPreview(
-                                        model = photoModel,
-                                        playerName = "$firstName $lastName".trim(),
-                                        maxWidth = 280.dp,
-                                        maxHeight = 340.dp,
-                                        enabled = canEdit && !saving,
-                                        onClick = imagePicker::launch,
-                                    )
-                                    if (canEdit) {
-                                        pendingPhoto?.let {
-                                            Text(
-                                                text = it.fileName,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    }
-                                    if (canEdit && hasPlayerChanges) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                                        ) {
-                                            Button(
-                                                enabled = !saving,
-                                                onClick = { showSaveConfirmation = true },
-                                                focusRequester = saveFocusRequester,
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.tertiary,
-                                                    contentColor = MaterialTheme.colorScheme.onTertiary,
-                                                ),
+                                        if (canEdit && hasPlayerChanges) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                                             ) {
-                                                ButtonText(stringResource(Res.string.save))
+                                                Button(
+                                                    enabled = !saving,
+                                                    onClick = { showSaveConfirmation = true },
+                                                    focusRequester = saveFocusRequester,
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = MaterialTheme.colorScheme.tertiary,
+                                                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                                                    ),
+                                                ) {
+                                                    ButtonText(stringResource(Res.string.save))
+                                                }
                                             }
+                                        } else if (!canEdit) {
+                                            Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
-                                    } else if (!canEdit) {
-                                        Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             }

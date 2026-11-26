@@ -84,7 +84,7 @@
     <string name="schedule_hide">Ocultar horario</string>
     <string name="action_open">Abrir</string>
     <string name="tab_tables">Mesas</string>
-    <string name="tab_ranking">Clasificación</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te añadan. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_mine_empty">Las mesas del jugador aparecen aquí cuando los organizadores sortean la ronda.</string>
@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d manos</string>
     <string name="team_n">Equipo %1$d</string>
     <string name="ranking_points_score">%1$s puntos - %2$d de puntuación</string>
-    <string name="ranking_empty">La clasificación aparece cuando se completa la primera mesa.</string>
+    <string name="ranking_empty">La clasificación aparece cuando se juega la primera mano.</string>
     <string name="ranking_empty_title">Aún no hay clasificación</string>
     <string name="ranking_teams">Equipos</string>
     <string name="ranking_chicken_hands">Manos del pollo</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Equipo o jugador</string>
     <string name="teams_search_empty">Ningún equipo coincide con la búsqueda.</string>
     <string name="team_statistics_note">Las estadísticas suman las mesas de todos los jugadores del equipo.</string>
+    <string name="team_statistics_empty">Las estadísticas aparecen cuando se completa una mesa de este equipo.</string>
     <string name="team_member_win_rate">Tasa de victorias</string>
     <string name="team_member_points">Puntos</string>
     <string name="team_member_score">Puntuación</string>
@@ -188,7 +189,7 @@
     <string name="progress_rounds_label">Rondas</string>
     <string name="progress_tables_label">Mesas</string>
     <string name="progress_ongoing_label">En curso</string>
-    <string name="tab_stats">Estadísticas</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Entrar</string>
     <string name="menu_contact">Soporte</string>
     <string name="menu_privacy">Privacidad</string>
@@ -223,7 +224,8 @@
     <string name="seats_save">Guardar los asientos</string>
     <string name="seats_restart">Empezar de nuevo</string>
     <string name="entry_seats_first">Asigna los asientos de la mesa para empezar a añadir manos.</string>
-    <string name="round_starts_at">Empieza a las</string>
+    <string name="round_will_start_at">La ronda empezará a las %1$s</string>
+    <string name="round_will_start_on_at">La ronda empezará el %1$s a las %2$s</string>
     <string name="round_clock_remaining">Tiempo restante: %1$s</string>
     <string name="table_hand_announce_new">Mano nueva %1$d</string>
     <string name="table_hand_announce_edited">Mano %1$d corregida</string>
@@ -329,4 +331,21 @@ Pero un email solo puede tener una cuenta en la app: quien quiera su propia cuen
     <string name="ranking_close">Cerrar</string>
     <string name="ranking_title_now">Clasificación actual</string>
     <string name="ranking_title_after_round">Clasificación tras la ronda %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Descargar la app</string>
+    <string name="apps_intro">MTS también es una app para móviles, tabletas y ordenadores. Muestra los mismos torneos que esta web, con la misma cuenta.</string>
+    <string name="apps_ios">iPhone y iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac con Apple silicon</string>
+    <string name="apps_windows_detail">Instalador para Windows 10 y 11</string>
+    <string name="apps_linux_detail">Debian y Ubuntu</string>
+    <string name="apps_download">Descargar</string>
+    <string name="apps_soon">Próximamente</string>
+    <string name="apps_this_device">Para este dispositivo</string>
+    <string name="apps_notice_title">Apps de MTS</string>
+    <string name="apps_notice_message">MTS también está como app para Android, iPhone, Mac, Windows y Linux.\n\nMás tarde las encontrarás en el menú Más, en Descargar la app.</string>
+    <string name="apps_notice_close">Cerrar</string>
+    <string name="apps_notice_never">No volver a mostrar</string>
 </resources>

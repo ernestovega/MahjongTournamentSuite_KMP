@@ -68,9 +68,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogPadding
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
@@ -352,15 +355,25 @@ internal fun ImportPreviewContent(
             }
         }
         val rowsState = rememberLazyListState()
+        // The table reaches the sides of the dialog, so its shadows take the whole width; each line keeps the margins inside.
         LazyColumn(
-            Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).scrollIndicators(rowsState).testTag("import_table"),
+            Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).dialogFullBleed().scrollIndicators(rowsState, scrollbar = MtsScrollbar.Overlay).testTag("import_table"),
             state = rowsState,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            stickyHeader { ImportTableHeader(showTeam = preview.isTeams && preview.hasTeamColumn) }
-            items(rows, key = { it.row }) { row -> ImportRowLine(row, preview, playerNameOf) }
+            // Its background takes the whole width, so the rows go out of sight under it.
+            stickyHeader {
+                Box(Modifier.background(AlertDialogDefaults.containerColor).padding(horizontal = MtsDialogPadding)) {
+                    ImportTableHeader(showTeam = preview.isTeams && preview.hasTeamColumn)
+                }
+            }
+            items(rows, key = { it.row }) { row ->
+                Box(Modifier.padding(horizontal = MtsDialogPadding)) { ImportRowLine(row, preview, playerNameOf) }
+            }
             items(preview.removed, key = { "removed-${it.slotId}" }) { removed ->
-                ImportRemovedLine(removed, showTeam = preview.isTeams && preview.hasTeamColumn, playerNameOf = playerNameOf)
+                Box(Modifier.padding(horizontal = MtsDialogPadding)) {
+                    ImportRemovedLine(removed, showTeam = preview.isTeams && preview.hasTeamColumn, playerNameOf = playerNameOf)
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material3.AlertDialogDefaults
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -56,8 +57,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DialogButtonR
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogPadding
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -188,9 +192,13 @@ fun PlayerAccountsBulkDialog(
                     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         // The filters scroll away with the rows, so the list gets the whole height on a phone.
                         val accountsState = rememberLazyListState()
-                        LazyColumn(Modifier.fillMaxWidth().weight(1f).scrollIndicators(accountsState).testTag("account_list"), state = accountsState) {
+                        // The list reaches the sides of the dialog, so its shadows take the whole width; each line keeps the margins inside.
+                        LazyColumn(
+                            Modifier.fillMaxWidth().weight(1f).dialogFullBleed().scrollIndicators(accountsState, scrollbar = MtsScrollbar.Overlay).testTag("account_list"),
+                            state = accountsState,
+                        ) {
                             item(key = "filters") {
-                                Column(Modifier.padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(Modifier.padding(start = MtsDialogPadding, end = MtsDialogPadding, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         AccountFilter.entries.forEach { option ->
                                             val count = players.count { it.matches(option) }
@@ -229,7 +237,10 @@ fun PlayerAccountsBulkDialog(
                                 }
                             }
                             // The titles stay at the top while the rows scroll under them.
-                            stickyHeader { ColumnTitles(compact) }
+                            // Its background takes the whole width, so the rows go out of sight under it.
+                            stickyHeader {
+                                Box(Modifier.background(AlertDialogDefaults.containerColor).padding(horizontal = MtsDialogPadding)) { ColumnTitles(compact) }
+                            }
                             items(shown, key = { it.id }) { slot ->
                                 val result = results.firstOrNull { it.playerId == slot.id }
                                 // A tap anywhere on the line (the number, the name, the email...) checks the player.
@@ -237,7 +248,7 @@ fun PlayerAccountsBulkDialog(
                                     checked = slot.id in selected,
                                     enabled = !busy,
                                     onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = MtsDialogPadding),
                                     gap = columnGap(compact),
                                     controlPadding = 0.dp,
                                 ) {

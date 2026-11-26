@@ -102,7 +102,7 @@
     <string name="discard">Negeren</string>
     <string name="loading_rankings">Klassementen laden…</string>
     <string name="no_ranking_yet">Nog geen klassement</string>
-    <string name="the_ranking_shows_when_the_first">Het klassement verschijnt zodra de eerste tafel voltooid is.</string>
+    <string name="the_ranking_shows_when_the_first">Het klassement verschijnt zodra de eerste hand gespeeld is.</string>
     <string name="settings">Instellingen</string>
     <string name="show_first_3">Eerste 3 tonen</string>
     <string name="previous_ranking_list">Vorige klassementslijst</string>
@@ -887,6 +887,7 @@
     <string name="role_super_admin">Superbeheerder</string>
     <string name="role_club_admin">Clubbeheerder</string>
     <string name="organizations_title">Organisaties</string>
+    <string name="organizations_button">Clubs</string>
     <string name="organizations_empty">Er zijn nog geen organisaties.</string>
     <string name="organization_new">Nieuwe organisatie</string>
     <string name="organization_edit">Organisatie bewerken</string>
@@ -1145,6 +1146,7 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
     <string name="pc_marked_more_or_less">Aangevinkt: %1$d. Vink er %2$d meer aan of %3$d uit.</string>
     <string name="pc_marked_less">Aangevinkt: %1$d. Vink er %2$d uit.</string>
     <string name="pc_minimum">Met %1$d spelers kan niemand weg: een toernooi heeft er minstens 16 nodig.</string>
+    <string name="pc_less_disabled">Dit haalt alleen de hier toegevoegde tafels weg. Om tafels weg te halen, markeer je hieronder de mensen die weggaan, in groepen van 4.</string>
     <string name="pc_sure_text">De tafels van alle rondes worden opnieuw geloot.\nDit kan niet ongedaan worden gemaakt.</string>
     <string name="pc_change">Wijzigen</string>
     <string name="pc_now">Nu: %1$d spelers, %2$d tafels per ronde.</string>

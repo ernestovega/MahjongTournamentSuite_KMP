@@ -46,7 +46,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
@@ -61,7 +61,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableCol
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
-import com.etologic.mahjongtournamentsuite.presentation.components.TopBarButtonsLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -344,19 +343,27 @@ fun RolesScreen(navController: NavHostController) {
         title = stringResource(Res.string.roles_title),
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
-        actions = if (catalog != null) {
+        // The main action of the screen, like New tournament in the tournament list.
+        floatingActionButton = if (catalog != null) {
             {
-                TopBarButtonsLayout {
-                    AppTopBarButton(stringResource(Res.string.role_new), Icons.Default.Add, onClick = {
-                        draft = RoleDraft(id = null, name = "", base = GlobalUserRole.EDITOR, permissions = catalog?.standard?.get(GlobalUserRole.EDITOR).orEmpty())
-                    })
+                ExtendedFloatingActionButton(onClick = {
+                    draft = RoleDraft(id = null, name = "", base = GlobalUserRole.EDITOR, permissions = catalog?.standard?.get(GlobalUserRole.EDITOR).orEmpty())
+                }) {
+                    androidx.compose.material3.Icon(Icons.Default.Add, contentDescription = null)
+                    ButtonText(stringResource(Res.string.role_new), Modifier.padding(start = 12.dp))
                 }
             }
         } else {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 900.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ScreenColumn(
+            maxWidth = 900.dp,
+            scrollable = true,
+            // Room under the last card so the button covers no role.
+            contentPadding = PaddingValues(start = MtsTheme.spacing.xl, top = MtsTheme.spacing.xl, end = MtsTheme.spacing.xl, bottom = FabClearance),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
             val roles = catalog
             SectionCard(title = stringResource(Res.string.roles_standard), subtitle = stringResource(Res.string.roles_standard_info)) {
@@ -472,7 +479,7 @@ internal fun RoleEditorDialog(
                 )
             },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp), inDialog = true) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (!draft.readOnly) {
                             OutlinedTextField(
@@ -596,7 +603,7 @@ internal fun AccountPermissionsDialog(
             modifier = Modifier.appFocusGroup(),
             title = { MtsDialogTitle(stringResource(Res.string.account_permissions), subtitle = user.alias.ifBlank { user.email }) },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp), inDialog = true) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             stringResource(if (managesPermissions) Res.string.account_permissions_info else Res.string.account_permissions_only_super_admin),

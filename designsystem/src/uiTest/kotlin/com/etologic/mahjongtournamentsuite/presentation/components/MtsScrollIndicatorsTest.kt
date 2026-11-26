@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.dragAndDrop
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipe
@@ -60,12 +63,30 @@ class MtsScrollIndicatorsMathTest {
         assertEquals(0.5f, metrics.position, 0.001f)
         assertEquals(0.1f, metrics.visibleFraction, 0.001f)
     }
+
+    @Test
+    fun withoutAPinnedHeaderTheShadowStartsAtTheTop() {
+        val items = (0 until 10).map { LazyItemSpan(it, it * 40, 40) }
+        assertEquals(0f, pinnedStartOf(items, firstIndex = 0, firstOffset = 0, viewportStart = 0))
+        val scrolled = (3 until 13).map { LazyItemSpan(it, (it - 3) * 40 - 10, 40) }
+        assertEquals(0f, pinnedStartOf(scrolled, firstIndex = 3, firstOffset = 10, viewportStart = 0))
+    }
+
+    @Test
+    fun aPinnedHeaderMovesTheShadowUnderIt() {
+        // The header (item 0, 30 px) stays pinned at the top while row 5 is the first one scrolled in.
+        val items = listOf(LazyItemSpan(0, 0, 30)) + (5 until 15).map { LazyItemSpan(it, (it - 5) * 40 - 12, 40) }
+        assertEquals(30f, pinnedStartOf(items, firstIndex = 5, firstOffset = 12, viewportStart = 0))
+        // The first item itself pinned while the list has only scrolled a little.
+        val first = listOf(LazyItemSpan(0, 0, 30)) + (1 until 10).map { LazyItemSpan(it, it * 40 - 20, 40) }
+        assertEquals(30f, pinnedStartOf(first, firstIndex = 0, firstOffset = 8, viewportStart = 0))
+    }
 }
 
 @OptIn(ExperimentalTestApi::class)
 class MtsScrollIndicatorsUiTest {
     @Test
-    fun theScrollbarTakesItsStripOnlyWhileTheContentCanScroll() = runComposeUiTest {
+    fun theScrollbarNeverTakesAStripBecauseItShowsOnlyWhileScrolling() = runComposeUiTest {
         var lines by mutableStateOf(2)
         val state = ScrollState(0)
         setContent {
@@ -84,7 +105,8 @@ class MtsScrollIndicatorsUiTest {
         lines = 20
         waitForIdle()
         val scrolls = onNodeWithTag("content").getBoundsInRoot()
-        assertEquals(300.dp - MtsScrollbarThickness, scrolls.right - scrolls.left)
+        // The scrollbar shows over the end of the list while it scrolls, so the list keeps its whole width (2026-11-26).
+        assertEquals(300.dp, scrolls.right - scrolls.left)
     }
 
     @Test
@@ -107,7 +129,7 @@ class MtsScrollIndicatorsUiTest {
     }
 
     @Test
-    fun theMarginScrollbarKeepsTheWidthAndIsDraggedInTheMargin() = runComposeUiTest {
+    fun theMarginScrollbarKeepsTheWidthAndIsDraggedOnTheEndOfTheList() = runComposeUiTest {
         val state = LazyListState()
         setContent {
             MtsTheme(useDarkTheme = false) {
@@ -129,10 +151,10 @@ class MtsScrollIndicatorsUiTest {
         val row = onNodeWithTag("row1").getBoundsInRoot()
         assertEquals(24.dp, row.left)
         assertEquals(324.dp, row.right)
-        onNodeWithTag("screen").performTouchInput {
-            // Down on the thumb, in the margin just after the list, and a drag to the bottom.
-            val x = (324.dp + MtsScrollbarThickness / 2).toPx()
-            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+        onNodeWithTag("screen").performMouseInput {
+            // A mouse down on the hidden thumb, on the end of the list, and a drag to the bottom.
+            val x = (324.dp - MtsScrollbarThickness / 2).toPx()
+            dragAndDrop(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
         }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 150, "The list is at ${state.firstVisibleItemIndex}")
@@ -151,13 +173,36 @@ class MtsScrollIndicatorsUiTest {
             }
         }
         waitForIdle()
-        onNodeWithTag("box").performTouchInput {
-            // Down on the thumb, at the top of the strip on the end, and a drag to the bottom.
+        onNodeWithTag("box").performMouseInput {
+            // A mouse down on the thumb, at the top of the strip on the end, and a drag to the bottom. The mouse takes
+            // the thumb also while it is hidden.
             val x = width - 3f
-            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+            dragAndDrop(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
         }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 150, "The list is at ${state.firstVisibleItemIndex}")
+    }
+
+    @Test
+    fun aFingerOnTheHiddenStripScrollsTheListNormally() = runComposeUiTest {
+        val state = LazyListState()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.width(300.dp).height(400.dp).testTag("box")) {
+                    LazyColumn(Modifier.fillMaxWidth().scrollIndicators(state), state = state) {
+                        items((1..200).toList(), key = { it }) { Text("Row $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        onNodeWithTag("box").performTouchInput {
+            val x = width - 3f
+            swipe(Offset(x, height - 20f), Offset(x, 20f), durationMillis = 300)
+        }
+        waitForIdle()
+        // The hidden scrollbar does not take the finger: the list moves by about the length of the swipe.
+        assertTrue(state.firstVisibleItemIndex in 5..30, "The list is at ${state.firstVisibleItemIndex}")
     }
 
     @Test
@@ -179,5 +224,34 @@ class MtsScrollIndicatorsUiTest {
         waitForIdle()
         // A finger on the rows moves the list by about the length of the swipe, not to the end.
         assertTrue(state.firstVisibleItemIndex in 5..30, "The list is at ${state.firstVisibleItemIndex}")
+    }
+
+    @Test
+    fun theTopShadowOfAListWithAStickyHeaderGoesUnderTheHeader() = runComposeUiTest {
+        val state = LazyListState()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.width(300.dp).height(200.dp)) {
+                    LazyColumn(
+                        state = state,
+                        modifier = Modifier.fillMaxWidth().scrollIndicators(state),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
+                    ) {
+                        stickyHeader { Text("Header", Modifier.fillMaxWidth().height(30.dp)) }
+                        items(50) { Text("Row $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        val indicator = LazyListIndicator(state)
+        assertEquals(0f, indicator.pinnedStart())
+
+        runOnIdle { kotlinx.coroutines.runBlocking { state.scrollToItem(10, 15) } }
+        waitForIdle()
+        val headerEnd = runOnIdle { indicator.pinnedStart() }
+        val header = runOnIdle { state.layoutInfo.visibleItemsInfo.first { it.index == 0 } }
+        assertEquals((header.offset + header.size - state.layoutInfo.viewportStartOffset).toFloat(), headerEnd)
+        assertTrue(headerEnd >= 30f * density.density - 1f, "The shadow starts at $headerEnd, under a 30 dp header")
     }
 }

@@ -77,3 +77,30 @@ describe("EMA report with a slot that has no person", () => {
     assert.equal(sheet.getCell("G3").value, 0);
   });
 });
+
+describe("EMA report refusals", () => {
+  before(requireEmulator);
+  const row = { playerId: 1, place: 1, tablePoints: 4, score: 10 };
+
+  it("refuses a tournament that does not exist", async () => {
+    await assert.rejects(generateEmaReport({ tournamentId: "no-such-tournament", rows: [row] }), /Tournament not found/);
+  });
+
+  it("refuses a ranked player who is not in the tournament, and an EMA id that is not in the registry", async () => {
+    const id = await seedTournament({ tables: [] });
+    const tournament = db.collection("tournaments").doc(id);
+    await tournament.update({ name: "Test", numPlayers: 1, eventStartDate: "2026-10-16", eventEndDate: "2026-10-16", hostCountry: "ESP", hostCity: "Madrid", shortName: "TEST" });
+    await assert.rejects(generateEmaReport({ tournamentId: id, rows: [row] }), /unknown tournament player/);
+    await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "19999999" });
+    await assert.rejects(generateEmaReport({ tournamentId: id, rows: [row] }), /Assigned EMA player does not exist/);
+  });
+
+  it("refuses a tournament date that is not yyyy-MM-dd", async () => {
+    const id = await seedTournament({ tables: [] });
+    const tournament = db.collection("tournaments").doc(id);
+    await tournament.update({ name: "Test", numPlayers: 1, eventStartDate: "16/10/2026", eventEndDate: "2026-10-16", hostCountry: "ESP", hostCity: "Madrid", shortName: "TEST" });
+    await db.collection("emaPlayerRegistry").doc("10000001").set({ firstName: "ANA", lastName: "LOPEZ", country: "ESP" });
+    await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "10000001" });
+    await assert.rejects(generateEmaReport({ tournamentId: id, rows: [row] }), /yyyy-MM-dd/);
+  });
+});

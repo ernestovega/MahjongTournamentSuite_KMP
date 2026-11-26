@@ -51,7 +51,7 @@ class SpanishScreensUiTest {
         onNodeWithText("Número EMA").assertExists()
         onNodeWithText("Correo electrónico").assertExists()
         onNodeWithText("Guardar").assertExists()
-        onNodeWithText("Cerrar").assertExists()
+        onNodeWithContentDescription("Cerrar").assertExists()
         onNodeWithText("Idioma").assertExists()
     }
 

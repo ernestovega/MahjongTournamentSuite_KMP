@@ -100,7 +100,7 @@
     <string name="table_hands_done">%1$d/%2$d раздач</string>
     <string name="team_n">Команда %1$d</string>
     <string name="ranking_points_score">%1$s очк. - счёт %2$d</string>
-    <string name="ranking_empty">Рейтинг появится, когда будет завершён первый стол.</string>
+    <string name="ranking_empty">Рейтинг появится, когда будет сыграна первая раздача.</string>
     <string name="ranking_empty_title">Рейтинга пока нет</string>
     <string name="ranking_teams">Команды</string>
     <string name="ranking_chicken_hands">Курицы</string>
@@ -125,6 +125,7 @@
     <string name="teams_search_hint">Команда или игрок</string>
     <string name="teams_search_empty">Нет команд по этому запросу.</string>
     <string name="team_statistics_note">Статистика суммирует столы всех игроков команды.</string>
+    <string name="team_statistics_empty">Статистика появится, когда будет завершён стол этой команды.</string>
     <string name="team_member_win_rate">Доля побед</string>
     <string name="team_member_points">Очки</string>
     <string name="team_member_score">Счёт</string>
@@ -194,7 +195,7 @@
     <string name="progress_rounds_label">Раунды</string>
     <string name="progress_tables_label">Столы</string>
     <string name="progress_ongoing_label">Идут</string>
-    <string name="tab_stats">Статистика</string>
+    <string name="tab_stats">Статы</string>
     <string name="menu_sign_in">Войти</string>
     <string name="menu_contact">Поддержка</string>
     <string name="menu_privacy">Конфиденциальность</string>
@@ -229,7 +230,8 @@
     <string name="seats_save">Сохранить места</string>
     <string name="seats_restart">Начать заново</string>
     <string name="entry_seats_first">Распределите места за столом, чтобы начать вводить раздачи.</string>
-    <string name="round_starts_at">Начало в</string>
+    <string name="round_will_start_at">Раунд начнётся в %1$s</string>
+    <string name="round_will_start_on_at">Раунд начнётся %1$s в %2$s</string>
     <string name="round_clock_remaining">Осталось: %1$s</string>
     <string name="table_hand_announce_new">Новая раздача %1$d</string>
     <string name="table_hand_announce_edited">Раздача %1$d исправлена</string>
@@ -337,4 +339,21 @@
     <string name="ranking_close">Закрыть</string>
     <string name="ranking_title_now">Текущий рейтинг</string>
     <string name="ranking_title_after_round">Рейтинг после раунда %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Скачать приложение</string>
+    <string name="apps_intro">MTS есть и в виде приложения для телефонов, планшетов и компьютеров. В нём те же турниры, что и на этом сайте, с той же учётной записью.</string>
+    <string name="apps_ios">iPhone и iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac с Apple silicon</string>
+    <string name="apps_windows_detail">Установщик для Windows 10 и 11</string>
+    <string name="apps_linux_detail">Debian и Ubuntu</string>
+    <string name="apps_download">Скачать</string>
+    <string name="apps_soon">Скоро</string>
+    <string name="apps_this_device">Для этого устройства</string>
+    <string name="apps_notice_title">Приложения MTS</string>
+    <string name="apps_notice_message">MTS есть и в виде приложения для Android, iPhone, Mac, Windows и Linux.\n\nПозже их можно найти в меню «Ещё», в пункте «Скачать приложение».</string>
+    <string name="apps_notice_close">Закрыть</string>
+    <string name="apps_notice_never">Больше не показывать</string>
 </resources>

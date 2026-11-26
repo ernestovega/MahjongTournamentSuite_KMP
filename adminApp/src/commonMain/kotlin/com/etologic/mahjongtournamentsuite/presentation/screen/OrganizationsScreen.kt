@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -62,7 +65,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
@@ -80,8 +83,13 @@ import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationL
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TopBarButtonsLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
@@ -226,92 +234,110 @@ fun OrganizationsScreen(navController: NavHostController) {
         title = stringResource(Res.string.organizations_title),
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
-        actions = if (access?.canCreateOrganizations == true) {
+        // The main action of the screen is a floating button, like New tournament in the tournament list.
+        floatingActionButton = if (access?.canCreateOrganizations == true) {
             {
-                TopBarButtonsLayout {
-                    AppTopBarButton(stringResource(Res.string.organization_new), Icons.Default.Add, onClick = {
-                        editing = OrganizationEditing(id = null, organization = null)
-                    })
+                ExtendedFloatingActionButton(onClick = { editing = OrganizationEditing(id = null, organization = null) }) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    ButtonText(stringResource(Res.string.organization_new), Modifier.padding(start = 12.dp))
                 }
             }
         } else {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 1200.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
-            val countryNameOf = rememberCountryNames()
-            SectionCard(container = false) {
-                val all = organizations
-                val countryCodes = all.orEmpty().map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
-                val query = searchQuery.trim()
-                val list = all?.filter { organization ->
-                    (selectedCountryCodes.isEmpty() || organization.country.uppercase() in selectedCountryCodes) &&
-                        (query.isEmpty() || organization.name.contains(query, ignoreCase = true))
-                }
-                if (!all.isNullOrEmpty()) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(Res.string.search)) },
-                        singleLine = true,
-                        trailingIcon = if (searchQuery.isNotEmpty()) {
-                            {
-                                IconButton(onClick = {
-                                    searchQuery = ""
-                                    searchFocusRequester.requestFocus()
-                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
-                            }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
-                    )
-                    if (countryCodes.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            countryCodes.forEach { code ->
-                                val isSelected = code in selectedCountryCodes
-                                val count = all.count { it.country.uppercase() == code }
-                                TextButton(
-                                    onClick = { selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code },
-                                    shape = CircleShape,
-                                    colors = if (isSelected) {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        )
-                                    } else {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    },
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
-                                ) {
-                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
-                                    Spacer(Modifier.width(4.dp))
-                                    ButtonText("$code ($count)")
+        // The search and the country filter stay on top and hide when the cards scroll down, and show when they scroll up.
+        HideOnScrollArea {
+                    ScreenColumn(
+                        maxWidth = 1200.dp,
+                        contentPadding = PaddingValues(start = MtsTheme.spacing.xl, top = MtsTheme.spacing.xl, end = MtsTheme.spacing.xl, bottom = 0.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        val scroll = rememberPersistentScrollState("organizations")
+                        ShowTabsAtTop(scroll)
+                    error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
+                    val countryNameOf = rememberCountryNames()
+                    SectionCard(container = false) {
+                        val all = organizations
+                        val countryCodes = all.orEmpty().map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
+                        val query = searchQuery.trim()
+                        val list = all?.filter { organization ->
+                            (selectedCountryCodes.isEmpty() || organization.country.uppercase() in selectedCountryCodes) &&
+                                (query.isEmpty() || organization.name.contains(query, ignoreCase = true))
+                        }
+                        if (!all.isNullOrEmpty()) {
+                                HideOnScrollTabs {
+                                                Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                                                    OutlinedTextField(
+                                                        value = searchQuery,
+                                                        onValueChange = { searchQuery = it },
+                                                        label = { Text(stringResource(Res.string.search)) },
+                                                        singleLine = true,
+                                                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                                                            {
+                                                                IconButton(onClick = {
+                                                                    searchQuery = ""
+                                                                    searchFocusRequester.requestFocus()
+                                                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
+                                                            }
+                                                        } else {
+                                                            null
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                                                    )
+                                                    if (countryCodes.isNotEmpty()) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
+                                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        ) {
+                                                            countryCodes.forEach { code ->
+                                                                val isSelected = code in selectedCountryCodes
+                                                                val count = all.count { it.country.uppercase() == code }
+                                                                TextButton(
+                                                                    onClick = { selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code },
+                                                                    shape = CircleShape,
+                                                                    colors = if (isSelected) {
+                                                                        ButtonDefaults.textButtonColors(
+                                                                            containerColor = MaterialTheme.colorScheme.primary,
+                                                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                                        )
+                                                                    } else {
+                                                                        ButtonDefaults.textButtonColors(
+                                                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                        )
+                                                                    },
+                                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
+                                                                ) {
+                                                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
+                                                                    Spacer(Modifier.width(4.dp))
+                                                                    ButtonText("$code ($count)")
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                 }
                             }
-                        }
-                    }
-                }
-                when {
-                    all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    else -> OrganizationsGrid(list) { organization ->
-                        OrganizationCard(
-                            organization = organization,
-                            details = stringResource(organization.type.labelRes()) + " · " + countryNameOf(organization.country, organization.country),
-                            enabled = !saving && organization.canEdit,
-                            onClick = { editing = OrganizationEditing(organization.id, organization) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                            // The list reaches the edges of the window, so its shadows take the whole width; the margins go
+                            // inside, with room under the last organization so the floating button covers none.
+                            val listPadding = screenListPadding(bottom = FabClearance)
+                            Column(Modifier.weight(1f).fillMaxWidth().screenFullBleed().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay).padding(listPadding)) {
+                                when {
+                                    all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    else -> OrganizationsGrid(list) { organization ->
+                                        OrganizationCard(
+                                            organization = organization,
+                                            details = stringResource(organization.type.labelRes()) + " · " + countryNameOf(organization.country, organization.country),
+                                            enabled = !saving && organization.canEdit,
+                                            onClick = { editing = OrganizationEditing(organization.id, organization) },
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+                            }
                 }
             }
         }
@@ -471,7 +497,7 @@ internal fun OrganizationEditorDialog(
                 )
             },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp), inDialog = true) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(
                             value = name,

@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_new_user
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.foundation.layout.Column
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -7,8 +11,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -44,6 +50,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -329,100 +337,115 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     // On a phone the send button is a floating button. It shows only while accounts are selected.
     val compact = LocalCompactLayout.current
     val showResetFab = compact && access?.canSendPasswordResets == true && chosenUids.isNotEmpty() && !saving && !loading
+    val canCreateUsers = access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
+        // One floating button at a time: while accounts are selected on a phone it sends the password reset,
+        // otherwise it creates an account.
         floatingActionButton = {
-            AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-                ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                    ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+                AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+                    // A long label (Spanish, French) breaks into two lines instead of passing the left edge of a phone.
+                    ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }, modifier = Modifier.widthIn(max = 300.dp)) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                        ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+                    }
                 }
-            }
+                // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
+                // its organizations, and a super admin any account.
+            if (canCreateUsers && !showResetFab) {
+                    ExtendedFloatingActionButton(onClick = { showCreateDialog = true }, modifier = Modifier.focusRequester(addFocusRequester)) {
+                        Icon(Icons.Default.PersonAdd, contentDescription = null)
+                        ButtonText(stringResource(Res.string.top_bar_new_user), Modifier.padding(start = 12.dp))
+                    }
+                }
         },
-        // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
-        // its organizations, and a super admin any account.
-        actions = if (access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true) {
-            {
-                AppTopBarActions(
-                    onRoles = if (access?.has(Permission.PERMISSIONS_MANAGE) == true) ({ navController.navigate(RolesRoute) }) else null,
-                    onNewUser = { showCreateDialog = true },
-                    newUserFocusRequester = addFocusRequester,
-                )
-            }
+        actions = if (access?.has(Permission.PERMISSIONS_MANAGE) == true) {
+            { AppTopBarActions(onRoles = { navController.navigate(RolesRoute) }) }
         } else {
             null
         },
     ) {
-        ScreenColumn(
-            maxWidth = 1200.dp,
-            // The floating button must not cover the last account.
-            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (compact) 88.dp else 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            error?.let {
-                AppErrorDialog(
-                    message = it,
-                    onDismiss = { error = null },
-                )
-            }
-            notice?.let { AppSuccessDialog(it, onDismiss = { notice = null }) }
-            UserFilters(
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                selectedRoles = selectedRoles,
-                onRoleToggle = { role ->
-                    selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
-                },
-                tournaments = tournaments,
-                selectedTournamentId = selectedTournamentId,
-                onTournamentSelected = { selectedTournamentId = it },
-            )
-            if (accountRequests.isNotEmpty()) {
-                AccountRequestsCard(
-                    requests = accountRequests,
-                    enabled = !loading && !saving,
-                    onApprove = { approvingRequest = it },
-                    onReject = { resolveRequest(it, approve = false) },
-                )
-            }
-            val canReset = access?.canSendPasswordResets == true
-            SectionCard(
-                container = false,
-                title = stringResource(Res.string.accounts),
-                subtitle = if (loading) stringResource(Res.string.loading) else pluralStringResource(Res.plurals.accounts_count_summary, users.size, filteredUsers.size, users.size),
+        // The filters, the requests and the selection bar hide when the list scrolls down and show when it scrolls up.
+        HideOnScrollArea {
+            ScreenColumn(
+                maxWidth = 1200.dp,
+                // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space
+                // (room for the floating buttons, so they do not cover the last account).
+                contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (canReset) {
-                    PasswordResetBar(
-                        shownCount = filteredUsers.size,
-                        selectedCount = chosenUids.size,
-                        busy = saving || loading,
-                        onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
-                        onClear = { selectedUids = emptySet() },
-                        onSend = { confirmResetOpen = true },
-                        deleteCount = if (access?.canDeleteUsers == true) deletableUids.size else 0,
-                        showDelete = access?.canDeleteUsers == true,
-                        onDelete = { confirmDeleteOpen = true },
-                        showSend = !compact,
+                error?.let {
+                    AppErrorDialog(
+                        message = it,
+                        onDismiss = { error = null },
                     )
                 }
-                UsersTable(
-                    users = filteredUsers,
-                    selectable = canReset,
-                    selectedUids = selectedUids,
-                    onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
-                    countryByEmaId = emaPlayers.associate { it.emaId to it.country },
-                    enabled = !loading && !saving,
-                    isSuperAdmin = access?.isSuperAdmin == true,
-                    selfUid = access?.uid,
-                    rowFocusRequesters = rowFocusRequesters,
-                    onEdit = { user ->
-                        restoreUid = user.uid
-                        editingUser = user
-                    },
-                )
+                notice?.let { AppSuccessDialog(it, onDismiss = { notice = null }) }
+                    HideOnScrollTabs {
+                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    UserFilters(
+                                        searchQuery = searchQuery,
+                                        onSearchChange = { searchQuery = it },
+                                        selectedRoles = selectedRoles,
+                                        onRoleToggle = { role ->
+                                            selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
+                                        },
+                                        tournaments = tournaments,
+                                        selectedTournamentId = selectedTournamentId,
+                                        onTournamentSelected = { selectedTournamentId = it },
+                                    )
+                                    if (accountRequests.isNotEmpty()) {
+                                        AccountRequestsCard(
+                                            requests = accountRequests,
+                                            enabled = !loading && !saving,
+                                            onApprove = { approvingRequest = it },
+                                            onReject = { resolveRequest(it, approve = false) },
+                                        )
+                                    }
+                                }
+                    }
+                val canReset = access?.canSendPasswordResets == true
+                SectionCard(
+                    container = false,
+                    title = stringResource(Res.string.accounts),
+                    subtitle = if (loading) stringResource(Res.string.loading) else pluralStringResource(Res.plurals.accounts_count_summary, users.size, filteredUsers.size, users.size),
+                ) {
+                    if (canReset) {
+                            HideOnScrollTabs {
+                                PasswordResetBar(
+                                    shownCount = filteredUsers.size,
+                                    selectedCount = chosenUids.size,
+                                    busy = saving || loading,
+                                    onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
+                                    onClear = { selectedUids = emptySet() },
+                                    onSend = { confirmResetOpen = true },
+                                    deleteCount = if (access?.canDeleteUsers == true) deletableUids.size else 0,
+                                    showDelete = access?.canDeleteUsers == true,
+                                    onDelete = { confirmDeleteOpen = true },
+                                    showSend = !compact,
+                                )
+                            }
+                        }
+                    UsersTable(
+                        users = filteredUsers,
+                        bottomPadding = if (canCreateUsers || compact) 88.dp else 24.dp,
+                        selectable = canReset,
+                        selectedUids = selectedUids,
+                        onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
+                        countryByEmaId = emaPlayers.associate { it.emaId to it.country },
+                        enabled = !loading && !saving,
+                        isSuperAdmin = access?.isSuperAdmin == true,
+                        selfUid = access?.uid,
+                        rowFocusRequesters = rowFocusRequesters,
+                        onEdit = { user ->
+                            restoreUid = user.uid
+                            editingUser = user
+                        },
+                    )
+                }
             }
         }
     }

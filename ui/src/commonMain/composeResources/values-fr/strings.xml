@@ -124,8 +124,8 @@
     <string name="stats_empty_message">Les statistiques s'affichent quand la première table est terminée.</string>
     <string name="stats_hand_stats_missing">Les statistiques de mains demandent des tables avec des mains saisies. Aucune table ici n'en a.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">Les valeurs de main utilisent %1$d table sur %2$d.</item>
-        <item quantity="other">Les valeurs de main utilisent %1$d tables sur %2$d.</item>
+        <item quantity="one">Les valeurs de main utilisent %1$d table sur %2$d. Les autres n’ont que les scores finaux, sans leurs mains.</item>
+        <item quantity="other">Les valeurs de main utilisent %1$d tables sur %2$d. Les autres n’ont que les scores finaux, sans leurs mains.</item>
     </plurals>
     <string name="card_fold">Replier</string>
     <string name="card_unfold">Déplier</string>
@@ -560,6 +560,7 @@
     <string name="password_reset_invalid_email">Cette adresse e-mail ne semble pas valide.\nVérifiez-la et réessayez.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versions</string>
+    <string name="dev_downloads">Téléchargements</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Architecture (GitHub)</string>
     <string name="dev_privacy_policy">Politique de confidentialité</string>
@@ -785,4 +786,6 @@ La première qui marche gagne</string>
     <string name="update_available_message">La version %1$s de MTS est disponible. Téléchargez-la et installez-la par-dessus celle-ci.</string>
     <string name="update_available_download">Télécharger</string>
     <string name="update_available_later">Plus tard</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Télécharger l'app</string>
 </resources>

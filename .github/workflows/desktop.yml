@@ -139,15 +139,16 @@ jobs:
         if: always() && runner.os == 'macOS'
         run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
 
-      # The same names on every release, so a link to the latest release can point to the file of each system.
+      # The same names on every release: the page of the apps of the web (AppDownloads, playerApp) links
+      # releases/latest/download/<name>, so the names must not change.
       - name: Name the installer
         run: |
           mkdir -p out
           FILE=$(ls suite/build/compose/binaries/main/${{ matrix.dir }}/* | head -1)
           case "${{ matrix.dir }}" in
-            dmg) cp "$FILE" "out/MTS-${{ needs.version.outputs.version }}-macos-arm64.dmg" ;;
-            msi) cp "$FILE" "out/MTS-${{ needs.version.outputs.version }}-windows-x64.msi" ;;
-            deb) cp "$FILE" "out/mts_${{ needs.version.outputs.version }}_amd64.deb" ;;
+            dmg) cp "$FILE" out/MTS-macos-arm64.dmg ;;
+            msi) cp "$FILE" out/MTS-windows-x64.msi ;;
+            deb) cp "$FILE" out/mts_amd64.deb ;;
           esac
           ls -la out
 
@@ -184,7 +185,7 @@ jobs:
 
           - **macOS** (Apple silicon): open the .dmg and drag MTS to Applications.
           - **Windows**: run the .msi. Windows may warn the first time: More info > Run anyway.
-          - **Linux** (Debian, Ubuntu): \`sudo apt install ./mts_${VERSION}_amd64.deb\`
+          - **Linux** (Debian, Ubuntu): \`sudo apt install ./mts_amd64.deb\`
 
           The app tells you when a new version is out.
           EOF

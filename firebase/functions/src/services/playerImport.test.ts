@@ -361,3 +361,28 @@ test("a row keeps the values of the file, also when they are wrong", () => {
   assert.deepEqual(result.rows[0].file, { id: "x", emaId: "abc", email: "bad", team: "Reds" });
   assert.equal(result.rows[0].emaId, null);
 });
+
+test("each file that is not a player list is refused with its code", async () => {
+  const code = (expected: string) => (error: unknown) => (error as { details?: { code?: string } }).details?.code === expected;
+  const JSZipClass = (await import("jszip")).default;
+
+  await assert.rejects(parsePlayerImportFile("broken.xlsx", Buffer.from("PK but not a zip")), code("NOT_EXCEL"));
+
+  const notAWorkbook = new JSZipClass();
+  notAWorkbook.file("xl/workbook.xml", "<workbook><");
+  await assert.rejects(parsePlayerImportFile("hello.xlsx", await notAWorkbook.generateAsync({ type: "nodebuffer" })), code("NOT_EXCEL"));
+
+  const bomb = new JSZipClass();
+  bomb.file("xl/zeros.xml", "0".repeat(31 * 1024 * 1024));
+  const bombBuffer = await bomb.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  await assert.rejects(parsePlayerImportFile("bomb.xlsx", bombBuffer), code("TOO_LARGE"));
+
+  const ExcelJS = await import("exceljs");
+  const noSheets = Buffer.from(await new ExcelJS.Workbook().xlsx.writeBuffer());
+  await assert.rejects(parsePlayerImportFile("empty.xlsx", noSheets), code("NO_SHEET"));
+
+  await assert.rejects(parsePlayerImportFile("blank.csv", Buffer.from("\n , \n\n")), code("EMPTY"));
+  await assert.rejects(parsePlayerImportFile("header.csv", Buffer.from("id,ema id\n\n")), code("NO_ROWS"));
+  const tooMany = ["id,ema id", ...Array.from({ length: 1001 }, (_, index) => `${index + 1},${10000000 + index}`)].join("\n");
+  await assert.rejects(parsePlayerImportFile("many.csv", Buffer.from(tooMany)), code("TOO_MANY_ROWS"));
+});

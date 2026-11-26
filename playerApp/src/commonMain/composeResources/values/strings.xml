@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d hands</string>
     <string name="team_n">Team %1$d</string>
     <string name="ranking_points_score">%1$s points - %2$d score</string>
-    <string name="ranking_empty">The ranking shows when the first table is completed.</string>
+    <string name="ranking_empty">The ranking shows when the first hand is played.</string>
     <string name="ranking_empty_title">No ranking yet</string>
     <string name="ranking_teams">Teams</string>
     <string name="ranking_chicken_hands">Chicken hands</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Team or player</string>
     <string name="teams_search_empty">No team matches the search.</string>
     <string name="team_statistics_note">The statistics add up the tables of every player of the team.</string>
+    <string name="team_statistics_empty">The statistics show when a table of this team is completed.</string>
     <string name="team_member_win_rate">Win rate</string>
     <string name="team_member_points">Points</string>
     <string name="team_member_score">Score</string>
@@ -223,7 +224,8 @@
     <string name="seats_save">Save the seats</string>
     <string name="seats_restart">Start again</string>
     <string name="entry_seats_first">Set the seats of the table to start entering hands.</string>
-    <string name="round_starts_at">Starts at</string>
+    <string name="round_will_start_at">The round will start at %1$s</string>
+    <string name="round_will_start_on_at">The round will start on %1$s at %2$s</string>
     <string name="round_clock_remaining">Time left: %1$s</string>
     <string name="table_hand_announce_new">New hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d corrected</string>
@@ -329,4 +331,21 @@ But one email can have only one account in the app: whoever wants their own acco
     <string name="ranking_close">Close</string>
     <string name="ranking_title_now">Current ranking</string>
     <string name="ranking_title_after_round">Ranking after round %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Get the app</string>
+    <string name="apps_intro">MTS is also an app for phones, tablets and computers. It shows the same tournaments as this web, with the same account.</string>
+    <string name="apps_ios">iPhone and iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Macs with Apple silicon</string>
+    <string name="apps_windows_detail">Installer for Windows 10 and 11</string>
+    <string name="apps_linux_detail">Debian and Ubuntu</string>
+    <string name="apps_download">Download</string>
+    <string name="apps_soon">Coming soon</string>
+    <string name="apps_this_device">For this device</string>
+    <string name="apps_notice_title">MTS apps</string>
+    <string name="apps_notice_message">MTS also comes as an app for Android, iPhone, Mac, Windows and Linux.\n\nYou can find them later in the More menu, under Get the app.</string>
+    <string name="apps_notice_close">Close</string>
+    <string name="apps_notice_never">Don't show again</string>
 </resources>

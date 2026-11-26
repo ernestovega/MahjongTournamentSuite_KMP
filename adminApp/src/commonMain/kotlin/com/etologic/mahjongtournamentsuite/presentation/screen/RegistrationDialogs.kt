@@ -41,7 +41,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRo
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -108,7 +108,7 @@ internal fun RegistrationEditDialog(
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(title) },
             text = {
-                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (registration == null) {
                         OutlinedButton(onClick = { picking = true }, modifier = Modifier.fillMaxWidth()) {
                             ButtonText(person?.let { "${it.displayName.ifBlank { it.emaId }} · ${it.emaId}" } ?: stringResource(Res.string.reg_pick_person))
@@ -222,7 +222,7 @@ internal fun RegistrationImportDialog(
                         Text(pluralStringResource(Res.plurals.reg_import_ready, read.rows.size, read.rows.size), fontWeight = FontWeight.SemiBold)
                         if (read.rows.any { it.problems.isNotEmpty() }) MtsDialogText(stringResource(Res.string.reg_import_with_problems))
                         val state = rememberLazyListState()
-                        LazyColumnWithScrollbar(state = state, modifier = Modifier.heightIn(max = 320.dp)) {
+                        LazyColumnWithScrollbar(state = state, modifier = Modifier.heightIn(max = 320.dp), inDialog = true) {
                             items(read.rows, key = { it.line }) { row ->
                                 Column(Modifier.padding(vertical = 4.dp)) {
                                     Text(

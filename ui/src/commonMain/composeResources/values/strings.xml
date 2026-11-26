@@ -124,8 +124,8 @@
     <string name="stats_empty_message">The statistics show when the first table is completed.</string>
     <string name="stats_hand_stats_missing">Hand statistics need tables with entered hands. No table here has them.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">Hand values use %1$d of %2$d table.</item>
-        <item quantity="other">Hand values use %1$d of %2$d tables.</item>
+        <item quantity="one">Hand values use %1$d of %2$d table. The others only have the final scores, without their hands.</item>
+        <item quantity="other">Hand values use %1$d of %2$d tables. The others only have the final scores, without their hands.</item>
     </plurals>
     <string name="card_fold">Fold</string>
     <string name="card_unfold">Unfold</string>
@@ -560,6 +560,7 @@
     <string name="password_reset_invalid_email">This email does not look right.\nCheck it and try again.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versions</string>
+    <string name="dev_downloads">Downloads</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Architecture (GitHub)</string>
     <string name="dev_privacy_policy">Privacy policy</string>
@@ -785,4 +786,6 @@ The first one that works wins</string>
     <string name="update_available_message">Version %1$s of MTS is ready. Download it and install it over this one.</string>
     <string name="update_available_download">Download</string>
     <string name="update_available_later">Later</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Get the app</string>
 </resources>

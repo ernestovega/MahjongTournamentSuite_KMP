@@ -12,8 +12,6 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
@@ -34,12 +32,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.export_players
 import mahjongtournamentsuite.adminapp.generated.resources.import_locked_text
 import mahjongtournamentsuite.adminapp.generated.resources.import_locked_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_players
-import mahjongtournamentsuite.adminapp.generated.resources.new_player
-import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.organizations_button
 import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
 import mahjongtournamentsuite.adminapp.generated.resources.roles_open
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
@@ -47,7 +43,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.top_bar_ema_players
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_invitations
-import mahjongtournamentsuite.adminapp.generated.resources.top_bar_new_user
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 
@@ -71,9 +66,6 @@ fun AppTopBarActions(
     onAppUsers: (() -> Unit)? = null,
     onStatistics: (() -> Unit)? = null,
     onEmaReport: (() -> Unit)? = null,
-    onNewTournament: (() -> Unit)? = null,
-    onNewPlayer: (() -> Unit)? = null,
-    onNewUser: (() -> Unit)? = null,
     /** The custom roles. Only super admins have it. */
     onRoles: (() -> Unit)? = null,
     teamsFocusRequester: FocusRequester? = null,
@@ -83,9 +75,6 @@ fun AppTopBarActions(
     playerBaseFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
     exportFocusRequester: FocusRequester? = null,
-    newTournamentFocusRequester: FocusRequester? = null,
-    newPlayerFocusRequester: FocusRequester? = null,
-    newUserFocusRequester: FocusRequester? = null,
 ) {
     var lockedInfoOpen by remember { mutableStateOf(false) }
     if (lockedInfoOpen) {
@@ -124,12 +113,9 @@ fun AppTopBarActions(
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }
-        onOrganizations?.let { AppTopBarButton(stringResource(Res.string.organizations_title), Icons.Default.Business, it) }
+        onOrganizations?.let { AppTopBarButton(stringResource(Res.string.organizations_button), Icons.Default.Business, it) }
         onPlayerBase?.let { AppTopBarButton(stringResource(Res.string.top_bar_ema_players), Icons.Default.People, it, playerBaseFocusRequester) }
-        onNewTournament?.let { AppTopBarButton(stringResource(Res.string.new_tournament), Icons.Outlined.AddBox, it, newTournamentFocusRequester) }
-        onNewPlayer?.let { AppTopBarButton(stringResource(Res.string.new_player), Icons.Default.PersonAdd, it, newPlayerFocusRequester) }
         onRoles?.let { AppTopBarButton(stringResource(Res.string.roles_open), Icons.Default.AdminPanelSettings, it) }
-        onNewUser?.let { AppTopBarButton(stringResource(Res.string.top_bar_new_user), Icons.Default.PersonAdd, it, newUserFocusRequester) }
     }
 }
 
@@ -141,8 +127,6 @@ private fun AppTopBarActionsPreview() {
             onPlayers = {},
             onPlayerBase = {},
             onAppUsers = {},
-            onNewTournament = {},
-            onNewPlayer = {},
         )
     }
 }

@@ -62,10 +62,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.bleedHorizontally
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
@@ -185,14 +187,18 @@ internal fun TournamentContent(
                 val accent = MaterialTheme.colorScheme.tertiary
                 val scrollState = rememberPersistentScrollState()
                 val stickyHost = remember(scrollState) { StickyHeaderHost(scrollState) }
+                // The table reaches the sides and the bottom of the window, so its shadows take the whole width and it
+                // goes out of sight at the edge; the margins of the screen go inside the scroll.
+                val gutter = screenLayout.screenGutter
                 Column(
                     modifier = Modifier
                         .widthIn(max = 1600.dp)
                         .fillMaxWidth()
                         .align(Alignment.TopCenter)
+                        .bleedHorizontally(gutter, gutter, bottom = screenLayout.sectionGap)
                         .onGloballyPositioned { stickyHost.viewportTop = it.positionInRoot().y }
-                        .verticalScrollWithIndicators(scrollState)
-                        .padding(bottom = 96.dp),
+                        .verticalScrollWithIndicators(scrollState, MtsScrollbar.Overlay, pinnedStart = { stickyHost.pinnedHeaderEnd() })
+                        .padding(start = gutter, end = gutter, bottom = 96.dp),
                 ) {
                     tableHeader(selectedEditor)
                     Spacer(Modifier.height(screenLayout.sectionGap))

@@ -87,6 +87,7 @@ internal fun TableUpdatesDialog(
             title = { MtsDialogTitle(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
             text = {
                 ScrollableColumnWithScrollbar(
+                    inDialog = true,
                     state = scrollState,
                     modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
                 ) {

@@ -138,6 +138,10 @@ fun PlayerApp(
     numpadEntry: Boolean = false,
     /** True in the Android app of the suite, which also holds the admin part. See [AppKoin]. */
     isolatedKoin: Boolean = false,
+    /** The apps of MTS, only on the web: the page of the apps, the More option and the notice. */
+    webApps: WebApps? = null,
+    /** True when the address was `/download`: the app opens the page of the apps over the tournaments. */
+    openApps: Boolean = false,
 ) {
     AppKoin(isolatedKoin, playerAppModules) {
         val themeController = rememberThemeController()
@@ -150,6 +154,7 @@ fun PlayerApp(
             LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
             LocalNumpadEntry provides numpadEntry,
+            LocalWebApps provides webApps,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
@@ -160,7 +165,7 @@ fun PlayerApp(
                     TrackPreferenceChanges()
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport, openRegistration)
+                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn, openSupport, openRegistration, openApps)
                         }
                     }
                 }
@@ -176,6 +181,7 @@ private fun PlayerNavigation(
     openSignIn: Boolean,
     openSupport: Boolean,
     openRegistration: RegistrationLink?,
+    openApps: Boolean,
 ) {
     val navController = rememberNavController()
     val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
@@ -187,7 +193,7 @@ private fun PlayerNavigation(
     }
 
     Box(Modifier.fillMaxSize()) {
-        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration)
+        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration, openApps)
         // On the web the back and forward of the browser move through the screens like the back of the app.
         BrowserHistory(navController)
         // Over every screen: the table of the player when a round of the player starts soon or is in play.
@@ -205,9 +211,10 @@ private fun PlayerNavHost(
     openSignIn: Boolean,
     openSupport: Boolean,
     openRegistration: RegistrationLink?,
+    openApps: Boolean,
 ) {
     NavHost(navController = navController, startDestination = SplashRoute) {
-        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration) }
+        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn, openSupport, openRegistration, openApps) }
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)
@@ -221,6 +228,7 @@ private fun PlayerNavHost(
                 onBack = { navController.popBackStack() },
             )
         }
+        screen<AppsRoute> { AppsScreen(navController) }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
         screen<TournamentRoute> { entry ->
             val route = entry.toRoute<TournamentRoute>()

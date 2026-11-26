@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
@@ -12,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.IntrinsicMeasurable
@@ -43,6 +48,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.max
 import kotlin.math.min
 
@@ -53,8 +60,8 @@ val MtsScrollbarThickness: Dp = 10.dp
 val MtsFadingEdgeLength: Dp = 16.dp
 
 /**
- * The shadow on each edge of a list that still has content to scroll to (the fading edge), and an always visible
- * scrollbar outside the list.
+ * The shadow on each edge of a list that still has content to scroll to (the fading edge), and a scrollbar that shows
+ * while the list scrolls (see below).
  *
  * The shadow shows also when the edge falls between two items, so a list cut in a gap still looks like a list.
  * It grows with the first pixels of the scroll, so it does not jump in.
@@ -66,6 +73,10 @@ val MtsFadingEdgeLength: Dp = 16.dp
  * Without [fadingEdges] it draws only the scrollbar: for a screen whose padding is outside its scroll, with a second
  * [scrollIndicators] without scrollbar inside the padding, so the shadows fall where the content is cut.
  *
+ * The scrollbar does not stay: it shows over the end edge of the list only while the list scrolls, like the
+ * scrollbars of the system, and fades out after it stops. The list keeps its whole width, whatever [MtsScrollbar]
+ * says (except [MtsScrollbar.None]). The shadows of the edges stay and say that there is more (Ernesto, 2026-11-26).
+ *
  * Put it before the scroll modifier (`Modifier.scrollIndicators(state).verticalScroll(state)`), or in the modifier of
  * a lazy list.
  */
@@ -75,14 +86,25 @@ fun Modifier.scrollIndicators(
     orientation: Orientation = Orientation.Vertical,
     scrollbar: MtsScrollbar = MtsScrollbar.Outside,
     fadingEdges: Boolean = true,
-): Modifier = scrollIndicators(remember(state) { ScrollStateIndicator(state) }, orientation, scrollbar, fadingEdges)
+    pinnedStart: (() -> Float)? = null,
+): Modifier {
+    val indicator = remember(state) { ScrollStateIndicator(state) }
+    indicator.pinnedStartOf = pinnedStart
+    return scrollIndicators(indicator, orientation, scrollbar, fadingEdges)
+}
 
-/** `verticalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar. */
+/**
+ * `verticalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar.
+ *
+ * [pinnedStart] gives, in pixels from the top of the scroll, the end of a header the content keeps stuck at the top
+ * (0 when none is stuck), so the top shadow goes under it.
+ */
 @Composable
 fun Modifier.verticalScrollWithIndicators(
     state: ScrollState = rememberScrollState(),
     scrollbar: MtsScrollbar = MtsScrollbar.Outside,
-): Modifier = scrollIndicators(state, Orientation.Vertical, scrollbar).verticalScroll(state)
+    pinnedStart: (() -> Float)? = null,
+): Modifier = scrollIndicators(state, Orientation.Vertical, scrollbar, pinnedStart = pinnedStart).verticalScroll(state)
 
 /** `horizontalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar under the row. */
 @Composable
@@ -125,6 +147,28 @@ private fun Modifier.scrollIndicators(
         dragged = scheme.primary,
     )
     val handle = remember(indicator) { ScrollIndicatorHandle(indicator) }
+    // The scrollbar shows only while the list scrolls or its thumb is dragged, everywhere (Ernesto, 2026-11-26: the
+    // fading edges already say that there is more). It fades out a moment after.
+    val autoHide = scrollbar != MtsScrollbar.None
+    // Shown while the list scrolls or the thumb is dragged, faded out a moment after.
+    val shownScrollbar = if (autoHide) {
+        handle.thumbAlpha = handle.thumbAlpha ?: Animatable(0f)
+        LaunchedEffect(handle) {
+            val alpha = handle.thumbAlpha ?: return@LaunchedEffect
+            snapshotFlow { handle.indicator.state.isScrollInProgress || handle.dragging }.collectLatest { moving ->
+                if (moving) {
+                    alpha.animateTo(1f, tween(150))
+                } else {
+                    delay(800)
+                    alpha.animateTo(0f, tween(400))
+                }
+            }
+        }
+        MtsScrollbar.Overlay
+    } else {
+        handle.thumbAlpha = null
+        scrollbar
+    }
     val drag = if (scrollbar != MtsScrollbar.None) {
         Modifier.pointerInput(handle, orientation) {
             val gutter = MtsScrollbarThickness.toPx()
@@ -133,6 +177,8 @@ private fun Modifier.scrollIndicators(
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                 val vertical = orientation == Orientation.Vertical
                 if (!handle.indicator.canScroll) return@awaitEachGesture
+                // A hidden scrollbar takes no finger: the content under it gets it. A mouse takes it, as on a computer.
+                if ((handle.thumbAlpha?.value ?: 1f) == 0f && down.type != PointerType.Mouse) return@awaitEachGesture
                 val inStrip = if (vertical) down.position.x >= size.width - gutter else down.position.y >= size.height - gutter
                 if (!inStrip) return@awaitEachGesture
                 val track = (if (vertical) size.height else size.width).toFloat()
@@ -162,9 +208,9 @@ private fun Modifier.scrollIndicators(
         Modifier
     }
     return this
-        .then(if (scrollbar == MtsScrollbar.Margin) MarginBleedElement(handle, orientation) else Modifier)
+        .then(if (shownScrollbar == MtsScrollbar.Margin) MarginBleedElement(handle, orientation) else Modifier)
         .then(drag)
-        .then(ScrollIndicatorsElement(handle, orientation, scrollbar, colors))
+        .then(ScrollIndicatorsElement(handle, orientation, shownScrollbar, colors))
 }
 
 /** Where the scrollbar of [scrollIndicators] goes. */
@@ -207,6 +253,12 @@ internal interface ScrollIndicator {
     /** How much of [edge] pixels is hidden after the end, from 0 to [edge]. */
     fun hiddenAfter(edge: Float): Float
 
+    /**
+     * Where the content starts to hide at the start, in pixels: the end of a sticky header pinned there, so the shadow
+     * goes under the header, where the list goes out of sight, and not over it. 0 without a pinned header.
+     */
+    fun pinnedStart(): Float = 0f
+
     /** The thumb along [track] pixels, or null when the content fits. */
     fun thumb(track: Float): ScrollThumb?
 
@@ -227,6 +279,11 @@ internal fun thumbFor(position: Float, visibleFraction: Float, track: Float, min
 private const val MIN_THUMB_PX = 32f
 
 internal class ScrollStateIndicator(override val state: ScrollState) : ScrollIndicator {
+    /** The end of a header stuck at the top of the scroll, from the content that sticks it. */
+    var pinnedStartOf: (() -> Float)? = null
+
+    override fun pinnedStart(): Float = pinnedStartOf?.invoke()?.coerceAtLeast(0f) ?: 0f
+
     // Before its first layout the state does not know its size yet (Int.MAX_VALUE): that does not count as scrollable.
     override val canScroll get() = state.maxValue in 1 until Int.MAX_VALUE
 
@@ -356,6 +413,30 @@ internal class LazyListIndicator(override val state: LazyListState) : LazyIndica
     override val beforeContentPadding get() = state.layoutInfo.beforeContentPadding
     override val firstIndex get() = state.firstVisibleItemIndex
     override val firstOffset get() = state.firstVisibleItemScrollOffset
+
+    override fun pinnedStart(): Float = pinnedStartOf(
+        items = items,
+        firstIndex = firstIndex,
+        firstOffset = firstOffset,
+        viewportStart = viewportStart,
+    )
+}
+
+/**
+ * The end of the sticky header pinned at the start of a lazy list, relative to the start of the visible area, or 0.
+ * A pinned header is a visible item that is not where the scroll would put it: one before the first visible item, or
+ * the first visible item drawn further in than its scroll offset.
+ */
+internal fun pinnedStartOf(
+    items: List<LazyItemSpan>,
+    firstIndex: Int,
+    firstOffset: Int,
+    viewportStart: Int,
+): Float {
+    // Offsets count from the end of the content padding before the items; the list itself starts at [viewportStart].
+    val pinned = items.filter { it.index < firstIndex || (it.index == firstIndex && firstOffset > 0 && it.offset > -firstOffset) }
+    val end = pinned.maxOfOrNull { it.offset + it.size } ?: return 0f
+    return (end - viewportStart).coerceAtLeast(0).toFloat()
 }
 
 internal class LazyGridIndicator(override val state: LazyGridState) : LazyIndicator() {
@@ -383,6 +464,9 @@ internal class ScrollIndicatorHandle(val indicator: ScrollIndicator) {
 
     /** Whether the strip of an outside scrollbar is in the layout. It comes once and stays (see the measure of the node). */
     var gutterShown = false
+
+    /** How visible the scrollbar is, from 0 to 1. Null for a list without scrollbar. */
+    var thumbAlpha: Animatable<Float, *>? = null
 }
 
 /**
@@ -533,12 +617,15 @@ private class ScrollIndicatorsNode(
         val after = indicator.hiddenAfter(edge) / edge
         val shadow = colors.shadow
         if (shadow.alpha > 0f) {
-            drawShadows(contentSize, edge, before, after, shadow)
+            drawShadows(contentSize, edge, before, after, shadow, if (vertical) indicator.pinnedStart() else 0f)
         }
         if (scrollbar == MtsScrollbar.None) return
         val strip = MtsScrollbarThickness.toPx()
         val track = if (vertical) size.height else size.width
         val thumb = indicator.thumb(track) ?: return
+        // The scrollbar has no track, and its thumb fades in and out with the scroll.
+        val fade = handle.thumbAlpha?.value
+        if (fade == 0f) return
         val inset = 2.dp.toPx()
         val thickness = if (handle.dragging) strip - inset else 4.dp.toPx()
         val radius = CornerRadius(thickness / 2f)
@@ -546,21 +633,27 @@ private class ScrollIndicatorsNode(
         val across = stripStart + (strip - thickness) / 2f
         val trackThickness = 4.dp.toPx()
         val trackAcross = stripStart + (strip - trackThickness) / 2f
+        val thumbColor = (if (handle.dragging) colors.dragged else colors.thumb).let { if (fade != null) it.copy(alpha = it.alpha * fade) else it }
         if (vertical) {
-            drawRoundRect(colors.track, Offset(trackAcross, 0f), Size(trackThickness, track), CornerRadius(trackThickness / 2f))
-            drawRoundRect(if (handle.dragging) colors.dragged else colors.thumb, Offset(across, thumb.start), Size(thickness, thumb.size), radius)
+            if (fade == null) drawRoundRect(colors.track, Offset(trackAcross, 0f), Size(trackThickness, track), CornerRadius(trackThickness / 2f))
+            drawRoundRect(thumbColor, Offset(across, thumb.start), Size(thickness, thumb.size), radius)
         } else {
-            drawRoundRect(colors.track, Offset(0f, trackAcross), Size(track, trackThickness), CornerRadius(trackThickness / 2f))
-            drawRoundRect(if (handle.dragging) colors.dragged else colors.thumb, Offset(thumb.start, across), Size(thumb.size, thickness), radius)
+            if (fade == null) drawRoundRect(colors.track, Offset(0f, trackAcross), Size(track, trackThickness), CornerRadius(trackThickness / 2f))
+            drawRoundRect(thumbColor, Offset(thumb.start, across), Size(thumb.size, thickness), radius)
         }
     }
 
-    private fun ContentDrawScope.drawShadows(contentSize: Size, edge: Float, before: Float, after: Float, shadow: Color) {
+    private fun ContentDrawScope.drawShadows(contentSize: Size, edge: Float, before: Float, after: Float, shadow: Color, start: Float) {
         clipRect(right = contentSize.width, bottom = contentSize.height) {
             if (before > 0f) {
                 val color = shadow.copy(alpha = shadow.alpha * before)
                 if (vertical) {
-                    drawRect(Brush.verticalGradient(listOf(color, Color.Transparent), startY = 0f, endY = edge), size = Size(contentSize.width, edge))
+                    // Under a pinned sticky header, not over it: the list hides behind the header.
+                    drawRect(
+                        Brush.verticalGradient(listOf(color, Color.Transparent), startY = start, endY = start + edge),
+                        topLeft = Offset(0f, start),
+                        size = Size(contentSize.width, edge),
+                    )
                 } else {
                     drawRect(Brush.horizontalGradient(listOf(color, Color.Transparent), startX = 0f, endX = edge), size = Size(edge, contentSize.height))
                 }

@@ -13,20 +13,20 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,740 | 202 | – | – | – | – | – | 96 % | 87 % |
-| `data`: repositories, network, telemetry | 7,931 | 441 | – | – | – | – | – | 99 % | 85 % |
-| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 91 % | 60 % |
-| `ui`: shared Compose components | 17,466 | 85 | 216 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,148 | 315 | 406 | 91 | – | 175 | 4 | 84 % | 62 % |
-| `playerApp`: player screens | 11,623 | 190 | 123 | 54 | – | 72 | 8 | 89 % | 65 % |
+| `domain`: business rules, use cases | 5,761 | 225 | – | – | – | – | – | 99 % | 92 % |
+| `data`: repositories, network, telemetry | 7,931 | 461 | – | – | – | – | – | 99 % | 89 % |
+| `designsystem`: theme, base components | 2,030 | – | 34 | 4 | – | – | – | 98 % | 66 % |
+| `ui`: shared Compose components | 17,743 | 89 | 269 | 24 | – | – | – | 90 % | 63 % |
+| `adminApp`: admin screens | 32,420 | 315 | 488 | 91 | – | 175 | 5 | 87 % | 65 % |
+| `playerApp`: player screens | 12,013 | 194 | 126 | 56 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
-| Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 83 % |
-| Backend: services | 16,011 | 371 | – | – | 186 | – | – | 96 % | 87 % |
+| Backend: API routes and middleware | 3,996 | 60 | – | – | 320 | – | – | 93 % | 86 % |
+| Backend: services | 16,015 | 373 | – | – | 195 | – | – | 96 % | 88 % |
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
-| Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
-| **Total** | **108,960** | **1,822** | **765** | **173** | **479** | **247** | **12** | **91 %** | **69 %** |
+| Repository scripts (Game day, smoke, versions) | 7,367 | 124 | – | – | – | – | – | – | – |
+| **Total** | **110,156** | **1,875** | **917** | **175** | **515** | **247** | **13** | **92 %** | **71 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
@@ -38,7 +38,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
   `androidMain`, `wasmJsMain` or `androidApp`. A dash means not measured.
 - **The total of lines and branches run** leaves out the maintenance and seed scripts of the backend: they run
   by hand, once or on test data, and their row shows how much of them the tests run.
-- Coverage measured on 2026-11-26 at `4557ea4dc` with `python3 scripts/test-coverage.py --measure`.
+- Coverage measured on 2026-11-26 at `443172759` with `python3 scripts/test-coverage.py --measure`.
 <!-- test-table:end -->
 
 ## 1. Kinds of tests
@@ -81,6 +81,10 @@ The measure leaves out the code the compiler writes, not us (filters in the root
 | `@Preview` functions | Previews of the screens for the IDE; the screenshot tests draw the screens themselves |
 | `*ComposableSingletons*`, `*_Factory`, `*MainKt` | Compose lambdas holders, generated factories and the entry points |
 | `*$DefaultImpls` | Static copies of the interface methods with a body, for Java callers. The tests run the methods themselves |
+
+**Goal (26 November):** 100 % of the lines in every part, and 100 % of the branches in the logic: `domain`, `data` and
+the backend. In the Compose parts (`designsystem`, `ui`, `adminApp`, `playerApp`) the branches are measured but are
+not a goal, because the Compose compiler adds branches for every parameter (its default value and whether it changed).
 
 The total of the table also leaves out the maintenance and seed scripts of the backend (`firebase/functions/src/scripts`,
 since 26 November). They run by hand, once or on test data, so their row is shown apart and does not count toward 100 %.

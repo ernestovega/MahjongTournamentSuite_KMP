@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git push origin develop:*)",
+      "Bash(git push origin HEAD:develop:*)",
+      "Bash(python3 scripts/test-coverage.py:*)",
+      "Bash(python3 scripts/versions.py:*)",
+      "Bash(python3 scripts/run-e2e-parallel.py:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm test:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

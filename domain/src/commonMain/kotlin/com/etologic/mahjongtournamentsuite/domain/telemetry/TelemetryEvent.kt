@@ -407,7 +407,13 @@ object TelemetryLink {
     /** The documentation of the architecture on GitHub (DEV menu). */
     const val ARCHITECTURE_DOCS = "architecture_docs"
     const val STAGING = "staging"
+
+    /** The page of the apps of the web, from the DEV menu of the admin app. */
+    const val DOWNLOADS = "downloads"
     const val GREEN_BOOK = "green_book"
+
+    /** A download of an app from the page of the apps of the web (Google Play, App Store, GitHub). */
+    const val APP_DOWNLOAD = "app_download"
 
     /** The map of the venue of a tournament. */
     const val VENUE_MAP = "venue_map"
@@ -429,7 +435,9 @@ object TelemetryLink {
         API_DOCS,
         ARCHITECTURE_DOCS,
         STAGING,
+        DOWNLOADS,
         GREEN_BOOK,
+        APP_DOWNLOAD,
         VENUE_MAP,
         VENUE_DIRECTIONS,
         ORGANIZER_EMAIL,

@@ -36,6 +36,20 @@ class ProfileDialogUiTest {
     }
 
     @Test
+    fun theCrossOfTheTitleClosesTheDialogAndThereIsNoCloseButton() = runComposeUiTest {
+        var closed = false
+        setContent {
+            TestTheme {
+                ProfileDialog(profile = player, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { error("unused") }, onSaved = {}, onDismiss = { closed = true })
+            }
+        }
+
+        onNodeWithText("Close").assertDoesNotExist()
+        onNodeWithContentDescription("Close").performClick()
+        assertEquals(true, closed)
+    }
+
+    @Test
     fun deleteMyAccountAsksFirstThenDeletesAndCloses() = runComposeUiTest {
         var deletes = 0
         var closed = false

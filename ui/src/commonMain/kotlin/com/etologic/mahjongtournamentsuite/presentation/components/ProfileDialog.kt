@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -168,12 +168,21 @@ fun ProfileDialog(
                 Box(Modifier.fillMaxWidth()) {
                     MtsDialogTitle(stringResource(Res.string.profile_title))
                     AppVersionLabel(Modifier.align(Alignment.TopStart).offset(x = (-16).dp, y = (-16).dp))
+                    // A cross in the top right corner closes the dialog. It takes the place of a Close button, which made
+                    // the dialog taller on a phone (Ernesto, 2026-11-26).
+                    FocusedIconButton(
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        modifier = Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-12).dp),
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.action_close))
+                    }
                 }
             },
             text = {
                 // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
-                    modifier = Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().dialogVerticalScroll(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -243,11 +252,9 @@ fun ProfileDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    // Save and Close share one line, also on a phone, so the dialog stays short. They belong to the alias, so they
-                    // come right after the fields.
+                    // Save belongs to the alias, so it comes right after the fields. The cross of the title closes the dialog.
                     MtsDialogButtons(stacked = false) {
                         FocusedButton(enabled = canSave, onClick = { save() }) { ButtonText(stringResource(Res.string.action_save)) }
-                        FocusedTextButton(enabled = !saving, onClick = onDismiss) { ButtonText(stringResource(Res.string.action_close)) }
                     }
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
@@ -270,7 +277,7 @@ fun ProfileDialog(
                     }
                 }
             },
-            // Save and Close sit under the fields they belong to, inside the content.
+            // Save sits under the fields it belongs to, inside the content.
             confirmButton = {},
         )
     }

@@ -84,7 +84,7 @@
     <string name="schedule_hide">Schema verbergen</string>
     <string name="action_open">Openen</string>
     <string name="tab_tables">Tafels</string>
-    <string name="tab_ranking">Klassement</string>
+    <string name="tab_ranking">Stand</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Je account is niet gekoppeld aan een speler van dit toernooi. Vraag de organisatoren om je toe te voegen. Alle tafels staan op het tabblad Alle.</string>
     <string name="tables_mine_empty">De tafels van de speler verschijnen hier zodra de organisatoren de ronde loten.</string>
@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d handen</string>
     <string name="team_n">Team %1$d</string>
     <string name="ranking_points_score">%1$s punten - %2$d score</string>
-    <string name="ranking_empty">Het klassement verschijnt zodra de eerste tafel klaar is.</string>
+    <string name="ranking_empty">Het klassement verschijnt zodra de eerste hand gespeeld is.</string>
     <string name="ranking_empty_title">Nog geen klassement</string>
     <string name="ranking_teams">Teams</string>
     <string name="ranking_chicken_hands">Kippenhanden</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Team of speler</string>
     <string name="teams_search_empty">Geen team past bij de zoekopdracht.</string>
     <string name="team_statistics_note">De statistieken tellen de tafels van alle spelers van het team op.</string>
+    <string name="team_statistics_empty">De statistieken verschijnen zodra een tafel van dit team klaar is.</string>
     <string name="team_member_win_rate">Winstpercentage</string>
     <string name="team_member_points">Punten</string>
     <string name="team_member_score">Score</string>
@@ -188,7 +189,7 @@
     <string name="progress_rounds_label">Rondes</string>
     <string name="progress_tables_label">Tafels</string>
     <string name="progress_ongoing_label">Bezig</string>
-    <string name="tab_stats">Statistieken</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Inloggen</string>
     <string name="menu_contact">Ondersteuning</string>
     <string name="menu_privacy">Privacy</string>
@@ -223,7 +224,8 @@
     <string name="seats_save">Plaatsen opslaan</string>
     <string name="seats_restart">Opnieuw beginnen</string>
     <string name="entry_seats_first">Leg de plaatsen aan tafel vast om handen in te voeren.</string>
-    <string name="round_starts_at">Begint om</string>
+    <string name="round_will_start_at">De ronde begint om %1$s</string>
+    <string name="round_will_start_on_at">De ronde begint op %1$s om %2$s</string>
     <string name="round_clock_remaining">Resterende tijd: %1$s</string>
     <string name="table_hand_announce_new">Nieuwe hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d gecorrigeerd</string>
@@ -329,4 +331,21 @@ Maar één e-mailadres kan maar één account in de app hebben: wie een eigen ac
     <string name="ranking_close">Sluiten</string>
     <string name="ranking_title_now">Huidig klassement</string>
     <string name="ranking_title_after_round">Klassement na ronde %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Download de app</string>
+    <string name="apps_intro">MTS is ook een app voor telefoons, tablets en computers. Hij toont dezelfde toernooien als deze website, met hetzelfde account.</string>
+    <string name="apps_ios">iPhone en iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac met Apple silicon</string>
+    <string name="apps_windows_detail">Installatieprogramma voor Windows 10 en 11</string>
+    <string name="apps_linux_detail">Debian en Ubuntu</string>
+    <string name="apps_download">Downloaden</string>
+    <string name="apps_soon">Binnenkort</string>
+    <string name="apps_this_device">Voor dit apparaat</string>
+    <string name="apps_notice_title">MTS-apps</string>
+    <string name="apps_notice_message">MTS is ook beschikbaar als app voor Android, iPhone, Mac, Windows en Linux.\n\nJe vindt ze later in het menu Meer, onder Download de app.</string>
+    <string name="apps_notice_close">Sluiten</string>
+    <string name="apps_notice_never">Niet meer tonen</string>
 </resources>
