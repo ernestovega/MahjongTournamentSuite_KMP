@@ -107,7 +107,14 @@ jobs:
             "gambling": false,
             "unrestrictedWebAccess": false,
             "lootBox": false,
-            "kidsAgeBand": null
+            "kidsAgeBand": null,
+            "ageAssurance": false,
+            "advertising": false,
+            "healthOrWellnessTopics": false,
+            "socialMedia": false,
+            "userGeneratedContent": false,
+            "messagingAndChat": false,
+            "parentalControls": false
           }
           JSON
           ARGS=()
