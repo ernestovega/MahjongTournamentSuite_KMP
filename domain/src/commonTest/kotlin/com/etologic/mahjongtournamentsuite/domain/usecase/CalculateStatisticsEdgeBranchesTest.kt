@@ -10,7 +10,8 @@ import kotlin.test.assertEquals
 /** The tables and hands that the statistics skip, and the keys of the rivals. */
 class CalculateStatisticsEdgeBranchesTest {
     private val calculate = CalculateStatisticsUseCase()
-    private val players = (1..4).map { TournamentPlayer(id = it, name = "P$it", team = 1, assignedEmaId = if (it == 2) "04000002" else if (it == 3) " " else null) }
+    private val emaIds = mapOf(2 to "04000002", 3 to " ")
+    private val players = (1..4).map { TournamentPlayer(id = it, name = "P$it", team = 1, assignedEmaId = emaIds[it]) }
 
     @Test
     fun aRivalIsTheEmaNumberOrTheTournamentAndTheSlot() {

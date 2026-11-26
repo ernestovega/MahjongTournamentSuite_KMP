@@ -8,11 +8,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerTotals
-import com.etologic.mahjongtournamentsuite.domain.model.groupPersonOf
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.groupPersonOf
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
