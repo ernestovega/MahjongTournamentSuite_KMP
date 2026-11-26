@@ -784,4 +784,6 @@ The first one that works wins</string>
     <string name="update_available_message">Version %1$s of MTS is ready. Download it and install it over this one.</string>
     <string name="update_available_download">Download</string>
     <string name="update_available_later">Later</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Get the app</string>
 </resources>

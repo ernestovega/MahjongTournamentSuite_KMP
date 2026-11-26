@@ -76,6 +76,8 @@ fun SplashScreen(
     openSupport: Boolean = false,
     /** A link of the web to a tournament, `/<slug>` or `/registration?...` (also the old `/inscripcion/...`). */
     openRegistration: RegistrationLink? = null,
+    /** True when the address was `/download`, the page of the apps. */
+    openApps: Boolean = false,
 ) {
     val session = koinInject<PlayerSessionPresenter>()
     val openRegistrationLink = rememberRegistrationLinkOpener(navController)
@@ -87,6 +89,9 @@ fun SplashScreen(
         if (openSupport) {
             // The support form over the tournaments, so Back returns to the list.
             navController.navigate(SupportRoute())
+        } else if (openApps) {
+            // The page of the apps over the tournaments, like the support form.
+            navController.navigate(AppsRoute)
         } else if (openRegistration != null) {
             // The registrations of the tournament. The link of the emails also confirms the email.
             // The splash leaves the screen as soon as the tournaments open, which would cancel this effect half way:
@@ -231,6 +236,11 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
         onNeedHelp = { navController.navigate(SupportRoute(email = email.trim())) },
+        onGetTheApp = if (LocalWebApps.current != null) {
+            { navController.navigate(AppsRoute) }
+        } else {
+            null
+        },
         onBack = { if (!navController.popBackStack()) navController.reopen(emptyList()) },
     )
 }
@@ -256,6 +266,7 @@ fun InfoTopBarButtons(
         // The same explanation of the draw as in the admin app, with its flowchart: public for every player.
         DrawExplanationTopBarButton(onClick = drawExplanation::open)
         ContactTopBarButton(navController)
+        AppsTopBarButton(navController)
         AppTopBarButton(
             text = stringResource(Res.string.menu_privacy),
             icon = Icons.Default.Policy,

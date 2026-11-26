@@ -244,6 +244,8 @@ fun TournamentsScreen(navController: NavHostController) {
     account.Dialogs()
     val drawExplanation = rememberDrawExplanationState()
     drawExplanation.Dialog()
+    // On the web, the apps of MTS, until the person hides the notice.
+    AppsNotice()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),

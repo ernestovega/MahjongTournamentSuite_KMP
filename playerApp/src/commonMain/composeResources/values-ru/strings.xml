@@ -338,4 +338,21 @@
     <string name="ranking_close">Закрыть</string>
     <string name="ranking_title_now">Текущий рейтинг</string>
     <string name="ranking_title_after_round">Рейтинг после раунда %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Скачать приложение</string>
+    <string name="apps_intro">MTS есть и в виде приложения для телефонов, планшетов и компьютеров. В нём те же турниры, что и на этом сайте, с той же учётной записью.</string>
+    <string name="apps_ios">iPhone и iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac с Apple silicon</string>
+    <string name="apps_windows_detail">Установщик для Windows 10 и 11</string>
+    <string name="apps_linux_detail">Debian и Ubuntu</string>
+    <string name="apps_download">Скачать</string>
+    <string name="apps_soon">Скоро</string>
+    <string name="apps_this_device">Для этого устройства</string>
+    <string name="apps_notice_title">Приложения MTS</string>
+    <string name="apps_notice_message">MTS есть и в виде приложения для Android, iPhone, Mac, Windows и Linux.\n\nПозже их можно найти в меню «Ещё», в пункте «Скачать приложение».</string>
+    <string name="apps_notice_close">Закрыть</string>
+    <string name="apps_notice_never">Больше не показывать</string>
 </resources>

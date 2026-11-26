@@ -784,4 +784,6 @@ Gana el primero que sale bien</string>
     <string name="update_available_message">La versión %1$s de MTS está lista. Descárgala e instálala sobre esta.</string>
     <string name="update_available_download">Descargar</string>
     <string name="update_available_later">Más tarde</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Descargar la app</string>
 </resources>

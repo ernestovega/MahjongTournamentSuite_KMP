@@ -780,4 +780,6 @@ De eerste die lukt, wint</string>
     <string name="update_available_message">Versie %1$s van MTS is klaar. Download hem en installeer hem over deze heen.</string>
     <string name="update_available_download">Downloaden</string>
     <string name="update_available_later">Later</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Download de app</string>
 </resources>
