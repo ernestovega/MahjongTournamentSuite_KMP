@@ -887,6 +887,7 @@
     <string name="role_super_admin">Super Admin</string>
     <string name="role_club_admin">Club Admin</string>
     <string name="organizations_title">Organizations</string>
+    <string name="organizations_button">Clubs</string>
     <string name="organizations_empty">There are no organizations yet.</string>
     <string name="organization_new">New organization</string>
     <string name="organization_edit">Edit organization</string>

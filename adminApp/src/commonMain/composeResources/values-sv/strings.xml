@@ -887,6 +887,7 @@
     <string name="role_super_admin">Superadministratör</string>
     <string name="role_club_admin">Klubbadministratör</string>
     <string name="organizations_title">Organisationer</string>
+    <string name="organizations_button">Klubbar</string>
     <string name="organizations_empty">Det finns inga organisationer än.</string>
     <string name="organization_new">Ny organisation</string>
     <string name="organization_edit">Redigera organisation</string>
