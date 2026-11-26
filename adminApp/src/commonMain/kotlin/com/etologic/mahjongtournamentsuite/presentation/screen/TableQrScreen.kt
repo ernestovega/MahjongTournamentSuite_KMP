@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -359,7 +360,8 @@ fun TableQrProjectionScreen(
     organizerName: String = "",
     organizerColor: String = "",
 ) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(Color.White).padding(MtsTheme.spacing.xl)) {
+    // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
+    BoxWithConstraints(Modifier.fillMaxSize().background(Color.White).safeDrawingPadding().padding(MtsTheme.spacing.xl)) {
         val roomWidth = maxWidth
         val roomHeight = maxHeight
         val wide = roomWidth > roomHeight * 1.3f
