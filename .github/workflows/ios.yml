@@ -47,8 +47,10 @@ jobs:
             echo "kotlin.native.jvmArgs=-Xmx4g"
           } >> "$HOME/.gradle/gradle.properties"
 
+      # The test binary of a module sometimes dies on the runner (signal 11 inside Compose, never on a Mac), which
+      # stops the rest of its tests. A second run repeats only the modules that failed.
       - name: Tests
-        run: ./gradlew iosSimulatorArm64Test --continue
+        run: ./gradlew iosSimulatorArm64Test --continue || ./gradlew iosSimulatorArm64Test --continue
 
       - name: Report
         if: always()
