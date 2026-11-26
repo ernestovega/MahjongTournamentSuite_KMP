@@ -99,7 +99,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import com.etologic.mahjongtournamentsuite.presentation.components.bleedHorizontally
 import com.etologic.mahjongtournamentsuite.presentation.components.cardFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -992,15 +991,15 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 )
                             } else {
                                 val detailsScrollState = rememberScrollState()
-                                // The details reach the sides of the card, so their shadows take the whole width; the margins
-                                // of the card go inside the scroll.
+                                // The details reach the sides and the bottom edge of the card, so their shadows take the whole
+                                // width and the content goes out of sight at the edge; the margins of the card go inside the scroll.
                                 val detailsPadding = screenLayout.cardPadding
-                                Box(modifier = Modifier.weight(1f).fillMaxWidth().bleedHorizontally(detailsPadding)) {
+                                Box(modifier = Modifier.weight(1f).fillMaxWidth().cardFullBleed(detailsPadding)) {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .verticalScrollWithIndicators(detailsScrollState, MtsScrollbar.Overlay)
-                                            .padding(horizontal = detailsPadding),
+                                            .padding(start = detailsPadding, end = detailsPadding, bottom = detailsPadding),
                                         verticalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
                                         OutlinedTextField(
