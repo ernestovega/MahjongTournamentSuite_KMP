@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
@@ -91,8 +92,11 @@ internal fun UsersTable(
     bottomPadding: Dp = 24.dp,
 ) {
     val compact = LocalCompactLayout.current
+    val listState = rememberPersistentLazyListState("users")
+    // Back at the top, the filters always show, also with a mouse wheel or a trackpad.
+    ShowTabsAtTop(listState)
     LazyColumnWithScrollbar(
-        state = rememberPersistentLazyListState("users"),
+        state = listState,
         // The list reaches the edges and the bottom of the window, so its shadows take the whole width; the margins go
         // inside.
         scrollbar = MtsScrollbar.Overlay,

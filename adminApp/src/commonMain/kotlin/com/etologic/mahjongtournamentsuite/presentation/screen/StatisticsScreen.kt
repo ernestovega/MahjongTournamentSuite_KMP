@@ -25,16 +25,21 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilterBar
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilters
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsView
 import com.etologic.mahjongtournamentsuite.presentation.components.opponentsOf
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -117,37 +122,45 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
-        ScreenColumn(
-            // The statistics sections use the full width and flow into columns.
-            maxWidth = Dp.Infinity,
-            contentPadding = PaddingValues(0.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-            scrollable = true,
-        ) {
-            // Other filters start at the top.
-            ResetScrollOnChange(LocalScreenScroll.current?.state, filters)
-            StatisticsFilterBar(
-                filters = filters,
-                onChange = setFilters,
-                players = registry,
-                tournaments = tournaments,
-                slotName = filters.slotId?.let { tournament?.names?.get(it) },
-                opponents = remember(person, filters.emaId) { opponentsOf(person?.takeIf { it.emaId == filters.emaId }) },
-            )
-            Column(
-                Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
-                verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
+        // The filters hide when the statistics scroll down and show when they scroll up, as in the player app.
+        HideOnScrollArea {
+            ScreenColumn(
+                // The statistics sections use the full width and flow into columns.
+                maxWidth = Dp.Infinity,
+                contentPadding = PaddingValues(0.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                FilteredStatistics(
-                    filters = filters,
-                    onFiltersChange = setFilters,
-                    person = person.takeIf { filters.view == StatisticsView.PERSON },
-                    tournament = tournament,
-                    group = group,
-                    loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
-                    loadPerson = { ema -> (presenter.person(ema) as? AppResult.Success)?.value },
-                )
+                val scroll = rememberPersistentScrollState("statistics")
+                // Other filters start at the top.
+                ResetScrollOnChange(scroll, filters)
+                ShowTabsAtTop(scroll)
+                // Another filter shows them again.
+                HideOnScrollTabs(filters) {
+                    StatisticsFilterBar(
+                        filters = filters,
+                        onChange = setFilters,
+                        players = registry,
+                        tournaments = tournaments,
+                        slotName = filters.slotId?.let { tournament?.names?.get(it) },
+                        opponents = remember(person, filters.emaId) { opponentsOf(person?.takeIf { it.emaId == filters.emaId }) },
+                    )
+                }
+                Column(
+                    Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay)
+                        .padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
+                    verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
+                ) {
+                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    FilteredStatistics(
+                        filters = filters,
+                        onFiltersChange = setFilters,
+                        person = person.takeIf { filters.view == StatisticsView.PERSON },
+                        tournament = tournament,
+                        group = group,
+                        loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
+                        loadPerson = { ema -> (presenter.person(ema) as? AppResult.Success)?.value },
+                    )
+                }
             }
         }
     }

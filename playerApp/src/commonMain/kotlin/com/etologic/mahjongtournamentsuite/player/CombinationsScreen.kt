@@ -69,7 +69,10 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
@@ -256,6 +259,7 @@ fun CombinationsScreen(navController: NavHostController) {
     val rowModifier = Modifier.widthIn(max = ListMaxWidth).fillMaxWidth()
     // The state is out of the button: on a phone the button is in the menu, which closes when it is pressed.
     var showCredits by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
     AppScaffold(
         title = stringResource(Res.string.combinations_title),
@@ -270,61 +274,71 @@ fun CombinationsScreen(navController: NavHostController) {
             ContactTopBarButton(navController)
         },
     ) {
-        LazyColumnWithScrollbar(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize(),
-            // No top padding, so that a value header sticks right at the top.
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            // The rows keep a margin on the end, so the scrollbar goes there and both margins stay equal.
-            scrollbar = MtsScrollbar.Overlay,
-        ) {
-            item(key = "search") {
-                CombinationTools(
-                    query = query,
-                    onQuery = { query = it },
-                    showAll = showAll,
-                    onShowAll = {
-                        showAll = !showAll
-                        toggled = emptyList()
-                    },
-                    modifier = rowModifier.padding(top = 12.dp),
-                )
-            }
-            item(key = "values") {
-                PointsChips(
-                    counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
-                    selected = values,
-                    onToggle = { value -> values = if (value in values) values - value else values + value },
-                    modifier = rowModifier,
-                )
-            }
-            if (shown.isEmpty()) {
-                item(key = "empty") {
-                    Text(
-                        stringResource(Res.string.combinations_empty),
-                        Modifier.padding(24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
+        // The search and the value chips hide when the list scrolls down and show when it scrolls up.
+        HideOnScrollArea {
+            Column(Modifier.fillMaxSize()) {
+                ShowTabsAtTop(listState)
+                HideOnScrollTabs {
+                    Column(
+                        Modifier.fillMaxWidth().padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        CombinationTools(
+                            query = query,
+                            onQuery = { query = it },
+                            showAll = showAll,
+                            onShowAll = {
+                                showAll = !showAll
+                                toggled = emptyList()
+                            },
+                            modifier = rowModifier,
+                        )
+                        PointsChips(
+                            counts = CombinationValues.associateWith { value -> found.count { it.points == value } },
+                            selected = values,
+                            onToggle = { value -> values = if (value in values) values - value else values + value },
+                            modifier = rowModifier,
+                        )
+                    }
                 }
-            }
-            // One group for each value, under a header that stays at the top while its combinations scroll.
-            shown.groupBy { it.points }.forEach { (points, group) ->
-                stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
-                items(group, key = { it.id }) { combination ->
-                    CombinationRow(
-                        combination = combination,
-                        name = names.getValue(combination.id),
-                        description = descriptions.getValue(combination.id),
-                        expanded = showAll != (combination.id in toggled),
-                        onFold = {
-                            toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
-                        },
-                        onOpen = { opened = combination.id },
-                        modifier = rowModifier,
-                    )
+                LazyColumnWithScrollbar(
+                    state = listState,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    // No top padding, so that a value header sticks right at the top.
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    // The rows keep a margin on the end, so the scrollbar goes there and both margins stay equal.
+                    scrollbar = MtsScrollbar.Overlay,
+                ) {
+                    if (shown.isEmpty()) {
+                        item(key = "empty") {
+                            Text(
+                                stringResource(Res.string.combinations_empty),
+                                Modifier.padding(24.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                    // One group for each value, under a header that stays at the top while its combinations scroll.
+                    shown.groupBy { it.points }.forEach { (points, group) ->
+                        stickyHeader(key = "points-$points") { PointsHeader(points, rowModifier) }
+                        items(group, key = { it.id }) { combination ->
+                            CombinationRow(
+                                combination = combination,
+                                name = names.getValue(combination.id),
+                                description = descriptions.getValue(combination.id),
+                                expanded = showAll != (combination.id in toggled),
+                                onFold = {
+                                    toggled = if (combination.id in toggled) toggled - combination.id else toggled + combination.id
+                                },
+                                onOpen = { opened = combination.id },
+                                modifier = rowModifier,
+                            )
+                        }
+                    }
                 }
             }
         }
