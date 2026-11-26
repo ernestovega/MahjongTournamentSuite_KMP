@@ -117,4 +117,49 @@ class ErrorReporterTest {
         reporter().reportHandled(kotlinx.coroutines.CancellationException("cancelled"), "Action failed.")
         assertTrue(requests.isEmpty())
     }
+
+    @Test
+    fun anErrorWithoutAStatusOrARoleSendsNeither() = runTest {
+        reporter().reportHandled(object : IllegalStateException("odd") {}, "Action failed.")
+
+        awaitRequests(1)
+        val report = Json.parseToJsonElement(requests.single().second).jsonObject
+        assertNull(report["httpStatus"])
+        assertNull(report["role"])
+        assertEquals("Error", report["errorType"]?.jsonPrimitive?.content, "an error without a class name")
+        assertEquals("Error", analytics.events.single().second[TelemetryParam.KIND])
+    }
+
+    @Test
+    fun aRunSendsAtMostItsLimitOfReports() = runTest {
+        val reporter = reporter()
+        repeat(25) { reporter.reportHandled(IllegalStateException("boom $it"), "Action failed.") }
+
+        awaitRequests(20)
+        assertEquals(20, analytics.events.size, "20 reports at most in one run")
+    }
+
+    @Test
+    fun withoutAPendingCrashOrWithABrokenOneNothingLeaves() = runTest {
+        reporter().flushPending()
+        store.saved = "{broken"
+        reporter().flushPending()
+        store.saved = "{}"
+        consent = false
+        reporter().flushPending()
+
+        assertTrue(requests.isEmpty())
+        assertTrue(analytics.events.isEmpty())
+        assertEquals("{}", store.saved, "without consent the crash stays for later")
+    }
+
+    @Test
+    fun aCrashWithoutDetailsLeavesWithEmptyFields() = runTest {
+        store.saved = "{}"
+        reporter().flushPending()
+
+        awaitRequests(1)
+        assertEquals("", analytics.events.single().second[TelemetryParam.REPORT_ID])
+        reporter().close()
+    }
 }

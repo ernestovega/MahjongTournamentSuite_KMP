@@ -146,4 +146,41 @@ class DefaultStatisticsRepositoryTest {
 
         assertIs<AppResult.Failure>(result)
     }
+
+    @Test
+    fun theRivalsOfAResultAreKept() = runTest {
+        val result = repository(
+            publicReads = true,
+            body = """{"emaId":"04000001","tournaments":[{"tournamentId":"t-1","results":[
+                {"emaId":"04000001","slotId":3,"roundId":1,"tableId":2,"seat":0,"position":1,"score":30,"points":4.0,
+                 "rivals":[{"opponent":"04000002","tablesBehind":1,"discardLosses":2,"selfDrawLosses":3,"othersDiscardWins":4}]}]}]}""",
+        ).loadPerson("04000001")
+
+        val rival = assertIs<AppResult.Success<List<com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest>>>(result)
+            .value.single().results.single().result.rivals.single()
+        assertEquals("04000002", rival.opponent)
+        assertEquals(listOf(1, 2, 3, 4), listOf(rival.tablesBehind, rival.discardLosses, rival.selfDrawLosses, rival.othersDiscardWins))
+    }
+
+    @Test
+    fun aPublicStandingNeedsAnEmaNumber() = runTest {
+        assertIs<AppResult.Failure>(repository(publicReads = true).loadStandings(null, listOf("t-1")))
+        assertTrue(requests.isEmpty())
+    }
+
+    @Test
+    fun aGroupFilterUsesTheNamesOfTheRoute() {
+        assertEquals(
+            mapOf("tournaments" to "a,b", "tournamentCountry" to "ES", "playerCountry" to "none", "from" to "2025-01-01", "to" to "2026-12-31"),
+            com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter(
+                tournamentIds = setOf("b", "a"),
+                tournamentCountry = "ES",
+                playerCountry = "",
+                fromYear = 2025,
+                toYear = 2026,
+            ).toQuery(),
+        )
+        assertEquals(emptyMap(), com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter().toQuery())
+        assertEquals(mapOf("playerCountry" to "FR"), com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter(playerCountry = "FR").toQuery())
+    }
 }
