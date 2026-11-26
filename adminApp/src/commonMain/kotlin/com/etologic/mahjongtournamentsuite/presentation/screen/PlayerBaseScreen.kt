@@ -92,12 +92,15 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.bleedHorizontally
+import com.etologic.mahjongtournamentsuite.presentation.components.cardFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
@@ -105,6 +108,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
+import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
@@ -887,9 +891,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     }
                                 }
                                 DataTableDivider()
+                                // The list reaches the sides and the bottom of the card, so its shadows take the whole width and
+                                // the rows go out of sight at the edge; the margins of the card go inside the list.
+                                val cardPadding = screenLayout.cardPadding
                                 LazyColumnWithScrollbar(
                                     state = playersListState,
-                                    modifier = Modifier.weight(1f).hideOnScroll(hideOnScroll),
+                                    modifier = Modifier.weight(1f).cardFullBleed(cardPadding).hideOnScroll(hideOnScroll),
+                                    contentPadding = PaddingValues(start = cardPadding, end = cardPadding, bottom = cardPadding),
+                                    scrollbar = MtsScrollbar.Overlay,
                                 ) {
                                     itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
                                         DataTableRow(
@@ -983,11 +992,15 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 )
                             } else {
                                 val detailsScrollState = rememberScrollState()
-                                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                                // The details reach the sides of the card, so their shadows take the whole width; the margins
+                                // of the card go inside the scroll.
+                                val detailsPadding = screenLayout.cardPadding
+                                Box(modifier = Modifier.weight(1f).fillMaxWidth().bleedHorizontally(detailsPadding)) {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .verticalScrollWithIndicators(detailsScrollState),
+                                            .verticalScrollWithIndicators(detailsScrollState, MtsScrollbar.Overlay)
+                                            .padding(horizontal = detailsPadding),
                                         verticalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
                                         OutlinedTextField(
