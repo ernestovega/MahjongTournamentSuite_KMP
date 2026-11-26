@@ -3,14 +3,16 @@
 
     python3 scripts/play.py pending
     python3 scripts/play.py tracks
-    python3 scripts/play.py upload admin <path/to/app-release.aab>
+    python3 scripts/play.py upload admin <path/to/app-release.aab> [path/to/mapping.txt]
 
 `pending` asks Google Play which version codes the app already has, and says whether its version code in
 gradle/libs.versions.toml is not there yet. In GitHub Actions it also writes `admin=true|false` to $GITHUB_OUTPUT,
 so the workflow only builds and uploads the app when it has a new version.
 
 `upload` uploads the bundle and releases it on the track $PLAY_TRACK (default `internal`) with the status
-$PLAY_RELEASE_STATUS (default `completed`, which rolls it out to the testers at once).
+$PLAY_RELEASE_STATUS (default `completed`, which rolls it out to the testers at once). With the mapping file of R8 it
+also uploads it as the deobfuscation file of that version, so Play shows the crashes and ANRs with their real names.
+The bundle already carries it, so this only makes sure.
 
 Both sign in with Application Default Credentials, which google-github-actions/auth sets up in the workflow.
 The service account needs access to the app in Play Console.
@@ -97,7 +99,7 @@ def pending() -> int:
     return 0
 
 
-def upload(app: str, bundle: Path) -> int:
+def upload(app: str, bundle: Path, mapping: Path | None = None) -> int:
     package = PACKAGES[app]
     version = local_versions()[app]
     track = os.environ.get("PLAY_TRACK") or "internal"
@@ -111,6 +113,14 @@ def upload(app: str, bundle: Path) -> int:
         code = int(uploaded["versionCode"])
         if code != int(version["code"]):
             raise SystemExit(f"The bundle has version code {code}, but {CATALOG} says {version['code']}.")
+        if mapping is not None:
+            edits.deobfuscationfiles().upload(
+                packageName=package,
+                editId=edit_id,
+                apkVersionCode=code,
+                deobfuscationFileType="proguard",
+                media_body=MediaFileUpload(str(mapping), mimetype="application/octet-stream", resumable=True),
+            ).execute()
         edits.tracks().update(
             packageName=package,
             editId=edit_id,
@@ -140,8 +150,8 @@ def main(args: list[str]) -> int:
                 for release in releases:
                     print(f"{LABELS[app]} on {track}: {release.get('name')} {release.get('versionCodes')} {release.get('status')}")
         return 0
-    if len(args) == 3 and args[0] == "upload" and args[1] in PACKAGES:
-        return upload(args[1], Path(args[2]))
+    if len(args) in (3, 4) and args[0] == "upload" and args[1] in PACKAGES:
+        return upload(args[1], Path(args[2]), Path(args[3]) if len(args) == 4 else None)
     print(__doc__, file=sys.stderr)
     return 2
 
