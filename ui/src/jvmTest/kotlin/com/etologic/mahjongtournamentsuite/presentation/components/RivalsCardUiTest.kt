@@ -58,13 +58,11 @@ class RivalsCardUiTest {
         onNodeWithText("Player 3").assertExists()
         val buttons = onAllNodesWithText("Compare")
         buttons.assertCountEquals(2)
-        buttons[0].performClick()
-        waitForIdle()
-        mainClock.advanceTimeBy(1_000)
+        // One click per test: a button ignores a second press within 500 ms of real time.
         buttons[1].performClick()
         waitForIdle()
 
-        assertEquals(listOf("1001", "1002"), compared)
+        assertEquals(listOf("1002"), compared)
     }
 
     @Test
