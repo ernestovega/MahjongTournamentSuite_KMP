@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
@@ -30,6 +31,7 @@ import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.design_system
 import mahjongtournamentsuite.ui.generated.resources.dev_api_docs
 import mahjongtournamentsuite.ui.generated.resources.dev_architecture_docs
+import mahjongtournamentsuite.ui.generated.resources.dev_downloads
 import mahjongtournamentsuite.ui.generated.resources.dev_menu
 import mahjongtournamentsuite.ui.generated.resources.dev_privacy_policy
 import mahjongtournamentsuite.ui.generated.resources.dev_staging
@@ -48,6 +50,9 @@ const val API_DOCS_URL = "https://mts.mahjongmadrid.com/api-docs/"
 /** The documentation of the architecture in Markdown on GitHub (docs/architecture). */
 const val ARCHITECTURE_DOCS_URL = "https://github.com/ernestovega/mahjongtournamentsuite_kmp/tree/main/docs/architecture"
 
+/** The page of the apps of the web (Google Play, App Store and the desktop installers). */
+const val DOWNLOADS_URL = "https://mts.mahjongmadrid.com/download"
+
 /** The admin app of the staging project (docs/staging.md). */
 const val STAGING_ADMIN_URL = "https://mts---staging.web.app/admin/"
 
@@ -62,7 +67,7 @@ private class DevMenuEntry(val text: String, val icon: ImageVector, val dividerA
 
 /**
  * One "DEV" button of the top bar with the tools for development: the screens Activity, App errors and Design
- * system, and the links to the screenshot gallery, the versions, the privacy policy, the API (Swagger),
+ * system, and the links to the screenshot gallery, the versions, the page of the apps (downloads), the privacy policy, the API (Swagger),
  * the documentation of the architecture (GitHub) and staging.
  * Only for administrators: the caller passes it only to them. On a phone it is one entry of the three-dots menu
  * that opens its own menu.
@@ -71,6 +76,7 @@ private class DevMenuEntry(val text: String, val icon: ImageVector, val dividerA
 fun DevMenuButton(actions: DevMenuActions) {
     val openGallery = rememberOpenLink(TelemetryLink.SCREENSHOT_GALLERY)
     val openVersions = rememberOpenVersions()
+    val openDownloads = rememberOpenLink(TelemetryLink.DOWNLOADS)
     val openPrivacyPolicy = rememberOpenPrivacyPolicy()
     val openApiDocs = rememberOpenLink(TelemetryLink.API_DOCS)
     val openArchitectureDocs = rememberOpenLink(TelemetryLink.ARCHITECTURE_DOCS)
@@ -81,6 +87,7 @@ fun DevMenuButton(actions: DevMenuActions) {
         DevMenuEntry(stringResource(Res.string.design_system), Icons.Default.Palette, false, actions.onDesignSystem),
         DevMenuEntry(stringResource(Res.string.top_bar_screenshots), Icons.Default.PhotoLibrary, true, { openGallery(SCREENSHOT_GALLERY_URL) }),
         DevMenuEntry(stringResource(Res.string.dev_versions), Icons.Default.NewReleases, false, openVersions),
+        DevMenuEntry(stringResource(Res.string.dev_downloads), Icons.Default.Download, false, { openDownloads(DOWNLOADS_URL) }),
         DevMenuEntry(stringResource(Res.string.dev_privacy_policy), Icons.Default.Policy, false, openPrivacyPolicy),
         DevMenuEntry(stringResource(Res.string.dev_api_docs), Icons.Default.Api, false, { openApiDocs(API_DOCS_URL) }),
         DevMenuEntry(stringResource(Res.string.dev_architecture_docs), Icons.Default.Description, false, { openArchitectureDocs(ARCHITECTURE_DOCS_URL) }),

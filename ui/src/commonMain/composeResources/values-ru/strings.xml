@@ -561,6 +561,7 @@
     <string name="password_reset_invalid_email">Этот адрес электронной почты выглядит неверно.\nПроверьте его и попробуйте снова.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Версии</string>
+    <string name="dev_downloads">Загрузки</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Архитектура (GitHub)</string>
     <string name="dev_privacy_policy">Политика конфиденциальности</string>
