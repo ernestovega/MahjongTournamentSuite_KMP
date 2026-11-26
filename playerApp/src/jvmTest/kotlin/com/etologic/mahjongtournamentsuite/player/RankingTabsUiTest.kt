@@ -37,14 +37,14 @@ class RankingTabsUiTest {
 
     private val count = 40
 
-    private fun view(teams: Boolean, chicken: Boolean, best: Boolean): PlayerTournamentView {
+    private fun view(teams: Boolean, chicken: Boolean, best: Boolean, started: Boolean = true): PlayerTournamentView {
         val tournament = Tournament(
             id = "t", name = "T", isTeams = teams, numPlayers = count, numRounds = 1,
             countChickenHands = chicken, countBestHands = best,
         )
         val slots = (1..count).map { TournamentPlayer(id = it, name = "Player $it", team = (it - 1) % 2 + 1) }
         val rankings = TournamentRankings(
-            players = (1..count).map { PlayerRanking(it, it, (it - 1) % 2 + 1, 100.0 - it, 1000 - it) },
+            players = (1..count).map { if (started) PlayerRanking(it, it, (it - 1) % 2 + 1, 100.0 - it, 1000 - it) else PlayerRanking(it, it, (it - 1) % 2 + 1, 0.0, 0) },
             teams = if (teams) listOf(TeamRanking(1, 1, 50.0, 500), TeamRanking(2, 2, 40.0, 400)) else emptyList(),
             chickenHands = if (chicken) listOf(ChickenHandRanking(1, 1, 3, 90.0, 900)) else emptyList(),
             bestHands = if (best) listOf(BestHandRanking(1, 1, 80, 90.0, 900)) else emptyList(),
@@ -123,5 +123,14 @@ class RankingTabsUiTest {
         rule.onNodeWithText("Teams").assertIsDisplayed()
         rule.onNodeWithText("Player 1").performTouchInput { swipeUp() }
         rule.waitUntil(5_000) { runCatching { rule.onNodeWithText("Teams").assertDoesNotExist() }.isSuccess }
+    }
+
+    @Test
+    fun beforeTheFirstHandTheTabSaysThatTheRankingComesLater() {
+        show(view(teams = true, chicken = true, best = true, started = false))
+        rule.onNodeWithText("No ranking yet").assertIsDisplayed()
+        rule.onNodeWithText("The ranking shows when the first hand is played.").assertIsDisplayed()
+        listOf("Player 1", "Teams", "Chicken").forEach { rule.onNodeWithText(it).assertDoesNotExist() }
+        rule.onNode(hasContentDescription("Search")).assertDoesNotExist()
     }
 }

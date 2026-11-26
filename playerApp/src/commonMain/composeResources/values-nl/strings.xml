@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d handen</string>
     <string name="team_n">Team %1$d</string>
     <string name="ranking_points_score">%1$s punten - %2$d score</string>
-    <string name="ranking_empty">Het klassement verschijnt zodra de eerste tafel klaar is.</string>
+    <string name="ranking_empty">Het klassement verschijnt zodra de eerste hand gespeeld is.</string>
     <string name="ranking_empty_title">Nog geen klassement</string>
     <string name="ranking_teams">Teams</string>
     <string name="ranking_chicken_hands">Kippenhanden</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Team of speler</string>
     <string name="teams_search_empty">Geen team past bij de zoekopdracht.</string>
     <string name="team_statistics_note">De statistieken tellen de tafels van alle spelers van het team op.</string>
+    <string name="team_statistics_empty">De statistieken verschijnen zodra een tafel van dit team klaar is.</string>
     <string name="team_member_win_rate">Winstpercentage</string>
     <string name="team_member_points">Punten</string>
     <string name="team_member_score">Score</string>

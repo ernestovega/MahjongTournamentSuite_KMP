@@ -6,8 +6,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.haveResults
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class CalculateTournamentRankingsUseCaseTest {
     private val calculate = CalculateTournamentRankingsUseCase()
@@ -169,6 +172,25 @@ class CalculateTournamentRankingsUseCaseTest {
         val result = calculate(fourPlayers, tables, includeTeams = false)
 
         assertEquals(listOf(4.0, 0.0, 2.0, 1.0), listOf(1, 2, 3, 4).map { id -> result.players.first { it.playerId == id }.points })
+    }
+
+    @Test
+    fun aTournamentHasResultsOnlyAfterAHandIsDoneOrAScoreIsKept() {
+        val waiting = completedTable(1, listOf("", "", "", ""))
+        val empty = RankingTable(waiting.table.copy(isCompleted = false), emptyList())
+
+        assertFalse(listOf(empty).haveResults)
+        assertFalse(listOf(RankingTable(empty.table, listOf(hand(1, "1", "8", chicken = false, isDone = false)))).haveResults)
+        assertFalse(listOf(RankingTable(empty.table.copy(playerEastScore = "0", playerSouthScore = "0"), emptyList())).haveResults)
+        assertTrue(listOf(empty, RankingTable(empty.table, listOf(hand(1, "1", "8", chicken = false)))).haveResults)
+        assertTrue(listOf(RankingTable(empty.table.copy(playerEastScore = "24"), emptyList())).haveResults)
+        assertTrue(listOf(waiting).haveResults)
+    }
+
+    @Test
+    fun aRankingHasResultsOnlyWhenSomePlayerHasPointsOrScore() {
+        assertFalse(calculate(fourPlayers, emptyList(), includeTeams = true).hasResults)
+        assertTrue(calculate(fourPlayers, listOf(completedTable(1, listOf("30", "10", "-10", "-30"))), includeTeams = true).hasResults)
     }
 
     private fun hand(
