@@ -96,21 +96,32 @@ class SmallComponentsUiTest {
     @Test
     fun theDateFieldClearsAndPicksADate() = runComposeUiTest {
         var value by mutableStateOf("2026-10-22")
-        setContent { MtsTheme(useDarkTheme = false) { DateField("Start", value, onChange = { value = it }) } }
+        // The buttons ignore a second press within 500 ms: the test moves this clock before each press.
+        val clock = TestTimeSource()
+        setContent {
+            CompositionLocalProvider(LocalPressTimeSource provides clock) {
+                MtsTheme(useDarkTheme = false) { DateField("Start", value, onChange = { value = it }) }
+            }
+        }
+        clock += 1.seconds
         onNode(hasClickAction() and hasContentDescription("Pick Start")).performClick()
         waitForIdle()
+        clock += 1.seconds
         onNode(hasClickAction() and hasText("OK")).performClick()
         waitForIdle()
         assertEquals("2026-10-22", value)
 
+        clock += 1.seconds
         onNode(hasClickAction() and hasContentDescription("Clear Start")).performClick()
         waitForIdle()
         assertEquals("", value)
         assertEquals(0, onAllNodes(hasContentDescription("Clear Start")).fetchSemanticsNodes().size)
 
+        clock += 1.seconds
         onNode(hasClickAction() and hasContentDescription("Pick Start")).performClick()
         waitForIdle()
         onNode(hasClickAction() and hasText("OK")).assertIsNotEnabled()
+        clock += 1.seconds
         onNode(hasClickAction() and hasText("Cancel")).performClick()
         waitForIdle()
         assertEquals("", value)
