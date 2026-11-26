@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
@@ -270,6 +271,7 @@ internal fun FilteredStatisticsTab(
     val scroll = rememberPersistentScrollState("statistics-$persistKey")
     // Other filters start at the top.
     ResetScrollOnChange(scroll, filters)
+    ShowTabsAtTop(scroll)
     Column(Modifier.fillMaxSize()) {
         // The filters hide with the tab rows when the statistics scroll down, and show again with another filter.
         HideOnScrollTabs(filters) {

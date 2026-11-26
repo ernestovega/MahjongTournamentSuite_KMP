@@ -42,6 +42,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -147,6 +148,7 @@ private fun TeamList(view: PlayerTournamentView, onSelect: (Int) -> Unit) {
     val rows = remember(view) { view.teamRows() }
     val shown = rows.filter { it.matches(query.orEmpty()) }
     val listState = rememberPersistentLazyListState("teams")
+    ShowTabsAtTop(listState)
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
