@@ -88,6 +88,8 @@ universal links) and the shared UI tests on the iOS simulator.
   it uses only common APIs (`runComposeUiTest`, no `java.*`, `String.format`, `runDesktopComposeUiTest` or JUnit
   rules); the others stay in `src/jvmTest`. The screenshot tests stay on the desktop.
 
+Both iOS workflows select Xcode 27 (iOS 27 SDK), which App Store Connect requires from April 2027.
+
 `.github/workflows/testflight.yml` (Publish · TestFlight), only by hand: archives the Release configuration and uploads
 it to App Store Connect (app "Mahjong Tournament Suite", SKU `mahjongtournamentsuite`). It signs automatically with
 the App Store Connect API key (Admin access; Key ID and Issuer ID in the workflow, the `.p8` in the secret
