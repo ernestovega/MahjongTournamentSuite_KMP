@@ -438,4 +438,93 @@ class DefaultRegistrationRepositoryTest {
         val notJson = repository { HttpStatusCode.BadRequest to "<html>bad gateway</html>" }.loadAdminList("t-1")
         assertTrue(assertIs<AppResult.Failure>(notJson).error !is AppError.Registration)
     }
+
+    @Test
+    fun theOwnRegistrationIsSavedTrimmed() = runTest {
+        tokens.values["registration-token.t-1"] = "token-old"
+        val saved = assertIs<AppResult.Success<*>>(repository(auth = NoSession()) { ok(own) }.updateOwn("t-1", " Vegan ", consent = false)).value
+            as com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
+
+        val request = requests.single()
+        assertEquals(HttpMethod.Put, request.method)
+        assertEquals("/functions/registrations/t-1/me", request.url.encodedPath)
+        assertEquals("token-old", request.headers[REGISTRATION_TOKEN_HEADER])
+        assertEquals("Vegan", request.json["foodRestrictions"]?.jsonPrimitive?.content)
+        assertEquals("Vegan", saved.foodRestrictions)
+    }
+
+    @Test
+    fun aPersonWithoutAnEmaNumberWritesToTheOrganizer() = runTest {
+        val repository = repository(auth = NoSession()) { ok("""{"ok":true}""") }
+
+        val result = repository.requestWithoutEmaNumber(
+            "t-1",
+            com.etologic.mahjongtournamentsuite.domain.model.NoEmaNumberRequest(name = " Ana ", country = " ES ", email = " a@b.c ", message = " Hi "),
+        )
+
+        assertEquals(AppResult.Success(Unit), result)
+        val json = requests.single().json
+        assertEquals(listOf("Ana", "ES", "a@b.c", "Hi"), listOf("name", "country", "email", "message").map { json[it]?.jsonPrimitive?.content })
+        assertIs<AppResult.Failure>(
+            repository(auth = NoSession()) { HttpStatusCode.TooManyRequests to "{}" }
+                .requestWithoutEmaNumber("t-1", com.etologic.mahjongtournamentsuite.domain.model.NoEmaNumberRequest("A", "ES", "a@b.c", "")),
+        )
+    }
+
+    @Test
+    fun aRegistrationWithoutATokenKeepsTheSavedOne() = runTest {
+        tokens.values["registration-token.t-1"] = "token-old"
+
+        repository { ok("""{"status":"CONFIRMED","manageToken":" "}""") }
+            .register("t-1", RegisterRequest("10990001", "a@b.c", "", consent = true))
+
+        assertEquals("token-old", tokens.values["registration-token.t-1"], "a blank token is not saved")
+    }
+
+    @Test
+    fun aConfirmationWithoutANewTokenKeepsTheTokenOfTheLink() = runTest {
+        repository(auth = NoSession()) { ok(own.replace("token-new", "")) }.confirm("t-1", " token-link ")
+
+        assertEquals("token-link", tokens.values["registration-token.t-1"])
+    }
+
+    @Test
+    fun anOwnRegistrationThatFailsForAnotherReasonKeepsTheToken() = runTest {
+        tokens.values["registration-token.t-1"] = "token-old"
+
+        assertIs<AppResult.Failure>(repository(auth = NoSession()) { HttpStatusCode.InternalServerError to "{}" }.loadOwn("t-1"))
+        assertEquals("token-old", tokens.values["registration-token.t-1"])
+    }
+
+    @Test
+    fun aSignedInPersonWhoseRegistrationIsGoneHasNoTokenToForget() = runTest {
+        assertEquals(AppResult.Success(null), repository { HttpStatusCode.NotFound to "{}" }.loadOwn("t-1"))
+        assertNull(tokens.values["registration-token.t-1"])
+    }
+
+    @Test
+    fun anOrganizerChangeSendsOnlyTheChangedFieldsTrimmed() = runTest {
+        repository { ok("""{"emaId":"1","name":"A","country":"ES","status":"CONFIRMED","position":1}""") }.adminUpdate(
+            "t-1",
+            "1",
+            RegistrationUpdate(email = " a@b.c ", status = RegistrationStatus.WAITING, teamName = " Dragons "),
+        )
+
+        val json = requests.single().json
+        assertEquals("a@b.c", json["email"]?.jsonPrimitive?.content)
+        assertEquals("WAITING", json["status"]?.jsonPrimitive?.content)
+        assertEquals("Dragons", json["teamName"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun aRefusalWithACodeButWithoutItsDetailsHasNoArguments() = runTest {
+        val incomplete = repository { HttpStatusCode.Conflict to """{"details":{"code":"INCOMPLETE_TEAMS"}}""" }.loadAdminList("t-1")
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), assertIs<AppResult.Failure>(incomplete).error)
+
+        val badCount = repository { HttpStatusCode.Conflict to """{"details":{"code":"BAD_PLAYER_COUNT"}}""" }.loadAdminList("t-1")
+        assertEquals(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, emptyList()), assertIs<AppResult.Failure>(badCount).error)
+
+        val broken = repository { HttpStatusCode.Conflict to """{"details":{"code":"INCOMPLETE_TEAMS","emaIds":"not a list"}}""" }.loadAdminList("t-1")
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), assertIs<AppResult.Failure>(broken).error)
+    }
 }
