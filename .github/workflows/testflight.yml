@@ -53,17 +53,22 @@ jobs:
           printf '%s\n' "$API_KEY" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
 
-      # The release framework for devices, here first so its errors are easy to read. The release link (with its
-      # whole-program optimisations) needs more memory than the runner has left next to the Gradle and Kotlin daemons:
-      # compile first, stop the daemons, and link in a process of its own with most of the memory.
-      - name: Compile the Kotlin code
-        run: ./gradlew :suite:compileKotlinIosArm64
-
-      - name: Link the Kotlin framework
+      # The release link (with its whole-program optimisations) needs more memory than the runner (7 GB) has left next
+      # to the Gradle daemon: the Kotlin/Native compiler runs in a process of its own with most of the memory. In the
+      # Gradle home, so the build phase of Xcode uses it too.
+      - name: Memory for the Kotlin/Native compiler
         run: |
-          ./gradlew --stop
-          pkill -f KotlinCompileDaemon || true
-          ./gradlew -Dorg.gradle.jvmargs=-Xmx1g -Pkotlin.native.disableCompilerDaemon=true -Pkotlin.native.jvmArgs=-Xmx6g :suite:linkReleaseFrameworkIosArm64
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "org.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8"
+            echo "kotlin.daemon.jvmargs=-Xmx1g"
+            echo "kotlin.native.disableCompilerDaemon=true"
+            echo "kotlin.native.jvmArgs=-Xmx5g"
+          } >> "$HOME/.gradle/gradle.properties"
+
+      # The release framework for devices, here first so its errors are easy to read.
+      - name: Link the Kotlin framework
+        run: ./gradlew :suite:linkReleaseFrameworkIosArm64
 
       - name: Archive
         run: |
