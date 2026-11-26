@@ -189,7 +189,7 @@
     <string name="progress_rounds_label">Turni</string>
     <string name="progress_tables_label">Tavoli</string>
     <string name="progress_ongoing_label">In corso</string>
-    <string name="tab_stats">Stat.</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Accedi</string>
     <string name="menu_contact">Assistenza</string>
     <string name="menu_privacy">Privacy</string>
@@ -224,7 +224,8 @@
     <string name="seats_save">Salva i posti</string>
     <string name="seats_restart">Ricomincia</string>
     <string name="entry_seats_first">Assegna i posti del tavolo per iniziare ad aggiungere mani.</string>
-    <string name="round_starts_at">Inizia alle</string>
+    <string name="round_will_start_at">Il turno inizierà alle %1$s</string>
+    <string name="round_will_start_on_at">Il turno inizierà il %1$s alle %2$s</string>
     <string name="round_clock_remaining">Tempo rimasto: %1$s</string>
     <string name="table_hand_announce_new">Nuova mano %1$d</string>
     <string name="table_hand_announce_edited">Mano %1$d corretta</string>

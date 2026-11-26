@@ -84,7 +84,7 @@
     <string name="schedule_hide">Schema verbergen</string>
     <string name="action_open">Openen</string>
     <string name="tab_tables">Tafels</string>
-    <string name="tab_ranking">Klassement</string>
+    <string name="tab_ranking">Stand</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Je account is niet gekoppeld aan een speler van dit toernooi. Vraag de organisatoren om je toe te voegen. Alle tafels staan op het tabblad Alle.</string>
     <string name="tables_mine_empty">De tafels van de speler verschijnen hier zodra de organisatoren de ronde loten.</string>
@@ -189,7 +189,7 @@
     <string name="progress_rounds_label">Rondes</string>
     <string name="progress_tables_label">Tafels</string>
     <string name="progress_ongoing_label">Bezig</string>
-    <string name="tab_stats">Statistieken</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Inloggen</string>
     <string name="menu_contact">Ondersteuning</string>
     <string name="menu_privacy">Privacy</string>
@@ -224,7 +224,8 @@
     <string name="seats_save">Plaatsen opslaan</string>
     <string name="seats_restart">Opnieuw beginnen</string>
     <string name="entry_seats_first">Leg de plaatsen aan tafel vast om handen in te voeren.</string>
-    <string name="round_starts_at">Begint om</string>
+    <string name="round_will_start_at">De ronde begint om %1$s</string>
+    <string name="round_will_start_on_at">De ronde begint op %1$s om %2$s</string>
     <string name="round_clock_remaining">Resterende tijd: %1$s</string>
     <string name="table_hand_announce_new">Nieuwe hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d gecorrigeerd</string>

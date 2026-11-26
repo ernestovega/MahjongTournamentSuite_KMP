@@ -224,7 +224,8 @@
     <string name="seats_save">Spara platserna</string>
     <string name="seats_restart">Börja om</string>
     <string name="entry_seats_first">Bestäm bordets platser för att börja föra in händer.</string>
-    <string name="round_starts_at">Börjar</string>
+    <string name="round_will_start_at">Omgången börjar %1$s</string>
+    <string name="round_will_start_on_at">Omgången börjar %1$s kl. %2$s</string>
     <string name="round_clock_remaining">Tid kvar: %1$s</string>
     <string name="table_hand_announce_new">Ny hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d rättad</string>

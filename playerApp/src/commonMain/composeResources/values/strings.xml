@@ -224,7 +224,8 @@
     <string name="seats_save">Save the seats</string>
     <string name="seats_restart">Start again</string>
     <string name="entry_seats_first">Set the seats of the table to start entering hands.</string>
-    <string name="round_starts_at">Starts at</string>
+    <string name="round_will_start_at">The round will start at %1$s</string>
+    <string name="round_will_start_on_at">The round will start on %1$s at %2$s</string>
     <string name="round_clock_remaining">Time left: %1$s</string>
     <string name="table_hand_announce_new">New hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d corrected</string>

@@ -208,7 +208,7 @@ Apply these rules to every new or changed dialog:
 
 ## Scrollable Lists And Pointer Input
 
-- Every scrolling list, column or row has its fading edges and always visible scrollbar: `Modifier.scrollIndicators(state)`
+- Every scrolling list, column or row has its fading edges and scrollbar (shown only while scrolling): `Modifier.scrollIndicators(state)`
   on a lazy list, `verticalScrollWithIndicators()` / `horizontalScrollWithIndicators()` instead of `verticalScroll()` /
   `horizontalScroll()` (see docs/design-system.md, "Scroll indicators").
 - `LazyColumnWithScrollbar` and `ScrollableColumnWithScrollbar` (ui) already include them.

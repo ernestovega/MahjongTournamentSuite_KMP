@@ -84,7 +84,7 @@
     <string name="schedule_hide">Ocultar horario</string>
     <string name="action_open">Abrir</string>
     <string name="tab_tables">Mesas</string>
-    <string name="tab_ranking">Clasificación</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te añadan. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_mine_empty">Las mesas del jugador aparecen aquí cuando los organizadores sortean la ronda.</string>
@@ -189,7 +189,7 @@
     <string name="progress_rounds_label">Rondas</string>
     <string name="progress_tables_label">Mesas</string>
     <string name="progress_ongoing_label">En curso</string>
-    <string name="tab_stats">Estadísticas</string>
+    <string name="tab_stats">Stats</string>
     <string name="menu_sign_in">Entrar</string>
     <string name="menu_contact">Soporte</string>
     <string name="menu_privacy">Privacidad</string>
@@ -224,7 +224,8 @@
     <string name="seats_save">Guardar los asientos</string>
     <string name="seats_restart">Empezar de nuevo</string>
     <string name="entry_seats_first">Asigna los asientos de la mesa para empezar a añadir manos.</string>
-    <string name="round_starts_at">Empieza a las</string>
+    <string name="round_will_start_at">La ronda empezará a las %1$s</string>
+    <string name="round_will_start_on_at">La ronda empezará el %1$s a las %2$s</string>
     <string name="round_clock_remaining">Tiempo restante: %1$s</string>
     <string name="table_hand_announce_new">Mano nueva %1$d</string>
     <string name="table_hand_announce_edited">Mano %1$d corregida</string>

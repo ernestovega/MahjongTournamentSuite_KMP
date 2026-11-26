@@ -173,4 +173,26 @@ class RulesTopBarUiTest {
         waitForIdle()
         onNodeWithText("How the draw works").assertExists()
     }
+
+    /** The top bar of the table screen: the rules, and the contact with support as in the other screens. */
+    @Composable
+    private fun TableBar(nav: NavHostController) = AppScaffold(title = "Round 1 - Table 1", onBack = {}, actions = { TableTopBarActions(nav) }) {}
+
+    @Test
+    fun onAWideScreenTheTableShowsRulesAndSupport() = runDesktopComposeUiTest(width = 1200, height = 800) {
+        show { nav -> TableBar(nav) }
+        button("Rules").assertExists()
+        button("Support").performClick()
+        onNodeWithText("Support form").assertExists()
+    }
+
+    @Test
+    fun onAPhoneTheSupportOfTheTableIsInTheMenu() = runDesktopComposeUiTest(width = 400, height = 800) {
+        show { nav -> TableBar(nav) }
+        button("Support").assertDoesNotExist()
+        openMenu()
+        listOf("Rules", "Green Book", "Combinations", "Penalties overview").forEach { button(it).assertExists() }
+        button("Support").performClick()
+        onNodeWithText("Support form").assertExists()
+    }
 }

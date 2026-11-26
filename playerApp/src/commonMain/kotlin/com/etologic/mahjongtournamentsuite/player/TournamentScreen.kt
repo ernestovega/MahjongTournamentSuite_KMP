@@ -27,7 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
@@ -239,7 +239,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
                                             MainTab.PLAYERS -> Icons.Default.Person
                                             MainTab.TEAMS -> Icons.Default.Groups
                                             MainTab.STATISTICS -> StatisticsIcon
-                                            else -> Icons.Default.Info
+                                            // Outlined, so the round "i" reads lighter than a full circle (Ernesto, 2026-11-26).
+                                            else -> Icons.Outlined.Info
                                         }
                                         Icon(icon, contentDescription = null, Modifier.size(20.dp))
                                     },
