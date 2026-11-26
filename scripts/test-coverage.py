@@ -76,6 +76,10 @@ def files(base: Path, pattern: str) -> list[Path]:
     return [path for path in base.glob(pattern) if "/build/" not in str(path) and "node_modules" not in str(path)]
 
 
+# Parts whose lines and branches run do not count in the total. See the notes under the table.
+UNCOUNTED_PARTS = {"backend_scripts"}
+
+
 def backend_part(relative: str) -> str:
     """The part of a file of firebase/functions/src (or lib), by its folder."""
     if relative.startswith("api/"):
@@ -256,8 +260,10 @@ def table(tests: dict, lines: dict, measured: dict) -> str:
             + " | ".join(number(counts.get(kind, 0)) for kind in KINDS)
             + f" | {percent(part.get('line'))} | {percent(part.get('branch'))} |"
         )
-    all_line = [sum(part.get("line", [0, 0])[i] for part in coverage.values()) for i in (0, 1)]
-    all_branch = [sum(part.get("branch", [0, 0])[i] for part in coverage.values()) for i in (0, 1)]
+    # The maintenance and seed scripts run by hand once, so the total of lines and branches run leaves them out.
+    counted = [part for key, part in coverage.items() if key not in UNCOUNTED_PARTS]
+    all_line = [sum(part.get("line", [0, 0])[i] for part in counted) for i in (0, 1)]
+    all_branch = [sum(part.get("branch", [0, 0])[i] for part in counted) for i in (0, 1)]
     rows.append(
         f"| **Total** | **{number(total['lines'])}** | "
         + " | ".join(f"**{number(total[kind])}**" for kind in KINDS)
@@ -282,6 +288,8 @@ def table(tests: dict, lines: dict, measured: dict) -> str:
         "- **Lines run and branches run** come from Kover (JVM tests of each Kotlin module) and from the coverage of Node",
         "  (backend unit and integration tests, on the compiled JavaScript). They do not count the Android and Web E2E tests,",
         "  `androidMain`, `wasmJsMain` or `androidApp`. A dash means not measured.",
+        "- **The total of lines and branches run** leaves out the maintenance and seed scripts of the backend: they run",
+        "  by hand, once or on test data, and their row shows how much of them the tests run.",
         f"- {source}",
         END,
     ])

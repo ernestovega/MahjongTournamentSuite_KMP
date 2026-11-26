@@ -13,11 +13,11 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,740 | 183 | – | – | – | – | – | 96 % | 87 % |
+| `domain`: business rules, use cases | 5,740 | 202 | – | – | – | – | – | 96 % | 87 % |
 | `data`: repositories, network, telemetry | 7,931 | 441 | – | – | – | – | – | 99 % | 85 % |
 | `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 91 % | 60 % |
 | `ui`: shared Compose components | 17,466 | 85 | 216 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,148 | 315 | 385 | 91 | – | 175 | 4 | 84 % | 62 % |
+| `adminApp`: admin screens | 32,148 | 315 | 406 | 91 | – | 175 | 4 | 84 % | 62 % |
 | `playerApp`: player screens | 11,623 | 190 | 123 | 54 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 83 % |
@@ -25,8 +25,8 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
-| Repository scripts (Game day, smoke, versions) | 7,347 | 124 | – | – | – | – | – | – | – |
-| **Total** | **108,954** | **1,803** | **744** | **173** | **479** | **247** | **12** | **91 %** | **69 %** |
+| Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
+| **Total** | **108,960** | **1,822** | **765** | **173** | **479** | **247** | **12** | **91 %** | **69 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
@@ -36,6 +36,8 @@ untested, in order of priority. The last part lists the test tournaments of the 
 - **Lines run and branches run** come from Kover (JVM tests of each Kotlin module) and from the coverage of Node
   (backend unit and integration tests, on the compiled JavaScript). They do not count the Android and Web E2E tests,
   `androidMain`, `wasmJsMain` or `androidApp`. A dash means not measured.
+- **The total of lines and branches run** leaves out the maintenance and seed scripts of the backend: they run
+  by hand, once or on test data, and their row shows how much of them the tests run.
 - Coverage measured on 2026-11-26 at `4557ea4dc` with `python3 scripts/test-coverage.py --measure`.
 <!-- test-table:end -->
 
@@ -78,6 +80,9 @@ The measure leaves out the code the compiler writes, not us (filters in the root
 | `*.backend.dto` | Data classes of the backend answers and requests, without logic: their branches are the serializers and default arguments that kotlinx.serialization writes (~3,000 branches) |
 | `@Preview` functions | Previews of the screens for the IDE; the screenshot tests draw the screens themselves |
 | `*ComposableSingletons*`, `*_Factory`, `*MainKt` | Compose lambdas holders, generated factories and the entry points |
+
+The total of the table also leaves out the maintenance and seed scripts of the backend (`firebase/functions/src/scripts`,
+since 26 November). They run by hand, once or on test data, so their row is shown apart and does not count toward 100 %.
 
 Files with the most untested lines (audit of 24 November; some are covered since):
 
