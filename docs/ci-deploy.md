@@ -48,7 +48,7 @@ Every test runs on `develop` (the default branch) every night (the game day once
 
 | Time | Workflow | What |
 |---|---|---|
-| 02:30 | Deploy · Production | The five checks of **Build and test**. Nothing is deployed. |
+| 02:30 | Deploy · Production | The five checks of **Build and test**, and **Test coverage**: it measures the coverage again and shows the table of tests per part of the code in the summary of the run (`scripts/test-coverage.py --measure`). Nothing is deployed. |
 | 02:45 | Test · Screenshots | Compares every screen with its reference image. |
 | 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
 | 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `develop` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
