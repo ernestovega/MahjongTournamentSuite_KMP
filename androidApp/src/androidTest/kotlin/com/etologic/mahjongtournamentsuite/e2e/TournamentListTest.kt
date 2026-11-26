@@ -50,7 +50,7 @@ class TournamentListTest : AdminE2eTest() {
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
         // "Super Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
-        // "Timer" opens the independent Timer, which is not tied to a tournament.
+        // "Timer" opens the independent Timer, which is not tied to a tournament. "New tournament" is the floating button.
         listOf(PROFILE_BUTTON, "Super Admin", "Users", "DEV", "Stats", "EMA players", "New tournament", "Timer")
             .forEach { c.waitForText(it) }
     }

@@ -13,7 +13,7 @@ import org.junit.Test
  */
 class SuiteSwitchTest : PlayerE2eTest() {
     private companion object {
-        /** The Edit button of a tournament: only the admin part has it. On a phone "New tournament" is in a menu. */
+        /** The Edit button of a tournament: only the admin part has it. */
         const val ADMIN_LIST = "Edit Test - Live ongoing tournament"
     }
 
