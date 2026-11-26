@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableConflictResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
@@ -19,7 +20,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import io.ktor.http.HttpStatusCode
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
@@ -59,18 +59,6 @@ internal const val GLOBAL_COUNTRIES_CACHE_KEY = "global:countries"
 internal const val GLOBAL_USERS_CACHE_KEY = "global:users"
 internal const val GLOBAL_EMA_PLAYERS_CACHE_KEY = "global:emaPlayers"
 internal const val GLOBAL_PROFILE_CACHE_KEY = "global:profile"
-
-@Serializable
-internal data class TableConflictResponseDto(
-    val details: TableConflictDetailsDto? = null,
-)
-
-@Serializable
-internal data class TableConflictDetailsDto(
-    val expectedVersion: Long? = null,
-    val currentVersion: Long? = null,
-    val current: TableWithHandsResponseDto? = null,
-)
 
 internal fun Throwable.toTableSaveError(json: Json): AppError {
     if (this !is BackendHttpException || status != HttpStatusCode.Conflict) return toTournamentAppError()
