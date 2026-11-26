@@ -2,8 +2,10 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -16,7 +18,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
@@ -32,6 +33,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountReposi
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
@@ -45,6 +47,8 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** An EMA registry whose writes fail with a lost connection, after the first [loadsBeforeFailing] reads of the list. */
 private class FailingRegistry(private val players: List<Player>, private val loadsBeforeFailing: Int = Int.MAX_VALUE) : PlayerRepository {
@@ -68,6 +72,19 @@ private class FailingRegistry(private val players: List<Player>, private val loa
 /** The EMA registry screen tells what is wrong: a missing field, a wrong or taken EMA number, and a failed save. */
 @OptIn(ExperimentalTestApi::class)
 class PlayerBaseErrorsUiTest {
+    // A real clock would drop a second press of the same button within half a second.
+    private val clock = TestTimeSource()
+
+    private fun SemanticsNodeInteraction.press() {
+        clock += 1.seconds
+        performClick()
+    }
+
+    private fun SemanticsNodeInteraction.pressAction() {
+        clock += 1.seconds
+        performSemanticsAction(SemanticsActions.OnClick)
+    }
+
     private val ada = Player(emaId = "00010001", firstName = "Ada", lastName = "Lovelace", country = "GBR")
     private val babbage = Player(emaId = "00010002", firstName = "Charles", lastName = "Babbage", country = "GBR")
 
@@ -93,7 +110,7 @@ class PlayerBaseErrorsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {})) {
+                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock) {
                     MtsTheme(useDarkTheme = false) { PlayerBaseScreen(rememberNavController()) }
                 }
             }
@@ -105,7 +122,7 @@ class PlayerBaseErrorsUiTest {
 
     private fun ComposeUiTest.selectAda() {
         awaitText("10001")
-        onAllNodes(hasText("10001", substring = true) and !hasSetTextAction()).onFirst().performClick()
+        onAllNodes(hasText("10001", substring = true) and !hasSetTextAction()).onFirst().press()
         waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Ada") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
     }
 
@@ -115,11 +132,11 @@ class PlayerBaseErrorsUiTest {
 
     private fun ComposeUiTest.saveAndExpect(message: String) {
         // The Save of the details can be under the bottom of the test window: the click goes to its action.
-        onAllNodes(hasText("Save") and hasClickAction()).onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        onAllNodes(hasText("Save") and hasClickAction()).onFirst().pressAction()
         waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Save player changes", substring = true)).fetchSemanticsNodes().isNotEmpty() }
-        onAllNodes(hasText("Save") and hasClickAction()).onLast().performClick()
+        onAllNodes(hasText("Save") and hasClickAction()).onLast().press()
         awaitText(message)
-        onAllNodes(hasText("OK") and hasClickAction()).onLast().performClick()
+        onAllNodes(hasText("OK") and hasClickAction()).onLast().press()
         waitForIdle()
     }
 
@@ -150,9 +167,9 @@ class PlayerBaseErrorsUiTest {
         awaitText("Add player")
         fun add(expected: String) {
             val button = onNode(hasText("Add player") and hasClickAction() and hasAnyAncestor(isDialog()))
-            button.performSemanticsAction(SemanticsActions.OnClick)
+            button.pressAction()
             awaitText(expected)
-            onAllNodes(hasText("OK") and hasClickAction()).onLast().performClick()
+            onAllNodes(hasText("OK") and hasClickAction()).onLast().press()
             waitForIdle()
         }
         add("EMA number is required.")
@@ -164,9 +181,9 @@ class PlayerBaseErrorsUiTest {
         add("Last name is required.")
         dialogField("Last name").performTextReplacement("Hopper")
         add("Choose a country")
-        onNode(hasText("Country") and hasAnyAncestor(isDialog())).performClick()
+        onNode(hasText("Country") and hasAnyAncestor(isDialog())).press()
         awaitText("No country")
-        onAllNodesWithText("No country").onFirst().performClick()
+        onAllNodesWithText("No country").onFirst().press()
         waitForIdle()
         add("OK")
         assertEquals(listOf("create:00099999"), registry.calls)
@@ -179,7 +196,7 @@ class PlayerBaseErrorsUiTest {
     }
 
     private fun ComposeUiTest.onNodeWithTextClick(text: String) {
-        onAllNodes(hasText(text) and hasClickAction()).onFirst().performClick()
+        onAllNodes(hasText(text) and hasClickAction()).onFirst().press()
         waitForIdle()
     }
 }

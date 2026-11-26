@@ -6,16 +6,22 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
@@ -25,10 +31,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFieldChange
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityOrigin
 import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -44,10 +52,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** An administrator reads who wrote what and when: the list, the filters, the next page and one entry. */
 @OptIn(ExperimentalTestApi::class)
 class ActivityScreenUiTest {
+    private val clock = TestTimeSource()
     private val now = Clock.System.now().toEpochMilliseconds()
 
     private fun entry(
@@ -90,12 +101,14 @@ class ActivityScreenUiTest {
         entries: List<ActivityEntry> = listOf(save, assign),
         pageSize: Int = Int.MAX_VALUE,
         widthDp: Int? = null,
+        failure: AppError? = null,
         tournaments: List<Tournament> = emptyList(),
         initialTournamentId: String? = null,
     ): FakeAdminRepository {
         val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply {
             activity = entries
             activityPageSize = pageSize
+            activityError = failure
         }
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
@@ -112,7 +125,7 @@ class ActivityScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides clock) {
                     MtsTheme(useDarkTheme = false) {
                         if (widthDp == null) {
                             ActivityScreen(rememberNavController(), initialTournamentId = initialTournamentId)
@@ -123,7 +136,7 @@ class ActivityScreenUiTest {
                 }
             }
         }
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Table saved").fetchSemanticsNodes().isNotEmpty() }
+        if (failure == null) waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Table saved").fetchSemanticsNodes().isNotEmpty() }
         return admin
     }
 
@@ -206,6 +219,58 @@ class ActivityScreenUiTest {
         onNodeWithText("Show only this person").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Person: Player 123").fetchSemanticsNodes().isNotEmpty() }
         assertEquals("u2", admin.activityRequests.last().first.uid)
+    }
+
+    private fun ComposeUiTest.tap(text: String) {
+        clock += 1.seconds
+        onAllNodes(hasText(text, substring = true) and hasClickAction()).onLast().performSemanticsAction(SemanticsActions.OnClick)
+        waitForIdle()
+    }
+
+    @Test
+    fun aPeriodIsPickedWithADateAndATimeAndCleared() = runComposeUiTest {
+        val admin = show()
+
+        tap("From")
+        tap("OK")
+        tap("OK")
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.fromMillis != null }
+
+        tap("Until")
+        tap("OK")
+        tap("OK")
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.toMillis != null }
+        val period = admin.activityRequests.last().first
+        assertEquals(60_000L, period.toMillis!! - period.fromMillis!!, "both ends at this minute, the end one minute later")
+
+        tap("Until")
+        tap("Cancel")
+        clock += 1.seconds
+        onNode(hasContentDescription("Clear dates") and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.let { it.fromMillis == null && it.toMillis == null } }
+    }
+
+    @Test
+    fun anEntryWithoutChangesShowsItsDetailsAndThePersonFilterIsCleared() = runComposeUiTest {
+        val admin = show()
+
+        onNodeWithText("Player assigned").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("teamId: 3").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Details").assertExists()
+        onNodeWithText("Show only this person").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Person: Ana Admin").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals("u1", admin.activityRequests.last().first.uid)
+
+        tap("Person: Ana Admin")
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.uid == null }
+    }
+
+    @Test
+    fun aFailedReadShowsTheError() = runComposeUiTest {
+        show(failure = AppError.Network)
+
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+        tap("OK")
     }
 
     private fun tournament(id: String, name: String) = Tournament(id = id, name = name, isTeams = false, numPlayers = 8, numRounds = 5)

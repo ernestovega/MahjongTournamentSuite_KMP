@@ -197,8 +197,12 @@ internal class FakeAdminRepository(
     var activityPageSize: Int = Int.MAX_VALUE
     val activityRequests = mutableListOf<Pair<ActivityFilter, String?>>()
 
+    /** When set, every read of the write log fails with it. */
+    var activityError: AppError? = null
+
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> {
         activityRequests += filter to cursor
+        activityError?.let { return AppResult.Failure(it) }
         val matching = activity.filter { entry ->
             (filter.tournamentId == null || entry.tournamentId == filter.tournamentId) &&
                 (filter.uid == null || entry.uid == filter.uid) &&

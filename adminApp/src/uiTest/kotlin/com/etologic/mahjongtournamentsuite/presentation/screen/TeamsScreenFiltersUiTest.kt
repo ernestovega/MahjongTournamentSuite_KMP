@@ -2,19 +2,21 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
@@ -106,6 +108,14 @@ class TeamsScreenFiltersUiTest {
         waitForIdle()
     }
 
+    /** A country chip holds a flag with its own tooltip, so the click goes to the first ancestor of the flag that has one. */
+    private fun ComposeUiTest.pressChip(description: String) {
+        clock += 1.seconds
+        var node = onAllNodes(hasContentDescription(description), useUnmergedTree = true).onFirst()
+        while (SemanticsActions.OnClick !in node.fetchSemanticsNode().config) node = node.onParent()
+        node.performSemanticsAction(SemanticsActions.OnClick)
+    }
+
     @Test
     fun theSearchFindsTeamsByNameNumberAndPlayer() = runComposeUiTest {
         show(world())
@@ -130,13 +140,14 @@ class TeamsScreenFiltersUiTest {
     @Test
     fun theCountryFilterKeepsTheTeamsWithAPlayerOfThatCountry() = runComposeUiTest {
         show(world())
+        // The teams come before the registry that gives the countries.
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasContentDescription("Filter by FR")).fetchSemanticsNodes().isNotEmpty() }
 
-        onAllNodes(hasClickAction() and hasAnyDescendant(hasContentDescription("Filter by FR"))).onFirst().performClick()
+        pressChip("Filter by FR")
         waitUntil(timeoutMillis = 5_000) { !shown("Aces") }
         assertTrue(shown("Dragons"))
 
-        clock += 1.seconds
-        onAllNodes(hasClickAction() and hasAnyDescendant(hasContentDescription("Remove FR country filter"))).onFirst().performClick()
+        pressChip("Remove FR country filter")
         waitUntil(timeoutMillis = 5_000) { shown("Aces") }
     }
 
