@@ -345,7 +345,7 @@ internal var RivalsDesign = 1
 @Composable
 private fun RivalSmallNumbers(labels: List<String>, values: List<String>) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val perRow = if (maxWidth >= 6 * 72.dp) 6 else 3
+        val perRow = if (maxWidth >= 72.dp * 6) 6 else 3
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             labels.zip(values).chunked(perRow).forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
