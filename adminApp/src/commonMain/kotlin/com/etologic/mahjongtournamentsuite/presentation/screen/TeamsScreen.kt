@@ -69,7 +69,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedAssist
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
@@ -221,7 +225,7 @@ fun TeamsScreen(
     LaunchedEffect(loading, teams.isNotEmpty()) {
         if (!loading && teams.isNotEmpty() && !initialFocusApplied) {
             initialFocusApplied = true
-            searchFocusRequester.requestFocus()
+            searchFocusRequester.requestFocusIfAttached()
         }
     }
 
@@ -233,7 +237,7 @@ fun TeamsScreen(
                 listState.scrollToItem(restoreIndex)
                 editFocusRequesters.getOrNull(restoreIndex)?.requestFocus()
             } else {
-                searchFocusRequester.requestFocus()
+                searchFocusRequester.requestFocusIfAttached()
             }
             restoreTeamId = null
         }
@@ -285,132 +289,174 @@ fun TeamsScreen(
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
     ) {
-        ScreenColumn(
-            maxWidth = 1100.dp,
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            error?.let {
-                AppErrorDialog(
-                    message = it,
-                    onDismiss = { error = null },
-                )
-            }
-            if (teams.isNotEmpty()) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text(stringResource(Res.string.search)) },
-                    singleLine = true,
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            FocusedIconButton(
-                                onClick = {
-                                    searchQuery = ""
-                                    searchFocusRequester.requestFocus()
-                                },
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
-                            }
-                        }
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
-                )
-                if (tournamentCountryCodes.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            tournamentCountryCodes.forEach { code ->
-                                val isSelected = code in selectedCountryCodes
-                                FocusedTextButton(
-                                    onClick = {
-                                        selectedCountryCodes = if (isSelected) {
-                                            selectedCountryCodes - code
-                                        } else {
-                                            selectedCountryCodes + code
+        // The search and the country filter hide when the list scrolls down and show when it scrolls up.
+        HideOnScrollArea {
+            ScreenColumn(
+                maxWidth = 1100.dp,
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                ShowTabsAtTop(listState)
+                error?.let {
+                    AppErrorDialog(
+                        message = it,
+                        onDismiss = { error = null },
+                    )
+                }
+                if (teams.isNotEmpty()) {
+                    HideOnScrollTabs {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                label = { Text(stringResource(Res.string.search)) },
+                                singleLine = true,
+                                trailingIcon = if (searchQuery.isNotEmpty()) {
+                                    {
+                                        FocusedIconButton(
+                                            onClick = {
+                                                searchQuery = ""
+                                                searchFocusRequester.requestFocus()
+                                            },
+                                        ) {
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
                                         }
-                                    },
-                                    shape = CircleShape,
-                                    colors = if (isSelected) {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        )
-                                    } else {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    },
-                                    border = BorderStroke(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.outline
-                                        },
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                ) {
-                                    CountryFlag(
-                                        code = code,
-                                        contentDescription = if (isSelected) {
-                                            stringResource(Res.string.remove_country_filter, code)
-                                        } else {
-                                            stringResource(Res.string.filter_by_code, code)
-                                        },
-                                    )
+                                    }
+                                } else {
+                                    null
+                                },
+                                modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                            )
+                            if (tournamentCountryCodes.isNotEmpty()) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        tournamentCountryCodes.forEach { code ->
+                                            val isSelected = code in selectedCountryCodes
+                                            FocusedTextButton(
+                                                onClick = {
+                                                    selectedCountryCodes = if (isSelected) {
+                                                        selectedCountryCodes - code
+                                                    } else {
+                                                        selectedCountryCodes + code
+                                                    }
+                                                },
+                                                shape = CircleShape,
+                                                colors = if (isSelected) {
+                                                    ButtonDefaults.textButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.primary,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    )
+                                                } else {
+                                                    ButtonDefaults.textButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                },
+                                                border = BorderStroke(
+                                                    width = if (isSelected) 2.dp else 1.dp,
+                                                    color = if (isSelected) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.outline
+                                                    },
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                            ) {
+                                                CountryFlag(
+                                                    code = code,
+                                                    contentDescription = if (isSelected) {
+                                                        stringResource(Res.string.remove_country_filter, code)
+                                                    } else {
+                                                        stringResource(Res.string.filter_by_code, code)
+                                                    },
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            SectionCard(container = false) {
-                if (teams.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.Groups, stringResource(Res.string.no_teams), stringResource(Res.string.no_teams_message), compact = true)
-                } else if (filteredTeams.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_teams_match), compact = true)
-                }
-                val compact = LocalCompactLayout.current
-                Column(Modifier.fillMaxWidth()) {
-                    if (!compact) {
-                        DataTableHeaderRow {
-                            TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
-                            TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                            TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
-                            Spacer(Modifier.width(96.dp))
-                        }
+                SectionCard(container = false) {
+                    if (teams.isEmpty() && !loading) {
+                        AppEmptyState(Icons.Default.Groups, stringResource(Res.string.no_teams), stringResource(Res.string.no_teams_message), compact = true)
+                    } else if (filteredTeams.isEmpty() && !loading) {
+                        AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_teams_match), compact = true)
                     }
-                    DataTableDivider()
-                    LazyColumnWithScrollbar(
-                        state = listState,
-                        scrollbar = MtsScrollbar.Margin,
-                        modifier = Modifier.weight(1f, fill = false),
-                    ) {
-                        itemsIndexed(filteredTeams, key = { _, team -> team.id }) { index, team ->
-                            val assignedPlayers = playersByTeamId[team.id].orEmpty()
-                            DataTableRow(
-                                onClick = { editingTeamId = team.id },
-                                clickFocusable = false,
-                            ) {
-                                if (compact) {
-                                    // A phone shows the team name over its players, and the edit button as an icon.
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val compact = LocalCompactLayout.current
+                    Column(Modifier.fillMaxWidth()) {
+                        if (!compact) {
+                            DataTableHeaderRow {
+                                TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
+                                TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                                TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
+                                Spacer(Modifier.width(96.dp))
+                            }
+                        }
+                        DataTableDivider()
+                        LazyColumnWithScrollbar(
+                            state = listState,
+                            scrollbar = MtsScrollbar.Margin,
+                            modifier = Modifier.weight(1f, fill = false),
+                        ) {
+                            itemsIndexed(filteredTeams, key = { _, team -> team.id }) { index, team ->
+                                val assignedPlayers = playersByTeamId[team.id].orEmpty()
+                                DataTableRow(
+                                    onClick = { editingTeamId = team.id },
+                                    clickFocusable = false,
+                                ) {
+                                    if (compact) {
+                                        // A phone shows the team name over its players, and the edit button as an icon.
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(
+                                                text = "#${team.id} · ${team.name}",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                            ) {
+                                                assignedPlayers.forEach { player ->
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                    ) {
+                                                        Text(player.id.toString())
+                                                        CountryFlag(
+                                                            code = player.country,
+                                                            width = 16.dp,
+                                                            contentDescription = player.country.ifBlank { stringResource(Res.string.no_country) },
+                                                        )
+                                                        Text(
+                                                            text = player.name ?: stringResource(Res.string.not_assigned),
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
                                         Text(
-                                            text = "#${team.id} · ${team.name}",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 2,
+                                            text = team.id.toString(),
+                                            modifier = Modifier.width(90.dp),
+                                        )
+                                        Text(
+                                            text = team.name,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                         Column(
-                                            modifier = Modifier.fillMaxWidth(),
+                                            modifier = Modifier.weight(1.6f),
                                             verticalArrangement = Arrangement.spacedBy(4.dp),
                                         ) {
                                             assignedPlayers.forEach { player ->
@@ -433,68 +479,34 @@ fun TeamsScreen(
                                             }
                                         }
                                     }
-                                } else {
-                                    Text(
-                                        text = team.id.toString(),
-                                        modifier = Modifier.width(90.dp),
-                                    )
-                                    Text(
-                                        text = team.name,
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Column(
-                                        modifier = Modifier.weight(1.6f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        assignedPlayers.forEach { player ->
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Text(player.id.toString())
-                                                CountryFlag(
-                                                    code = player.country,
-                                                    width = 16.dp,
-                                                    contentDescription = player.country.ifBlank { stringResource(Res.string.no_country) },
-                                                )
-                                                Text(
-                                                    text = player.name ?: stringResource(Res.string.not_assigned),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                            }
-                                        }
+                                    if (compact) {
+                                        FocusedIconButton(
+                                            onClick = { editingTeamId = team.id },
+                                            focusRequester = editFocusRequesters[index],
+                                        ) { Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit)) }
+                                    } else {
+                                        FocusedButton(
+                                            onClick = { editingTeamId = team.id },
+                                            focusRequester = editFocusRequesters[index],
+                                            buttonModifier = Modifier.onPreviewKeyEvent { event ->
+                                                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                                when (event.key) {
+                                                    Key.DirectionUp -> {
+                                                        editFocusRequesters.getOrNull(index - 1)?.requestFocus()
+                                                        true
+                                                    }
+                                                    Key.DirectionDown -> {
+                                                        editFocusRequesters.getOrNull(index + 1)?.requestFocus()
+                                                        true
+                                                    }
+                                                    else -> false
+                                                }
+                                            },
+                                        ) { ButtonText(stringResource(Res.string.edit)) }
                                     }
                                 }
-                                if (compact) {
-                                    FocusedIconButton(
-                                        onClick = { editingTeamId = team.id },
-                                        focusRequester = editFocusRequesters[index],
-                                    ) { Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit)) }
-                                } else {
-                                    FocusedButton(
-                                        onClick = { editingTeamId = team.id },
-                                        focusRequester = editFocusRequesters[index],
-                                        buttonModifier = Modifier.onPreviewKeyEvent { event ->
-                                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                            when (event.key) {
-                                                Key.DirectionUp -> {
-                                                    editFocusRequesters.getOrNull(index - 1)?.requestFocus()
-                                                    true
-                                                }
-                                                Key.DirectionDown -> {
-                                                    editFocusRequesters.getOrNull(index + 1)?.requestFocus()
-                                                    true
-                                                }
-                                                else -> false
-                                            }
-                                        },
-                                    ) { ButtonText(stringResource(Res.string.edit)) }
-                                }
+                                DataTableDivider()
                             }
-                            DataTableDivider()
                         }
                     }
                 }

@@ -85,11 +85,14 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHead
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -622,409 +625,417 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             )
         },
     ) {
-        ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            error?.let {
-                AppErrorDialog(
-                    message = it,
-                    onDismiss = { error = null },
-                )
-            }
-            if (importDialogOpen) {
-                PlayerImportDialog(
-                    tournamentId = tournamentId,
-                    playerNameOf = { emaId -> playersByEma[emaId]?.displayName },
-                    onChanged = { refresh(force = true) },
-                    onDismiss = { importDialogOpen = false },
-                )
-            }
-            if (idCardsDialogOpen) {
-                // The names of the staff saved the last time fill the dialog when they arrive.
-                var savedStaffNames by remember { mutableStateOf(emptyList<String>()) }
-                var staffCandidates by remember { mutableStateOf(emptyList<IdCardStaffCandidate>()) }
-                LaunchedEffect(tournamentId) {
-                    (presenter.loadIdCardStaffNames(tournamentId) as? AppResult.Success)?.let { savedStaffNames = it.value }
-                }
-                LaunchedEffect(tournamentId) {
-                    (presenter.loadIdCardStaffCandidates(tournamentId) as? AppResult.Success)?.let { staffCandidates = it.value }
-                }
-                IdCardsExportDialog(
-                    savedStaffNames = savedStaffNames,
-                    staffCandidates = staffCandidates,
-                    onExport = { sheet ->
-                        idCardsDialogOpen = false
-                        exportIdCards(sheet)
-                    },
-                    onDismiss = { idCardsDialogOpen = false },
-                )
-            }
-            SectionCard(container = false) {
-                if (players.isNotEmpty()) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(Res.string.search)) },
-                        singleLine = true,
-                        trailingIcon = if (searchQuery.isNotEmpty()) {
-                            {
-                                IconButton(onClick = {
-                                    searchQuery = ""
-                                    searchFocusRequester.requestFocus()
-                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
-                            }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+        // The search and the country filter hide when the list scrolls down and show when it scrolls up.
+        HideOnScrollArea {
+            ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ShowTabsAtTop(assignmentsListState)
+                error?.let {
+                    AppErrorDialog(
+                        message = it,
+                        onDismiss = { error = null },
                     )
-                    if (tournamentCountryCodes.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                tournamentCountryCodes.forEach { code ->
-                                    val isSelected = code in selectedCountryCodes
-                                    val count = players.count { slot ->
-                                        val assigned = slot.assignedEmaId?.let(playersByEma::get)
-                                        assigned?.country.orEmpty().uppercase() == code
-                                    }
-                                    TextButton(
-                                        onClick = {
-                                            selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code
-                                        },
-                                        shape = CircleShape,
-                                        colors = if (isSelected) {
-                                            ButtonDefaults.textButtonColors(
-                                                containerColor = MaterialTheme.colorScheme.primary,
-                                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                            )
-                                        } else {
-                                            ButtonDefaults.textButtonColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        },
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
-                                    ) {
-                                        CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
-                                        Spacer(Modifier.width(4.dp))
-                                        ButtonText("$code ($count)")
-                                    }
-                                }
-                            }
-                        }
+                }
+                if (importDialogOpen) {
+                    PlayerImportDialog(
+                        tournamentId = tournamentId,
+                        playerNameOf = { emaId -> playersByEma[emaId]?.displayName },
+                        onChanged = { refresh(force = true) },
+                        onDismiss = { importDialogOpen = false },
+                    )
+                }
+                if (idCardsDialogOpen) {
+                    // The names of the staff saved the last time fill the dialog when they arrive.
+                    var savedStaffNames by remember { mutableStateOf(emptyList<String>()) }
+                    var staffCandidates by remember { mutableStateOf(emptyList<IdCardStaffCandidate>()) }
+                    LaunchedEffect(tournamentId) {
+                        (presenter.loadIdCardStaffNames(tournamentId) as? AppResult.Success)?.let { savedStaffNames = it.value }
                     }
-                }
-                if (players.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.People, stringResource(Res.string.no_players_yet), stringResource(Res.string.no_generated_players), compact = true)
-                }
-                if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_tournament_players_match), compact = true)
-                }
-                val compact = LocalCompactLayout.current
-                // The column of the button that opens the tables, the same in the header and in every row.
-                val anyRoundTables = roundTablesByPlayerId.isNotEmpty()
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val tablesToggleLabel = !compact && maxWidth >= TablesToggleLabelMinWidth
-                val tablesToggleWidth = if (tablesToggleLabel) TablesToggleLabeledWidth else TablesToggleIconWidth
-                Column(Modifier.fillMaxWidth()) {
-                    if (!compact) {
-                        DataTableHeaderRow {
-                            TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
-                            TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
-                            TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
-                            TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
-                            // The name and the team at the left. The space that is left over stays before the menu.
-                            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                TournamentPlayerHeader(stringResource(Res.string.name), TournamentPlayerNameModifier(), TextAlign.Start)
-                                if (isTeamsTournament) {
-                                    TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier(), TextAlign.Start)
-                                }
-                            }
-                            if (anyRoundTables) {
-                                TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(tablesToggleWidth))
-                            }
-                            Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
-                        }
+                    LaunchedEffect(tournamentId) {
+                        (presenter.loadIdCardStaffCandidates(tournamentId) as? AppResult.Success)?.let { staffCandidates = it.value }
                     }
-                    DataTableDivider()
-                    LazyColumnWithScrollbar(
-                        state = assignmentsListState,
-                        scrollbar = MtsScrollbar.Margin,
-                        modifier = Modifier.weight(1f, fill = false),
-                    ) {
-                        items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
-                            val slot = filteredPlayers[index]
-                            val assigned = slot.assignedEmaId?.let(playersByEma::get)
-                            val playerCountry = assigned?.country.orEmpty()
-                            val playerName = assigned?.displayName
-                            val roundTables = roundTablesByPlayerId[slot.id].orEmpty()
-                            DataTableRow(
-                                // A slot with a player is not clickable. The editor must use the menu and Clear to change it.
-                                onClick = if (slot.isAssigned) null else ({ openAssignment(slot.id) }),
-                                clickFocusable = false,
-                                highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
-                            ) {
-                                if (compact) {
-                                    // A phone shows the player in one cell: photo, name, then the other columns as small text.
-                                    TournamentPlayerPhoto(
-                                        photoUrl = assigned?.photoUrl,
-                                        playerName = playerName.orEmpty(),
-                                        columnWidth = TournamentPlayerCompactLeadingWidth,
-                                    )
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(
-                                            text = (assigned?.let { "${it.firstName.trim()} ${it.lastName.trim()}" } ?: stringResource(Res.string.not_assigned)) +
-                                                (slot.substitution?.let { " (${it.label()})" } ?: ""),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = if (assigned == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                                            textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            if (assigned != null) CountryFlag(code = playerCountry)
-                                            Text(
-                                                text = listOfNotNull(
-                                                    "#${slot.id}",
-                                                    assigned?.emaId?.let { "EMA $it" },
-                                                    if (isTeamsTournament) teamNamesById[slot.team] ?: teamLabel(slot.team) else null,
-                                                ).joinToString(" · "),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
+                    IdCardsExportDialog(
+                        savedStaffNames = savedStaffNames,
+                        staffCandidates = staffCandidates,
+                        onExport = { sheet ->
+                            idCardsDialogOpen = false
+                            exportIdCards(sheet)
+                        },
+                        onDismiss = { idCardsDialogOpen = false },
+                    )
+                }
+                SectionCard(container = false) {
+                    if (players.isNotEmpty()) {
+                        HideOnScrollTabs {
+                            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    label = { Text(stringResource(Res.string.search)) },
+                                    singleLine = true,
+                                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                                        {
+                                            IconButton(onClick = {
+                                                searchQuery = ""
+                                                searchFocusRequester.requestFocus()
+                                            }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
+                                        }
+                                    } else {
+                                        null
+                                    },
+                                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                                )
+                                if (tournamentCountryCodes.isNotEmpty()) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        ) {
+                                            tournamentCountryCodes.forEach { code ->
+                                                val isSelected = code in selectedCountryCodes
+                                                val count = players.count { slot ->
+                                                    val assigned = slot.assignedEmaId?.let(playersByEma::get)
+                                                    assigned?.country.orEmpty().uppercase() == code
+                                                }
+                                                TextButton(
+                                                    onClick = {
+                                                        selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code
+                                                    },
+                                                    shape = CircleShape,
+                                                    colors = if (isSelected) {
+                                                        ButtonDefaults.textButtonColors(
+                                                            containerColor = MaterialTheme.colorScheme.primary,
+                                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                        )
+                                                    } else {
+                                                        ButtonDefaults.textButtonColors(
+                                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        )
+                                                    },
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
+                                                ) {
+                                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
+                                                    Spacer(Modifier.width(4.dp))
+                                                    ButtonText("$code ($count)")
+                                                }
+                                            }
                                         }
                                     }
-                                } else {
-                                    Text(
-                                        text = slot.id.toString(),
-                                        modifier = Modifier.width(TournamentPlayerIdColumnWidth),
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Text(
-                                        assigned?.emaId ?: "—",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Box(
-                                        modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        // An empty slot has no flag. A player without country shows the globe of the guests.
-                                        if (assigned != null) CountryFlag(code = playerCountry)
+                                }
+                            }
+                        }
+                    }
+                    if (players.isEmpty() && !loading) {
+                        AppEmptyState(Icons.Default.People, stringResource(Res.string.no_players_yet), stringResource(Res.string.no_generated_players), compact = true)
+                    }
+                    if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
+                        AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_tournament_players_match), compact = true)
+                    }
+                    val compact = LocalCompactLayout.current
+                    // The column of the button that opens the tables, the same in the header and in every row.
+                    val anyRoundTables = roundTablesByPlayerId.isNotEmpty()
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val tablesToggleLabel = !compact && maxWidth >= TablesToggleLabelMinWidth
+                    val tablesToggleWidth = if (tablesToggleLabel) TablesToggleLabeledWidth else TablesToggleIconWidth
+                    Column(Modifier.fillMaxWidth()) {
+                        if (!compact) {
+                            DataTableHeaderRow {
+                                TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
+                                TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
+                                TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
+                                TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
+                                // The name and the team at the left. The space that is left over stays before the menu.
+                                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    TournamentPlayerHeader(stringResource(Res.string.name), TournamentPlayerNameModifier(), TextAlign.Start)
+                                    if (isTeamsTournament) {
+                                        TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier(), TextAlign.Start)
                                     }
-                                    Box(
-                                        modifier = Modifier
-                                            .width(TournamentPlayerPhotoColumnWidth)
-                                            .height(TournamentPlayerPhotoSize),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
+                                }
+                                if (anyRoundTables) {
+                                    TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(tablesToggleWidth))
+                                }
+                                Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
+                            }
+                        }
+                        DataTableDivider()
+                        LazyColumnWithScrollbar(
+                            state = assignmentsListState,
+                            scrollbar = MtsScrollbar.Margin,
+                            modifier = Modifier.weight(1f, fill = false),
+                        ) {
+                            items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
+                                val slot = filteredPlayers[index]
+                                val assigned = slot.assignedEmaId?.let(playersByEma::get)
+                                val playerCountry = assigned?.country.orEmpty()
+                                val playerName = assigned?.displayName
+                                val roundTables = roundTablesByPlayerId[slot.id].orEmpty()
+                                DataTableRow(
+                                    // A slot with a player is not clickable. The editor must use the menu and Clear to change it.
+                                    onClick = if (slot.isAssigned) null else ({ openAssignment(slot.id) }),
+                                    clickFocusable = false,
+                                    highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
+                                ) {
+                                    if (compact) {
+                                        // A phone shows the player in one cell: photo, name, then the other columns as small text.
                                         TournamentPlayerPhoto(
                                             photoUrl = assigned?.photoUrl,
                                             playerName = playerName.orEmpty(),
-                                            columnWidth = TournamentPlayerPhotoColumnWidth,
+                                            columnWidth = TournamentPlayerCompactLeadingWidth,
                                         )
-                                    }
-                                    // The name and the team at the left. The space that is left over stays before the menu.
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                    // The whole name on one line. A very long name wraps to a second line.
-                                    Text(
-                                        if (assigned == null) {
-                                            stringResource(Res.string.not_assigned)
-                                        } else {
-                                            assigned.firstName.trim() + " " + assigned.lastName.trim()
-                                        } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
-                                        modifier = TournamentPlayerNameModifier(),
-                                        textAlign = TextAlign.Start,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    if (isTeamsTournament) {
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = (assigned?.let { "${it.firstName.trim()} ${it.lastName.trim()}" } ?: stringResource(Res.string.not_assigned)) +
+                                                    (slot.substitution?.let { " (${it.label()})" } ?: ""),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = if (assigned == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                                                textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                if (assigned != null) CountryFlag(code = playerCountry)
+                                                Text(
+                                                    text = listOfNotNull(
+                                                        "#${slot.id}",
+                                                        assigned?.emaId?.let { "EMA $it" },
+                                                        if (isTeamsTournament) teamNamesById[slot.team] ?: teamLabel(slot.team) else null,
+                                                    ).joinToString(" · "),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        }
+                                    } else {
                                         Text(
-                                            text = teamNamesById[slot.team] ?: teamLabel(slot.team),
+                                            text = slot.id.toString(),
+                                            modifier = Modifier.width(TournamentPlayerIdColumnWidth),
+                                            textAlign = TextAlign.Center,
+                                        )
+                                        Text(
+                                            assigned?.emaId ?: "—",
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = TournamentPlayerTeamModifier(),
+                                            modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
+                                            textAlign = TextAlign.Center,
+                                        )
+                                        Box(
+                                            modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            // An empty slot has no flag. A player without country shows the globe of the guests.
+                                            if (assigned != null) CountryFlag(code = playerCountry)
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .width(TournamentPlayerPhotoColumnWidth)
+                                                .height(TournamentPlayerPhotoSize),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            TournamentPlayerPhoto(
+                                                photoUrl = assigned?.photoUrl,
+                                                playerName = playerName.orEmpty(),
+                                                columnWidth = TournamentPlayerPhotoColumnWidth,
+                                            )
+                                        }
+                                        // The name and the team at the left. The space that is left over stays before the menu.
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                        // The whole name on one line. A very long name wraps to a second line.
+                                        Text(
+                                            if (assigned == null) {
+                                                stringResource(Res.string.not_assigned)
+                                            } else {
+                                                assigned.firstName.trim() + " " + assigned.lastName.trim()
+                                            } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
+                                            modifier = TournamentPlayerNameModifier(),
                                             textAlign = TextAlign.Start,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                         )
-                                    }
-                                    }
-                                }
-                                // The tables of every round open under the player. They start closed, so the list stays short.
-                                if (anyRoundTables) {
-                                    Box(Modifier.width(tablesToggleWidth), contentAlignment = Alignment.Center) {
-                                    if (roundTables.isNotEmpty()) {
-                                    PlayerRoundTablesToggle(
-                                        expanded = slot.id in expandedTablesSlotIds,
-                                        showLabel = tablesToggleLabel,
-                                        onToggle = {
-                                            expandedTablesSlotIds = if (slot.id in expandedTablesSlotIds) {
-                                                expandedTablesSlotIds - slot.id
-                                            } else {
-                                                expandedTablesSlotIds + slot.id
-                                            }
-                                        },
-                                    )
-                                    }
-                                    }
-                                }
-                                Box(
-                                    modifier = if (compact) Modifier else Modifier.width(TournamentPlayerActionColumnWidth),
-                                    contentAlignment = Alignment.CenterEnd,
-                                ) {
-                                    if (!slot.isAssigned) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(MaterialTheme.shapes.small)
-                                                .background(
-                                                    if (focusedAssignRowIndex == index) {
-                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                                    } else {
-                                                        androidx.compose.ui.graphics.Color.Transparent
-                                                    },
-                                                )
-                                                .padding(3.dp),
-                                        ) {
-                                            Button(
-                                                enabled = !loading && savingId == null,
-                                                onClick = { openAssignment(slot.id) },
-                                                modifier = Modifier
-                                                    .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
-                                                    .onFocusChanged {
-                                                        focusedAssignRowIndex = if (it.isFocused) index else null
-                                                    }
-                                                    .onPreviewKeyEvent { event ->
-                                                        if (event.type != KeyEventType.KeyDown) {
-                                                            return@onPreviewKeyEvent false
-                                                        }
-                                                        when (event.key) {
-                                                            Key.DirectionLeft, Key.DirectionRight -> true
-                                                            Key.DirectionUp -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
-                                                                true
-                                                            }
-                                                            Key.DirectionDown -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
-                                                                true
-                                                            }
-                                                            else -> false
-                                                        }
-                                                    },
-                                            ) { ButtonText(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
+                                        if (isTeamsTournament) {
+                                            Text(
+                                                text = teamNamesById[slot.team] ?: teamLabel(slot.team),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = TournamentPlayerTeamModifier(),
+                                                textAlign = TextAlign.Start,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
                                         }
                                     }
-                                    if (slot.isAssigned) {
-                                        var actionsMenuOpen by remember { mutableStateOf(false) }
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(MaterialTheme.shapes.small)
-                                                .background(
-                                                    if (focusedClearRowIndex == index) {
-                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                                    } else {
-                                                        androidx.compose.ui.graphics.Color.Transparent
-                                                    },
-                                                )
-                                                .padding(3.dp),
-                                        ) {
-                                            IconButton(
-                                                enabled = !loading && savingId == null,
-                                                onClick = { actionsMenuOpen = true },
+                                    // The tables of every round open under the player. They start closed, so the list stays short.
+                                    if (anyRoundTables) {
+                                        Box(Modifier.width(tablesToggleWidth), contentAlignment = Alignment.Center) {
+                                        if (roundTables.isNotEmpty()) {
+                                        PlayerRoundTablesToggle(
+                                            expanded = slot.id in expandedTablesSlotIds,
+                                            showLabel = tablesToggleLabel,
+                                            onToggle = {
+                                                expandedTablesSlotIds = if (slot.id in expandedTablesSlotIds) {
+                                                    expandedTablesSlotIds - slot.id
+                                                } else {
+                                                    expandedTablesSlotIds + slot.id
+                                                }
+                                            },
+                                        )
+                                        }
+                                        }
+                                    }
+                                    Box(
+                                        modifier = if (compact) Modifier else Modifier.width(TournamentPlayerActionColumnWidth),
+                                        contentAlignment = Alignment.CenterEnd,
+                                    ) {
+                                        if (!slot.isAssigned) {
+                                            Box(
                                                 modifier = Modifier
-                                                    .focusRequester(clearFocusRequesters[filteredPlayerIndexes[index]])
-                                                    .onFocusChanged {
-                                                        focusedClearRowIndex = if (it.isFocused) index else null
-                                                    }
-                                                    .onPreviewKeyEvent { event ->
-                                                        if (event.type != KeyEventType.KeyDown) {
-                                                            return@onPreviewKeyEvent false
-                                                        }
-                                                        when (event.key) {
-                                                            Key.DirectionLeft, Key.DirectionRight -> true
-                                                            Key.DirectionUp -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
-                                                                true
-                                                            }
-                                                            Key.DirectionDown -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
-                                                                true
-                                                            }
-                                                            else -> false
-                                                        }
-                                                    },
-                                            ) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.player_actions)) }
-                                            DropdownMenu(
-                                                expanded = actionsMenuOpen,
-                                                onDismissRequest = { actionsMenuOpen = false },
+                                                    .clip(MaterialTheme.shapes.small)
+                                                    .background(
+                                                        if (focusedAssignRowIndex == index) {
+                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                                        } else {
+                                                            androidx.compose.ui.graphics.Color.Transparent
+                                                        },
+                                                    )
+                                                    .padding(3.dp),
                                             ) {
-                                                DropdownMenuItem(
-                                                    text = { Text(stringResource(Res.string.clear)) },
-                                                    onClick = {
-                                                        actionsMenuOpen = false
-                                                        openClearAssignment(slot.id)
-                                                    },
-                                                )
-                                                val accountActionsEnabled = !accountBusy && !loading && savingId == null
-                                                // Invitations and reminders go out from the Invitations dialog only. The menu keeps the edit
-                                                // of the email, because that dialog asks only for the emails that are missing.
-                                                if (slot.isAssigned && !slot.hasAccount) {
-                                                    DropdownMenuItem(
-                                                        enabled = accountActionsEnabled,
-                                                        text = { Text(stringResource(Res.string.edit_email)) },
-                                                        onClick = {
-                                                            actionsMenuOpen = false
-                                                            emailSlotId = slot.id
+                                                Button(
+                                                    enabled = !loading && savingId == null,
+                                                    onClick = { openAssignment(slot.id) },
+                                                    modifier = Modifier
+                                                        .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
+                                                        .onFocusChanged {
+                                                            focusedAssignRowIndex = if (it.isFocused) index else null
+                                                        }
+                                                        .onPreviewKeyEvent { event ->
+                                                            if (event.type != KeyEventType.KeyDown) {
+                                                                return@onPreviewKeyEvent false
+                                                            }
+                                                            when (event.key) {
+                                                                Key.DirectionLeft, Key.DirectionRight -> true
+                                                                Key.DirectionUp -> {
+                                                                    requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
+                                                                    true
+                                                                }
+                                                                Key.DirectionDown -> {
+                                                                    requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
+                                                                    true
+                                                                }
+                                                                else -> false
+                                                            }
+                                                        },
+                                                ) { ButtonText(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
+                                            }
+                                        }
+                                        if (slot.isAssigned) {
+                                            var actionsMenuOpen by remember { mutableStateOf(false) }
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(MaterialTheme.shapes.small)
+                                                    .background(
+                                                        if (focusedClearRowIndex == index) {
+                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                                        } else {
+                                                            androidx.compose.ui.graphics.Color.Transparent
                                                         },
                                                     )
-                                                }
-                                                // Super admins and club admins edit an account. The edit dialog has the button to reset the password.
-                                                val accountUid = slot.accountUid
-                                                if (canEditAccounts && slot.hasAccount && accountUid != null) {
+                                                    .padding(3.dp),
+                                            ) {
+                                                IconButton(
+                                                    enabled = !loading && savingId == null,
+                                                    onClick = { actionsMenuOpen = true },
+                                                    modifier = Modifier
+                                                        .focusRequester(clearFocusRequesters[filteredPlayerIndexes[index]])
+                                                        .onFocusChanged {
+                                                            focusedClearRowIndex = if (it.isFocused) index else null
+                                                        }
+                                                        .onPreviewKeyEvent { event ->
+                                                            if (event.type != KeyEventType.KeyDown) {
+                                                                return@onPreviewKeyEvent false
+                                                            }
+                                                            when (event.key) {
+                                                                Key.DirectionLeft, Key.DirectionRight -> true
+                                                                Key.DirectionUp -> {
+                                                                    requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
+                                                                    true
+                                                                }
+                                                                Key.DirectionDown -> {
+                                                                    requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
+                                                                    true
+                                                                }
+                                                                else -> false
+                                                            }
+                                                        },
+                                                ) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.player_actions)) }
+                                                DropdownMenu(
+                                                    expanded = actionsMenuOpen,
+                                                    onDismissRequest = { actionsMenuOpen = false },
+                                                ) {
                                                     DropdownMenuItem(
-                                                        enabled = accountActionsEnabled,
-                                                        text = { Text(stringResource(Res.string.edit_account)) },
+                                                        text = { Text(stringResource(Res.string.clear)) },
                                                         onClick = {
                                                             actionsMenuOpen = false
-                                                            navController.navigate(UsersRoute(editUid = accountUid))
+                                                            openClearAssignment(slot.id)
                                                         },
                                                     )
-                                                }
-                                                if (tournamentStarted) {
-                                                    DropdownMenuItem(
-                                                        text = { Text(stringResource(if (slot.substitution == null) Res.string.substitute else Res.string.substitution)) },
-                                                        onClick = {
-                                                            actionsMenuOpen = false
-                                                            substitutionSlotId = slot.id
-                                                        },
-                                                    )
+                                                    val accountActionsEnabled = !accountBusy && !loading && savingId == null
+                                                    // Invitations and reminders go out from the Invitations dialog only. The menu keeps the edit
+                                                    // of the email, because that dialog asks only for the emails that are missing.
+                                                    if (slot.isAssigned && !slot.hasAccount) {
+                                                        DropdownMenuItem(
+                                                            enabled = accountActionsEnabled,
+                                                            text = { Text(stringResource(Res.string.edit_email)) },
+                                                            onClick = {
+                                                                actionsMenuOpen = false
+                                                                emailSlotId = slot.id
+                                                            },
+                                                        )
+                                                    }
+                                                    // Super admins and club admins edit an account. The edit dialog has the button to reset the password.
+                                                    val accountUid = slot.accountUid
+                                                    if (canEditAccounts && slot.hasAccount && accountUid != null) {
+                                                        DropdownMenuItem(
+                                                            enabled = accountActionsEnabled,
+                                                            text = { Text(stringResource(Res.string.edit_account)) },
+                                                            onClick = {
+                                                                actionsMenuOpen = false
+                                                                navController.navigate(UsersRoute(editUid = accountUid))
+                                                            },
+                                                        )
+                                                    }
+                                                    if (tournamentStarted) {
+                                                        DropdownMenuItem(
+                                                            text = { Text(stringResource(if (slot.substitution == null) Res.string.substitute else Res.string.substitution)) },
+                                                            onClick = {
+                                                                actionsMenuOpen = false
+                                                                substitutionSlotId = slot.id
+                                                            },
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                                // A second line under the player: the table of every round, side by side.
+                                if (roundTables.isNotEmpty() && slot.id in expandedTablesSlotIds) {
+                                    PlayerRoundTablesStrip(
+                                        roundTables = roundTables,
+                                        titleWidth = if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth,
+                                        modifier = Modifier.padding(bottom = MtsTheme.spacing.sm),
+                                    )
+                                }
+                                DataTableDivider()
                             }
-                            // A second line under the player: the table of every round, side by side.
-                            if (roundTables.isNotEmpty() && slot.id in expandedTablesSlotIds) {
-                                PlayerRoundTablesStrip(
-                                    roundTables = roundTables,
-                                    titleWidth = if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth,
-                                    modifier = Modifier.padding(bottom = MtsTheme.spacing.sm),
-                                )
-                            }
-                            DataTableDivider()
                         }
                     }
-                }
+                    }
                 }
             }
         }

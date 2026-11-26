@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -59,11 +60,14 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
@@ -319,52 +323,54 @@ fun ActivityScreen(
             )
         },
     ) {
-        ScreenColumn(
-            maxWidth = 1200.dp,
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
-            // The filters are the first item of the list, so they scroll away with the entries.
-            val filtersBar: @Composable () -> Unit = {
-                ActivityFiltersBar(
-                    searchText = searchText,
-                    onSearchText = { searchText = it },
-                    tournaments = tournaments,
-                    tournamentId = tournamentId,
-                    onTournament = { tournamentId = it },
-                    source = source,
-                    onSource = { sourceName = it.name },
-                    origin = origin,
-                    onOrigin = { originName = it?.name },
-                    fromMillis = fromMillis,
-                    toMillis = toMillis,
-                    onPickPeriod = { periodPicker = it },
-                    onClearPeriod = {
-                        fromMillis = null
-                        toMillis = null
-                    },
-                    personName = if (personUid == null) null else personName ?: personUid,
-                    onClearPerson = {
-                        personUid = null
-                        personName = null
+        HideOnScrollArea {
+            ScreenColumn(
+                maxWidth = 1200.dp,
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
+                // The filters hide when the list scrolls down and show when it scrolls up.
+                val filtersBar: @Composable () -> Unit = {
+                    ActivityFiltersBar(
+                        searchText = searchText,
+                        onSearchText = { searchText = it },
+                        tournaments = tournaments,
+                        tournamentId = tournamentId,
+                        onTournament = { tournamentId = it },
+                        source = source,
+                        onSource = { sourceName = it.name },
+                        origin = origin,
+                        onOrigin = { originName = it?.name },
+                        fromMillis = fromMillis,
+                        toMillis = toMillis,
+                        onPickPeriod = { periodPicker = it },
+                        onClearPeriod = {
+                            fromMillis = null
+                            toMillis = null
+                        },
+                        personName = if (personUid == null) null else personName ?: personUid,
+                        onClearPerson = {
+                            personUid = null
+                            personName = null
+                        },
+                    )
+                }
+                ActivityTable(
+                    filters = filtersBar,
+                    loadedCount = entries.size,
+                    entries = entries,
+                    showEmpty = !loading,
+                    rowFocusRequesters = rowFocusRequesters,
+                    hasMore = nextCursor != null,
+                    loading = loading,
+                    onLoadMore = { scope.launch { loadPage(nextCursor) } },
+                    onOpen = {
+                        restoreEntryId = it.id
+                        openEntryId = it.id
                     },
                 )
             }
-            ActivityTable(
-                filters = filtersBar,
-                loadedCount = entries.size,
-                entries = entries,
-                showEmpty = !loading,
-                rowFocusRequesters = rowFocusRequesters,
-                hasMore = nextCursor != null,
-                loading = loading,
-                onLoadMore = { scope.launch { loadPage(nextCursor) } },
-                onOpen = {
-                    restoreEntryId = it.id
-                    openEntryId = it.id
-                },
-            )
         }
     }
 
@@ -557,7 +563,7 @@ private fun shortDateTime(millis: Long): String {
 }
 
 @Composable
-private fun ActivityTable(
+private fun ColumnScope.ActivityTable(
     filters: @Composable () -> Unit,
     loadedCount: Int,
     entries: List<ActivityEntry>,
@@ -569,11 +575,14 @@ private fun ActivityTable(
     onOpen: (ActivityEntry) -> Unit,
 ) {
     val compact = LocalCompactLayout.current
+    val listState = rememberPersistentLazyListState("activity")
+    ShowTabsAtTop(listState)
+    // The filters hide when the list scrolls down and show when it scrolls up or is back at its top.
+    HideOnScrollTabs { filters() }
     LazyColumnWithScrollbar(
-        state = rememberPersistentLazyListState("activity"),
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+        state = listState,
+        modifier = Modifier.fillMaxWidth().weight(1f).appFocusGroup(),
     ) {
-        item(key = "filters") { filters() }
         item(key = "title") {
             Column(Modifier.padding(top = MtsTheme.spacing.lg, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(Res.string.app_activity), style = MaterialTheme.typography.titleMedium)

@@ -80,6 +80,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationL
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TopBarButtonsLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
@@ -98,6 +104,7 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.clear_search
@@ -238,79 +245,90 @@ fun OrganizationsScreen(navController: NavHostController) {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 1200.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
-            val countryNameOf = rememberCountryNames()
-            SectionCard(container = false) {
-                val all = organizations
-                val countryCodes = all.orEmpty().map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
-                val query = searchQuery.trim()
-                val list = all?.filter { organization ->
-                    (selectedCountryCodes.isEmpty() || organization.country.uppercase() in selectedCountryCodes) &&
-                        (query.isEmpty() || organization.name.contains(query, ignoreCase = true))
-                }
-                if (!all.isNullOrEmpty()) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(Res.string.search)) },
-                        singleLine = true,
-                        trailingIcon = if (searchQuery.isNotEmpty()) {
-                            {
-                                IconButton(onClick = {
-                                    searchQuery = ""
-                                    searchFocusRequester.requestFocus()
-                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
-                            }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
-                    )
-                    if (countryCodes.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            countryCodes.forEach { code ->
-                                val isSelected = code in selectedCountryCodes
-                                val count = all.count { it.country.uppercase() == code }
-                                TextButton(
-                                    onClick = { selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code },
-                                    shape = CircleShape,
-                                    colors = if (isSelected) {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        )
+        // The search and the country filter stay on top and hide when the cards scroll down, and show when they scroll up.
+        HideOnScrollArea {
+            ScreenColumn(maxWidth = 1200.dp, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                val scroll = rememberPersistentScrollState("organizations")
+                ShowTabsAtTop(scroll)
+                error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
+                val countryNameOf = rememberCountryNames()
+                SectionCard(container = false) {
+                    val all = organizations
+                    val countryCodes = all.orEmpty().map { it.country.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
+                    val query = searchQuery.trim()
+                    val list = all?.filter { organization ->
+                        (selectedCountryCodes.isEmpty() || organization.country.uppercase() in selectedCountryCodes) &&
+                            (query.isEmpty() || organization.name.contains(query, ignoreCase = true))
+                    }
+                    if (!all.isNullOrEmpty()) {
+                        HideOnScrollTabs {
+                            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    label = { Text(stringResource(Res.string.search)) },
+                                    singleLine = true,
+                                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                                        {
+                                            IconButton(onClick = {
+                                                searchQuery = ""
+                                                searchFocusRequester.requestFocus()
+                                            }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
+                                        }
                                     } else {
-                                        ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                                        null
                                     },
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
-                                ) {
-                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
-                                    Spacer(Modifier.width(4.dp))
-                                    ButtonText("$code ($count)")
+                                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                                )
+                                if (countryCodes.isNotEmpty()) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().horizontalScrollWithIndicators(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        countryCodes.forEach { code ->
+                                            val isSelected = code in selectedCountryCodes
+                                            val count = all.count { it.country.uppercase() == code }
+                                            TextButton(
+                                                onClick = { selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code },
+                                                shape = CircleShape,
+                                                colors = if (isSelected) {
+                                                    ButtonDefaults.textButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.primary,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    )
+                                                } else {
+                                                    ButtonDefaults.textButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
+                                            ) {
+                                                CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
+                                                Spacer(Modifier.width(4.dp))
+                                                ButtonText("$code ($count)")
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                when {
-                    all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    else -> OrganizationsGrid(list) { organization ->
-                        OrganizationCard(
-                            organization = organization,
-                            details = stringResource(organization.type.labelRes()) + " · " + countryNameOf(organization.country, organization.country),
-                            enabled = !saving && organization.canEdit,
-                            onClick = { editing = OrganizationEditing(organization.id, organization) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                    Column(Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(scroll, MtsScrollbar.Margin)) {
+                        when {
+                            all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            else -> OrganizationsGrid(list) { organization ->
+                                OrganizationCard(
+                                    organization = organization,
+                                    details = stringResource(organization.type.labelRes()) + " · " + countryNameOf(organization.country, organization.country),
+                                    enabled = !saving && organization.canEdit,
+                                    onClick = { editing = OrganizationEditing(organization.id, organization) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                        }
                     }
                 }
             }
