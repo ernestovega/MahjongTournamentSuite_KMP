@@ -913,6 +913,7 @@
     <string name="role_super_admin">Суперадминистратор</string>
     <string name="role_club_admin">Администратор клуба</string>
     <string name="organizations_title">Организации</string>
+    <string name="organizations_button">Клубы</string>
     <string name="organizations_empty">Организаций пока нет.</string>
     <string name="organization_new">Новая организация</string>
     <string name="organization_edit">Изменить организацию</string>

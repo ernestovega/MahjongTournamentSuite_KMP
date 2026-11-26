@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import mahjongtournamentsuite.adminapp.generated.resources.top_bar_new_user
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
@@ -340,21 +339,21 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
+        // One floating button at a time: while accounts are selected on a phone it sends the password reset,
+        // otherwise it creates an account.
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-                    ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                        ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
-                    }
+            AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+                ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                    ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
                 }
-                // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
-                // its organizations, and a super admin any account.
-                if (canCreateUsers) {
-                    ExtendedFloatingActionButton(onClick = { showCreateDialog = true }, modifier = Modifier.focusRequester(addFocusRequester)) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null)
-                        ButtonText(stringResource(Res.string.top_bar_new_user), Modifier.padding(start = 12.dp))
-                    }
+            }
+            // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
+            // its organizations, and a super admin any account.
+            if (canCreateUsers && !showResetFab) {
+                ExtendedFloatingActionButton(onClick = { showCreateDialog = true }, modifier = Modifier.focusRequester(addFocusRequester)) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = null)
+                    ButtonText(stringResource(Res.string.top_bar_new_user), Modifier.padding(start = 12.dp))
                 }
             }
         },

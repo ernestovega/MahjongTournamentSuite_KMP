@@ -55,15 +55,19 @@ export async function loadAccountScope(access: Access): Promise<AccountScope> {
     };
   }
   const memberIds = access.editor ? await memberTournamentIds(access.uid) : new Set<string>();
-  const manageTournamentIds = await organizationTournamentIds(access.adminOrganizations);
-  const tournamentIds = new Set([...memberIds, ...manageTournamentIds]);
+  const clubTournamentIds = await organizationTournamentIds(access.adminOrganizations);
+  // A club admin whose role or own changes leave out the staff permission sees the staff of its clubs, but changes none.
+  const managesStaff = access.rolePermissions.CLUB_ADMIN.has("accounts.manageStaff");
+  const manageOrganizations: ReadonlySet<string> = managesStaff ? access.adminOrganizations : new Set();
+  const manageTournamentIds: ReadonlySet<string> = managesStaff ? clubTournamentIds : new Set();
+  const tournamentIds = new Set([...memberIds, ...clubTournamentIds]);
   const organizations = new Set([...access.adminOrganizations, ...(await organizersOfTournaments(memberIds))]);
   return {
     superAdmin: false,
     uid: access.uid,
     tournamentIds,
     organizations,
-    manageOrganizations: access.adminOrganizations,
+    manageOrganizations,
     manageTournamentIds,
     emaIdsWithEmail: await seatedEmaIds(tournamentIds),
   };
