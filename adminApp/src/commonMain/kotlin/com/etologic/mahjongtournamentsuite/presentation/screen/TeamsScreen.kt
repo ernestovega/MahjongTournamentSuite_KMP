@@ -729,7 +729,7 @@ private fun PlayerPickerDialog(
                         )
                     } else {
                         Box(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
-                            LazyColumnWithScrollbar(state = listState) {
+                            LazyColumnWithScrollbar(state = listState, inDialog = true) {
                                 itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { _, player ->
                                     val assignedSlot = slotsByEma[player.emaId]
                                     val assignedTeam = assignedSlot?.let {

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
@@ -387,7 +386,7 @@ internal fun StatisticsFiltersDialog(
             title = { MtsDialogTitle(stringResource(Res.string.stats_filters_title)) },
             text = {
                 Column(
-                    Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState()),
+                    Modifier.fillMaxWidth().dialogVerticalScroll(),
                     verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                 ) {
                     SelectField(

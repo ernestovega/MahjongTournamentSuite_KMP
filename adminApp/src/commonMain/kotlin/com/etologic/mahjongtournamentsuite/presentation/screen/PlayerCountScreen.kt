@@ -87,6 +87,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackH
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
@@ -785,9 +787,11 @@ internal fun ColumnScope.TeamsContent(
     val dropTeam = dragPointer?.let { pointer -> teamBounds.entries.firstOrNull { it.value.contains(pointer) }?.key }
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountTeams"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountTeams"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         SectionTitle(stringResource(Res.string.pc_teams_title))
         Text(
@@ -947,9 +951,11 @@ internal fun ColumnScope.ReviewContent(
     var showDrawExplanation by remember { mutableStateOf(false) }
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountConfirm"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountConfirm"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.pc_confirm_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -1097,9 +1103,11 @@ internal fun ColumnScope.DoneContent(
 ) {
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountDone"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountDone"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.pc_done_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)

@@ -71,8 +71,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -624,7 +624,7 @@ internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) 
                         textAlign = TextAlign.Center,
                     )
                     Column(
-                        Modifier.weight(1f, fill = false).verticalScrollWithIndicators(rememberScrollState()),
+                        Modifier.weight(1f, fill = false).dialogVerticalScroll(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Text(

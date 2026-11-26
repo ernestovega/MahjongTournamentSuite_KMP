@@ -561,7 +561,7 @@ private fun ErrorGroupDialog(
             title = { Text(group?.errorType.orEmpty(), Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) },
             text = {
                 val scroll = rememberScrollState()
-                ScrollableColumnWithScrollbar(state = scroll, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+                ScrollableColumnWithScrollbar(state = scroll, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp), inDialog = true) {
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (group != null) ErrorGroupFacts(group, now)
                         val loaded = detail

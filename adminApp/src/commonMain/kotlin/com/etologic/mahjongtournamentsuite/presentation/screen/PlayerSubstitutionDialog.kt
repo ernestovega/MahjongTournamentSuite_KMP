@@ -29,8 +29,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRo
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -80,7 +80,7 @@ fun PlayerSubstitutionDialog(
             title = { MtsDialogTitle(stringResource(Res.string.substitution), subtitle = playerName) },
             // The same gap between the sections, and the same height for every radio and checkbox line.
             text = {
-                Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
                     Text(
                         stringResource(Res.string.substitution_explanation),
                         Modifier.fillMaxWidth(),
