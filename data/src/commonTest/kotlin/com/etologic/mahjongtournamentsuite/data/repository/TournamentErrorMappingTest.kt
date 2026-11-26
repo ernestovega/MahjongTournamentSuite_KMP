@@ -152,6 +152,39 @@ class TournamentErrorMappingTest {
     }
 
     @Test
+    fun theManifestReadsEveryRevisionThatComes() {
+        val names = listOf("tables", "players", "teams", "rounds", "members")
+        val globals = listOf("tournaments", "emaPlayers", "countries", "users")
+        val manifest = DataVersionsManifestDto(
+            resources = names.mapIndexed { index, name -> name to DataVersionDto(index + 1L) }.toMap(),
+            globalResources = globals.mapIndexed { index, name -> name to DataVersionDto(index + 10L) }.toMap(),
+        ).toDomain()
+
+        assertEquals(
+            listOf(1L, 2L, 3L, 4L, 5L, 10L, 11L, 12L, 13L),
+            with(manifest) {
+                listOf(
+                    tablesRevision, playersRevision, teamsRevision, roundsRevision, membersRevision,
+                    tournamentsRevision, emaPlayersRevision, countriesRevision, usersRevision,
+                )
+            },
+        )
+    }
+
+    @Test
+    fun aTableConflictWithoutTheServerCopyHasNoTable() {
+        val json = Json { ignoreUnknownKeys = true }
+
+        val conflict = assertIs<AppError.Conflict>(http(HttpStatusCode.Conflict, """{"details":{"expectedVersion":3}}""").toTableSaveError(json))
+
+        assertEquals(3L, conflict.expectedVersion)
+        assertNull(conflict.currentTable)
+        assertEquals(emptyList(), conflict.currentHands)
+        assertIs<AppError.Unexpected>(IllegalStateException("x").toTableSaveError(json))
+        assertIs<AppError.Unexpected>(IllegalStateException("x").toPlayerChangeError())
+    }
+
+    @Test
     fun aSubstitutionWithAnUnknownReasonIsNone() {
         assertEquals(
             PlayerSubstitution(SubstitutionReason.LATE, 2, duringSession = true, excludedFromEma = false),
