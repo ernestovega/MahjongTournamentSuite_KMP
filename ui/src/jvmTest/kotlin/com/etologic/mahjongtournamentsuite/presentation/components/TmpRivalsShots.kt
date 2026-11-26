@@ -41,7 +41,7 @@ class TmpRivalsShots {
                 setContent {
                     MtsTheme(useDarkTheme = dark) {
                         Box(Modifier.testTag("shot").background(MaterialTheme.colorScheme.background).width(w.dp).padding(16.dp)) {
-                            Column { RivalsCard(stats, names, Modifier, onCompareRival = {}, design = design) }
+                            androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.background) { Column { RivalsCard(stats, names, Modifier, onCompareRival = {}, design = design) } }
                         }
                     }
                 }

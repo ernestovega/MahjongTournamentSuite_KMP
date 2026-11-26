@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -340,20 +341,27 @@ internal fun RivalsCard(
 /** The design of the rivals while Ernesto chooses: 1 small numbers with their labels, 2 a table with one header. */
 internal var RivalsDesign = 1
 
-/** Six small numbers, each with its label above. Three columns on a narrow card, six on a wide one. */
+/** Six small numbers, each with its label above: in one row on a wide card, in two rows of three on a narrow one. */
 @Composable
 private fun RivalSmallNumbers(labels: List<String>, values: List<String>) {
-    StatGrid(Modifier.fillMaxWidth(), minCellWidth = 72.dp, maxCellWidth = 160.dp, gap = 8.dp) {
-        labels.zip(values).forEach { (label, value) ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    minLines = 2,
-                )
-                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val perRow = if (maxWidth >= 6 * 72.dp) 6 else 3
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            labels.zip(values).chunked(perRow).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    row.forEach { (label, value) ->
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                minLines = 2,
+                            )
+                            Text(value, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
     }
@@ -367,7 +375,7 @@ private fun RivalNumbersRow(cells: List<String>, header: Boolean) {
             Text(
                 cell,
                 Modifier.weight(1f),
-                style = if (header) MaterialTheme.typography.labelSmall else MaterialTheme.typography.titleMedium,
+                style = if (header) MaterialTheme.typography.labelSmall else MaterialTheme.typography.titleMedium.inTextFont(),
                 fontWeight = if (header) null else FontWeight.Bold,
                 color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
                 textAlign = TextAlign.Center,
