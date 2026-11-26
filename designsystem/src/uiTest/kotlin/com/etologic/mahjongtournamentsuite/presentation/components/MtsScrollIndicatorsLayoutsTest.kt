@@ -21,7 +21,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.dragAndDrop
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
@@ -45,9 +46,9 @@ class MtsScrollIndicatorsLayoutsTest {
             }
         }
         waitForIdle()
-        onNodeWithTag("box").performTouchInput {
+        onNodeWithTag("box").performMouseInput {
             val x = width - 3f
-            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+            dragAndDrop(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
         }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 200, "The grid is at ${state.firstVisibleItemIndex}")
@@ -66,7 +67,7 @@ class MtsScrollIndicatorsLayoutsTest {
             }
         }
         waitForIdle()
-        onNodeWithTag("box").performTouchInput { click(Offset(width - 3f, height - 2f)) }
+        onNodeWithTag("box").performMouseInput { click(Offset(width - 3f, height - 2f)) }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 300, "The grid is at ${state.firstVisibleItemIndex}")
     }

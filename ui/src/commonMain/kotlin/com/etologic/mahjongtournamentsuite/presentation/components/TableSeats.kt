@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -331,6 +332,8 @@ fun TableSeatsView(
      * hands that arrive while it is open, and leaves it off for the first load.
      */
     animateScoreChanges: Boolean = false,
+    /** Before the round starts the players are a plain list, not seats around the table (Ernesto, 2026-11-26). */
+    asList: Boolean = false,
     onPlayerClick: (Int) -> Unit = {},
 ) {
     require(seats.size == 4) { "A table has four seats." }
@@ -368,6 +371,8 @@ fun TableSeatsView(
         // A finished table is a list from the first place to the last, with the points of each player (Ernesto, 2026-11-25).
         if (showPoints) {
             SeatsPodium(placed, onPlayerClick)
+        } else if (asList) {
+            SeatsList(placed, onPlayerClick)
         } else {
             SeatsCross(placed, diffs, centerLabel, showDiffs && diffsAvailable, animateScoreChanges, onPlayerClick)
         }
@@ -506,6 +511,43 @@ private fun SeatCard(
         }
     }
 }
+
+/**
+ * The players of a table whose round has not started: one card per player, one under the other, with the flag, the
+ * number and the name. The wind shows first once the seats are chosen.
+ */
+@Composable
+private fun SeatsList(placed: List<PlacedSeat>, onPlayerClick: (Int) -> Unit) {
+    Column(Modifier.fillMaxWidth().testTag(SEATS_LIST_TAG), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        // In the order of the seats once they are known (East first), else in the order of the draw.
+        val ordered = if (placed.all { it.wind != null }) placed.sortedBy { it.wind!!.ordinal } else placed
+        ordered.forEach { item ->
+            val seat = item.seat
+            SeatCardFrame(seat, Modifier.fillMaxWidth(), onPlayerClick) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+                ) {
+                    item.wind?.let { WindIcon(it, size = 22.dp) }
+                    PlayerFlagAndNumber(seat.country, seat.slotId)
+                    SeatLevelMedal(seat)
+                    Text(
+                        seat.name,
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** The test tag of the list of the players of a table whose round has not started. */
+const val SEATS_LIST_TAG = "seatsList"
 
 /** The card of a player: white, with a green border for the viewer. A tap opens the player. */
 @Composable

@@ -196,6 +196,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                         // The time left of the round is at the top left, above the seats.
                         leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
                         animateScoreChanges = change != null,
+                        asList = !complete && view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED,
                         // On a table that takes hands, a tap on a player starts a hand won by that player.
                         onPlayerClick = { slot ->
                             if (view.canAddHands(table, now)) {

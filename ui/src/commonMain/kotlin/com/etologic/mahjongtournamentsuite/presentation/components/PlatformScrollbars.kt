@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /**
- * A vertical lazy list with the fading edges and an always visible scrollbar beside it, outside the rows
+ * A vertical lazy list with the fading edges and a scrollbar that shows while it scrolls, outside the rows
  * ([scrollIndicators]).
  */
 @Composable
@@ -51,7 +51,7 @@ fun LazyColumnWithScrollbar(
     }
 }
 
-/** A scrollable column with the fading edges and an always visible scrollbar beside it ([scrollIndicators]). */
+/** A scrollable column with the fading edges and a scrollbar that shows while it scrolls ([scrollIndicators]). */
 @Composable
 fun ScrollableColumnWithScrollbar(
     state: ScrollState,

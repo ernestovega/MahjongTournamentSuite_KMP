@@ -12,9 +12,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -71,12 +73,14 @@ class TableListUiTest {
     fun draggingTheThumbGoesThroughTheWholeTournament() = runComposeUiTest {
         show()
         // Rounds and cards have different heights, so the thumb must keep its size and the drag must not stop halfway.
+        // The scrollbar shows while the list scrolls (2026-11-26).
+        showTheScrollbar()
         onNodeWithTag(DRAGGABLE_SCROLLBAR_TAG).performTouchInput {
             down(center)
             repeat(40) { moveBy(Offset(0f, 25f)) }
             up()
         }
-        waitForIdle()
+        letTheClockRun()
         onNodeWithText("Round 6").assertIsDisplayed()
         onNodeWithText("Table 10").assertIsDisplayed()
     }
@@ -102,5 +106,18 @@ class TableListUiTest {
         onAllNodesWithText("Table 7").onFirst().assertIsDisplayed()
         onNodeWithText("Table 1").assertDoesNotExist()
         onNodeWithText("Table 6").assertDoesNotExist()
+    }
+
+    /** A short swipe on the list, so its scrollbar shows. The clock then waits for the test, so it does not hide again. */
+    private fun ComposeUiTest.showTheScrollbar() {
+        mainClock.autoAdvance = false
+        onRoot().performTouchInput { swipe(Offset(10f, 300f), Offset(10f, 200f), durationMillis = 100) }
+        mainClock.advanceTimeBy(200)
+    }
+
+    /** Lets the clock run by itself again and waits for the list to settle. */
+    private fun ComposeUiTest.letTheClockRun() {
+        mainClock.autoAdvance = true
+        waitForIdle()
     }
 }

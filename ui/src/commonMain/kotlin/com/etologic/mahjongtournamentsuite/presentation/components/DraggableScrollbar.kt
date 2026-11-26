@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -32,7 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -40,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
@@ -90,7 +95,8 @@ internal fun scrollbarTargetIndex(fraction: Float, totalItems: Int, visibleItems
 }
 
 /**
- * A scrollbar for every platform that is always visible while the list can scroll. The thumb is big enough for a
+ * A scrollbar for every platform that shows while the list scrolls and fades out a moment after it stops (Ernesto,
+ * 2026-11-26: the fading edges already say that there is more). The thumb is big enough for a
  * finger: a drag on it, or anywhere in its strip, moves the list fast. A tap in the strip jumps there.
  * The list keeps its fading edges with `Modifier.scrollIndicators(state, scrollbar = MtsScrollbar.None)`.
  * While the person drags, [label] can show a text next to the thumb, for example the round of the first visible item.
@@ -122,6 +128,21 @@ fun DraggableScrollbar(
     var dragFraction by remember { mutableStateOf(0f) }
     var dragThumbPx by remember { mutableStateOf(0f) }
     var target by remember { mutableStateOf<Float?>(null) }
+    // Shown while the list scrolls or the thumb is dragged, hidden a moment after. Hidden, it takes no press.
+    var shown by remember { mutableStateOf(false) }
+    // A mouse over the shown scrollbar keeps it, so it can be taken after a turn of the wheel.
+    var hovered by remember { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        snapshotFlow { state.isScrollInProgress || dragging || hovered }.collectLatest { moving ->
+            if (moving) {
+                shown = true
+            } else {
+                delay(800)
+                shown = false
+            }
+        }
+    }
+    val alpha by animateFloatAsState(if (shown) 1f else 0f, tween(if (shown) 150 else 400))
     LaunchedEffect(state) {
         snapshotFlow { target }.collectLatest { fraction ->
             if (fraction == null) return@collectLatest
@@ -153,10 +174,30 @@ fun DraggableScrollbar(
         Box(
             Modifier
                 .matchParentSize()
-                .pointerInput(state) {
-                    detectTapGestures { offset -> target = fractionAt(offset.y) }
-                }
-                .pointerInput(state) {
+                .then(
+                    if (!shown) {
+                        Modifier
+                    } else {
+                        Modifier
+                            .pointerInput(state) {
+                                awaitPointerEventScope {
+                                    try {
+                                        while (true) {
+                                            when (awaitPointerEvent().type) {
+                                                PointerEventType.Enter -> hovered = true
+                                                PointerEventType.Exit -> hovered = false
+                                                else -> Unit
+                                            }
+                                        }
+                                    } finally {
+                                        hovered = false
+                                    }
+                                }
+                            }
+                            .pointerInput(state) { detectTapGestures { offset -> target = fractionAt(offset.y) } }
+                    },
+                )
+                .then(if (!shown) Modifier else Modifier.pointerInput(state) {
                     try {
                         detectVerticalDragGestures(
                             onDragStart = { offset ->
@@ -186,13 +227,14 @@ fun DraggableScrollbar(
                         dragging = false
                         target = null
                     }
-                },
+                }),
         )
         Box(
             Modifier
                 .align(Alignment.TopEnd)
                 .offset { IntOffset(0, thumbTop.roundToInt()) }
                 .padding(end = 4.dp)
+                .alpha(alpha)
                 .width(thumbWidth)
                 .height(with(density) { thumbPx.toDp() })
                 .clip(MtsTheme.shapes.pill)

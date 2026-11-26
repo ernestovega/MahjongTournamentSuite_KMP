@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.dragAndDrop
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipe
@@ -65,7 +67,7 @@ class MtsScrollIndicatorsMathTest {
 @OptIn(ExperimentalTestApi::class)
 class MtsScrollIndicatorsUiTest {
     @Test
-    fun theScrollbarTakesItsStripOnlyWhileTheContentCanScroll() = runComposeUiTest {
+    fun theScrollbarNeverTakesAStripBecauseItShowsOnlyWhileScrolling() = runComposeUiTest {
         var lines by mutableStateOf(2)
         val state = ScrollState(0)
         setContent {
@@ -84,7 +86,8 @@ class MtsScrollIndicatorsUiTest {
         lines = 20
         waitForIdle()
         val scrolls = onNodeWithTag("content").getBoundsInRoot()
-        assertEquals(300.dp - MtsScrollbarThickness, scrolls.right - scrolls.left)
+        // The scrollbar shows over the end of the list while it scrolls, so the list keeps its whole width (2026-11-26).
+        assertEquals(300.dp, scrolls.right - scrolls.left)
     }
 
     @Test
@@ -107,7 +110,7 @@ class MtsScrollIndicatorsUiTest {
     }
 
     @Test
-    fun theMarginScrollbarKeepsTheWidthAndIsDraggedInTheMargin() = runComposeUiTest {
+    fun theMarginScrollbarKeepsTheWidthAndIsDraggedOnTheEndOfTheList() = runComposeUiTest {
         val state = LazyListState()
         setContent {
             MtsTheme(useDarkTheme = false) {
@@ -129,10 +132,10 @@ class MtsScrollIndicatorsUiTest {
         val row = onNodeWithTag("row1").getBoundsInRoot()
         assertEquals(24.dp, row.left)
         assertEquals(324.dp, row.right)
-        onNodeWithTag("screen").performTouchInput {
-            // Down on the thumb, in the margin just after the list, and a drag to the bottom.
-            val x = (324.dp + MtsScrollbarThickness / 2).toPx()
-            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+        onNodeWithTag("screen").performMouseInput {
+            // A mouse down on the hidden thumb, on the end of the list, and a drag to the bottom.
+            val x = (324.dp - MtsScrollbarThickness / 2).toPx()
+            dragAndDrop(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
         }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 150, "The list is at ${state.firstVisibleItemIndex}")
@@ -151,13 +154,36 @@ class MtsScrollIndicatorsUiTest {
             }
         }
         waitForIdle()
-        onNodeWithTag("box").performTouchInput {
-            // Down on the thumb, at the top of the strip on the end, and a drag to the bottom.
+        onNodeWithTag("box").performMouseInput {
+            // A mouse down on the thumb, at the top of the strip on the end, and a drag to the bottom. The mouse takes
+            // the thumb also while it is hidden.
             val x = width - 3f
-            swipe(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
+            dragAndDrop(Offset(x, 10f), Offset(x, height - 1f), durationMillis = 500)
         }
         waitForIdle()
         assertTrue(state.firstVisibleItemIndex > 150, "The list is at ${state.firstVisibleItemIndex}")
+    }
+
+    @Test
+    fun aFingerOnTheHiddenStripScrollsTheListNormally() = runComposeUiTest {
+        val state = LazyListState()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.width(300.dp).height(400.dp).testTag("box")) {
+                    LazyColumn(Modifier.fillMaxWidth().scrollIndicators(state), state = state) {
+                        items((1..200).toList(), key = { it }) { Text("Row $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        onNodeWithTag("box").performTouchInput {
+            val x = width - 3f
+            swipe(Offset(x, height - 20f), Offset(x, 20f), durationMillis = 300)
+        }
+        waitForIdle()
+        // The hidden scrollbar does not take the finger: the list moves by about the length of the swipe.
+        assertTrue(state.firstVisibleItemIndex in 5..30, "The list is at ${state.firstVisibleItemIndex}")
     }
 
     @Test
