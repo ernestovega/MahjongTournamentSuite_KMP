@@ -60,8 +60,9 @@ the app with the same rules as Android (`suiteStartOf`). The app ID in the file 
 `FirebaseSetup.swift` turns on App Check (App Attest, DeviceCheck on old devices, the debug provider in Debug) and
 Analytics, and hands them to the shared code. The project has:
 
-1. The Swift package `firebase-ios-sdk` (13.x): `FirebaseCore`, `FirebaseAppCheck` and `FirebaseAnalytics` (without
-   `FirebaseAnalyticsIdentitySupport`, so no advertising ID).
+1. The Swift package `firebase-ios-sdk` (13.x): `FirebaseCore`, `FirebaseAppCheck` and `FirebaseAnalyticsCore` (Analytics
+   without `GoogleAppMeasurementIdentitySupport` and the ads conversion framework, so no advertising ID; the plain
+   `FirebaseAnalytics` product brings them in). The Swift code still imports `FirebaseAnalytics`.
 2. `iosApp/Firebase/GoogleService-Info.plist` (iOS app of `mahjong-tournament-suite`, for Debug and Release) and
    `iosApp/Firebase/Staging/GoogleService-Info.plist` (iOS app of `mts---staging`). The build phase "Set version and
    Firebase" copies the one of the configuration into the app; without it the app runs without Firebase. They are not
