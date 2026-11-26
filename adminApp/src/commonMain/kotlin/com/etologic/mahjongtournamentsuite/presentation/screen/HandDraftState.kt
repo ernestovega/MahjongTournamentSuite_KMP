@@ -288,19 +288,6 @@ internal class HandDraftState private constructor(
         resultFieldsTouched = false
     }
 
-    fun snapshot(): TableHand = TableHand(
-        handId = handId,
-        playerWinnerId = playerWinnerId.trim(),
-        playerLooserId = normalizedLoserId,
-        handScore = handScore.trim(),
-        isChickenHand = isChickenHand,
-        isDone = isDone,
-        playerEastPenalty = currentPenalty(0),
-        playerSouthPenalty = currentPenalty(1),
-        playerWestPenalty = currentPenalty(2),
-        playerNorthPenalty = currentPenalty(3),
-    )
-
     fun buildPatch(): Map<String, Any?> {
         val patch = linkedMapOf<String, Any?>()
 

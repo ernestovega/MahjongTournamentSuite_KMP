@@ -8,12 +8,15 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
@@ -193,6 +196,40 @@ class PlayerBaseErrorsUiTest {
     fun aListThatDoesNotLoadShowsTheError() = runComposeUiTest {
         show(FailingRegistry(listOf(ada), loadsBeforeFailing = 0))
         awaitText("OK")
+    }
+
+    private fun ComposeUiTest.pressChip(description: String) {
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasContentDescription(description), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        var chip = onAllNodes(hasContentDescription(description), useUnmergedTree = true).onFirst()
+        while (SemanticsActions.OnClick !in chip.fetchSemanticsNode().config) chip = chip.onParent()
+        chip.pressAction()
+        waitForIdle()
+    }
+
+    @Test
+    fun theSearchAndTheCountryFilterNarrowTheRegistryAndACancelledSaveKeepsTheChanges() = runComposeUiTest {
+        val curie = Player(emaId = "00020001", firstName = "Marie", lastName = "Curie", country = "FRA", photoUrl = "https://photos.test/curie.png")
+        val registry = FailingRegistry(listOf(ada, babbage, curie))
+        show(registry)
+        awaitText("10001")
+
+        field("Search").performTextReplacement("zzz")
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("10001", substring = true).fetchSemanticsNodes().isEmpty() }
+        onAllNodesWithContentDescription("Clear search").onFirst().pressAction()
+        awaitText("10001")
+
+        pressChip("Filter by France")
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("10001", substring = true).fetchSemanticsNodes().isEmpty() }
+        pressChip("Remove France country filter")
+        awaitText("10001")
+
+        selectAda()
+        field("First name").performTextReplacement("Augusta")
+        onAllNodes(hasText("Save") and hasClickAction()).onFirst().pressAction()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Save player changes", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodes(hasText("Cancel") and hasClickAction()).onLast().press()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Save player changes", substring = true)).fetchSemanticsNodes().isEmpty() }
+        assertEquals(emptyList(), registry.calls)
     }
 
     private fun ComposeUiTest.onNodeWithTextClick(text: String) {

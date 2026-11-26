@@ -3,7 +3,11 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -100,5 +104,39 @@ class RankingScreenUiTest {
         waitForIdle()
 
         assertEquals(callsAfterOpening, server.calls)
+    }
+
+    private fun androidx.compose.ui.test.ComposeUiTest.press(description: String) {
+        onAllNodesWithContentDescription(description).onFirst().performClick()
+        mainClock.advanceTimeBy(600)
+        waitForIdle()
+    }
+
+    @Test
+    fun theControlsPageTheListAndChangeItsRows() = runComposeUiTest {
+        show(server())
+        waitForIdle()
+
+        press("Start automatic paging")
+        // The countdown runs while the list pages by itself.
+        mainClock.advanceTimeBy(31_000)
+        waitForIdle()
+        press("Pause automatic paging")
+        press("Next ranking list")
+        press("Previous ranking list")
+        press("Show more rows")
+        press("Show fewer rows")
+        onAllNodesWithText("Show first 3").onFirst().performClick()
+        waitForIdle()
+
+        onNodeWithText("Results r1 · loaded ", substring = true).assertExists()
+    }
+
+    @Test
+    fun aFailedLoadShowsTheError() = runComposeUiTest {
+        show(server().apply { failPlayers = true })
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("OK").onFirst().performClick()
+        waitForIdle()
     }
 }
