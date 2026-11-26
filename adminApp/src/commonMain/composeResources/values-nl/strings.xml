@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Niet-opgeslagen wijzigingen</string>
     <string name="you_have_unsaved_changes_save_them">Je hebt niet-opgeslagen wijzigingen. Opslaan voordat je verdergaat?</string>
     <string name="discard">Negeren</string>
-    <string name="loading_rankings">Klassementen laden…</string>
     <string name="no_ranking_yet">Nog geen klassement</string>
     <string name="the_ranking_shows_when_the_first">Het klassement verschijnt zodra de eerste hand gespeeld is.</string>
     <string name="settings">Instellingen</string>
@@ -199,7 +198,6 @@
     <string name="name">Naam</string>
     <string name="short_name">Korte naam</string>
     <string name="from_to">Van-tot</string>
-    <string name="features">Kenmerken</string>
     <string name="select_ema_player">EMA-speler kiezen</string>
     <string name="name_ema_id_or_country">Naam, EMA-ID of land</string>
     <string name="no_player_found">Geen speler gevonden.</string>
@@ -221,7 +219,6 @@
     <string name="no_players_match_the_search">Geen spelers komen overeen met de zoekopdracht.</string>
     <string name="clear_slot">Plaats wissen</string>
     <string name="tables">Tafels</string>
-    <string name="loading">Laden…</string>
     <string name="round">Ronde</string>
     <string name="table">Tafel</string>
     <string name="no_players_in_this_group">Geen spelers in deze groep.</string>
@@ -700,7 +697,6 @@
     <string name="errors_no_reports">Rapporten ouder dan 30 dagen worden verwijderd.</string>
     <string name="errors_report_id">Rapport-ID: %1$s</string>
     <string name="errors_report_reason">Reden: %1$s</string>
-    <string name="errors_loading_detail">De details worden geladen…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Laden… tot nu toe %1$d probleem</item>
@@ -1199,7 +1195,6 @@ Geef het een toernooi als editor en het wordt weer ingeschakeld bij het opslaan.
 De wijziging staat in de activiteit.</string>
     <string name="pc_confirm">Opnieuw loten</string>
     <string name="pc_back">Terug</string>
-    <string name="pc_loading">Spelers laden…</string>
     <string name="pc_saving">Nieuwe loting opslaan…</string>
     <string name="pc_done_title">Klaar</string>
     <string name="pc_done_text">Het toernooi heeft nu %1$d spelers en een nieuwe loting.</string>

@@ -284,15 +284,8 @@ private fun tableColumns(): List<String> = listOf(
 @Composable
 private fun TableHeaderRow() {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(Res.string.column_player), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(2.2f))
-        tableColumns().forEach {
-            Text(
-                it,
-                style = MaterialTheme.typography.labelLarge,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        DataTableHeaderText(stringResource(Res.string.column_player), modifier = Modifier.weight(2.2f))
+        tableColumns().forEach { DataTableHeaderText(it, modifier = Modifier.weight(1f)) }
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }

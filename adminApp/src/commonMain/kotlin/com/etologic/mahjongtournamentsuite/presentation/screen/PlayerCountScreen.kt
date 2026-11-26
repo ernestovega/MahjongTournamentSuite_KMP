@@ -133,7 +133,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people
 import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_less_disabled
-import mahjongtournamentsuite.adminapp.generated.resources.pc_loading
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_completed
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_pending
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_started
@@ -267,7 +266,8 @@ fun PlayerCountScreen(
                     onClose = onBack,
                 )
             }
-            loaded == null -> MtsDialogText(stringResource(Res.string.pc_loading))
+            // The logo with a progress covers the screen while it loads.
+            loaded == null -> Unit
             working -> WorkingContent(
                 text = tries?.let { stringResource(Res.string.reg_draw_calculating, it) } ?: stringResource(Res.string.pc_saving),
                 backup = tries != null && backup,
@@ -457,6 +457,8 @@ internal fun PlayerCountFrame(
         subtitle = subtitle,
         shortSubtitle = shortSubtitle,
         isLoading = isLoading,
+        // It loads only at the start, while it has nothing to show: the logo with a progress covers it.
+        contentLoading = isLoading,
         onBack = onBack,
         // The ⓘ is the first control: focused at once, it would open its tooltip.
         autoFocusFirst = false,

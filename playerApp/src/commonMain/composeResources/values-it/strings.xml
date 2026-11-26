@@ -84,7 +84,7 @@
     <string name="schedule_hide">Nascondi il programma</string>
     <string name="action_open">Apri</string>
     <string name="tab_tables">Tavoli</string>
-    <string name="tab_ranking">Classifica</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Il tuo account non è collegato a un giocatore di questo torneo. Chiedi agli organizzatori di aggiungerti. Tutti i tavoli sono nella scheda Tutti.</string>
     <string name="tables_mine_empty">I tavoli del giocatore compaiono qui quando gli organizzatori sorteggiano il turno.</string>

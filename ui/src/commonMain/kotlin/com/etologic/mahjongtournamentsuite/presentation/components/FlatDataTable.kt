@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +41,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -62,6 +66,29 @@ fun DataTableHeaderRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = content,
+    )
+}
+
+/** Table column titles are always bold and centered in their column, in every table. */
+@Composable
+fun dataTableHeaderStyle(base: TextStyle = MaterialTheme.typography.labelLarge): TextStyle =
+    base.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+
+/** One column title of a table: bold and centered in its column. */
+@Composable
+fun DataTableHeaderText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.labelLarge,
+    maxLines: Int = 2,
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        style = dataTableHeaderStyle(style),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 
@@ -181,23 +208,9 @@ private fun FlatDataTablePreview() {
     MtsTheme(useDarkTheme = false) {
         Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
             DataTableHeaderRow {
-                Text(
-                    text = "Column A",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = "Column B",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = "",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.width(44.dp),
-                )
+                DataTableHeaderText(text = "Column A", modifier = Modifier.weight(1f))
+                DataTableHeaderText(text = "Column B", modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(44.dp))
             }
             DataTableDivider()
             DataTableRow {

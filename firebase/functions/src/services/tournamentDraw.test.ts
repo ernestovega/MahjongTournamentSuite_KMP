@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { drawProblem } from "./tournamentDraw";
+import { drawProblem, meetingLimit, repeatFreeCeiling, repeatFreeMax, repeatFreeSure } from "./tournamentDraw";
 
 // 16 players. Teams are the pairs (1,2), (3,4) and so on.
 const players = Array.from({ length: 16 }, (_, index) => ({ id: index + 1, team: Math.floor(index / 2) + 1 }));
@@ -50,4 +50,51 @@ test("two players who meet in two rounds are refused", () => {
   tables[6].playerIds = [3, 4, 11, 15];
   tables[7].playerIds = [7, 8, 12, 16];
   assert.match(drawProblem(players, tables, 2, 4) ?? "", /more than one round/);
+});
+
+// The same values as RepeatFreeRoundsTest and docs/draw.md, "What the draw finds for sure".
+test("the rounds without repeats are the ones the app counts on", () => {
+  const sizes: Array<[number, number, number, number, number]> = [
+    // players, ceiling, sure, ceiling with teams, sure with teams
+    [16, 5, 5, 4, 4],
+    [20, 6, 5, 5, 4],
+    [24, 7, 5, 6, 4],
+    [28, 9, 9, 8, 8],
+    [32, 10, 7, 9, 6],
+    [36, 11, 8, 10, 7],
+    [40, 13, 13, 12, 12],
+    [44, 14, 10, 13, 9],
+    [48, 15, 11, 14, 10],
+  ];
+  for (const [n, ceiling, sure, ceilingTeams, sureTeams] of sizes) {
+    assert.equal(repeatFreeCeiling(n, false), ceiling, `ceiling ${n}`);
+    assert.equal(repeatFreeSure(n, false), sure, `sure ${n}`);
+    assert.equal(repeatFreeCeiling(n, true), ceilingTeams, `ceiling ${n} teams`);
+    assert.equal(repeatFreeSure(n, true), sureTeams, `sure ${n} teams`);
+  }
+  assert.equal(repeatFreeMax(20, false), 5);
+  assert.equal(repeatFreeMax(20, true), 4);
+  assert.equal(repeatFreeMax(24, true), 6);
+  // Others: 70 % of the ceiling. 100 players: ceiling 33, sure 23.
+  assert.equal(repeatFreeSure(100, false), 23);
+  assert.equal(repeatFreeSure(10, false), 0);
+});
+
+test("two players meet once while the rounds fit, and at most twice a block begun with more", () => {
+  assert.equal(meetingLimit(16, 5, false), 1);
+  assert.equal(meetingLimit(24, 4, true), 1);
+  // 24 players with teams: blocks of 4 rounds, so 5 rounds are 2 blocks.
+  assert.equal(meetingLimit(24, 5, true), 4);
+  assert.equal(meetingLimit(16, 6, false), 4);
+  assert.equal(meetingLimit(16, 11, false), 6);
+});
+
+test("a draw in blocks may repeat a pair, but not more than the blocks allow", () => {
+  // 16 players without teams, 6 rounds: more than the 5 that fit. Rounds 1 to 6 alternate the rows and the columns.
+  const tables = [1, 2, 3, 4, 5, 6].flatMap((round) => (round % 2 === 1 ? rows() : columns()).map((t) => ({ ...t, roundId: round })));
+  // Every pair of a row meets 3 times, within the limit of 4.
+  assert.equal(drawProblem(players, tables, 6, 4), null);
+  // 6 rounds of the rows: a pair meets 6 times, over the limit of 4 (2 blocks begun).
+  const rowsOnly = [1, 2, 3, 4, 5, 6].flatMap((round) => rows().map((t) => ({ ...t, roundId: round })));
+  assert.match(drawProblem(players, rowsOnly, 6, 4) ?? "", /more than 4 rounds/);
 });

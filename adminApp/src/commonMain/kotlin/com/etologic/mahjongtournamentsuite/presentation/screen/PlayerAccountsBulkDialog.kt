@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -347,18 +348,19 @@ private fun ColumnTitles(compact: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(columnGap(compact)),
     ) {
         @Composable
-        fun Title(textRes: StringResource, modifier: Modifier, align: TextAlign = TextAlign.Start) = Text(
+        fun Title(textRes: StringResource, modifier: Modifier) = Text(
             stringResource(textRes),
             modifier,
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = align,
+            textAlign = TextAlign.Center,
         )
         Spacer(Modifier.width(CheckboxColumnWidth))
-        Title(Res.string.id, Modifier.width(idColumnWidth(compact)), TextAlign.Center)
-        Title(Res.string.country, Modifier.width(flagColumnWidth(compact)), TextAlign.Center)
+        Title(Res.string.id, Modifier.width(idColumnWidth(compact)))
+        Title(Res.string.country, Modifier.width(flagColumnWidth(compact)))
         if (compact) {
             Title(Res.string.name, Modifier.weight(1f).padding(start = CompactNameStartPadding))
         } else {
@@ -366,7 +368,7 @@ private fun ColumnTitles(compact: Boolean) {
             Title(Res.string.name, Modifier.weight(1f))
             Title(Res.string.email, Modifier.weight(1f))
         }
-        Title(Res.string.account, Modifier.width(if (compact) CompactResultColumnWidth else ResultColumnWidth), TextAlign.Center)
+        Title(Res.string.account, Modifier.width(if (compact) CompactResultColumnWidth else ResultColumnWidth))
     }
 }
 

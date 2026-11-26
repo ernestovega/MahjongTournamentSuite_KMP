@@ -258,14 +258,14 @@ internal val AssignmentEmaColumnWidth = 96.dp
 internal fun TournamentPlayerHeader(
     text: String,
     modifier: Modifier,
-    textAlign: TextAlign = TextAlign.Center,
 ) {
     Text(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
+        textAlign = TextAlign.Center,
     )
 }
 

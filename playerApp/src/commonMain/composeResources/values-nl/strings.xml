@@ -84,7 +84,7 @@
     <string name="schedule_hide">Schema verbergen</string>
     <string name="action_open">Openen</string>
     <string name="tab_tables">Tafels</string>
-    <string name="tab_ranking">Stand</string>
+    <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
     <string name="tables_not_linked">Je account is niet gekoppeld aan een speler van dit toernooi. Vraag de organisatoren om je toe te voegen. Alle tafels staan op het tabblad Alle.</string>
     <string name="tables_mine_empty">De tafels van de speler verschijnen hier zodra de organisatoren de ronde loten.</string>

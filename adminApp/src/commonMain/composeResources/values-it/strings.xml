@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Modifiche non salvate</string>
     <string name="you_have_unsaved_changes_save_them">Hai modifiche non salvate. Salvarle prima di continuare?</string>
     <string name="discard">Scarta</string>
-    <string name="loading_rankings">Caricamento delle classifiche…</string>
     <string name="no_ranking_yet">Ancora nessuna classifica</string>
     <string name="the_ranking_shows_when_the_first">La classifica compare quando si gioca la prima mano.</string>
     <string name="settings">Impostazioni</string>
@@ -199,7 +198,6 @@
     <string name="name">Nome</string>
     <string name="short_name">Nome breve</string>
     <string name="from_to">Dal-al</string>
-    <string name="features">Opzioni</string>
     <string name="select_ema_player">Seleziona un giocatore EMA</string>
     <string name="name_ema_id_or_country">Nome, ID EMA o paese</string>
     <string name="no_player_found">Nessun giocatore trovato.</string>
@@ -221,7 +219,6 @@
     <string name="no_players_match_the_search">Nessun giocatore corrisponde alla ricerca.</string>
     <string name="clear_slot">Svuota il posto</string>
     <string name="tables">Tavoli</string>
-    <string name="loading">Caricamento…</string>
     <string name="round">Turno</string>
     <string name="table">Tavolo</string>
     <string name="no_players_in_this_group">Nessun giocatore in questo gruppo.</string>
@@ -700,7 +697,6 @@
     <string name="errors_no_reports">I rapporti più vecchi di 30 giorni vengono eliminati.</string>
     <string name="errors_report_id">ID del rapporto: %1$s</string>
     <string name="errors_report_reason">Motivo: %1$s</string>
-    <string name="errors_loading_detail">Caricamento dei dettagli…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Caricamento… %1$d problema finora</item>
@@ -1199,7 +1195,6 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
 La modifica resta registrata nell'attività.</string>
     <string name="pc_confirm">Fai il nuovo sorteggio</string>
     <string name="pc_back">Indietro</string>
-    <string name="pc_loading">Caricamento dei giocatori…</string>
     <string name="pc_saving">Salvataggio del nuovo sorteggio…</string>
     <string name="pc_done_title">Fatto</string>
     <string name="pc_done_text">Il torneo ora ha %1$d giocatori e un nuovo sorteggio.</string>

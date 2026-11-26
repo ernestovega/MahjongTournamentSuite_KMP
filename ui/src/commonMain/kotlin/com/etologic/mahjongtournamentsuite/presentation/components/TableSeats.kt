@@ -514,22 +514,19 @@ private fun SeatCard(
 
 /**
  * The players of a table whose round has not started: one card per player, one under the other, with the flag, the
- * number and the name. The wind shows first once the seats are chosen.
+ * number and the name. No wind: the seats are not the ones of the game yet (Ernesto, 2026-11-26).
  */
 @Composable
 private fun SeatsList(placed: List<PlacedSeat>, onPlayerClick: (Int) -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag(SEATS_LIST_TAG), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-        // In the order of the seats once they are known (East first), else in the order of the draw.
-        val ordered = if (placed.all { it.wind != null }) placed.sortedBy { it.wind!!.ordinal } else placed
-        ordered.forEach { item ->
+    Column(Modifier.fillMaxWidth().testTag(SEATS_LIST_TAG), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        placed.forEach { item ->
             val seat = item.seat
             SeatCardFrame(seat, Modifier.fillMaxWidth(), onPlayerClick) {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
+                    Modifier.fillMaxWidth().padding(horizontal = MtsTheme.spacing.lg, vertical = MtsTheme.spacing.md),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 ) {
-                    item.wind?.let { WindIcon(it, size = 22.dp) }
                     PlayerFlagAndNumber(seat.country, seat.slotId)
                     SeatLevelMedal(seat)
                     Text(

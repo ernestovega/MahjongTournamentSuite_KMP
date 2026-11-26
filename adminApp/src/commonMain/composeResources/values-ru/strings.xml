@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Несохранённые изменения</string>
     <string name="you_have_unsaved_changes_save_them">У вас есть несохранённые изменения. Сохранить их перед продолжением?</string>
     <string name="discard">Отменить изменения</string>
-    <string name="loading_rankings">Загрузка рейтингов…</string>
     <string name="no_ranking_yet">Рейтинга пока нет</string>
     <string name="the_ranking_shows_when_the_first">Рейтинг появится, когда будет сыграна первая раздача.</string>
     <string name="settings">Настройки</string>
@@ -199,7 +198,6 @@
     <string name="name">Название</string>
     <string name="short_name">Короткое название</string>
     <string name="from_to">С-по</string>
-    <string name="features">Особенности</string>
     <string name="select_ema_player">Выберите игрока EMA</string>
     <string name="name_ema_id_or_country">Имя, EMA ID или страна</string>
     <string name="no_player_found">Игрок не найден.</string>
@@ -221,7 +219,6 @@
     <string name="no_players_match_the_search">Нет игроков, соответствующих поиску.</string>
     <string name="clear_slot">Очистить место</string>
     <string name="tables">Столы</string>
-    <string name="loading">Загрузка…</string>
     <string name="round">Раунд</string>
     <string name="table">Стол</string>
     <string name="no_players_in_this_group">В этой группе нет игроков.</string>
@@ -712,7 +709,6 @@
     <string name="errors_no_reports">Отчёты старше 30 дней удаляются.</string>
     <string name="errors_report_id">ID отчёта: %1$s</string>
     <string name="errors_report_reason">Причина: %1$s</string>
-    <string name="errors_loading_detail">Загрузка подробностей…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Загрузка… пока %1$d проблема</item>
@@ -1247,7 +1243,6 @@
 Изменение записывается в журнал действий.</string>
     <string name="pc_confirm">Провести жеребьёвку</string>
     <string name="pc_back">Назад</string>
-    <string name="pc_loading">Загрузка игроков…</string>
     <string name="pc_saving">Сохранение новой жеребьёвки…</string>
     <string name="pc_done_title">Готово</string>
     <string name="pc_done_text">Теперь в турнире %1$d игроков и новая жеребьёвка.</string>

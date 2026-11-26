@@ -26,6 +26,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
@@ -132,7 +133,10 @@ fun PersonStatisticsTab(
     ) {
         message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
         top?.invoke()
-        val loaded = data ?: return@Column
+        val loaded = data ?: run {
+            if (message == null) AppLoadingCompact()
+            return@Column
+        }
         PlayerStatisticsPanel(
             loaded.overall,
             tournaments = loaded.tournaments.map { it.first },
@@ -170,7 +174,10 @@ fun PlayerSlotStatisticsTab(
     ) {
         message?.let { AppErrorDialog(it, onDismiss = polled.dismissMessage) }
         top?.invoke()
-        val loaded = data ?: return@Column
+        val loaded = data ?: run {
+            if (message == null) AppLoadingCompact()
+            return@Column
+        }
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
         // Before the first hand the place says nothing: every player is first with 0 points.
         val standing: (@Composable (Modifier) -> Unit)? = ranking?.takeIf { loaded.hasResults }?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = playerCount) } }
@@ -206,6 +213,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     }
     if (!ready) {
         ReportLoading(true, onLoadingChange)
+        AppLoadingCompact()
         return
     }
     FilteredStatisticsTab(
@@ -296,6 +304,8 @@ internal fun FilteredStatisticsTab(
             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
         ) {
             message?.let { AppErrorDialog(it, onDismiss = dismiss) }
+            // The logo with a progress shows in place of the statistics while they load.
+            if (!loaded && message == null) AppLoadingCompact()
             FilteredStatistics(
                 filters = filters,
                 onFiltersChange = setFilters,

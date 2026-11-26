@@ -59,6 +59,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -720,6 +721,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         title = stringResource(Res.string.players),
         isLoading = loading || saving,
         showBackgroundLogo = loading && players.isEmpty(),
+        contentLoading = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         // Only super admins and club admins add players, with a floating button like New tournament.
@@ -883,8 +885,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 if (!compact) {
                                     DataTableHeaderRow {
                                         if (canDelete) Spacer(Modifier.width(PlayerCheckboxColumnWidth))
-                                        PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
-                                        PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
+                                        PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth))
+                                        PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth))
                                         PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
                                         PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
                                     }
@@ -1108,14 +1110,14 @@ private val SupportedPlayerPhotoTypes = setOf("image/jpeg", "image/png", "image/
 private fun PlayerTableHeader(
     text: String,
     modifier: Modifier,
-    textAlign: TextAlign = TextAlign.Start,
 ) {
     Text(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
+        textAlign = TextAlign.Center,
     )
 }
 

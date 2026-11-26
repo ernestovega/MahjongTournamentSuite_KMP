@@ -268,6 +268,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
         titleLeading = profile?.let { { PlayerPhoto(it.photoUrl, it.name, size = TopBarPhotoSize) } },
         subtitleContent = profile?.takeIf { it.country.isNotBlank() || it.emaId.isNotBlank() }?.let { { PlayerCountryAndEma(it.country, it.emaId) } },
         isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
+        contentLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = { ContactTopBarButton(navController) },

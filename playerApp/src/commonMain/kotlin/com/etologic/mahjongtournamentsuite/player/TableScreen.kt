@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -69,6 +68,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenHandMark
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
@@ -78,8 +78,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
@@ -158,6 +158,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             subtitle = view?.tournament?.name,
             shortSubtitle = view?.tournament?.shortName,
             isLoading = view == null && message == null,
+            contentLoading = view == null && message == null,
             autoFocusFirst = false,
             onBack = { navController.popBackStack() },
             actions = { TableTopBarActions(navController) },
@@ -610,14 +611,22 @@ private fun RoundStartLine(tournament: Tournament, roundId: Int) {
         null -> stringResource(Res.string.round_will_start_at, formatLocalizedTime(time))
         else -> stringResource(Res.string.round_will_start_on_at, formatLocalizedDate(day, withYear = false), formatLocalizedTime(time))
     }
-    val color = MaterialTheme.colorScheme.onSurfaceVariant
-    Row(
-        Modifier.testTag("round-start"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+    // An informative card in blue, like the yellow notice of the hand buttons but calmer (Ernesto, 2026-11-26).
+    val accent = MtsTheme.colors.info
+    Surface(
+        Modifier.fillMaxWidth().testTag("round-start"),
+        shape = MaterialTheme.shapes.medium,
+        color = accent.copy(alpha = 0.16f).compositeOver(MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, accent),
     ) {
-        Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(24.dp), tint = color)
-        Text(text, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = color, textAlign = TextAlign.Center)
+        Row(
+            Modifier.padding(horizontal = MtsTheme.spacing.lg, vertical = MtsTheme.spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.CenterHorizontally),
+        ) {
+            Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(24.dp), tint = accent)
+            Text(text, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
     }
 }
 

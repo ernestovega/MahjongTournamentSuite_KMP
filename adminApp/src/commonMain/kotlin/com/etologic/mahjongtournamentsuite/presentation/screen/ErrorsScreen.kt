@@ -48,9 +48,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorReportEntry
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
@@ -112,7 +114,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.errors_last_hours
 import mahjongtournamentsuite.adminapp.generated.resources.errors_last_seen
 import mahjongtournamentsuite.adminapp.generated.resources.errors_load_more_reports
 import mahjongtournamentsuite.adminapp.generated.resources.errors_loading_count
-import mahjongtournamentsuite.adminapp.generated.resources.errors_loading_detail
 import mahjongtournamentsuite.adminapp.generated.resources.errors_minutes_ago
 import mahjongtournamentsuite.adminapp.generated.resources.errors_no_reports
 import mahjongtournamentsuite.adminapp.generated.resources.errors_no_stack
@@ -214,7 +215,8 @@ fun ErrorsScreen(navController: NavHostController) {
     AppScaffold(
         title = stringResource(Res.string.app_errors),
         isLoading = loading,
-        showBackgroundLogo = loading && groups.isEmpty(),
+        // The list fills in while it loads, so the logo with a progress covers it only until the first problems.
+        contentLoading = loading && groups.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
@@ -442,10 +444,10 @@ private fun ErrorGroupsTable(
         if (!compact) {
             item {
                 DataTableHeaderRow {
-                    Text(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth), style = MaterialTheme.typography.labelLarge)
+                    DataTableHeaderText(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth))
                 }
                 DataTableDivider()
             }
@@ -579,7 +581,7 @@ private fun ErrorGroupDialog(
                         if (group != null) ErrorGroupFacts(group, now)
                         val loaded = detail
                         if (loaded == null) {
-                            Text(stringResource(Res.string.errors_loading_detail), style = MaterialTheme.typography.bodyMedium)
+                            AppLoadingCompact()
                         } else {
                             Text(stringResource(Res.string.errors_stack_trace), style = MaterialTheme.typography.titleSmall)
                             SelectionContainer {

@@ -81,7 +81,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.account_permissions_s
 import mahjongtournamentsuite.adminapp.generated.resources.account_permissions_saved
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
-import mahjongtournamentsuite.adminapp.generated.resources.loading
 import mahjongtournamentsuite.adminapp.generated.resources.perm_accounts_changeEmaId
 import mahjongtournamentsuite.adminapp.generated.resources.perm_accounts_changeEmail
 import mahjongtournamentsuite.adminapp.generated.resources.perm_accounts_createPlayer
@@ -342,6 +341,7 @@ fun RolesScreen(navController: NavHostController) {
     AppScaffold(
         title = stringResource(Res.string.roles_title),
         isLoading = loading || saving,
+        contentLoading = loading && catalog == null,
         onBack = { navController.popBackStack() },
         // The main action of the screen, like New tournament in the tournament list.
         floatingActionButton = if (catalog != null) {
@@ -379,7 +379,8 @@ fun RolesScreen(navController: NavHostController) {
             }
             SectionCard(title = stringResource(Res.string.roles_custom)) {
                 when {
-                    roles == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // The logo with a progress covers the screen while it loads.
+                    roles == null -> Unit
                     roles.custom.isEmpty() -> Text(stringResource(Res.string.roles_custom_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     else -> roles.custom.forEachIndexed { index, role ->
                         if (index > 0) HorizontalDivider()

@@ -195,13 +195,13 @@ private fun statusColor(status: RegistrationStatus): Color = when (status) {
 internal fun RegistrationsHeaderRow(isTeams: Boolean) {
     Column {
         DataTableHeaderRow {
-            HeaderText("#", Modifier.width(PositionColumnWidth), TextAlign.Center)
+            HeaderText("#", Modifier.width(PositionColumnWidth))
             Spacer(Modifier.width(PhotoSize))
             HeaderText(stringResource(Res.string.reg_col_player), Modifier.weight(0.34f))
             HeaderText(stringResource(Res.string.reg_email), Modifier.weight(0.3f))
             if (isTeams) HeaderText(stringResource(Res.string.reg_col_team), Modifier.weight(0.2f))
-            HeaderText(stringResource(Res.string.reg_col_food), Modifier.width(FoodColumnWidth), TextAlign.Center, maxLines = 1)
-            HeaderText(stringResource(Res.string.reg_paid), Modifier.width(PaidColumnWidth), TextAlign.Center)
+            HeaderText(stringResource(Res.string.reg_col_food), Modifier.width(FoodColumnWidth), maxLines = 1)
+            HeaderText(stringResource(Res.string.reg_paid), Modifier.width(PaidColumnWidth))
             Spacer(Modifier.width(ActionsColumnWidth))
         }
         DataTableDivider()
@@ -209,13 +209,14 @@ internal fun RegistrationsHeaderRow(isTeams: Boolean) {
 }
 
 @Composable
-private fun HeaderText(text: String, modifier: Modifier, textAlign: TextAlign = TextAlign.Start, maxLines: Int = 2) {
+private fun HeaderText(text: String, modifier: Modifier, maxLines: Int = 2) {
     Text(
         text,
         modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
+        textAlign = TextAlign.Center,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
     )
