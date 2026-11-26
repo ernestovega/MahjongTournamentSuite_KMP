@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -86,15 +87,17 @@ internal fun UsersTable(
     selectedUids: Set<String>,
     onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
+    // The space after the last account, so the floating buttons do not cover it.
+    bottomPadding: Dp = 24.dp,
 ) {
     val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("users"),
         // The list reaches the edges and the bottom of the window, so its shadows take the whole width; the margins go
-        // inside. On a phone the floating button must not cover the last account.
+        // inside.
         scrollbar = MtsScrollbar.Overlay,
         modifier = Modifier.fillMaxWidth().screenFullBleed().appFocusGroup(),
-        contentPadding = screenListPadding(bottom = if (compact) 88.dp else 24.dp),
+        contentPadding = screenListPadding(bottom = bottomPadding),
     ) {
         if (!compact) {
             item {

@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_new_user
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Column
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -329,29 +334,32 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     // On a phone the send button is a floating button. It shows only while accounts are selected.
     val compact = LocalCompactLayout.current
     val showResetFab = compact && access?.canSendPasswordResets == true && chosenUids.isNotEmpty() && !saving && !loading
+    val canCreateUsers = access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
         floatingActionButton = {
-            AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-                ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                    ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+                    ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                        ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+                    }
+                }
+                // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
+                // its organizations, and a super admin any account.
+                if (canCreateUsers) {
+                    ExtendedFloatingActionButton(onClick = { showCreateDialog = true }, modifier = Modifier.focusRequester(addFocusRequester)) {
+                        Icon(Icons.Default.PersonAdd, contentDescription = null)
+                        ButtonText(stringResource(Res.string.top_bar_new_user), Modifier.padding(start = 12.dp))
+                    }
                 }
             }
         },
-        // Every editor and admin creates player accounts. A club admin also creates editors and club admins of
-        // its organizations, and a super admin any account.
-        actions = if (access?.has(Permission.ACCOUNTS_CREATE_PLAYER) == true) {
-            {
-                AppTopBarActions(
-                    onRoles = if (access?.has(Permission.PERMISSIONS_MANAGE) == true) ({ navController.navigate(RolesRoute) }) else null,
-                    onNewUser = { showCreateDialog = true },
-                    newUserFocusRequester = addFocusRequester,
-                )
-            }
+        actions = if (access?.has(Permission.PERMISSIONS_MANAGE) == true) {
+            { AppTopBarActions(onRoles = { navController.navigate(RolesRoute) }) }
         } else {
             null
         },
@@ -359,7 +367,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         ScreenColumn(
             maxWidth = 1200.dp,
             // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space
-            // (on a phone, room for the floating button, so it does not cover the last account).
+            // (room for the floating buttons, so they do not cover the last account).
             contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -411,6 +419,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
                 UsersTable(
                     users = filteredUsers,
+                    bottomPadding = if (canCreateUsers || compact) 88.dp else 24.dp,
                     selectable = canReset,
                     selectedUids = selectedUids,
                     onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
