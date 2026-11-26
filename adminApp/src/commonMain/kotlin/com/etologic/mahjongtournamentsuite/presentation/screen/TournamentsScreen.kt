@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Card
@@ -95,6 +96,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActi
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -103,6 +105,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DevMenuActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
@@ -156,6 +159,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.logo_for
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_host_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
+import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
 import mahjongtournamentsuite.adminapp.generated.resources.open_profile
 import mahjongtournamentsuite.adminapp.generated.resources.players
@@ -165,7 +169,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_color_valu
 import mahjongtournamentsuite.adminapp.generated.resources.tournaments
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -405,17 +409,26 @@ fun TournamentsScreen(
                     navController.navigate(PlayerBaseRoute)
                 },
                 onStatistics = { navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name)) },
-                onNewTournament = if (adminStatus?.canCreateTournaments == true) {
-                    {
+                playerBaseFocusRequester = playerBaseFocusRequester,
+            )
+        },
+        // New tournament is the main action of the list, so it is a floating button at the bottom right and not one
+        // more button of the top bar.
+        floatingActionButton = if (adminStatus?.canCreateTournaments == true) {
+            {
+                ExtendedFloatingActionButton(
+                    onClick = {
                         lastFocusedControl = "new-tournament"
                         showCreateTournamentDialog = true
-                    }
-                } else {
-                    null
-                },
-                playerBaseFocusRequester = playerBaseFocusRequester,
-                newTournamentFocusRequester = newTournamentFocusRequester,
-            )
+                    },
+                    modifier = Modifier.focusRequester(newTournamentFocusRequester),
+                ) {
+                    Icon(Icons.Outlined.AddBox, contentDescription = null)
+                    ButtonText(stringResource(Res.string.new_tournament), Modifier.padding(start = 12.dp))
+                }
+            }
+        } else {
+            null
         },
     ) {
         val compact = LocalCompactLayout.current
@@ -424,7 +437,7 @@ fun TournamentsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        if (compact) PaddingValues(start = CompactScreenSidePadding, end = CompactScreenSidePadding, top = 12.dp) else PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+                        if (compact) PaddingValues(start = CompactScreenSidePadding, end = CompactScreenSidePadding, top = 12.dp) else PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
                     ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -436,7 +449,8 @@ fun TournamentsScreen(
                         state = listState,
                         modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Margin),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(bottom = 32.dp),
+                        // The floating button must not cover the last tournament.
+                        contentPadding = PaddingValues(bottom = FabClearance),
                     ) {
                         itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
                             CompactTournamentCard(
@@ -497,6 +511,8 @@ fun TournamentsScreen(
                                                 state = listState,
                                                 // The draggable scrollbar is the scrollbar of this list.
                                                 modifier = modifier.scrollIndicators(listState, scrollbar = MtsScrollbar.None),
+                                                // The floating button must not cover the last tournament.
+                                                contentPadding = PaddingValues(bottom = FabClearance),
                                             ) {
                                                 stickyHeader {
                                                     Column(modifier = Modifier.background(headerBackground)) {
@@ -1116,3 +1132,6 @@ private fun UserProfile.toUiName(): String {
 
 /** How far the scrollbar of the table goes past its end, into the 24 dp margin of the screen: the width of its strip. */
 private val TableScrollbarBleed = 20.dp
+
+/** Room under the last tournament, so that the New tournament floating button does not cover it. */
+private val FabClearance = 88.dp
