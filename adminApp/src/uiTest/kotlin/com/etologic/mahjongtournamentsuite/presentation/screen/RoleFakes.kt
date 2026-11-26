@@ -46,6 +46,8 @@ internal class FakeAdminRepository(
     private val role: GlobalUserRole,
     var users: List<ManagedUser> = emptyList(),
     private val organizations: Set<String> = if (role == GlobalUserRole.CLUB_ADMIN) setOf("org-es") else emptySet(),
+    /** The permissions that the server reports, as a custom role or changes for one person give them. Null keeps the defaults of the role. */
+    private val permissions: Set<Permission>? = null,
 ) : AdminRepository {
     val calls = mutableListOf<String>()
 
@@ -54,7 +56,10 @@ internal class FakeAdminRepository(
 
     private fun <T> write(value: () -> T): AppResult<T> = if (failWrites) AppResult.Failure(AppError.Network) else AppResult.Success(value())
 
-    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(AdminStatus("me", role, adminOrganizations = organizations))
+    override suspend fun whoAmI(refreshMode: RefreshMode) = AppResult.Success(
+        if (permissions == null) AdminStatus("me", role, adminOrganizations = organizations)
+        else AdminStatus("me", role, adminOrganizations = organizations, permissions = permissions),
+    )
     override suspend fun listOrganizations() = AppResult.Success(
         listOf(
             Organization("org-es", "Madrid Club", OrganizationType.CLUB, "ES", canEdit = true),
