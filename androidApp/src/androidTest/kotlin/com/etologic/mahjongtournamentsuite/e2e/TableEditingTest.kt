@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import org.junit.After
 import org.junit.Test
@@ -69,8 +71,13 @@ class TableEditingTest : AdminE2eTest() {
         c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput(score)
     }
 
+    /**
+     * The Done box of the last hand, by its click action: a touch at its centre can land on the sticky header of the
+     * table, which stays over the first rows while the table scrolls.
+     */
     private fun tickDone() {
-        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast().performClick()
+        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast()
+            .performSemanticsAction(SemanticsActions.OnClick)
     }
 
     /** The switches above the rows are "Manual scores" and then "Completed". The rows follow with one "Done" box each. */

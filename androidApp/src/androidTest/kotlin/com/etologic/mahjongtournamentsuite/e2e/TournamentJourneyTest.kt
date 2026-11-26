@@ -11,6 +11,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import org.junit.After
@@ -146,8 +147,10 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.onAllNodes(emptyChoice).let { it[it.fetchSemanticsNodes().size - 1].performClick() }
         c.onAllNodes(playerOption(loser)).onLast().performClick()
         c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput("8")
-        // Only the Done box of hand 16. With every hand done the server closes the table: no "Completed" switch.
-        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast().performClick()
+        // Only the Done box of hand 16. With every hand done the server closes the table: no "Completed" switch. By its
+        // click action: a touch at its centre can land on the sticky header of the table.
+        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         c.clickButton("Save")
         c.waitForText("16 of 16 hands done.")
         closeTableNotices()
