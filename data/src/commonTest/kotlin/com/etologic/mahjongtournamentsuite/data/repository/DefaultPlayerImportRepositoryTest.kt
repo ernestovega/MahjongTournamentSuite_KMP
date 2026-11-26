@@ -197,6 +197,23 @@ class DefaultPlayerImportRepositoryTest {
     }
 
     @Test
+    fun aFileErrorKeepsItsLimitAndAnUnknownOneIsAnError() = runTest {
+        suspend fun errorOf(body: String, status: HttpStatusCode = HttpStatusCode.BadRequest): AppError {
+            val repository = repository { respond(body, status, io.ktor.http.headersOf("Content-Type", "application/json")) }
+            return assertIs<AppResult.Failure>(repository.preview("t1", "p.csv", byteArrayOf(1))).error
+        }
+
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.TOO_MANY_ROWS, listOf("500")), errorOf("""{"details":{"code":"TOO_MANY_ROWS","max":500}}"""))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.TOO_MANY_ROWS, listOf("")), errorOf("""{"details":{"code":"TOO_MANY_ROWS"}}"""))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.MISSING_COLUMNS, listOf("")), errorOf("""{"details":{"code":"MISSING_COLUMNS"}}"""))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.EMPTY, emptyList()), errorOf("""{"details":{"code":"EMPTY"}}"""))
+        assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"FROM_THE_FUTURE"}}"""))
+        assertIs<AppError.Unexpected>(errorOf("""{"error":"no details"}"""))
+        assertIs<AppError.Unexpected>(errorOf("not json"))
+        assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Forbidden), "only a refused file has a file error")
+    }
+
+    @Test
     fun exportReadsTheFileFromTheExportRoute() = runTest {
         var method = ""
         var path = ""

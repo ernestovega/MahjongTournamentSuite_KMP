@@ -147,6 +147,43 @@ class DefaultPlayerHandRepositoryTest {
         assertTrue(failure.error !is AppError.Conflict)
     }
 
+    @Test
+    fun theSeatsGoEastSouthWestNorthWithTheVersion() = runTest {
+        val result = repository(body = """{"tableVersion":5}""").assignSeats("t-1", 2, 5, seats = listOf(7, 9, 11, 13), expectedVersion = 4)
+
+        assertIs<AppResult.Success<Unit>>(result)
+        val request = requests.single()
+        assertTrue(request.url.encodedPath.endsWith("/player/tournaments/t-1/tables/2/5/seats"), request.url.encodedPath)
+        val json = request.json()
+        assertEquals(listOf("7", "9", "11", "13"), listOf("playerEastId", "playerSouthId", "playerWestId", "playerNorthId").map { json[it]?.jsonPrimitive?.content })
+        assertEquals("4", json["expectedVersion"]?.jsonPrimitive?.content)
+        assertEquals(listOf("tournament:t-1:table"), cache.stale)
+    }
+
+    @Test
+    fun aTableWithoutFourSeatsIsRefusedBeforeTheServer() = runTest {
+        val result = repository().assignSeats("t-1", 2, 5, seats = listOf(7, 9, 11), expectedVersion = 4)
+
+        assertIs<AppResult.Failure>(result)
+        assertTrue(requests.isEmpty())
+    }
+
+    @Test
+    fun aConflictWithACodeKeepsTheCode() = runTest {
+        val result = repository(body = """{"message":"m","details":{"code":"HAND_ENTRY_CLOSED"}}""", status = HttpStatusCode.Conflict)
+            .assignSeats("t-1", 2, 5, seats = listOf(7, 9, 11, 13), expectedVersion = 4)
+
+        val error = assertIs<AppError.Conflict>(assertIs<AppResult.Failure>(result).error)
+        assertEquals(com.etologic.mahjongtournamentsuite.domain.model.ConflictCode.HAND_ENTRY_CLOSED, error.code)
+    }
+
+    @Test
+    fun aConflictWithABlankMessageHasTheFixedText() = runTest {
+        val result = repository(body = """{"message":"  "}""", status = HttpStatusCode.Conflict).recordHand("t-1", 2, 5, HandProposal(7, 9, 24), expectedVersion = 3)
+
+        assertEquals("The table changed on the server.", assertIs<AppError.Conflict>(assertIs<AppResult.Failure>(result).error).message)
+    }
+
     private class StaleRecorder : RepositoryCache {
         val stale = mutableListOf<String>()
 
