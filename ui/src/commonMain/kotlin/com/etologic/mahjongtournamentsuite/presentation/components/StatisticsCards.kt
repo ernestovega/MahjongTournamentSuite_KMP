@@ -332,13 +332,21 @@ internal fun RivalsCard(
                     rival.selfDrawLosses,
                     rival.othersDiscardWins,
                 ).map { it.toString() }
-                if (design == 2) RivalNumbersRow(values, header = false) else RivalSmallNumbers(labels, values)
+                when (design) {
+                    2 -> RivalNumbersRow(values, header = false)
+                    3 -> RivalList(labels, values, alwaysTwoColumns = false)
+                    4 -> RivalList(labels, values, alwaysTwoColumns = true)
+                    else -> RivalSmallNumbers(labels, values)
+                }
             }
         }
     }
 }
 
-/** The design of the rivals while Ernesto chooses: 1 small numbers with their labels, 2 a table with one header. */
+/**
+ * The design of the rivals while Ernesto chooses: 1 small numbers with their labels, 2 a table with one header,
+ * 3 a list with one column on a narrow card and two on a wide one, 4 a list with two columns always.
+ */
 internal var RivalsDesign = 1
 
 /** Six small numbers, each with its label above: in one row on a wide card, in two rows of three on a narrow one. */
@@ -359,6 +367,36 @@ private fun RivalSmallNumbers(labels: List<String>, values: List<String>) {
                                 minLines = 2,
                             )
                             Text(value, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The six numbers of a rival as a list: the label on the left and the number on the right of each line. The lines
+ * go in two columns on a wide card or when [alwaysTwoColumns] is true, else in one column.
+ */
+@Composable
+private fun RivalList(labels: List<String>, values: List<String>, alwaysTwoColumns: Boolean) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (alwaysTwoColumns || maxWidth >= 400.dp) 2 else 1
+        val lines = labels.zip(values)
+        val perColumn = (lines.size + columns - 1) / columns
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            lines.chunked(perColumn).forEach { column ->
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    column.forEach { (label, value) ->
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                label,
+                                Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(value, style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold)
                         }
                     }
                 }

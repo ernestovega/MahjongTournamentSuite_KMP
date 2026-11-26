@@ -36,7 +36,7 @@ class TmpRivalsShots {
     @Test
     fun shots() {
         val dir = File("build/rivals-shots").apply { mkdirs() }
-        for (design in 1..2) for (dark in listOf(false, true)) for ((label, w) in listOf("movil" to 360, "escritorio" to 520)) {
+        for (design in 3..4) for (dark in listOf(false, true)) for ((label, w) in listOf("movil" to 360, "escritorio" to 520)) {
             runComposeUiTest {
                 setContent {
                     MtsTheme(useDarkTheme = dark) {
