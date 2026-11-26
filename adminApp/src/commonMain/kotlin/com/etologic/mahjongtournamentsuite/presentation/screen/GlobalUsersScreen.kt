@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -346,7 +347,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         // otherwise it creates an account.
         floatingActionButton = {
                 AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-                    ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
+                    // A long label (Spanish, French) breaks into two lines instead of passing the left edge of a phone.
+                    ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }, modifier = Modifier.widthIn(max = 300.dp)) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                         ButtonText(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
                     }
