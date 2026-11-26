@@ -2,8 +2,16 @@ package com.etologic.mahjongtournamentsuite.data.session
 
 import java.io.ByteArrayOutputStream
 
-actual class PlatformCredentialStore actual constructor() : CredentialStore {
-    private val enabled = System.getProperty("os.name")?.contains("mac", ignoreCase = true) == true
+actual class PlatformCredentialStore internal constructor(
+    /** Only macOS has the Keychain. On Windows and Linux nothing is saved. */
+    private val enabled: Boolean,
+    /** The Keychain tool. A test gives a fake one. */
+    private val security: String,
+) : CredentialStore {
+    actual constructor() : this(
+        enabled = System.getProperty("os.name")?.contains("mac", ignoreCase = true) == true,
+        security = "/usr/bin/security",
+    )
 
     override suspend fun load(): SavedCredentials? {
         if (!enabled) return null
@@ -40,7 +48,7 @@ actual class PlatformCredentialStore actual constructor() : CredentialStore {
     }
 
     private fun runSecurity(vararg arguments: String): String? = runCatching {
-        val process = ProcessBuilder("/usr/bin/security", *arguments)
+        val process = ProcessBuilder(security, *arguments)
             .redirectErrorStream(true)
             .start()
         val output = ByteArrayOutputStream()
@@ -50,7 +58,7 @@ actual class PlatformCredentialStore actual constructor() : CredentialStore {
     }.getOrNull()
 
     private fun runSecurityInteractive(arguments: List<String>): Boolean = runCatching {
-        val process = ProcessBuilder("/usr/bin/security", "-i")
+        val process = ProcessBuilder(security, "-i")
             .redirectErrorStream(true)
             .start()
         process.outputStream.bufferedWriter(Charsets.UTF_8).use { input ->
@@ -69,7 +77,6 @@ actual class PlatformCredentialStore actual constructor() : CredentialStore {
 }
 
 /** One line for `security -i`: every argument in double quotes, with `\` and `"` escaped. */
-internal fun securityCommandLine(arguments: List<String>): String =
-    arguments.joinToString(" ") { argument ->
-        "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
-    }
+internal fun securityCommandLine(arguments: List<String>): String = arguments.joinToString(" ") { argument ->
+    "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+}
