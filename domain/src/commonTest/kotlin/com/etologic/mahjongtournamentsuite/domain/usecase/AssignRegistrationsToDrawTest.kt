@@ -56,4 +56,14 @@ class AssignRegistrationsToDrawTest {
         assertTrue(RegistrationSettings(maxPlayers = 4, confirmed = 4).isFull)
         assertFalse(RegistrationSettings(maxPlayers = null, confirmed = 400).isFull)
     }
+
+    @Test
+    fun drawTeamsThatDoNotMatchTheRegistrationTeamsGiveNothing() {
+        val teamOf = { emaId: String -> if (people.indexOf(emaId) < 4) "red" else "blue" }
+        val oneBigTeam = slots(8, false).map { it.copy(team = 1) }
+        val unevenTeams = slots(8, true).mapIndexed { index, slot -> if (index == 4) slot.copy(team = 1) else slot }
+
+        assertNull(assignRegistrationsToDraw(oneBigTeam, people, isTeams = true, teamOf = teamOf))
+        assertNull(assignRegistrationsToDraw(unevenTeams, people, isTeams = true, teamOf = teamOf))
+    }
 }

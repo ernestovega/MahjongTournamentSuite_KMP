@@ -12,6 +12,7 @@ class GenerateTournamentScheduleBruteForceParallelUseCaseTest {
     @Test
     fun rejectsInvalidPlayerAndRoundCounts() = runTest {
         assertNull(generate(3, 1, false, 1) {})
+        assertNull(generate(0, 1, false, 1) {})
         assertNull(generate(4, 0, false, 1) {})
     }
 

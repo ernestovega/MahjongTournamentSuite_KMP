@@ -193,6 +193,23 @@ class CalculateTournamentRankingsUseCaseTest {
         assertTrue(calculate(fourPlayers, listOf(completedTable(1, listOf("30", "10", "-10", "-30"))), includeTeams = true).hasResults)
     }
 
+    @Test
+    fun specialRankingsSkipHandsOfUnknownSlotsAndScoresThatAreNotNumbers() {
+        val table = completedTable(1, listOf("30", "10", "-10", "-30")).copy(
+            hands = listOf(
+                hand(1, winner = "9", score = "10", chicken = true),
+                hand(2, winner = "9", score = "10", chicken = false),
+                hand(3, winner = "1", score = "x", chicken = false),
+                hand(4, winner = "2", score = "12", chicken = false),
+            ),
+        )
+
+        val result = calculate(fourPlayers, listOf(table), includeTeams = false)
+
+        assertEquals(emptyList(), result.chickenHands)
+        assertEquals(listOf(2), result.bestHands.map { it.playerId })
+    }
+
     private fun hand(
         id: Int,
         winner: String,

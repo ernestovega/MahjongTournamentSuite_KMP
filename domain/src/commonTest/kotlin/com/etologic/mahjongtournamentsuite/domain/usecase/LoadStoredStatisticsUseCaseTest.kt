@@ -7,6 +7,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.EmaPlayerTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.GroupTables
 import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerTotals
+import com.etologic.mahjongtournamentsuite.domain.model.groupPersonOf
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroup
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
@@ -115,5 +117,24 @@ class LoadStoredStatisticsUseCaseTest {
 
         failStandingsAfter = standingsAsked.size + 1
         assertEquals(failure, useCase.standings("1", own = true, ids), "a failed call fails them all")
+    }
+
+    @Test
+    fun aPersonOutsideTheRegistryIsNamedByTheEmaNumber() {
+        val totals = PlayerTotals("9", tables = 1, points = 1.0, score = 10, tablesWithHands = 0, handsPlayed = 0, handsWon = 0, selfDraws = 0, dealIns = 0, penaltyCount = 0)
+        val overview = overviewFrom(StatisticsOverview(1, 2, 1, 0, 0, 0, 0, 0, 0, 0, listOf(totals)), registry)
+        val group = groupFrom(StatisticsGroupFilter(), StatisticsGroup(listOf("a"), GroupTables(), listOf(groupPersonOf("9", emptyList()), groupPersonOf("1", emptyList()))), registry)
+
+        assertEquals("EMA 9", overview.profiles.getValue(1).name)
+        assertEquals(listOf("ANA RUIZ", "EMA 9"), group.profiles.values.map { it.name })
+    }
+
+    @Test
+    fun tournamentsWithoutADateGoFirst() {
+        val undated = tournament.copy(id = "b", eventStartDate = null)
+
+        val data = personFrom("1", listOf(tournament, undated), listOf(PersonTournamentDigest("a", emptyList()), PersonTournamentDigest("b", emptyList())), registry)
+
+        assertEquals(listOf("b", "a"), data.tournaments.map { it.first.id })
     }
 }
