@@ -32,7 +32,8 @@ The installer lands in `suite/build/compose/binaries/main/<format>/`.
 ## Publish
 
 1. Bump the admin version if the current one already has a desktop release: `python3 scripts/versions.py bump admin`.
-2. Actions > **Publish · Desktop** > Run workflow on `main` (it does nothing on other branches; see docs/ci-deploy.md).
+2. Actions > **Publish · Desktop** > Run workflow on `main`. On another branch (`develop`) it only builds the
+   installers and leaves them in the artifacts of the run, to try them; see docs/ci-deploy.md.
 3. The workflow builds the three installers on macOS, Windows and Linux runners, signs and notarizes the DMG, and
    creates the release `desktop-v<version>` with the three files. A version that already has a release stops the run.
 

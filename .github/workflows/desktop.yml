@@ -1,7 +1,8 @@
 # Builds the desktop app (the suite: player and admin parts) for macOS, Windows and Linux and publishes the three
 # installers in a GitHub release tagged desktop-v<admin version>. Only by hand, from Actions > Publish · Desktop, like
-# the Google Play and TestFlight uploads, and only from main. The version is admin-versionName: a release that already
-# exists is not replaced, so bump the versions before running it again. The installed apps look for a newer release when they start.
+# the Google Play and TestFlight uploads, and only from main: from another branch it builds the installers and leaves
+# them in the artifacts of the run. The version is admin-versionName: a release that already exists is not replaced,
+# so bump the versions before running it again. The installed apps look for a newer release when they start.
 # See docs/desktop-release.md.
 #
 # macOS: signed with the Developer ID certificate and notarized with the App Store Connect API key, so it opens
@@ -27,8 +28,6 @@ env:
 jobs:
   version:
     name: Version
-    # Releases leave only from main, like the store uploads (docs/ci-deploy.md, "Branches").
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -43,7 +42,7 @@ jobs:
         run: |
           VERSION=$(sed -nE 's/^admin-versionName = "([^"]+)"/\1/p' gradle/libs.versions.toml)
           if [ -z "$VERSION" ]; then echo "No admin-versionName in gradle/libs.versions.toml."; exit 1; fi
-          if gh release view "desktop-v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if [ "$GITHUB_REF" = "refs/heads/main" ] && gh release view "desktop-v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::The release desktop-v$VERSION already exists. Bump the admin version (scripts/versions.py bump admin) first."
             exit 1
           fi
@@ -156,8 +155,11 @@ jobs:
           path: out/*
           if-no-files-found: error
 
+  # Releases leave only from main, like the store uploads (docs/ci-deploy.md, "Branches"). From another branch the run
+  # only builds the installers, which stay in the artifacts of the run.
   release:
     name: GitHub release
+    if: github.ref == 'refs/heads/main'
     needs: [version, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
