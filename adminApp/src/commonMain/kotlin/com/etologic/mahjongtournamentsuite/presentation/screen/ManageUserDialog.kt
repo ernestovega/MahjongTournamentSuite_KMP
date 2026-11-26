@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -64,9 +63,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.label
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -261,7 +260,7 @@ internal fun ManageUserDialog(
             title = { MtsDialogTitle(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
             text = {
                 Column(
-                    modifier = Modifier.heightIn(max = 560.dp).verticalScrollWithIndicators(rememberScrollState()),
+                    modifier = Modifier.heightIn(max = 560.dp).dialogVerticalScroll(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     // Only super admins set the photo of another account. The others do not see this part.
@@ -622,6 +621,7 @@ private fun TournamentAssignmentsDialog(
                         LazyColumnWithScrollbar(
                             state = listState,
                             modifier = Modifier.fillMaxWidth().height(240.dp),
+                            inDialog = true,
                         ) {
                             items(
                                 count = filteredTournaments.size,

@@ -33,9 +33,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_locked_text
 import mahjongtournamentsuite.adminapp.generated.resources.import_locked_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_players
 import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.organizations_button
 import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
 import mahjongtournamentsuite.adminapp.generated.resources.roles_open
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams

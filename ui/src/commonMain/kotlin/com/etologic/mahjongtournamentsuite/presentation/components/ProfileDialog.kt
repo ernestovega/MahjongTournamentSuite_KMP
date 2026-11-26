@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -173,7 +172,7 @@ fun ProfileDialog(
             text = {
                 // It scrolls when the window is not tall enough, so no field is cut.
                 Column(
-                    modifier = Modifier.fillMaxWidth().verticalScrollWithIndicators(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().dialogVerticalScroll(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {

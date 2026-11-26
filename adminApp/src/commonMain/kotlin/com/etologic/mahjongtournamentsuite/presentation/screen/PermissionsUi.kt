@@ -479,7 +479,7 @@ internal fun RoleEditorDialog(
                 )
             },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp), inDialog = true) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (!draft.readOnly) {
                             OutlinedTextField(
@@ -603,7 +603,7 @@ internal fun AccountPermissionsDialog(
             modifier = Modifier.appFocusGroup(),
             title = { MtsDialogTitle(stringResource(Res.string.account_permissions), subtitle = user.alias.ifBlank { user.email }) },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.heightIn(max = 560.dp), inDialog = true) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             stringResource(if (managesPermissions) Res.string.account_permissions_info else Res.string.account_permissions_only_super_admin),

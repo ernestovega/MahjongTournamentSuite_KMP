@@ -3,6 +3,9 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.rememberLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogListPadding
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -91,7 +94,12 @@ internal fun EmaPlayerPickerDialog(
                         Text(stringResource(Res.string.no_player_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         val matchesState = rememberLazyListState()
-                        LazyColumn(Modifier.heightIn(max = 360.dp).scrollIndicators(matchesState), state = matchesState) {
+                        // The list reaches the sides of the dialog, so its shadows take the whole width; the margins go inside.
+                        LazyColumn(
+                            Modifier.fillMaxWidth().heightIn(max = 360.dp).dialogFullBleed().scrollIndicators(matchesState, scrollbar = MtsScrollbar.Overlay),
+                            state = matchesState,
+                            contentPadding = dialogListPadding(),
+                        ) {
                             items(matches.take(MAX_RESULTS), key = { it.emaId }) { player ->
                                 val owner = owners[player.emaId]
                                 Row(

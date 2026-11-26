@@ -295,6 +295,7 @@ fun EditTournamentDialog(
                     Spacer(Modifier.height(12.dp))
                     ScrollableColumnWithScrollbar(
                         state = dialogScrollState,
+                        inDialog = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 560.dp),

@@ -98,6 +98,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
@@ -598,7 +599,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScrollWithIndicators(newPlayerScrollState),
+                                .dialogVerticalScroll(newPlayerScrollState),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }

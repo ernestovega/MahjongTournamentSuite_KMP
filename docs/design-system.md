@@ -105,6 +105,11 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
   `screenListPadding()` in a `ScreenColumn`, or the list's own `contentPadding`), so its shadows take the whole width
   and its scrollbar (`Overlay`) sits on the edge of the window. A scrollable `ScreenColumn` always keeps its margins
   inside the scroll. Lists narrower than the screen keep their margins outside.
+- **Dialogs too**: the scrolling content of an AlertDialog reaches both sides of the dialog and keeps the 24 dp margins
+  inside the scroll (`Modifier.dialogVerticalScroll()`, `inDialog = true` on `ScrollableColumnWithScrollbar` /
+  `LazyColumnWithScrollbar`, or `dialogFullBleed()` with `dialogListPadding()` on a lazy list). The scrollbar goes over
+  the end margin, so both margins are equal. A list with a sticky header pads each line instead and gives the header
+  the dialog background across the whole width, so the rows go out of sight under it.
 - A **scrollbar that is always visible** while the content can scroll, on every platform (also Android and web). The
   thumb can be dragged (with a finger too) and a tap in the strip takes it there.
 - Where the scrollbar goes (`MtsScrollbar`):

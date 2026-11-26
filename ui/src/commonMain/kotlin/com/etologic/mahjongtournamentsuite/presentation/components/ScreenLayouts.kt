@@ -121,19 +121,7 @@ val LocalScreenBleed = compositionLocalOf { ScreenBleed(0.dp, 0.dp) }
 @Composable
 fun Modifier.screenFullBleed(): Modifier {
     val bleed = LocalScreenBleed.current
-    val density = LocalDensity.current
-    val startPx = with(density) { bleed.start.roundToPx() }
-    val endPx = with(density) { bleed.end.roundToPx() }
-    if (startPx == 0 && endPx == 0) return this
-    return layout { measurable, constraints ->
-        if (!constraints.hasBoundedWidth) {
-            val placeable = measurable.measure(constraints)
-            return@layout layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-        }
-        val wider = constraints.maxWidth + startPx + endPx
-        val placeable = measurable.measure(constraints.copy(minWidth = wider, maxWidth = wider))
-        layout(constraints.maxWidth, placeable.height) { placeable.place(-startPx, 0) }
-    }
+    return bleedHorizontally(bleed.start, bleed.end)
 }
 
 /** The content padding of a list with [screenFullBleed]: the side margins of the screen, inside the list. */

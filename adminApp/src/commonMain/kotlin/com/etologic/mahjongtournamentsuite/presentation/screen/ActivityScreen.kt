@@ -703,7 +703,7 @@ private fun ActivityEntryDialog(
             onDismissRequest = onDismiss,
             title = { Text(actionLabel(entry.action), Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) },
             text = {
-                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp), inDialog = true) {
                     SelectionContainer {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(dateTime(entry.at), style = MaterialTheme.typography.bodyMedium)

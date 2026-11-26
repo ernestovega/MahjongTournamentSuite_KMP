@@ -70,6 +70,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveTextFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RegistrationsPresenter
@@ -258,11 +260,12 @@ fun RegistrationsScreen(
             }
             if (current != null) {
                 val busy = saving || drawTries != null
+                // The list reaches the edges of the window, so its shadows take the whole width; the margins go inside.
                 LazyColumnWithScrollbar(
                     state = rememberLazyListState(),
-                    modifier = Modifier.weight(1f).fillMaxWidth().testTag("registrations-list"),
-                    contentPadding = PaddingValues(vertical = MtsTheme.layout.screenGutter),
-                    scrollbar = MtsScrollbar.Margin,
+                    modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("registrations-list"),
+                    contentPadding = screenListPadding(top = MtsTheme.layout.screenGutter, bottom = MtsTheme.layout.screenGutter),
+                    scrollbar = MtsScrollbar.Overlay,
                 ) {
                     item(key = "settings") {
                         RegistrationSettingsPanel(

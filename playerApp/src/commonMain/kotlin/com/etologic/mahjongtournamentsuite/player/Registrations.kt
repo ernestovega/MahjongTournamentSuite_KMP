@@ -96,8 +96,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
@@ -750,7 +750,7 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
             onDismissRequest = { if (!busy) onDismiss() },
             title = { MtsDialogTitle(stringResource(Res.string.preg_register_title), subtitle = tournament.name) },
             text = {
-                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!loaded || busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                     val signedInPerson = me
                     if (signedInPerson != null) {
@@ -916,7 +916,7 @@ private fun ManageRegistrationDialog(
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(Res.string.preg_manage_title), subtitle = "${own.name} · ${own.emaId}") },
             text = {
-                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                     if (own.sharedEmail) {
                         Text(
@@ -1016,7 +1016,7 @@ private fun NoEmaNumberDialog(onSend: (NoEmaNumberRequest) -> Unit, onDismiss: (
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(Res.string.preg_no_ema_title)) },
             text = {
-                Column(Modifier.verticalScrollWithIndicators(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(Res.string.preg_no_ema_info), style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(name, { name = it.take(80) }, label = { Text(stringResource(Res.string.preg_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(country, { country = it.take(60) }, label = { Text(stringResource(Res.string.preg_no_ema_country)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
