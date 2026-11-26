@@ -786,4 +786,6 @@
     <string name="update_available_message">Версия MTS %1$s готова. Скачайте её и установите поверх этой.</string>
     <string name="update_available_download">Скачать</string>
     <string name="update_available_later">Позже</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Скачать приложение</string>
 </resources>

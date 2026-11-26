@@ -64,6 +64,27 @@ private fun registrationFromUrl(): RegistrationLink? {
 }
 
 /**
+ * True for `/download`: the public address of the page of the apps. The address goes back to `/`, like `/support`.
+ */
+private fun appsFromUrl(): Boolean {
+    if (window.location.pathname.trim('/') != "download") return false
+    window.history.replaceState(null, "", "/" + window.location.search + window.location.hash)
+    return true
+}
+
+private fun touchPoints(): Int = js("navigator.maxTouchPoints || 0")
+
+/** The key of localStorage that hides the notice of the apps for good ("Don't show again"). */
+private const val APPS_NOTICE_HIDDEN = "mts.appsNoticeHidden"
+
+/** The apps of MTS for this browser: its system and the "Don't show again" of the notice. */
+private fun webApps() = WebApps(
+    device = appPlatformOfUserAgent(window.navigator.userAgent, runCatching { touchPoints() }.getOrDefault(0)),
+    noticeHidden = { runCatching { localStorage.getItem(APPS_NOTICE_HIDDEN) == "1" }.getOrDefault(false) },
+    hideNotice = { runCatching { localStorage.setItem(APPS_NOTICE_HIDDEN, "1") } },
+)
+
+/**
  * True when the page asked for the accessibility tree of Compose in the DOM: the web E2E tests (`e2e/web`) set
  * `mts.a11y` to `on` in localStorage, so they find the texts and buttons by their roles and names.
  */
@@ -74,6 +95,8 @@ fun main() {
     loadTimeZones()
     val openSignIn = signInFromUrl()
     val openSupport = supportFromUrl()
+    val openApps = appsFromUrl()
+    val apps = webApps()
     val openRegistration = registrationFromUrl()
     ComposeViewport(configure = { isA11YEnabled = accessibilityTreeRequested() }) {
         PlayerApp(
@@ -83,6 +106,8 @@ fun main() {
             openSignIn = openSignIn,
             openSupport = openSupport,
             openRegistration = openRegistration,
+            webApps = apps,
+            openApps = openApps,
         )
     }
 }

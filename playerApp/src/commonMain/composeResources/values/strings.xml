@@ -329,4 +329,21 @@ But one email can have only one account in the app: whoever wants their own acco
     <string name="ranking_close">Close</string>
     <string name="ranking_title_now">Current ranking</string>
     <string name="ranking_title_after_round">Ranking after round %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Get the app</string>
+    <string name="apps_intro">MTS is also an app for phones, tablets and computers. It shows the same tournaments as this web, with the same account.</string>
+    <string name="apps_ios">iPhone and iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Macs with Apple silicon</string>
+    <string name="apps_windows_detail">Installer for Windows 10 and 11</string>
+    <string name="apps_linux_detail">Debian and Ubuntu</string>
+    <string name="apps_download">Download</string>
+    <string name="apps_soon">Coming soon</string>
+    <string name="apps_this_device">For this device</string>
+    <string name="apps_notice_title">MTS apps</string>
+    <string name="apps_notice_message">MTS also comes as an app for Android, iPhone, Mac, Windows and Linux.\n\nYou can find them later in the More menu, under Get the app.</string>
+    <string name="apps_notice_close">Close</string>
+    <string name="apps_notice_never">Don't show again</string>
 </resources>

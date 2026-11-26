@@ -780,4 +780,6 @@ Den första som fungerar vinner</string>
     <string name="update_available_message">Version %1$s av MTS är klar. Ladda ner den och installera den över den här.</string>
     <string name="update_available_download">Ladda ner</string>
     <string name="update_available_later">Senare</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Hämta appen</string>
 </resources>
