@@ -1146,6 +1146,7 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
     <string name="pc_marked_more_or_less">Markerade: %1$d. Markera %2$d till eller avmarkera %3$d.</string>
     <string name="pc_marked_less">Markerade: %1$d. Avmarkera %2$d.</string>
     <string name="pc_minimum">Med %1$d spelare kan ingen gå: en turnering behöver minst 16.</string>
+    <string name="pc_less_disabled">Detta tar bara bort borden som lagts till här. För att ta bort bord markerar du nedan de personer som går, i grupper om 4.</string>
     <string name="pc_sure_text">Borden i alla ronder lottas om.\nDet går inte att ångra.</string>
     <string name="pc_change">Ändra</string>
     <string name="pc_now">Nu: %1$d spelare, %2$d bord per omgång.</string>
