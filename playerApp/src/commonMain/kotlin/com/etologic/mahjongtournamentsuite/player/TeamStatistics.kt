@@ -27,13 +27,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.StatCard
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.TeamRoundsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.hasResults
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -41,10 +44,12 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.stats_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.team_member_points
 import mahjongtournamentsuite.playerapp.generated.resources.team_member_score
 import mahjongtournamentsuite.playerapp.generated.resources.team_member_win_rate
 import mahjongtournamentsuite.playerapp.generated.resources.team_members
+import mahjongtournamentsuite.playerapp.generated.resources.team_statistics_empty
 import mahjongtournamentsuite.playerapp.generated.resources.team_statistics_note
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -95,7 +100,8 @@ internal fun TeamStatisticsTab(
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
         val teamId = loaded.slots.firstOrNull { it.id in members }?.team ?: 0
-        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = teamCount) } }
+        // Before the first hand the place says nothing: every team is first with 0 points.
+        val standing: (@Composable (Modifier) -> Unit)? = ranking?.takeIf { loaded.hasResults }?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = teamCount) } }
         val combined = teamStatistics(teamId, members, loaded.statistics.players)
         // The place of the team first, then its players, then the statistics of all their tables together.
         standing?.invoke(Modifier.fillMaxWidth())
@@ -114,8 +120,10 @@ internal fun TeamStatisticsTab(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        combined?.let {
-            PlayerStatisticsPanel(it, tournaments = listOf(loaded.tournament), rivalNames = loaded.rivalNames)
+        if (combined == null) {
+            AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.team_statistics_empty))
+        } else {
+            PlayerStatisticsPanel(combined, tournaments = listOf(loaded.tournament), rivalNames = loaded.rivalNames)
         }
     }
 }

@@ -13,12 +13,12 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,742 | 218 | – | – | – | – | – | 96 % | 87 % |
-| `data`: repositories, network, telemetry | 7,931 | 449 | – | – | – | – | – | 99 % | 85 % |
-| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 91 % | 60 % |
-| `ui`: shared Compose components | 17,521 | 85 | 221 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,148 | 315 | 420 | 91 | – | 175 | 4 | 84 % | 62 % |
-| `playerApp`: player screens | 11,947 | 194 | 123 | 56 | – | 72 | 8 | 89 % | 65 % |
+| `domain`: business rules, use cases | 5,757 | 220 | – | – | – | – | – | 99 % | 92 % |
+| `data`: repositories, network, telemetry | 7,931 | 457 | – | – | – | – | – | 99 % | 88 % |
+| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 92 % | 60 % |
+| `ui`: shared Compose components | 17,530 | 85 | 221 | 24 | – | – | – | 90 % | 63 % |
+| `adminApp`: admin screens | 32,150 | 315 | 420 | 91 | – | 175 | 4 | 86 % | 64 % |
+| `playerApp`: player screens | 11,962 | 194 | 124 | 56 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 83 % |
 | Backend: services | 16,011 | 371 | – | – | 186 | – | – | 96 % | 87 % |
@@ -26,7 +26,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
-| **Total** | **109,341** | **1,850** | **784** | **175** | **479** | **247** | **12** | **91 %** | **69 %** |
+| **Total** | **109,382** | **1,860** | **785** | **175** | **479** | **247** | **12** | **91 %** | **71 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
@@ -38,7 +38,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
   `androidMain`, `wasmJsMain` or `androidApp`. A dash means not measured.
 - **The total of lines and branches run** leaves out the maintenance and seed scripts of the backend: they run
   by hand, once or on test data, and their row shows how much of them the tests run.
-- Coverage measured on 2026-11-26 at `4557ea4dc` with `python3 scripts/test-coverage.py --measure`.
+- Coverage measured on 2026-11-26 at `1e85adfb7` with `python3 scripts/test-coverage.py --measure`.
 <!-- test-table:end -->
 
 ## 1. Kinds of tests

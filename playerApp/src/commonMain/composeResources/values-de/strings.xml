@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d Hände</string>
     <string name="team_n">Team %1$d</string>
     <string name="ranking_points_score">%1$s Punkte - %2$d Score</string>
-    <string name="ranking_empty">Die Rangliste erscheint, sobald der erste Tisch abgeschlossen ist.</string>
+    <string name="ranking_empty">Die Rangliste erscheint, sobald die erste Hand gespielt ist.</string>
     <string name="ranking_empty_title">Noch keine Rangliste</string>
     <string name="ranking_teams">Teams</string>
     <string name="ranking_chicken_hands">Hühnerhände</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Team oder Spieler</string>
     <string name="teams_search_empty">Kein Team passt zur Suche.</string>
     <string name="team_statistics_note">Die Statistiken zählen die Tische aller Spieler des Teams zusammen.</string>
+    <string name="team_statistics_empty">Die Statistiken erscheinen, sobald ein Tisch dieses Teams abgeschlossen ist.</string>
     <string name="team_member_win_rate">Gewinnquote</string>
     <string name="team_member_points">Punkte</string>
     <string name="team_member_score">Score</string>

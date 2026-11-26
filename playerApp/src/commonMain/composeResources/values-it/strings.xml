@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d mani</string>
     <string name="team_n">Squadra %1$d</string>
     <string name="ranking_points_score">%1$s punti - punteggio %2$d</string>
-    <string name="ranking_empty">La classifica compare quando si completa il primo tavolo.</string>
+    <string name="ranking_empty">La classifica compare quando si gioca la prima mano.</string>
     <string name="ranking_empty_title">Ancora nessuna classifica</string>
     <string name="ranking_teams">Squadre</string>
     <string name="ranking_chicken_hands">Mani pollo</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Squadra o giocatore</string>
     <string name="teams_search_empty">Nessuna squadra corrisponde alla ricerca.</string>
     <string name="team_statistics_note">Le statistiche sommano i tavoli di tutti i giocatori della squadra.</string>
+    <string name="team_statistics_empty">Le statistiche compaiono quando si completa un tavolo di questa squadra.</string>
     <string name="team_member_win_rate">Percentuale di vittorie</string>
     <string name="team_member_points">Punti</string>
     <string name="team_member_score">Punteggio</string>

@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d hands</string>
     <string name="team_n">Team %1$d</string>
     <string name="ranking_points_score">%1$s points - %2$d score</string>
-    <string name="ranking_empty">The ranking shows when the first table is completed.</string>
+    <string name="ranking_empty">The ranking shows when the first hand is played.</string>
     <string name="ranking_empty_title">No ranking yet</string>
     <string name="ranking_teams">Teams</string>
     <string name="ranking_chicken_hands">Chicken hands</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Team or player</string>
     <string name="teams_search_empty">No team matches the search.</string>
     <string name="team_statistics_note">The statistics add up the tables of every player of the team.</string>
+    <string name="team_statistics_empty">The statistics show when a table of this team is completed.</string>
     <string name="team_member_win_rate">Win rate</string>
     <string name="team_member_points">Points</string>
     <string name="team_member_score">Score</string>

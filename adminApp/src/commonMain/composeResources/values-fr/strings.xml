@@ -102,7 +102,7 @@
     <string name="discard">Abandonner</string>
     <string name="loading_rankings">Chargement des classements…</string>
     <string name="no_ranking_yet">Pas encore de classement</string>
-    <string name="the_ranking_shows_when_the_first">Le classement s'affiche quand la première table est terminée.</string>
+    <string name="the_ranking_shows_when_the_first">Le classement s'affiche dès que la première main est jouée.</string>
     <string name="settings">Paramètres</string>
     <string name="show_first_3">Afficher les 3 premiers</string>
     <string name="previous_ranking_list">Liste de classement précédente</string>
