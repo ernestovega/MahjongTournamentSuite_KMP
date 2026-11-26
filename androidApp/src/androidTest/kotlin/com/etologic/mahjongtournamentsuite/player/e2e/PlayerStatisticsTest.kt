@@ -52,8 +52,10 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     @Test
     fun tournamentStatisticsSayHowManyTablesFeedTheHandValues() {
         openTournamentStatistics()
-        c.scrollListTo("Hand values use 33 of 34 tables.")
-        c.waitForText("Hand values use 33 of 34 tables.")
+        // Since 26-nov the note also says why: "The others only have the final scores, without their hands."
+        val note = "Hand values use 33 of 34 tables. The others only have the final scores, without their hands."
+        c.scrollListTo(note)
+        c.waitForText(note)
     }
 
     /**
