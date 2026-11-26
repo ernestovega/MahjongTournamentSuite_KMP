@@ -1134,4 +1134,3 @@ private fun UserProfile.toUiName(): String {
 private val TableScrollbarBleed = 20.dp
 
 /** Room under the last tournament, so that the New tournament floating button does not cover it. */
-private val FabClearance = 88.dp

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -62,7 +63,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
@@ -81,7 +82,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TopBarButtonsLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
@@ -226,19 +226,25 @@ fun OrganizationsScreen(navController: NavHostController) {
         title = stringResource(Res.string.organizations_title),
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
-        actions = if (access?.canCreateOrganizations == true) {
+        // The main action of the screen is a floating button, like New tournament in the tournament list.
+        floatingActionButton = if (access?.canCreateOrganizations == true) {
             {
-                TopBarButtonsLayout {
-                    AppTopBarButton(stringResource(Res.string.organization_new), Icons.Default.Add, onClick = {
-                        editing = OrganizationEditing(id = null, organization = null)
-                    })
+                ExtendedFloatingActionButton(onClick = { editing = OrganizationEditing(id = null, organization = null) }) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    ButtonText(stringResource(Res.string.organization_new), Modifier.padding(start = 12.dp))
                 }
             }
         } else {
             null
         },
     ) {
-        ScreenColumn(maxWidth = 1200.dp, scrollable = true, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ScreenColumn(
+            maxWidth = 1200.dp,
+            scrollable = true,
+            // Room under the last organization so the floating button covers none.
+            contentPadding = PaddingValues(start = MtsTheme.spacing.xl, top = MtsTheme.spacing.xl, end = MtsTheme.spacing.xl, bottom = FabClearance),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
             val countryNameOf = rememberCountryNames()
             SectionCard(container = false) {
