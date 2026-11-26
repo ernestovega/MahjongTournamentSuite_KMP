@@ -155,7 +155,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ### 5.1 Tournaments and organizations
 
 - **Tournament list** by role: all, those of your organizations, or those assigned to you.
-- **Create a tournament**
+- **Create a tournament** with the «New tournament» floating button at the bottom right of the list
   - Individual or teams: players, rounds, dates, schedule, venue (with Google Places), short name, contact, organizers.
   - Or **«Open registrations»**: the tournament starts with no players and the draw happens at the close.
 - **Settings**: public or not, differences at the tables, match length, schedule and agenda.
