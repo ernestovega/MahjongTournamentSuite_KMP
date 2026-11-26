@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,14 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,6 +53,7 @@ import mahjongtournamentsuite.ui.generated.resources.column_points
 import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.more_information
 import mahjongtournamentsuite.ui.generated.resources.rival_ahead_of_you
+import mahjongtournamentsuite.ui.generated.resources.rival_compare
 import mahjongtournamentsuite.ui.generated.resources.rival_deal_ins
 import mahjongtournamentsuite.ui.generated.resources.rival_ema
 import mahjongtournamentsuite.ui.generated.resources.rival_player
@@ -272,13 +273,19 @@ internal fun RecordsCard(statistics: PlayerStatistics, modifier: Modifier) {
     }
 }
 
-/** The opponents who did the most harm to the player. The rule and the weights are in `RivalWeights`. */
+/**
+ * The opponents who did the most harm to the player. The rule and the weights are in `RivalWeights`.
+ * Each rival takes a short block: the heat and the name, a button that compares the player with the rival, and the
+ * six numbers as a list in two columns, with the label on the left and the number on the right of each line.
+ * [onCompareRival] gets the EMA number of the rival. Without it, or for a rival without an EMA number, there is no
+ * button.
+ */
 @Composable
 internal fun RivalsCard(
     statistics: PlayerStatistics,
     names: Map<String, String>,
     modifier: Modifier,
-    onOpenRival: ((String) -> Unit)?,
+    onCompareRival: ((String) -> Unit)?,
 ) {
     val rivals = remember(statistics) { statistics.toughestRivals() }
     StatCard(
@@ -298,20 +305,60 @@ internal fun RivalsCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            return@StatCard
         }
+        val labels = listOf(
+            stringResource(Res.string.rival_shared_tables),
+            stringResource(Res.string.rival_ahead_of_you),
+            stringResource(Res.string.rival_wins_against_you),
+            stringResource(Res.string.rival_deal_ins),
+            stringResource(Res.string.rival_self_draws),
+            stringResource(Res.string.rival_third_party_deal_ins),
+        )
         rivals.forEachIndexed { index, rival ->
             if (index > 0) HorizontalDivider()
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // A rival with an EMA number has a statistics page. A key with a hash has none.
-                val open = onOpenRival?.takeIf { '#' !in rival.opponent }
-                RivalHeading(rivalName(rival.opponent, names), heat = FLAMES - index, open = open?.let { { it(rival.opponent) } })
-                StatGrid(Modifier.fillMaxWidth()) {
-                    BigNumber(stringResource(Res.string.rival_shared_tables), rival.sharedTables.toString())
-                    BigNumber(stringResource(Res.string.rival_ahead_of_you), rival.tablesBehind.toString())
-                    BigNumber(stringResource(Res.string.rival_wins_against_you), (rival.discardLosses + rival.selfDrawLosses + rival.othersDiscardWins).toString())
-                    BigNumber(stringResource(Res.string.rival_deal_ins), rival.discardLosses.toString())
-                    BigNumber(stringResource(Res.string.rival_self_draws), rival.selfDrawLosses.toString())
-                    BigNumber(stringResource(Res.string.rival_third_party_deal_ins), rival.othersDiscardWins.toString())
+            // A rival with an EMA number has statistics to compare with. A key with a hash has none.
+            val compare = onCompareRival?.takeIf { '#' !in rival.opponent }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                RivalHeading(rivalName(rival.opponent, names), heat = FLAMES - index, compare = compare?.let { { it(rival.opponent) } })
+                val values = listOf(
+                    rival.sharedTables,
+                    rival.tablesBehind,
+                    rival.discardLosses + rival.selfDrawLosses + rival.othersDiscardWins,
+                    rival.discardLosses,
+                    rival.selfDrawLosses,
+                    rival.othersDiscardWins,
+                ).map { it.toString() }
+                RivalNumbers(labels, values)
+            }
+        }
+    }
+}
+
+/**
+ * The six numbers of a rival as a list in two columns of three lines: the label on the left and the number on the
+ * right of each line. A long label goes on to a second line.
+ */
+@Composable
+private fun RivalNumbers(labels: List<String>, values: List<String>) {
+    val lines = labels.zip(values)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        lines.chunked((lines.size + 1) / 2).forEach { column ->
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                column.forEach { (label, value) ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            label,
+                            Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(value, style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -319,37 +366,40 @@ internal fun RivalsCard(
 }
 
 /**
- * The name of a rival, centered, with a row of flames before it like the heat of a dish. The flames share the line of
- * the name to save height. [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
- * The name is a link when [open] is set.
+ * The name of a rival with a row of flames after it like the heat of a dish, and the button that compares the
+ * player with the rival after it. [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
  */
 @Composable
-private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
+private fun RivalHeading(name: String, heat: Int, compare: (() -> Unit)?) {
     val flame = MaterialTheme.colorScheme.error
     Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            repeat(FLAMES) { index ->
-                Icon(
-                    Icons.Default.LocalFireDepartment,
-                    contentDescription = null,
-                    Modifier.size(24.dp),
-                    tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
-                )
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                name,
+                Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row {
+                repeat(FLAMES) { index ->
+                    Icon(
+                        Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        Modifier.size(16.dp),
+                        tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
+                    )
+                }
             }
         }
-        Text(
-            name,
-            Modifier.weight(1f, fill = false).then(if (open != null) Modifier.clickable(onClick = open) else Modifier),
-            style = MaterialTheme.typography.titleLarge.inTextFont(),
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            color = if (open != null) MtsTheme.colors.link else Color.Unspecified,
-            textDecoration = if (open != null) TextDecoration.Underline else null,
-        )
+        if (compare != null) {
+            DebouncedOutlinedButton(onClick = compare, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                ButtonText(stringResource(Res.string.rival_compare))
+            }
+        }
     }
 }
 

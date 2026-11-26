@@ -146,6 +146,7 @@
     <string name="rivals_none">Ingen rival än. Det krävs %1$d gemensamma bord.</string>
     <string name="rival_shared_tables">Gemensamma bord</string>
     <string name="rival_ahead_of_you">Före dig</string>
+    <string name="rival_compare">Jämför</string>
     <string name="rival_wins_against_you">Vinster mot dig</string>
     <string name="rival_deal_ins">Inkast</string>
     <string name="rival_self_draws">Självdragna</string>

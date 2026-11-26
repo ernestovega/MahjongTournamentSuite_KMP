@@ -147,6 +147,7 @@
     <string name="rivals_none">Ancora nessun rivale. Servono %1$d tavoli in comune.</string>
     <string name="rival_shared_tables">Tavoli in comune</string>
     <string name="rival_ahead_of_you">Davanti a te</string>
+    <string name="rival_compare">Confronta</string>
     <string name="rival_wins_against_you">Mani che ti ha vinto</string>
     <string name="rival_deal_ins">Ti ha battuto su scarto</string>
     <string name="rival_self_draws">Ti ha battuto dal muro</string>

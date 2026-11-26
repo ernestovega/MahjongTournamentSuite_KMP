@@ -69,7 +69,7 @@ fun FilteredStatistics(
                     ?.let { TableStatisticsPanel(it, data.names) }
                     ?: AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_empty_message))
             }
-            StatisticsView.SLOT -> tournament?.let { SlotContent(it, filters.slotId ?: return@let, onFiltersChange, filters) }
+            StatisticsView.SLOT -> tournament?.let { SlotContent(it, filters.slotId ?: return@let) }
             StatisticsView.TOURNAMENT -> tournament?.let { data ->
                 // Before the first completed table every number is 0: the screen says that the statistics come later.
                 if (data.statistics.tablesCompleted == 0) {
@@ -155,7 +155,7 @@ private fun PersonContent(
             kept.overall,
             tournaments = kept.tournaments.map { it.first },
             rivalNames = kept.rivalNames,
-            onOpenRival = { ema -> onFiltersChange(filters.withPerson(ema)) },
+            onCompareRival = { ema -> onFiltersChange(filters.copy(rivalEmaId = ema, together = false)) },
         )
         return
     }
@@ -163,7 +163,7 @@ private fun PersonContent(
         kept.overall,
         tournaments = kept.tournaments.map { it.first },
         rivalNames = kept.rivalNames,
-        onOpenRival = { ema -> onFiltersChange(filters.withPerson(ema)) },
+        onCompareRival = { ema -> onFiltersChange(filters.copy(rivalEmaId = ema, together = false)) },
     )
     Text(stringResource(Res.string.stats_player_tournaments), style = MaterialTheme.typography.titleLarge)
     PlayerTournamentsSection(
@@ -175,7 +175,7 @@ private fun PersonContent(
 
 /** One seat of one tournament: the place, and the place after each round. */
 @Composable
-private fun SlotContent(data: TournamentStatisticsData, slotId: Int, onFiltersChange: (StatisticsFilters) -> Unit, filters: StatisticsFilters) {
+private fun SlotContent(data: TournamentStatisticsData, slotId: Int) {
     val rankings = remember(data) {
         val calculate = CalculateTournamentRankingsUseCase()
         val rounds = data.statistics.playedRounds((1..data.tournament.numRounds).toList())
@@ -198,7 +198,6 @@ private fun SlotContent(data: TournamentStatisticsData, slotId: Int, onFiltersCh
         afterPlaces = { modifier -> PlayerRoundsCard(stats.byRound((1..data.tournament.numRounds).toList()), places, data.slots.size, modifier) },
         tournaments = listOf(data.tournament),
         rivalNames = data.rivalNames,
-        onOpenRival = { ema -> onFiltersChange(filters.withPerson(ema)) },
     )
 }
 

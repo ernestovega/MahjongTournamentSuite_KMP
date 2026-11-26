@@ -146,6 +146,7 @@
     <string name="rivals_none">Nog geen rivaal. Daarvoor zijn %1$d gedeelde tafels nodig.</string>
     <string name="rival_shared_tables">Gedeelde tafels</string>
     <string name="rival_ahead_of_you">Voor jou</string>
+    <string name="rival_compare">Vergelijken</string>
     <string name="rival_wins_against_you">Winst tegen jou</string>
     <string name="rival_deal_ins">Inworpen</string>
     <string name="rival_self_draws">Zelf getrokken</string>
