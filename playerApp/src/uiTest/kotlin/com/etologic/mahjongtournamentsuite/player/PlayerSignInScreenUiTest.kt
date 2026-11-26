@@ -75,6 +75,8 @@ class PlayerSignInScreenUiTest {
     fun english() {
         Locale.setDefault(Locale.ENGLISH)
         Dispatchers.setMain(Dispatchers.Unconfined)
+        // Another test class can leave its Koin running: these screens need their own fake account.
+        stopKoin()
     }
 
     @AfterTest
