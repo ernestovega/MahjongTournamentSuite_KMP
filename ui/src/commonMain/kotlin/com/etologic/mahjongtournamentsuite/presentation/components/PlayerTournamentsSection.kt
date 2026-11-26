@@ -83,9 +83,10 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * The tournaments of one person, the newest first. Each tournament is a card. Folded, the card already says the dates,
  * the place, the points and the score of the player, so the list works as a summary of the whole career.
- * Unfolded, it shows the numbers, skills, places and hands of that tournament. Only the newest card starts unfolded.
+ * Unfolded, it shows the numbers, skills, places and hands of that tournament. Every card starts folded, however many
+ * there are, and opens only when it is tapped.
  * With tournaments in more than one year, a row of year chips on top filters the list.
- * With [tournamentId], chosen in the bar of [ChosenTournamentBar], the section shows only that tournament, unfolded.
+ * With [tournamentId], chosen in the bar of [ChosenTournamentBar], the section shows only that tournament, folded too.
  */
 @Composable
 fun PlayerTournamentsSection(
@@ -102,9 +103,8 @@ fun PlayerTournamentsSection(
         )
     }
     val ids = sorted.map { it.first.id }
-    val expanded = remember(ids) {
-        mutableStateMapOf<String, Boolean>().apply { sorted.firstOrNull()?.let { put(it.first.id, true) } }
-    }
+    // Every card starts folded. Only a tap opens one.
+    val expanded = remember(ids) { mutableStateMapOf<String, Boolean>() }
     val standings = remember(ids) { mutableStateMapOf<String, Standing>() }
     // The round that each tournament card shows. A card without a round shows the whole tournament.
     val rounds = remember(ids) { mutableStateMapOf<String, Int>() }
@@ -120,8 +120,6 @@ fun PlayerTournamentsSection(
             else -> sorted.filter { it.first.tournamentYear() == year }
         }
     }
-    // The chosen tournament opens unfolded.
-    LaunchedEffect(single?.first?.id) { single?.let { expanded[it.first.id] = true } }
     // The places load for the tournaments on screen. A new year asks only for its own tournaments.
     LaunchedEffect(visible.map { it.first.id }) {
         val missing = visible.map { it.first.id }.filter { it !in requested }
@@ -142,14 +140,7 @@ fun PlayerTournamentsSection(
                 years.forEach { y ->
                     FilterChip(
                         selected = y == year,
-                        onClick = {
-                            year = if (y == year) null else y
-                            // A year with every card folded opens its newest tournament, so the screen is not empty.
-                            val first = sorted.firstOrNull { year == null || it.first.tournamentYear() == year }?.first?.id
-                            if (first != null && sorted.none { (year == null || it.first.tournamentYear() == year) && expanded[it.first.id] == true }) {
-                                expanded[first] = true
-                            }
-                        },
+                        onClick = { year = if (y == year) null else y },
                         label = { Text(y.toString()) },
                     )
                 }
