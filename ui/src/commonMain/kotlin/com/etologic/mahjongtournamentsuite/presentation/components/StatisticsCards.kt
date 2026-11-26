@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -33,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -278,8 +276,9 @@ internal fun RecordsCard(statistics: PlayerStatistics, modifier: Modifier) {
 /**
  * The opponents who did the most harm to the player. The rule and the weights are in `RivalWeights`.
  * Each rival takes a short block: the heat and the name, a button that compares the player with the rival, and the
- * six numbers in small. [onCompareRival] gets the EMA number of the rival. Without it, or for a rival without an EMA
- * number, there is no button.
+ * six numbers as a list in two columns, with the label on the left and the number on the right of each line.
+ * [onCompareRival] gets the EMA number of the rival. Without it, or for a rival without an EMA number, there is no
+ * button.
  */
 @Composable
 internal fun RivalsCard(
@@ -287,7 +286,6 @@ internal fun RivalsCard(
     names: Map<String, String>,
     modifier: Modifier,
     onCompareRival: ((String) -> Unit)?,
-    design: Int = RivalsDesign,
 ) {
     val rivals = remember(statistics) { statistics.toughestRivals() }
     StatCard(
@@ -317,9 +315,8 @@ internal fun RivalsCard(
             stringResource(Res.string.rival_self_draws),
             stringResource(Res.string.rival_third_party_deal_ins),
         )
-        if (design == 2) RivalNumbersRow(labels, header = true)
         rivals.forEachIndexed { index, rival ->
-            if (index > 0 || design == 2) HorizontalDivider()
+            if (index > 0) HorizontalDivider()
             // A rival with an EMA number has statistics to compare with. A key with a hash has none.
             val compare = onCompareRival?.takeIf { '#' !in rival.opponent }
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -332,92 +329,34 @@ internal fun RivalsCard(
                     rival.selfDrawLosses,
                     rival.othersDiscardWins,
                 ).map { it.toString() }
-                when (design) {
-                    2 -> RivalNumbersRow(values, header = false)
-                    3 -> RivalList(labels, values, alwaysTwoColumns = false)
-                    4 -> RivalList(labels, values, alwaysTwoColumns = true)
-                    else -> RivalSmallNumbers(labels, values)
-                }
+                RivalNumbers(labels, values)
             }
         }
     }
 }
 
 /**
- * The design of the rivals while Ernesto chooses: 1 small numbers with their labels, 2 a table with one header,
- * 3 a list with one column on a narrow card and two on a wide one, 4 a list with two columns always.
+ * The six numbers of a rival as a list in two columns of three lines: the label on the left and the number on the
+ * right of each line. A long label goes on to a second line.
  */
-internal var RivalsDesign = 1
-
-/** Six small numbers, each with its label above: in one row on a wide card, in two rows of three on a narrow one. */
 @Composable
-private fun RivalSmallNumbers(labels: List<String>, values: List<String>) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val perRow = if (maxWidth >= 72.dp * 6) 6 else 3
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            labels.zip(values).chunked(perRow).forEach { row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    row.forEach { (label, value) ->
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                minLines = 2,
-                            )
-                            Text(value, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold)
-                        }
+private fun RivalNumbers(labels: List<String>, values: List<String>) {
+    val lines = labels.zip(values)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        lines.chunked((lines.size + 1) / 2).forEach { column ->
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                column.forEach { (label, value) ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            label,
+                            Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(value, style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 }
             }
-        }
-    }
-}
-
-/**
- * The six numbers of a rival as a list: the label on the left and the number on the right of each line. The lines
- * go in two columns on a wide card or when [alwaysTwoColumns] is true, else in one column.
- */
-@Composable
-private fun RivalList(labels: List<String>, values: List<String>, alwaysTwoColumns: Boolean) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (alwaysTwoColumns || maxWidth >= 400.dp) 2 else 1
-        val lines = labels.zip(values)
-        val perColumn = (lines.size + columns - 1) / columns
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            lines.chunked(perColumn).forEach { column ->
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    column.forEach { (label, value) ->
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                label,
-                                Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(value, style = MaterialTheme.typography.bodyMedium.inTextFont(), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** One row of the rivals table: the labels in the [header], or the numbers of one rival. */
-@Composable
-private fun RivalNumbersRow(cells: List<String>, header: Boolean) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Bottom) {
-        cells.forEach { cell ->
-            Text(
-                cell,
-                Modifier.weight(1f),
-                style = if (header) MaterialTheme.typography.labelSmall else MaterialTheme.typography.titleMedium.inTextFont(),
-                fontWeight = if (header) null else FontWeight.Bold,
-                color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
@@ -439,7 +378,7 @@ private fun RivalHeading(name: String, heat: Int, compare: (() -> Unit)?) {
                 Icon(
                     Icons.Default.LocalFireDepartment,
                     contentDescription = null,
-                    Modifier.size(18.dp),
+                    Modifier.size(16.dp),
                     tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
                 )
             }
@@ -451,7 +390,7 @@ private fun RivalHeading(name: String, heat: Int, compare: (() -> Unit)?) {
             fontWeight = FontWeight.SemiBold,
         )
         if (compare != null) {
-            DebouncedTextButton(onClick = compare, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            DebouncedOutlinedButton(onClick = compare, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 ButtonText(stringResource(Res.string.rival_compare))
             }
         }
