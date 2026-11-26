@@ -199,7 +199,6 @@
     <string name="name">Nome</string>
     <string name="short_name">Nome breve</string>
     <string name="from_to">Dal-al</string>
-    <string name="features">Opzioni</string>
     <string name="select_ema_player">Seleziona un giocatore EMA</string>
     <string name="name_ema_id_or_country">Nome, ID EMA o paese</string>
     <string name="no_player_found">Nessun giocatore trovato.</string>

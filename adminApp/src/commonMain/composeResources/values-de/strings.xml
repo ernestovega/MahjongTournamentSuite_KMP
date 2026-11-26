@@ -199,7 +199,6 @@
     <string name="name">Name</string>
     <string name="short_name">Kurzname</string>
     <string name="from_to">Von-bis</string>
-    <string name="features">Merkmale</string>
     <string name="select_ema_player">EMA-Spieler wählen</string>
     <string name="name_ema_id_or_country">Name, EMA-ID oder Land</string>
     <string name="no_player_found">Kein Spieler gefunden.</string>
