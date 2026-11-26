@@ -71,7 +71,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.alias
 import mahjongtournamentsuite.adminapp.generated.resources.app_users
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.email
-import mahjongtournamentsuite.adminapp.generated.resources.loading
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
 import mahjongtournamentsuite.adminapp.generated.resources.removed_and_requested
 import mahjongtournamentsuite.adminapp.generated.resources.removed_from_organizations
@@ -98,6 +97,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var organizations by remember { mutableStateOf<List<Organization>>(emptyList()) }
     var emaPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    // The first load is over, so the screen has something to show.
+    var loaded by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var notice by remember { mutableStateOf<UiText?>(null) }
@@ -197,6 +198,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
             }
             loading = false
+            loaded = true
         }
     }
 
@@ -341,7 +343,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
-        showBackgroundLogo = loading && users.isEmpty(),
+        contentLoading = !loaded,
         onBack = { navController.popBackStack() },
         // One floating button at a time: while accounts are selected on a phone it sends the password reset,
         // otherwise it creates an account.
@@ -411,7 +413,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 SectionCard(
                     container = false,
                     title = stringResource(Res.string.accounts),
-                    subtitle = if (loading) stringResource(Res.string.loading) else pluralStringResource(Res.plurals.accounts_count_summary, users.size, filteredUsers.size, users.size),
+                    subtitle = if (!loaded) null else pluralStringResource(Res.plurals.accounts_count_summary, users.size, filteredUsers.size, users.size),
                 ) {
                     if (canReset) {
                             HideOnScrollTabs {

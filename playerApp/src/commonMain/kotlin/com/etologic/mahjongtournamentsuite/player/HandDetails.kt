@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.dataTableHeaderStyle
 import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -272,9 +273,8 @@ private fun androidx.compose.foundation.layout.RowScope.HeaderCell(text: String,
     Text(
         text,
         Modifier.weight(weight),
-        style = MaterialTheme.typography.labelMedium,
+        style = dataTableHeaderStyle(MaterialTheme.typography.labelMedium),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
     )
 }
 

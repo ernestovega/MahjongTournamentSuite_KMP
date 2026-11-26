@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Ungespeicherte Änderungen</string>
     <string name="you_have_unsaved_changes_save_them">Du hast ungespeicherte Änderungen. Vor dem Fortfahren speichern?</string>
     <string name="discard">Verwerfen</string>
-    <string name="loading_rankings">Ranglisten werden geladen…</string>
     <string name="no_ranking_yet">Noch keine Rangliste</string>
     <string name="the_ranking_shows_when_the_first">Die Rangliste erscheint, sobald die erste Hand gespielt ist.</string>
     <string name="settings">Einstellungen</string>
@@ -199,7 +198,6 @@
     <string name="name">Name</string>
     <string name="short_name">Kurzname</string>
     <string name="from_to">Von-bis</string>
-    <string name="features">Merkmale</string>
     <string name="select_ema_player">EMA-Spieler wählen</string>
     <string name="name_ema_id_or_country">Name, EMA-ID oder Land</string>
     <string name="no_player_found">Kein Spieler gefunden.</string>
@@ -221,7 +219,6 @@
     <string name="no_players_match_the_search">Kein Spieler passt zur Suche.</string>
     <string name="clear_slot">Platz leeren</string>
     <string name="tables">Tische</string>
-    <string name="loading">Wird geladen…</string>
     <string name="round">Runde</string>
     <string name="table">Tisch</string>
     <string name="no_players_in_this_group">Keine Spieler in dieser Gruppe.</string>
@@ -700,7 +697,6 @@
     <string name="errors_no_reports">Berichte, die älter als 30 Tage sind, werden gelöscht.</string>
     <string name="errors_report_id">Berichts-ID: %1$s</string>
     <string name="errors_report_reason">Grund: %1$s</string>
-    <string name="errors_loading_detail">Details werden geladen…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Wird geladen… bisher %1$d Problem</item>
@@ -1199,7 +1195,6 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
 Die Änderung steht in der Aktivität.</string>
     <string name="pc_confirm">Neu auslosen</string>
     <string name="pc_back">Zurück</string>
-    <string name="pc_loading">Spieler werden geladen…</string>
     <string name="pc_saving">Neue Auslosung wird gespeichert…</string>
     <string name="pc_done_title">Erledigt</string>
     <string name="pc_done_text">Das Turnier hat jetzt %1$d Spieler und eine neue Auslosung.</string>

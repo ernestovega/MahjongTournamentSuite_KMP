@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -70,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -107,7 +109,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.hand_score
-import mahjongtournamentsuite.adminapp.generated.resources.loading_rankings
 import mahjongtournamentsuite.adminapp.generated.resources.next_ranking_list
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_ranking_yet
@@ -270,10 +271,7 @@ private fun RankingStandaloneContent(
                         )
                     }
                     when {
-                        loading && snapshot == null -> CenteredMessage(
-                            message = stringResource(Res.string.loading_rankings),
-                            modifier = Modifier.weight(1f),
-                        )
+                        loading && snapshot == null -> AppLoading(Modifier.weight(1f), containerColor = Color.Transparent)
                         currentPage == null -> AppEmptyState(
                             icon = Icons.Default.Leaderboard,
                             title = stringResource(Res.string.no_ranking_yet),
@@ -337,11 +335,6 @@ private fun RankingStandaloneContent(
             }
         }
     }
-}
-
-@Composable
-private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Text(message) }
 }
 
 @Composable
@@ -613,7 +606,7 @@ private fun RankingPage(
             }
             // The photo is as tall as a line of text, so it does not change the rows that fit on a page.
             val photoSize = with(androidx.compose.ui.platform.LocalDensity.current) { textStyle.lineHeight.toDp() }
-            val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+            val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
             val measuredWidths = rememberRankingColumnWidths(page, textStyle)
             val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing, if (page.showPhoto) photoSize else null) else measuredWidths
 
@@ -630,7 +623,7 @@ private fun RankingPage(
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
                     if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
                     if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
-                    RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
+                    RankingCell(page.nameHeader, widths.name, TextAlign.Center, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
                     }

@@ -55,8 +55,8 @@ describe("Player web", () => {
     await freshTree(page, button(page, "Add draw"));
     await seeText(page, "Hand 12/16");
 
+    // A draw has nothing to ask: "Add draw" opens the check of the hand at once (Ernesto, 25-nov).
     await tapButton(page, "Add draw");
-    await tapButton(page, "Review");
     await tapButton(page, "Confirm");
     await page.waitForTimeout(3000);
     await freshTree(page, button(page, "Add draw"));

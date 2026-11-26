@@ -150,7 +150,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.feature_chicken_off
 import mahjongtournamentsuite.adminapp.generated.resources.feature_chicken_on
 import mahjongtournamentsuite.adminapp.generated.resources.feature_individual
 import mahjongtournamentsuite.adminapp.generated.resources.feature_team
-import mahjongtournamentsuite.adminapp.generated.resources.features
 import mahjongtournamentsuite.adminapp.generated.resources.from_to
 import mahjongtournamentsuite.adminapp.generated.resources.logo
 import mahjongtournamentsuite.adminapp.generated.resources.logo_for
@@ -371,6 +370,7 @@ fun TournamentsScreen(
     AppScaffold(
         title = stringResource(Res.string.tournaments),
         isLoading = isRefreshing || isLoading,
+        contentLoading = isRefreshing && tournaments.isEmpty(),
         showBackgroundLogo = false,
         navigationIcon = {
             ProfileInfo(profile, roleLabel, navController)
@@ -709,34 +709,22 @@ private fun TournamentTableHeader(
     actionCellMinWidth: Dp,
 ) {
     DataTableHeaderRow {
-        HeaderCell(text = stringResource(Res.string.color), minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth, textAlign = TextAlign.Center)
-        HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = stringResource(Res.string.country), minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.color), minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth)
+        HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f)
+        HeaderCell(text = stringResource(Res.string.country), minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth)
         HeaderCell(text = stringResource(Res.string.city), minWidth = cellMinWidth, weight = 0.7f)
         HeaderCell(text = stringResource(Res.string.name), minWidth = cellMinWidth, weight = NameWeight)
         HeaderCell(text = stringResource(Res.string.short_name), minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
-        HeaderCell(text = stringResource(Res.string.players), minWidth = PlayersColumnMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = stringResource(Res.string.from_to), minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
-        Column(
+        HeaderCell(text = stringResource(Res.string.players), minWidth = PlayersColumnMinWidth, weight = .5f)
+        HeaderCell(text = stringResource(Res.string.from_to), minWidth = cellMinWidth, weight = 1.8f)
+        Row(
             modifier = Modifier.weight(FeaturesGroupWeight).widthIn(min = featuresGroupMinWidth(cellMinWidth)),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(Res.string.features),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                HeaderCell(text = stringResource(Res.string.teams), minWidth = TeamsColumnMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
-                HeaderCell(text = stringResource(Res.string.best_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
-                HeaderCell(text = stringResource(Res.string.chicken_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
-            }
+            HeaderCell(text = stringResource(Res.string.teams), minWidth = TeamsColumnMinWidth, weight = TeamsWeight)
+            HeaderCell(text = stringResource(Res.string.best_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, maxLines = 2)
+            HeaderCell(text = stringResource(Res.string.chicken_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, maxLines = 2)
         }
         Text(
             text = "",
@@ -1039,17 +1027,17 @@ private fun RowScope.HeaderCell(
     minWidth: Dp,
     weight: Float,
     width: Dp? = null,
-    textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = 2,
 ) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = if (width != null) Modifier.width(width) else Modifier.weight(weight).widthIn(min = minWidth),
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
-        textAlign = textAlign,
+        textAlign = TextAlign.Center,
     )
 }
 

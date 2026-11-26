@@ -252,6 +252,7 @@ fun TournamentsScreen(navController: NavHostController) {
         title = stringResource(Res.string.tournaments_title),
         actions = { InfoTopBarButtons(navController, drawExplanation) },
         isLoading = (items == null && message == null) || (tab == StartTab.STATS && statisticsLoading),
+        contentLoading = items == null && message == null,
         autoFocusFirst = false,
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.

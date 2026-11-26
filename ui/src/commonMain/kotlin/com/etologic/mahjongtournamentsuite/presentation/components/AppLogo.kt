@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,6 +21,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -99,13 +101,31 @@ fun AppBackground(showLogo: Boolean = true, content: @Composable () -> Unit) {
  * on the web the canvas of the app is white until something draws on it.
  */
 @Composable
-fun AppLoading(modifier: Modifier = Modifier) {
+fun AppLoading(
+    modifier: Modifier = Modifier,
+    /** Transparent over a surface of another color, such as a dialog. */
+    containerColor: Color = MaterialTheme.colorScheme.background,
+    logoSize: Dp = 160.dp,
+) {
     Column(
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize().background(containerColor),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MtsSpacing.xxl, Alignment.CenterVertically),
     ) {
-        AppLogo(size = 160.dp)
+        AppLogo(size = logoSize)
         CircularProgressIndicator()
     }
+}
+
+/**
+ * [AppLoading] in a small place, such as a dialog or a part of a screen that loads by itself: a smaller logo with
+ * the progress below it, over the color of what holds it.
+ */
+@Composable
+fun AppLoadingCompact(modifier: Modifier = Modifier) {
+    AppLoading(
+        modifier = modifier.height(160.dp),
+        containerColor = Color.Transparent,
+        logoSize = 72.dp,
+    )
 }

@@ -207,7 +207,7 @@ internal fun RowScope.GridHeaderCell(
                 }
                 WholeWordsText(
                     text = text,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     maxLines = 2,
                 )
             }

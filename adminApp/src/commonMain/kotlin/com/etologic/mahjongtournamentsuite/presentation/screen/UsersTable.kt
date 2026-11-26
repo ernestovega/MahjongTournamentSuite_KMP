@@ -41,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -107,23 +108,13 @@ internal fun UsersTable(
             item {
                 DataTableHeaderRow {
                     if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
-                    Text(
-                        stringResource(Res.string.photo),
-                        modifier = Modifier.width(PlayerPhotoColumnWidth),
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        stringResource(Res.string.country),
-                        modifier = Modifier.width(UserCountryColumnWidth),
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.email), modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.role), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.status), modifier = Modifier.weight(0.13f), style = MaterialTheme.typography.labelLarge)
+                    DataTableHeaderText(stringResource(Res.string.photo), modifier = Modifier.width(PlayerPhotoColumnWidth))
+                    DataTableHeaderText(stringResource(Res.string.country), modifier = Modifier.width(UserCountryColumnWidth))
+                    DataTableHeaderText(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f))
+                    DataTableHeaderText(stringResource(Res.string.email), modifier = Modifier.weight(0.3f))
+                    DataTableHeaderText(stringResource(Res.string.role), modifier = Modifier.weight(0.2f))
+                    DataTableHeaderText(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.12f))
+                    DataTableHeaderText(stringResource(Res.string.status), modifier = Modifier.weight(0.13f))
                 }
                 DataTableDivider()
             }

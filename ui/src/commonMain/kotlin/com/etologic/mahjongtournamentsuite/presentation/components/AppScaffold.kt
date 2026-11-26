@@ -89,7 +89,13 @@ fun AppScaffold(
     titleLeading: @Composable (() -> Unit)? = null,
     titleAction: @Composable (() -> Unit)? = null,
     isLoading: Boolean = false,
-    showProgress: Boolean = isLoading,
+    /**
+     * True while the screen has nothing to show yet, on its first load. The logo with a progress below it covers
+     * the content, as on the splash and the loading page of the web, in place of a text such as "Loading…".
+     * Later loads, such as a refresh or a save, only show the bar below the top bar.
+     */
+    contentLoading: Boolean = false,
+    showProgress: Boolean = isLoading && !contentLoading,
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     leadingActions: @Composable (() -> Unit)? = null,
@@ -280,11 +286,13 @@ fun AppScaffold(
         ) { padding ->
             Box(modifier = Modifier.padding(padding)) {
                 // The content stays in the same place whether the logo shows or not, so it keeps its state.
-                AppBackground(showLogo = showBackgroundLogo && showsLoadingBackgroundLogo) {
+                AppBackground(showLogo = showBackgroundLogo && showsLoadingBackgroundLogo && !contentLoading) {
                     CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
                         content()
                     }
                 }
+                // Over the content, so the content keeps its state.
+                if (contentLoading) AppLoading()
             }
         }
     }

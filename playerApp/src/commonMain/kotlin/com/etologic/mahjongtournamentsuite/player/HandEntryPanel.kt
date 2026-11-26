@@ -90,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.dataTableHeaderStyle
 import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
@@ -1169,7 +1170,7 @@ private fun ReviewScoreTable(
     val order = seats.indices.filter { seats[it] != null }
         .sortedBy { index -> seats[index]?.let { currentWindOf(seats, it, handNumber)?.ordinal } ?: index }
         .sortedByDescending { index -> totals.getOrNull(index)?.toDoubleOrNull() ?: Double.NEGATIVE_INFINITY }
-    val headerStyle = MaterialTheme.typography.labelMedium
+    val headerStyle = dataTableHeaderStyle(MaterialTheme.typography.labelMedium)
     val valueStyle = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold)
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -1338,8 +1339,7 @@ private fun HeaderText(text: String, modifier: Modifier) {
     Text(
         text,
         modifier,
-        textAlign = TextAlign.End,
-        style = MaterialTheme.typography.labelMedium,
+        style = dataTableHeaderStyle(MaterialTheme.typography.labelMedium),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
