@@ -157,7 +157,6 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 scrollable = true,
-                paddingInsideScroll = true,
             ) {
                 MessageDialog(message)
                 if (view == null || table == null) return@ScreenColumn

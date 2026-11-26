@@ -358,8 +358,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
-            // The floating button must not cover the last account.
-            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (compact) 88.dp else 24.dp),
+            // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space
+            // (on a phone, room for the floating button, so it does not cover the last account).
+            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let {

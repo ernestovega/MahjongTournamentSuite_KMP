@@ -68,6 +68,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 
 private val UserCountryColumnWidth = 64.dp
 private val UserCheckboxColumnWidth = 48.dp
@@ -88,8 +90,11 @@ internal fun UsersTable(
     val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("users"),
-        scrollbar = MtsScrollbar.Margin,
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+        // The list reaches the edges and the bottom of the window, so its shadows take the whole width; the margins go
+        // inside. On a phone the floating button must not cover the last account.
+        scrollbar = MtsScrollbar.Overlay,
+        modifier = Modifier.fillMaxWidth().screenFullBleed().appFocusGroup(),
+        contentPadding = screenListPadding(bottom = if (compact) 88.dp else 24.dp),
     ) {
         if (!compact) {
             item {

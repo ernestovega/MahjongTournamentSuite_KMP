@@ -95,6 +95,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScr
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -622,7 +624,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             )
         },
     ) {
-        ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let {
                 AppErrorDialog(
                     message = it,
@@ -748,10 +750,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         }
                     }
                     DataTableDivider()
+                    // No bottom margin on the screen: the list reaches the bottom of the window.
                     LazyColumnWithScrollbar(
                         state = assignmentsListState,
-                        scrollbar = MtsScrollbar.Margin,
-                        modifier = Modifier.weight(1f, fill = false),
+                        // The list reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+                        scrollbar = MtsScrollbar.Overlay,
+                        modifier = Modifier.weight(1f, fill = false).screenFullBleed(),
+                        contentPadding = screenListPadding(bottom = 24.dp),
                     ) {
                         items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
                             val slot = filteredPlayers[index]

@@ -112,6 +112,9 @@ internal val SeatWindIcons = listOf(
 internal class StickyHeaderHost(val scrollState: ScrollState) {
     /** Top edge of the scroll viewport in root coordinates. */
     var viewportTop by mutableStateOf(0f)
+
+    /** Where the stuck header ends, in pixels from the top of the viewport, or 0: the top shadow of the scroll goes under it. */
+    var pinnedHeaderEnd: () -> Float = { 0f }
 }
 
 internal val LocalStickyHeaderHost = compositionLocalOf<StickyHeaderHost?> { null }

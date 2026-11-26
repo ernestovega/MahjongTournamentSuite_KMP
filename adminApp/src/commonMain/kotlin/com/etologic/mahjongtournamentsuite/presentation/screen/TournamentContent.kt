@@ -191,7 +191,7 @@ internal fun TournamentContent(
                         .fillMaxWidth()
                         .align(Alignment.TopCenter)
                         .onGloballyPositioned { stickyHost.viewportTop = it.positionInRoot().y }
-                        .verticalScrollWithIndicators(scrollState)
+                        .verticalScrollWithIndicators(scrollState, pinnedStart = { stickyHost.pinnedHeaderEnd() })
                         .padding(bottom = 96.dp),
                 ) {
                     tableHeader(selectedEditor)

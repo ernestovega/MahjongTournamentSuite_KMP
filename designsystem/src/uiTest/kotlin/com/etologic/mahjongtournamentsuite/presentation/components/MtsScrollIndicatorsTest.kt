@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -59,6 +60,24 @@ class MtsScrollIndicatorsMathTest {
         val metrics = assertNotNull(lazyScrollMetricsOf(100, items, 0, 400, 45, 0, canScroll = true))
         assertEquals(0.5f, metrics.position, 0.001f)
         assertEquals(0.1f, metrics.visibleFraction, 0.001f)
+    }
+
+    @Test
+    fun withoutAPinnedHeaderTheShadowStartsAtTheTop() {
+        val items = (0 until 10).map { LazyItemSpan(it, it * 40, 40) }
+        assertEquals(0f, pinnedStartOf(items, firstIndex = 0, firstOffset = 0, viewportStart = 0))
+        val scrolled = (3 until 13).map { LazyItemSpan(it, (it - 3) * 40 - 10, 40) }
+        assertEquals(0f, pinnedStartOf(scrolled, firstIndex = 3, firstOffset = 10, viewportStart = 0))
+    }
+
+    @Test
+    fun aPinnedHeaderMovesTheShadowUnderIt() {
+        // The header (item 0, 30 px) stays pinned at the top while row 5 is the first one scrolled in.
+        val items = listOf(LazyItemSpan(0, 0, 30)) + (5 until 15).map { LazyItemSpan(it, (it - 5) * 40 - 12, 40) }
+        assertEquals(30f, pinnedStartOf(items, firstIndex = 5, firstOffset = 12, viewportStart = 0))
+        // The first item itself pinned while the list has only scrolled a little.
+        val first = listOf(LazyItemSpan(0, 0, 30)) + (1 until 10).map { LazyItemSpan(it, it * 40 - 20, 40) }
+        assertEquals(30f, pinnedStartOf(first, firstIndex = 0, firstOffset = 8, viewportStart = 0))
     }
 }
 
@@ -179,5 +198,34 @@ class MtsScrollIndicatorsUiTest {
         waitForIdle()
         // A finger on the rows moves the list by about the length of the swipe, not to the end.
         assertTrue(state.firstVisibleItemIndex in 5..30, "The list is at ${state.firstVisibleItemIndex}")
+    }
+
+    @Test
+    fun theTopShadowOfAListWithAStickyHeaderGoesUnderTheHeader() = runComposeUiTest {
+        val state = LazyListState()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.width(300.dp).height(200.dp)) {
+                    LazyColumn(
+                        state = state,
+                        modifier = Modifier.fillMaxWidth().scrollIndicators(state),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
+                    ) {
+                        stickyHeader { Text("Header", Modifier.fillMaxWidth().height(30.dp)) }
+                        items(50) { Text("Row $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        val indicator = LazyListIndicator(state)
+        assertEquals(0f, indicator.pinnedStart())
+
+        runOnIdle { kotlinx.coroutines.runBlocking { state.scrollToItem(10, 15) } }
+        waitForIdle()
+        val headerEnd = runOnIdle { indicator.pinnedStart() }
+        val header = runOnIdle { state.layoutInfo.visibleItemsInfo.first { it.index == 0 } }
+        assertEquals((header.offset + header.size - state.layoutInfo.viewportStartOffset).toFloat(), headerEnd)
+        assertTrue(headerEnd >= 30f * density.density - 1f, "The shadow starts at $headerEnd, under a 30 dp header")
     }
 }

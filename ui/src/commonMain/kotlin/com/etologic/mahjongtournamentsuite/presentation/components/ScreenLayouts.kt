@@ -81,6 +81,13 @@ fun ProvideCompactLayout(content: @Composable () -> Unit) {
 /** The scroll state of a [ScreenColumn] and the top of its viewport in the window. A section uses them to stick or to scroll. */
 class ScreenScroll(val state: ScrollState) {
     var viewportTop by mutableFloatStateOf(0f)
+
+    /**
+     * Where a header that the content keeps stuck at the top ends, in pixels from the top of the viewport, or 0. The
+     * top shadow of the screen goes under it, where the content goes out of sight. The content that sticks the header
+     * sets it (and puts it back when it leaves); it is read while drawing, so it can read the scroll and sizes.
+     */
+    var pinnedHeaderEnd: () -> Float = { 0f }
 }
 
 /** The [ScreenScroll] of the closest scrolling [ScreenColumn]. Null when the screen does not scroll. */
@@ -105,6 +112,36 @@ fun ResetScrollOnChange(state: ScrollState?, key: Any?) {
 class ScreenBleed(val start: Dp, val end: Dp)
 
 val LocalScreenBleed = compositionLocalOf { ScreenBleed(0.dp, 0.dp) }
+
+/**
+ * Makes a list that takes the whole width of a [ScreenColumn] reach both edges of the screen, through its side margins,
+ * so its fading edges take the whole width. Give the list [screenListPadding] as its content padding, so the items
+ * keep the margins of the design. A list narrower than the screen does not need it.
+ */
+@Composable
+fun Modifier.screenFullBleed(): Modifier {
+    val bleed = LocalScreenBleed.current
+    val density = LocalDensity.current
+    val startPx = with(density) { bleed.start.roundToPx() }
+    val endPx = with(density) { bleed.end.roundToPx() }
+    if (startPx == 0 && endPx == 0) return this
+    return layout { measurable, constraints ->
+        if (!constraints.hasBoundedWidth) {
+            val placeable = measurable.measure(constraints)
+            return@layout layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+        }
+        val wider = constraints.maxWidth + startPx + endPx
+        val placeable = measurable.measure(constraints.copy(minWidth = wider, maxWidth = wider))
+        layout(constraints.maxWidth, placeable.height) { placeable.place(-startPx, 0) }
+    }
+}
+
+/** The content padding of a list with [screenFullBleed]: the side margins of the screen, inside the list. */
+@Composable
+fun screenListPadding(top: Dp = 0.dp, bottom: Dp = 0.dp): PaddingValues {
+    val bleed = LocalScreenBleed.current
+    return PaddingValues(start = bleed.start, top = top, end = bleed.end, bottom = bottom)
+}
 
 /**
  * A row that scrolls sideways and reaches both edges of the [ScreenColumn].
@@ -163,8 +200,6 @@ fun ScreenColumn(
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(MtsTheme.spacing.sm),
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     scrollable: Boolean = false,
-    /** When true, the padding scrolls with the content. The content then goes under the top bar without a gap. */
-    paddingInsideScroll: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BoxWithConstraints(
@@ -209,19 +244,14 @@ fun ScreenColumn(
                         .align(Alignment.TopCenter)
                         .onGloballyPositioned { screenScroll.viewportTop = it.positionInRoot().y }
                         .then(
-                            // The scrollbar goes on the edge of the screen, over the side margin, so both margins stay equal.
-                            if (scrollable && paddingInsideScroll) {
+                            // The margins scroll with the content: it goes under the top bar without a gap, and out of
+                            // sight at the edges of the window, where its shadows take the whole width. The scrollbar
+                            // goes on the edge of the screen, over the side margin, so both margins stay equal.
+                            if (scrollable) {
                                 Modifier
-                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.Overlay)
+                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.Overlay, pinnedStart = { screenScroll.pinnedHeaderEnd() })
                                     .verticalScroll(scrollState)
                                     .padding(sidePadding)
-                            } else if (scrollable) {
-                                // The shadows go inside the margins, where the content is cut.
-                                Modifier
-                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.Overlay, fadingEdges = false)
-                                    .padding(sidePadding)
-                                    .scrollIndicators(scrollState, scrollbar = MtsScrollbar.None)
-                                    .verticalScroll(scrollState)
                             } else {
                                 Modifier.padding(sidePadding)
                             },
