@@ -87,8 +87,8 @@ enum class AppPlatform {
 object AppDownloads {
     private const val LATEST_RELEASE = "https://github.com/ernestovega/MahjongTournamentSuite_KMP/releases/latest/download/"
 
-    /** Google Play. Null until the app is in production. */
-    val android: String? = null
+    /** Google Play: in production since 26-nov-2026. */
+    val android: String? = "https://play.google.com/store/apps/details?id=com.etologic.mahjongtournamentsuite"
 
     /** The App Store. Null until Apple publishes the app. */
     val ios: String? = null
