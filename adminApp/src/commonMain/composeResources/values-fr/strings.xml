@@ -1146,6 +1146,7 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
     <string name="pc_marked_more_or_less">Cochés : %1$d. Coche-en %2$d de plus ou décoche-en %3$d.</string>
     <string name="pc_marked_less">Cochés : %1$d. Décoche-en %2$d.</string>
     <string name="pc_minimum">Avec %1$d joueurs, personne ne peut partir : un tournoi en demande au moins 16.</string>
+    <string name="pc_less_disabled">Ceci ne retire que les tables ajoutées ici. Pour retirer des tables, cochez plus bas les personnes qui partent, par groupes de 4.</string>
     <string name="pc_sure_text">Les tables de toutes les rondes sont tirées à nouveau.\nCela ne peut pas être annulé.</string>
     <string name="pc_change">Changer</string>
     <string name="pc_now">Actuellement : %1$d joueurs, %2$d tables par manche.</string>

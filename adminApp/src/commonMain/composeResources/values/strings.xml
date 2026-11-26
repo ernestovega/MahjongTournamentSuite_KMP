@@ -1146,6 +1146,7 @@ Give it a tournament as an editor and it is enabled again when you save.</string
     <string name="pc_marked_more_or_less">Marked: %1$d. Mark %2$d more or unmark %3$d.</string>
     <string name="pc_marked_less">Marked: %1$d. Unmark %2$d.</string>
     <string name="pc_minimum">With %1$d players nobody can leave: a tournament needs at least 16.</string>
+    <string name="pc_less_disabled">This only takes back the tables added here. To take away tables, mark below the people who leave, in groups of 4.</string>
     <string name="pc_sure_text">The tables of every round are drawn again.\nThis cannot be undone.</string>
     <string name="pc_change">Change</string>
     <string name="pc_now">Now: %1$d players, %2$d tables per round.</string>
