@@ -80,6 +80,7 @@ The measure leaves out the code the compiler writes, not us (filters in the root
 | `*.backend.dto` | Data classes of the backend answers and requests, without logic: their branches are the serializers and default arguments that kotlinx.serialization writes (~3,000 branches) |
 | `@Preview` functions | Previews of the screens for the IDE; the screenshot tests draw the screens themselves |
 | `*ComposableSingletons*`, `*_Factory`, `*MainKt` | Compose lambdas holders, generated factories and the entry points |
+| `*$DefaultImpls` | Static copies of the interface methods with a body, for Java callers. The tests run the methods themselves |
 
 The total of the table also leaves out the maintenance and seed scripts of the backend (`firebase/functions/src/scripts`,
 since 26 November). They run by hand, once or on test data, so their row is shown apart and does not count toward 100 %.
