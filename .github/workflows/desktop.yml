@@ -126,6 +126,8 @@ jobs:
           KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
           printf '%s\n' "$API_KEY" > "$KEY"
           DMG=$(ls suite/build/compose/binaries/main/dmg/*.dmg)
+          # jpackage signs the app inside; the DMG gets its own signature, so Gatekeeper checks it before it opens.
+          codesign --sign "Developer ID Application: $MTS_MAC_SIGN_IDENTITY" --keychain "$MTS_MAC_SIGN_KEYCHAIN" --timestamp "$DMG"
           xcrun notarytool submit "$DMG" --key "$KEY" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID" --wait --timeout 30m \
             | tee "$RUNNER_TEMP/notary.log"
           rm -f "$KEY"
