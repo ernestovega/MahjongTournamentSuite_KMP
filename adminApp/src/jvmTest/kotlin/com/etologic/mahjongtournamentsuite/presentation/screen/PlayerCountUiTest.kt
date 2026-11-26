@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -351,6 +352,26 @@ class PlayerCountUiTest {
         onNodeWithText("With 16 players nobody can leave: a tournament needs at least 16.").assertIsDisplayed()
         assertTrue(onAllNodesWithTag("playerCountSlot-1").fetchSemanticsNodes().isEmpty())
         see("playerCountMore").assertIsEnabled()
+    }
+
+    @Test
+    fun theMinimumIsACardAndTheTooltipOfTheDisabledLess() = runComposeUiTest {
+        showScreen(World(individual.copy(numPlayers = 16), slots(16)))
+        see("playerCountMinimum").assertIsDisplayed()
+        see("playerCountLess").assertIsNotEnabled()
+        onNodeWithTag("playerCountLess").performMouseInput { moveTo(center) }
+        waitForIdle()
+        assertEquals(2, onAllNodesWithText("With 16 players nobody can leave: a tournament needs at least 16.").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun theDisabledLessExplainsHowToTakeAwayTables() = runComposeUiTest {
+        showScreen(World(individual, slots(individual.numPlayers)))
+        onNodeWithTag("playerCountLess").performMouseInput { moveTo(center) }
+        waitForIdle()
+        onNodeWithText(
+            "This only takes back the tables added here. To take away tables, mark below the people who leave, in groups of 4.",
+        ).assertIsDisplayed()
     }
 
     @Test

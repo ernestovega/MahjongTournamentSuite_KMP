@@ -1145,6 +1145,7 @@ Weise ihm ein Turnier als Editor zu, dann wird es beim Speichern wieder aktivier
     <string name="pc_marked_more_or_less">Markiert: %1$d. Markiere %2$d mehr oder entferne %3$d.</string>
     <string name="pc_marked_less">Markiert: %1$d. Entferne %2$d.</string>
     <string name="pc_minimum">Mit %1$d Spielern kann niemand gehen: Ein Turnier braucht mindestens 16.</string>
+    <string name="pc_less_disabled">Damit entfernst du nur die hier hinzugefügten Tische. Um Tische zu entfernen, markiere unten die Personen, die gehen, in Vierergruppen.</string>
     <string name="pc_sure_text">Die Tische aller Runden werden neu ausgelost.\nDas kann nicht rückgängig gemacht werden.</string>
     <string name="pc_change">Ändern</string>
     <string name="pc_now">Jetzt: %1$d Spieler, %2$d Tische pro Runde.</string>

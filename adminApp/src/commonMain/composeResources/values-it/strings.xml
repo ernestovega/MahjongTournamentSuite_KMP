@@ -1145,6 +1145,7 @@ Assegnagli un torneo come editor e verrà riattivato al salvataggio.</string>
     <string name="pc_marked_more_or_less">Segnati: %1$d. Segnane altri %2$d o togline %3$d.</string>
     <string name="pc_marked_less">Segnati: %1$d. Togline %2$d.</string>
     <string name="pc_minimum">Con %1$d giocatori non può uscire nessuno: un torneo ne richiede almeno 16.</string>
+    <string name="pc_less_disabled">Questo toglie solo i tavoli aggiunti qui. Per togliere tavoli, segna qui sotto le persone che escono, a gruppi di 4.</string>
     <string name="pc_sure_text">I tavoli di tutti i turni vengono sorteggiati di nuovo.\nNon si può annullare.</string>
     <string name="pc_change">Cambia</string>
     <string name="pc_now">Ora: %1$d giocatori, %2$d tavoli per turno.</string>

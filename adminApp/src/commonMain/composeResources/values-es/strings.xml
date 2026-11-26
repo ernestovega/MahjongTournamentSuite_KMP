@@ -1145,6 +1145,7 @@ Asígnale un torneo como editor y se reactivará al guardar.</string>
     <string name="pc_marked_more_or_less">Marcados: %1$d. Marca %2$d más o desmarca %3$d.</string>
     <string name="pc_marked_less">Marcados: %1$d. Desmarca %2$d.</string>
     <string name="pc_minimum">Con %1$d jugadores no puede salir nadie: un torneo necesita al menos 16.</string>
+    <string name="pc_less_disabled">Esto solo quita las mesas añadidas aquí. Para quitar mesas, marca abajo a las personas que salen, en grupos de 4.</string>
     <string name="pc_sure_text">Las mesas de todas las rondas se sortean de nuevo.\nNo se puede deshacer.</string>
     <string name="pc_change">Cambiar</string>
     <string name="pc_now">Ahora: %1$d jugadores, %2$d mesas por ronda.</string>

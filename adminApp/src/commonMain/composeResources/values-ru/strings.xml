@@ -1183,6 +1183,7 @@
     <string name="pc_marked_more_or_less">Отмечено: %1$d. Отметьте ещё %2$d или снимите %3$d.</string>
     <string name="pc_marked_less">Отмечено: %1$d. Снимите %2$d.</string>
     <string name="pc_minimum">При %1$d игроках никто не может уйти: в турнире должно быть не меньше 16.</string>
+    <string name="pc_less_disabled">Здесь убираются только добавленные столы. Чтобы убрать столы, отметьте ниже тех, кто уходит, группами по 4.</string>
     <string name="pc_sure_text">Столы всех раундов будут разыграны заново.\nЭто нельзя отменить.</string>
     <string name="pc_change">Изменить</string>
     <string name="pc_now">Сейчас: %1$d игроков, %2$d столов в раунде.</string>
