@@ -362,7 +362,7 @@ private fun RivalNumbers(labels: List<String>, values: List<String>) {
 }
 
 /**
- * The name of a rival with a row of flames before it like the heat of a dish, and the button that compares the
+ * The name of a rival with a row of flames after it like the heat of a dish, and the button that compares the
  * player with the rival after it. [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
  */
 @Composable
@@ -373,22 +373,24 @@ private fun RivalHeading(name: String, heat: Int, compare: (() -> Unit)?) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-            repeat(FLAMES) { index ->
-                Icon(
-                    Icons.Default.LocalFireDepartment,
-                    contentDescription = null,
-                    Modifier.size(16.dp),
-                    tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
-                )
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                name,
+                Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row {
+                repeat(FLAMES) { index ->
+                    Icon(
+                        Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        Modifier.size(16.dp),
+                        tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
+                    )
+                }
             }
         }
-        Text(
-            name,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium.inTextFont(),
-            fontWeight = FontWeight.SemiBold,
-        )
         if (compare != null) {
             DebouncedOutlinedButton(onClick = compare, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 ButtonText(stringResource(Res.string.rival_compare))
