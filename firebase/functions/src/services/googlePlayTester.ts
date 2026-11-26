@@ -6,19 +6,33 @@ import { bumpGlobalDataVersion } from "./dataVersionsService";
 import { setAccountEmaId } from "./playerAccountsService";
 import { createUserProfile, setGlobalUserRole, setUserPhoto } from "./usersService";
 
+/** An account of the reviewers of a store. The paths of the photos work from lib/services and from src/services. */
+export type StoreTester = { email: string; alias: string; role: "SUPER_ADMIN"; photoPath: string };
+
 /**
  * The account of the Google Play reviewers (docs/google-play-tester.md). Google needs an account with access to every
  * feature of the app. An admin reaches everything, so the account has no EMA player. The password is not here: it
  * lives in Play Console (App content > App access).
  */
-export const GOOGLE_PLAY_TESTER = {
+export const GOOGLE_PLAY_TESTER: StoreTester = {
   email: "mtsgoogleplaytester@mahjongmadrid.com",
   alias: "Google Play Testers",
-  role: "SUPER_ADMIN" as const,
+  role: "SUPER_ADMIN",
+  photoPath: resolve(__dirname, "../../assets/google-play-tester.png"),
 };
 
-/** The photo of the account (the Play Console icon). The path works from lib/services and from src/services. */
-const PHOTO_PATH = resolve(__dirname, "../../assets/google-play-tester.png");
+/**
+ * The account of the App Review of Apple (docs/google-play-tester.md), like the one of Google Play. Its password is
+ * only in App Store Connect (App Review Information): the workflow Publish · App Store listing makes a new one each
+ * run and puts it there.
+ */
+export const APP_STORE_TESTER: StoreTester = {
+  email: "mtsappstoretester@mahjongmadrid.com",
+  alias: "App Store Testers",
+  role: "SUPER_ADMIN",
+  photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
+};
+
 const PHOTO_CONTENT_TYPE = "image/png";
 
 function hasPhoto(document: FirebaseFirestore.DocumentSnapshot): boolean {
@@ -29,37 +43,50 @@ function hasPhoto(document: FirebaseFirestore.DocumentSnapshot): boolean {
 export type GooglePlayTesterReport = {
   account: "CREATE" | "MISSING_PASSWORD" | "UPDATE" | "OK";
   uid: string | null;
+  /** True when [setPassword] changed the password of an existing account. */
+  passwordSet?: boolean;
 };
 
+/** The account of the Google Play reviewers, as GOOGLE_PLAY_TESTER says. See [ensureStoreTester]. */
+export function ensureGooglePlayTester(params: { apply: boolean; password?: string }): Promise<GooglePlayTesterReport> {
+  return ensureStoreTester(GOOGLE_PLAY_TESTER, params);
+}
+
 /**
- * Makes the account of the Google Play reviewers exist as GOOGLE_PLAY_TESTER says. It changes only what differs, and
- * only with [apply]. It creates a missing account only with a [password]. A photo that someone chose stays.
+ * Makes the account of the reviewers of a store exist as [tester] says. It changes only what differs, and only with
+ * [apply]. It creates a missing account only with a [password]. An existing account keeps its password, unless
+ * [setPassword] asks to put [password] on it. A photo that someone chose stays.
  */
-export async function ensureGooglePlayTester(params: { apply: boolean; password?: string }): Promise<GooglePlayTesterReport> {
-  const existing = await auth.getUserByEmail(GOOGLE_PLAY_TESTER.email).catch(() => null);
+export async function ensureStoreTester(
+  tester: StoreTester,
+  params: { apply: boolean; password?: string; setPassword?: boolean },
+): Promise<GooglePlayTesterReport> {
+  const existing = await auth.getUserByEmail(tester.email).catch(() => null);
   if (existing == null) {
     if (!params.password) return { account: "MISSING_PASSWORD", uid: null };
     if (!params.apply) return { account: "CREATE", uid: null };
-    const created = await auth.createUser({ email: GOOGLE_PLAY_TESTER.email, password: params.password, emailVerified: true });
-    await configureAccount(created.uid);
+    const created = await auth.createUser({ email: tester.email, password: params.password, emailVerified: true });
+    await configureAccount(tester, created.uid);
     return { account: "CREATE", uid: created.uid };
   }
 
   const profile = await db.doc(`users/${existing.uid}`).get();
-  const accountOk = profile.get("alias") === GOOGLE_PLAY_TESTER.alias &&
+  const accountOk = profile.get("alias") === tester.alias &&
     (existing.customClaims ?? {}).superAdmin === true &&
     !(typeof profile.get("emaId") === "string" && profile.get("emaId") !== "") &&
     hasPhoto(profile);
-  if (!accountOk && params.apply) await configureAccount(existing.uid);
-  return { account: accountOk ? "OK" : "UPDATE", uid: existing.uid };
+  if (!accountOk && params.apply) await configureAccount(tester, existing.uid);
+  const passwordSet = params.apply && params.setPassword === true && !!params.password;
+  if (passwordSet) await auth.updateUser(existing.uid, { password: params.password, emailVerified: true });
+  return { account: accountOk ? "OK" : "UPDATE", uid: existing.uid, passwordSet };
 }
 
-async function configureAccount(uid: string): Promise<void> {
-  await createUserProfile(uid, GOOGLE_PLAY_TESTER.email, GOOGLE_PLAY_TESTER.alias);
-  await setGlobalUserRole(uid, GOOGLE_PLAY_TESTER.role);
+async function configureAccount(tester: StoreTester, uid: string): Promise<void> {
+  await createUserProfile(uid, tester.email, tester.alias);
+  await setGlobalUserRole(uid, tester.role);
   await setAccountEmaId({ uid, emaId: null });
   if (!hasPhoto(await db.doc(`users/${uid}`).get())) {
-    await setUserPhoto(uid, PHOTO_CONTENT_TYPE, readFileSync(PHOTO_PATH).toString("base64"));
+    await setUserPhoto(uid, PHOTO_CONTENT_TYPE, readFileSync(tester.photoPath).toString("base64"));
   }
   await bumpGlobalDataVersion("users");
 }

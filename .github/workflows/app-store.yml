@@ -1,0 +1,131 @@
+# Uploads the App Store listing of the iOS app (texts, screenshots, categories, review notes) to App Store Connect and,
+# when asked, submits the version for review. Only by hand, from Actions > Publish · App Store listing. See
+# docs/ios-release.md and docs/app-store/listing.md.
+#
+# It also makes the App Review account (mtsappstoretester@…, docs/google-play-tester.md) in production, with a password
+# that comes from the API key and that only this workflow and App Store Connect know.
+name: Publish · App Store listing
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "Also submit the version for review (its build must be in App Store Connect already)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: app-store
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ASC_KEY_ID: S8GAZ32F4X
+  ASC_ISSUER_ID: 9ec15174-5e83-4917-9dd6-6fb152d6d888
+
+jobs:
+  listing:
+    name: Listing and review account
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Version
+        run: |
+          echo "VERSION=$(sed -nE 's/^admin-versionName = "(.*)"/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_ENV"
+          echo "BUILD=$(sed -nE 's/^admin-versionCode = "(.*)"/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_ENV"
+
+      - name: Metadata and screenshots
+        run: python3 scripts/app_store_metadata.py build/app-store
+
+      - name: App Store Connect API key and review password
+        env:
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then echo "The secret APP_STORE_CONNECT_API_KEY is missing."; exit 1; fi
+          mkdir -p "$RUNNER_TEMP/asc"
+          python3 - "$RUNNER_TEMP/asc/key.json" <<'PY'
+          import json, os, sys
+          json.dump({"key_id": os.environ["ASC_KEY_ID"], "issuer_id": os.environ["ASC_ISSUER_ID"],
+                     "key": os.environ["API_KEY"], "in_house": False}, open(sys.argv[1], "w"))
+          PY
+          PASSWORD="Mts-$(printf 'mts-app-store-tester' | openssl dgst -sha256 -hmac "$API_KEY" | awk '{print $NF}' | cut -c1-20)"
+          echo "::add-mask::$PASSWORD"
+          echo "APP_STORE_TESTER_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+          printf '%s\n' "mtsappstoretester@mahjongmadrid.com" > build/app-store/metadata/review_information/demo_user.txt
+          printf '%s\n' "$PASSWORD" > build/app-store/metadata/review_information/demo_password.txt
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: App Review account in production
+        working-directory: firebase/functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm run seed:app-store-tester:apply -- --set-password
+
+      - name: Upload to App Store Connect
+        env:
+          SUBMIT: ${{ inputs.submit }}
+        run: |
+          gem install fastlane --no-document
+          cat > "$RUNNER_TEMP/asc/rating.json" <<'JSON'
+          {
+            "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+            "contests": "NONE",
+            "gamblingSimulated": "NONE",
+            "gunsOrOtherWeapons": "NONE",
+            "medicalOrTreatmentInformation": "NONE",
+            "profanityOrCrudeHumor": "NONE",
+            "sexualContentGraphicAndNudity": "NONE",
+            "sexualContentOrNudity": "NONE",
+            "horrorOrFearThemes": "NONE",
+            "matureOrSuggestiveThemes": "NONE",
+            "violenceCartoonOrFantasy": "NONE",
+            "violenceRealistic": "NONE",
+            "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+            "gambling": false,
+            "unrestrictedWebAccess": false,
+            "lootBox": false,
+            "kidsAgeBand": null
+          }
+          JSON
+          ARGS=()
+          if [ "$SUBMIT" = "true" ]; then ARGS+=(--submit_for_review true --build_number "$BUILD"); else ARGS+=(--submit_for_review false); fi
+          fastlane deliver \
+            --api_key_path "$RUNNER_TEMP/asc/key.json" \
+            --app_identifier com.etologic.mahjongtournamentsuite \
+            --platform ios \
+            --app_version "$VERSION" \
+            --metadata_path build/app-store/metadata \
+            --screenshots_path build/app-store/screenshots \
+            --app_rating_config_path "$RUNNER_TEMP/asc/rating.json" \
+            --skip_binary_upload true \
+            --overwrite_screenshots true \
+            --automatic_release false \
+            --run_precheck_before_submit false \
+            --submission_information '{"add_id_info_uses_idfa": false, "export_compliance_uses_encryption": false}' \
+            --force true \
+            "${ARGS[@]}"
+
+      - name: Delete the key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc" build/app-store/metadata/review_information/demo_password.txt

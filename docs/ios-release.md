@@ -94,5 +94,14 @@ the App Store Connect API key (Admin access; Key ID and Issuer ID in the workflo
 
 ## App Store
 
-The plan, the Apple Developer account and the store listing: `/mnt/project-files/ios/plan-ios-app-store.md` in the
-project files.
+The texts of the listing are in [app-store/listing.md](app-store/listing.md) (the description is the one of the Google
+Play listing), the screenshots in `docs/app-store/<iphone|ipad>/<language>/` (iPhone 6.9" and iPad 13", made by
+`StoreScreenshotsTest` with `MTS_STORE_FORMS=iphone,ipad`).
+
+Actions > Publish · App Store listing (`app-store.yml`, by hand) uploads them with fastlane `deliver`, with the
+categories, the age rating (4+) and the review notes, and makes the App Review account in production
+([google-play-tester.md](google-play-tester.md)). Its box "submit" also sends the version for review, with the build
+of the same version that Publish · TestFlight uploaded.
+
+Only App Store Connect can do these, once: the price (free) and the countries, the App Privacy answers, and the
+contact of App Review Information (name, phone, email: not in this public repository).

@@ -79,7 +79,9 @@ import kotlin.test.Test
  * (`--rerun`: Gradle does not see the variables, so without it a test run that passed counts as up to date.
  * `--no-configuration-cache`: a reused configuration cache keeps the variables of the run that stored it.)
  *
- * `MTS_STORE_LANGUAGES=en,es` and `MTS_STORE_FORMS=phone` make only those.
+ * `MTS_STORE_LANGUAGES=en,es` and `MTS_STORE_FORMS=phone` make only those. The App Store ones (iPhone 6.9"
+ * 1320 × 2868 and iPad 13" 2064 × 2752, in `docs/app-store/<iphone|ipad>/<language>/`) are made only when asked:
+ * `MTS_STORE_FORMS=iphone,ipad`.
  *
  * Record on Linux, like the other screenshots: macOS draws the texts a little differently.
  */
@@ -95,12 +97,20 @@ class StoreScreenshotsTest {
         val captionSize: TextUnit,
         val cardWidth: Dp,
         val cardHeight: Dp,
+        val store: String = "play-store",
+        val wide: Boolean = false,
     ) {
         // 432 × 768 dp: a phone screen of 376 × 624 dp under the caption.
         Phone("phone", 1080, 1920, 2.5f, 128.dp, 26.sp, 376.dp, 624.dp),
 
         // 1280 × 720 dp: a big tablet or Chromebook screen of 1030 × 580 dp under the caption.
-        Tablet("tablet", 1920, 1080, 1.5f, 112.dp, 36.sp, 1030.dp, 580.dp),
+        Tablet("tablet", 1920, 1080, 1.5f, 112.dp, 36.sp, 1030.dp, 580.dp, wide = true),
+
+        // App Store, iPhone 6.9": 440 × 956 dp, a phone screen of 400 × 790 dp under the caption.
+        IPhone("iphone", 1320, 2868, 3f, 140.dp, 28.sp, 400.dp, 790.dp, store = "app-store"),
+
+        // App Store, iPad 13": 1032 × 1376 dp, a tablet screen of 940 × 1200 dp under the caption.
+        IPad("ipad", 2064, 2752, 2f, 150.dp, 40.sp, 940.dp, 1200.dp, store = "app-store", wide = true),
     }
 
     /** One screenshot: its number and name in the file name, the caption of each language, the screen and its wait. */
@@ -119,8 +129,10 @@ class StoreScreenshotsTest {
         System.getenv("MTS_STORE_LANGUAGES")?.split(',')?.map(String::trim)?.contains(language) ?: true
     }
 
-    /** Both forms, or only the one of `MTS_STORE_FORMS` (`phone` or `tablet`). */
-    private val forms = Form.entries.filter { form -> System.getenv("MTS_STORE_FORMS")?.split(',')?.contains(form.dir) ?: true }
+    /** The forms of Google Play, or those of `MTS_STORE_FORMS` (`phone`, `tablet`, `iphone`, `ipad`). */
+    private val forms = Form.entries.filter { form ->
+        System.getenv("MTS_STORE_FORMS")?.split(',')?.contains(form.dir) ?: (form.store == "play-store")
+    }
 
     private val shots = listOf(
         Shot(
@@ -243,16 +255,15 @@ class StoreScreenshotsTest {
     @Test
     fun storeScreenshots() {
         if (System.getenv("MTS_STORE_SCREENSHOTS") != "1") return
-        val root = File("../docs/play-store")
         val failures = mutableListOf<String>()
         Dispatchers.setMain(Dispatchers.Unconfined)
         val locale = Locale.getDefault()
         for (form in forms) {
             for (language in languages) {
-                val dir = File(root, "${form.dir}/$language").apply { mkdirs() }
+                val dir = File("../docs/${form.store}/${form.dir}/$language").apply { mkdirs() }
                 dir.listFiles { f -> f.extension == "png" }?.forEach(File::delete)
                 Locale.setDefault(Locale.forLanguageTag(language))
-                for (shot in shots.filter { form == Form.Phone || it.tablet }) {
+                for (shot in shots.filter { !form.wide || it.tablet }) {
                     val file = File(dir, "${shot.number}-${shot.name}.png")
                     try {
                         runDesktopComposeUiTest(form.widthPx, form.heightPx) {

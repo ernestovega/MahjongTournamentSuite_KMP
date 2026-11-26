@@ -16,6 +16,8 @@
     "seed:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/seedPlayers.js",
     "seed:google-play-tester": "npm run build && node lib/scripts/seedGooglePlayTester.js",
     "seed:google-play-tester:apply": "npm run build && node lib/scripts/seedGooglePlayTester.js --apply",
+    "seed:app-store-tester": "npm run build && node lib/scripts/seedAppStoreTester.js",
+    "seed:app-store-tester:apply": "npm run build && node lib/scripts/seedAppStoreTester.js --apply",
     "reset:access": "npm run build && node lib/scripts/resetAccess.js",
     "sync:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/syncPlayers.js",
     "backfill:statistics": "npm run build && node lib/scripts/backfillStatistics.js",
