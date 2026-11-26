@@ -525,7 +525,8 @@ fun TournamentScreen(
         },
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tournament == null,
-        showProgress = isLoading || isLoadingRest,
+        contentLoading = isLoading && tournament == null,
+        showProgress = tournament != null && (isLoading || isLoadingRest),
         onBack = { requestAction(RoundEditorAction.Back) },
         leadingActions = {
             ProfileInfo(profile, roleLabel, navController)

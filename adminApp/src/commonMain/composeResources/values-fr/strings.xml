@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Modifications non enregistrées</string>
     <string name="you_have_unsaved_changes_save_them">Vous avez des modifications non enregistrées. Les enregistrer avant de continuer ?</string>
     <string name="discard">Abandonner</string>
-    <string name="loading_rankings">Chargement des classements…</string>
     <string name="no_ranking_yet">Pas encore de classement</string>
     <string name="the_ranking_shows_when_the_first">Le classement s'affiche dès que la première main est jouée.</string>
     <string name="settings">Paramètres</string>
@@ -221,7 +220,6 @@
     <string name="no_players_match_the_search">Aucun joueur ne correspond à la recherche.</string>
     <string name="clear_slot">Vider la place</string>
     <string name="tables">Tables</string>
-    <string name="loading">Chargement…</string>
     <string name="round">Tour</string>
     <string name="table">Table</string>
     <string name="no_players_in_this_group">Aucun joueur dans ce groupe.</string>
@@ -700,7 +698,6 @@
     <string name="errors_no_reports">Les rapports de plus de 30 jours sont supprimés.</string>
     <string name="errors_report_id">ID du rapport : %1$s</string>
     <string name="errors_report_reason">Motif : %1$s</string>
-    <string name="errors_loading_detail">Chargement des détails…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Chargement… %1$d problème pour l'instant</item>
@@ -1199,7 +1196,6 @@ Attribuez-lui un tournoi comme éditeur et il sera réactivé à l'enregistremen
 Le changement est enregistré dans l'activité.</string>
     <string name="pc_confirm">Faire le nouveau tirage</string>
     <string name="pc_back">Retour</string>
-    <string name="pc_loading">Chargement des joueurs…</string>
     <string name="pc_saving">Enregistrement du nouveau tirage…</string>
     <string name="pc_done_title">Terminé</string>
     <string name="pc_done_text">Le tournoi a maintenant %1$d joueurs et un nouveau tirage.</string>

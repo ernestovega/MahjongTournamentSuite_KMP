@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -70,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -107,7 +109,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.hand_score
-import mahjongtournamentsuite.adminapp.generated.resources.loading_rankings
 import mahjongtournamentsuite.adminapp.generated.resources.next_ranking_list
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_ranking_yet
@@ -270,10 +271,7 @@ private fun RankingStandaloneContent(
                         )
                     }
                     when {
-                        loading && snapshot == null -> CenteredMessage(
-                            message = stringResource(Res.string.loading_rankings),
-                            modifier = Modifier.weight(1f),
-                        )
+                        loading && snapshot == null -> AppLoading(Modifier.weight(1f), containerColor = Color.Transparent)
                         currentPage == null -> AppEmptyState(
                             icon = Icons.Default.Leaderboard,
                             title = stringResource(Res.string.no_ranking_yet),
@@ -337,11 +335,6 @@ private fun RankingStandaloneContent(
             }
         }
     }
-}
-
-@Composable
-private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Text(message) }
 }
 
 @Composable

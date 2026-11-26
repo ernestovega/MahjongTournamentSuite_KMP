@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Osparade ändringar</string>
     <string name="you_have_unsaved_changes_save_them">Du har osparade ändringar. Spara dem innan du fortsätter?</string>
     <string name="discard">Släng</string>
-    <string name="loading_rankings">Laddar ranking…</string>
     <string name="no_ranking_yet">Ingen ranking än</string>
     <string name="the_ranking_shows_when_the_first">Rankingen visas när första handen är spelad.</string>
     <string name="settings">Inställningar</string>
@@ -221,7 +220,6 @@
     <string name="no_players_match_the_search">Inga spelare matchar sökningen.</string>
     <string name="clear_slot">Töm platsen</string>
     <string name="tables">Bord</string>
-    <string name="loading">Laddar…</string>
     <string name="round">Omgång</string>
     <string name="table">Bord</string>
     <string name="no_players_in_this_group">Inga spelare i den här gruppen.</string>
@@ -700,7 +698,6 @@
     <string name="errors_no_reports">Rapporter äldre än 30 dagar raderas.</string>
     <string name="errors_report_id">Rapport-ID: %1$s</string>
     <string name="errors_report_reason">Orsak: %1$s</string>
-    <string name="errors_loading_detail">Laddar detaljerna…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Laddar… %1$d problem hittills</item>
@@ -1199,7 +1196,6 @@ Ge det en turnering som redaktör så aktiveras det igen när du sparar.</string
 Ändringen registreras i aktiviteten.</string>
     <string name="pc_confirm">Gör den nya lottningen</string>
     <string name="pc_back">Tillbaka</string>
-    <string name="pc_loading">Laddar spelarna…</string>
     <string name="pc_saving">Sparar den nya lottningen…</string>
     <string name="pc_done_title">Klart</string>
     <string name="pc_done_text">Turneringen har nu %1$d spelare och en ny lottning.</string>

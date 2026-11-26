@@ -158,6 +158,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             subtitle = view?.tournament?.name,
             shortSubtitle = view?.tournament?.shortName,
             isLoading = view == null && message == null,
+            contentLoading = view == null && message == null,
             autoFocusFirst = false,
             onBack = { navController.popBackStack() },
             actions = { TableTopBarActions(navController) },

@@ -29,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
@@ -98,7 +99,10 @@ internal fun TeamStatisticsTab(
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-        val loaded = data ?: return@Column
+        val loaded = data ?: run {
+            if (message == null) AppLoadingCompact()
+            return@Column
+        }
         val teamId = loaded.slots.firstOrNull { it.id in members }?.team ?: 0
         // Before the first hand the place says nothing: every team is first with 0 points.
         val standing: (@Composable (Modifier) -> Unit)? = ranking?.takeIf { loaded.hasResults }?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = teamCount) } }

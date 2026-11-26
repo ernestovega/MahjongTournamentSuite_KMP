@@ -100,7 +100,6 @@
     <string name="unsaved_changes">Unsaved changes</string>
     <string name="you_have_unsaved_changes_save_them">You have unsaved changes. Save them before continuing?</string>
     <string name="discard">Discard</string>
-    <string name="loading_rankings">Loading rankings…</string>
     <string name="no_ranking_yet">No ranking yet</string>
     <string name="the_ranking_shows_when_the_first">The ranking shows when the first hand is played.</string>
     <string name="settings">Settings</string>
@@ -221,7 +220,6 @@
     <string name="no_players_match_the_search">No players match the search.</string>
     <string name="clear_slot">Clear slot</string>
     <string name="tables">Tables</string>
-    <string name="loading">Loading…</string>
     <string name="round">Round</string>
     <string name="table">Table</string>
     <string name="no_players_in_this_group">No players in this group.</string>
@@ -700,7 +698,6 @@
     <string name="errors_no_reports">Reports older than 30 days are deleted.</string>
     <string name="errors_report_id">Report ID: %1$s</string>
     <string name="errors_report_reason">Reason: %1$s</string>
-    <string name="errors_loading_detail">Loading the details…</string>
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <plurals name="errors_loading_count">
         <item quantity="one">Loading… %1$d problem so far</item>
@@ -1199,7 +1196,6 @@ Give it a tournament as an editor and it is enabled again when you save.</string
 The change is recorded in the activity.</string>
     <string name="pc_confirm">Make the new draw</string>
     <string name="pc_back">Back</string>
-    <string name="pc_loading">Loading the players…</string>
     <string name="pc_saving">Saving the new draw…</string>
     <string name="pc_done_title">Done</string>
     <string name="pc_done_text">The tournament now has %1$d players and a new draw.</string>

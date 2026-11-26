@@ -720,6 +720,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         title = stringResource(Res.string.players),
         isLoading = loading || saving,
         showBackgroundLogo = loading && players.isEmpty(),
+        contentLoading = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         // Only super admins and club admins add players, with a floating button like New tournament.

@@ -194,6 +194,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
         shortTitle = if (teamOpen) null else view?.tournament?.shortName,
         shortSubtitle = view?.tournament?.shortName,
         isLoading = (view == null && message == null) || ((shownTab == MainTab.STATISTICS || teamOpen) && statisticsLoading),
+        contentLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { if (teamOpen) selectedTeam = null else navController.popBackStack() },
         // The same buttons as the list of tournaments. On a phone they go into the menu.

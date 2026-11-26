@@ -312,8 +312,9 @@ fun ActivityScreen(
     AppScaffold(
         title = stringResource(Res.string.app_activity),
         isLoading = loading && entries.isEmpty(),
-        showProgress = loading,
+        showProgress = loading && entries.isNotEmpty(),
         showBackgroundLogo = loading && entries.isEmpty(),
+        contentLoading = loading && entries.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = {

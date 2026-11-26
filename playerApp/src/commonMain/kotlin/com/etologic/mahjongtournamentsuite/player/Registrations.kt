@@ -88,6 +88,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryRegistrationAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
@@ -751,7 +752,8 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
             title = { MtsDialogTitle(stringResource(Res.string.preg_register_title), subtitle = tournament.name) },
             text = {
                 Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (!loaded || busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    // The first load shows the logo with a progress. A save shows the bar.
+                    if (!loaded) AppLoadingCompact() else if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                     val signedInPerson = me
                     if (signedInPerson != null) {
                         MtsDialogText(stringResource(Res.string.preg_register_as, signedInPerson.displayName.ifBlank { signedInPerson.emaId }, signedInPerson.emaId))

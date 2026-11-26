@@ -222,6 +222,7 @@ fun RegistrationsScreen(
         shortSubtitle = tournament?.shortName,
         isLoading = loading || saving,
         showBackgroundLogo = loading && current == null,
+        contentLoading = loading && current == null,
         onBack = { navController.popBackStack() },
         snackbarHost = { SnackbarHost(snackbar) },
         actions = {

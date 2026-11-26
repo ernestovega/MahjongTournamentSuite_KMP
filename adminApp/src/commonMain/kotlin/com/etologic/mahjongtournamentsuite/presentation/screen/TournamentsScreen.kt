@@ -371,6 +371,7 @@ fun TournamentsScreen(
     AppScaffold(
         title = stringResource(Res.string.tournaments),
         isLoading = isRefreshing || isLoading,
+        contentLoading = isRefreshing && tournaments.isEmpty(),
         showBackgroundLogo = false,
         navigationIcon = {
             ProfileInfo(profile, roleLabel, navController)

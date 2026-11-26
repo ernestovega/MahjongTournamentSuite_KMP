@@ -597,6 +597,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         shortSubtitle = tournaments.firstOrNull { it.id == tournamentId }?.shortName,
         isLoading = loading || savingId != null,
         showBackgroundLogo = loading && players.isEmpty(),
+        contentLoading = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },
         // The cards and the list to print, the teams and the invitations, left of the title. On a phone they go first in the menu.
         leadingActions = {

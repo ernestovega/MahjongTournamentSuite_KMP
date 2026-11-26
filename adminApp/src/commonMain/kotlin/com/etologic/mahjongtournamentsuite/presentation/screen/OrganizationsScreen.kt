@@ -114,7 +114,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.delete
 import mahjongtournamentsuite.adminapp.generated.resources.error_star_prefix
 import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
-import mahjongtournamentsuite.adminapp.generated.resources.loading
 import mahjongtournamentsuite.adminapp.generated.resources.logo
 import mahjongtournamentsuite.adminapp.generated.resources.logo_choose
 import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_2mb
@@ -233,6 +232,7 @@ fun OrganizationsScreen(navController: NavHostController) {
     AppScaffold(
         title = stringResource(Res.string.organizations_title),
         isLoading = loading || saving,
+        contentLoading = loading && organizations == null,
         onBack = { navController.popBackStack() },
         // The main action of the screen is a floating button, like New tournament in the tournament list.
         floatingActionButton = if (access?.canCreateOrganizations == true) {
@@ -325,7 +325,8 @@ fun OrganizationsScreen(navController: NavHostController) {
                             Column(Modifier.weight(1f).fillMaxWidth().screenFullBleed().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay).padding(listPadding)) {
                                 when {
                                     all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    // The logo with a progress shows while it loads. An error shows its dialog.
+                                    list == null -> Unit
                                     list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     else -> OrganizationsGrid(list) { organization ->
                                         OrganizationCard(

@@ -289,6 +289,7 @@ fun TeamsScreen(
         shortSubtitle = tournaments.firstOrNull { it.id == tournamentId }?.shortName,
         isLoading = loading || saving,
         showBackgroundLogo = loading && teams.isEmpty(),
+        contentLoading = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
     ) {
         // The search and the country filter hide when the list scrolls down and show when it scrolls up.

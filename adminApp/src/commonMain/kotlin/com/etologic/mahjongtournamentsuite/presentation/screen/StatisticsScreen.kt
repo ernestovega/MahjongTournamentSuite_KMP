@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FilteredStatistics
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
@@ -119,6 +120,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         title = stringResource(Res.string.statistics),
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tournament == null && person == null && group == null,
+        contentLoading = isLoading && tournament == null && person == null && group == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
@@ -151,6 +153,13 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
                 ) {
                     message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    val shown = when (filters.view) {
+                        StatisticsView.PERSON -> person
+                        StatisticsView.GROUP -> group
+                        else -> tournament
+                    }
+                    // Another filter loads its statistics: the logo with a progress shows in their place.
+                    if (isLoading && shown == null) AppLoadingCompact()
                     FilteredStatistics(
                         filters = filters,
                         onFiltersChange = setFilters,

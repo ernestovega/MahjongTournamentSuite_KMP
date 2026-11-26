@@ -66,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
@@ -346,7 +347,8 @@ internal fun RoundControlContent(
         subtitle = state.tournament?.name?.ifBlank { null },
         shortSubtitle = state.tournament?.shortName,
         isLoading = state.tournament == null,
-        showProgress = state.tournament == null || allTables == null || busy,
+        contentLoading = state.tournament == null,
+        showProgress = state.tournament != null && busy,
         onBack = onBack,
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -642,7 +644,7 @@ private fun TablesCard(
 ) {
     Card(title = stringResource(Res.string.round_control_tables), info = stringResource(Res.string.round_control_tables_help), modifier = Modifier.fillMaxWidth()) {
         when {
-            tables == null -> Unit
+            tables == null -> AppLoadingCompact()
             tables.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
             else -> tables.forEachIndexed { index, table ->
                 if (index > 0) HorizontalDivider()
