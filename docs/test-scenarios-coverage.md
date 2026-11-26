@@ -70,6 +70,15 @@ report shows each file: `./gradlew koverHtmlReportCoverage` (`build/reports/kove
 Kover counts only the JVM build. `androidMain` (~1,000 lines), `wasmJsMain` (~1,000 lines) and `androidApp/src/main`
 (~360 lines) are not measured; the Android E2E tests run part of `androidMain`, nothing runs `wasmJsMain`.
 
+The measure leaves out the code the compiler writes, not us (filters in the root `build.gradle.kts`, since 26 November):
+
+| Left out | Why |
+| --- | --- |
+| `*.generated.resources` | Compose resources accessors |
+| `*.backend.dto` | Data classes of the backend answers and requests, without logic: their branches are the serializers and default arguments that kotlinx.serialization writes (~3,000 branches) |
+| `@Preview` functions | Previews of the screens for the IDE; the screenshot tests draw the screens themselves |
+| `*ComposableSingletons*`, `*_Factory`, `*MainKt` | Compose lambdas holders, generated factories and the entry points |
+
 Files with the most untested lines (audit of 24 November; some are covered since):
 
 | File | Lines | Untested lines | What is missing |

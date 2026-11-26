@@ -49,8 +49,11 @@ kover {
     reports {
         filters {
             excludes {
-                packages("*.generated.resources")
+                // Code the compiler writes, not us: the resources, the serializers and default arguments of the
+                // backend DTOs (data classes without logic) and the @Preview functions. See docs/test-scenarios-coverage.md.
+                packages("*.generated.resources", "*.backend.dto")
                 classes("*ComposableSingletons*", "*_Factory", "*MainKt")
+                annotatedBy("androidx.compose.ui.tooling.preview.Preview")
             }
         }
     }
