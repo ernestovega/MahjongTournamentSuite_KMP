@@ -13,12 +13,12 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,740 | 218 | – | – | – | – | – | 99 % | 92 % |
+| `domain`: business rules, use cases | 5,755 | 220 | – | – | – | – | – | 99 % | 92 % |
 | `data`: repositories, network, telemetry | 7,931 | 449 | – | – | – | – | – | 99 % | 88 % |
 | `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 92 % | 60 % |
-| `ui`: shared Compose components | 17,513 | 85 | 221 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,148 | 315 | 420 | 91 | – | 175 | 4 | 86 % | 64 % |
-| `playerApp`: player screens | 11,623 | 190 | 123 | 54 | – | 72 | 8 | 89 % | 65 % |
+| `ui`: shared Compose components | 17,522 | 85 | 221 | 24 | – | – | – | 90 % | 63 % |
+| `adminApp`: admin screens | 32,150 | 315 | 420 | 91 | – | 175 | 4 | 86 % | 64 % |
+| `playerApp`: player screens | 11,638 | 190 | 124 | 54 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 83 % |
 | Backend: services | 16,011 | 371 | – | – | 186 | – | – | 96 % | 87 % |
@@ -26,7 +26,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
-| **Total** | **109,007** | **1,846** | **784** | **173** | **479** | **247** | **12** | **91 %** | **71 %** |
+| **Total** | **109,048** | **1,848** | **785** | **173** | **479** | **247** | **12** | **91 %** | **71 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
