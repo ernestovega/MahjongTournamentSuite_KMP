@@ -87,6 +87,8 @@ jobs:
           SUBMIT: ${{ inputs.submit }}
         run: |
           gem install fastlane --no-document
+          # Without a Deliverfile, deliver asks whether to create one, which fails without a terminal.
+          echo "# The options are on the command line (app-store.yml)." > Deliverfile
           cat > "$RUNNER_TEMP/asc/rating.json" <<'JSON'
           {
             "alcoholTobaccoOrDrugUseOrReferences": "NONE",
