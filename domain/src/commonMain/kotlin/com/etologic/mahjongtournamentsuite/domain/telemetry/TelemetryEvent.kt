@@ -433,6 +433,7 @@ object TelemetryLink {
         ARCHITECTURE_DOCS,
         STAGING,
         GREEN_BOOK,
+        APP_DOWNLOAD,
         VENUE_MAP,
         VENUE_DIRECTIONS,
         ORGANIZER_EMAIL,
