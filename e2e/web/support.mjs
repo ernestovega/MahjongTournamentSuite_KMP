@@ -40,13 +40,16 @@ export async function launch() {
 }
 
 /**
- * A new page of the app at [path], with the analytics consent already answered (no) and the accessibility tree on.
+ * A new page of the app at [path], with the analytics consent already answered (no), the accessibility tree on and
+ * the notice of the apps hidden.
  * [phone] gives a phone screen; otherwise a desktop one.
  */
 export async function openApp(browser, siteUrl, path = "/", { phone = true } = {}) {
   const context = await browser.newContext(phone ? { viewport: { width: 412, height: 900 }, deviceScaleFactor: 1 } : { viewport: { width: 1280, height: 800 } });
   await context.addInitScript(() => {
     localStorage.setItem("mts.a11y", "on");
+    // The notice of the apps on the tournament list of the web covers the sign-in; the tests see the site without it.
+    localStorage.setItem("mts.appsNoticeHidden", "1");
   });
   // Only the local site: no Analytics, no App Check and no other Google script. In GitHub those load (here a proxy
   // stops them), and the App Check of the Firebase scripts then holds back every call of the API.
