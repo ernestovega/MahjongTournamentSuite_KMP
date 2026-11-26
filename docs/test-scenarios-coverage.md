@@ -15,7 +15,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `domain`: business rules, use cases | 5,757 | 220 | – | – | – | – | – | 99 % | 92 % |
 | `data`: repositories, network, telemetry | 7,931 | 457 | – | – | – | – | – | 99 % | 88 % |
-| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 92 % | 60 % |
+| `designsystem`: theme, base components | 1,812 | – | 30 | 4 | – | – | – | 92 % | 60 % |
 | `ui`: shared Compose components | 17,530 | 85 | 221 | 24 | – | – | – | 90 % | 63 % |
 | `adminApp`: admin screens | 32,150 | 315 | 420 | 91 | – | 175 | 4 | 86 % | 64 % |
 | `playerApp`: player screens | 11,962 | 194 | 124 | 56 | – | 72 | 8 | 89 % | 65 % |
@@ -26,7 +26,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
-| **Total** | **109,382** | **1,860** | **785** | **175** | **479** | **247** | **12** | **91 %** | **71 %** |
+| **Total** | **109,382** | **1,860** | **795** | **175** | **479** | **247** | **12** | **91 %** | **71 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
@@ -81,6 +81,10 @@ The measure leaves out the code the compiler writes, not us (filters in the root
 | `@Preview` functions | Previews of the screens for the IDE; the screenshot tests draw the screens themselves |
 | `*ComposableSingletons*`, `*_Factory`, `*MainKt` | Compose lambdas holders, generated factories and the entry points |
 | `*$DefaultImpls` | Static copies of the interface methods with a body, for Java callers. The tests run the methods themselves |
+
+**Goal (26 November):** 100 % of the lines in every part, and 100 % of the branches in the logic: `domain`, `data` and
+the backend. In the Compose parts (`designsystem`, `ui`, `adminApp`, `playerApp`) the branches are measured but are
+not a goal, because the Compose compiler adds branches for every parameter (its default value and whether it changed).
 
 The total of the table also leaves out the maintenance and seed scripts of the backend (`firebase/functions/src/scripts`,
 since 26 November). They run by hand, once or on test data, so their row is shown apart and does not count toward 100 %.
