@@ -740,7 +740,13 @@ fun PlayerBaseScreen(navController: NavHostController) {
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
             ScreenColumn(
                 maxWidth = 1200.dp,
-                contentPadding = if (compactScreen) PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 16.dp) else PaddingValues(24.dp),
+                // With the New player floating button the list and the details end above it, so it covers no row
+                // and not the Save button at the bottom right of the details.
+                contentPadding = if (compactScreen) {
+                    PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = if (canCreate) FabClearance else 16.dp)
+                } else {
+                    PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (canCreate) FabClearance else 24.dp)
+                },
                 verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp),
             ) {
                     ShowTabsAtTop(playersListState)
@@ -884,8 +890,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 LazyColumnWithScrollbar(
                                     state = playersListState,
                                     modifier = Modifier.weight(1f).hideOnScroll(hideOnScroll),
-                                    // Room under the last player so the floating button covers none.
-                                    contentPadding = PaddingValues(bottom = if (canCreate) FabClearance else 0.dp),
                                 ) {
                                     itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
                                         DataTableRow(
