@@ -142,4 +142,34 @@ class RepositorySupportTest {
     fun otherFailuresStayUnexpectedErrors() {
         assertIs<AppError.Unexpected>(IllegalStateException("broken").toRepositoryAppError())
     }
+
+    @Test
+    fun aFailureWithoutAMessageIsNamedByItsKindOrTheFallback() {
+        assertEquals(AppError.Unexpected("IllegalStateException: broken"), IllegalStateException(" broken ").toRepositoryAppError())
+        assertEquals(AppError.Unexpected("IllegalStateException"), IllegalStateException("  ").toRepositoryAppError())
+        assertEquals(AppError.Unexpected("Could not save"), IllegalStateException().toRepositoryAppError("Could not save"))
+    }
+
+    @Test
+    fun aConflictWithMissingOrOddFieldsKeepsWhatItCanRead() {
+        fun conflict(body: String) = BackendHttpException(HttpStatusCode.Conflict, body).toRepositoryAppError()
+
+        assertEquals(
+            AppError.Conflict("", code = ConflictCode.ASSIGNMENTS_MISSING, args = emptyList()),
+            conflict("""{"message":{},"details":{"code":"ASSIGNMENTS_MISSING","missing":{}}}"""),
+        )
+        assertEquals(
+            AppError.Conflict("", code = ConflictCode.PREVIOUS_ROUND_IN_PLAY, args = listOf("", "", "true")),
+            conflict("""{"details":{"code":"PREVIOUS_ROUND_IN_PLAY","roundId":[],"tables":"3","started":{}}}"""),
+        )
+        assertEquals(
+            AppError.Conflict("", code = ConflictCode.PREVIOUS_ROUND_IN_PLAY, args = listOf("", "", "true")),
+            conflict("""{"details":{"code":"PREVIOUS_ROUND_IN_PLAY"}}"""),
+        )
+        assertIs<AppError.Unexpected>(conflict("""{"details":{"code":{}}}"""))
+        assertIs<AppError.Unexpected>(conflict("""{"details":{}}"""))
+        assertIs<AppError.Unexpected>(conflict("""{"details":"x"}"""))
+        assertIs<AppError.Unexpected>(conflict("""[1]"""))
+        assertIs<AppError.Unexpected>(conflict("not json"))
+    }
 }

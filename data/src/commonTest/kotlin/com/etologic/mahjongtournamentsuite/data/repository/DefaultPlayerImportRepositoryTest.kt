@@ -210,6 +210,9 @@ class DefaultPlayerImportRepositoryTest {
         assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"FROM_THE_FUTURE"}}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"error":"no details"}"""))
         assertIs<AppError.Unexpected>(errorOf("not json"))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.EMPTY, emptyList()), errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Conflict))
+        assertIs<AppError.Unexpected>(errorOf("""{"details":{}}"""))
+        assertIs<AppError.Unexpected>(errorOf("""{"details":"x"}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Forbidden), "only a refused file has a file error")
     }
 

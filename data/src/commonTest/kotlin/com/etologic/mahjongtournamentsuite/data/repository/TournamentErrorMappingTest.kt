@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDt
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -88,6 +89,30 @@ class TournamentErrorMappingTest {
     @Test
     fun aRegistrationRefusalKeepsItsCode() {
         assertIs<AppError.Registration>(http(HttpStatusCode.BadRequest, """{"details":{"code":"ALREADY_REGISTERED"}}""").toTournamentAppError())
+    }
+
+    @Test
+    fun aRegistrationRefusalKeepsTheNamesAndCountsThatItCarries() {
+        fun error(status: HttpStatusCode, body: String) = http(status, body).registrationAppErrorOrNull()
+
+        assertEquals(
+            AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, listOf("1", "2")),
+            error(HttpStatusCode.BadRequest, """{"details":{"code":"INCOMPLETE_TEAMS","emaIds":["1","2"]}}"""),
+        )
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), error(HttpStatusCode.Conflict, """{"details":{"code":"INCOMPLETE_TEAMS"}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), error(HttpStatusCode.Conflict, """{"details":{"code":"INCOMPLETE_TEAMS","emaIds":"1"}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, listOf("7")), error(HttpStatusCode.Conflict, """{"details":{"code":"BAD_PLAYER_COUNT","confirmed":7}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, emptyList()), error(HttpStatusCode.Conflict, """{"details":{"code":"BAD_PLAYER_COUNT"}}"""))
+        assertNull(error(HttpStatusCode.InternalServerError, """{"details":{"code":"BAD_PLAYER_COUNT"}}"""), "only a refusal has a code")
+        assertNull(error(HttpStatusCode.Conflict, """{"details":{}}"""))
+        assertNull(error(HttpStatusCode.Conflict, """{"details":{"code":"FROM_THE_FUTURE"}}"""))
+        assertNull(IllegalStateException("x").registrationAppErrorOrNull())
+    }
+
+    @Test
+    fun aRefusedPlayerChangeWithoutAReasonAsksToRefresh() {
+        assertIs<AppError.Conflict>(http(HttpStatusCode.Conflict, "{}").toPlayerChangeError())
+        assertEquals(AppError.Network, Exception("Failed to fetch").toPlayerChangeError())
     }
 
     @Test
