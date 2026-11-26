@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -101,21 +100,11 @@ dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
 
+// `./gradlew :adminApp:run` runs the admin part alone, for development. The installed desktop app is :suite.
 compose.desktop {
     application {
         mainClass = "com.etologic.mahjongtournamentsuite.MainKt"
         jvmArgs += "--enable-native-access=ALL-UNNAMED"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.etologic.mahjongtournamentsuite"
-            // The desktop app is the admin app, so it shares the admin version.
-            // Compose desktop requires a major version above zero.
-            packageVersion = libs.versions.admin.versionName.get()
-            macOS { iconFile.set(project.file("desktop-icons/icon.icns")) }
-            windows { iconFile.set(project.file("desktop-icons/icon.ico")) }
-            linux { iconFile.set(project.file("desktop-icons/icon.png")) }
-        }
     }
 }
 

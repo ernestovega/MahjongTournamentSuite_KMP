@@ -1,0 +1,192 @@
+# Builds the desktop app (the suite: player and admin parts) for macOS, Windows and Linux and publishes the three
+# installers in a GitHub release tagged desktop-v<admin version>. Only by hand, from Actions > Publish · Desktop, like
+# the Google Play and TestFlight uploads, and only from main. The version is admin-versionName: a release that already
+# exists is not replaced, so bump the versions before running it again. The installed apps look for a newer release when they start.
+# See docs/desktop-release.md.
+#
+# macOS: signed with the Developer ID certificate and notarized with the App Store Connect API key, so it opens
+# without warnings. Secrets: MAC_DEVELOPER_ID_P12 (the .p12 in base64), MAC_DEVELOPER_ID_P12_PASSWORD and
+# APP_STORE_CONNECT_API_KEY. Without the certificate the DMG is built unsigned and the run says so.
+# Windows: an MSI without signature (SmartScreen warns the first time). Linux: a DEB.
+name: Publish · Desktop
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  ASC_KEY_ID: S8GAZ32F4X
+  ASC_ISSUER_ID: 9ec15174-5e83-4917-9dd6-6fb152d6d888
+
+jobs:
+  version:
+    name: Version
+    # Releases leave only from main, like the store uploads (docs/ci-deploy.md, "Branches").
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Admin version and free tag
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(sed -nE 's/^admin-versionName = "([^"]+)"/\1/p' gradle/libs.versions.toml)
+          if [ -z "$VERSION" ]; then echo "No admin-versionName in gradle/libs.versions.toml."; exit 1; fi
+          if gh release view "desktop-v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::The release desktop-v$VERSION already exists. Bump the admin version (scripts/versions.py bump admin) first."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Desktop $VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (Apple silicon)
+            os: macos-26
+            task: packageDmg
+            dir: dmg
+          - name: Windows
+            os: windows-latest
+            task: packageMsi
+            dir: msi
+          - name: Linux
+            os: ubuntu-latest
+            task: packageDeb
+            dir: deb
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      # jpackage comes with the JDK. Compose desktop needs JDK 17 or later.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Developer ID certificate
+        if: runner.os == 'macOS'
+        env:
+          P12: ${{ secrets.MAC_DEVELOPER_ID_P12 }}
+          P12_PASSWORD: ${{ secrets.MAC_DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          if [ -z "$P12" ]; then
+            echo "::warning::No MAC_DEVELOPER_ID_P12 secret: the DMG is not signed nor notarized, and macOS will block it."
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/developer-id.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/developer-id.p12"
+          # jpackage wants the name after "Developer ID Application: ", such as "Ernesto Vega (TEAMID)".
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | sed -nE 's/.*"Developer ID Application: (.*)"/\1/p' | head -1)
+          if [ -z "$IDENTITY" ]; then echo "The .p12 holds no Developer ID Application certificate."; exit 1; fi
+          echo "MTS_MAC_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "MTS_MAC_SIGN_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+          echo "SIGNED=true" >> "$GITHUB_ENV"
+
+      - name: Build the installer
+        env:
+          # The analytics of the desktop app (data/build.gradle.kts).
+          MTS_GA4_API_SECRET: ${{ secrets.MTS_GA4_API_SECRET }}
+        run: ./gradlew :suite:${{ matrix.task }} --no-configuration-cache
+
+      - name: Notarize
+        if: runner.os == 'macOS' && env.SIGNED == 'true'
+        env:
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then echo "The secret APP_STORE_CONNECT_API_KEY is missing."; exit 1; fi
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$API_KEY" > "$KEY"
+          DMG=$(ls suite/build/compose/binaries/main/dmg/*.dmg)
+          xcrun notarytool submit "$DMG" --key "$KEY" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID" --wait --timeout 30m \
+            | tee "$RUNNER_TEMP/notary.log"
+          rm -f "$KEY"
+          grep -q "status: Accepted" "$RUNNER_TEMP/notary.log" || { echo "Apple did not accept the DMG."; exit 1; }
+          xcrun stapler staple "$DMG"
+          spctl --assess --type open --context context:primary-signature -v "$DMG"
+
+      - name: Delete the keychain
+        if: always() && runner.os == 'macOS'
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
+
+      # The same names on every release, so a link to the latest release can point to the file of each system.
+      - name: Name the installer
+        run: |
+          mkdir -p out
+          FILE=$(ls suite/build/compose/binaries/main/${{ matrix.dir }}/* | head -1)
+          case "${{ matrix.dir }}" in
+            dmg) cp "$FILE" "out/MTS-${{ needs.version.outputs.version }}-macos-arm64.dmg" ;;
+            msi) cp "$FILE" "out/MTS-${{ needs.version.outputs.version }}-windows-x64.msi" ;;
+            deb) cp "$FILE" "out/mts_${{ needs.version.outputs.version }}_amd64.deb" ;;
+          esac
+          ls -la out
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.dir }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: out
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          cat > notes.md <<EOF
+          MTS $VERSION for the desktop: the player part and the admin part, like the Android and iOS apps.
+
+          - **macOS** (Apple silicon): open the .dmg and drag MTS to Applications.
+          - **Windows**: run the .msi. Windows may warn the first time: More info > Run anyway.
+          - **Linux** (Debian, Ubuntu): \`sudo apt install ./mts_${VERSION}_amd64.deb\`
+
+          The app tells you when a new version is out.
+          EOF
+          gh release create "desktop-v$VERSION" out/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "MTS Desktop $VERSION" \
+            --notes-file notes.md
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/desktop-v$VERSION" >> "$GITHUB_STEP_SUMMARY"

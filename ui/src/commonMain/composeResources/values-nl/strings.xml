@@ -775,4 +775,9 @@ De eerste die lukt, wint</string>
     <string name="compare_best_place">Beste plaats</string>
     <string name="compare_last_tournament">Laatste toernooi</string>
     <string name="compare_no_place">Nog geen eindplaats</string>
+    <!-- Desktop app: a new version is out -->
+    <string name="update_available_title">Nieuwe versie</string>
+    <string name="update_available_message">Versie %1$s van MTS is klaar. Download hem en installeer hem over deze heen.</string>
+    <string name="update_available_download">Downloaden</string>
+    <string name="update_available_later">Later</string>
 </resources>

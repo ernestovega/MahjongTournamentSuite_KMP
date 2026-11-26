@@ -45,7 +45,7 @@ data class SuiteStart(
 
 /**
  * Holds the player application and the admin application, one at a time, like the two apps of the web site. The
- * Android app and the iOS app show it.
+ * Android app, the iOS app and the desktop app show it.
  * - The player part opens first. Its top bar shows the admin button only to admins and editors.
  * - The two parts share the session, which is saved in a file of the app, so one sign-in is enough.
  * - Each part keeps its screens while the other one is open. Leaving the admin part after a sign-out, or without the
@@ -68,6 +68,10 @@ fun SuiteRoot(
     storedSessionUid: () -> String?,
     /** Tells the platform which part is on the screen (`player` or `admin`), for the telemetry of that part. */
     onPartShown: (String) -> Unit,
+    /**
+     * True where the score of a hand is typed on the numpad of the app: phones and tablets. The desktop has a keyboard.
+     */
+    numpadEntry: Boolean = true,
 ) {
     // The first part is known before the first frame, so the other part never starts for nothing.
     var section by rememberSaveable { mutableStateOf(initial?.section ?: SuiteSection.PLAYER) }
@@ -126,14 +130,13 @@ fun SuiteRoot(
                     // The telemetry of each part starts with the name of the part. See AndroidTelemetry.
                     onPartShown("player")
                     // The app has one version for both parts: the admin version. See docs/versioning.md.
-                    // Phones and tablets type the score of a hand on the numpad of the app, not on the system keyboard.
                     PlayerApp(
                         appVersion = AppVersion.admin,
                         openSignIn = playerSignIn,
                         openTournamentId = playerEntry?.tournamentId,
                         openSupport = playerEntry?.support == true,
                         openRegistration = playerEntry?.link,
-                        numpadEntry = true,
+                        numpadEntry = numpadEntry,
                         isolatedKoin = true,
                     )
                 }

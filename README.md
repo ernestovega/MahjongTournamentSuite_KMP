@@ -92,7 +92,10 @@ More in [docs/architecture/](docs/architecture/README.md): system diagrams, data
 # Android
 ./gradlew :androidApp:assembleDebug
 
-# Desktop (management)
+# Desktop (the suite, as installed; installers: docs/desktop-release.md)
+./gradlew :suite:run
+
+# Desktop, the admin part alone (development)
 ./gradlew :adminApp:run
 
 # Web (Wasm)

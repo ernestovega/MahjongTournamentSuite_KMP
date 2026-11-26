@@ -37,8 +37,9 @@ It has two parts:
 |---|:-:|:-:|
 | **Android** (one «MTS» app) | ✅ starts here | ✅ «Manager app» button for staff |
 | **Web** (Wasm) `mts.mahjongmadrid.com` | ✅ `/` | ✅ `/admin/` |
-| **Desktop** (JVM) | | ✅ |
+| **Desktop** (one «MTS» app: macOS, Windows, Linux) | ✅ starts here | ✅ «Manager app» button for staff |
 
+- **Desktop app**: the same suite as Android, installed from the GitHub releases ([desktop-release.md](desktop-release.md)).
 - **One Android app**: it starts in Player. If the account is staff, the «Manager app» button opens the Admin part and «Player app» goes back.
 - **On the web**, after signing in, staff choose «Player app» or «Manager app».
 - **Direct links**: `/t/<id>` opens a tournament, `/<short-name>` (for example `/6thmmc`) opens its registrations, or the tournament after the draw, and `/<short-name>/my-table` opens your table. On Android the app takes every address of the site (App Links) and opens it where the web does; the pages that are not the app (privacy policy, Green Book, API docs) go on to the browser.

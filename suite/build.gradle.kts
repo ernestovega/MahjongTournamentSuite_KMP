@@ -1,7 +1,9 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// The suite of the mobile apps: the player part and the admin part in one app (SuiteRoot). The Android app
-// (androidApp) and the iOS app (iosApp, through the `Shared` framework) both show it. See docs/ios-release.md.
+// The suite: the player part and the admin part in one app (SuiteRoot). The Android app (androidApp), the iOS app
+// (iosApp, through the `Shared` framework) and the desktop app (jvmMain, packaged here) show it.
+// See docs/ios-release.md and docs/desktop-release.md.
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
@@ -19,6 +21,8 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
+
+    jvm()
 
     // The framework that the Xcode project of iosApp links. Xcode builds it with embedAndSignAppleFrameworkForXcode.
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
@@ -38,11 +42,89 @@ kotlin {
             implementation(projects.ui)
             implementation(projects.domain)
         }
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(projects.data)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
         iosMain.dependencies {
             implementation(projects.data)
         }
         iosTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+    }
+}
+
+// The desktop app: a DMG for macOS, an MSI for Windows and a DEB for Linux. Each one is built on its own system
+// (`./gradlew :suite:packageReleaseDmg`, `packageReleaseMsi`, `packageReleaseDeb`); the workflow Publish · Desktop
+// builds the three and puts them in a GitHub release. See docs/desktop-release.md.
+compose.desktop {
+    application {
+        mainClass = "com.etologic.mahjongtournamentsuite.DesktopMainKt"
+        jvmArgs += "--enable-native-access=ALL-UNNAMED"
+
+        buildTypes.release.proguard {
+            // Koin, Ktor and kotlinx.serialization find classes by reflection. The app is small enough without it.
+            isEnabled.set(false)
+        }
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "MTS"
+            // One version for the Android, iOS and desktop apps: the admin version. Compose desktop requires a major
+            // version above zero. See docs/versioning.md.
+            packageVersion = libs.versions.admin.versionName.get()
+            description = "Mahjong Tournament Suite"
+            vendor = "Etologic"
+            // jlink keeps only these modules of the JDK (java.base and java.desktop always). The first five are what
+            // `./gradlew :suite:suggestRuntimeModules` lists; the rest are found only at run time: TLS with elliptic
+            // curves, the dates in every language, DNS and the screen readers.
+            modules(
+                "java.instrument",
+                "java.management",
+                "java.net.http",
+                "java.prefs",
+                "jdk.unsupported",
+                "jdk.crypto.ec",
+                "jdk.localedata",
+                "java.naming",
+                "jdk.accessibility",
+            )
+
+            macOS {
+                bundleID = "com.etologic.mahjongtournamentsuite.desktop"
+                appCategory = "public.app-category.productivity"
+                iconFile.set(rootProject.file("adminApp/desktop-icons/icon.icns"))
+                // CI signs with the Developer ID certificate in its keychain (docs/desktop-release.md).
+                System.getenv("MTS_MAC_SIGN_IDENTITY")?.takeIf { it.isNotBlank() }?.let { identity ->
+                    signing {
+                        sign.set(true)
+                        this.identity.set(identity)
+                        System.getenv("MTS_MAC_SIGN_KEYCHAIN")?.takeIf { it.isNotBlank() }?.let { keychain.set(it) }
+                    }
+                }
+            }
+            windows {
+                iconFile.set(rootProject.file("adminApp/desktop-icons/icon.ico"))
+                menuGroup = "MTS"
+                shortcut = true
+                dirChooser = true
+                // Installs for the user, so it needs no administrator.
+                perUserInstall = true
+                // Never change it: Windows finds the installed app by it and replaces it with the new version.
+                upgradeUuid = "6C223D9F-2C21-48D8-AE2B-AC081C000B14"
+            }
+            linux {
+                iconFile.set(rootProject.file("adminApp/desktop-icons/icon.png"))
+                packageName = "mts"
+                menuGroup = "Office"
+                shortcut = true
+                appCategory = "Office"
+            }
         }
     }
 }

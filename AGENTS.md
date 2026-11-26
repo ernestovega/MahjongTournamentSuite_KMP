@@ -51,7 +51,8 @@ The project uses a simple Clean Architecture split:
     switches to `adminApp` for admins and editors (`SuiteRoot`). See `docs/android-release.md`.
 
 - `suite`
-  - `SuiteRoot`, shared by the Android app and the iOS app, and the `Shared` framework of iOS (`iosMain`)
+  - `SuiteRoot`, shared by the Android app, the iOS app and the desktop app (`jvmMain`, packaged with Compose
+    Desktop), and the `Shared` framework of iOS (`iosMain`)
 
 - `iosApp`
   - the Xcode project of the iOS app: SwiftUI entry point, Firebase SDKs, icons, Info.plist. See `docs/ios-release.md`.
@@ -93,10 +94,10 @@ Build Android:
 ./gradlew :androidApp:assembleDebug
 ```
 
-Run desktop:
+Run desktop (the suite; installers and releases in `docs/desktop-release.md`):
 
 ```bash
-./gradlew :adminApp:run
+./gradlew :suite:run
 ```
 
 Run web (Wasm):

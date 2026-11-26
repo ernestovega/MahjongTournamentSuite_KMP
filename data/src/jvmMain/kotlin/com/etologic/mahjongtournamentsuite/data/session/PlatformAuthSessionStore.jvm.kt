@@ -6,12 +6,7 @@ import kotlinx.serialization.json.Json
 actual class PlatformAuthSessionStore actual constructor(
     private val json: Json,
 ) : AuthSessionStore {
-    private val file: File = run {
-        val home = System.getProperty("user.home") ?: "."
-        val dir = File(home, ".mahjongtournamentsuite")
-        dir.mkdirs()
-        File(dir, "auth_session.json")
-    }
+    private val file: File = sessionFile()
 
     override suspend fun load(): StoredAuthSession? {
         if (!file.exists()) return null
@@ -28,6 +23,23 @@ actual class PlatformAuthSessionStore actual constructor(
         file.writeText(json.encodeToString(StoredAuthSession.serializer(), session))
         file.keepPrivate()
     }
+}
+
+private fun sessionFile(): File {
+    val home = System.getProperty("user.home") ?: "."
+    val dir = File(home, ".mahjongtournamentsuite")
+    dir.mkdirs()
+    return File(dir, "auth_session.json")
+}
+
+private val uidJson = Json { ignoreUnknownKeys = true }
+
+/** The account of the saved session, or null without one. The suite keeps the screens of its admin part only for it. */
+fun storedSessionUid(): String? {
+    val file = sessionFile()
+    if (!file.exists()) return null
+    val text = runCatching { file.readText() }.getOrNull()?.takeIf { it.isNotBlank() } ?: return null
+    return runCatching { uidJson.decodeFromString(StoredAuthSession.serializer(), text).uid }.getOrNull()
 }
 
 /** Only the owner of the computer account may read the tokens of the session. */

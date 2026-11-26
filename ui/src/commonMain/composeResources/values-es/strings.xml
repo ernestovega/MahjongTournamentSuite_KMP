@@ -779,4 +779,9 @@ Gana el primero que sale bien</string>
     <string name="compare_best_place">Mejor puesto</string>
     <string name="compare_last_tournament">Último torneo</string>
     <string name="compare_no_place">Aún sin puesto final</string>
+    <!-- Desktop app: a new version is out -->
+    <string name="update_available_title">Nueva versión</string>
+    <string name="update_available_message">La versión %1$s de MTS está lista. Descárgala e instálala sobre esta.</string>
+    <string name="update_available_download">Descargar</string>
+    <string name="update_available_later">Más tarde</string>
 </resources>

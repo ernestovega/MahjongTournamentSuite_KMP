@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.telemetry
 
+import com.etologic.mahjongtournamentsuite.data.platform.DesktopPlatform
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
@@ -166,7 +167,9 @@ actual fun providePlatformTelemetry(): PlatformTelemetry {
     val env = if (System.getProperty("jpackage.app-path") != null) "prod" else "dev"
     val analytics = desktopAnalytics(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.apiSecret, env)
     val pending = FilePendingCrashStore(File(System.getProperty("user.home"), ".mahjongtournamentsuite/pending-crash.json"))
-    return PlatformTelemetry(analytics, "admin", "desktop", env, Locale.getDefault().language, pending)
+    // The desktop app of the suite says which part is open. It has one version, the admin version, for both parts.
+    val app = DesktopPlatform.currentApp ?: "admin"
+    return PlatformTelemetry(analytics, app, "desktop", env, Locale.getDefault().language, pending, AppVersion.admin)
 }
 
 actual fun installCrashHandler(onCrash: (Throwable) -> Unit) {

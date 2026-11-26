@@ -34,7 +34,7 @@ CATALOG = "gradle/libs.versions.toml"
 
 WEB, ADMIN, BACKEND = "web", "admin", "backend"
 PRODUCTS = (WEB, ADMIN, BACKEND)
-LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app", BACKEND: "Backend"}
+LABELS = {WEB: "Web", ADMIN: "Android, iOS and desktop app", BACKEND: "Backend"}
 # Only the Android app has a version code, because Google Play needs one.
 HAS_CODE = {WEB: False, ADMIN: True, BACKEND: False}
 # The products that the Gradle build makes. The backend is built with npm.

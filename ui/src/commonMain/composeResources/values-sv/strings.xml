@@ -775,4 +775,9 @@ Den första som fungerar vinner</string>
     <string name="compare_best_place">Bästa placering</string>
     <string name="compare_last_tournament">Senaste turnering</string>
     <string name="compare_no_place">Ingen slutplacering än</string>
+    <!-- Desktop app: a new version is out -->
+    <string name="update_available_title">Ny version</string>
+    <string name="update_available_message">Version %1$s av MTS är klar. Ladda ner den och installera den över den här.</string>
+    <string name="update_available_download">Ladda ner</string>
+    <string name="update_available_later">Senare</string>
 </resources>

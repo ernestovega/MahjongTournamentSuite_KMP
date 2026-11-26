@@ -5,7 +5,7 @@ There are three products, and each one has its own version:
 | Product | What it is | Where it is shown |
 |---|---|---|
 | **Web** | Both web apps (admin and player), served by Firebase Hosting. | Profile dialog and sign-in screen of both web apps, and `/version.json` on the site |
-| **Admin app** | The Android app (`androidApp`), which holds the admin part and the player part, and the admin app on desktop. | Profile dialog of both parts on Android, and of the desktop app |
+| **Admin app** | The Android app (`androidApp`), which holds the admin part and the player part, the iOS app and the desktop app (`:suite`). | Profile dialog of both parts on Android, and of the desktop app |
 | **Backend** | Everything under `firebase/`: the functions (the API), the Firestore and Storage rules, and the indexes. | `GET /api/health` answers `{ "ok": true, "version": "…" }` |
 
 Until November 2026 the backend counted as part of the web. It got its own version, starting at 1.0.0, so that a change in the API no longer raises the web version and the other way round.

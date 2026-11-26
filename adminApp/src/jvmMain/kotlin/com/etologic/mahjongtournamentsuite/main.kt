@@ -1,11 +1,13 @@
 package com.etologic.mahjongtournamentsuite
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
@@ -17,7 +19,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.mahjongtournamentsuit
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-fun main() = application {
+/** The admin app alone, for development: `./gradlew :adminApp:run`. The installed desktop app is `:suite`. */
+fun main() = desktopApplication { App() }
+
+/**
+ * The desktop application: the main window with [content] and the windows that the admin part opens apart (the timer,
+ * the rankings, the QR of the tables). It ends when the main window and every other window are closed.
+ */
+fun desktopApplication(content: @Composable FrameWindowScope.() -> Unit) = application {
     var isMainWindowOpen by remember { mutableStateOf(true) }
     val hasStandaloneWindows = StandaloneWindows.hasOpenWindows
 
@@ -37,7 +46,7 @@ fun main() = application {
                 window.minimumSize = Dimension(900, 650)
                 onDispose { }
             }
-            App()
+            content()
         }
     }
 

@@ -781,4 +781,9 @@
     <string name="compare_best_place">Лучшее место</string>
     <string name="compare_last_tournament">Последний турнир</string>
     <string name="compare_no_place">Итогового места пока нет</string>
+    <!-- Desktop app: a new version is out -->
+    <string name="update_available_title">Новая версия</string>
+    <string name="update_available_message">Версия MTS %1$s готова. Скачайте её и установите поверх этой.</string>
+    <string name="update_available_download">Скачать</string>
+    <string name="update_available_later">Позже</string>
 </resources>
