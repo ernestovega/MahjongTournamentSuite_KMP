@@ -25,8 +25,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.RegistrationImportRow
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.CompletableDeferred
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -34,14 +32,6 @@ import kotlin.test.assertNull
 /** The dialog that adds or changes a registration, and the dialog that imports the answers of a Google Form. */
 @OptIn(ExperimentalTestApi::class)
 class RegistrationDialogsUiTest {
-    private val originalLocale = java.util.Locale.getDefault()
-
-    @BeforeTest
-    fun useEnglish() = java.util.Locale.setDefault(java.util.Locale.ENGLISH)
-
-    @AfterTest
-    fun restoreLocale() = java.util.Locale.setDefault(originalLocale)
-
     private val ana = Player(emaId = "01000001", firstName = "Ana", lastName = "Lopez", country = "ES")
     private val ben = Player(emaId = "02000002", firstName = "Ben", lastName = "Smith", country = "GB")
 

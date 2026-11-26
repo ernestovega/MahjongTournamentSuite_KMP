@@ -25,22 +25,12 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** The dialog that assigns an EMA player to a tournament place, and the dialog that clears the assignment. */
 @OptIn(ExperimentalTestApi::class)
 class PlayerAssignmentDialogsUiTest {
-    private val originalLocale = java.util.Locale.getDefault()
-
-    @BeforeTest
-    fun useEnglish() = java.util.Locale.setDefault(java.util.Locale.ENGLISH)
-
-    @AfterTest
-    fun restoreLocale() = java.util.Locale.setDefault(originalLocale)
-
     private val ana = Player(emaId = "01000001", firstName = "Ana", lastName = "Lopez", country = "ES")
     private val ben = Player(emaId = "02000002", firstName = "Ben", lastName = "Smith", country = "GB")
     private val cai = Player(emaId = "03000003", firstName = "Cai", lastName = "Wong", country = "")
