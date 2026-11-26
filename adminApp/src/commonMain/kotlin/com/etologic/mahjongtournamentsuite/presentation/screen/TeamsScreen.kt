@@ -376,6 +376,7 @@ fun TeamsScreen(
                                                                     } else {
                                                                         stringResource(Res.string.filter_by_code, code)
                                                                     },
+                                                                    tooltip = false,
                                                                 )
                                                             }
                                                         }
