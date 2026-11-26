@@ -16,17 +16,17 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | `domain`: business rules, use cases | 5,761 | 225 | – | – | – | – | – | 99 % | 92 % |
 | `data`: repositories, network, telemetry | 7,931 | 461 | – | – | – | – | – | 99 % | 89 % |
 | `designsystem`: theme, base components | 2,030 | – | 34 | 4 | – | – | – | 98 % | 66 % |
-| `ui`: shared Compose components | 17,743 | 89 | 269 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,420 | 315 | 488 | 91 | – | 175 | 5 | 87 % | 65 % |
-| `playerApp`: player screens | 12,013 | 194 | 126 | 56 | – | 72 | 8 | 89 % | 65 % |
+| `ui`: shared Compose components | 17,780 | 93 | 312 | 24 | – | – | – | 90 % | 63 % |
+| `adminApp`: admin screens | 32,437 | 315 | 488 | 91 | – | 175 | 5 | 87 % | 65 % |
+| `playerApp`: player screens | 12,045 | 194 | 126 | 56 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 3,996 | 60 | – | – | 320 | – | – | 93 % | 86 % |
-| Backend: services | 16,015 | 373 | – | – | 195 | – | – | 96 % | 88 % |
+| Backend: services | 16,062 | 376 | – | – | 195 | – | – | 96 % | 88 % |
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,367 | 124 | – | – | – | – | – | – | – |
-| **Total** | **110,156** | **1,875** | **917** | **175** | **515** | **247** | **13** | **92 %** | **71 %** |
+| **Total** | **110,289** | **1,882** | **960** | **175** | **515** | **247** | **13** | **92 %** | **71 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
