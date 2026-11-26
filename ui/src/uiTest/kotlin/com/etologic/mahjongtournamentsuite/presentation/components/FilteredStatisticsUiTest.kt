@@ -143,12 +143,14 @@ class FilteredStatisticsUiTest {
     private fun ComposeUiTest.count(text: String) = onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size
 
     @Test
-    fun onePersonShowsTheNumbersAndTheTournamentsAndARivalOpensItsOwn() = runComposeUiTest {
+    fun onePersonShowsTheNumbersAndTheTournamentsAndCompareOpensTheComparisonWithARival() = runComposeUiTest {
         val host = show(StatisticsFilters(emaId = "1"), person = ana)
         assertTrue(count("Tournaments") > 0)
-        onNode(hasClickAction() and hasText("Bea Rival", substring = true)).performScrollTo().performClick()
+        onNode(hasClickAction() and hasText("Compare")).performScrollTo().performClick()
         waitForIdle()
-        assertEquals("2", host.changes.single().emaId)
+        val change = host.changes.single()
+        assertEquals("1", change.emaId)
+        assertEquals("2", change.rivalEmaId)
     }
 
     @Test
