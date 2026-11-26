@@ -55,7 +55,7 @@ jobs:
   # The accounts and the password, with the Admin SDK of staging.
   accounts:
     name: Accounts
-    if: github.ref == 'refs/heads/main' && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check' && inputs.action != 'logs' && inputs.action != 'latency' && inputs.action != 'cost'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action != 'bots' && inputs.action != 'check' && inputs.action != 'mail-check' && inputs.action != 'logs' && inputs.action != 'latency' && inputs.action != 'cost'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -112,7 +112,7 @@ jobs:
   # The errors of the staging API, to find why a step of a game day failed. The addresses in them are masked.
   logs:
     name: Errors of the staging API
-    if: github.ref == 'refs/heads/main' && inputs.action == 'logs'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'logs'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -151,7 +151,7 @@ jobs:
   # and the new instances in the same minutes: a slow save from a cold start or from load.
   latency:
     name: Latency of the staging API
-    if: github.ref == 'refs/heads/main' && inputs.action == 'latency'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'latency'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -194,7 +194,7 @@ jobs:
   # The tournament input names the game day of the window, for its players and rounds.
   cost:
     name: Cost of staging
-    if: github.ref == 'refs/heads/main' && inputs.action == 'cost'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'cost'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -245,7 +245,7 @@ jobs:
   # The staging app and its automatic player (RehearsalPlayerTest), built once for every emulator.
   app:
     name: Staging app for the emulators
-    if: github.ref == 'refs/heads/main' && inputs.emulators && (inputs.action == 'calibrate' || inputs.action == 'bots')
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.emulators && (inputs.action == 'calibrate' || inputs.action == 'bots')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -396,7 +396,7 @@ jobs:
   # Three jobs, three machines with their own address, as phones on different networks.
   bots:
     name: Bots ${{ matrix.slots }}
-    if: github.ref == 'refs/heads/main' && inputs.action == 'bots'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'bots'
     runs-on: ubuntu-latest
     timeout-minutes: 330
     strategy:
@@ -448,7 +448,7 @@ jobs:
   # The phones of one venue wifi: one machine, one address, many phones polling like the app at their tables.
   venue:
     name: Venue wifi (${{ inputs.venue_phones }} phones)
-    if: github.ref == 'refs/heads/main' && inputs.action == 'bots' && inputs.venue_phones > 0
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'bots' && inputs.venue_phones > 0
     runs-on: ubuntu-latest
     timeout-minutes: 330
     steps:
@@ -480,7 +480,7 @@ jobs:
   check:
     name: Checks
     needs: [bots, venue]
-    if: always() && github.ref == 'refs/heads/main' && (inputs.action == 'bots' || inputs.action == 'check')
+    if: always() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (inputs.action == 'bots' || inputs.action == 'check')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

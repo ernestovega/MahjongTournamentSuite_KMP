@@ -5,7 +5,7 @@ name: Test · Game day · Auto
 on:
   # Once a week, Sunday at 03:15 UTC, after the other night tests (Ernesto, 2026-11-24: weekly, not nightly, because it
   # costs money): small on even weeks of the year, corners on odd weeks, with teams, chicken and best hands, without
-  # phone emulators. It deploys main to staging first.
+  # phone emulators. It deploys its branch (develop, the default branch) to staging first.
   schedule:
     - cron: "15 3 * * 0"
   workflow_dispatch:
@@ -16,7 +16,7 @@ on:
         options: [small, medium, large, corners]
         default: small
       deploy_staging:
-        description: "Deploy main to staging first. Off only when the backend and the web did not change since the last deploy."
+        description: "Deploy the branch to staging first. Off only when the backend and the web did not change since the last deploy."
         type: boolean
         default: true
       phone_emulators:
@@ -47,10 +47,10 @@ env:
   STAGING: ${{ vars.STAGING_FIREBASE_PROJECT }}
 
 jobs:
-  # Main goes to staging first: the app of the test and the backend it talks to are the same commit.
+  # The branch goes to staging first: the app of the test and the backend it talks to are the same commit.
   staging:
-    name: Deploy main to staging
-    if: github.ref == 'refs/heads/main' && (inputs.deploy_staging || github.event_name == 'schedule')
+    name: Deploy the branch to staging
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (inputs.deploy_staging || github.event_name == 'schedule')
     uses: ./.github/workflows/staging.yml
     with:
       action: deploy
@@ -63,7 +63,7 @@ jobs:
   plan:
     name: Plan of the scenario
     needs: staging
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.staging.result == 'success' || needs.staging.result == 'skipped') }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (needs.staging.result == 'success' || needs.staging.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -188,7 +188,7 @@ jobs:
   # The staging app with the automatic organizer and player, built once.
   app:
     name: Staging app
-    if: github.ref == 'refs/heads/main'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

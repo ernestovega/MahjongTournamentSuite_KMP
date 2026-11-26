@@ -1,11 +1,11 @@
 # The gallery of the screenshot tests and the game day videos (docs/screenshot-gallery.md), a web page on its own
-# Hosting site in the staging project. It runs after every push to main that changes a reference image, after every
+# Hosting site in the staging project. It runs after every push to develop that changes a reference image, after every
 # run of Test · Screenshots and Test · Game day · Auto, and by hand. It checks nothing and blocks nothing.
 name: Publish · Screenshot gallery
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
     paths:
       - "*/screenshots/**"
       - "scripts/gallery/**"

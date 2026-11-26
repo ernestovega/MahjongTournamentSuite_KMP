@@ -29,6 +29,8 @@ env:
 jobs:
   listing:
     name: Listing and review account
+    # Production comes only from main (Ernesto, 2026-11-26). Run by hand on develop, it does nothing.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

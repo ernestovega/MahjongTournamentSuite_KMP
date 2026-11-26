@@ -2,6 +2,8 @@
 # main (Actions > Deploy · Production > Run workflow > pick the branch): then it only tests and deploys nothing.
 # When main changes, deploys Firebase and publishes the Android apps that have a new version code on Google Play
 # (docs/android-release.md).
+# Since 2026-11-26 (Ernesto) the work goes to develop, which deploys itself to staging (staging.yml). main changes only
+# when Ernesto asks for a release: develop is merged into main, and that push is what deploys production.
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 # The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
 name: Deploy · Production
@@ -12,7 +14,7 @@ on:
     branches: [main]
   push:
     branches: [main]
-  # Every night at 02:30 UTC (03:30 in Madrid) every test runs on main, and nothing is deployed. GitHub emails the owner
+  # Every night at 02:30 UTC (03:30 in Madrid) every test runs on the default branch (develop), and nothing is deployed. GitHub emails the owner
   # when it fails. Until the gate below is on (23-dec-2026), this is how a broken test shows up.
   schedule:
     - cron: "30 2 * * *"
