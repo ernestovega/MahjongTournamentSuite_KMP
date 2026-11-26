@@ -90,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
@@ -427,6 +428,7 @@ internal fun TableList(
             return@Column
         }
         val state = rememberPersistentLazyListState("tables-" + emptyText)
+        ShowTabsAtTop(state)
         // A new filter starts the list at the top. The restored filter keeps the restored position.
         var lastFilter by remember { mutableStateOf(filter) }
         LaunchedEffect(filter) {

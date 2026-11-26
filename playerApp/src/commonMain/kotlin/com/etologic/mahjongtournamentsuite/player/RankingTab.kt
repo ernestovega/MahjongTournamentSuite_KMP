@@ -65,6 +65,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PositionTroph
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -297,6 +298,7 @@ private fun RankingRows(
     val visible = rows
     val options = remember(rows) { rows.map { it.key to it.title } }
     val listState = rememberPersistentLazyListState("ranking")
+    ShowTabsAtTop(listState)
     val scope = rememberCoroutineScope()
     val myIndex = visible.indexOfFirst { it.mine }
     Column {
