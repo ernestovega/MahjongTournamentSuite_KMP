@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /**
  * A card that explains why something cannot be done now, so it is not missed among the plain lines of a screen.
@@ -29,9 +30,9 @@ fun InfoNotice(text: String, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            Modifier.padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(20.dp))
             Text(text, style = MaterialTheme.typography.bodyMedium)
