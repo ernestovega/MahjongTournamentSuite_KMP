@@ -4,7 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -161,6 +164,18 @@ fun ShowTabsAtTop(scrollable: ScrollableState) {
 
 /** Lets the scrolling content inside this node control [state]. */
 fun Modifier.hideOnScroll(state: HideOnScrollState): Modifier = nestedScroll(state.connection)
+
+/**
+ * A screen whose filters and search fields hide like the tab rows: the rows in [HideOnScrollTabs] inside hide when a
+ * list inside scrolls down, and show when it scrolls up or is back at its top ([ShowTabsAtTop] on the list).
+ */
+@Composable
+fun HideOnScrollArea(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val state = rememberHideOnScrollState()
+    CompositionLocalProvider(LocalHideOnScroll provides state) {
+        Box(modifier.fillMaxSize().hideOnScroll(state)) { content() }
+    }
+}
 
 /**
  * Shows [content] while the closest [hideOnScroll] state is visible.

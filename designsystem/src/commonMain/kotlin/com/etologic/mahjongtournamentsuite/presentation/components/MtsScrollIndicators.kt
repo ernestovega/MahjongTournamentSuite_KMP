@@ -86,14 +86,25 @@ fun Modifier.scrollIndicators(
     orientation: Orientation = Orientation.Vertical,
     scrollbar: MtsScrollbar = MtsScrollbar.Outside,
     fadingEdges: Boolean = true,
-): Modifier = scrollIndicators(remember(state) { ScrollStateIndicator(state) }, orientation, scrollbar, fadingEdges)
+    pinnedStart: (() -> Float)? = null,
+): Modifier {
+    val indicator = remember(state) { ScrollStateIndicator(state) }
+    indicator.pinnedStartOf = pinnedStart
+    return scrollIndicators(indicator, orientation, scrollbar, fadingEdges)
+}
 
-/** `verticalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar. */
+/**
+ * `verticalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar.
+ *
+ * [pinnedStart] gives, in pixels from the top of the scroll, the end of a header the content keeps stuck at the top
+ * (0 when none is stuck), so the top shadow goes under it.
+ */
 @Composable
 fun Modifier.verticalScrollWithIndicators(
     state: ScrollState = rememberScrollState(),
     scrollbar: MtsScrollbar = MtsScrollbar.Outside,
-): Modifier = scrollIndicators(state, Orientation.Vertical, scrollbar).verticalScroll(state)
+    pinnedStart: (() -> Float)? = null,
+): Modifier = scrollIndicators(state, Orientation.Vertical, scrollbar, pinnedStart = pinnedStart).verticalScroll(state)
 
 /** `horizontalScroll(state)` with its [scrollIndicators]: the fading edges and the scrollbar under the row. */
 @Composable
@@ -242,6 +253,12 @@ internal interface ScrollIndicator {
     /** How much of [edge] pixels is hidden after the end, from 0 to [edge]. */
     fun hiddenAfter(edge: Float): Float
 
+    /**
+     * Where the content starts to hide at the start, in pixels: the end of a sticky header pinned there, so the shadow
+     * goes under the header, where the list goes out of sight, and not over it. 0 without a pinned header.
+     */
+    fun pinnedStart(): Float = 0f
+
     /** The thumb along [track] pixels, or null when the content fits. */
     fun thumb(track: Float): ScrollThumb?
 
@@ -262,6 +279,11 @@ internal fun thumbFor(position: Float, visibleFraction: Float, track: Float, min
 private const val MIN_THUMB_PX = 32f
 
 internal class ScrollStateIndicator(override val state: ScrollState) : ScrollIndicator {
+    /** The end of a header stuck at the top of the scroll, from the content that sticks it. */
+    var pinnedStartOf: (() -> Float)? = null
+
+    override fun pinnedStart(): Float = pinnedStartOf?.invoke()?.coerceAtLeast(0f) ?: 0f
+
     // Before its first layout the state does not know its size yet (Int.MAX_VALUE): that does not count as scrollable.
     override val canScroll get() = state.maxValue in 1 until Int.MAX_VALUE
 
@@ -391,6 +413,30 @@ internal class LazyListIndicator(override val state: LazyListState) : LazyIndica
     override val beforeContentPadding get() = state.layoutInfo.beforeContentPadding
     override val firstIndex get() = state.firstVisibleItemIndex
     override val firstOffset get() = state.firstVisibleItemScrollOffset
+
+    override fun pinnedStart(): Float = pinnedStartOf(
+        items = items,
+        firstIndex = firstIndex,
+        firstOffset = firstOffset,
+        viewportStart = viewportStart,
+    )
+}
+
+/**
+ * The end of the sticky header pinned at the start of a lazy list, relative to the start of the visible area, or 0.
+ * A pinned header is a visible item that is not where the scroll would put it: one before the first visible item, or
+ * the first visible item drawn further in than its scroll offset.
+ */
+internal fun pinnedStartOf(
+    items: List<LazyItemSpan>,
+    firstIndex: Int,
+    firstOffset: Int,
+    viewportStart: Int,
+): Float {
+    // Offsets count from the end of the content padding before the items; the list itself starts at [viewportStart].
+    val pinned = items.filter { it.index < firstIndex || (it.index == firstIndex && firstOffset > 0 && it.offset > -firstOffset) }
+    val end = pinned.maxOfOrNull { it.offset + it.size } ?: return 0f
+    return (end - viewportStart).coerceAtLeast(0).toFloat()
 }
 
 internal class LazyGridIndicator(override val state: LazyGridState) : LazyIndicator() {
@@ -571,7 +617,7 @@ private class ScrollIndicatorsNode(
         val after = indicator.hiddenAfter(edge) / edge
         val shadow = colors.shadow
         if (shadow.alpha > 0f) {
-            drawShadows(contentSize, edge, before, after, shadow)
+            drawShadows(contentSize, edge, before, after, shadow, if (vertical) indicator.pinnedStart() else 0f)
         }
         if (scrollbar == MtsScrollbar.None) return
         val strip = MtsScrollbarThickness.toPx()
@@ -597,12 +643,17 @@ private class ScrollIndicatorsNode(
         }
     }
 
-    private fun ContentDrawScope.drawShadows(contentSize: Size, edge: Float, before: Float, after: Float, shadow: Color) {
+    private fun ContentDrawScope.drawShadows(contentSize: Size, edge: Float, before: Float, after: Float, shadow: Color, start: Float) {
         clipRect(right = contentSize.width, bottom = contentSize.height) {
             if (before > 0f) {
                 val color = shadow.copy(alpha = shadow.alpha * before)
                 if (vertical) {
-                    drawRect(Brush.verticalGradient(listOf(color, Color.Transparent), startY = 0f, endY = edge), size = Size(contentSize.width, edge))
+                    // Under a pinned sticky header, not over it: the list hides behind the header.
+                    drawRect(
+                        Brush.verticalGradient(listOf(color, Color.Transparent), startY = start, endY = start + edge),
+                        topLeft = Offset(0f, start),
+                        size = Size(contentSize.width, edge),
+                    )
                 } else {
                     drawRect(Brush.horizontalGradient(listOf(color, Color.Transparent), startX = 0f, endX = edge), size = Size(edge, contentSize.height))
                 }

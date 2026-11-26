@@ -247,7 +247,6 @@ fun AppsScreen(navController: NavHostController) {
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             scrollable = true,
-            paddingInsideScroll = true,
         ) {
             SectionCard {
                 Text(stringResource(Res.string.apps_intro), style = MaterialTheme.typography.bodyMedium)
@@ -288,6 +287,7 @@ internal fun AppsNoticeDialog(device: AppPlatform?, onClose: (forever: Boolean) 
             title = { MtsDialogTitle(stringResource(Res.string.apps_notice_title)) },
             text = {
                 ScrollableColumnWithScrollbar(
+                    inDialog = true,
                     state = rememberScrollState(),
                     modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
                     verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),

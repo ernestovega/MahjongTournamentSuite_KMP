@@ -92,12 +92,30 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
 
 - A **fading edge**: a soft shadow on each edge that still has content behind it. It shows also when the edge falls in
   the gap between two items, so a list cut there still looks like a list. It grows with the first pixels of the scroll.
+  With a **sticky header** stuck at the top (a `stickyHeader` of a lazy list, or a header the content keeps stuck in a
+  `verticalScroll`, like the hands of a table), the top shadow goes under the header, where the list goes out of sight,
+  not over it. Lazy lists find their pinned header by themselves; a `ScrollState` gets it from `pinnedStart`
+  (`ScreenScroll.pinnedHeaderEnd` in a `ScreenColumn`, `StickyHeaderHost.pinnedHeaderEnd` in the admin table editor).
+- **No gap under the top bar** (Ernesto, 2026-11-26): a list or a scrolling screen starts right under the top bar.
+  Its top margin goes inside the scroll (`contentPadding` of a lazy list, the top padding of a scrollable
+  `ScreenColumn`), so the content goes out of sight right at the bar and the top shadow starts there. The same at the
+  bottom of the window.
+- **Full-width lists reach the edges** (Ernesto, 2026-11-26): a list that takes the whole width of the screen has no
+  side margin around it. The margins of the design go inside it (`Modifier.screenFullBleed()` with
+  `screenListPadding()` in a `ScreenColumn`, or the list's own `contentPadding`), so its shadows take the whole width
+  and its scrollbar (`Overlay`) sits on the edge of the window. A scrollable `ScreenColumn` always keeps its margins
+  inside the scroll. Lists narrower than the screen keep their margins outside.
+- **Dialogs too**: the scrolling content of an AlertDialog reaches both sides of the dialog and keeps the 24 dp margins
+  inside the scroll (`Modifier.dialogVerticalScroll()`, `inDialog = true` on `ScrollableColumnWithScrollbar` /
+  `LazyColumnWithScrollbar`, or `dialogFullBleed()` with `dialogListPadding()` on a lazy list). The scrollbar goes over
+  the end margin, so both margins are equal. A list with a sticky header pads each line instead and gives the header
+  the dialog background across the whole width, so the rows go out of sight under it.
 - A **scrollbar** while the content scrolls, on every platform (also Android and web). The
   thumb can be dragged (with a finger too) and a tap in the strip takes it there.
 - Since 2026-11-26 the scrollbar does not stay, on any platform: it shows over the end edge of the list only while the
   list scrolls, with no track, and fades out a moment after, like the scrollbars of the system. The list keeps its whole
-  width, whatever `MtsScrollbar` says (except `None`). The fading edges stay and say that there is more.
-  `DraggableScrollbar` does the same.
+  width, whatever `MtsScrollbar` says (except `None`). The fading edges stay and say that there is more. A hidden
+  scrollbar takes no finger; a mouse can still take its thumb. `DraggableScrollbar` does the same.
 - Where the scrollbar goes (`MtsScrollbar`):
   - `Outside` (default): its own 10 dp strip beside the list (under a horizontal one), outside the content. The strip
     comes the first time the content can scroll (a list that fits keeps all its width) and then stays, so content that

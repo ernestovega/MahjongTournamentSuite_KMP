@@ -18,6 +18,7 @@ import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performMouseInput
@@ -201,13 +202,17 @@ class PlayerScreensScreenshotTest {
         },
     ) { nav -> TournamentsScreen(nav) }
 
-    /** The tournaments of the own player, each card with its round chips, the second round chosen in the newest one. */
+    /** The tournaments of the own player. Every card starts folded: the newest one is tapped open, with its second round chosen. */
     @Test
     fun statisticsTabByTournaments() = playerScreenshots(
         "statistics-tab-by-tournaments",
         ready = {
             openStatsTab()
             waitForText(uiText("stats_skills"), substring = true)
+            // The card is the last "Madrid Open 2026" on screen: the panel above may name it too.
+            waitForText("Madrid Open 2026")
+            onAllNodesWithText("Madrid Open 2026").onLast().performScrollTo().performClick()
+            waitForIdle()
             val round = uiText("round_short", 2)
             waitForText(round)
             onAllNodesWithText(round).onFirst().performClick()

@@ -73,6 +73,7 @@ fun DrawExplanationDialog(onDismiss: () -> Unit) {
             title = { MtsDialogTitle(stringResource(Res.string.draw_help_title)) },
             text = {
                 ScrollableColumnWithScrollbar(
+                    inDialog = true,
                     state = scrollState,
                     modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp),
                 ) {

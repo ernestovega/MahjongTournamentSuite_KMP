@@ -33,9 +33,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_locked_text
 import mahjongtournamentsuite.adminapp.generated.resources.import_locked_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_players
 import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.organizations_button
 import mahjongtournamentsuite.adminapp.generated.resources.pc_top_bar
 import mahjongtournamentsuite.adminapp.generated.resources.players
-import mahjongtournamentsuite.adminapp.generated.resources.organizations_title
 import mahjongtournamentsuite.adminapp.generated.resources.roles_open
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
@@ -113,7 +113,7 @@ fun AppTopBarActions(
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }
-        onOrganizations?.let { AppTopBarButton(stringResource(Res.string.organizations_title), Icons.Default.Business, it) }
+        onOrganizations?.let { AppTopBarButton(stringResource(Res.string.organizations_button), Icons.Default.Business, it) }
         onPlayerBase?.let { AppTopBarButton(stringResource(Res.string.top_bar_ema_players), Icons.Default.People, it, playerBaseFocusRequester) }
         onRoles?.let { AppTopBarButton(stringResource(Res.string.roles_open), Icons.Default.AdminPanelSettings, it) }
     }

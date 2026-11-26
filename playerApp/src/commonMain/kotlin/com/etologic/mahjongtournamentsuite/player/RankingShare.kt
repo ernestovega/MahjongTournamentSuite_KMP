@@ -173,7 +173,7 @@ internal fun RankingShareDialog(
             onDismissRequest = onDismiss,
             title = { MtsDialogTitle(stringResource(Res.string.ranking_share_title)) },
             text = {
-                ScrollableColumnWithScrollbar(scroll, Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+                ScrollableColumnWithScrollbar(scroll, Modifier.fillMaxWidth().heightIn(max = 520.dp), inDialog = true) {
                     // What this box draws becomes the image: the card with a margin of the background of the app.
                     Box(
                         Modifier

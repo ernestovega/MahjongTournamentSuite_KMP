@@ -555,6 +555,7 @@
     <string name="password_reset_invalid_email">Dit e-mailadres lijkt niet te kloppen.\nControleer het en probeer het opnieuw.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versies</string>
+    <string name="dev_downloads">Downloads</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Architectuur (GitHub)</string>
     <string name="dev_privacy_policy">Privacybeleid</string>

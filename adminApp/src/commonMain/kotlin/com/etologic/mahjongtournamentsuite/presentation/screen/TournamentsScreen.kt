@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -433,12 +432,11 @@ fun TournamentsScreen(
     ) {
         val compact = LocalCompactLayout.current
         Box(modifier = Modifier.fillMaxSize()) {
+            // No margin around the list: it reaches the top bar and the edges of the window, so it goes out of sight there and
+            // its shadows take the whole width. The margins of the design go inside the list.
+            val sideMargin = if (compact) CompactScreenSidePadding else 24.dp
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        if (compact) PaddingValues(start = CompactScreenSidePadding, end = CompactScreenSidePadding, top = 12.dp) else PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
-                    ),
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -447,10 +445,11 @@ fun TournamentsScreen(
                     val listState = rememberPersistentLazyListState("tournaments")
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Margin),
+                        modifier = Modifier.fillMaxSize().scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
+                        // The first card keeps its space under the top bar, and it scrolls away with the list.
                         // The floating button must not cover the last tournament.
-                        contentPadding = PaddingValues(bottom = FabClearance),
+                        contentPadding = PaddingValues(start = sideMargin, top = 12.dp, end = sideMargin, bottom = FabClearance),
                     ) {
                         itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
                             CompactTournamentCard(
@@ -502,7 +501,7 @@ fun TournamentsScreen(
                                             ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth +
                                             (PlayersColumnMinWidth - cellMinWidth)
                                         val columnSpacing = 12.dp
-                                        val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
+                                        val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1)) + sideMargin * 2
                                         val needsHorizontalScroll = baseMinWidth > maxWidth
 
                                         val headerBackground = MaterialTheme.colorScheme.background
@@ -515,7 +514,8 @@ fun TournamentsScreen(
                                                 contentPadding = PaddingValues(bottom = FabClearance),
                                             ) {
                                                 stickyHeader {
-                                                    Column(modifier = Modifier.background(headerBackground)) {
+                                                    // The background takes the whole width, so the rows go out of sight under it.
+                                                    Column(modifier = Modifier.background(headerBackground).padding(horizontal = sideMargin)) {
                                                         TournamentTableHeader(
                                                             cellMinWidth = cellMinWidth,
                                                             actionCellMinWidth = actionCellMinWidth,
@@ -524,35 +524,37 @@ fun TournamentsScreen(
                                                     }
                                                 }
                                                 itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
-                                                    TournamentTableRow(
-                                                        modifier = Modifier
-                                                            // The lazy item can compose before the requester list catches up with the tournaments list.
-                                                            .then(
-                                                                tournamentFocusRequesters.getOrNull(index)
-                                                                    ?.let { Modifier.focusRequester(it) }
-                                                                    ?: Modifier,
-                                                            )
-                                                            .onFocusChanged {
-                                                                if (it.isFocused) lastFocusedTournamentId = tournament.id
-                                                                if (it.isFocused) lastFocusedControl = "tournament"
+                                                    Column(Modifier.padding(horizontal = sideMargin)) {
+                                                        TournamentTableRow(
+                                                            modifier = Modifier
+                                                                // The lazy item can compose before the requester list catches up with the tournaments list.
+                                                                .then(
+                                                                    tournamentFocusRequesters.getOrNull(index)
+                                                                        ?.let { Modifier.focusRequester(it) }
+                                                                        ?: Modifier,
+                                                                )
+                                                                .onFocusChanged {
+                                                                    if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                                                    if (it.isFocused) lastFocusedControl = "tournament"
+                                                                },
+                                                            tournament = tournament,
+                                                            enabled = !isLoading,
+                                                            cellMinWidth = cellMinWidth,
+                                                            actionCellMinWidth = actionCellMinWidth,
+                                                            showEdit = canEditTournament(tournament),
+                                                            onClick = {
+                                                                lastFocusedTournamentId = tournament.id
+                                                                lastFocusedControl = "tournament"
+                                                                openTournament(tournament)
                                                             },
-                                                        tournament = tournament,
-                                                        enabled = !isLoading,
-                                                        cellMinWidth = cellMinWidth,
-                                                        actionCellMinWidth = actionCellMinWidth,
-                                                        showEdit = canEditTournament(tournament),
-                                                        onClick = {
-                                                            lastFocusedTournamentId = tournament.id
-                                                            lastFocusedControl = "tournament"
-                                                            openTournament(tournament)
-                                                        },
-                                                        onEdit = {
-                                                            lastFocusedTournamentId = tournament.id
-                                                            lastFocusedControl = "tournament"
-                                                            editDialogTournament = tournament
-                                                        },
-                                                    )
-                                                    DataTableDivider()
+                                                            onEdit = {
+                                                                lastFocusedTournamentId = tournament.id
+                                                                lastFocusedControl = "tournament"
+                                                                editDialogTournament = tournament
+                                                            },
+                                                        )
+                                                        DataTableDivider()
+                                                    }
                                                 }
                                             }
                                         }
@@ -574,10 +576,10 @@ fun TournamentsScreen(
                                                 }
 
                                                 // The same draggable scrollbar on every platform, also for a finger. It goes in the
-                                                // margin of the screen, after the table, so both sides of the table look the same.
+                                                // end padding of the list, near the edge of the window.
                                                 DraggableScrollbar(
                                                     state = listState,
-                                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = TableScrollbarBleed),
+                                                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = TableScrollbarEndGap),
                                                 )
                                             }
                                         } else {
@@ -585,10 +587,10 @@ fun TournamentsScreen(
                                                 tableContent(Modifier.fillMaxWidth())
 
                                                 // The same draggable scrollbar on every platform, also for a finger. It goes in the
-                                                // margin of the screen, after the table, so both sides of the table look the same.
+                                                // end padding of the list, near the edge of the window.
                                                 DraggableScrollbar(
                                                     state = listState,
-                                                    modifier = Modifier.align(Alignment.CenterEnd).offset(x = TableScrollbarBleed),
+                                                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = TableScrollbarEndGap),
                                                 )
                                             }
                                         }
@@ -1131,6 +1133,6 @@ private fun UserProfile.toUiName(): String {
 }
 
 /** How far the scrollbar of the table goes past its end, into the 24 dp margin of the screen: the width of its strip. */
-private val TableScrollbarBleed = 20.dp
+private val TableScrollbarEndGap = 4.dp
 
 /** Room under the last tournament, so that the New tournament floating button does not cover it. */

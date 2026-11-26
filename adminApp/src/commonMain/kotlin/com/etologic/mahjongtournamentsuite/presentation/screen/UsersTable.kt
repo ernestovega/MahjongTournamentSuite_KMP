@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -46,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactL
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
@@ -68,6 +70,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 
 private val UserCountryColumnWidth = 64.dp
 private val UserCheckboxColumnWidth = 48.dp
@@ -84,12 +88,20 @@ internal fun UsersTable(
     selectedUids: Set<String>,
     onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
+    // The space after the last account, so the floating buttons do not cover it.
+    bottomPadding: Dp = 24.dp,
 ) {
     val compact = LocalCompactLayout.current
+    val listState = rememberPersistentLazyListState("users")
+    // Back at the top, the filters always show, also with a mouse wheel or a trackpad.
+    ShowTabsAtTop(listState)
     LazyColumnWithScrollbar(
-        state = rememberPersistentLazyListState("users"),
-        scrollbar = MtsScrollbar.Margin,
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+        state = listState,
+        // The list reaches the edges and the bottom of the window, so its shadows take the whole width; the margins go
+        // inside.
+        scrollbar = MtsScrollbar.Overlay,
+        modifier = Modifier.fillMaxWidth().screenFullBleed().appFocusGroup(),
+        contentPadding = screenListPadding(bottom = bottomPadding),
     ) {
         if (!compact) {
             item {

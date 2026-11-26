@@ -263,6 +263,7 @@ internal fun AssignEmaPlayerDialog(
                             LazyColumnWithScrollbar(
                                 state = playerListState,
                                 modifier = Modifier.heightIn(max = 410.dp),
+                                inDialog = true,
                             ) {
                                 items(players.size, key = { players[it].emaId }) { index ->
                                     val player = players[index]

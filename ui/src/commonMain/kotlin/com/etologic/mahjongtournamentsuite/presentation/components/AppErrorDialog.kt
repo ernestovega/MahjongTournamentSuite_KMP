@@ -76,7 +76,10 @@ private fun AppMessageDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = 240.dp)
-                        .scrollIndicators(listState),
+                        // It reaches the sides of the dialog, so its shadows take the whole width; the margins go inside.
+                        .dialogFullBleed()
+                        .scrollIndicators(listState, scrollbar = MtsScrollbar.Overlay),
+                    contentPadding = dialogListPadding(),
                 ) {
                     item {
                         SelectionContainer {

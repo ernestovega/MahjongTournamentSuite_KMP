@@ -55,12 +55,16 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
@@ -68,7 +72,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StaggeredColu
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -200,7 +206,7 @@ fun ErrorsScreen(navController: NavHostController) {
     LaunchedEffect(openGroupId, loading) {
         if (openGroupId == null && !loading) {
             val id = restoreGroupId
-            if (id != null) rowFocusRequesters[id]?.requestFocus() else reloadFocusRequester.requestFocus()
+            if (id != null) rowFocusRequesters[id]?.requestFocus() else reloadFocusRequester.requestFocusIfAttached()
             restoreGroupId = null
         }
     }
@@ -212,48 +218,56 @@ fun ErrorsScreen(navController: NavHostController) {
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
-        ScreenColumn(
-            maxWidth = 1200.dp,
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
-            ErrorKpis(shown, now)
-            ErrorFiltersBar(
-                query = query,
-                onQueryChange = { query = it },
-                periodHours = periodHours,
-                onPeriod = { periodHours = it },
-                app = app,
-                onApp = { app = it },
-                platform = platform,
-                onPlatform = { platform = it },
-                kind = kind,
-                onKind = { kind = it },
-                productionOnly = productionOnly,
-                onProductionOnly = { productionOnly = it },
-                sortFrequent = sortFrequent,
-                onSortFrequent = { sortFrequent = it },
-                reloadFocusRequester = reloadFocusRequester,
-                onReload = { reloadCount++ },
-                reloadEnabled = !loading,
-            )
-            SectionCard(
-                container = false,
-                title = stringResource(Res.string.app_errors),
-                subtitle = if (loading) pluralStringResource(Res.plurals.errors_loading_count, groups.size, groups.size) else pluralStringResource(Res.plurals.errors_summary, groups.size, shown.size, groups.size),
+        // The figures and the filters hide when the list scrolls down and show when it scrolls up.
+        HideOnScrollArea {
+            ScreenColumn(
+                maxWidth = 1200.dp,
+                // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space.
+                contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                ErrorGroupsTable(
-                    groups = shown,
-                    now = now,
-                    emptyText = stringResource(if (groups.isEmpty()) Res.string.errors_none_logged else Res.string.errors_none_match),
-                    showEmpty = !loading,
-                    rowFocusRequesters = rowFocusRequesters,
-                    onOpen = {
-                        restoreGroupId = it.id
-                        openGroupId = it.id
-                    },
-                )
+                error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
+                    HideOnScrollTabs {
+                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    ErrorKpis(shown, now)
+                                    ErrorFiltersBar(
+                                        query = query,
+                                        onQueryChange = { query = it },
+                                        periodHours = periodHours,
+                                        onPeriod = { periodHours = it },
+                                        app = app,
+                                        onApp = { app = it },
+                                        platform = platform,
+                                        onPlatform = { platform = it },
+                                        kind = kind,
+                                        onKind = { kind = it },
+                                        productionOnly = productionOnly,
+                                        onProductionOnly = { productionOnly = it },
+                                        sortFrequent = sortFrequent,
+                                        onSortFrequent = { sortFrequent = it },
+                                        reloadFocusRequester = reloadFocusRequester,
+                                        onReload = { reloadCount++ },
+                                        reloadEnabled = !loading,
+                                    )
+                                }
+                    }
+                SectionCard(
+                    container = false,
+                    title = stringResource(Res.string.app_errors),
+                    subtitle = if (loading) pluralStringResource(Res.plurals.errors_loading_count, groups.size, groups.size) else pluralStringResource(Res.plurals.errors_summary, groups.size, shown.size, groups.size),
+                ) {
+                    ErrorGroupsTable(
+                        groups = shown,
+                        now = now,
+                        emptyText = stringResource(if (groups.isEmpty()) Res.string.errors_none_logged else Res.string.errors_none_match),
+                        showEmpty = !loading,
+                        rowFocusRequesters = rowFocusRequesters,
+                        onOpen = {
+                            restoreGroupId = it.id
+                            openGroupId = it.id
+                        },
+                    )
+                }
             }
         }
     }
@@ -416,10 +430,14 @@ private fun ErrorGroupsTable(
         return
     }
     val compact = LocalCompactLayout.current
+    val listState = rememberPersistentLazyListState("errors")
+    ShowTabsAtTop(listState)
     LazyColumnWithScrollbar(
-        state = rememberPersistentLazyListState("errors"),
-        scrollbar = MtsScrollbar.Margin,
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+        state = listState,
+        // The list reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        scrollbar = MtsScrollbar.Overlay,
+        modifier = Modifier.fillMaxWidth().screenFullBleed().appFocusGroup(),
+        contentPadding = screenListPadding(bottom = 24.dp),
     ) {
         if (!compact) {
             item {
@@ -556,7 +574,7 @@ private fun ErrorGroupDialog(
             title = { Text(group?.errorType.orEmpty(), Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) },
             text = {
                 val scroll = rememberScrollState()
-                ScrollableColumnWithScrollbar(state = scroll, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+                ScrollableColumnWithScrollbar(state = scroll, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp), inDialog = true) {
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (group != null) ErrorGroupFacts(group, now)
                         val loaded = detail

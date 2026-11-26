@@ -69,10 +69,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawBackupRunningNote
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoNotice
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
@@ -87,6 +89,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackH
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountData
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerCountSlot
@@ -128,6 +132,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_rounds
 import mahjongtournamentsuite.adminapp.generated.resources.pc_kept_teams
 import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people
 import mahjongtournamentsuite.adminapp.generated.resources.pc_leave_people_teams
+import mahjongtournamentsuite.adminapp.generated.resources.pc_less_disabled
 import mahjongtournamentsuite.adminapp.generated.resources.pc_loading
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_completed
 import mahjongtournamentsuite.adminapp.generated.resources.pc_locked_pending
@@ -547,10 +552,17 @@ internal fun ColumnScope.ChooseContent(
                 AddTables(
                     added = form.addedTables,
                     canAdd = form.chosen.isEmpty() && PlayerCountRules.canAddTable(current, form.addedTables),
+                    // Why − and + do nothing, on the button itself: − only takes back the tables added here.
+                    lessDisabledReason = if (maxChosen == 0) {
+                        stringResource(Res.string.pc_minimum, current)
+                    } else {
+                        stringResource(Res.string.pc_less_disabled)
+                    },
+                    moreDisabledReason = if (form.chosen.isNotEmpty()) stringResource(Res.string.pc_add_locked) else null,
                     onChange = { onFormChange(form.withAddedTables(it)) },
                 )
                 when {
-                    form.chosen.isNotEmpty() -> Hint(stringResource(Res.string.pc_add_locked))
+                    form.chosen.isNotEmpty() -> InfoNotice(stringResource(Res.string.pc_add_locked), Modifier.testTag("playerCountAddLocked"))
                     adding -> Hint(
                         if (isTeams) {
                             pluralStringResource(Res.plurals.pc_new_teams, newSlots / PlayerCountRules.STEP, newSlots / PlayerCountRules.STEP)
@@ -588,8 +600,8 @@ internal fun ColumnScope.ChooseContent(
                 MarkedStatus(current, form.chosen.size)
                 if (isTeams) Hint(stringResource(Res.string.pc_leave_people_teams))
                 when {
-                    adding -> Hint(stringResource(Res.string.pc_remove_locked))
-                    maxChosen == 0 -> Hint(stringResource(Res.string.pc_minimum, current))
+                    adding -> InfoNotice(stringResource(Res.string.pc_remove_locked), Modifier.testTag("playerCountRemoveLocked"))
+                    maxChosen == 0 -> InfoNotice(stringResource(Res.string.pc_minimum, current), Modifier.testTag("playerCountMinimum"))
                 }
                 if (!adding && maxChosen > 0) ChoiceSearch(form, onFormChange)
             }
@@ -683,24 +695,34 @@ private fun MarkedStatus(current: Int, marked: Int) {
 
 /** − tables added +, with whole tables of 4. */
 @Composable
-private fun AddTables(added: Int, canAdd: Boolean, onChange: (Int) -> Unit) {
+private fun AddTables(
+    added: Int,
+    canAdd: Boolean,
+    lessDisabledReason: String,
+    moreDisabledReason: String?,
+    onChange: (Int) -> Unit,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        FocusedIconButton(
-            onClick = { onChange(added - 1) },
-            enabled = added > 0,
-            buttonModifier = Modifier.stepBorder(added > 0).testTag("playerCountLess"),
-        ) { Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.pc_remove_table)) }
+        AppTooltipBox(lessDisabledReason, enabled = added == 0) {
+            FocusedIconButton(
+                onClick = { onChange(added - 1) },
+                enabled = added > 0,
+                buttonModifier = Modifier.stepBorder(added > 0).testTag("playerCountLess"),
+            ) { Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.pc_remove_table)) }
+        }
         Text(
             stringResource(Res.string.pc_added_tables, added),
             modifier = Modifier.padding(horizontal = 16.dp).testTag("playerCountAdded"),
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
         )
-        FocusedIconButton(
-            onClick = { onChange(added + 1) },
-            enabled = canAdd,
-            buttonModifier = Modifier.stepBorder(canAdd).testTag("playerCountMore"),
-        ) { Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.pc_add_table)) }
+        AppTooltipBox(moreDisabledReason.orEmpty(), enabled = !canAdd && moreDisabledReason != null) {
+            FocusedIconButton(
+                onClick = { onChange(added + 1) },
+                enabled = canAdd,
+                buttonModifier = Modifier.stepBorder(canAdd).testTag("playerCountMore"),
+            ) { Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.pc_add_table)) }
+        }
     }
 }
 
@@ -785,9 +807,11 @@ internal fun ColumnScope.TeamsContent(
     val dropTeam = dragPointer?.let { pointer -> teamBounds.entries.firstOrNull { it.value.contains(pointer) }?.key }
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountTeams"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountTeams"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         SectionTitle(stringResource(Res.string.pc_teams_title))
         Text(
@@ -947,9 +971,11 @@ internal fun ColumnScope.ReviewContent(
     var showDrawExplanation by remember { mutableStateOf(false) }
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountConfirm"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountConfirm"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.pc_confirm_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -1097,9 +1123,11 @@ internal fun ColumnScope.DoneContent(
 ) {
     ScrollableColumnWithScrollbar(
         state = rememberScrollState(),
-        modifier = Modifier.weight(1f).fillMaxWidth().testTag("playerCountDone"),
+        // It reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        modifier = Modifier.weight(1f).fillMaxWidth().screenFullBleed().testTag("playerCountDone"),
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
-        scrollbar = MtsScrollbar.Margin,
+        scrollbar = MtsScrollbar.Overlay,
+        contentPadding = screenListPadding(),
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(Res.string.pc_done_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)

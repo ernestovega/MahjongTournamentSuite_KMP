@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -91,11 +90,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.dialogVerticalScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -457,7 +456,7 @@ fun HandEntryPanel(
                 onDismissRequest = { finishEntry() },
                 title = entryTitle,
                 text = {
-                    Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         when (winStep) {
                             WinStep.WINNER -> {
                                 StepQuestion(stringResource(Res.string.entry_winner))
@@ -576,7 +575,7 @@ fun HandEntryPanel(
                     }
                 },
                 text = {
-                    Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, extraTime)
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
@@ -628,7 +627,7 @@ fun HandEntryPanel(
                 onDismissRequest = { finishEntry() },
                 title = { MtsDialogTitle(stringResource(Res.string.entry_add_penalty)) },
                 text = {
-                    Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         // One penalty per entry: for another one, the player adds it again (Ernesto, 2026-11-25).
                         penaltyDrafts.firstOrNull()?.let { draft ->
                             PenaltyForm(draft = draft, seats = seats, view = view, onChange = { penaltyDrafts[0] = it })
@@ -658,7 +657,7 @@ fun HandEntryPanel(
                 },
                 title = { MtsDialogTitle(stringResource(Res.string.entry_check_penalty)) },
                 text = {
-                    Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ReviewPenalty(penaltyEntries, view, table, seats, handInPlay)
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_penalty))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
@@ -1373,7 +1372,7 @@ private fun TableChangedDialog(
             onDismissRequest = onClose,
             title = { MtsDialogTitle(stringResource(Res.string.changed_title)) },
             text = {
-                Column(Modifier.verticalScrollWithIndicators(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(serverMessage)
                     Text(stringResource(Res.string.changed_not_saved))
                     Text(stringResource(Res.string.changed_table_now), fontWeight = FontWeight.Bold)

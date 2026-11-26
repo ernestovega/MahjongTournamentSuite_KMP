@@ -111,7 +111,7 @@ internal fun OpenTablesReviewDialog(
                         }
                     }
                     HorizontalDivider()
-                    ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp)) {
+                    ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp), inDialog = true) {
                         Column {
                             tables.forEachIndexed { index, table ->
                                 if (index > 0) HorizontalDivider()
