@@ -25,8 +25,8 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
-| Repository scripts (Game day, smoke, versions) | 7,342 | 124 | – | – | – | – | – | – | – |
-| **Total** | **108,868** | **1,712** | **711** | **173** | **479** | **247** | **12** | **88 %** | **64 %** |
+| Repository scripts (Game day, smoke, versions) | 7,344 | 124 | – | – | – | – | – | – | – |
+| **Total** | **108,870** | **1,712** | **711** | **173** | **479** | **247** | **12** | **88 %** | **64 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
