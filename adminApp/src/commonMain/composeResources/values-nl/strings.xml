@@ -102,7 +102,7 @@
     <string name="discard">Negeren</string>
     <string name="loading_rankings">Klassementen laden…</string>
     <string name="no_ranking_yet">Nog geen klassement</string>
-    <string name="the_ranking_shows_when_the_first">Het klassement verschijnt zodra de eerste tafel voltooid is.</string>
+    <string name="the_ranking_shows_when_the_first">Het klassement verschijnt zodra de eerste hand gespeeld is.</string>
     <string name="settings">Instellingen</string>
     <string name="show_first_3">Eerste 3 tonen</string>
     <string name="previous_ranking_list">Vorige klassementslijst</string>

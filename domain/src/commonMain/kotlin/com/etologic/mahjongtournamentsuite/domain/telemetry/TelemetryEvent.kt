@@ -409,6 +409,9 @@ object TelemetryLink {
     const val STAGING = "staging"
     const val GREEN_BOOK = "green_book"
 
+    /** A download of an app from the page of the apps of the web (Google Play, App Store, GitHub). */
+    const val APP_DOWNLOAD = "app_download"
+
     /** The map of the venue of a tournament. */
     const val VENUE_MAP = "venue_map"
 
@@ -430,6 +433,7 @@ object TelemetryLink {
         ARCHITECTURE_DOCS,
         STAGING,
         GREEN_BOOK,
+        APP_DOWNLOAD,
         VENUE_MAP,
         VENUE_DIRECTIONS,
         ORGANIZER_EMAIL,

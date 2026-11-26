@@ -398,7 +398,19 @@ jobs:
 
       - name: Upload the app
         if: steps.pending.outputs.admin == 'true'
-        run: python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab
+        run: |
+          python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab \
+            androidApp/build/outputs/mapping/release/mapping.txt
+
+      # The mapping file of R8 turns the obfuscated names of a stack trace back into the real ones, also for the
+      # reports of the Errors screen: `retrace mapping.txt stacktrace.txt` (docs/android-release.md).
+      - name: Keep the mapping file
+        if: steps.pending.outputs.admin == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-mapping
+          path: androidApp/build/outputs/mapping/release/mapping.txt
+          retention-days: 90
 
       # After the app, never at the same time: Play keeps one edit of the app at a time (scripts/play_listing.py).
       - name: Upload the store listing

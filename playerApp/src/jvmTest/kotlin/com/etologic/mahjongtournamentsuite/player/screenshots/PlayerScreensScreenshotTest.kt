@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
@@ -15,9 +16,9 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollTo
@@ -32,25 +33,29 @@ import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
-import com.etologic.mahjongtournamentsuite.player.RANKING_ROUND_BUTTON_TAG
-import com.etologic.mahjongtournamentsuite.player.RankingShareDialog
-import com.etologic.mahjongtournamentsuite.player.SharedRankingLine
+import com.etologic.mahjongtournamentsuite.player.AppPlatform
+import com.etologic.mahjongtournamentsuite.player.AppsNoticeDialog
+import com.etologic.mahjongtournamentsuite.player.AppsScreen
 import com.etologic.mahjongtournamentsuite.player.COMBINATION_DIALOG_TAG
 import com.etologic.mahjongtournamentsuite.player.CombinationDialog
 import com.etologic.mahjongtournamentsuite.player.Combinations
 import com.etologic.mahjongtournamentsuite.player.CombinationsScreen
 import com.etologic.mahjongtournamentsuite.player.CreditsDialog
+import com.etologic.mahjongtournamentsuite.player.LocalWebApps
 import com.etologic.mahjongtournamentsuite.player.MainTab
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.MyTournamentMark
 import com.etologic.mahjongtournamentsuite.player.PenaltiesScreen
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
+import com.etologic.mahjongtournamentsuite.player.RANKING_ROUND_BUTTON_TAG
+import com.etologic.mahjongtournamentsuite.player.RankingShareDialog
 import com.etologic.mahjongtournamentsuite.player.RoundMoment
+import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
+import com.etologic.mahjongtournamentsuite.player.SharedRankingLine
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
-import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
 import com.etologic.mahjongtournamentsuite.player.TableScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentCard
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
@@ -58,6 +63,7 @@ import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentStanding
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
+import com.etologic.mahjongtournamentsuite.player.WebApps
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
@@ -480,6 +486,22 @@ class PlayerScreensScreenshotTest {
 
     @Test
     fun penalties() = playerScreenshots("penalties", ready = { waitForText(playerText("penalties_section_dead_hand")) }) { nav -> PenaltiesScreen(nav) }
+
+    /** The page of the apps of the web (`/download`), on a Windows browser: Windows goes first. */
+    @Test
+    fun apps() = playerScreenshots("apps", ready = { waitForText(playerText("apps_intro"), substring = true) }) { nav ->
+        CompositionLocalProvider(LocalWebApps provides WebApps(AppPlatform.WINDOWS, { false }, {})) { AppsScreen(nav) }
+    }
+
+    /** The notice of the apps on the list of tournaments of the web, on an Android phone. */
+    @Test
+    fun appsNotice() = playerScreenshots(
+        "dialogs/apps-notice",
+        variants = dialogVariants,
+        ready = { waitForText(playerText("apps_notice_never")) },
+    ) {
+        AppsNoticeDialog(device = AppPlatform.ANDROID, onClose = {})
+    }
 
     @Test
     fun statisticsTournament() = playerScreenshots("statistics-tournament", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->

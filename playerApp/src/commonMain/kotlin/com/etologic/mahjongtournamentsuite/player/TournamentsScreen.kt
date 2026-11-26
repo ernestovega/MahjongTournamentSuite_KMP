@@ -88,6 +88,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
@@ -244,6 +245,8 @@ fun TournamentsScreen(navController: NavHostController) {
     account.Dialogs()
     val drawExplanation = rememberDrawExplanationState()
     drawExplanation.Dialog()
+    // On the web, the apps of MTS, until the person hides the notice.
+    AppsNotice()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = stringResource(Res.string.tournaments_title),
@@ -311,6 +314,7 @@ fun TournamentsScreen(navController: NavHostController) {
                             }
                             // Each tab keeps its own scroll.
                             val listState = rememberPersistentLazyListState(if (liveOnly) "tournaments-live" else "tournaments")
+                            ShowTabsAtTop(listState)
                             Box(Modifier.weight(1f)) {
                                 LazyColumn(
                                     state = listState,

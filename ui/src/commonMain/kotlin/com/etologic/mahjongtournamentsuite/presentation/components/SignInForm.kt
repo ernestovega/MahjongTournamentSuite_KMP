@@ -62,6 +62,7 @@ import mahjongtournamentsuite.ui.generated.resources.password_show
 import mahjongtournamentsuite.ui.generated.resources.sign_in_button
 import mahjongtournamentsuite.ui.generated.resources.sign_in_contact
 import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
+import mahjongtournamentsuite.ui.generated.resources.sign_in_get_the_app
 import mahjongtournamentsuite.ui.generated.resources.sign_in_privacy
 import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
@@ -88,6 +89,8 @@ fun SignInForm(
     onNeedHelp: () -> Unit,
     /** Set when the sign-in is optional: the back button returns to the screen that asked for it. */
     onBack: (() -> Unit)? = null,
+    /** Opens the page of the apps. Only the web sets it: the link shows under the form. */
+    onGetTheApp: (() -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val passwordRequester = remember { FocusRequester() }
@@ -285,6 +288,12 @@ fun SignInForm(
                                 ButtonText(stringResource(Res.string.sign_in_forgot_password))
                             }
                         }
+                    }
+                }
+
+                onGetTheApp?.let { open ->
+                    FocusedTextButton(onClick = open, enabled = !isLoading) {
+                        ButtonText(stringResource(Res.string.sign_in_get_the_app))
                     }
                 }
             }

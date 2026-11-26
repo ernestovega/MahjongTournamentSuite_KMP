@@ -65,6 +65,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PositionTroph
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -136,8 +137,11 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
     val round = afterRound?.takeIf { it in byRound }
     val rankings = round?.let(byRound::getValue) ?: view.rankings
     var sharing by remember { mutableStateOf(false) }
+    // Before the first hand every player has 0 points: the tab says that the ranking comes later, without the rows.
+    val started = view.rankings.hasResults
     val kinds = buildList {
         add(RankingKind.PLAYERS)
+        if (!started) return@buildList
         if (view.tournament.isTeams && rankings.teams.isNotEmpty()) add(RankingKind.TEAMS)
         if (view.tournament.countChickenHands && rankings.chickenHands.isNotEmpty()) add(RankingKind.CHICKEN)
         if (view.tournament.countBestHands && rankings.bestHands.isNotEmpty()) add(RankingKind.BEST)
@@ -146,7 +150,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
     val kind = chosen.takeIf { it in kinds } ?: RankingKind.PLAYERS
     val myTeam = rankings.players.firstOrNull { it.playerId == view.mySlotId }?.teamId
 
-    val rows = when (kind) {
+    val allRows = when (kind) {
         RankingKind.PLAYERS -> rankings.players.map { row ->
             RankingRow(
                 key = "p${row.playerId}",
@@ -221,6 +225,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
             )
         }
     }
+    val rows = if (started) allRows else emptyList()
 
     if (sharing) {
         val which = if (round == null) stringResource(Res.string.ranking_title_now) else stringResource(Res.string.ranking_title_after_round, round)
@@ -293,6 +298,7 @@ private fun RankingRows(
     val visible = rows
     val options = remember(rows) { rows.map { it.key to it.title } }
     val listState = rememberPersistentLazyListState("ranking")
+    ShowTabsAtTop(listState)
     val scope = rememberCoroutineScope()
     val myIndex = visible.indexOfFirst { it.mine }
     Column {

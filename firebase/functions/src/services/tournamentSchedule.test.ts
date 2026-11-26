@@ -110,3 +110,12 @@ test("a complete schedule gives every round a date and a start time", () => {
   assert.throws(() => requireCompleteRoundSchedules(missingRound, 2), /Every round needs a date and a start time/);
   assert.throws(() => requireCompleteRoundSchedules([], 1), /Every round needs a date and a start time/);
 });
+
+test("refuses round schedules and agenda items that are not valid", () => {
+  assert.throws(() => normalizeRoundSchedules("rounds", 2, "2027-02-06", "2027-02-07"), /must be an array/);
+  const round = { roundId: 1, date: "2027-02-06", startTime: "10:00" };
+  assert.throws(() => normalizeRoundSchedules([round, round], 2, "2027-02-06", "2027-02-07"), /must be unique/);
+  assert.throws(() => normalizeAgendaItems({ title: "Lunch" }), /must be an array/);
+  assert.throws(() => normalizeAgendaItems(Array.from({ length: 101 }, () => ({ title: "x" }))), /at most 100 rows/);
+  assert.throws(() => normalizeAgendaItems([{ title: "x".repeat(121), date: "2027-02-06", startTime: "13:00" }]), /at most 120 characters/);
+});

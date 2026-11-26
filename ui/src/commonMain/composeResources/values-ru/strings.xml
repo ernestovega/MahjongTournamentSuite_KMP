@@ -125,10 +125,10 @@
     <string name="stats_empty_message">Статистика появится, когда будет завершён первый стол.</string>
     <string name="stats_hand_stats_missing">Для статистики раздач нужны столы с введёнными раздачами. Здесь таких нет.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">Стоимость рук рассчитана по %1$d из %2$d стола.</item>
-        <item quantity="few">Стоимость рук рассчитана по %1$d из %2$d столов.</item>
-        <item quantity="many">Стоимость рук рассчитана по %1$d из %2$d столов.</item>
-        <item quantity="other">Стоимость рук рассчитана по %1$d из %2$d столов.</item>
+        <item quantity="one">Стоимость рук рассчитана по %1$d из %2$d стола. У остальных есть только итоговые очки, без рук.</item>
+        <item quantity="few">Стоимость рук рассчитана по %1$d из %2$d столов. У остальных есть только итоговые очки, без рук.</item>
+        <item quantity="many">Стоимость рук рассчитана по %1$d из %2$d столов. У остальных есть только итоговые очки, без рук.</item>
+        <item quantity="other">Стоимость рук рассчитана по %1$d из %2$d столов. У остальных есть только итоговые очки, без рук.</item>
     </plurals>
     <string name="card_fold">Свернуть</string>
     <string name="card_unfold">Развернуть</string>
@@ -786,4 +786,6 @@
     <string name="update_available_message">Версия MTS %1$s готова. Скачайте её и установите поверх этой.</string>
     <string name="update_available_download">Скачать</string>
     <string name="update_available_later">Позже</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">Скачать приложение</string>
 </resources>

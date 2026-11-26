@@ -130,6 +130,43 @@ class CalculateStatisticsUseCaseTest {
     }
 
     @Test
+    fun everyKindOfBrokenHandIsLeftOut() {
+        val done = table(completed = true, scores = listOf("0", "0", "0", "0"))
+        val broken = listOf(
+            hand(1, winner = "", loser = "", score = ""),
+            hand(2, winner = "", loser = "", score = "0", chicken = true),
+            hand(3, winner = "1", loser = "2", score = ""),
+            hand(4, winner = "1", loser = "2", score = "ten"),
+            hand(5, winner = "1", loser = "", score = "16", chicken = true),
+            hand(6, winner = "one", loser = "2", score = "10"),
+            hand(7, winner = "1", loser = "two", score = "10"),
+            hand(8, winner = "1", loser = "9", score = "10"),
+        )
+
+        assertEquals(0, calculate(players, listOf(RankingTable(done, broken))).handsPlayed)
+    }
+
+    @Test
+    fun aTableWithAnEmptyOrRepeatedSeatCountsNoHands() {
+        val empty = table(completed = true, scores = listOf("0", "0", "0", "0")).copy(playerNorthId = "")
+        val repeated = table(completed = true, scores = listOf("0", "0", "0", "0")).copy(playerNorthId = "1")
+
+        assertEquals(0, calculate(players, listOf(RankingTable(empty, listOf(hand(1, "1", "2", "10"))))).handsPlayed)
+        assertEquals(0, calculate(players, listOf(RankingTable(repeated, listOf(hand(1, "1", "2", "10"))))).handsPlayed)
+    }
+
+    @Test
+    fun aRivalWithoutAnEmaNumberIsKnownByTheSlotOfTheTournament() {
+        val withEma = players.map { if (it.id == 2) it.copy(assignedEmaId = "10000002") else it }
+        val table = table(completed = true, scores = listOf("30", "10", "0", "-40"))
+
+        val result = calculate(withEma, listOf(RankingTable(table, listOf(hand(1, "1", "2", "10")))), tournamentId = "t1")
+
+        val rivals = result.players.first { it.playerId == 1 }.results.single().rivals.map { it.opponent }.toSet()
+        assertEquals(setOf("10000002", "t1#3", "t1#4"), rivals)
+    }
+
+    @Test
     fun tiedScoresShareThePlace() {
         val table = table(completed = true, totalsOnly = true, scores = listOf("20", "20", "0", "-40"))
         val result = calculate(players, listOf(RankingTable(table, emptyList())))

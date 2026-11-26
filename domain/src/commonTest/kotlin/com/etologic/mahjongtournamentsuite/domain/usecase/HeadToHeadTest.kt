@@ -88,4 +88,47 @@ class HeadToHeadTest {
         assertEquals(1, h2h.me.tablesAbove)
         assertEquals(0, h2h.rival.tablesAbove)
     }
+
+    @Test
+    fun withoutSharedTablesThereIsNothingToCompare() {
+        val h2h = headToHead(ana, "7", bea)
+
+        assertEquals(emptyList(), h2h.tables)
+        assertNull(h2h.me.averagePlace)
+        assertNull(h2h.me.bestHand)
+        assertNull(h2h.me.tablesAbove, "without shared tables the rival's results tell nothing")
+        assertNull(h2h.rival.points)
+    }
+
+    @Test
+    fun theRivalDataCountsOnlyWhenItHasEverySharedTable() {
+        val partial = person("2", madrid to listOf(result(madrid, 1, 1, 3, 1.0, "1")))
+
+        val h2h = headToHead(ana, "2", partial)
+
+        assertNull(h2h.rival.points, "one shared table of the rival is missing")
+        assertEquals(1, h2h.tables.count { it.theirs != null })
+    }
+
+    @Test
+    fun theTalliesOfTheRivalCountOnlyWhenEveryTableNamesThePerson() {
+        val other = person(
+            "2",
+            madrid to listOf(result(madrid, 1, 1, 3, 1.0, "5")),
+            toledo to listOf(result(toledo, 1, 2, 1, 4.0, "1")),
+        )
+
+        val h2h = headToHead(ana, "2", other)
+
+        assertNull(h2h.me.winsOnTheirDiscard)
+        assertEquals(1, h2h.me.tablesAbove, "the places at the tables still tell who finished above")
+    }
+
+    @Test
+    fun tablesOfATournamentWithoutDatesGoByRound() {
+        val undated = madrid.copy(id = "t-3", eventStartDate = null)
+        val me = person("1", undated to listOf(result(undated, 1, 1, 1, 4.0, "2"), result(undated, 3, 1, 2, 2.0, "2")))
+
+        assertEquals(listOf(3, 1), headToHead(me, "2", rivalData = null).tables.map { it.mine.roundId })
+    }
 }

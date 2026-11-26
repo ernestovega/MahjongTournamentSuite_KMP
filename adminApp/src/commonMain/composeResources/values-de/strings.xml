@@ -102,7 +102,7 @@
     <string name="discard">Verwerfen</string>
     <string name="loading_rankings">Ranglisten werden geladen…</string>
     <string name="no_ranking_yet">Noch keine Rangliste</string>
-    <string name="the_ranking_shows_when_the_first">Die Rangliste erscheint, sobald der erste Tisch abgeschlossen ist.</string>
+    <string name="the_ranking_shows_when_the_first">Die Rangliste erscheint, sobald die erste Hand gespielt ist.</string>
     <string name="settings">Einstellungen</string>
     <string name="show_first_3">Erste 3 anzeigen</string>
     <string name="previous_ranking_list">Vorherige Ranglistenseite</string>

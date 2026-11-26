@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 @OptIn(ExperimentalTestApi::class)
 class HideOnScrollUiTest {
@@ -46,6 +48,7 @@ class HideOnScrollUiTest {
         val state = HideOnScrollState(hideDistance)
         state.scroll(-200f)
         assertFalse(state.visible)
+        state.endDrag()
         state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
         assertFalse(state.visible, "A short move back keeps the rows hidden.")
         state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
@@ -55,6 +58,8 @@ class HideOnScrollUiTest {
     @Test
     fun aSmallMoveBackAtTheEndOfALongDragDoesNotShowTheRows() {
         val state = HideOnScrollState(hideDistance)
+        state.scroll(-200f)
+        state.endDrag()
         // A long drag up the screen, as far as the top bar, with the finger shaking a little on the way and as it lifts.
         repeat(20) {
             state.scroll(-40f)
@@ -64,6 +69,79 @@ class HideOnScrollUiTest {
         assertFalse(state.visible, "The shaking finger does not stop the rows from hiding.")
         state.scroll(-40f)
         repeat(5) { state.connection.onPreScroll(Offset(0f, 8f), NestedScrollSource.UserInput) }
+        assertFalse(state.visible)
+    }
+
+    @Test
+    fun theRowsThatShowInADragDoNotHideAgainInTheSameDrag() {
+        val state = HideOnScrollState(hideDistance)
+        state.scroll(-200f)
+        state.endDrag()
+        state.connection.onPreScroll(Offset(0f, 120f), NestedScrollSource.UserInput)
+        assertTrue(state.visible)
+        // The rows push the content down while they show, which reads as a scroll down under the finger.
+        state.connection.onPreScroll(Offset(0f, -150f), NestedScrollSource.UserInput)
+        state.scroll(-150f)
+        assertTrue(state.visible, "The rows stay until the finger lifts.")
+        state.endDrag()
+        state.scroll(-150f)
+        assertFalse(state.visible, "A new drag down hides them again.")
+    }
+
+    @Test
+    fun theRowsThatHideInADragDoNotShowAgainInTheSameDrag() {
+        val state = HideOnScrollState(hideDistance)
+        state.scroll(-120f)
+        assertFalse(state.visible)
+        // The content moves up under the finger while the rows hide.
+        state.connection.onPreScroll(Offset(0f, 150f), NestedScrollSource.UserInput)
+        assertFalse(state.visible)
+    }
+
+    @Test
+    fun aChangeHoldsOnlyWhileTheRowsMove() {
+        // A mouse wheel or a trackpad never lifts a finger: the rows react again once they stop moving.
+        val time = TestTimeSource()
+        val state = HideOnScrollState(hideDistance, time)
+        state.scroll(-200f)
+        assertFalse(state.visible)
+        state.connection.onPreScroll(Offset(0f, 150f), NestedScrollSource.UserInput)
+        assertFalse(state.visible, "The rows are still hiding.")
+        time += 1.seconds
+        state.connection.onPreScroll(Offset(0f, 150f), NestedScrollSource.UserInput)
+        assertTrue(state.visible)
+    }
+
+    @Test
+    fun aShortShakeBackDoesNotStartTheDistanceAgain() {
+        val state = HideOnScrollState(hideDistance)
+        state.scroll(-200f)
+        state.endDrag()
+        state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
+        state.connection.onPreScroll(Offset(0f, -4f), NestedScrollSource.UserInput)
+        state.connection.onPreScroll(Offset(0f, 60f), NestedScrollSource.UserInput)
+        assertTrue(state.visible)
+    }
+
+    @Test
+    fun theRowsShowWhenTheContentIsBackAtTheTop() {
+        val state = HideOnScrollState(hideDistance)
+        state.scroll(-200f)
+        state.endDrag()
+        // A fling up that reaches the top: the content takes 20 px and 30 px are left over.
+        state.connection.onPostScroll(Offset(0f, 20f), Offset(0f, 30f), NestedScrollSource.SideEffect)
+        assertTrue(state.visible)
+    }
+
+    @Test
+    fun aFlingUpShowsTheRows() {
+        val state = HideOnScrollState(hideDistance)
+        state.scroll(-200f)
+        state.endDrag()
+        repeat(4) { state.connection.onPreScroll(Offset(0f, 40f), NestedScrollSource.SideEffect) }
+        assertTrue(state.visible)
+        // A fling does not lock the rows: the next drag down hides them.
+        state.scroll(-150f)
         assertFalse(state.visible)
     }
 
@@ -128,6 +206,30 @@ class HideOnScrollUiTest {
                     }
                     Column(Modifier.height(300.dp).verticalScroll(rememberScrollState()).testTag("content")) {
                         repeat(3) { Text("Row $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        onNodeWithTag("content").performTouchInput { swipeUp(startY = bottom - 10f, endY = top + 10f) }
+        waitForIdle()
+        onNodeWithText("Tabs").assertIsDisplayed()
+    }
+
+    @Test
+    fun contentThatFitsOnceTheRowsHideShowsThemAgain() = runComposeUiTest {
+        // The content is a little taller than the screen with the rows, and fits without them, like the statistics
+        // of all tournaments in a wide window. A mouse wheel then has nothing to scroll up.
+        setContent {
+            val state = rememberHideOnScrollState()
+            CompositionLocalProvider(LocalHideOnScroll provides state) {
+                Column(Modifier.height(400.dp).hideOnScroll(state)) {
+                    HideOnScrollTabs {
+                        Box(Modifier.height(100.dp).testTag("tabs")) { Text("Tabs") }
+                    }
+                    val scroll = rememberScrollState()
+                    ShowTabsAtTop(scroll)
+                    Column(Modifier.weight(1f).verticalScroll(scroll).testTag("content")) {
+                        repeat(9) { Text("Row $it", Modifier.height(40.dp)) }
                     }
                 }
             }

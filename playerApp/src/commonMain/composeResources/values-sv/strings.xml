@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d händer</string>
     <string name="team_n">Lag %1$d</string>
     <string name="ranking_points_score">%1$s poäng - %2$d resultat</string>
-    <string name="ranking_empty">Rankingen visas när första bordet är klart.</string>
+    <string name="ranking_empty">Rankingen visas när första handen är spelad.</string>
     <string name="ranking_empty_title">Ingen ranking än</string>
     <string name="ranking_teams">Lag</string>
     <string name="ranking_chicken_hands">Kycklinghänder</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Lag eller spelare</string>
     <string name="teams_search_empty">Inget lag matchar sökningen.</string>
     <string name="team_statistics_note">Statistiken räknar ihop borden för alla spelare i laget.</string>
+    <string name="team_statistics_empty">Statistiken visas när ett bord för det här laget är klart.</string>
     <string name="team_member_win_rate">Vinstandel</string>
     <string name="team_member_points">Poäng</string>
     <string name="team_member_score">Resultat</string>
@@ -330,4 +331,21 @@ Men en e-post kan bara ha ett konto i appen: den som vill ha ett eget konto beh�
     <string name="ranking_close">Stäng</string>
     <string name="ranking_title_now">Aktuell ranking</string>
     <string name="ranking_title_after_round">Ranking efter omgång %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Hämta appen</string>
+    <string name="apps_intro">MTS finns också som app för mobiler, surfplattor och datorer. Den visar samma turneringar som den här webben, med samma konto.</string>
+    <string name="apps_ios">iPhone och iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac med Apple silicon</string>
+    <string name="apps_windows_detail">Installationsprogram för Windows 10 och 11</string>
+    <string name="apps_linux_detail">Debian och Ubuntu</string>
+    <string name="apps_download">Ladda ner</string>
+    <string name="apps_soon">Kommer snart</string>
+    <string name="apps_this_device">För den här enheten</string>
+    <string name="apps_notice_title">MTS-appar</string>
+    <string name="apps_notice_message">MTS finns också som app för Android, iPhone, Mac, Windows och Linux.\n\nDu hittar dem senare i menyn Mer, under Hämta appen.</string>
+    <string name="apps_notice_close">Stäng</string>
+    <string name="apps_notice_never">Visa inte igen</string>
 </resources>

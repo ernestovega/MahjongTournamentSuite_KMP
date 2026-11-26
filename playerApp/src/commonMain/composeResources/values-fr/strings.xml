@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d mains</string>
     <string name="team_n">Équipe %1$d</string>
     <string name="ranking_points_score">%1$s points - score %2$d</string>
-    <string name="ranking_empty">Le classement s'affiche quand la première table est terminée.</string>
+    <string name="ranking_empty">Le classement s'affiche dès que la première main est jouée.</string>
     <string name="ranking_empty_title">Pas encore de classement</string>
     <string name="ranking_teams">Équipes</string>
     <string name="ranking_chicken_hands">Mains poule</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Équipe ou joueur</string>
     <string name="teams_search_empty">Aucune équipe ne correspond à la recherche.</string>
     <string name="team_statistics_note">Les statistiques additionnent les tables de tous les joueurs de l’équipe.</string>
+    <string name="team_statistics_empty">Les statistiques s'affichent quand une table de cette équipe est terminée.</string>
     <string name="team_member_win_rate">Taux de victoire</string>
     <string name="team_member_points">Points</string>
     <string name="team_member_score">Score</string>
@@ -330,4 +331,21 @@ Mais un email ne peut avoir qu'un seul compte dans l'app : qui veut son propre c
     <string name="ranking_close">Fermer</string>
     <string name="ranking_title_now">Classement actuel</string>
     <string name="ranking_title_after_round">Classement après le tour %1$d</string>
+
+    <!-- The apps: the page /download, the More menu and the notice of the web -->
+    <string name="apps_title">Télécharger l'app</string>
+    <string name="apps_intro">MTS existe aussi en app pour téléphones, tablettes et ordinateurs. Elle affiche les mêmes tournois que ce site, avec le même compte.</string>
+    <string name="apps_ios">iPhone et iPad</string>
+    <string name="apps_android_detail">Google Play</string>
+    <string name="apps_ios_detail">App Store</string>
+    <string name="apps_mac_detail">Mac avec Apple silicon</string>
+    <string name="apps_windows_detail">Installateur pour Windows 10 et 11</string>
+    <string name="apps_linux_detail">Debian et Ubuntu</string>
+    <string name="apps_download">Télécharger</string>
+    <string name="apps_soon">Bientôt</string>
+    <string name="apps_this_device">Pour cet appareil</string>
+    <string name="apps_notice_title">Apps MTS</string>
+    <string name="apps_notice_message">MTS existe aussi en app pour Android, iPhone, Mac, Windows et Linux.\n\nVous les retrouverez plus tard dans le menu Plus, sous Télécharger l'app.</string>
+    <string name="apps_notice_close">Fermer</string>
+    <string name="apps_notice_never">Ne plus afficher</string>
 </resources>

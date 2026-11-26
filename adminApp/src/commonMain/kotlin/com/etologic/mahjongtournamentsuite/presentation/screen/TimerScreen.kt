@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
@@ -132,7 +133,8 @@ fun TimerStandaloneScreen(
 
     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
+            Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
                 TimerContent(
                     controller = controller,
                     themePreference = themeController.preference,

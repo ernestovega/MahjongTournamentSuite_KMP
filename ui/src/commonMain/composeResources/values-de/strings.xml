@@ -123,8 +123,8 @@
     <string name="stats_empty_message">Die Statistiken erscheinen, sobald der erste Tisch abgeschlossen ist.</string>
     <string name="stats_hand_stats_missing">Handstatistiken brauchen Tische mit eingetragenen Händen. Hier hat kein Tisch welche.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">Die Handwerte nutzen %1$d von %2$d Tisch.</item>
-        <item quantity="other">Die Handwerte nutzen %1$d von %2$d Tischen.</item>
+        <item quantity="one">Die Handwerte nutzen %1$d von %2$d Tisch. Die übrigen haben nur die Endstände, ohne ihre Hände.</item>
+        <item quantity="other">Die Handwerte nutzen %1$d von %2$d Tischen. Die übrigen haben nur die Endstände, ohne ihre Hände.</item>
     </plurals>
     <string name="card_fold">Einklappen</string>
     <string name="card_unfold">Ausklappen</string>
@@ -780,4 +780,6 @@ Die erste, die klappt, gewinnt</string>
     <string name="update_available_message">Version %1$s von MTS ist da. Lade sie herunter und installiere sie über diese.</string>
     <string name="update_available_download">Herunterladen</string>
     <string name="update_available_later">Später</string>
+    <!-- Sign-in of the web: the page of the apps -->
+    <string name="sign_in_get_the_app">App herunterladen</string>
 </resources>
