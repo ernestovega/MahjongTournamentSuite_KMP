@@ -717,7 +717,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                                     },
                                                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
                                                                 ) {
-                                                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
+                                                                    CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code), tooltip = false)
                                                                     Spacer(Modifier.width(4.dp))
                                                                     ButtonText("$code ($count)")
                                                                 }

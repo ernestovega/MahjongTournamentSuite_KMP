@@ -42,6 +42,11 @@ fun CountryFlag(
     modifier: Modifier = Modifier,
     width: Dp = 24.dp,
     contentDescription: String? = null,
+    /**
+     * False for a flag inside a button: the button says what it does, and a tooltip on the flag would make it a node
+     * of its own, so a screen reader and the UI tests would find the flag apart from the button that it is in.
+     */
+    tooltip: Boolean = true,
 ) {
     val normalizedCode = normalizedFlagCountryCode(code)
     val countryName = when {
@@ -49,8 +54,8 @@ fun CountryFlag(
         normalizedCode != null -> countryDisplayName(normalizedCode, fallback = "").ifEmpty { null }
         else -> null
     }
-    if (countryName == null) {
-        FlagBox(code, modifier, width, contentDescription)
+    if (countryName == null || !tooltip) {
+        FlagBox(code, modifier, width, contentDescription ?: countryName)
         return
     }
     AppTooltipBox(countryName) {
