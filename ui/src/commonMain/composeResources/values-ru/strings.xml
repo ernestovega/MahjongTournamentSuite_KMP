@@ -150,6 +150,7 @@
     <string name="rivals_none">Соперников пока нет. Нужно %1$d общих столов.</string>
     <string name="rival_shared_tables">Общие столы</string>
     <string name="rival_ahead_of_you">Выше вас</string>
+    <string name="rival_compare">Сравнить</string>
     <string name="rival_wins_against_you">Победы над вами</string>
     <string name="rival_deal_ins">Сбросы в руку</string>
     <string name="rival_self_draws">Со стены</string>

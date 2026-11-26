@@ -41,8 +41,8 @@ fun PlayerStatisticsPanel(
     tournaments: List<Tournament> = emptyList(),
     /** Display name of every rival key. See `RivalTally.opponent`. */
     rivalNames: Map<String, String> = emptyMap(),
-    /** Opens the statistics of a rival. The key is the EMA number. Without it the rival names are plain text. */
-    onOpenRival: ((String) -> Unit)? = null,
+    /** Compares the person with a rival. The key is the EMA number of the rival. Without it the rivals have no button. */
+    onCompareRival: ((String) -> Unit)? = null,
 ) {
     if (statistics.tablesPlayed == 0) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -68,7 +68,7 @@ fun PlayerStatisticsPanel(
                     PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                     afterPlaces?.invoke(Modifier.fillMaxWidth())
                     RecordsCard(statistics, Modifier.fillMaxWidth())
-                    RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
+                    RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onCompareRival)
                 }
             } else {
                 header?.invoke()
@@ -78,7 +78,7 @@ fun PlayerStatisticsPanel(
                 PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                 afterPlaces?.invoke(Modifier.fillMaxWidth())
                 RecordsCard(statistics, Modifier.fillMaxWidth())
-                RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
+                RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onCompareRival)
             }
             if (statistics.tablesWithHands < statistics.tablesPlayed) {
                 Text(

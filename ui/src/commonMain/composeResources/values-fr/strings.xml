@@ -147,6 +147,7 @@
     <string name="rivals_none">Aucun rival pour l'instant. Il faut %1$d tables partagées.</string>
     <string name="rival_shared_tables">Tables partagées</string>
     <string name="rival_ahead_of_you">Devant vous</string>
+    <string name="rival_compare">Comparer</string>
     <string name="rival_wins_against_you">Mains qu'il vous a gagnées</string>
     <string name="rival_deal_ins">Vous a battu sur défausse</string>
     <string name="rival_self_draws">Vous a battu du mur</string>

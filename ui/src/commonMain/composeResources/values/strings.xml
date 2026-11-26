@@ -147,6 +147,7 @@
     <string name="rivals_none">No rival yet. It needs %1$d shared tables.</string>
     <string name="rival_shared_tables">Shared tables</string>
     <string name="rival_ahead_of_you">Ahead of you</string>
+    <string name="rival_compare">Compare</string>
     <string name="rival_wins_against_you">Wins against you</string>
     <string name="rival_deal_ins">Deal-ins</string>
     <string name="rival_self_draws">Self-draws</string>

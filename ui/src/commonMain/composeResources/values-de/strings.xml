@@ -146,6 +146,7 @@
     <string name="rivals_none">Noch kein Rivale. Dafür braucht es %1$d gemeinsame Tische.</string>
     <string name="rival_shared_tables">Gemeinsame Tische</string>
     <string name="rival_ahead_of_you">Vor dir</string>
+    <string name="rival_compare">Vergleichen</string>
     <string name="rival_wins_against_you">Siege gegen dich</string>
     <string name="rival_deal_ins">Einwürfe</string>
     <string name="rival_self_draws">Selbst gezogen</string>
