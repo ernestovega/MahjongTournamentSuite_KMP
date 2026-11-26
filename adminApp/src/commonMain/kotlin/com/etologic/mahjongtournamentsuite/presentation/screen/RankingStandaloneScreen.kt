@@ -899,6 +899,8 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
     val playersByEma = basePlayers.associateBy { it.emaId }
     val teamNamesById = tournamentTeams.associate { it.id to it.name }
     val pages = mutableListOf<RankingPage>()
+    // Before the first hand every player has 0 points: no page, the screen says that the ranking comes later.
+    if (!rankings.hasResults) return pages
 
     if (rankings.players.isNotEmpty()) {
         pages += RankingPage(

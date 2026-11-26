@@ -102,7 +102,7 @@
     <string name="discard">Släng</string>
     <string name="loading_rankings">Laddar ranking…</string>
     <string name="no_ranking_yet">Ingen ranking än</string>
-    <string name="the_ranking_shows_when_the_first">Rankingen visas när första bordet är klart.</string>
+    <string name="the_ranking_shows_when_the_first">Rankingen visas när första handen är spelad.</string>
     <string name="settings">Inställningar</string>
     <string name="show_first_3">Visa de 3 första</string>
     <string name="previous_ranking_list">Föregående rankingsida</string>

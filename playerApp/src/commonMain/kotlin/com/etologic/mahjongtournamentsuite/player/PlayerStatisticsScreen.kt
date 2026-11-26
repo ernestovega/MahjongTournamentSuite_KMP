@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsView
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundChips
+import com.etologic.mahjongtournamentsuite.presentation.components.hasResults
 import com.etologic.mahjongtournamentsuite.presentation.components.opponentsOf
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
@@ -170,7 +171,8 @@ fun PlayerSlotStatisticsTab(
         top?.invoke()
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
-        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = playerCount) } }
+        // Before the first hand the place says nothing: every player is first with 0 points.
+        val standing: (@Composable (Modifier) -> Unit)? = ranking?.takeIf { loaded.hasResults }?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier, places = places, of = playerCount) } }
         if (stats == null) {
             standing?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
@@ -281,7 +283,8 @@ internal fun FilteredStatisticsTab(
             )
         }
         val shown = tournament
-        if (view == StatisticsView.TOURNAMENT && shown != null) {
+        // Without a completed table there is no round to choose: the empty state shows alone.
+        if (view == StatisticsView.TOURNAMENT && shown != null && shown.statistics.tablesCompleted > 0) {
             // The chips of the rounds stay above the statistics while they scroll. Every card shows the chosen round.
             TournamentRoundChips(shown.statistics, shown.tournament.roundIds(), round, { round = it }, edge = MtsTheme.spacing.lg)
         }

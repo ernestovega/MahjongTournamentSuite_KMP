@@ -102,7 +102,7 @@
     <string name="discard">Scarta</string>
     <string name="loading_rankings">Caricamento delle classifiche…</string>
     <string name="no_ranking_yet">Ancora nessuna classifica</string>
-    <string name="the_ranking_shows_when_the_first">La classifica compare quando si completa il primo tavolo.</string>
+    <string name="the_ranking_shows_when_the_first">La classifica compare quando si gioca la prima mano.</string>
     <string name="settings">Impostazioni</string>
     <string name="show_first_3">Mostra i primi 3</string>
     <string name="previous_ranking_list">Elenco di classifica precedente</string>

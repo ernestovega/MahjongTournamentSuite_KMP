@@ -94,7 +94,7 @@
     <string name="table_hands_done">%1$d/%2$d händer</string>
     <string name="team_n">Lag %1$d</string>
     <string name="ranking_points_score">%1$s poäng - %2$d resultat</string>
-    <string name="ranking_empty">Rankingen visas när första bordet är klart.</string>
+    <string name="ranking_empty">Rankingen visas när första handen är spelad.</string>
     <string name="ranking_empty_title">Ingen ranking än</string>
     <string name="ranking_teams">Lag</string>
     <string name="ranking_chicken_hands">Kycklinghänder</string>
@@ -119,6 +119,7 @@
     <string name="teams_search_hint">Lag eller spelare</string>
     <string name="teams_search_empty">Inget lag matchar sökningen.</string>
     <string name="team_statistics_note">Statistiken räknar ihop borden för alla spelare i laget.</string>
+    <string name="team_statistics_empty">Statistiken visas när ett bord för det här laget är klart.</string>
     <string name="team_member_win_rate">Vinstandel</string>
     <string name="team_member_points">Poäng</string>
     <string name="team_member_score">Resultat</string>

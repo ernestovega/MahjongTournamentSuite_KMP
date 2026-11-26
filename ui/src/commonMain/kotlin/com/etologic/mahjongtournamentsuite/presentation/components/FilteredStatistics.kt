@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
+import com.etologic.mahjongtournamentsuite.domain.model.haveResults
 import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.GroupStatisticsData
@@ -70,6 +71,11 @@ fun FilteredStatistics(
             }
             StatisticsView.SLOT -> tournament?.let { SlotContent(it, filters.slotId ?: return@let, onFiltersChange, filters) }
             StatisticsView.TOURNAMENT -> tournament?.let { data ->
+                // Before the first completed table every number is 0: the screen says that the statistics come later.
+                if (data.statistics.tablesCompleted == 0) {
+                    AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_empty_message))
+                    return@let
+                }
                 TournamentStatisticsPanel(
                     statistics = data.statistics,
                     names = data.names,
@@ -180,7 +186,8 @@ private fun SlotContent(data: TournamentStatisticsData, slotId: Int, onFiltersCh
     val places = rankings.second.mapNotNull { (round, byRound) ->
         byRound.players.firstOrNull { it.playerId == slotId }?.let { round to it.position }
     }.toMap()
-    ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth(), places = places, of = data.slots.size) }
+    // Before the first hand the place says nothing: every player is first with 0 points.
+    if (data.hasResults) ranking?.let { PlayerStandingCard(it.position, it.points, it.score, Modifier.fillMaxWidth(), places = places, of = data.slots.size) }
     val stats = data.statistics.players.firstOrNull { it.playerId == slotId }
     if (stats == null) {
         AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_empty_message))
@@ -297,3 +304,6 @@ private fun TogetherComparison(
         }
     }
 }
+
+/** Some table of the tournament has a result, so its ranking says something. Stored statistics keep no tables. */
+val TournamentStatisticsData.hasResults: Boolean get() = statistics.tablesCompleted > 0 || tables.haveResults
