@@ -51,6 +51,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
@@ -442,10 +443,10 @@ private fun ErrorGroupsTable(
         if (!compact) {
             item {
                 DataTableHeaderRow {
-                    Text(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth), style = MaterialTheme.typography.labelLarge)
+                    DataTableHeaderText(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f))
+                    DataTableHeaderText(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth))
                 }
                 DataTableDivider()
             }

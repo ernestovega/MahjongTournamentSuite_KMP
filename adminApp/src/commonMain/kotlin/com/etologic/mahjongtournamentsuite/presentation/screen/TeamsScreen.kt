@@ -799,6 +799,8 @@ private fun TeamHeader(text: String, modifier: Modifier) {
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
     )
 }

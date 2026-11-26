@@ -742,15 +742,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     Column(Modifier.fillMaxWidth()) {
                         if (!compact) {
                             DataTableHeaderRow {
-                                TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
+                                TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth))
                                 TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
-                                TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
+                                TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth))
                                 TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
                                 // The name and the team at the left. The space that is left over stays before the menu.
                                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    TournamentPlayerHeader(stringResource(Res.string.name), TournamentPlayerNameModifier(), TextAlign.Start)
+                                    TournamentPlayerHeader(stringResource(Res.string.name), TournamentPlayerNameModifier())
                                     if (isTeamsTournament) {
-                                        TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier(), TextAlign.Start)
+                                        TournamentPlayerHeader(stringResource(Res.string.team), TournamentPlayerTeamModifier())
                                     }
                                 }
                                 if (anyRoundTables) {
