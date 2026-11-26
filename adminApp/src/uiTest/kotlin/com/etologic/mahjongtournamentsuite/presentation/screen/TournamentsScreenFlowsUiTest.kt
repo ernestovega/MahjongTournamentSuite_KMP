@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -39,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -97,7 +99,7 @@ class TournamentsScreenFlowsUiTest {
         val store = AppMemoryStore()
     }
 
-    private fun ComposeUiTest.show(world: World) {
+    private fun ComposeUiTest.show(world: World, compact: Boolean = false) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -118,7 +120,7 @@ class TournamentsScreenFlowsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact) {
                     MtsTheme(useDarkTheme = false) {
                         val navController = rememberNavController()
                         NavHost(navController, startDestination = TournamentsRoute) {
@@ -288,5 +290,21 @@ class TournamentsScreenFlowsUiTest {
         waitForIdle()
         onAllNodes(hasClickAction() and hasText("Delete")).onLast().performClick()
         awaitText("AT sign in")
+    }
+
+    @Test
+    fun onAPhoneACardOpensTheTournamentAndItsEditButtonTheDialog() = runComposeUiTest {
+        val withLogo = open.copy(associationLogoUrl = "https://logo.test/a.png", drawPending = true, registration = RegistrationSettings(maxPlayers = 8, confirmed = 5, waiting = 2))
+        show(World(listOf(withLogo)), compact = true)
+        awaitText("Open Madrid")
+        awaitText("5 / 8 (+2)")
+
+        click("Edit Open Madrid")
+        onNodeWithText("Edit tournament").assertExists()
+        onAllNodes(hasClickAction() and hasText("Cancel")).onLast().performClick()
+        waitForIdle()
+
+        openTheTournament()
+        awaitText("AT registrations")
     }
 }
