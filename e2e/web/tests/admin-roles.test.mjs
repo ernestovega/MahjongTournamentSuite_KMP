@@ -1,6 +1,7 @@
 // Web E2E of the Club Admin role and of the permissions of one person (docs/user-roles-matrix.md). club@e2e.test is the Club Admin
 // of the club that owns test-last-table: the admin app lists only that tournament, the server refuses the others, and
-// a super admin who takes away "Create tournaments" from this person removes the button and the call.
+// a super admin who takes away "Create tournaments" from this person removes the button and the call. A custom role
+// without "Configure" removes the edit button of the tournament and the call, and deleting the role gives them back.
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
 
@@ -89,5 +90,41 @@ describe("Club Admin and custom permissions", () => {
     const page = await openAdmin(browser, site.url, CLUB.email, ["TournamentsRoute {}"]);
     await seeText(page, OWN.name);
     assert.equal(await button(page, "New tournament").count(), 0, "the New tournament button is gone");
+  });
+
+  it("a custom role without Configure takes the edit button and the call away, and deleting it gives them back", { timeout: 180_000 }, async () => {
+    await setClubPermissions(null);
+    const standard = await call("GET", "/admin/roles", admin);
+    const base = standard.body.standard.find((it) => it.id === "CLUB_ADMIN").permissions;
+    const created = await call("POST", "/admin/roles", admin, {
+      name: `Scorer ${Date.now()}`,
+      base: "CLUB_ADMIN",
+      permissions: base.filter((it) => it !== "tournament.configure" && it !== "tournament.delete"),
+    });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+    const role = created.body;
+    try {
+      const chosen = await call("PUT", `/admin/users/${CLUB.uid}/permissions`, admin, { levels: { CLUB_ADMIN: { roleId: role.id } } });
+      assert.equal(chosen.status, 200, JSON.stringify(chosen.body));
+
+      const list = await call("GET", "/tournaments", club);
+      const own = tournamentList(list.body).find((it) => it.id === OWN.id);
+      assert.ok(!own.permissions.includes("tournament.configure"), "the custom role leaves out Configure");
+      assert.ok(own.permissions.includes("tournament.edit"), "the custom role keeps the tables");
+      const settings = await call("PUT", `/tournaments/${OWN.id}/settings`, club, {});
+      assert.equal(settings.status, 403, "the server refuses to configure");
+
+      const page = await openAdmin(browser, site.url, CLUB.email, ["TournamentsRoute {}"]);
+      await seeText(page, OWN.name);
+      await button(page, "New tournament").waitFor();
+      assert.equal(await button(page, `Edit ${OWN.name}`).count(), 0, "the edit button of the tournament is gone");
+    } finally {
+      const removed = await call("DELETE", `/admin/roles/${role.id}`, admin);
+      assert.equal(removed.status, 200, JSON.stringify(removed.body));
+    }
+    const back = await call("GET", "/tournaments", club);
+    assert.ok(tournamentList(back.body).find((it) => it.id === OWN.id).permissions.includes("tournament.configure"), "deleting the role gives Configure back");
+    const page = await openAdmin(browser, site.url, CLUB.email, ["TournamentsRoute {}"]);
+    await button(page, `Edit ${OWN.name}`).waitFor();
   });
 });
