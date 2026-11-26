@@ -66,6 +66,8 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun filterByCountry() {
         openPlayers()
+        // The country buttons come with the EMA players, a moment after the list.
+        c.waitForText("SUI (6)")
         c.clickButton("Filter by SUI")
         c.waitForText("Lucia PEREZ")
         c.waitForNoText("Jorge MARTIN")
