@@ -2,7 +2,7 @@ import { HttpError, badRequest, conflict, forbidden, notFound } from "../api/htt
 import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
 import { handSeatScores, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
-import { seatingIsOpen, tournamentMatchPhase } from "./matchTime";
+import { seatingState, tournamentMatchPhase, unstartedRoundIsPast } from "./matchTime";
 import { manualHands, manualSeats } from "./roundControl";
 import { getPlayerRegistration } from "./playerAccountsService";
 import {
@@ -158,7 +158,12 @@ async function loadFor(
   if (manual === "open") return { registration, table, seats, hands, phase: "PLAYING" };
   // Players write only while the match is on: from the Play of the Timer to the end of the match time.
   // Before or after it, an organizer enters the data.
-  const phase = tournamentMatchPhase(tournament, key.roundId, Date.now());
+  const nowMs = Date.now();
+  const phase = tournamentMatchPhase(tournament, key.roundId, nowMs);
+  // A round that never got its gong and whose planned time is over was not played in time: it is over too.
+  if (phase === "NOT_STARTED" && unstartedRoundIsPast(tournament, key.roundId, nowMs)) {
+    throw conflict("The time of this match is over. An organizer must enter the missing data", { code: "ROUND_TIME_OVER" });
+  }
   if (phase === "NOT_STARTED") throw conflict("This round has not started yet. Wait for the starting gong", { code: "ROUND_NOT_STARTED" });
   if (phase === "OVER") throw conflict("The time of this match is over. An organizer must enter the missing data", { code: "ROUND_TIME_OVER" });
   return { registration, table, seats, hands, phase };
@@ -351,7 +356,8 @@ export function parseSeatsInput(body: unknown): [string, string, string, string]
 
 /**
  * A player of the table sets its four seats. It is possible from a few minutes before the planned start of the round
- * ([seatingIsOpen]) until the first hand is saved, so the table can sit down before the starting gong.
+ * ([seatingState]) until the first hand is saved, so the table can sit down before the starting gong, and never after
+ * the time of the round.
  * The four players must be the players of the draw.
  */
 export async function assignSeats(
@@ -380,7 +386,11 @@ export async function assignSeats(
       // An admin can open or close the seats by hand (the plan B of the Timer). It wins over the planned start.
       const manual = manualSeats(tournament, params.roundId);
       if (manual === "closed") throw conflict("An organizer closed the seats of this round", { code: "SEATS_CLOSED" });
-      if (manual == null && !seatingIsOpen(tournament, params.roundId, Date.now())) {
+      const seating = manual == null ? seatingState(tournament, params.roundId, Date.now()) : "OPEN";
+      if (seating === "OVER") {
+        throw conflict("The time of this round is over. An organizer must set the seats", { code: "SEATS_TIME_OVER" });
+      }
+      if (seating === "NOT_YET") {
         throw conflict("The seats open a few minutes before the start of the round", { code: "SEATS_NOT_OPEN" });
       }
       const version = Number(table.version ?? 0);

@@ -1,8 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Groups
@@ -71,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
@@ -248,12 +249,12 @@ fun PlayerImportDialog(
                             Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
                             Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-                                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                                TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+                                TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.cancel)) }
+                                TextButton(onClick = picker::launch) { ButtonText(stringResource(Res.string.import_choose_other_file)) }
                                 Button(
                                     enabled = preview.canApply,
                                     onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
-                                ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+                                ) { ButtonText(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
                             }
                         }
                     }
@@ -268,8 +269,8 @@ fun PlayerImportDialog(
                         text = { MtsDialogText(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
                         confirmButton = {
                             MtsDialogButtons {
-                                Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) }
-                                TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) }
+                                Button(onClick = { apply(current) }) { ButtonText(stringResource(Res.string.import_confirm_button)) }
+                                TextButton(onClick = { confirming = false }) { ButtonText(stringResource(Res.string.cancel)) }
                             }
                         },
                     )
@@ -285,7 +286,7 @@ fun PlayerImportDialog(
                 text = { ImportResultContent(current.result) },
                 confirmButton = {
                     MtsDialogButtons {
-                        Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                        Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.close)) }
                     }
                 },
             )
@@ -494,8 +495,8 @@ private fun ImportNote(icon: ImageVector, text: String, color: Color) {
 @Composable
 private fun ImportResultContent(result: PlayerImportResult) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_players, result.players), MaterialTheme.colorScheme.primary)
-        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_changed, result.changedSlots), MaterialTheme.colorScheme.primary)
+        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_players, result.players), MtsTheme.colors.link)
+        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_changed, result.changedSlots), MtsTheme.colors.link)
         if (result.emptiedSlots > 0) {
             ImportResultLine(Icons.Filled.SkipNext, stringResource(Res.string.import_result_emptied, result.emptiedSlots), MaterialTheme.colorScheme.onSurfaceVariant)
         }

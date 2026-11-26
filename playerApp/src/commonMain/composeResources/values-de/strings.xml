@@ -124,7 +124,8 @@
     <string name="team_member_score">Score</string>
     <string name="jump_to_me">Zu mir springen</string>
     <string name="entry_totals_only">Die Veranstalter tragen für diesen Tisch nur die Endergebnisse ein. Du kannst hier keine Hände hinzufügen.</string>
-    <string name="entry_round_not_started">Warten auf den Startgong. Die Hand-Schaltflächen erscheinen, wenn die Runde beginnt.</string>
+    <string name="entry_round_not_started">Die Hand-Schaltflächen erscheinen, wenn die Runde beginnt.</string>
+    <string name="entry_seats_open_soon">Du kannst die Sitzplätze ab 10 Minuten vor Beginn der Runde festlegen.</string>
     <string name="entry_seats_not_assigned">Die Plätze dieses Tisches sind noch nicht festgelegt. Du kannst Hände hinzufügen, sobald alle vier Plätze festgelegt sind.</string>
     <string name="entry_closed_by_organizer">Ein Veranstalter hat die Handeingabe dieses Tisches vorerst geschlossen. Frag einen Schiedsrichter, wenn du eine Hand hinzufügen musst.</string>
     <string name="entry_time_over">Die Zeit dieses Spiels ist abgelaufen. Du kannst jetzt keine Hände mehr hinzufügen. Die Veranstalter tragen die fehlenden Daten ein.</string>
@@ -138,7 +139,6 @@
     <string name="entry_hand_score">Handwert</string>
     <string name="entry_chicken_limit">Eine Hühnerhand hat 12 Punkte oder weniger.</string>
     <string name="chicken_hand">Hühnerhand</string>
-    <string name="entry_draw_explanation">Niemand gewinnt diese Hand. Jeder Platz erhält null Punkte.</string>
     <string name="entry_last_hand">Letzte Hand des Tisches</string>
     <string name="entry_back">Zurück</string>
     <string name="entry_numpad_delete">Löschen</string>
@@ -148,20 +148,22 @@
     <string name="entry_saving_hand">Hand wird gespeichert...</string>
     <string name="entry_confirm_save">Bestätigen</string>
     <string name="entry_edit">Bearbeiten</string>
-    <string name="entry_add_another_penalty">Weitere Strafe hinzufügen</string>
-    <string name="entry_penalty_note">Eine Strafe beendet die Hand nicht. Ihre Punkte zählen, wenn die Hand gespeichert wird.</string>
     <string name="entry_check_penalty">Strafe prüfen</string>
     <string name="entry_saving_penalty">Strafe wird gespeichert...</string>
     <string name="entry_updating_table">Tisch wird aktualisiert...</string>
-    <string name="entry_others_each">die anderen je +%1$d</string>
-    <string name="entry_penalty_n">Strafe %1$d</string>
-    <string name="entry_remove_penalty">Strafe %1$d entfernen</string>
     <string name="entry_penalized_player">Bestrafter Spieler</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Bestraft</string>
     <string name="entry_points">Punkte</string>
+    <string name="entry_review_wins">Gewinnt</string>
+    <string name="entry_review_pays">Zahlt</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">Pkt.</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Gesamt</string>
     <string name="entry_shared_multiple">Eine geteilte Strafe muss ein Vielfaches von 3 sein.</string>
-    <string name="entry_others_get">Die anderen Spieler erhalten je +%1$d.</string>
-    <string name="entry_share">Mit den anderen Spielern teilen</string>
-    <string name="entry_wins">gewinnt %1$d</string>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">An die anderen gezahlt</string>
     <string name="entry_from">von</string>
     <string name="changed_title">Der Tisch hat sich geändert</string>
     <string name="changed_not_saved">Deine Hand ist nicht gespeichert. Prüfe unten die Daten des Servers.</string>
@@ -177,7 +179,6 @@
     <string name="changed_already">Wenn die Hand schon im Tisch steht, trag sie nicht noch einmal ein.</string>
     <string name="changed_call_staff">Du kannst einen Helfer rufen, um den Tisch zu prüfen, oder dieses Fenster schließen und weitermachen.</string>
     <string name="changed_close">Schließen und weiter</string>
-    <string name="scope_table">Tisch</string>
     <string name="tab_tables_me">Ich</string>
     <string name="tab_tables_team">Mein Team</string>
     <string name="tab_tables_all">Alle</string>

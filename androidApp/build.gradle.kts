@@ -113,6 +113,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     "stagingImplementation"(libs.androidx.compose.ui.test.manifest)
     // The one Android app of the suite holds both applications. See SuiteRoot.
+    implementation(projects.suite)
     implementation(projects.adminApp)
     implementation(projects.playerApp)
     implementation(projects.ui)

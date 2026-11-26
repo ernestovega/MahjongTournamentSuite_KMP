@@ -33,3 +33,14 @@ GOOGLE_PLAY_TESTER_PASSWORD='…' npm run seed:google-play-tester:apply   # also
 
 It fixes the alias and the role, removes an EMA number, and puts the photo when the account has none (a photo that
 someone chose stays). An existing account keeps its password.
+
+## App Store reviewer account
+
+Apple reviews the iOS app with an account of its own, made the same way: `APP_STORE_TESTER` in
+`firebase/functions/src/services/googlePlayTester.ts` (`mtsappstoretester@mahjongmadrid.com`, alias App Store Testers,
+admin, no EMA number, the app icon as photo, `firebase/functions/assets/app-store-tester.png`).
+
+The workflow Actions > Publish · App Store listing makes or fixes it in production on each run
+(`npm run seed:app-store-tester:apply -- --set-password`). Its password comes from the App Store Connect API key, so
+it is the same on every run, and the workflow writes it only into App Store Connect (App Review Information). Nobody
+needs to know it; to see it, open App Store Connect.

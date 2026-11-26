@@ -58,7 +58,7 @@ Web: https://mts.mahjongmadrid.com · Management: `/admin/` · Android: the «MT
 | Firebase on Android | App Check (Play Integrity), Analytics (GA4) |
 | Build | Gradle 9 + AGP 9, version catalog (`gradle/libs.versions.toml`) |
 
-Modules: `domain` (models and rules, no platform dependencies), `data` (API client, DTOs, caches), `ui` (shared components and screens), `designsystem`, `playerApp`, `adminApp` and `androidApp` (the Android app that holds both parts).
+Modules: `domain` (models and rules, no platform dependencies), `data` (API client, DTOs, caches), `ui` (shared components and screens), `designsystem`, `playerApp`, `adminApp` `suite` (the player and admin parts in one app, shared by Android and iOS), `androidApp` (the Android app) and `iosApp` (the Xcode project of the iOS app, see docs/ios-release.md).
 
 ### Backend
 

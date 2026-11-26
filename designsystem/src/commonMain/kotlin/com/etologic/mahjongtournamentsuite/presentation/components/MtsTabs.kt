@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -93,9 +96,11 @@ fun MtsTab(
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs)) {
             icon?.invoke()
             val style = MaterialTheme.typography.labelMedium
+            // The labels of the tabs are in capitals, like the buttons (Ernesto, 2026-11-25). Screen readers and the
+            // tests still get the label as it is written.
             Text(
-                title,
-                Modifier.padding(horizontal = MtsTheme.spacing.xxs),
+                buttonCaps(title),
+                Modifier.padding(horizontal = MtsTheme.spacing.xxs).clearAndSetSemantics { text = AnnotatedString(title) },
                 style = style,
                 maxLines = 1,
                 softWrap = false,

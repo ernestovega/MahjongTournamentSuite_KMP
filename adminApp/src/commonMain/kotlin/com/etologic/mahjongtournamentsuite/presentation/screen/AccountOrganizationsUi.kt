@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -209,13 +210,13 @@ internal fun RemoveFromOrganizationsDialog(
                         focusRequester = confirmFocus,
                         buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
                         colors = MtsButtons.destructiveColors(),
-                    ) { Text(stringResource(Res.string.remove_from_organizations_action)) }
+                    ) { ButtonText(stringResource(Res.string.remove_from_organizations_action)) }
                     FocusedTextButton(
                         onClick = onDismiss,
                         enabled = !saving,
                         focusRequester = cancelFocus,
                         buttonModifier = Modifier.focusLoop(confirmFocus, confirmFocus),
-                    ) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -258,11 +259,11 @@ internal fun AccountRequestsCard(
                             enabled = enabled,
                             colors = MtsButtons.destructiveOutlinedColors(),
                             border = MtsButtons.destructiveBorder(enabled),
-                        ) { Text(stringResource(Res.string.account_request_approve)) }
+                        ) { ButtonText(stringResource(Res.string.account_request_approve)) }
                         FocusedTextButton(
                             onClick = { onReject(request) },
                             enabled = enabled,
-                        ) { Text(stringResource(Res.string.account_request_reject)) }
+                        ) { ButtonText(stringResource(Res.string.account_request_reject)) }
                     }
                 }
             }

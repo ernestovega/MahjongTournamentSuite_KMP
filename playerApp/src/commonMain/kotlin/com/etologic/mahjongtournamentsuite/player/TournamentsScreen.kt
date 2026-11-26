@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -177,11 +178,14 @@ fun TournamentsScreen(navController: NavHostController) {
     var standingsRevision by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
-        // The first load reads everything. The later checks ask for changes only. [PollSchedule.listDelay] sets how often.
-        // A hidden tab or an app in the background does not check. The return checks at once.
+        // Every check asks for changes only: the revision of the manifest says if the list saved on the device is still
+        // the last one, so a page load that finds it the same shows it after one request and not after two in a row.
+        // The server raises that revision for every change of the list (also its registrations and round clocks).
+        // [PollSchedule.listDelay] sets how often. A hidden tab or an app in the background does not check. The return
+        // checks at once.
         pollForChanges(
             isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
-            forceFirst = true,
+            forceFirst = false,
             load = { mode -> tournaments.listTournaments(mode) },
             nextDelay = { PollSchedule.listDelay(items, currentLocalDateTime()) },
         ) { result ->
@@ -562,7 +566,7 @@ internal fun TournamentCard(
                 // A tournament before its draw shows its registrations. The button opens the tournament on its Players tab.
                 tournament.registration?.takeIf { tournament.inRegistration }?.let { registration ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.link)
                         Column(Modifier.weight(1f)) {
                             Text(
                                 stringResource(if (registration.isOpen) Res.string.preg_open else Res.string.preg_closed),
@@ -576,14 +580,14 @@ internal fun TournamentCard(
                         }
                         // Already registered: no button. The stamp of the card says it (Ernesto, 21-nov).
                         if (registration.isOpen && mark != MyTournamentMark.REGISTERED && mark != MyTournamentMark.WAITING) {
-                            Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { Text(stringResource(Res.string.preg_register)) }
+                            Button(onClick = onClick, modifier = Modifier.testTag("tournament-register")) { ButtonText(stringResource(Res.string.preg_register)) }
                         }
                     }
                 }
                 // Only the city and the flag of the country. The exact address is behind Directions and in the Info tab.
                 if (hasCity || mapLink != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MtsTheme.colors.link)
                         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (tournament.hostCity.isNotBlank()) {
                                 Text(
@@ -653,7 +657,7 @@ internal fun TournamentCard(
                         },
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     ) {
-                        Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
+                        ButtonText(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 if (expanded) TournamentSchedule(tournament)
@@ -676,7 +680,7 @@ private fun LinkButton(icon: ImageVector, label: String, description: String? = 
     ) {
         Icon(icon, contentDescription = null, Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        ButtonText(label, style = MaterialTheme.typography.labelLarge)
     }
 }
 

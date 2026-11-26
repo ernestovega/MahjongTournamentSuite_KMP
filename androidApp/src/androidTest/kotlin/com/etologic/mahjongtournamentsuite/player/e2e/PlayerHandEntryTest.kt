@@ -40,11 +40,11 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     }
 
     @Test
-    fun addDrawOpensTheDrawDialog() {
+    fun addDrawOpensTheCheckOfTheHand() {
         openActivePlayerTable()
         c.clickButton("Add draw")
-        c.waitForText("No player wins this hand. Every seat scores zero.")
-        c.waitForText("Review")
+        c.waitForText("Check hand")
+        c.waitForText("Confirm")
         c.waitForText("Cancel")
     }
 
@@ -52,28 +52,16 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun cancelDoesNotSaveTheDraw() {
         openActivePlayerTable()
         c.clickButton("Add draw")
-        c.waitForText("Review")
-        c.clickButton("Cancel")
-        c.waitForNoText("No player wins this hand. Every seat scores zero.")
-        c.waitForText("12/16", substring = true)
-    }
-
-    @Test
-    fun reviewShowsTheTableAndEditGoesBack() {
-        openActivePlayerTable()
-        c.clickButton("Add draw")
-        c.clickButton("Review")
         c.waitForText("Check hand")
-        c.waitForText("Confirm")
-        c.clickButton("Edit")
-        c.waitForText("No player wins this hand. Every seat scores zero.")
+        c.clickButton("Cancel")
+        c.waitForNoText("Check hand")
+        c.waitForText("12/16", substring = true)
     }
 
     @Test
     fun savedDrawMovesTheTableToTheNextHand() {
         openActivePlayerTable()
         c.clickButton("Add draw")
-        c.clickButton("Review")
         c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
@@ -123,8 +111,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun penaltyDialogShowsPlayerAndPoints() {
         openActivePlayerTable()
         c.clickButton("Add penalty")
-        listOf("Penalized player", "Points", "Share it with the other players", "Add another penalty").forEach { c.waitForText(it) }
-        c.waitForText("A penalty does not end the hand. Its points count when the hand is saved.")
+        listOf("Penalized player", "Points", "Paid to the others").forEach { c.waitForText(it) }
     }
 
     @Test

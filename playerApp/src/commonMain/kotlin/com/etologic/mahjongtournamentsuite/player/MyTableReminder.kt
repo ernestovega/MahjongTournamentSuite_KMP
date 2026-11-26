@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateSto
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDateTime
@@ -308,7 +310,7 @@ internal fun MyTableButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Icon(Icons.Default.TableRestaurant, contentDescription = null)
         Spacer(Modifier.width(MtsTheme.spacing.sm))
-        Text(stringResource(Res.string.my_table_go))
+        ButtonText(stringResource(Res.string.my_table_go))
     }
 }
 
@@ -382,7 +384,7 @@ internal fun MyTableReminderDialog(
                     Text(
                         myTableReminderTime(moment),
                         // The time is what the player must see first, so it is the biggest text.
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.inTextFont(),
                         // The accent of the brand, like a table in play.
                         color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,
@@ -405,7 +407,7 @@ internal fun MyTableReminderDialog(
                         focusRequester = openRequester,
                         buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
                     ) {
-                        Text(stringResource(Res.string.my_table_go))
+                        ButtonText(stringResource(Res.string.my_table_go))
                     }
                     FocusedTextButton(
                         onClick = onDismiss,
@@ -414,7 +416,7 @@ internal fun MyTableReminderDialog(
                         focusRequester = laterRequester,
                         buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
                     ) {
-                        Text(stringResource(Res.string.my_table_dismiss))
+                        ButtonText(stringResource(Res.string.my_table_dismiss))
                     }
                 }
             },

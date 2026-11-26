@@ -7,3 +7,6 @@ testdata/registrations-export.csv -text
 
 # Google Play store images (docs/play-store/README.md), also in Git LFS.
 docs/play-store/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# App Store screenshots (docs/ios-release.md), also in Git LFS.
+docs/app-store/**/*.png filter=lfs diff=lfs merge=lfs -text

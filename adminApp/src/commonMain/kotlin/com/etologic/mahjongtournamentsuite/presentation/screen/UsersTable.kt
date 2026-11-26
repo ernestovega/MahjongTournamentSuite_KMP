@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -242,7 +243,7 @@ internal fun UserFilters(
                 singleLine = true,
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchChange("") }) { Text("×") }
+                        IconButton(onClick = { onSearchChange("") }) { ButtonText("×") }
                     }
                 },
                 modifier = if (compact) fieldModifier else Modifier.weight(1f),

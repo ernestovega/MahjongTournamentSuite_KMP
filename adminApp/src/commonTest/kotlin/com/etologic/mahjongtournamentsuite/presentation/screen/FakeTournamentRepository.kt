@@ -211,8 +211,12 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 
+    /** The refusal of the server to a Play, such as a round before that is not closed. Null starts the round. */
+    var startRefusal: ((roundId: Int, action: RoundClockAction.Start) -> AppError?)? = null
+
     override suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> {
         clockError?.let { return AppResult.Failure(it) }
+        if (action is RoundClockAction.Start) startRefusal?.invoke(roundId, action)?.let { return AppResult.Failure(it) }
         clockActions += roundId to action
         val current = roundClocks.firstOrNull { it.roundId == roundId }
         val duration = tournaments.firstOrNull { it.id == tournamentId }?.matchDurationMinutes ?: 120
@@ -247,7 +251,8 @@ internal class FakeTournamentRepository : TournamentRepository {
         var completed = 0
         tables.forEach { key ->
             this.tables[key]?.takeIf { (table, _) -> !table.isCompleted }?.let { (table, hands) ->
-                this.tables[key] = table.copy(isCompleted = true) to hands
+                // Like the server, a change of the mark is a new version of the table.
+                this.tables[key] = table.copy(isCompleted = true, version = table.version + 1) to hands
                 completed += 1
             }
         }
@@ -272,11 +277,11 @@ internal class FakeTournamentRepository : TournamentRepository {
         roundControls = (roundControls.filter { it.roundId != roundId } + updated).filter { it.isManual }.sortedBy { it.roundId }
         change.reopenTables.forEach { tableId ->
             val key = TableKey(roundId, tableId)
-            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = false) to hands }
+            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = false, version = table.version + 1) to hands }
         }
         change.completeTables.forEach { tableId ->
             val key = TableKey(roundId, tableId)
-            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = true) to hands }
+            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = true, version = table.version + 1) to hands }
         }
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }

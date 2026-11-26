@@ -131,7 +131,7 @@ internal fun RoundControlChange.toDto() = RoundControlRequestDto(
 )
 
 internal fun RoundClockAction.toDto(): RoundClockActionRequestDto = when (this) {
-    is RoundClockAction.Start -> RoundClockActionRequestDto(action = "start", agoSeconds = agoSeconds)
+    is RoundClockAction.Start -> RoundClockActionRequestDto(action = "start", agoSeconds = agoSeconds, closePrevious = closePrevious.takeIf { it })
     is RoundClockAction.Pause -> RoundClockActionRequestDto(action = "pause", agoSeconds = agoSeconds)
     is RoundClockAction.Resume -> RoundClockActionRequestDto(action = "resume", agoSeconds = agoSeconds)
     is RoundClockAction.Reset -> RoundClockActionRequestDto(action = "reset", force = force)

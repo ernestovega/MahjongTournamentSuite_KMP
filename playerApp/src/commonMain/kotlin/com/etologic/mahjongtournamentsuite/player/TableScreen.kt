@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
-import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayerNumberDigits
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -29,7 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassTop
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -59,7 +57,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,12 +69,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.BestHandIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
-import com.etologic.mahjongtournamentsuite.presentation.components.BestHandMark
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenHandMark
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
+import com.etologic.mahjongtournamentsuite.presentation.components.ProvidePlayerNumberDigits
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.playerNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberReduceMotion
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -87,6 +91,7 @@ import kotlinx.coroutines.flow.map
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
+import mahjongtournamentsuite.playerapp.generated.resources.entry_points_abbr
 import mahjongtournamentsuite.playerapp.generated.resources.hand_discard
 import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
 import mahjongtournamentsuite.playerapp.generated.resources.hand_penalty
@@ -102,7 +107,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 @Composable
 fun TableScreen(navController: NavHostController, tournamentId: String, roundId: Int, tableId: Int) {
@@ -141,6 +145,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             // The round and the table are the title. The tournament is the subtitle.
             title = stringResource(Res.string.stats_round_table, roundId, tableId),
             subtitle = view?.tournament?.name,
+            shortSubtitle = view?.tournament?.shortName,
             isLoading = view == null && message == null,
             autoFocusFirst = false,
             onBack = { navController.popBackStack() },
@@ -156,36 +161,41 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             ) {
                 MessageDialog(message)
                 if (view == null || table == null) return@ScreenColumn
-                // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.
-                HandChangeAnnouncement(changes.latest)
                 val complete = view.isFinished(table, now)
                 val handNumber = minOf(table.doneHands + 1, 16)
-                TableSeatsView(
-                    seats = table.seatsFor(view, withLevelChange = true),
-                    handNumber = handNumber,
-                    // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
-                    centerLabel = when {
-                        complete -> ""
-                        view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
-                        else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
-                    },
-                    showPoints = complete,
-                    windsKnown = table.seatsAssigned,
-                    // The switch shows whenever the tournament allows the differences, also before the first hand, but not on a
-                    // finished table: there is nothing left to catch up (Ernesto, 2026-11-25).
-                    diffsAvailable = view.tournament.showTableDiffs && !complete,
-                    // The time left of the round is at the top left, above the seats.
-                    leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
-                    animateScoreChanges = change != null,
-                    // On a table that takes hands, a tap on a player starts a hand won by that player.
-                    onPlayerClick = { slot ->
-                        if (view.canAddHands(table, now)) {
-                            preselectWinner = slot
-                        } else {
-                            navController.navigate(TournamentPlayerRoute(tournamentId, slot))
-                        }
-                    },
-                )
+                // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.
+                // The announcer shares a box with the seats: alone it would be one more item of the column, with its
+                // 16 dp gap above the row of the time left (Ernesto, 2026-11-25).
+                Box {
+                    HandChangeAnnouncement(changes.latest)
+                    TableSeatsView(
+                        seats = table.seatsFor(view, withLevelChange = true),
+                        handNumber = handNumber,
+                        // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
+                        centerLabel = when {
+                            complete -> ""
+                            view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
+                            else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
+                        },
+                        showPoints = complete,
+                        windsKnown = table.seatsAssigned,
+                        // The switch shows only while the table is in play: not before the gong, and not on a finished table
+                        // (Ernesto, 2026-11-25).
+                        diffsAvailable = view.tournament.showTableDiffs && !complete &&
+                            view.matchPhaseOf(roundId, now) != MatchPhase.NOT_STARTED,
+                        // The time left of the round is at the top left, above the seats.
+                        leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
+                        animateScoreChanges = change != null,
+                        // On a table that takes hands, a tap on a player starts a hand won by that player.
+                        onPlayerClick = { slot ->
+                            if (view.canAddHands(table, now)) {
+                                preselectWinner = slot
+                            } else {
+                                navController.navigate(TournamentPlayerRoute(tournamentId, slot))
+                            }
+                        },
+                    )
+                }
                 HandEntryPanel(
                     tournamentId = tournamentId,
                     roundId = roundId,
@@ -200,7 +210,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
                     OutlinedButton(onClick = { navController.navigate(SignInRoute()) }, Modifier.fillMaxWidth()) {
                         Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
-                        Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
+                        ButtonText(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
                     }
                 }
                 HandHistory(view, table, details, change) { details = it }
@@ -330,13 +340,10 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    // The invisible outline gives the value the size of the score pill of a hand, so both line up.
-                    ScorePill(
-                        if (receives) "+$value" else "$value",
-                        color = accent,
-                        outline = Color.Transparent,
-                        small = receives,
-                    )
+                    // In the column of the scores of the hands, so both line up.
+                    Box(Modifier.widthIn(min = ScoreColumnWidth), contentAlignment = Alignment.Center) {
+                        ScoreValue(if (receives) "+$value" else "$value", color = accent, small = receives)
+                    }
                 }
             }
         }
@@ -359,7 +366,9 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             if (kind != HandKind.DRAW) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                    // The number of the player goes before the name, small (Ernesto, 2026-11-25).
+                    SmallPlayerNumber(winnerSlot, MtsTheme.colors.gain)
                     Text(
                         view.nameOf(winnerSlot),
                         Modifier.weight(1f, fill = false),
@@ -386,6 +395,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error,
                         )
+                        SmallPlayerNumber(loserSlot, MaterialTheme.colorScheme.error)
                         // A little smaller than the winner above (Ernesto, 2026-11-25).
                         Text(
                             view.nameOf(loserSlot),
@@ -400,23 +410,26 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                 }
             }
         }
-        // The chicken and the best hand mark the winning hand, so they go under its score, which saves width.
-        // The best hand is a gold, silver or bronze hand for the three best hands of the tournament.
-        val bestHandRank = view.bestHandRank(hand)
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (kind != HandKind.DRAW) {
-                ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
-            }
-            if (hand.isChickenHand || bestHandRank != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Each mark says what it is on a touch, a long touch or a hover (Ernesto, 2026-11-25).
-                    if (hand.isChickenHand) ChickenHandMark()
-                    bestHandRank?.let { BestHandMark(it, size = 24.dp) }
+        // The chicken marks the winning hand, so it goes on the left of its score. The best hands of the tournament
+        // belong to the ranking, not to the hands of a table (Ernesto, 2026-11-25).
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // It says what it is on a touch, a long touch or a hover (Ernesto, 2026-11-25).
+            if (hand.isChickenHand) ChickenHandMark()
+            // The scores of all the hands form a column, each one centered in it (Ernesto, 2026-11-25).
+            Box(Modifier.widthIn(min = ScoreColumnWidth), contentAlignment = Alignment.Center) {
+                // A draw has no points: a dash in their place (Ernesto, 2026-11-25).
+                if (kind != HandKind.DRAW) {
+                    ScoreValue(hand.handScore, MaterialTheme.colorScheme.onSurface, withPoints = true)
+                } else {
+                    ScoreValue("-", MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
     }
 }
+
+/** The width of the column of the scores in the list of hands: a score of three digits in its pill. */
+private val ScoreColumnWidth = 80.dp
 
 /** The number of a hand, with the normal font and a "#" in front. */
 @Composable
@@ -428,19 +441,42 @@ private fun HandNumber(handId: Int) {
     )
 }
 
-/** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
+/** The number of a player as "#NN", small and in the color of the name after it. */
 @Composable
-private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean = false) {
-    Surface(shape = MtsTheme.shapes.pill, color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
+private fun SmallPlayerNumber(slot: Int?, color: Color) {
+    if (slot == null) return
+    Text(playerNumber(slot), style = MaterialTheme.typography.labelMedium.inTextFont(), color = color.copy(alpha = 0.8f))
+}
+
+/** A score without outline. The score of a hand and the value of a penalty use it, so they line up. */
+@Composable
+private fun ScoreValue(text: String, color: Color, small: Boolean = false, withPoints: Boolean = false) {
+    // No outline, and the score of a hand says "pts" below, as in the review of a hand (Ernesto, 2026-11-25).
+    Column(
+        Modifier.padding(vertical = if (small) 2.dp else MtsTheme.spacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text,
-            Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else MtsTheme.spacing.sm),
-            style = if (small) MaterialTheme.typography.titleMedium.inTextFont() else MaterialTheme.typography.titleLarge.inTextFont(),
+            style = (if (small) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge).inTextFont().tight(),
             fontWeight = FontWeight.Bold,
             color = color,
         )
+        if (withPoints) {
+            Text(
+                stringResource(Res.string.entry_points_abbr),
+                style = MaterialTheme.typography.labelSmall.inTextFont().tight(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
+
+/** A style whose line is as tall as its letters, without the room above and below. */
+private fun TextStyle.tight(): TextStyle = copy(
+    lineHeight = fontSize,
+    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+)
 
 /**
  * The way the hand was won: its icon and its name in its color, with no background (Ernesto, 2026-11-25). Only this
@@ -449,14 +485,16 @@ private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
+        // A self-draw shows the explosion, the same as in the dialogs of a hand (Ernesto, 2026-11-25).
+        if (kind == HandKind.SELF_PICK) SelfDrawIcon(18.dp) else Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
         Text(
             when (kind) {
                 HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
                 HandKind.DISCARD -> stringResource(Res.string.hand_discard)
                 HandKind.DRAW -> stringResource(Res.string.hand_draw)
             },
-            style = MaterialTheme.typography.labelLarge,
+            // The text font, as the player who discarded: the decorative font looked too heavy here (Ernesto, 2026-11-25).
+            style = MaterialTheme.typography.bodyMedium.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = accent,
             maxLines = 1,
@@ -472,9 +510,9 @@ private fun HandKind.accent(): Color = when (this) {
     HandKind.DRAW -> MtsTheme.colors.draw
 }
 
+/** The icon of a discard or a draw. A self-draw uses [SelfDrawIcon]. */
 private fun HandKind.icon(): ImageVector = when (this) {
-    HandKind.SELF_PICK -> Icons.Default.LocalFireDepartment
-    HandKind.DISCARD -> Icons.Default.SwapHoriz
+    HandKind.SELF_PICK, HandKind.DISCARD -> Icons.Default.SwapHoriz
     HandKind.DRAW -> Icons.Default.HorizontalRule
 }
 

@@ -6,8 +6,8 @@
     <string name="use_1_to_10_characters">Usa de 1 a 10 caracteres.</string>
     <string name="best_hands">Mejores manos</string>
     <string name="count_the_best_hands_and_show">Cuenta las mejores manos y las muestra en la clasificación y en las pantallas del torneo.</string>
-    <string name="chicken_hands">Manos de pollo</string>
-    <string name="count_the_chicken_hands_and_show">Cuenta las manos de pollo y las muestra en la clasificación y en las pantallas del torneo.</string>
+    <string name="chicken_hands">Manos del pollo</string>
+    <string name="count_the_chicken_hands_and_show">Cuenta las manos del pollo y las muestra en la clasificación y en las pantallas del torneo.</string>
     <string name="logo">Logotipo</string>
     <string name="reuse">Reutilizar</string>
     <string name="remove">Quitar</string>
@@ -161,7 +161,7 @@
     <string name="use_the_field_above_to_search">Usa el campo de arriba para buscar un jugador por nombre o número EMA y ver sus habilidades.</string>
     <string name="players_results">Jugadores y resultados</string>
     <string name="manual_scores">Puntuaciones manuales</string>
-    <string name="when_on_enter_each_player_s">Si está activado, introduce tú mismo la puntuación final de cada jugador.\nLas manos no cuentan (salvo para contar las manos de pollo y las mejores manos).</string>
+    <string name="when_on_enter_each_player_s">Si está activado, introduce tú mismo la puntuación final de cada jugador.\nLas manos no cuentan (salvo para contar las manos del pollo y las mejores manos).</string>
     <string name="hands">Manos</string>
     <string name="when_on_mark_the_table_complete">Si está activado, marca la mesa como completa y bloquea las manos.\nCada mano debe ser válida antes de poder activarlo.</string>
     <string name="no_hands_yet">Aún no hay manos</string>
@@ -175,7 +175,7 @@
     <string name="done">Hecha</string>
     <string name="total_scores">Puntuación</string>
     <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos.\nLas manos de oro, plata y bronce muestran las mejores manos del torneo que tiene esta mesa.</string>
-    <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos de pollo y de las mejores manos</string>
+    <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos del pollo y de las mejores manos</string>
     <string name="save_and_next_table">Guardar e ir a la mesa siguiente</string>
     <string name="preview_tournament">Vista previa del torneo</string>
     <string name="previous_round">Ronda anterior</string>
@@ -441,8 +441,8 @@
     <string name="feature_individual">Torneo individual</string>
     <string name="feature_best_on">Se cuentan las mejores manos</string>
     <string name="feature_best_off">No se cuentan las mejores manos</string>
-    <string name="feature_chicken_on">Se cuentan las manos de pollo</string>
-    <string name="feature_chicken_off">No se cuentan las manos de pollo</string>
+    <string name="feature_chicken_on">Se cuentan las manos del pollo</string>
+    <string name="feature_chicken_off">No se cuentan las manos del pollo</string>
     <string name="no_host_country">Sin país anfitrión</string>
     <string name="logo_for">Logotipo de %1$s</string>
     <string name="remove_country_filter">Quitar el filtro del país %1$s</string>
@@ -458,7 +458,7 @@
     <string name="hand_loser_without_winner">No se puede elegir un perdedor sin un ganador.</string>
     <string name="hand_score_whole">La puntuación debe ser un número entero.</string>
     <string name="hand_score_minimum">La puntuación mínima para ganar una mano es 8.</string>
-    <string name="hand_chicken_maximum">Una mano de pollo no puede valer más de 12 puntos.</string>
+    <string name="hand_chicken_maximum">Una mano del pollo no puede valer más de 12 puntos.</string>
     <string name="seat_positions_first">Elige primero las cuatro posiciones de los asientos</string>
     <string name="table_done">Hecho</string>
     <string name="edit_seats">Editar asientos</string>
@@ -489,7 +489,7 @@
     <string name="field_player_winner_id">Jugador ganador (ID)</string>
     <string name="field_player_looser_id">Jugador perdedor (ID)</string>
     <string name="field_hand_score">Puntuación de la mano</string>
-    <string name="field_is_chicken_hand">Es mano de pollo</string>
+    <string name="field_is_chicken_hand">Es mano del pollo</string>
     <string name="field_is_done">Hecha</string>
     <string name="field_player_east_penalty">Penalización del jugador este</string>
     <string name="field_player_south_penalty">Penalización del jugador sur</string>
@@ -783,6 +783,10 @@
     <string name="timer_reset_confirm_title">¿Reiniciar el reloj de la ronda?</string>
     <string name="timer_reset_confirm_message">Se borra el reloj de la ronda. Las manos guardadas se conservan, pero los jugadores no podrán añadir más hasta que vuelvas a pulsar Iniciar. Para conservar el tiempo jugado, usa «La ronda empezó antes» al iniciarla.</string>
     <string name="timer_reset_confirm">Reiniciar</string>
+    <string name="round_close_previous_title">¿Empezar la ronda %1$s?</string>
+    <string name="round_close_previous_message">La ronda %1$s aún tiene mesas abiertas: %2$s.\nSe cerrarán con las manos que tengan. Podrás corregirlas después en el editor de mesas.</string>
+    <string name="round_close_previous_never_started">La ronda %1$s nunca empezó. Sus mesas %2$s se cerrarán sin resultados.</string>
+    <string name="round_close_previous_confirm">Cerrarlas y empezar</string>
     <string name="timer_tournament_completed">El torneo está completado. Sus relojes no se pueden cambiar.</string>
     <string name="timer_late_start">La ronda debía empezar a las %1$s.\nPulsa Iniciar cuando suene el gong. Hasta entonces, los jugadores no pueden añadir manos.</string>
     <string name="timer_stop">Terminar la ronda</string>

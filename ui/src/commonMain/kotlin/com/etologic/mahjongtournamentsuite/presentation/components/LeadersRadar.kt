@@ -281,7 +281,7 @@ private fun CornerBlock(corner: LeaderCorner, names: Map<Int, String>, photos: M
                 style = MaterialTheme.typography.bodyMedium.inTextFont(),
                 fontWeight = FontWeight.Bold,
                 // A name in the color of the links shows that the player opens.
-                color = MaterialTheme.colorScheme.primary,
+                color = MtsTheme.colors.link,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["PG2F9TPVFV.com.etologic.mahjongtournamentsuite"],
+        "components": [
+          { "/": "/privacy/*", "exclude": true, "comment": "The privacy policy opens in the browser." },
+          { "/": "/green-book/*", "exclude": true, "comment": "The Green Book PDFs." },
+          { "/": "/api/*", "exclude": true },
+          { "/": "/api-docs/*", "exclude": true },
+          { "/": "/version*", "exclude": true },
+          { "/": "/*.*", "exclude": true, "comment": "Files of the site: scripts, images, documents." },
+          { "/": "/*", "comment": "Every other address is the app: the tournaments, a tournament, a registration, the table QR, support and management. docs/table-qr.md." }
+        ]
+      }
+    ]
+  }
+}

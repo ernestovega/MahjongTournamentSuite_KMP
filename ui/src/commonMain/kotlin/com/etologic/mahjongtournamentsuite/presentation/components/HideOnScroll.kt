@@ -26,18 +26,30 @@ class HideOnScrollState(private val hideDistancePx: Float) {
     var visible by mutableStateOf(true)
         private set
 
-    /** The distance that the content scrolled down since the last change of direction. */
+    /** The distance that the content scrolled down since the rows last showed. */
     private var scrolledDown = 0f
+
+    /** The distance that the finger moved down since it last moved up. */
+    private var scrolledUp = 0f
 
     fun show() {
         visible = true
         scrolledDown = 0f
+        scrolledUp = 0f
     }
 
     internal val connection = object : NestedScrollConnection {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-            // A drag down shows the rows, also at the top, where the content does not move.
-            if (available.y > 0f) show()
+            // A drag down shows the rows, also at the top, where the content does not move. A small move back, as the
+            // finger stops or lifts at the end of a long drag up, does not: the rows show after the same distance
+            // that hides them.
+            when {
+                available.y > 0f -> {
+                    scrolledUp += available.y
+                    if (scrolledUp > hideDistancePx) show()
+                }
+                available.y < 0f -> scrolledUp = 0f
+            }
             return Offset.Zero
         }
 

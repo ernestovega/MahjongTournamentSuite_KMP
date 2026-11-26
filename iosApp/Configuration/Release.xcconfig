@@ -1,0 +1,9 @@
+#include "Config.xcconfig"
+// The build for TestFlight and the App Store.
+PRODUCT_BUNDLE_IDENTIFIER = com.etologic.mahjongtournamentsuite
+APP_DISPLAY_NAME = MTS
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+MTS_BACKEND_URL =
+MTS_ENVIRONMENT = prod
+KOTLIN_FRAMEWORK_BUILD_TYPE = release
+APP_ATTEST_ENVIRONMENT = production

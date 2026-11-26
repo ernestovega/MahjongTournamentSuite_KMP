@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -21,8 +20,8 @@ fun SignOutConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             text = { MtsDialogText(stringResource(Res.string.sign_out_message)) },
             confirmButton = {
                 MtsDialogButtons {
-                    DebouncedButton(onClick = onConfirm) { Text(stringResource(Res.string.sign_out_confirm)) }
-                    AppTextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+                    DebouncedButton(onClick = onConfirm) { ButtonText(stringResource(Res.string.sign_out_confirm)) }
+                    AppTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

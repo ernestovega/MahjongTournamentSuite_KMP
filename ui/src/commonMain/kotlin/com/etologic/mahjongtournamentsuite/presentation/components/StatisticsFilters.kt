@@ -41,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsGroupFilter
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -76,7 +77,8 @@ import org.jetbrains.compose.resources.stringResource
  * The filters of the statistics screen, the same in both apps. They combine. A null field keeps everything.
  *
  * - [emaId]: one person, over the tournaments that the other filters keep.
- * - [rivalEmaId]: with [emaId], only the tables of the person against this rival.
+ * - [rivalEmaId]: with [emaId], the person compared with this other player, who may have never played with the person.
+ * - [together]: with [rivalEmaId], only the tables where the two played together. Without it, all the tables of each one.
  * - [slotId]: one seat of [tournamentId] without an EMA number, such as a guest.
  * - [tournamentId]: one tournament.
  * - [tournamentCountry]: the two-letter code of the country where the tournaments were played.
@@ -88,6 +90,7 @@ import org.jetbrains.compose.resources.stringResource
 data class StatisticsFilters(
     val emaId: String? = null,
     val rivalEmaId: String? = null,
+    val together: Boolean = false,
     val slotId: Int? = null,
     val tournamentId: String? = null,
     val tournamentCountry: String? = null,
@@ -128,6 +131,7 @@ data class StatisticsFilters(
     fun withPerson(emaId: String): StatisticsFilters = copy(
         emaId = emaId,
         rivalEmaId = rivalEmaId?.takeIf { it != emaId && emaId == this.emaId },
+        together = together && rivalEmaId != null && rivalEmaId != emaId && emaId == this.emaId,
         slotId = null,
         playerCountry = null,
         roundId = null,
@@ -138,6 +142,7 @@ data class StatisticsFilters(
     fun encode(): String = listOfNotNull(
         emaId?.let { "player=$it" },
         rivalEmaId?.let { "rival=$it" },
+        "together=1".takeIf { together && rivalEmaId != null },
         slotId?.let { "slot=$it" },
         tournamentId?.let { "tournament=$it" },
         tournamentCountry?.let { "tournamentCountry=$it" },
@@ -155,6 +160,7 @@ data class StatisticsFilters(
             return StatisticsFilters(
                 emaId = values["player"]?.takeIf { it.isNotBlank() },
                 rivalEmaId = values["rival"]?.takeIf { it.isNotBlank() && values["player"]?.isNotBlank() == true },
+                together = values["together"] == "1",
                 slotId = values["slot"]?.toIntOrNull(),
                 tournamentId = values["tournament"]?.takeIf { it.isNotBlank() },
                 tournamentCountry = values["tournamentCountry"]?.takeIf { it.isNotBlank() },
@@ -195,7 +201,8 @@ private const val NO_COUNTRY_KEY = "-"
 /**
  * The row of the active filters of the statistics, each one a chip that removes it, and the button that opens the
  * filters dialog. [players] and [tournaments] give the names and the choices. [slotName] is the name of the seat
- * of [StatisticsFilters.slotId].
+ * of [StatisticsFilters.slotId]. [opponents] are the EMA numbers of the players who shared a table with the person of
+ * [StatisticsFilters.emaId]: they come first in the list of the players to compare with. See [opponentsOf].
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -207,6 +214,7 @@ fun StatisticsFilterBar(
     modifier: Modifier = Modifier,
     slotName: String? = null,
     maxWidth: Dp = 720.dp,
+    opponents: Set<String> = emptySet(),
 ) {
     var editing by remember { mutableStateOf(false) }
     val chips = filterChips(filters, players, tournaments, slotName)
@@ -228,7 +236,7 @@ fun StatisticsFilterBar(
             DebouncedOutlinedButton(onClick = { editing = true }) {
                 Icon(Icons.Default.FilterList, contentDescription = null, Modifier.size(18.dp))
                 Spacer(Modifier.width(MtsTheme.spacing.sm))
-                Text(stringResource(Res.string.stats_filters), maxLines = 1)
+                ButtonText(stringResource(Res.string.stats_filters), maxLines = 1)
             }
         }
     }
@@ -237,6 +245,7 @@ fun StatisticsFilterBar(
             filters = filters,
             players = players,
             tournaments = tournaments,
+            opponents = opponents,
             onApply = {
                 editing = false
                 onChange(it)
@@ -264,7 +273,7 @@ private fun filterChips(filters: StatisticsFilters, players: List<Player>, tourn
         filters.rivalEmaId?.takeIf { filters.emaId != null }?.let { ema ->
             val rival = players.firstOrNull { it.emaId == ema }
             val name = rival?.displayName ?: "EMA $ema"
-            add(Chip(stringResource(Res.string.stats_chip_rival, name), { CountryFlag(rival?.country.orEmpty(), width = 20.dp) }) { it.copy(rivalEmaId = null) })
+            add(Chip(stringResource(Res.string.stats_chip_rival, name), { CountryFlag(rival?.country.orEmpty(), width = 20.dp) }) { it.copy(rivalEmaId = null, together = false) })
         }
         if (filters.emaId == null && filters.slotId != null) {
             add(Chip(slotName ?: "#${filters.slotId}", { CountryFlag("", width = 20.dp) }) { it.copy(slotId = null) })
@@ -319,6 +328,8 @@ internal fun StatisticsFiltersDialog(
     tournaments: List<Tournament>,
     onApply: (StatisticsFilters) -> Unit,
     onDismiss: () -> Unit,
+    /** The opponents of the person of [filters]. See [StatisticsFilterBar]. */
+    opponents: Set<String> = emptySet(),
 ) {
     var draft by remember { mutableStateOf(filters) }
     val anyPlayer = stringResource(Res.string.stats_filter_any_player)
@@ -344,9 +355,16 @@ internal fun StatisticsFiltersDialog(
         listOf(SelectOption(ANY, anyPlayer)) +
             sortedOptions.filter { (player, _) -> countryOfPlayers == null || player.country.equals(countryOfPlayers, ignoreCase = true) || player.emaId == draft.emaId }.map { it.second }
     }
-    val rivalOptions = remember(sortedOptions, draft.emaId, anyRival) {
-        listOf(SelectOption(ANY, anyRival)) + sortedOptions.filter { (player, _) -> player.emaId != draft.emaId }.map { it.second }
+    // The person can be compared with any other player with an EMA number. The players who shared a table with the
+    // person come first. They are known only for the person on the screen.
+    val rivalOptions = remember(sortedOptions, opponents, draft.emaId, filters.emaId, anyRival) {
+        val known = if (draft.emaId == filters.emaId) opponents else emptySet()
+        listOf(SelectOption(ANY, anyRival)) +
+            sortedOptions.filter { (player, _) -> player.emaId.isNotBlank() && player.emaId != draft.emaId }
+                .sortedBy { (player, _) -> player.emaId !in known }
+                .map { it.second }
     }
+    val showRival = draft.emaId != null && rivalOptions.size > 1
     // The country and the years of the tournaments narrow the list of the tournaments.
     val tournamentOptions = listOf(SelectOption(ANY, allTournaments)) +
         tournaments.filter { it.id == draft.tournamentId || draft.copy(tournamentId = null).keeps(it) }
@@ -376,21 +394,21 @@ internal fun StatisticsFiltersDialog(
                         stringResource(Res.string.stats_filter_player),
                         playerOptions,
                         draft.emaId ?: ANY,
-                        { ema -> draft = if (ema == ANY) draft.copy(emaId = null, rivalEmaId = null) else draft.withPerson(ema) },
+                        { ema -> draft = if (ema == ANY) draft.copy(emaId = null, rivalEmaId = null, together = false) else draft.withPerson(ema) },
                         Modifier.fillMaxWidth(),
                         // The menu composes all its items. The search finds the players that it does not show.
                         maxShown = SELECT_MAX_SHOWN,
                     )
-                    SelectField(
-                        stringResource(Res.string.stats_filter_rival),
-                        rivalOptions,
-                        draft.rivalEmaId ?: ANY,
-                        { ema -> draft = draft.copy(rivalEmaId = ema.takeIf { it != ANY }) },
-                        Modifier.fillMaxWidth(),
-                        // A rival is a rival of the chosen player.
-                        enabled = draft.emaId != null,
-                        maxShown = SELECT_MAX_SHOWN,
-                    )
+                    if (showRival) {
+                        SelectField(
+                            stringResource(Res.string.stats_filter_rival),
+                            rivalOptions,
+                            draft.rivalEmaId ?: ANY,
+                            { ema -> draft = draft.copy(rivalEmaId = ema.takeIf { it != ANY }, together = false) },
+                            Modifier.fillMaxWidth(),
+                            maxShown = SELECT_MAX_SHOWN,
+                        )
+                    }
                     SelectField(
                         stringResource(Res.string.stats_filter_tournament),
                         tournamentOptions,
@@ -446,10 +464,14 @@ internal fun StatisticsFiltersDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    DebouncedButton(onClick = { onApply(draft) }) { Text(stringResource(Res.string.stats_filter_apply)) }
-                    DebouncedTextButton(onClick = { draft = StatisticsFilters() }) { Text(stringResource(Res.string.stats_filter_clear)) }
+                    DebouncedButton(onClick = { onApply(draft) }) { ButtonText(stringResource(Res.string.stats_filter_apply)) }
+                    DebouncedTextButton(onClick = { draft = StatisticsFilters() }) { ButtonText(stringResource(Res.string.stats_filter_clear)) }
                 }
             },
         )
     }
 }
+
+/** The EMA numbers of the players who shared a table with the person of [data]. Guests without EMA are left out. */
+fun opponentsOf(data: PersonStatisticsData?): Set<String> =
+    data?.overall?.results.orEmpty().flatMap { it.rivals }.map { it.opponent }.filter { '#' !in it && it != data?.emaId }.toSet()

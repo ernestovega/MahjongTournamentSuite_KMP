@@ -25,11 +25,13 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
 import com.etologic.mahjongtournamentsuite.domain.model.OwnRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationStatus
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.player.RANKING_ROUND_BUTTON_TAG
 import com.etologic.mahjongtournamentsuite.player.RankingShareDialog
 import com.etologic.mahjongtournamentsuite.player.SharedRankingLine
@@ -48,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.player.RoundMoment
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
+import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
 import com.etologic.mahjongtournamentsuite.player.TableScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentCard
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
@@ -422,6 +425,35 @@ class PlayerScreensScreenshotTest {
         TableScreen(nav, ONGOING, roundId = 3, tableId = 1)
     }
 
+    // A table of a round that has not started: the start time above the seats, and no Diffs switch until the gong.
+    @Test
+    fun tableNotStarted() = playerScreenshots(
+        "table-not-started",
+        modules = { playerModules(tournaments = SeatsOpenTournamentRepository()) },
+        ready = { waitForText("PIERRE MOREAU", substring = true) },
+    ) { nav ->
+        TableScreen(nav, ONGOING, roundId = 4, tableId = 1)
+    }
+
+    // The seats dialog with two seats picked: the picked players on the left with the icon of their wind, and Cancel
+    // under Start again.
+    @Test
+    fun seatsDialog() = playerScreenshots(
+        "seats-dialog",
+        modules = { playerModules(tournaments = SeatsOpenTournamentRepository()) },
+        ready = {
+            waitForText("PIERRE MOREAU", substring = true)
+            onAllNodesWithText(playerText("seats_change")).onFirst().performClick()
+            repeat(2) {
+                waitUntil(timeoutMillis = 10_000) { onAllNodesWithTag(SEAT_OPTION_TAG).fetchSemanticsNodes().isNotEmpty() }
+                onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
+            }
+            waitForText(playerText("seats_restart"))
+        },
+    ) { nav ->
+        TableScreen(nav, ONGOING, roundId = 4, tableId = 1)
+    }
+
     @Test
     fun combinations() = playerScreenshots("combinations", ready = { waitForText(playerText("comb_pure_double_chow")) }) { nav -> CombinationsScreen(nav) }
 
@@ -507,3 +539,14 @@ internal open class MineTournamentRepository :
         ),
     )
 }
+
+/**
+ * The dates of the screenshots are in the past, so round 4 of [ONGOING], which never got its gong, is over for the
+ * players. An organizer opened its seats by hand, so the table before the gong and its seats dialog still show.
+ */
+internal class SeatsOpenTournamentRepository :
+    ScreenshotTournamentRepository(
+        tournaments = ScreenshotData.tournaments.map {
+            if (it.id == ONGOING) it.copy(roundControls = listOf(RoundControl(4, seats = ControlMode.OPEN))) else it
+        },
+    )

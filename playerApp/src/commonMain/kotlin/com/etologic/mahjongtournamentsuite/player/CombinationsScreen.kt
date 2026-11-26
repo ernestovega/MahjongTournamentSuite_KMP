@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -74,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScr
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.rememberOpenLink
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.allStringResources
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_close
@@ -369,9 +371,9 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
                             modifier = CompactButton,
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
                             contentPadding = CompactButtonPadding,
-                        ) { Text("www.martinpersson.org") }
+                        ) { ButtonText("www.martinpersson.org") }
                         TextButton(onClick = onDismiss, modifier = CompactButton, contentPadding = CompactButtonPadding) {
-                            Text(stringResource(Res.string.combinations_close))
+                            ButtonText(stringResource(Res.string.combinations_close))
                         }
                     }
                 }
@@ -419,7 +421,7 @@ private fun CombinationTools(query: String, onQuery: (String) -> Unit, showAll: 
                 ) {
                     Icon(icon, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(label)
+                    ButtonText(label)
                 }
             } else {
                 IconButton(
@@ -489,7 +491,7 @@ private fun PointsChips(counts: Map<Int, Int>, selected: List<Int>, onToggle: (I
                 },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
             ) {
-                Text("${pluralStringResource(Res.plurals.combinations_points, points, points)} ($count)")
+                ButtonText("${pluralStringResource(Res.plurals.combinations_points, points, points)} ($count)")
             }
         }
     }
@@ -630,7 +632,7 @@ internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) 
                             Modifier.fillMaxWidth(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MtsTheme.colors.link,
                             textAlign = TextAlign.Center,
                         )
                         if (combination.groups.isNotEmpty()) {
@@ -664,7 +666,7 @@ internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) { Text(stringResource(Res.string.combinations_close)) }
+                        TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.combinations_close)) }
                     }
                 }
             }

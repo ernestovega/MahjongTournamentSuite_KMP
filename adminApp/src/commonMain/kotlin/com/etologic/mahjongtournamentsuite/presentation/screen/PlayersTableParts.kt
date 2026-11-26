@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -108,7 +109,7 @@ internal fun PlayerRoundTablesToggle(
     val icon = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore
     if (showLabel) {
         TextButton(onClick = onToggle, modifier = Modifier.testTag(PlayerRoundTablesToggleTag)) {
-            Text(label, maxLines = 1)
+            ButtonText(label, maxLines = 1)
             Spacer(Modifier.width(4.dp))
             Icon(icon, contentDescription = null)
         }

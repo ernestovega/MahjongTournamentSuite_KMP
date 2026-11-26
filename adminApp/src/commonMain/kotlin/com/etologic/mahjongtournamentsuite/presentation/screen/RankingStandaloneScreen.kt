@@ -89,6 +89,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
@@ -298,7 +299,7 @@ private fun RankingStandaloneContent(
                 if (playing) {
                     Text(
                         text = remainingSeconds.toString(),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold).inTextFont(),
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(16.dp),
@@ -606,7 +607,7 @@ private fun RankingPage(
                     fontSize = fontSize,
                     lineHeight = (fontSize.value + 2f).sp,
                     fontWeight = FontWeight.Bold,
-                )
+                ).inTextFont()
             }
             // The photo is as tall as a line of text, so it does not change the rows that fit on a page.
             val photoSize = with(androidx.compose.ui.platform.LocalDensity.current) { textStyle.lineHeight.toDp() }

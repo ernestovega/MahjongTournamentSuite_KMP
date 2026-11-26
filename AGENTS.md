@@ -7,12 +7,9 @@ This repository is a Kotlin Multiplatform application for `MahjongTournamentSuit
 Supported targets:
 
 - Android
+- iOS (in progress, see `docs/ios-release.md`)
 - Desktop (JVM)
 - Web (Wasm)
-
-Not in scope:
-
-- iOS
 
 The backend is a Firebase Cloud Function with an Express API in `firebase/functions` (TypeScript). See `docs/backend.md`.
 
@@ -52,6 +49,12 @@ The project uses a simple Clean Architecture split:
   - Android application entry point only
   - `androidApp` (`com.etologic.mahjongtournamentsuite`) is the one Android app of the suite: it opens `playerApp` and
     switches to `adminApp` for admins and editors (`SuiteRoot`). See `docs/android-release.md`.
+
+- `suite`
+  - `SuiteRoot`, shared by the Android app and the iOS app, and the `Shared` framework of iOS (`iosMain`)
+
+- `iosApp`
+  - the Xcode project of the iOS app: SwiftUI entry point, Firebase SDKs, icons, Info.plist. See `docs/ios-release.md`.
 
 - `firebase`
   - Cloud Functions API, Firestore and Storage rules (clients never read Firestore directly), indexes
@@ -219,6 +222,8 @@ Apply these rules to every new or changed dialog:
 - Use the `Debounced*` buttons (`DebouncedButton`, `DebouncedTextButton`, `DebouncedOutlinedButton`, `DebouncedIconButton`, `DebouncedExtendedFloatingActionButton`) for the same look and layout as the Material button.
 - Import them with an alias, for example `import ...components.DebouncedButton as Button`.
 - Never import a raw Material button. `ButtonConventionTest` fails when a source file does.
+- The text of a button is `ButtonText`, never `Text`: every button shows its text in capitals, while screen readers
+  and tests get the text as written. `ButtonTextConventionTest` fails when a button content uses `Text`.
 - Menu items, chips that toggle a filter, checkboxes and switches have no threshold on purpose. They must stay fast to use.
 
 ## Checkboxes, Switches And Radio Buttons

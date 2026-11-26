@@ -34,6 +34,9 @@ kotlin {
     // The JVM target only runs the tests of the shared code.
     jvm()
 
+    iosArm64()
+    iosSimulatorArm64()
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
@@ -41,6 +44,16 @@ kotlin {
     }
 
     sourceSets {
+        // The UI tests that run on the desktop and on the iOS simulator alike (docs/ios-release.md).
+        jvmTest { kotlin.srcDir("src/uiTest/kotlin") }
+        iosTest {
+            kotlin.srcDir("src/uiTest/kotlin")
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.compose.ui.test)
+            }
+        }
         commonMain.dependencies {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.lifecycle.runtime.compose)

@@ -53,4 +53,28 @@ class MtsFontsTest {
     fun theLicenseOfTheCyrillicFontIsInTheRepository() {
         assertTrue(File("licenses/RussoOne-OFL.txt").readText().contains("SIL Open Font License"))
     }
+
+    @Test
+    fun onlyTheBigTitlesUseTheDecorativeFont() {
+        Locale.setDefault(Locale.ENGLISH)
+        var typography: androidx.compose.material3.Typography? = null
+        var title: FontFamily? = null
+        var scoreLarge: FontFamily? = null
+        runComposeUiTest {
+            setContent {
+                MtsTheme {
+                    typography = androidx.compose.material3.MaterialTheme.typography
+                    title = GangOfThreeFontFamily()
+                    scoreLarge = MtsTheme.typography.scoreLarge.fontFamily
+                }
+            }
+            waitForIdle()
+        }
+        val t = typography!!
+        // Titles of screens, dialogs and sections (Ernesto, 2026-11-25).
+        for (style in listOf(t.displayLarge, t.headlineSmall, t.titleLarge, t.titleMedium)) assertEquals(title, style.fontFamily)
+        // Content and actions: small titles, buttons, chips, tabs and fields.
+        for (style in listOf(t.titleSmall, t.labelLarge, t.labelMedium, t.labelSmall, t.bodyLarge, t.bodyMedium)) assertNotEquals(title, style.fontFamily)
+        assertEquals(FontFamily.Default, scoreLarge)
+    }
 }

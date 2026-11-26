@@ -40,9 +40,25 @@ When a clock starts, resumes or changes its time left, the server plans the clos
 
 The Timer shows an action at once and says "No connection". It sends the action again every few seconds, with the time that passed since the press (`agoSeconds`, or a smaller `remainingSeconds`), so the server applies it at the instant of the press. The server accepts a delay of up to 10 minutes for a pause or a resume.
 
+## One round at a time
+
+A round starts only once the round before it is closed (Ernesto, 2026-11-25). The server checks it on every Play
+(`POST /tournaments/{id}/rounds/{roundId}/clock`, action `start`), also with "The round started earlier":
+
+- While the round before plays, is paused or is in its extra time and has open tables, the Play answers `409`
+  `PREVIOUS_ROUND_IN_PLAY` (`details.roundId`, `details.tables`). The Timer and Round control say "Round N is still in
+  play. Stop it before starting the next round."
+- When every table of the round before finished before its time, the Play ends it at once (as Stop) and starts the round.
+- When the time of the round before is over (or it never started) but it has open tables, the Play answers `409`
+  `PREVIOUS_ROUND_OPEN_TABLES` (`details.roundId`, `details.tables`, `details.started`). The screen asks "Start round
+  N?" with the tables and "Close them and start" (red), which sends the Play again with `"closePrevious": true`: the
+  server completes those tables, as the review of Round control does, and starts the round.
+- A table with a pending problem is closed like the others and corrected later in the table editor, which edits
+  completed tables. A Play of a round that already started is never refused.
+
 ## Seats before the round
 
-A player of a table can set the four seats from 10 minutes before the planned start, or once the round started, until the first saved hand or penalty, while the round is not over (`POST /player/tournaments/{id}/tables/{roundId}/{tableId}/seats`). The player picks East, South and West; the player who is left takes North. The button says "Change the seats" once they are set. Organizers can still set seats at any time.
+A player of a table can set the four seats from 10 minutes before the planned start, or once the round started, until the first saved hand or penalty, while the round is not over (`POST /player/tournaments/{id}/tables/{roundId}/{tableId}/seats`). A round that never got its gong is over for the players once its planned match time (plus the extra time of "Finish the hand") has passed, once a later round has started, or once the tournament is completed: the seats answer `SEATS_TIME_OVER`, the hands `ROUND_TIME_OVER`, and the table shows "The time of this match is over". Before the 10 minutes the table says when the seats open. A gong after the planned time opens the round again for its whole match. The window is computed on every request from the current data, so a new planned time, a new match duration, time added on the Timer, a pause, a Stop, a Reset (the round waits for a new gong) or another time zone apply at once. A tournament without a time zone has no planned instant: only a later round or the end of the tournament closes a round without gong. The player picks East, South and West; the player who is left takes North. The button says "Change the seats" once they are set. Organizers can still set seats at any time.
 
 ## Reminder of the own table (player app)
 
@@ -75,7 +91,7 @@ While the clock runs, the screen hides all controls except Pause. The other cont
 
 ## Round control (plan B)
 
-The "Round control" button of the tournament screen (admins and the editors of the tournament) opens a wide dialog that works without the Timer. On top, one chip per round with the status icon of its tables and a play mark on the round whose clock runs. Below, the clock (an ended round shows its time and "Time is over" in red, like the Timer), "What the players can do" (hand entry and seats: Follow the clock, Open or Closed) and the tables. Info buttons explain each part. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
+The "Round control" button of the tournament screen (admins and the editors of the tournament) opens a screen of its own that works without the Timer (it was a dialog over the table editor: a table it closed popped up the "Table updated" notice of the editor behind it; now the tournament screen loads the tables again when the admin goes back). On top, one chip per round with the status icon of its tables and a play mark on the round whose clock runs. Below, the clock (an ended round shows its time and "Time is over" in red, like the Timer), "What the players can do" (hand entry and seats: Follow the clock, Open or Closed) and the tables. Info buttons explain each part. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
 
 The control lives in the tournament document, apart from the settings:
 
@@ -126,7 +142,7 @@ Closing a Timer does not stop the round: the clock lives on the server.
 ## Main source files
 
 - `firebase/functions/src/services/roundClock.ts`, `roundClockService.ts`, `roundControl.ts`, `matchTime.ts`, `matchTimeTaskService.ts`
-- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundControlDialog.kt`
+- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundControlScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt`
 - `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundTimerController.kt`
 - `playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTime.kt`, `SeatsAssignment.kt`, `HandEntryPanel.kt`

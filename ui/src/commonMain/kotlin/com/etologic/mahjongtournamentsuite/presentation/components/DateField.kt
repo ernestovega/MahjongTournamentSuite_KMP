@@ -63,9 +63,9 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, modifier
                             state.selectedDateMillis?.let { onChange(epochMillisToIsoDate(it)) }
                             open = false
                         },
-                    ) { Text(stringResource(Res.string.action_ok)) }
+                    ) { ButtonText(stringResource(Res.string.action_ok)) }
                 },
-                dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(Res.string.action_cancel)) } },
+                dismissButton = { TextButton(onClick = { open = false }) { ButtonText(stringResource(Res.string.action_cancel)) } },
             ) { DatePicker(state = state) }
         }
     }

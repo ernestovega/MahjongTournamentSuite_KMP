@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -153,7 +154,7 @@ internal fun TournamentContent(
                             border = MtsButtons.destructiveBorder(enabled),
                         ) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.reset_table), Modifier.padding(start = 8.dp))
+                            ButtonText(stringResource(Res.string.reset_table), Modifier.padding(start = 8.dp))
                         }
                     }
                 }
@@ -218,13 +219,13 @@ internal fun TournamentContent(
                             modifier = Modifier.focusRequester(saveFocusRequester),
                             containerColor = accent,
                             contentColor = MaterialTheme.colorScheme.onTertiary,
-                        ) { Text(stringResource(Res.string.save)) }
+                        ) { ButtonText(stringResource(Res.string.save)) }
                         if (roundTableCount > 1) {
                             ExtendedFloatingActionButton(
                                 onClick = { onSaveAndNext(tableId) },
                                 containerColor = accent,
                                 contentColor = MaterialTheme.colorScheme.onTertiary,
-                            ) { Text(stringResource(Res.string.save_and_next_table)) }
+                            ) { ButtonText(stringResource(Res.string.save_and_next_table)) }
                         }
                     }
                 }
@@ -326,7 +327,7 @@ private fun RoundTableStrip(
                     enabled = enabled,
                     focusRequester = roundFocusRequester,
                 ) {
-                    Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
+                    ButtonText(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(8.dp))
                     StatusIconWithTooltip(roundStatus)
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)

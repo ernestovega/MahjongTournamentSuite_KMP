@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -114,6 +115,8 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         handPatches: Map<Int, Map<String, Any?>>,
     ) = unusedFakeResult<Pair<TableState, List<TableHand>>>()
 
+    override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> = server.answer("clocks", null) { AppResult.Failure(AppError.Network) }
+
     override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> = server.manifests[tournamentId]?.let { AppResult.Success(it) } ?: AppResult.Failure(AppError.Network)
 
     override suspend fun createTournament(request: CreateTournamentRequest) = unusedFakeResult<Tournament>()
@@ -212,7 +215,7 @@ class PlayerTournamentLoadTest {
         val load = async { presenter.load("t1") }
         runCurrent()
 
-        assertEquals(setOf("revisions", "tournaments", "players", "registry", "tables", "me"), server.started.toSet())
+        assertEquals(setOf("revisions", "clocks", "tournaments", "players", "registry", "tables", "me"), server.started.toSet())
         server.release()
         assertIs<AppResult.Success<PlayerTournamentView>>(load.await())
     }
@@ -223,13 +226,14 @@ class PlayerTournamentLoadTest {
         val load = async { presenter.load("t1") }
         runCurrent()
 
-        assertEquals(listOf("revisions"), server.started)
+        // The clocks need no revision, so they do not wait for them.
+        assertEquals(listOf("revisions", "clocks"), server.started)
 
         server.revisionsGate.complete(Unit)
         runCurrent()
 
         assertEquals("revisions", server.started.first())
-        assertEquals(setOf("tournaments", "players", "registry", "tables", "me"), server.started.drop(1).toSet())
+        assertEquals(setOf("clocks", "tournaments", "players", "registry", "tables", "me"), server.started.drop(1).toSet())
         server.release()
         assertIs<AppResult.Success<PlayerTournamentView>>(load.await())
         assertEquals(1, server.started.count { it == "revisions" })

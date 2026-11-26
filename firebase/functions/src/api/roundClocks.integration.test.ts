@@ -97,11 +97,52 @@ describe("the clocks of the rounds", () => {
 
   it("resets a round without hands at once", async () => {
     const tournamentId = await seedClockTournament();
-    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null });
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null });
 
-    const reset = await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "reset" }, actor: null });
+    const reset = await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "reset" }, actor: null });
 
     assert.deepEqual(reset.roundClocks, []);
+  });
+
+  it("starts a round only once the round before is closed", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    const refusedWith = (code: string, tables: number[]) => (error: unknown) => error instanceof HttpError && error.status === 409
+      && (error.details as { code?: string })?.code === code
+      && JSON.stringify((error.details as { tables?: number[] })?.tables) === JSON.stringify(tables);
+    const play2 = (extra: { closePrevious?: boolean; nowMs?: number } = {}) =>
+      updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, ...extra });
+
+    // Round 1 never started and its table is open.
+    await assert.rejects(play2(), refusedWith("PREVIOUS_ROUND_OPEN_TABLES", [1]));
+    // Round 1 plays, then pauses: Play of round 2 waits for its Stop, even with closePrevious.
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+    await assert.rejects(play2({ nowMs: now }), refusedWith("PREVIOUS_ROUND_IN_PLAY", [1]));
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "pause", agoMs: 0 }, actor: null, nowMs: now });
+    await assert.rejects(play2({ closePrevious: true, nowMs: now + MIN }), refusedWith("PREVIOUS_ROUND_IN_PLAY", [1]));
+    // Stopped, round 1 is over but its empty table stays open: closePrevious completes it, and round 2 starts.
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "stop" }, actor: null, nowMs: now + 2 * MIN });
+    await assert.rejects(play2({ nowMs: now + 3 * MIN }), refusedWith("PREVIOUS_ROUND_OPEN_TABLES", [1]));
+    const started = await play2({ closePrevious: true, nowMs: now + 3 * MIN });
+
+    assert.deepEqual(started.roundClocks.map((clock) => clock.roundId), [1, 2]);
+    assert.equal((await tableState(tournamentId, 1)).completed, true);
+    // A second Play of a round that started is never refused.
+    await play2({ nowMs: now + 4 * MIN });
+  });
+
+  it("ends the round before at once when every table of it finished early", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+    await db.doc(`tournaments/${tournamentId}/tables/1_1`).update({ isCompleted: true });
+
+    const answer = await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now });
+
+    const round1 = answer.roundClocks.find((clock) => clock.roundId === 1);
+    // Stopped now: 30 minutes played, so the match time is over at once (STOP mode, no extra time).
+    assert.equal(round1 != null && round1.startedAtMs + round1.pausedMs + 120 * MIN + round1.adjustMs <= now, true);
+    assert.deepEqual(answer.roundClocks.map((clock) => clock.roundId), [1, 2]);
   });
 
   it("refuses an unknown round, a completed tournament and a pause before the start", async () => {
@@ -115,6 +156,11 @@ describe("the clocks of the rounds", () => {
     await assert.rejects(getRoundClocks("missing-tournament"), status(404));
   });
 });
+
+/** Opens table 1 of the round again, as an organizer does in Round control to fill a hand later. */
+async function reopenForTheOrganizer(tournamentId: string, roundId: number): Promise<void> {
+  await db.doc(`tournaments/${tournamentId}/tables/${roundId}_1`).update({ isCompleted: false, matchTimeChecked: false });
+}
 
 /** Gives table 1 of the round one played hand, as a player or an organizer would. */
 async function playOneHand(tournamentId: string, roundId: number): Promise<void> {
@@ -227,9 +273,11 @@ describe("a change that ends the round at once", () => {
     const now = Date.now();
     await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 300 * MIN });
     // Round 1 is over. An organizer enters a hand in it now.
+    // Round 2 starts once round 1 is closed. Then an organizer opens table 1 of round 1 again and enters a hand in it.
+    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, closePrevious: true, actor: null, nowMs: now });
+    await reopenForTheOrganizer(tournamentId, 1);
     await playOneHand(tournamentId, 1);
 
-    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now });
     await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now + MIN });
 
     assert.deepEqual(await tableState(tournamentId, 1), { completed: false, checked: false });
@@ -239,7 +287,8 @@ describe("a change that ends the round at once", () => {
     const tournamentId = await seedClockTournament();
     const now = Date.now();
     await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 300 * MIN });
-    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 60 * MIN });
+    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, closePrevious: true, actor: null, nowMs: now - 60 * MIN });
+    await reopenForTheOrganizer(tournamentId, 1);
     await playOneHand(tournamentId, 1);
     await playOneHand(tournamentId, 2);
 

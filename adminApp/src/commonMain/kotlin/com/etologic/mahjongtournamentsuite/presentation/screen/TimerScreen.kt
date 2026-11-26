@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -256,11 +257,11 @@ internal fun TimerContent(
                                 scope.launch { controller.stop() }
                             },
                         ) {
-                            Text(stringResource(Res.string.timer_stop_confirm))
+                            ButtonText(stringResource(Res.string.timer_stop_confirm))
                         }
 
                         Button(onClick = { dialog = null }) {
-                            Text(stringResource(Res.string.cancel))
+                            ButtonText(stringResource(Res.string.cancel))
                         }
                     }
                 },
@@ -268,6 +269,8 @@ internal fun TimerContent(
         }
         null -> Unit
     }
+
+    PreviousRoundDialogs(state, controller)
 
     if (state.confirmReset) {
         TrackedDialog("ConfirmRoundReset") {
@@ -279,11 +282,11 @@ internal fun TimerContent(
                 confirmButton = {
                     MtsDialogButtons {
                         Button(onClick = { scope.launch { controller.reset(force = true) } }) {
-                            Text(stringResource(Res.string.timer_reset_confirm))
+                            ButtonText(stringResource(Res.string.timer_reset_confirm))
                         }
 
                         Button(onClick = { controller.dismissResetConfirmation() }) {
-                            Text(stringResource(Res.string.cancel))
+                            ButtonText(stringResource(Res.string.cancel))
                         }
                     }
                 },
@@ -489,7 +492,7 @@ internal fun TimerContent(
                                 contentDescription = stringResource(Res.string.timer_start),
                                 modifier = Modifier.size(72.dp),
                             )
-                            Text(
+                            ButtonText(
                                 text = stringResource(if (isStarted) Res.string.timer_gong_resume else Res.string.timer_gong_start),
                                 style = MaterialTheme.typography.titleMedium,
                             )
@@ -631,7 +634,7 @@ internal fun MinutesDialog(
                         ),
                         onClick = { apply() },
                     ) {
-                        Text(stringResource(Res.string.set))
+                        ButtonText(stringResource(Res.string.set))
                     }
 
                     Button(
@@ -642,7 +645,7 @@ internal fun MinutesDialog(
                             next = timeFieldFocusRequester,
                         ),
                     ) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                 }
             },

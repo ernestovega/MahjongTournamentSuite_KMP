@@ -25,6 +25,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalTopBarMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.TopBarMenuScope
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.combinations_title
 import mahjongtournamentsuite.playerapp.generated.resources.menu_green_book
@@ -71,7 +72,7 @@ fun RulesTopBarButton(
         Text(
             text = rules,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+            color = MtsTheme.colors.link,
             modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .semantics { heading() },

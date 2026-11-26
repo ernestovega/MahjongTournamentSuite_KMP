@@ -6,12 +6,12 @@
 applications, like the web site:
 
 - It opens the player part (`playerApp`), which everyone uses, with or without an account.
-- Admins and editors see the **Management** button in the top bar, and the chooser after the sign-in. It switches to
-  the admin part (`adminApp`) inside the same app, with the same session. **Player view**, or Back on the first screen
+- Admins and editors see the **Manager app** button in the top bar, and the chooser after the sign-in. It switches to
+  the admin part (`adminApp`) inside the same app, with the same session. **Player app**, or Back on the first screen
   of the admin part, returns. Each part keeps its screens while the other one is open.
 - The admin part has no sign-in of its own: without a session, or after a sign-out, it goes to the player part, as on
   the web (`leaveAdminForPlayerApp`, `SuiteAppHost`).
-- The code is `androidApp/src/main/.../SuiteRoot.kt`. Both parts show the version of the app, which is the admin version
+- The code is `suite/src/commonMain/.../SuiteRoot.kt`, which the iOS app shares (docs/ios-release.md). Both parts show the version of the app, which is the admin version
   (see [versioning.md](versioning.md)).
 
 There was a separate player app, **MTS Player** (`com.etologic.mahjongtournamentsuite.player`, module

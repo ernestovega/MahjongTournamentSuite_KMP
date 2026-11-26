@@ -10,7 +10,7 @@ import mahjongtournamentsuite.designsystem.generated.resources.go3v2
 import mahjongtournamentsuite.designsystem.generated.resources.mts_cyrillic_caps
 import org.jetbrains.compose.resources.Font
 
-/** The font of titles and labels for a language. */
+/** The font of the big titles for a language. */
 internal enum class TitleFont {
     /** Gang of Three, all in capitals. */
     Decorative,
@@ -61,7 +61,7 @@ fun TitleFontFamily(language: String): FontFamily {
 }
 
 /**
- * The same style in the text font. Titles and labels use the decorative font, which is hard to read when small and
- * takes more width. Player names and numbers use this instead, so long names fit and stay easy to read.
+ * The same style in the text font. The big titles use the decorative font, which is hard to read when small and takes
+ * more width. A title style that shows data (scores, clocks, names) uses this instead, so it stays easy to read.
  */
 fun TextStyle.inTextFont(): TextStyle = copy(fontFamily = FontFamily.Default)

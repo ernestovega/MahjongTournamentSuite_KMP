@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,11 +24,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.RivalTally
+import com.etologic.mahjongtournamentsuite.domain.model.TableResult
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.domain.usecase.headToHead
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -46,6 +56,13 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExte
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.ComparePlacesCard
+import com.etologic.mahjongtournamentsuite.presentation.components.CompareSkillsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.CompareTournamentsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ComparisonCard
+import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadCard
+import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadPlacesCard
+import com.etologic.mahjongtournamentsuite.presentation.components.HeadToHeadSkillsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LeadersCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelChangeTag
@@ -64,6 +81,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.SharedTablesCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatCard
@@ -321,6 +339,85 @@ class UiComponentsScreenshotTest {
         )
     }
 
+    /** Two players who shared three tables in two tournaments. */
+    private fun headToHeadSample(): Triple<PersonStatisticsData, PersonStatisticsData, List<Tournament>> {
+        val (first, second) = ScreenshotData.tournaments.take(2)
+        val ana = ScreenshotData.players[0]
+        val bea = ScreenshotData.players[1]
+        fun result(t: Tournament, round: Int, table: Int, place: Int, points: Double, rival: String, behind: Int, dealIns: Int, selfDraws: Int, won: Int, best: Int) = TableResult(
+            tournamentId = t.id, roundId = round, tableId = table, seat = 0, position = place, score = ((points - 2) * 25).toInt(), points = points,
+            hasHands = true, handsPlayed = 16, handsWon = won, selfDraws = selfDraws, bestHand = best,
+            dealIns = dealIns + 1, winningScoreSum = won * (8 + best / 4),
+            rivals = listOf(RivalTally(rival, tablesBehind = behind, discardLosses = dealIns, selfDrawLosses = 0)),
+        )
+        val mine = listOf(
+            first to listOf(result(first, 2, 4, 1, 4.0, bea.emaId, 0, 1, 2, 5, 48), result(first, 5, 1, 3, 1.0, bea.emaId, 1, 2, 0, 2, 16)),
+            second to listOf(result(second, 3, 7, 2, 2.0, bea.emaId, 0, 0, 1, 3, 24)),
+        )
+        val theirs = listOf(
+            first to listOf(result(first, 2, 4, 4, 0.0, ana.emaId, 1, 0, 0, 1, 8), result(first, 5, 1, 1, 4.0, ana.emaId, 0, 0, 3, 6, 64)),
+            second to listOf(result(second, 3, 7, 3, 1.0, ana.emaId, 1, 1, 0, 2, 12)),
+        )
+        fun person(player: Player, parts: List<Pair<Tournament, List<TableResult>>>) = PersonStatisticsData(
+            player.emaId,
+            PlayerProfile(player.displayName, player.emaId, player.country, null),
+            PlayerStatistics(0, parts.flatMap { it.second }),
+            parts.map { it.first to PlayerStatistics(0, it.second) },
+        )
+        val me = person(ana, mine)
+        val rival = person(bea, theirs)
+        return Triple(me, rival, listOf(first, second))
+    }
+
+    @Test
+    fun headToHead() = component("statistics-head-to-head", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
+        val h2h = headToHead(me, rival.emaId, rival)
+        HeadToHeadCard(h2h, me.profile, rival.profile, Modifier.fillMaxWidth())
+        SharedTablesCard(h2h, me.profile, rival.profile, Modifier.fillMaxWidth(), onOpenTable = {})
+    }
+
+    @Test
+    fun headToHeadCharts() = component("statistics-head-to-head-charts", variants = componentDialogVariants) {
+        val (me, rival, tournaments) = headToHeadSample()
+        val (first, second) = tournaments
+        HeadToHeadSkillsCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+        HeadToHeadPlacesCard(
+            listOf(second, first),
+            mine = mapOf(second.id to Standing(rank = 4, of = 40, points = 9.0, score = 30), first.id to Standing(rank = 7, of = 60, points = 12.0, score = 80)),
+            theirs = mapOf(second.id to Standing(rank = 11, of = 40, points = 7.0, score = -10), first.id to Standing(rank = 2, of = 60, points = 17.0, score = 150)),
+            me = me.profile,
+            rival = rival.profile,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    @Test
+    fun comparison() = component("statistics-comparison", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
+        CompareSkillsCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+        ComparePlacesCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+    }
+
+    @Test
+    fun comparisonTable() = component("statistics-comparison-table", variants = componentDialogVariants) {
+        val (me, rival) = headToHeadSample()
+        ComparisonCard(me.overall, rival.overall, me.profile, rival.profile, Modifier.fillMaxWidth())
+    }
+
+    @Test
+    fun comparisonTournaments() = component("statistics-comparison-tournaments", variants = componentDialogVariants) {
+        val (me, rival, tournaments) = headToHeadSample()
+        val (first, second) = tournaments
+        CompareTournamentsCard(
+            mine = listOf(second to Standing(rank = 4, of = 40, points = 9.0, score = 30), first to null),
+            theirs = listOf(second to Standing(rank = 11, of = 40, points = 7.0, score = -10), first to Standing(rank = 2, of = 60, points = 17.0, score = 150)),
+            me = me.profile,
+            rival = rival.profile,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
     @Test
     fun statisticsFiltersDialog() = component("dialog-statistics-filters", variants = componentDialogVariants) {
         StatisticsFiltersDialog(
@@ -334,6 +431,7 @@ class UiComponentsScreenshotTest {
             tournaments = ScreenshotData.tournaments,
             onApply = {},
             onDismiss = {},
+            opponents = ScreenshotData.players.drop(1).take(3).map { it.emaId }.toSet(),
         )
     }
 

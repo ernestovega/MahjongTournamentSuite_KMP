@@ -19,6 +19,8 @@ import mahjongtournamentsuite.ui.generated.resources.conflict_no_table_in_round
 import mahjongtournamentsuite.ui.generated.resources.conflict_no_tables
 import mahjongtournamentsuite.ui.generated.resources.conflict_not_assigned
 import mahjongtournamentsuite.ui.generated.resources.conflict_player_in_two_teams
+import mahjongtournamentsuite.ui.generated.resources.conflict_previous_round_in_play
+import mahjongtournamentsuite.ui.generated.resources.conflict_previous_round_open_tables
 import mahjongtournamentsuite.ui.generated.resources.conflict_request_resolved
 import mahjongtournamentsuite.ui.generated.resources.conflict_round_not_started
 import mahjongtournamentsuite.ui.generated.resources.conflict_round_time_over
@@ -26,6 +28,7 @@ import mahjongtournamentsuite.ui.generated.resources.conflict_seats_closed
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_locked
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_assigned
 import mahjongtournamentsuite.ui.generated.resources.conflict_seats_not_open
+import mahjongtournamentsuite.ui.generated.resources.conflict_seats_time_over
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_hand
 import mahjongtournamentsuite.ui.generated.resources.conflict_table_changed_penalty
@@ -174,6 +177,9 @@ private fun conflictText(code: ConflictCode, args: List<String>): UiText = when 
     ConflictCode.ACCOUNT_HAS_OTHER_EMA -> UiText.of(Res.string.conflict_account_has_other_ema)
     ConflictCode.ALL_HANDS_DONE -> UiText.of(Res.string.conflict_all_hands_done)
     ConflictCode.ASSIGNMENTS_MISSING -> UiText.of(Res.string.conflict_assignments_missing, args.firstOrNull().orEmpty())
+    ConflictCode.PREVIOUS_ROUND_IN_PLAY -> UiText.of(Res.string.conflict_previous_round_in_play, args.getOrNull(0).orEmpty())
+    ConflictCode.PREVIOUS_ROUND_OPEN_TABLES ->
+        UiText.of(Res.string.conflict_previous_round_open_tables, args.getOrNull(0).orEmpty(), args.getOrNull(1).orEmpty())
     ConflictCode.CLOCK_NOT_STARTED -> UiText.of(Res.string.conflict_clock_not_started)
     ConflictCode.DUPLICATE_TOURNAMENT -> UiText.of(Res.string.conflict_duplicate_tournament)
     ConflictCode.EMA_ALREADY_IN_TOURNAMENT -> UiText.of(Res.string.conflict_ema_already_in_tournament)
@@ -192,6 +198,7 @@ private fun conflictText(code: ConflictCode, args: List<String>): UiText = when 
     ConflictCode.SEATS_LOCKED -> UiText.of(Res.string.conflict_seats_locked)
     ConflictCode.SEATS_NOT_ASSIGNED -> UiText.of(Res.string.conflict_seats_not_assigned)
     ConflictCode.SEATS_NOT_OPEN -> UiText.of(Res.string.conflict_seats_not_open)
+    ConflictCode.SEATS_TIME_OVER -> UiText.of(Res.string.conflict_seats_time_over)
     ConflictCode.TABLE_CHANGED -> UiText.of(Res.string.conflict_table_changed)
     ConflictCode.TABLE_CHANGED_HAND -> UiText.of(Res.string.conflict_table_changed_hand)
     ConflictCode.TABLE_CHANGED_PENALTY -> UiText.of(Res.string.conflict_table_changed_penalty)

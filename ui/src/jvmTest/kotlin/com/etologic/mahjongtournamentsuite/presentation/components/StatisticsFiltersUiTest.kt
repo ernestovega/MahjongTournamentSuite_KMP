@@ -2,8 +2,6 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -27,9 +25,9 @@ class StatisticsFiltersUiTest {
     private val uppsala = Tournament(id = "t-2", name = "Uppsala Open", isTeams = false, numPlayers = 4, numRounds = 1, hostCountry = "SE", eventStartDate = "2026-03-01")
     private val tournaments = listOf(madrid, uppsala)
 
-    private fun ComposeUiTest.dialog(filters: StatisticsFilters, onApply: (StatisticsFilters) -> Unit = {}) = setContent {
+    private fun ComposeUiTest.dialog(filters: StatisticsFilters, opponents: Set<String> = emptySet(), onApply: (StatisticsFilters) -> Unit = {}) = setContent {
         MtsTheme(useDarkTheme = false) {
-            StatisticsFiltersDialog(filters = filters, players = players, tournaments = tournaments, onApply = onApply, onDismiss = {})
+            StatisticsFiltersDialog(filters = filters, players = players, tournaments = tournaments, onApply = onApply, onDismiss = {}, opponents = opponents)
         }
     }
 
@@ -56,7 +54,7 @@ class StatisticsFiltersUiTest {
     fun applyGivesTheChosenFilters() = runComposeUiTest {
         val filters = StatisticsFilters(emaId = ana.emaId, rivalEmaId = bea.emaId, tournamentCountry = "ES", fromYear = 2025)
         var applied: StatisticsFilters? = null
-        dialog(filters) { applied = it }
+        dialog(filters, opponents = setOf(bea.emaId)) { applied = it }
         onNodeWithText("Apply").performClick()
         waitForIdle()
         assertEquals(filters, applied)
@@ -76,13 +74,37 @@ class StatisticsFiltersUiTest {
     }
 
     @Test
-    fun theRivalAndTheCountryOfThePlayersDependOnThePlayer() = runComposeUiTest {
+    fun theRivalShowsOnlyWithThePlayerOnTheScreen() = runComposeUiTest {
         dialog(StatisticsFilters())
-        onNodeWithText("Any rival").assertIsNotEnabled()
-        open("Any player", probe = "(04000001)")
-        onNode(hasText("(04000001)", substring = true) and !hasSetTextAction()).performClick()
+        onNodeWithText("Nobody").assertDoesNotExist()
+    }
+
+    @Test
+    fun anyPlayerCanBeComparedEvenWithoutASharedTable() = runComposeUiTest {
+        val cara = Player(emaId = "04000003", firstName = "Cara", lastName = "Moreno", country = "ESP")
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                StatisticsFiltersDialog(
+                    filters = StatisticsFilters(emaId = ana.emaId),
+                    players = players + cara,
+                    tournaments = tournaments,
+                    onApply = {},
+                    onDismiss = {},
+                    opponents = setOf(cara.emaId),
+                )
+            }
+        }
+        open("Nobody", probe = "(04000003)")
+        assertEquals(true, shows("(04000002)"), "Bea never played with Ana, and she can still be compared.")
+    }
+
+    @Test
+    fun withoutAPlayerTheDialogHidesTheComparison() = runComposeUiTest {
+        dialog(StatisticsFilters(emaId = ana.emaId), opponents = setOf(bea.emaId))
+        onNodeWithText("Nobody").assertExists()
+        onNodeWithText("Clear").performClick()
         waitForIdle()
-        onNodeWithText("Any rival").assertIsEnabled()
+        onNodeWithText("Nobody").assertDoesNotExist()
     }
 
     @Test

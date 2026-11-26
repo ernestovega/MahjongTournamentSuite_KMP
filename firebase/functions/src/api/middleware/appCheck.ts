@@ -52,13 +52,19 @@ export function appCheck(options: {
       next(new HttpError(401, "app_check_failed", "The request does not come from a known app."));
       return;
     }
-    // The Android and desktop apps say who they are and the state of their App Check (X-MTS-Client), so the logs tell
-    // a script from an app whose token failed. A signed-in request says so too: enforce could spare them later.
+    // Only the mobile apps can attest (Play Integrity on Android, App Attest on iOS). The web and the desktop app send
+    // no token, and nor do our own scripts, so logging them would bury the one useful signal: a mobile app whose token
+    // failed. The apps say who they are and the state of their App Check in X-MTS-Client.
+    const client = req.header(CLIENT_HEADER);
+    if (!client?.startsWith("android/") && !client?.startsWith("ios/")) {
+      next();
+      return;
+    }
     console.warn("App Check failed", {
       reason,
       method: req.method,
       path: req.path,
-      client: req.header(CLIENT_HEADER)?.slice(0, 120) ?? null,
+      client: client.slice(0, 120),
       userAgent: req.header("user-agent")?.slice(0, 120) ?? null,
       signedIn: (req.header("authorization") ?? "").startsWith("Bearer "),
     });

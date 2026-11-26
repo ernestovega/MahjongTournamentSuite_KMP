@@ -1,9 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.TitleFontFamily
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,12 +42,16 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.TitleFontFamily
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.field_password
@@ -60,8 +60,8 @@ import mahjongtournamentsuite.ui.generated.resources.ic_visibility_off
 import mahjongtournamentsuite.ui.generated.resources.password_hide
 import mahjongtournamentsuite.ui.generated.resources.password_show
 import mahjongtournamentsuite.ui.generated.resources.sign_in_button
-import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
 import mahjongtournamentsuite.ui.generated.resources.sign_in_contact
+import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
 import mahjongtournamentsuite.ui.generated.resources.sign_in_privacy
 import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
@@ -251,7 +251,7 @@ fun SignInForm(
                         infoMessage?.let { message ->
                             Text(
                                 text = message.asString(),
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
@@ -274,7 +274,7 @@ fun SignInForm(
                                         strokeWidth = 2.dp,
                                     )
                                 } else {
-                                    Text(stringResource(Res.string.sign_in_button))
+                                    ButtonText(stringResource(Res.string.sign_in_button))
                                 }
                             }
                             FocusedTextButton(
@@ -282,7 +282,7 @@ fun SignInForm(
                                 onClick = onForgotPassword,
                                 contentPadding = LinkButtonPadding,
                             ) {
-                                Text(stringResource(Res.string.sign_in_forgot_password))
+                                ButtonText(stringResource(Res.string.sign_in_forgot_password))
                             }
                         }
                     }

@@ -124,7 +124,8 @@
     <string name="team_member_score">Punteggio</string>
     <string name="jump_to_me">Vai a me</string>
     <string name="entry_totals_only">Gli organizzatori inseriscono solo i punteggi finali di questo tavolo. Non puoi aggiungere mani qui.</string>
-    <string name="entry_round_not_started">In attesa del gong iniziale. I pulsanti per aggiungere mani appaiono quando inizia il turno.</string>
+    <string name="entry_round_not_started">I pulsanti per aggiungere mani appaiono quando inizia il turno.</string>
+    <string name="entry_seats_open_soon">Potrai assegnare i posti da 10 minuti prima dell'inizio del turno.</string>
     <string name="entry_seats_not_assigned">I posti di questo tavolo non sono ancora assegnati. Potrai aggiungere mani quando i quattro posti saranno assegnati.</string>
     <string name="entry_closed_by_organizer">Un organizzatore ha chiuso per ora l'inserimento delle mani di questo tavolo. Chiama un arbitro se devi aggiungere una mano.</string>
     <string name="entry_time_over">Il tempo di questa partita è finito. Ora non puoi aggiungere mani. Gli organizzatori inseriscono i dati mancanti.</string>
@@ -138,7 +139,6 @@
     <string name="entry_hand_score">Punteggio della mano</string>
     <string name="entry_chicken_limit">Una mano pollo ha 12 punti o meno.</string>
     <string name="chicken_hand">Mano pollo</string>
-    <string name="entry_draw_explanation">Nessun giocatore vince questa mano. Ogni posto segna zero.</string>
     <string name="entry_last_hand">Ultima mano del tavolo</string>
     <string name="entry_back">Indietro</string>
     <string name="entry_numpad_delete">Cancella</string>
@@ -148,20 +148,22 @@
     <string name="entry_saving_hand">Salvataggio della mano...</string>
     <string name="entry_confirm_save">Conferma</string>
     <string name="entry_edit">Modifica</string>
-    <string name="entry_add_another_penalty">Aggiungi un'altra penalità</string>
-    <string name="entry_penalty_note">Una penalità non termina la mano. I suoi punti contano quando la mano viene salvata.</string>
     <string name="entry_check_penalty">Controlla la penalità</string>
     <string name="entry_saving_penalty">Salvataggio della penalità...</string>
     <string name="entry_updating_table">Aggiornamento del tavolo...</string>
-    <string name="entry_others_each">gli altri +%1$d ciascuno</string>
-    <string name="entry_penalty_n">Penalità %1$d</string>
-    <string name="entry_remove_penalty">Rimuovi la penalità %1$d</string>
     <string name="entry_penalized_player">Giocatore penalizzato</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Penalizzato</string>
     <string name="entry_points">Punti</string>
+    <string name="entry_review_wins">Vince</string>
+    <string name="entry_review_pays">Paga</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">pti</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Totale</string>
     <string name="entry_shared_multiple">Una penalità condivisa deve essere un multiplo di 3.</string>
-    <string name="entry_others_get">Gli altri giocatori ricevono +%1$d ciascuno.</string>
-    <string name="entry_share">Dividila con gli altri giocatori</string>
-    <string name="entry_wins">vince %1$d</string>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Pagata agli altri</string>
     <string name="entry_from">da</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>
@@ -177,7 +179,6 @@
     <string name="changed_already">Se la mano è già nel tavolo, non inserirla di nuovo.</string>
     <string name="changed_call_staff">Puoi chiamare un membro dello staff per controllare il tavolo, oppure chiudere questa finestra e continuare.</string>
     <string name="changed_close">Chiudi e continua</string>
-    <string name="scope_table">Tavolo</string>
     <string name="tab_tables_me">Io</string>
     <string name="tab_tables_team">La mia squadra</string>
     <string name="tab_tables_all">Tutti</string>

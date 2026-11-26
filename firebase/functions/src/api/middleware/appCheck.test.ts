@@ -53,6 +53,39 @@ describe("appCheck", () => {
     }]);
   });
 
+  it("logs the iOS app too, which attests with App Attest", async () => {
+    const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
+    const headers: Record<string, string> = { "x-mts-client": "ios/1.0.410; appcheck=failed:AppAttestError" };
+    const req = { method: "GET", path: "/tournaments", header: (name: string) => headers[name.toLowerCase()] } as unknown as Request;
+    const logged: unknown[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => { logged.push(args[1]); };
+    try {
+      await middleware(req, {} as never, () => undefined);
+    } finally {
+      console.warn = original;
+    }
+    assert.deepEqual(logged, [{
+      reason: "missing", method: "GET", path: "/tournaments", client: "ios/1.0.410; appcheck=failed:AppAttestError", userAgent: null, signedIn: false,
+    }]);
+  });
+
+  it("logs nothing for the web, the desktop app or a script, which send no token", async () => {
+    const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
+    const logged: unknown[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => { logged.push(args); };
+    try {
+      for (const headers of [{}, { "user-agent": "mts-benchmark" }, { "x-mts-client": "desktop/1.0.370; appcheck=none" }] as Record<string, string>[]) {
+        const req = { method: "GET", path: "/x", header: (name: string) => headers[name.toLowerCase()] } as unknown as Request;
+        await middleware(req, {} as never, () => undefined);
+      }
+    } finally {
+      console.warn = original;
+    }
+    assert.deepEqual(logged, []);
+  });
+
   it("reads the mode from a text and falls back to off", () => {
     assert.equal(appCheckModeFromEnv("Enforce"), "enforce");
     assert.equal(appCheckModeFromEnv(" monitor "), "monitor");

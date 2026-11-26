@@ -22,6 +22,9 @@ A platform without Analytics settings also sends no error log and shows no conse
 - The answer is saved on the device. Android: `SharedPreferences` file `mts_telemetry`. Web: `localStorage` key `mtsAnalyticsConsent`. Desktop: Java preferences.
 - The user can withdraw the consent in the profile dialog. The app then stops all data and shows the screen again.
 - On Android, `firebase_analytics_collection_enabled` is `false` in the manifest. Collection starts only after the user accepts.
+- The Android app has no advertising ID: the manifest removes the `AD_ID` permission that Firebase Analytics adds and sets
+  `google_analytics_adid_collection_enabled` to `false`. Analytics count users by the app instance id. In Play Console the
+  advertising ID declaration is "No".
 - The Android UI tests save the consent before they start the app, so builds with Firebase settings still run them.
 
 ## Rules for the data

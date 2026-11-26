@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,7 +9,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -67,14 +67,14 @@ internal fun UserDeletesConfirmDialog(count: Int, busy: Boolean, onConfirm: () -
                         focusRequester = deleteFocus,
                         buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
                         colors = MtsButtons.destructiveColors(),
-                    ) { Text(stringResource(Res.string.delete_selected_count, count)) }
+                    ) { ButtonText(stringResource(Res.string.delete_selected_count, count)) }
 
                     FocusedTextButton(
                         onClick = onDismiss,
                         enabled = !busy,
                         focusRequester = cancelFocus,
                         buttonModifier = Modifier.focusLoop(deleteFocus, deleteFocus),
-                    ) { Text(stringResource(Res.string.cancel)) }
+                    ) { ButtonText(stringResource(Res.string.cancel)) }
                 }
             },
         )
@@ -123,7 +123,7 @@ internal fun UserDeletesResultDialog(results: List<UserDeleteResult>, users: Lis
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) }
+                    Button(onClick = onDismiss) { ButtonText(stringResource(Res.string.ok)) }
                 }
             },
         )

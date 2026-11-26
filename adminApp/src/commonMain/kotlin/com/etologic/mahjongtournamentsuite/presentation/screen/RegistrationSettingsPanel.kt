@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -125,7 +126,7 @@ internal fun RegistrationSettingsPanel(
                     }
                 },
             ) {
-                val color = if (settings.isOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                val color = if (settings.isOpen) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(
@@ -140,7 +141,7 @@ internal fun RegistrationSettingsPanel(
                 if (canConfigure && !settings.isOpen) {
                     OutlinedButton(onClick = onDraw, enabled = !busy, modifier = Modifier.padding(top = MtsTheme.spacing.xs)) {
                         Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                        ButtonText(stringResource(Res.string.reg_draw), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
                     }
                 }
             }
@@ -229,7 +230,7 @@ internal fun RegistrationSettingsPanel(
                             Text(
                                 data.publicLink,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MtsTheme.colors.link,
                                 maxLines = if (compact) 2 else 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.testTag("registrations-link-value"),
@@ -281,11 +282,11 @@ private fun InlineEditor(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
             FocusedTextButton(onClick = onCancel) {
                 Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                ButtonText(stringResource(Res.string.cancel), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
             }
             FocusedButton(onClick = onSave, enabled = saveEnabled, modifier = Modifier.testTag("registrations-save-setting")) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+                ButtonText(stringResource(Res.string.reg_save), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
             }
         }
     }
@@ -296,6 +297,6 @@ private fun InlineEditor(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: 
 internal fun AddPersonButton(busy: Boolean, onAdd: () -> Unit, modifier: Modifier = Modifier) {
     FocusedButton(onClick = onAdd, enabled = !busy, modifier = modifier) {
         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-        Text(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
+        ButtonText(stringResource(Res.string.reg_add), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
     }
 }

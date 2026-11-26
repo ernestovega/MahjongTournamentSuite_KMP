@@ -124,7 +124,8 @@
     <string name="team_member_score">Resultat</string>
     <string name="jump_to_me">Hoppa till mig</string>
     <string name="entry_totals_only">Arrangörerna för bara in slutresultaten för det här bordet. Du kan inte lägga till händer här.</string>
-    <string name="entry_round_not_started">Väntar på startgongen. Knapparna för händer visas när omgången börjar.</string>
+    <string name="entry_round_not_started">Knapparna för händer visas när omgången börjar.</string>
+    <string name="entry_seats_open_soon">Du kan ange platserna från 10 minuter innan rundan börjar.</string>
     <string name="entry_seats_not_assigned">Platserna vid det här bordet är inte bestämda än. Du kan lägga till händer när alla fyra platser är bestämda.</string>
     <string name="entry_closed_by_organizer">En arrangör har stängt inmatningen av händer för det här bordet tills vidare. Fråga en domare om du behöver lägga till en hand.</string>
     <string name="entry_time_over">Tiden för den här matchen är slut. Du kan inte lägga till händer nu. Arrangörerna för in det som saknas.</string>
@@ -138,7 +139,6 @@
     <string name="entry_hand_score">Handens värde</string>
     <string name="entry_chicken_limit">En kycklinghand har 12 poäng eller mindre.</string>
     <string name="chicken_hand">Kycklinghand</string>
-    <string name="entry_draw_explanation">Ingen spelare vinner den här handen. Alla platser får noll.</string>
     <string name="entry_last_hand">Bordets sista hand</string>
     <string name="entry_back">Tillbaka</string>
     <string name="entry_numpad_delete">Radera</string>
@@ -148,20 +148,22 @@
     <string name="entry_saving_hand">Sparar handen...</string>
     <string name="entry_confirm_save">Bekräfta</string>
     <string name="entry_edit">Redigera</string>
-    <string name="entry_add_another_penalty">Lägg till ett straff till</string>
-    <string name="entry_penalty_note">Ett straff avslutar inte handen. Poängen räknas när handen sparas.</string>
     <string name="entry_check_penalty">Kontrollera straffet</string>
     <string name="entry_saving_penalty">Sparar straffet...</string>
     <string name="entry_updating_table">Uppdaterar bordet...</string>
-    <string name="entry_others_each">övriga +%1$d var</string>
-    <string name="entry_penalty_n">Straff %1$d</string>
-    <string name="entry_remove_penalty">Ta bort straff %1$d</string>
     <string name="entry_penalized_player">Bestraffad spelare</string>
+    <!-- The red box of the penalized player in the check of a penalty. -->
+    <string name="entry_penalized_short">Bestraffad</string>
     <string name="entry_points">Poäng</string>
+    <string name="entry_review_wins">Vinner</string>
+    <string name="entry_review_pays">Betalar</string>
+    <!-- Short for points, under the score of a hand in its review. -->
+    <string name="entry_points_abbr">p</string>
+    <!-- The column of the table score after the hand, in the review of a hand. -->
+    <string name="entry_total">Totalt</string>
     <string name="entry_shared_multiple">Ett delat straff måste vara en multipel av 3.</string>
-    <string name="entry_others_get">De andra spelarna får +%1$d var.</string>
-    <string name="entry_share">Dela med de andra spelarna</string>
-    <string name="entry_wins">vinner %1$d</string>
+    <!-- The green box of a shared penalty in its check: the other three get a part. -->
+    <string name="entry_share_short">Betalas till de andra</string>
     <string name="entry_from">från</string>
     <string name="changed_title">Bordet har ändrats</string>
     <string name="changed_not_saved">Din hand är inte sparad. Kontrollera serverns data nedan.</string>
@@ -177,7 +179,6 @@
     <string name="changed_already">Om handen redan finns i bordet, mata inte in den igen.</string>
     <string name="changed_call_staff">Du kan kalla på en funktionär för att kontrollera bordet, eller stänga fönstret och fortsätta.</string>
     <string name="changed_close">Stäng och fortsätt</string>
-    <string name="scope_table">Bord</string>
     <string name="tab_tables_me">Jag</string>
     <string name="tab_tables_team">Mitt lag</string>
     <string name="tab_tables_all">Alla</string>

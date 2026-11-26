@@ -260,7 +260,7 @@ fun TournamentScheduleEditor(
                             )
                         },
                     ) {
-                        Text(stringResource(Res.string.remove))
+                        ButtonText(stringResource(Res.string.remove))
                     }
                 }
                 Row(
@@ -343,7 +343,7 @@ fun TournamentScheduleEditor(
             enabled = enabled,
             onClick = { onAgendaRowsChange(agendaRows + AgendaItemEditorRow()) },
         ) {
-            Text(stringResource(Res.string.add_activity))
+            ButtonText(stringResource(Res.string.add_activity))
         }
     }
 

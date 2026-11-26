@@ -56,7 +56,11 @@ private class FixedHandRepository(private val conflict: Boolean = false) : Playe
         tableVersion = 3,
     )
 
-    override suspend fun previewHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal) = AppResult.Success(preview)
+    /** The same hand as a self-draw: Lena wins 24 from each of the other three. */
+    private val selfDrawPreview = preview.copy(handScores = listOf(-32, -32, 96, -32), tableScores = listOf("-61", "-54", "+83", "+32"))
+
+    override suspend fun previewHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal) =
+        AppResult.Success(if (proposal.loserSlotId == null) selfDrawPreview else preview)
 
     override suspend fun recordHand(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal, expectedVersion: Long) = if (conflict) AppResult.Failure(AppError.Conflict("Another phone saved hand 7 first.")) else AppResult.Success(preview)
 
@@ -72,10 +76,10 @@ private class FixedHandRepository(private val conflict: Boolean = false) : Playe
 @OptIn(ExperimentalTestApi::class)
 class HandEntryDialogsScreenshotTest {
     private val registry = listOf(
-        Player("04010001", "Lucía", "Martín", "ES"),
-        Player("04010002", "Lena", "Schmidt", "DE"),
-        Player("04010003", "Mateus", "Silva", "PT"),
-        Player("04010004", "Oskar", "Lindqvist", "SE"),
+        Player("04010001", "María del Carmen", "Martín", "ES"),
+        Player("04010002", "Maximiliano Alejandro", "Schmidt", "DE"),
+        Player("04010003", "Anne-Charlotte", "Silva", "PT"),
+        Player("04010004", "Konstantinos", "Lindqvist", "SE"),
     )
 
     private val view = run {
@@ -175,10 +179,35 @@ class HandEntryDialogsScreenshotTest {
         waitForText(playerText("entry_confirm_save"))
     }
 
+    // A chicken hand: a small circle with the chicken under the score.
     @Test
-    fun draw() = shot("entry-draw") {
+    fun checkChickenHand() = shot("entry-check-hand-chicken") {
+        tap("entry_add_win")
+        choose(2)
+        waitForText(playerText("entry_self_draw"))
+        choose(2)
+        waitForText(playerText("entry_hand_score"))
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("8")
+        tap("chicken_hand")
+        tap("entry_review")
+        waitForText(playerText("entry_confirm_save"))
+    }
+
+    @Test
+    fun checkSelfDraw() = shot("entry-check-hand-self-draw") {
+        tap("entry_add_win")
+        choose(2)
+        tap("entry_self_draw")
+        waitForText(playerText("entry_hand_score"))
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("24")
+        tap("entry_review")
+        waitForText(playerText("entry_confirm_save"))
+    }
+
+    @Test
+    fun draw() = shot("entry-check-draw") {
         tap("entry_add_draw")
-        waitForText(playerText("entry_review"))
+        waitForText(playerText("entry_confirm_save"))
     }
 
     @Test
@@ -186,7 +215,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
     }
 
     @Test
@@ -194,7 +223,7 @@ class HandEntryDialogsScreenshotTest {
         tap("entry_add_penalty")
         choose(3)
         onAllNodes(hasSetTextAction()).onFirst().performTextInput("30")
-        tap("entry_share")
+        tap("entry_share_short")
         tap("entry_review")
         waitForText(playerText("entry_confirm_save"))
     }

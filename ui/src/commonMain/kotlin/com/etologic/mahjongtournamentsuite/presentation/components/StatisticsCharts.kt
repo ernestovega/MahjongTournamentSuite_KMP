@@ -455,10 +455,26 @@ internal fun SkillsCard(statistics: PlayerStatistics, modifier: Modifier) {
  * The skill at [highlight] stands out: its axis, its point and its name are in the main color.
  */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, highlight: Int? = null) {
+    RadarChartOf(listOf(RadarSeries(skills, MaterialTheme.colorScheme.primary, Color.Unspecified)), modifier, highlight)
+}
+
+/**
+ * One shape of the radar: the skills of one player. [fill] colors the shape and [text] the value of each skill.
+ * All the series have the same skills in the same order.
+ */
+internal class RadarSeries(val skills: List<Skill>, val fill: Color, val text: Color)
+
+/**
+ * The radar with one shape for each of [series], one over the other. The names come from the first series. With more
+ * than one series, every name has the value of each series under it, in the color of its series.
+ */
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun RadarChartOf(series: List<RadarSeries>, modifier: Modifier = Modifier, highlight: Int? = null) {
     val primary = MaterialTheme.colorScheme.primary
     val grid = MaterialTheme.colorScheme.outlineVariant
+    val skills = series.first().skills
     val count = skills.size
     val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
     // The layout makes the radar smaller when a name at a side does not fit next to it, and the canvas draws it that size.
@@ -486,18 +502,24 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
                         drawLine(grid, center, point(i, 1f), strokeWidth = 1.dp.toPx())
                     }
                 }
-                val shape = Path()
-                skills.forEachIndexed { i, skill ->
-                    point(i, skill.fraction).let { if (i == 0) shape.moveTo(it.x, it.y) else shape.lineTo(it.x, it.y) }
+                // With two shapes the fill is lighter, so the one under shows through the one over it.
+                val fillAlpha = if (series.size > 1) 0.18f else 0.25f
+                series.forEach { one ->
+                    val shape = Path()
+                    one.skills.forEachIndexed { i, skill ->
+                        point(i, skill.fraction).let { if (i == 0) shape.moveTo(it.x, it.y) else shape.lineTo(it.x, it.y) }
+                    }
+                    shape.close()
+                    drawPath(shape, one.fill.copy(alpha = fillAlpha))
+                    drawPath(shape, one.fill, style = Stroke(width = 2.dp.toPx()))
+                    one.skills.forEachIndexed { i, skill ->
+                        drawCircle(one.fill, if (i == highlight) 6.dp.toPx() else 3.5.dp.toPx(), point(i, skill.fraction))
+                    }
                 }
-                shape.close()
-                drawPath(shape, primary.copy(alpha = 0.25f))
-                drawPath(shape, primary, style = Stroke(width = 2.dp.toPx()))
-                skills.forEachIndexed { i, skill -> drawCircle(primary, if (i == highlight) 6.dp.toPx() else 3.5.dp.toPx(), point(i, skill.fraction)) }
             }
             skills.forEachIndexed { index, skill ->
                 val highlighted = index == highlight
-                val labelColor = if (highlighted) MaterialTheme.colorScheme.primary else Color.Unspecified
+                val labelColor = if (highlighted) MtsTheme.colors.link else Color.Unspecified
                 AppTooltipBox(skill.explanation) {
                     Column(
                         Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
@@ -531,7 +553,20 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
                                 info()
                             }
                         }
-                        Text(skill.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = labelColor)
+                        if (series.size == 1) {
+                            Text(skill.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = labelColor)
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                                series.forEach { one ->
+                                    Text(
+                                        one.skills.getOrNull(index)?.text.orEmpty(),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = one.text,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

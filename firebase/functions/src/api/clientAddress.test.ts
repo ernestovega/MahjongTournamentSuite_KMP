@@ -20,6 +20,7 @@ describe("clientAddress", () => {
   it("takes the client before the Google proxy of Firebase Hosting", () => {
     assert.equal(clientAddress(request("13.71.226.146,64.233.172.44")), "13.71.226.146");
     assert.equal(clientAddress(request("13.71.226.146,66.102.6.33")), "13.71.226.146");
+    assert.equal(clientAddress(request("172.206.119.228,192.178.11.1")), "172.206.119.228");
   });
 
   it("uses the socket without the header (tests and the emulator)", () => {
@@ -29,6 +30,8 @@ describe("clientAddress", () => {
   it("knows the ranges of the Google proxies and nothing else", () => {
     assert.equal(isGoogleProxy("64.233.172.44"), true);
     assert.equal(isGoogleProxy("66.102.6.33"), true);
+    assert.equal(isGoogleProxy("192.178.11.4"), true);
+    assert.equal(isGoogleProxy("193.0.0.1"), false);
     assert.equal(isGoogleProxy("13.71.226.146"), false);
     assert.equal(isGoogleProxy("8.8.8.8"), false);
     assert.equal(isGoogleProxy("not an address"), false);

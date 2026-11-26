@@ -79,6 +79,9 @@ jobs:
             sed -i "s/mahjong-tournament-suite/$STAGING/g" "$file"
           done
           ! grep -rl 'AIzaSyDf4pvgE_iwfbo2Yo4nEmMN0Ch0qvb1T_c' build/hosting
+          # Staging tabs show the logo in orange, so they are not mistaken for production ones.
+          cp scripts/staging/favicon.png build/hosting/favicon.png
+          cp scripts/staging/favicon.png build/hosting/admin/favicon.png
 
       # firebase.json names the production hosting site and builds the web apps itself. The staging copy names the
       # staging site and uses the build above. The functions read their settings from .env.<project>, which wins over

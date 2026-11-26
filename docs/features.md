@@ -35,12 +35,12 @@ It has two parts:
 
 | Platform | Player | Admin |
 |---|:-:|:-:|
-| **Android** (one «MTS» app) | ✅ starts here | ✅ «Management» button for staff |
+| **Android** (one «MTS» app) | ✅ starts here | ✅ «Manager app» button for staff |
 | **Web** (Wasm) `mts.mahjongmadrid.com` | ✅ `/` | ✅ `/admin/` |
 | **Desktop** (JVM) | | ✅ |
 
-- **One Android app**: it starts in Player. If the account is staff, the «Management» button opens the Admin part and «Player view» goes back.
-- **On the web**, after signing in, staff choose «Player view» or «Management».
+- **One Android app**: it starts in Player. If the account is staff, the «Manager app» button opens the Admin part and «Player app» goes back.
+- **On the web**, after signing in, staff choose «Player app» or «Manager app».
 - **Direct links**: `/t/<id>` opens a tournament, `/<short-name>` (for example `/6thmmc`) opens its registrations, or the tournament after the draw, and `/<short-name>/my-table` opens your table. On Android the app takes every address of the site (App Links) and opens it where the web does; the pages that are not the app (privacy policy, Green Book, API docs) go on to the browser.
 - **Browser back/forward** work like the app's back button on both web apps.
 
@@ -121,7 +121,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 
 ### 4.7 Statistics (all public)
 
-- **One screen with a row of filters**: player, rival, tournament, country of the tournaments, country of the players (or «No country») and years from/to. The filters survive a reload.
+- **One screen with a row of filters**: player, tables against a rival (only players that the player met), tournament, country of the tournaments, country of the players (or «No country») and years from/to. The filters survive a reload.
 - **Player**
   - **Skills** radar: win rate, self-draw rate, deal-in rate and average hand value.
   - **Places**: ring, average place and a chart of the last 10/20/50/all tables, colored by tournament.
@@ -155,7 +155,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ### 5.1 Tournaments and organizations
 
 - **Tournament list** by role: all, those of your organizations, or those assigned to you.
-- **Create a tournament**
+- **Create a tournament** with the «New tournament» floating button at the bottom right of the list
   - Individual or teams: players, rounds, dates, schedule, venue (with Google Places), short name, contact, organizers.
   - Or **«Open registrations»**: the tournament starts with no players and the draw happens at the close.
 - **Settings**: public or not, differences at the tables, match length, schedule and agenda.

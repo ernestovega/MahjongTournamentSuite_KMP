@@ -11,6 +11,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
+import com.etologic.mahjongtournamentsuite.data.session.storedSessionUid
 import com.etologic.mahjongtournamentsuite.player.SiteLink
 import com.etologic.mahjongtournamentsuite.player.siteLinkOf
 
@@ -42,6 +44,8 @@ class MainActivity : ComponentActivity() {
                 startRequest = startRequest.value,
                 onStartHandled = { startRequest.value = null },
                 post = { action -> Handler(Looper.getMainLooper()).post(action) },
+                storedSessionUid = ::storedSessionUid,
+                onPartShown = { part -> AndroidPlatformContext.currentApp = part },
             )
         }
     }
@@ -75,18 +79,8 @@ private fun Intent.siteLink(): SiteLink? {
     return siteLinkOf(uri.path.orEmpty(), query)
 }
 
-/**
- * A link of the web opens where the web opens it (docs/table-qr.md, "Android app"): the tournaments, a tournament,
- * its registration, the table of the player, the support form or the management part.
- */
-private fun Intent.linkStart(): SuiteStart? = when (val link = siteLink()) {
-    null, SiteLink.Browser -> null
-    SiteLink.Home -> SuiteStart(SuiteSection.PLAYER)
-    SiteLink.Admin -> SuiteStart(SuiteSection.ADMIN)
-    SiteLink.Support -> SuiteStart(SuiteSection.PLAYER, support = true)
-    is SiteLink.Tournament -> SuiteStart(SuiteSection.PLAYER, tournamentId = link.tournamentId)
-    is SiteLink.Registration -> SuiteStart(SuiteSection.PLAYER, link = link.link)
-}
+/** A link of the web opens where the web opens it (docs/table-qr.md, "Android app"). See [suiteStartOf]. */
+private fun Intent.linkStart(): SuiteStart? = siteLink()?.let(::suiteStartOf)
 
 /**
  * Sends a page of the site that is not the app to the browser, and returns true. The browser is named, because the

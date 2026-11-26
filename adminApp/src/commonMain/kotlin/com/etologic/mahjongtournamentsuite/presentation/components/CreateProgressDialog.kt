@@ -125,7 +125,7 @@ fun CreateProgressDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Button(onClick = onCancel) { Text(stringResource(Res.string.create_cancel_calculation)) }
+                    Button(onClick = onCancel) { ButtonText(stringResource(Res.string.create_cancel_calculation)) }
                 }
             },
         )

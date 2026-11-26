@@ -27,11 +27,19 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsWindowWidth
 
 /** The colors of the buttons of the suite that are not in the Material defaults. */
 object MtsButtons {
+    /** A text button: its text is the green of [MtsColors.link][com.etologic.mahjongtournamentsuite.presentation.theme.MtsColors.link], which reads at 4.5:1. */
+    @Composable
+    fun textColors(): ButtonColors = ButtonDefaults.textButtonColors(contentColor = MtsTheme.colors.link)
+
+    /** An outlined button: its text is the green of the links, like [textColors]. */
+    @Composable
+    fun outlinedColors(): ButtonColors = ButtonDefaults.outlinedButtonColors(contentColor = MtsTheme.colors.link)
+
     /** A destructive action that is the main button of its place, like "Delete" in a delete confirmation. */
     @Composable
     fun destructiveColors(): ButtonColors = ButtonDefaults.buttonColors(
-        containerColor = MaterialTheme.colorScheme.error,
-        contentColor = MaterialTheme.colorScheme.onError,
+        containerColor = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
     )
 
     /** A destructive action that is a secondary button, like "Discard" next to "Save". Use it with [destructiveBorder]. */

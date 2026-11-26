@@ -32,6 +32,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFil
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsFilters
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsView
+import com.etologic.mahjongtournamentsuite.presentation.components.opponentsOf
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
@@ -131,6 +132,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 players = registry,
                 tournaments = tournaments,
                 slotName = filters.slotId?.let { tournament?.names?.get(it) },
+                opponents = remember(person, filters.emaId) { opponentsOf(person?.takeIf { it.emaId == filters.emaId }) },
             )
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
@@ -144,6 +146,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     tournament = tournament,
                     group = group,
                     loadStandings = { emaId, ids -> presenter.standings(emaId, ids) },
+                    loadPerson = { ema -> (presenter.person(ema) as? AppResult.Success)?.value },
                 )
             }
         }

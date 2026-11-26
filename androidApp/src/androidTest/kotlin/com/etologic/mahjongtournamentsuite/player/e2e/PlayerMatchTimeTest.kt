@@ -60,7 +60,6 @@ class PlayerMatchTimeTest : PlayerE2eTest() {
     fun handAddedInExtraTimeCompletesTheTable() {
         openMyTable(E2eAccounts.EXTRA_TIME, extraTimeTournament)
         c.clickButton("Add draw")
-        c.clickButton("Review")
         c.clickButton("Confirm")
         // The hand in play is the last hand. The table is completed, so the entry buttons go away.
         c.waitForNoText("Add draw")

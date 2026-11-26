@@ -1,0 +1,130 @@
+# Uploads the iOS app (Release, com.etologic.mahjongtournamentsuite) to App Store Connect, where it goes to TestFlight.
+# Only by hand, from Actions > Publish · TestFlight, like the Google Play upload. The version is the one of the catalog
+# (admin-versionName and admin-versionCode): App Store Connect refuses a build number it already has, so bump the
+# versions before running it again. See docs/ios-release.md.
+#
+# The signing is automatic: with the App Store Connect API key (Admin access) Xcode makes the distribution certificate
+# and the profile in the cloud. Secret: APP_STORE_CONNECT_API_KEY, the content of the .p8 file.
+name: Publish · TestFlight
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  ASC_KEY_ID: S8GAZ32F4X
+  ASC_ISSUER_ID: 9ec15174-5e83-4917-9dd6-6fb152d6d888
+  TEAM_ID: PG2F9TPVFV
+
+jobs:
+  testflight:
+    name: Archive and upload to TestFlight
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      # Xcode 27 (iOS 27 SDK): App Store Connect requires it from April 2027. The runner image has several Xcodes.
+      - name: Newest Xcode (27 once the runner has it)
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode_[0-9]*.app | sort -V | tail -1)
+            echo "::warning::No Xcode 27 on this runner yet, using $XCODE. App Store Connect requires the iOS 27 SDK from April 2027."
+          fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: App Store Connect API key
+        env:
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then echo "The secret APP_STORE_CONNECT_API_KEY is missing."; exit 1; fi
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$API_KEY" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      # The release link (with its whole-program optimisations) needs more memory than the runner (7 GB) has left next
+      # to the Gradle daemon: the Kotlin/Native compiler runs in a process of its own with most of the memory. In the
+      # Gradle home, so the build phase of Xcode uses it too.
+      - name: Memory for the Kotlin/Native compiler
+        run: |
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "org.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8"
+            echo "kotlin.daemon.jvmargs=-Xmx1g"
+            echo "kotlin.native.disableCompilerDaemon=true"
+            echo "kotlin.native.jvmArgs=-Xmx5g"
+          } >> "$HOME/.gradle/gradle.properties"
+
+      # The build phase of Xcode links the release framework (about 40 minutes): linking it in a step before would only
+      # do it twice, since Xcode links it again with its own settings.
+      - name: Archive
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/MTS.xcarchive \
+            -derivedDataPath build/ios-release \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            archive > build/archive.log 2>&1 || { grep -nE ": error:|^error:|^e: |FAILURE|What went wrong|BUILD FAILED|ARCHIVE FAILED" -A3 build/archive.log | head -150 || true; exit 1; }
+          grep -E "Version |Firebase: " build/archive.log || true
+
+      - name: Upload to App Store Connect
+        run: |
+          cat > build/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/MTS.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" 2>&1 | tail -40
+
+      - name: Delete the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/asc/"*.p8
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: testflight-logs
+          path: |
+            build/archive.log
+            build/export/*.log
+          if-no-files-found: ignore

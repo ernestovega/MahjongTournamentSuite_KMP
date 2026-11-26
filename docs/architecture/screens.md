@@ -7,12 +7,12 @@ How to move around the apps and what each role sees. The pictures are the ones o
 ```mermaid
 flowchart LR
   subgraph Android["📱 Android app «MTS» (one app)"]
-    AP["Player part<br/>(playerApp)"] -- "«Management» button<br/>(staff only)" --> AA["Management part<br/>(adminApp)"]
-    AA -- "«Player view» button / back" --> AP
+    AP["Player part<br/>(playerApp)"] -- "«Manager app» button<br/>(staff only)" --> AA["Management part<br/>(adminApp)"]
+    AA -- "«Player app» button / back" --> AP
   end
   subgraph Web["🌐 mts.mahjongmadrid.com"]
     WP["/ → player web"] -- "after signing in,<br/>staff chooses" --> WA["/admin/ → management web"]
-    WA -- "«Player view»" --> WP
+    WA -- "«Player app»" --> WP
   end
   D["🖥️ Desktop"] --> DA["management only"]
 ```
@@ -75,7 +75,7 @@ flowchart TD
   T -- "tournament" --> E["Tournament<br/>round › table editor"]
   T -- "tournament before the draw" --> REG["Registrations"]
   E -- "Timer · Ranking · QR" --> W["Windows to project"]
-  E -- "Round control" --> RC["Round control dialog"]
+  E -- "Round control" --> RC["Round control screen"]
   E -- "More" --> MORE["Players · Tables IDs · Stats ·<br/>EMA report · Activity"]
   MORE --> PL["Players"]
   PL -- "top bar" --> TE["Teams · ID cards · ID list ·<br/>Invitations · Number of players"]
@@ -84,7 +84,7 @@ flowchart TD
 
 | Screen | Who | What it does | Picture |
 |---|---|---|---|
-| **Sign in** | Staff (Super Admin, Club Admin, editor) | On the web, a staff account chooses «Player view» or «Management». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Sign in"> |
+| **Sign in** | Staff (Super Admin, Club Admin, editor) | On the web, a staff account chooses «Player app» or «Manager app». | <img src="../../adminApp/screenshots/sign-in/phone-light.png" width="140" alt="Sign in"> |
 | **Tournaments** | Super Admin: all · Club Admin: those of its organizations · Editor: assigned | Create (Super Admin and Club Admin), edit, open. Top bar: accounts, EMA registry, organizations, clock; DEV menu (Super Admin). | <img src="../../adminApp/screenshots/tournaments/phone-light.png" width="140" alt="Tournaments"> |
 | **Tournament (round editor)** | Staff of the tournament | Round › table: players, seats, points and the 16 hands. Top bar: Timer, Ranking, QR and Round control; Players, Tables IDs, Stats, EMA report and Activity in the More menu. | <img src="../../adminApp/screenshots/tournament/phone-light.png" width="140" alt="Tournament (round editor)"> |
 | **Registrations** | Staff of the tournament | Before the draw: public link, places, waiting list, paid, food, the import of the Google Form (it replaces the list and marks the rows with problems), settings and Make the draw. | <img src="../../adminApp/screenshots/registrations/phone-light.png" width="140" alt="Registrations"> |
@@ -94,6 +94,7 @@ flowchart TD
 | **Teams** | Staff of the tournament | Name and members of each team. Opens from Players. | <img src="../../adminApp/screenshots/teams/phone-light.png" width="140" alt="Teams"> |
 | **Ranking (big screen)** | Staff of the tournament | To project in the venue; it pages by itself. | <img src="../../adminApp/screenshots/ranking-standalone/phone-light.png" width="140" alt="Ranking (big screen)"> |
 | **Round clock** | Staff of the tournament | Starts, pauses and sets the time of the round; opens the hands to the players. | <img src="../../adminApp/screenshots/timer/phone-light.png" width="140" alt="Round clock"> |
+| **Round control** | Admin or editor of the tournament | Plan B of the Timer, from the top bar of the tournament: the clock of a round, what the players can do (hands, seats, per table) and the open tables of finished rounds. A screen, so closing a table here does not interrupt the table editor. | <img src="../../adminApp/screenshots/round-control/phone-light.png" width="140" alt="Round control"> |
 | **Statistics** | Staff | The same screen as the Player, with the same filters. | <img src="../../adminApp/screenshots/statistics/phone-light.png" width="140" alt="Statistics"> |
 | **Accounts** | Staff: every player and the staff of its organizations · Super Admin: all | Create, edit, deactivate and delete (Super Admin), password email. The **Permissions** button of a staff account: custom role (also the Club Admin, in its organizations) and single boxes (Super Admin). | <img src="../../adminApp/screenshots/users/phone-light.png" width="140" alt="Accounts"> |
 | **Roles** | Super Admin | Standard roles (read only, can be duplicated) and custom roles that start from Editor or Club Admin: name, permission boxes, how many accounts use it. Opens from Accounts. | <img src="../../adminApp/screenshots/roles/phone-light.png" width="140" alt="Roles"> |

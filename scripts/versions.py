@@ -53,6 +53,9 @@ MODULES = {
     # The Android app (androidApp, the admin version) holds the player part too.
     "playerApp": {WEB, ADMIN},
     "androidApp": {ADMIN},
+    # The mobile suite and the iOS app have the version of the Android app: they are the same app.
+    "suite": {ADMIN},
+    "iosApp": {ADMIN},
 }
 
 # The products that each platform source set goes into. Other source sets, such as commonMain,
@@ -62,6 +65,7 @@ SOURCE_SETS = {
     "webMain": {WEB},
     "jsMain": {WEB},
     "androidMain": {ADMIN},
+    "iosMain": {ADMIN},
     # The desktop app is the admin app.
     "jvmMain": {ADMIN},
 }

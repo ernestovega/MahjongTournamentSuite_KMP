@@ -288,7 +288,7 @@ fun EditTournamentDialog(
                             Tab(
                                 selected = tab == selectedTab,
                                 onClick = { selectedTab = tab },
-                                text = { Text(stringResource(tab.title)) },
+                                text = { ButtonText(stringResource(tab.title), fontWeight = null) },
                             )
                         }
                     }
@@ -608,7 +608,7 @@ fun EditTournamentDialog(
                                         FocusedOutlinedButton(
                                             onClick = { onPlayerCount?.invoke(liveTournament) },
                                             modifier = Modifier.testTag("changePlayerCount"),
-                                        ) { Text(stringResource(Res.string.pc_title)) }
+                                        ) { ButtonText(stringResource(Res.string.pc_title)) }
                                     }
                                     TournamentReadOnlyField(
                                         label = stringResource(Res.string.created_by_uid),
@@ -658,7 +658,7 @@ fun EditTournamentDialog(
                                 colors = MtsButtons.destructiveOutlinedColors(),
                                 border = MtsButtons.destructiveBorder(!isLoading),
                             ) {
-                                Text(stringResource(Res.string.delete))
+                                ButtonText(stringResource(Res.string.delete))
                             }
                         }
                     },
@@ -673,7 +673,7 @@ fun EditTournamentDialog(
                         },
                         focusRequester = renameCancelFocusRequester,
                     ) {
-                        Text(stringResource(Res.string.cancel))
+                        ButtonText(stringResource(Res.string.cancel))
                     }
                     Button(
                         enabled = !isLoading,
@@ -819,7 +819,7 @@ fun EditTournamentDialog(
                             next = renameFieldFocusRequester,
                         ),
                     ) {
-                        Text(stringResource(Res.string.save))
+                        ButtonText(stringResource(Res.string.save))
                     }
                 }
             },
@@ -899,7 +899,7 @@ fun EditTournamentDialog(
                                 }
                             },
                         ) {
-                            Text(stringResource(Res.string.delete))
+                            ButtonText(stringResource(Res.string.delete))
                         }
 
                         Button(
@@ -911,7 +911,7 @@ fun EditTournamentDialog(
                                 next = deleteFocusRequester,
                             ),
                         ) {
-                            Text(stringResource(Res.string.cancel))
+                            ButtonText(stringResource(Res.string.cancel))
                         }
                     }
                 },

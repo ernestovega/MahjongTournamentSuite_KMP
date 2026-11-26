@@ -177,7 +177,7 @@ fun SupportForm(
                         if (busy) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         } else {
-                            Text(stringResource(Res.string.support_send))
+                            ButtonText(stringResource(Res.string.support_send))
                         }
                     }
                 }

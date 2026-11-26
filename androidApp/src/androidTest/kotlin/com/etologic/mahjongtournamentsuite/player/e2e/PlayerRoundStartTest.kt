@@ -51,7 +51,7 @@ class PlayerRoundStartTest : PlayerE2eTest() {
         // The organizer resets the clock of a round with hands. The hands stay.
         timer("""{"action":"reset","force":true}""")
         openExtraTimeTable()
-        c.waitForText("Waiting for the starting gong. The hand buttons appear when the round starts.")
+        c.waitForText("The hand buttons appear when the round starts.")
         c.assertNoText("Add draw")
 
         timer("""{"action":"start"}""")
@@ -76,7 +76,7 @@ class PlayerRoundStartTest : PlayerE2eTest() {
         // Each pick asks for the next wind. The fourth player takes North without a question.
         listOf("South", "West", "North").forEach { next ->
             c.onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
-            c.waitForText(if (next == "North") "North:" else "Who sits at $next?", substring = next == "North")
+            c.waitForText(if (next == "North") "Seats of the table" else "Who sits at $next?")
         }
         c.clickButton("Save the seats")
 
@@ -104,12 +104,12 @@ class PlayerRoundStartTest : PlayerE2eTest() {
     fun anOpenRoundShowsTheHandButtonsBeforeTheGong() {
         timer("""{"action":"reset","force":true}""")
         openExtraTimeTable()
-        c.waitForText("Waiting for the starting gong. The hand buttons appear when the round starts.")
+        c.waitForText("The hand buttons appear when the round starts.")
         c.assertNoText("Add draw")
 
         control("""{"hands":"open"}""")
 
         c.waitForText("Add draw", timeoutMs = 60_000)
-        c.assertNoText("Waiting for the starting gong. The hand buttons appear when the round starts.")
+        c.assertNoText("The hand buttons appear when the round starts.")
     }
 }

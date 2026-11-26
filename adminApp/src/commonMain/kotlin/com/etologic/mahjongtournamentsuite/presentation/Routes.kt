@@ -85,6 +85,13 @@ data object ErrorsRoute
  * Who wrote what and when in the database. Only administrators can open it.
  * [tournamentId] opens it with the tournament filter on that tournament; null shows all tournaments.
  */
+/**
+ * Round control of a tournament, the plan B of the Timer. [round] is the round it opens at: the round in play, or the
+ * next one to play.
+ */
+@Serializable
+data class RoundControlRoute(val tournamentId: String, val round: Int = 1)
+
 @Serializable
 data class ActivityRoute(val tournamentId: String? = null)
 

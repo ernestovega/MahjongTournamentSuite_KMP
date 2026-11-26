@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -110,7 +111,7 @@ internal fun TableResultsCard(
             Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
                 if (editor.hasCompleteSeatPositions) {
                     FocusedTextButton(onClick = { editingSeats = !editingSeats }, enabled = enabled) {
-                        Text(stringResource(if (editingSeats) Res.string.table_done else Res.string.edit_seats))
+                        ButtonText(stringResource(if (editingSeats) Res.string.table_done else Res.string.edit_seats))
                     }
                 }
                 LabeledSwitch(

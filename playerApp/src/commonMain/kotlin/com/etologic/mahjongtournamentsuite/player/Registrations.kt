@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,6 +100,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicat
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -353,7 +355,7 @@ internal fun RegistrationsTab(tournament: Tournament) {
             AlertDialog(
                 onDismissRequest = { done = null },
                 text = { MtsDialogText(message.asString()) },
-                confirmButton = { MtsDialogButtons { TextButton(onClick = { done = null }) { Text(stringResource(Res.string.preg_close)) } } },
+                confirmButton = { MtsDialogButtons { TextButton(onClick = { done = null }) { ButtonText(stringResource(Res.string.preg_close)) } } },
             )
         }
     }
@@ -406,7 +408,7 @@ internal fun RegistrationsTab(tournament: Tournament) {
                 item(key = "title-$status") {
                     RegistrationSectionTitle(
                         stringResource(if (status == RegistrationStatus.CONFIRMED) Res.string.preg_title_confirmed else Res.string.preg_title_waiting, rows.size),
-                        color = if (status == RegistrationStatus.CONFIRMED) MaterialTheme.colorScheme.primary else MtsTheme.colors.warning,
+                        color = if (status == RegistrationStatus.CONFIRMED) MtsTheme.colors.link else MtsTheme.colors.warning,
                     )
                 }
                 items(rows, key = { "$status-${it.emaId}" }) { row ->
@@ -493,7 +495,7 @@ private fun RegistrationSummaryCard(settings: RegistrationSettings?) {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 val open = settings?.isOpen == true
                 SummaryRow(stringResource(Res.string.preg_status_label), compact) {
-                    val color = if (open) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    val color = if (open) MtsTheme.colors.link else MaterialTheme.colorScheme.onSurfaceVariant
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                         Text(
@@ -565,7 +567,7 @@ private fun SummaryDetail(text: String) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onRegister: () -> Unit, onNoEma: () -> Unit) {
     // The color of the state: green with a place, amber on the waiting list.
-    val accent = if (own?.status == RegistrationStatus.WAITING) MtsTheme.colors.warning else MaterialTheme.colorScheme.primary
+    val accent = if (own?.status == RegistrationStatus.WAITING) MtsTheme.colors.warning else MtsTheme.colors.link
     Card(
         Modifier.fillMaxWidth().testTag("registration-own"),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -580,8 +582,8 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
             val (icon, tint) = when (own?.status) {
                 RegistrationStatus.CONFIRMED -> Icons.Default.CheckCircle to accent
                 RegistrationStatus.WAITING -> Icons.Default.HourglassTop to MtsTheme.colors.warning
-                RegistrationStatus.PENDING -> Icons.Default.MarkEmailUnread to MaterialTheme.colorScheme.primary
-                null -> Icons.Default.HowToReg to MaterialTheme.colorScheme.primary
+                RegistrationStatus.PENDING -> Icons.Default.MarkEmailUnread to MtsTheme.colors.link
+                null -> Icons.Default.HowToReg to MtsTheme.colors.link
             }
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(32.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
@@ -602,7 +604,7 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     if (own != null && own.status != RegistrationStatus.PENDING) {
                         Button(onClick = onManage, modifier = Modifier.testTag("registration-manage")) {
                             Icon(Icons.Default.Edit, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.preg_edit), Modifier.padding(start = MtsTheme.spacing.sm))
+                            ButtonText(stringResource(Res.string.preg_edit), Modifier.padding(start = MtsTheme.spacing.sm))
                         }
                     }
                 }
@@ -622,9 +624,9 @@ private fun OwnRegistrationCard(own: OwnRegistration?, onManage: () -> Unit, onR
                     ) {
                         Button(onClick = onRegister, modifier = Modifier.testTag("registration-register")) {
                             Icon(Icons.Default.HowToReg, contentDescription = null, Modifier.size(18.dp))
-                            Text(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
+                            ButtonText(stringResource(Res.string.preg_register), Modifier.padding(start = 8.dp))
                         }
-                        TextButton(onClick = onNoEma) { Text(stringResource(Res.string.preg_no_ema)) }
+                        TextButton(onClick = onNoEma) { ButtonText(stringResource(Res.string.preg_no_ema)) }
                     }
                 }
             }
@@ -651,7 +653,7 @@ private fun TeamMissingCard(onSetUp: () -> Unit) {
                     modifier = Modifier.padding(top = 4.dp).testTag("registration-set-up-team"),
                 ) {
                     Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(18.dp))
-                    Text(stringResource(Res.string.preg_team_missing_action), Modifier.padding(start = 8.dp))
+                    ButtonText(stringResource(Res.string.preg_team_missing_action), Modifier.padding(start = 8.dp))
                 }
             }
         }
@@ -685,7 +687,7 @@ private fun RegistrationLine(row: PublicRegistration, teamName: String?, isTeams
         ),
     ) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = MtsTheme.spacing.md), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
+            Text(row.position.toString(), style = MaterialTheme.typography.titleMedium.inTextFont(), textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 24.dp))
             PlayerPhoto(photoUrl = row.photoUrl, name = row.name, size = RegistrationPhotoSize)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -760,7 +762,7 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 CountryFlag(code = chosen.country, width = 20.dp)
                                 Text("${chosen.displayName} · ${chosen.emaId}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { picked = null }) { Text(stringResource(Res.string.action_cancel)) }
+                                TextButton(onClick = { picked = null }) { ButtonText(stringResource(Res.string.action_cancel)) }
                             }
                         } else {
                             OutlinedTextField(
@@ -822,8 +824,8 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
                             }
                         },
                         modifier = Modifier.testTag("registration-submit"),
-                    ) { Text(stringResource(Res.string.preg_register)) }
-                    TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(Res.string.action_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_register)) }
+                    TextButton(onClick = onDismiss, enabled = !busy) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )
@@ -901,8 +903,8 @@ private fun ManageRegistrationDialog(
                                     }
                                 }
                             },
-                        ) { Text(stringResource(Res.string.preg_cancel_confirm)) }
-                        TextButton(onClick = { confirmCancel = false }) { Text(stringResource(Res.string.action_cancel)) }
+                        ) { ButtonText(stringResource(Res.string.preg_cancel_confirm)) }
+                        TextButton(onClick = { confirmCancel = false }) { ButtonText(stringResource(Res.string.action_cancel)) }
                     }
                 },
             )
@@ -929,7 +931,7 @@ private fun ManageRegistrationDialog(
                     TextButton(
                         enabled = !busy && (food.isBlank() || consent) && food != own.foodRestrictions,
                         onClick = { run { presenter.saveFood(tournamentId, food, consent) } },
-                    ) { Text(stringResource(Res.string.preg_save)) }
+                    ) { ButtonText(stringResource(Res.string.preg_save)) }
                     if (list?.isTeams == true) {
                         HorizontalDivider()
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -947,11 +949,11 @@ private fun ManageRegistrationDialog(
                         )
                         if (team == null) {
                             TextButton(enabled = !busy && teamName.isNotBlank(), onClick = { run { presenter.createTeam(tournamentId, teamName) } }) {
-                                Text(stringResource(Res.string.preg_create_team))
+                                ButtonText(stringResource(Res.string.preg_create_team))
                             }
                         } else {
                             if (isCaptain && teamName.isNotBlank() && teamName != team.name) {
-                                TextButton(enabled = !busy, onClick = { run { presenter.renameTeam(tournamentId, teamName) } }) { Text(stringResource(Res.string.preg_rename_team)) }
+                                TextButton(enabled = !busy, onClick = { run { presenter.renameTeam(tournamentId, teamName) } }) { ButtonText(stringResource(Res.string.preg_rename_team)) }
                             }
                             team.members.forEach { emaId ->
                                 val name = list.registrations.firstOrNull { it.emaId == emaId }?.name ?: emaId
@@ -962,7 +964,7 @@ private fun ManageRegistrationDialog(
                                     )
                                     if (isCaptain && emaId != own.emaId) {
                                         TextButton(enabled = !busy, onClick = { run { presenter.removeMember(tournamentId, emaId) } }) {
-                                            Text(stringResource(Res.string.preg_remove_member))
+                                            ButtonText(stringResource(Res.string.preg_remove_member))
                                         }
                                     }
                                 }
@@ -980,22 +982,22 @@ private fun ManageRegistrationDialog(
                                     val emaId = member
                                     member = ""
                                     run { presenter.addMember(tournamentId, emaId) }
-                                }) { Text(stringResource(Res.string.preg_add_member)) }
+                                }) { ButtonText(stringResource(Res.string.preg_add_member)) }
                             }
-                            TextButton(enabled = !busy, onClick = { run { presenter.leaveTeam(tournamentId) } }) { Text(stringResource(Res.string.preg_leave_team)) }
+                            TextButton(enabled = !busy, onClick = { run { presenter.leaveTeam(tournamentId) } }) { ButtonText(stringResource(Res.string.preg_leave_team)) }
                         }
                     }
                 }
             },
             confirmButton = {
                 MtsDialogButtons {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.preg_close)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.preg_close)) }
                     OutlinedButton(
                         onClick = { confirmCancel = true },
                         colors = MtsButtons.destructiveOutlinedColors(),
                         border = MtsButtons.destructiveBorder(),
                         modifier = Modifier.testTag("registration-cancel"),
-                    ) { Text(stringResource(Res.string.preg_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_cancel)) }
                 }
             },
         )
@@ -1027,8 +1029,8 @@ private fun NoEmaNumberDialog(onSend: (NoEmaNumberRequest) -> Unit, onDismiss: (
                     Button(
                         enabled = name.trim().length >= 2 && email.contains('@'),
                         onClick = { onSend(NoEmaNumberRequest(name, country, email, message)) },
-                    ) { Text(stringResource(Res.string.preg_send)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+                    ) { ButtonText(stringResource(Res.string.preg_send)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.action_cancel)) }
                 }
             },
         )

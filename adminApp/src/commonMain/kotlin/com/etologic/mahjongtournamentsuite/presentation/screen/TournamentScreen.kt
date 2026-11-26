@@ -44,6 +44,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -171,8 +172,6 @@ fun TournamentScreen(
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
     // The table the admin asked to empty. A dialog asks before the server clears it.
     var tableToReset by remember { mutableStateOf<Int?>(null) }
-    // The round that the Round control dialog opens at, or null while it is closed.
-    var roundControlRound by remember { mutableStateOf<Int?>(null) }
     var editingTournament by remember { mutableStateOf(false) }
     var tablesIdsOpen by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
@@ -406,7 +405,11 @@ fun TournamentScreen(
             RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
             RoundEditorAction.Activity -> navController.navigate(ActivityRoute(tournamentId))
-            RoundEditorAction.RoundControl -> roundControlRound = tournament?.timerRound(allTables.roundsWithHands()) ?: 1
+            // A screen of its own, not a dialog: a table closed there does not show the "table changed" notice of this
+            // editor behind it. Back here, the screen loads the tables again.
+            RoundEditorAction.RoundControl -> navController.navigate(
+                RoundControlRoute(tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1),
+            )
         }
     }
 
@@ -468,9 +471,6 @@ fun TournamentScreen(
             saveFocusRequester.requestFocus()
         }
     }
-    roundControlRound?.let { round ->
-        RoundControlDialog(tournamentId = tournamentId, initialRound = round, onDismiss = { roundControlRound = null })
-    }
     tableToReset?.let { tableId ->
         ResetTableDialog(
             roundId = selectedRoundId ?: 0,
@@ -519,6 +519,7 @@ fun TournamentScreen(
     Box(modifier = Modifier.trackActivity(activity)) {
     AppScaffold(
         title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
+        shortTitle = tournament?.shortName,
         titleAction = {
             TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
         },

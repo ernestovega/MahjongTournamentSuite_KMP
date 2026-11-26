@@ -13,36 +13,34 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -53,16 +51,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
@@ -71,6 +70,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chicken_hand
 import mahjongtournamentsuite.ui.generated.resources.diffs_about
@@ -80,8 +80,8 @@ import mahjongtournamentsuite.ui.generated.resources.diffs_label
 import mahjongtournamentsuite.ui.generated.resources.diffs_other
 import mahjongtournamentsuite.ui.generated.resources.diffs_self
 import mahjongtournamentsuite.ui.generated.resources.icon_chicken
-import mahjongtournamentsuite.ui.generated.resources.icon_self_draw
 import mahjongtournamentsuite.ui.generated.resources.icon_sad_face
+import mahjongtournamentsuite.ui.generated.resources.icon_self_draw
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy_bronze
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy_silver
@@ -99,11 +99,11 @@ import mahjongtournamentsuite.ui.generated.resources.wind_east
 import mahjongtournamentsuite.ui.generated.resources.wind_north
 import mahjongtournamentsuite.ui.generated.resources.wind_south
 import mahjongtournamentsuite.ui.generated.resources.wind_west
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 enum class SeatWind {
     EAST,
@@ -192,14 +192,14 @@ fun ChickenHandMark(size: Dp = 22.dp) {
     AppTooltipBox(stringResource(Res.string.chicken_hand), alignEnd = true) { ChickenIcon(size) }
 }
 
-/** The explosion of a self-draw. A label beside it says the words, so it has no description of its own. */
+/** The self-draw: a mushroom cloud in a few warm colors, its own colors unless [tint] (Ernesto, 2026-11-25). A label beside it says the words, so it has no description of its own. */
 @Composable
-fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
+fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
     Icon(
         painter = painterResource(Res.drawable.icon_self_draw),
         contentDescription = null,
         modifier = modifier.size(size),
-        tint = Color.Unspecified,
+        tint = tint,
     )
 }
 
@@ -249,7 +249,7 @@ fun RankTrophy(rank: Int, size: Dp = 28.dp) {
 
 /** The color of the result of a position at a table. It matches the trophy. The fourth place is red. */
 @Composable
-fun positionColor(position: Int): Color = MtsTheme.colors.position(position, MaterialTheme.colorScheme.error)
+fun positionColor(position: Int): Color = MtsTheme.colors.position(position, MaterialTheme.colorScheme.errorContainer)
 
 /** The sad face of the player who finished fourth at a table. */
 @Composable
@@ -355,11 +355,11 @@ fun TableSeatsView(
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 36.dp) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f)) { leading?.invoke() }
-                    DiffsInfo()
-                    // The space between the info icon and the label is the same as between the label and the switch (Ernesto, 2026-11-25).
-                    MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }, gap = MtsTheme.spacing.sm) {
+                    // The info icon goes after the switch, as far from it as the label is (Ernesto, 2026-11-25).
+                    MtsSwitchRow(checked = showDiffs, onCheckedChange = { showDiffs = it }, gap = DiffsGap) {
                         Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
                     }
+                    DiffsInfo()
                 }
             }
         } else if (leading != null) {
@@ -374,14 +374,22 @@ fun TableSeatsView(
     }
 }
 
+/** The space between the label of the Diffs switch and the switch, and between the switch and its info icon. */
+private val DiffsGap = 8.dp
+
+/** The info button of the Diffs switch: the 24 dp icon with (DiffsGap - 2 dp) on each side. */
+private val DiffsInfoSize = 24.dp + (DiffsGap - 2.dp) * 2
+
 /** An info icon. A touch, a hover or a click shows what the differences mean. */
 @Composable
 private fun DiffsInfo() {
     val diffsInfoDescription = stringResource(Res.string.diffs_about)
     AppTooltipBox(stringResource(Res.string.diffs_explanation), alignEnd = true) {
+        // A button only as high as the row of the switch. Its icon starts DiffsGap after the switch: the circle of the
+        // icon leaves 2 dp of its 24 dp empty, so the button adds the rest.
         IconButton(
             onClick = { toggleTooltip() },
-            modifier = Modifier.semantics { contentDescription = diffsInfoDescription },
+            modifier = Modifier.size(DiffsInfoSize).semantics { contentDescription = diffsInfoDescription },
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -440,7 +448,8 @@ private fun SeatsCross(
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(
                                 label,
-                                style = MaterialTheme.typography.labelMedium,
+                                // The number of the hand in the text font, like every number of the table (Ernesto, 2026-11-25).
+                                style = MaterialTheme.typography.labelMedium.inTextFont(),
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                             )
@@ -490,7 +499,7 @@ private fun SeatCard(
             }
             SeatScore(seat.score, item.score)
             if (seat.penalty != 0) {
-                Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall.inTextFont(), color = MaterialTheme.colorScheme.error)
             }
             seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
             if (showDiffs) DiffsTable(diffs)
@@ -674,7 +683,7 @@ private fun tablePointsText(points: String): String {
 @Composable
 private fun SeatExtras(seat: SeatDisplay) {
     if (seat.penalty != 0) {
-        Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+        Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall.inTextFont(), color = MaterialTheme.colorScheme.error)
     }
     seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
 }
@@ -744,7 +753,7 @@ private fun DiffsRow(label: String, self: String, him: String, other: String, he
     Row(Modifier.widthIn(max = 180.dp).fillMaxWidth()) {
         Text(label, Modifier.weight(0.8f), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
         listOf(self, him, other).forEach { cell ->
-            Text(cell, Modifier.weight(1f), style = style, color = color, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(cell, Modifier.weight(1f), style = if (header) style else style.inTextFont(), color = color, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

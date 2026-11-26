@@ -1,0 +1,168 @@
+# Builds the iOS app (iosApp) for the simulator, opens it there and keeps screenshots of the first screens. It checks
+# nothing: until the release there are no new gates in CI. Run it by hand from Actions > Build · iOS, or it runs on a
+# push that touches the iOS code. See docs/ios-release.md.
+name: Build · iOS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "iosApp/**"
+      - "suite/**"
+      - "**/src/iosMain/**"
+      - "**/src/iosTest/**"
+      - "**/src/uiTest/**"
+      - ".github/workflows/ios.yml"
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # The common tests and the iOS tests of every module, on the iOS simulator (Kotlin/Native).
+  tests:
+    name: Kotlin tests on the iOS simulator
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      # Xcode 27 (iOS 27 SDK): App Store Connect requires it from April 2027. The runner image has several Xcodes.
+      - name: Newest Xcode (27 once the runner has it)
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode_[0-9]*.app | sort -V | tail -1)
+            echo "::warning::No Xcode 27 on this runner yet, using $XCODE. App Store Connect requires the iOS 27 SDK from April 2027."
+          fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Memory for the Kotlin/Native compiler
+        run: |
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8"
+            echo "kotlin.daemon.jvmargs=-Xmx1g"
+            echo "kotlin.native.disableCompilerDaemon=true"
+            echo "kotlin.native.jvmArgs=-Xmx4g"
+          } >> "$HOME/.gradle/gradle.properties"
+
+      # The test binary of a module sometimes dies on the runner (signal 11 inside Compose, never on a Mac), which
+      # stops the rest of its tests. A second run repeats only the modules that failed.
+      - name: Tests
+        run: ./gradlew iosSimulatorArm64Test --continue || ./gradlew iosSimulatorArm64Test --continue
+
+      - name: Report
+        if: always()
+        run: |
+          for f in $(find . -path "*/build/test-results/iosSimulatorArm64Test/*.xml" 2>/dev/null); do
+            module=$(echo "$f" | cut -d/ -f2)
+            tests=$(grep -o 'tests="[0-9]*"' "$f" | head -1 | grep -o '[0-9]*')
+            failures=$(grep -o 'failures="[0-9]*"' "$f" | head -1 | grep -o '[0-9]*')
+            echo "$module $tests $failures"
+          done | awk '{t[$1]+=$2; f[$1]+=$3} END {for (m in t) printf "%-14s %5d tests, %d failed\n", m, t[m], f[m]}'
+          grep -l "<failure" $(find . -path "*/build/test-results/iosSimulatorArm64Test/*.xml") 2>/dev/null | head -20 | while read f; do
+            grep -B1 -A4 "<failure" "$f" | head -20
+          done
+
+  simulator:
+    name: Build and open in the simulator
+    # The repository is public, so the macOS runners cost nothing.
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      # Xcode 27 (iOS 27 SDK): App Store Connect requires it from April 2027. The runner image has several Xcodes.
+      - name: Newest Xcode (27 once the runner has it)
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            XCODE=$(ls -d /Applications/Xcode_[0-9]*.app | sort -V | tail -1)
+            echo "::warning::No Xcode 27 on this runner yet, using $XCODE. App Store Connect requires the iOS 27 SDK from April 2027."
+          fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Xcode and simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | grep -E "iPhone|iPad" | head -20
+
+      # The same framework that the build phase of Xcode makes, here first so its errors are easy to read.
+      - name: Link the Kotlin framework
+        run: ./gradlew :suite:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Build the app for the simulator
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build/xcodebuild.log 2>&1 || { grep -nE ": error:|^error:|^e: |FAILURE|What went wrong|BUILD FAILED|ARCHIVE FAILED" -A3 build/xcodebuild.log | head -150 || true; exit 1; }
+          grep -E "warning: .*\.swift|Version |Firebase: " build/xcodebuild.log || true
+
+      - name: Open the app in the simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available | grep -E "^\s+iPhone [0-9]+ Pro \(" | tail -1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          echo "Simulator $DEVICE"
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/iosApp.app
+          mkdir -p build/ios-screens
+          xcrun simctl launch "$DEVICE" com.etologic.mahjongtournamentsuite
+          for second in 5 15 30; do
+            sleep 10
+            xcrun simctl io "$DEVICE" screenshot "build/ios-screens/iphone-${second}s.png"
+          done
+          xcrun simctl ui "$DEVICE" appearance dark
+          sleep 5
+          xcrun simctl io "$DEVICE" screenshot build/ios-screens/iphone-dark.png
+          # Opening a link of the site, like the QR of a table, goes through the universal links handler.
+          xcrun simctl openurl "$DEVICE" "https://mts.mahjongmadrid.com/support" || true
+          sleep 8
+          xcrun simctl io "$DEVICE" screenshot build/ios-screens/iphone-link.png
+          xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "iosApp"' --style compact > build/ios-screens/app.log || true
+          # A short report in the log of the job: is the app still running, what it logged, and how many colours each
+          # screenshot has (a blank or black screen has one or two).
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q com.etologic.mahjongtournamentsuite; then echo "App running"; else echo "App NOT running"; fi
+          grep -iE "error|exception|terminat|crash|fatal" build/ios-screens/app.log | tail -40 || true
+          for shot in build/ios-screens/*.png; do
+            echo "$shot: $(sips -g pixelWidth -g pixelHeight "$shot" | tail -2 | awk '{print $2}' | xargs)"
+          done
+
+      - name: Keep the build log
+        if: always()
+        run: mkdir -p build/ios-screens && cp build/xcodebuild.log build/ios-screens/ 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ios-simulator
+          path: build/ios-screens/
+          if-no-files-found: ignore

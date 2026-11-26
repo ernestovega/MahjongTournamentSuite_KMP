@@ -1,9 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
-import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
@@ -56,9 +55,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DialogButtonRow
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
@@ -214,9 +216,9 @@ fun PlayerAccountsBulkDialog(
                                         TextButton(
                                             enabled = shown.isNotEmpty() && !busy,
                                             onClick = { selected = shown.map { it.id }.toSet() },
-                                        ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
+                                        ) { ButtonText(stringResource(Res.string.select_all_shown, shown.size)) }
                                         TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
-                                            Text(stringResource(Res.string.clear))
+                                            ButtonText(stringResource(Res.string.clear))
                                         }
                                         Text(
                                             stringResource(Res.string.selected_count, chosen.size),
@@ -292,14 +294,14 @@ fun PlayerAccountsBulkDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                    TextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.close)) }
                     Button(
                         enabled = chosen.isNotEmpty() && !busy,
                         onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(Res.string.send_count, chosen.size))
+                        ButtonText(stringResource(Res.string.send_count, chosen.size))
                     }
                 }
             },
@@ -395,7 +397,7 @@ private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult
         result.outcome == PlayerAccountOutcome.REMINDED -> stringResource(Res.string.outcome_label_reminded)
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
-    val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MtsTheme.colors.link
     Column(Modifier.width(width), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text, color = color, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         // Only an email that went out has a time. A failure shows its reason alone.
