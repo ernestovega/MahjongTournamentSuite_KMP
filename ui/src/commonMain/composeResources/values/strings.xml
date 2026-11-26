@@ -559,6 +559,7 @@
     <string name="password_reset_invalid_email">This email does not look right.\nCheck it and try again.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versions</string>
+    <string name="dev_downloads">Downloads</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Architecture (GitHub)</string>
     <string name="dev_privacy_policy">Privacy policy</string>
