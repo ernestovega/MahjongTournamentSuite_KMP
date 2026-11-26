@@ -85,6 +85,8 @@ In `designsystem/.../presentation/components`:
   its own click (`onCheckedChange = null` / `onClick = null`) inside a `toggleable` or `selectable` parent.
   `LabeledControlsTest` (ui, jvmTest) fails otherwise; its short allowed list holds the boxes that select a row of a
   list whose tap opens the row, and the boxes of the hand table.
+- The column titles of every table are bold and centered in their column (Ernesto, 2026-11-26), also in small
+  tables such as the hand list of a table. Use `DataTableHeaderText` or `dataTableHeaderStyle()` (ui, `FlatDataTable.kt`).
 
 ### Scroll indicators (fading edges and scrollbar)
 

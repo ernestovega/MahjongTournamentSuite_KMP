@@ -606,7 +606,7 @@ private fun RankingPage(
             }
             // The photo is as tall as a line of text, so it does not change the rows that fit on a page.
             val photoSize = with(androidx.compose.ui.platform.LocalDensity.current) { textStyle.lineHeight.toDp() }
-            val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+            val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
             val measuredWidths = rememberRankingColumnWidths(page, textStyle)
             val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing, if (page.showPhoto) photoSize else null) else measuredWidths
 
@@ -623,7 +623,7 @@ private fun RankingPage(
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
                     if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
                     if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
-                    RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
+                    RankingCell(page.nameHeader, widths.name, TextAlign.Center, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
                     }

@@ -198,7 +198,6 @@
     <string name="name">Naam</string>
     <string name="short_name">Korte naam</string>
     <string name="from_to">Van-tot</string>
-    <string name="features">Kenmerken</string>
     <string name="select_ema_player">EMA-speler kiezen</string>
     <string name="name_ema_id_or_country">Naam, EMA-ID of land</string>
     <string name="no_player_found">Geen speler gevonden.</string>

@@ -55,6 +55,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -612,9 +613,9 @@ private fun ColumnScope.ActivityTable(
         if (!compact) {
             item(key = "header") {
                 DataTableHeaderRow {
-                    Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(Res.string.activity_col_what), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                    DataTableHeaderText(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth))
+                    DataTableHeaderText(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f))
+                    DataTableHeaderText(stringResource(Res.string.activity_col_what), modifier = Modifier.weight(1f))
                 }
                 DataTableDivider()
             }
