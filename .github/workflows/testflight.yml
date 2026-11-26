@@ -9,13 +9,6 @@ name: Publish · TestFlight
 
 on:
   workflow_dispatch:
-  # TEMPORARY, until the iOS branch is merged (a workflow can be started by hand only from main): a change of this
-  # file on the iOS branch starts it. Remove it before merging.
-  push:
-    branches:
-      - claude/project-thread-7wbkkh
-    paths:
-      - ".github/workflows/testflight.yml"
 
 concurrency:
   group: testflight
