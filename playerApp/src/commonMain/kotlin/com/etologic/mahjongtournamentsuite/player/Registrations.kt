@@ -753,7 +753,11 @@ private fun RegisterDialog(tournament: Tournament, onDone: (RegisterResult) -> U
             text = {
                 Column(Modifier.dialogVerticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     // The first load shows the logo with a progress. A save shows the bar.
-                    if (!loaded) AppLoadingCompact() else if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    if (!loaded) {
+                        AppLoadingCompact()
+                    } else if (busy) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
                     val signedInPerson = me
                     if (signedInPerson != null) {
                         MtsDialogText(stringResource(Res.string.preg_register_as, signedInPerson.displayName.ifBlank { signedInPerson.emaId }, signedInPerson.emaId))

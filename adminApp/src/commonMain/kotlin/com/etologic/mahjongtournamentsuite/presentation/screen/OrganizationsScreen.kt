@@ -325,8 +325,7 @@ fun OrganizationsScreen(navController: NavHostController) {
                             Column(Modifier.weight(1f).fillMaxWidth().screenFullBleed().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay).padding(listPadding)) {
                                 when {
                                     all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    // The logo with a progress shows while it loads. An error shows its dialog.
-                                    list == null -> Unit
+                                    list == null -> Unit // The logo with a progress covers it while it loads.
                                     list.isEmpty() -> Text(stringResource(Res.string.organizations_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     else -> OrganizationsGrid(list) { organization ->
                                         OrganizationCard(
