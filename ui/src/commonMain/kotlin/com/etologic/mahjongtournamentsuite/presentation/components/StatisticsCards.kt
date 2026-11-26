@@ -346,7 +346,11 @@ private fun RivalNumbers(labels: List<String>, values: List<String>) {
         lines.chunked((lines.size + 1) / 2).forEach { column ->
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 column.forEach { (label, value) ->
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
                             label,
                             Modifier.weight(1f),
@@ -373,7 +377,7 @@ private fun RivalHeading(name: String, heat: Int, compare: (() -> Unit)?) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 name,
                 Modifier.weight(1f, fill = false),
