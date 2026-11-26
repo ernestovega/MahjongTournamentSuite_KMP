@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.clickable
@@ -317,8 +319,10 @@ fun OrganizationsScreen(navController: NavHostController) {
                                                 }
                                 }
                             }
-                            // Room under the last organization so the floating button covers none.
-                            Column(Modifier.weight(1f).fillMaxWidth().verticalScrollWithIndicators(scroll, MtsScrollbar.Margin).padding(bottom = FabClearance)) {
+                            // The list reaches the edges of the window, so its shadows take the whole width; the margins go
+                            // inside, with room under the last organization so the floating button covers none.
+                            val listPadding = screenListPadding(bottom = FabClearance)
+                            Column(Modifier.weight(1f).fillMaxWidth().screenFullBleed().verticalScrollWithIndicators(scroll, MtsScrollbar.Overlay).padding(listPadding)) {
                                 when {
                                     all != null && all.isNotEmpty() && list.isNullOrEmpty() -> Text(stringResource(Res.string.no_matches), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     list == null -> Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
