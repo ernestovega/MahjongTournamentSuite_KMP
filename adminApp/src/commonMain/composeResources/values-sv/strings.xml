@@ -199,7 +199,6 @@
     <string name="name">Namn</string>
     <string name="short_name">Kortnamn</string>
     <string name="from_to">Från-till</string>
-    <string name="features">Egenskaper</string>
     <string name="select_ema_player">Välj EMA-spelare</string>
     <string name="name_ema_id_or_country">Namn, EMA-ID eller land</string>
     <string name="no_player_found">Ingen spelare hittades.</string>
