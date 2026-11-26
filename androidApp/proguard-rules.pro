@@ -26,7 +26,11 @@
 -dontwarn org.openjsse.**
 
 # Play Console looks for the call to EdgeToEdge.enable (enableEdgeToEdge in every activity) to tell that the app
-# handles edge to edge. Kept as a method of its own, so R8 does not inline it out of sight.
+# handles edge to edge. The call and the types of its signature keep their names, so Play finds
+# EdgeToEdge.enable$default(Landroidx/activity/ComponentActivity;Landroidx/activity/SystemBarStyle;...).
+-keepnames class androidx.activity.ComponentActivity
+-keepnames class androidx.activity.SystemBarStyle
 -keep class androidx.activity.EdgeToEdge {
     public static void enable(...);
+    public static void enable$default(...);
 }

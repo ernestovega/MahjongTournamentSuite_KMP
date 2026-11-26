@@ -114,13 +114,17 @@ def upload(app: str, bundle: Path, mapping: Path | None = None) -> int:
         if code != int(version["code"]):
             raise SystemExit(f"The bundle has version code {code}, but {CATALOG} says {version['code']}.")
         if mapping is not None:
-            edits.deobfuscationfiles().upload(
-                packageName=package,
-                editId=edit_id,
-                apkVersionCode=code,
-                deobfuscationFileType="proguard",
-                media_body=MediaFileUpload(str(mapping), mimetype="application/octet-stream", resumable=True),
-            ).execute()
+            # The bundle already carries the mapping file, so a failed upload here does not stop the release.
+            try:
+                edits.deobfuscationfiles().upload(
+                    packageName=package,
+                    editId=edit_id,
+                    apkVersionCode=code,
+                    deobfuscationFileType="proguard",
+                    media_body=MediaFileUpload(str(mapping), mimetype="application/octet-stream", resumable=True),
+                ).execute()
+            except HttpError as error:
+                print(f"::warning::The mapping file was not uploaded ({error.status_code}). The bundle carries it.")
         edits.tracks().update(
             packageName=package,
             editId=edit_id,
