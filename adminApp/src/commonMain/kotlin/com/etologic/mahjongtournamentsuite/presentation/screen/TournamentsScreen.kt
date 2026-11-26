@@ -26,10 +26,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Card
@@ -157,9 +157,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.from_to
 import mahjongtournamentsuite.adminapp.generated.resources.logo
 import mahjongtournamentsuite.adminapp.generated.resources.logo_for
 import mahjongtournamentsuite.adminapp.generated.resources.name
+import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.no_host_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
-import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
 import mahjongtournamentsuite.adminapp.generated.resources.open_profile
 import mahjongtournamentsuite.adminapp.generated.resources.players
@@ -423,7 +423,7 @@ fun TournamentsScreen(
                     },
                     modifier = Modifier.focusRequester(newTournamentFocusRequester),
                 ) {
-                    Icon(Icons.Outlined.AddBox, contentDescription = null)
+                    Icon(Icons.Default.Add, contentDescription = null)
                     ButtonText(stringResource(Res.string.new_tournament), Modifier.padding(start = 12.dp))
                 }
             }
