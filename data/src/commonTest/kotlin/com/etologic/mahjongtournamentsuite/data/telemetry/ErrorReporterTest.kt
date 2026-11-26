@@ -52,7 +52,7 @@ class ErrorReporterTest {
         }
     }
 
-    private fun reporter(): ErrorReporter {
+    private fun reporter(crashes: PendingCrashStore? = store): ErrorReporter {
         val platform = PlatformTelemetry(
             analytics = object : com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry by analytics {
                 override fun hasConsent(): Boolean = consent
@@ -61,7 +61,7 @@ class ErrorReporterTest {
             platform = "android",
             env = "prod",
             language = "es",
-            pendingCrashes = store,
+            pendingCrashes = crashes,
         )
         return ErrorReporter(platform, client, ApiConfiguration("https://api.test/api"), CoroutineScope(Dispatchers.Unconfined))
     }
@@ -161,5 +161,33 @@ class ErrorReporterTest {
         awaitRequests(1)
         assertEquals("", analytics.events.single().second[TelemetryParam.REPORT_ID])
         reporter().close()
+    }
+
+    @Test
+    fun withoutACrashStoreOrWithABrokenOneNothingIsKept() = runTest {
+        reporter(crashes = null).apply {
+            recordCrash(IllegalStateException())
+            flushPending()
+        }
+        reporter(
+            crashes = object : PendingCrashStore {
+                override fun save(json: String) = error("disk full")
+
+                override fun take(): String? = error("disk broken")
+            },
+        ).apply {
+            recordCrash(IllegalStateException())
+            flushPending()
+        }
+
+        assertTrue(requests.isEmpty())
+        assertTrue(analytics.events.isEmpty())
+    }
+
+    @Test
+    fun aCrashWithoutAMessageKeepsAnEmptyMessage() = runTest {
+        reporter().recordCrash(IllegalStateException())
+
+        assertEquals("", Json.parseToJsonElement(store.saved!!).jsonObject["message"]?.jsonPrimitive?.content)
     }
 }

@@ -76,6 +76,7 @@ class DefaultRegistrationRepositoryTest {
 
     private fun repository(
         auth: AuthRepository = FakeAuthRepository(),
+        withCache: Boolean = true,
         answer: (HttpRequestData) -> Pair<HttpStatusCode, String>,
     ) = DefaultRegistrationRepository(
         backendApi = mockBackendApi { request ->
@@ -90,7 +91,7 @@ class DefaultRegistrationRepositoryTest {
         authRepository = auth,
         logger = Logger.withTag("DefaultRegistrationRepositoryTest"),
         tokens = tokens,
-        cache = cache,
+        cache = cache.takeIf { withCache },
     )
 
     private fun ok(body: String) = HttpStatusCode.OK to body
@@ -159,6 +160,19 @@ class DefaultRegistrationRepositoryTest {
         requests.clear()
         repository.loadOwn("t-1")
         assertEquals("token-1", requests.single().headers[REGISTRATION_TOKEN_HEADER])
+    }
+
+    @Test
+    fun aBlankTokenIsNotKeptAndTheNameOfTheTokenHasOnlySafeCharacters() = runTest {
+        val repository = repository(auth = NoSession(), withCache = false) { ok("""{"status":"PENDING","emailHint":"a***@example.test","manageToken":" "}""") }
+
+        assertIs<AppResult.Success<*>>(repository.register("t/1 x", RegisterRequest("10990001", "ana@example.test", "", consent = true)))
+        assertNull(tokens.values["registration-token.t1x"])
+
+        tokens.values["registration-token.t1x"] = " "
+        assertEquals(AppResult.Success(null), repository.loadOwn("t/1 x"), "a blank token is no token")
+        assertEquals(1, requests.size)
+        assertTrue(cache.stale.isEmpty(), "without a cache nothing is marked old")
     }
 
     @Test
