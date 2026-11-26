@@ -1,5 +1,7 @@
-# Deploys main to the staging Firebase project, a copy of production with test data only. Run it by hand from
-# Actions > Deploy · Staging. It never touches the production project. See docs/staging.md.
+# Deploys develop to the staging Firebase project, a copy of production with test data only. Every push to develop
+# deploys it (Ernesto, 2026-11-26: the work goes to develop and staging, main and production only when he asks). It can
+# also be run by hand from Actions > Deploy · Staging, on develop or on main. It never touches the production project.
+# See docs/staging.md and docs/ci-deploy.md.
 # Needs the repository variables STAGING_FIREBASE_PROJECT, STAGING_GCP_WORKLOAD_IDENTITY_PROVIDER and
 # STAGING_GCP_DEPLOY_SERVICE_ACCOUNT, the repository secret STAGING_ADMIN_EMAIL, and the secrets MTS_SMTP_URI,
 # PLACES_API_KEY and MTS_ID_TOOLKIT_API_KEY in the Secret Manager of the staging project. The deploy creates
@@ -7,14 +9,16 @@
 name: Deploy · Staging
 
 on:
+  push:
+    branches: [develop]
   workflow_dispatch:
     inputs:
       action:
-        description: "deploy: publish main on staging. seed: admin account, countries and the EMA players of the rehearsal. android: build the staging APK."
+        description: "deploy: publish the branch (develop or main) on staging. seed: admin account, countries and the EMA players of the rehearsal. android: build the staging APK."
         type: choice
         options: [deploy, seed, android]
         default: deploy
-  # The Game day deploys main here before it plays, so the app and the backend of the test are the same commit.
+  # The Game day deploys its branch here before it plays, so the app and the backend of the test are the same commit.
   workflow_call:
     inputs:
       action:
@@ -22,8 +26,8 @@ on:
         default: deploy
 
 concurrency:
-  # One queue per action: a pending run of one action never cancels a run of another.
-  group: staging-${{ inputs.action }}
+  # One queue per action: a pending run of one action never cancels a run of another. A push has no inputs: it deploys.
+  group: staging-${{ inputs.action || 'deploy' }}
   cancel-in-progress: false
 
 permissions:
@@ -32,7 +36,7 @@ permissions:
 jobs:
   deploy:
     name: Deploy to staging
-    if: github.ref == 'refs/heads/main' && inputs.action == 'deploy'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (inputs.action || 'deploy') == 'deploy'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -184,7 +188,7 @@ jobs:
   # Needs the repository secret STAGING_ADMIN_EMAIL.
   seed:
     name: Seed staging
-    if: github.ref == 'refs/heads/main' && inputs.action == 'seed'
+    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'seed'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -231,10 +235,11 @@ jobs:
           npm run seed:countries
           npm run seed:staging -- --apply --project="$STAGING"
 
-  # The staging Android app (build type `staging`), as a downloadable APK. It may run on any branch: it touches no project.
+  # The staging Android app (build type `staging`), as a downloadable APK, on every push to develop and by hand. It may
+  # run on any branch: it touches no project.
   android:
     name: Build the staging Android app
-    if: inputs.action == 'android'
+    if: inputs.action == 'android' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

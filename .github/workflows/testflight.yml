@@ -25,6 +25,8 @@ env:
 jobs:
   testflight:
     name: Archive and upload to TestFlight
+    # Production comes only from main (Ernesto, 2026-11-26). Run by hand on develop, it does nothing.
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 120
     steps:

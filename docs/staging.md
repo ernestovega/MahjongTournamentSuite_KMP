@@ -21,6 +21,7 @@ production data.
 2. Add a web app and copy its `apiKey`. Add an Android app with the package
    `com.etologic.mahjongtournamentsuite.staging` and put its `google-services.json` in `androidApp/src/staging/`.
 3. In Google Cloud Shell, from a clone of the repository: `PROJECT_ID=<project> bash scripts/setup-github-deploy.sh`.
+   For staging it lets the workflows of `main` and `develop` sign in (production only `main`).
    It also enables the Cloud Billing API, which the deploy of the functions needs and cannot enable itself.
 4. In the Secret Manager of staging: `MTS_SMTP_URI` and `PLACES_API_KEY` (copies of production) and
    `MTS_ID_TOOLKIT_API_KEY` (the `apiKey` of step 2).
@@ -30,7 +31,9 @@ production data.
 
 ## Deploy and seed
 
-- Actions > Deploy · Staging > Run workflow, action `deploy`: publishes main on staging. The functions read
+- Every push to `develop` deploys it here and builds the staging APK (see [ci-deploy.md](ci-deploy.md#branches)).
+  By hand: Actions > Deploy · Staging > Run workflow, action `deploy`, on `develop` (or on `main`, to see production's
+  code with test data; the next push to `develop` replaces it). The functions read
   `.env.<project>`, written by the workflow: invitation links to the staging web and photos in the staging bucket.
   The staging web apps send no Analytics and no App Check token to production.
 - The same workflow, action `seed`: countries, the admin account of `STAGING_ADMIN_EMAIL` (a new one gets the

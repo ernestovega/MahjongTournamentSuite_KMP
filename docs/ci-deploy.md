@@ -2,9 +2,18 @@
 
 ## Branches
 
-- Work happens on branches that start from `develop`. Merge them into `develop` without a pull request. Nothing runs on `develop`.
-- To release, open a pull request from `develop` to `main`. It runs every test except the UI tests, which run by hand until the apps are in production.
-- After the merge into `main`, the workflow deploys Firebase.
+Since 2026-11-26 (Ernesto, with the apps about to go live on Google Play and the App Store) the work goes to staging by
+default and to production only when Ernesto asks.
+
+- `develop` is the default branch. Work happens on branches that start from `develop`, and they are merged into
+  `develop` and pushed, without a pull request.
+- Every push to `develop` deploys it to staging (**Deploy · Staging**, `staging.yml`: web apps, functions, Firestore and
+  Storage rules) and builds the staging APK "MTS Staging" (an artifact of the run). Nothing reaches production.
+- `main` is production. It changes only when Ernesto asks for a release: `develop` is merged into `main` and pushed (or
+  a pull request from `develop` to `main`, which also runs every test). That push deploys production Firebase.
+- Google Play, TestFlight and the App Store listing are published only by hand, from `main` (Actions > Deploy ·
+  Production with Run workflow, Publish · TestFlight, Publish · App Store listing). The iOS jobs do nothing on another
+  branch. Every new publishing workflow (the desktop app too) follows the same rule: by hand, from `main`.
 
 ## Workflow
 
@@ -34,7 +43,7 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
 
 ### Every night
 
-Every test runs on `main` every night (the game day once a week), and GitHub emails the owner when one fails (Ernesto, 2026-11-24). Times in UTC
+Every test runs on `develop` (the default branch) every night (the game day once a week), and GitHub emails the owner when one fails (Ernesto, 2026-11-24). Times in UTC
 (Madrid is one hour later in winter):
 
 | Time | Workflow | What |
@@ -42,7 +51,7 @@ Every test runs on `main` every night (the game day once a week), and GitHub ema
 | 02:30 | Deploy · Production | The five checks of **Build and test**. Nothing is deployed. |
 | 02:45 | Test · Screenshots | Compares every screen with its reference image. |
 | 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
-| 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `main` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
+| 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `develop` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |
 | 03:30 | Test · Web E2E | The Player web app in Chromium (Playwright) against the local test backend. See [e2e/web/README.md](../e2e/web/README.md). |
 | 05:00 | Check · Production benchmark | The times of production (see [benchmark.md](benchmark.md)). |
 
@@ -66,7 +75,7 @@ The deploy uses `--force`, so a function removed from the code is also deleted i
 
 ## Credentials
 
-The deploy signs in to Google Cloud with Workload Identity Federation. No key is stored in GitHub. Only workflows of this repository that run on `main` can sign in.
+The deploy signs in to Google Cloud with Workload Identity Federation. No key is stored in GitHub. Only workflows of this repository that run on `main` can sign in to production. Staging also lets in `develop`.
 
 One-time setup:
 

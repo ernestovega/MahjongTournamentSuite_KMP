@@ -144,7 +144,7 @@ Treat those as tooling noise unless a specific failure appears.
 
 ## Versions
 
-The web, the admin app (Android and desktop) and the backend (`firebase/`) have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin|backend>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. `python3 scripts/versions.py status` shows the published version of each product next to the one on main. Details: `docs/versioning.md`.
+The web, the admin app (Android and desktop) and the backend (`firebase/`) have independent versions in `gradle/libs.versions.toml`. Every release to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin|backend>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. `python3 scripts/versions.py status` shows the published version of each product next to the one on main. Details: `docs/versioning.md`.
 
 ## Editing Guidance
 
@@ -161,7 +161,7 @@ The web, the admin app (Android and desktop) and the backend (`firebase/`) have 
 - Compose UI tests run on the JVM (`jvmTest`). Android instrumented UI tests are described in `docs/instrumented-ui-tests.md`.
 - If adding tests, prefer focused common tests before platform-specific ones.
 - Hand scoring and table points exist on the server (`handScoring.ts`), in the admin table editor and in the player hand details. `testdata/scoring-cases.json` holds shared cases with their correct results; `scoringCases.test.ts` and the `ScoringCasesTest` of `adminApp` and `playerApp` check them. When a scoring rule changes, change the cases first, then make every side pass.
-- A push to `main` deploys to production without running the tests (they only run on pull requests, `.github/workflows/firebase.yml`). Run the Kotlin, integration and script tests locally before pushing.
+- Work goes to `develop` (the default branch): a push to `develop` deploys staging, never production. Never push to `main` unless the owner asks for a release in so many words: a push to `main` deploys production without running the tests (they only run on pull requests, `.github/workflows/firebase.yml`). Google Play, TestFlight, the App Store and the desktop app are published only by hand from `main`. Run the Kotlin, integration and script tests locally before pushing. See `docs/ci-deploy.md`.
 
 ## Keyboard Focus And Interaction
 

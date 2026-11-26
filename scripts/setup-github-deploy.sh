@@ -71,8 +71,13 @@ echo "Creating the GitHub identity pool and provider..."
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 \
   || gcloud iam workload-identity-pools create "$POOL" --location=global --display-name="GitHub"
 
-# Only workflows of this repository that run on main can sign in.
-CONDITION="assertion.repository_id == '${REPOSITORY_ID}' && assertion.ref == 'refs/heads/main'"
+# Only workflows of this repository that run on main can sign in to production. Staging also lets in develop, which
+# deploys itself there on every push (docs/staging.md).
+if [ "$PROJECT_ID" = "mahjong-tournament-suite" ]; then
+  CONDITION="assertion.repository_id == '${REPOSITORY_ID}' && assertion.ref == 'refs/heads/main'"
+else
+  CONDITION="assertion.repository_id == '${REPOSITORY_ID}' && (assertion.ref == 'refs/heads/main' || assertion.ref == 'refs/heads/develop')"
+fi
 if gcloud iam workload-identity-pools providers describe "$PROVIDER" \
   --location=global --workload-identity-pool="$POOL" >/dev/null 2>&1; then
   gcloud iam workload-identity-pools providers update-oidc "$PROVIDER" \
@@ -100,5 +105,5 @@ Done. Add these two variables in GitHub
   GCP_WORKLOAD_IDENTITY_PROVIDER = ${POOL_ID}/providers/${PROVIDER}
   GCP_DEPLOY_SERVICE_ACCOUNT     = ${SA_EMAIL}
 
-They are not secrets. Only the ${REPOSITORY} workflows on main can use them.
+They are not secrets. Only the ${REPOSITORY} workflows on main (and on develop, for staging) can use them.
 EOF
