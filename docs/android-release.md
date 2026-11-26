@@ -39,7 +39,7 @@ keytool -genkeypair -v -keystore ~/keystores/mts-upload.jks -alias upload \
 
 ## Code shrinking
 
-The release build runs R8 (`isMinifyEnabled` and `isShrinkResources`). It removes unused code and resources but keeps the class names (`-dontobfuscate` in `proguard-rules.pro`): the app reads route and exception names at run time, and crash reports stay readable. The UI tests run on the debug build, so check a release build by hand after changing the rules or adding a library that uses reflection.
+The release build runs R8 (`isMinifyEnabled` and `isShrinkResources`). It removes unused code and resources and, since 2026-11-26, obfuscates the libraries (Play Console asked for it). The code of the app and every exception keep their names (`-keepnames` in `proguard-rules.pro`): the app reads route and exception names at run time, and the reports of the Errors screen stay readable. A library frame of a stack trace is obfuscated: the mapping file turns it back, with `retrace mapping.txt stacktrace.txt` (the `android-mapping` artifact of the deploy run, or `androidApp/build/outputs/mapping/release/mapping.txt` of a local build). Play gets the mapping file inside the bundle and again from `scripts/play.py`, so its crashes and ANRs show the real names. The UI tests run on the debug build, so check a release build by hand after changing the rules or adding a library that uses reflection.
 
 ## Signing the release build
 

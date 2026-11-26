@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -252,7 +253,8 @@ private fun RankingStandaloneContent(
     }
 
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
+        Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
             Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
                 val compact = LocalCompactLayout.current
                 Column(
