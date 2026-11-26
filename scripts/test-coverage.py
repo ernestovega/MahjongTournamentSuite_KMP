@@ -5,6 +5,8 @@ For each part of the code the table gives its size, the number of tests of each 
 the tests run. The counts come from the test sources, so they are always quick to get. The coverage comes from a
 measure: Kover for the Kotlin modules (JVM tests) and the coverage of Node for the backend (unit and integration tests
 on the emulators). The last measure stays in docs/test-coverage.json, so a run without --measure keeps it.
+The nightly run of Deploy · Production measures it too (job "Test coverage table"): its summary shows the table, and its
+artifact holds docs/test-coverage.json.
 
 Usage, from the repository root:
   python3 scripts/test-coverage.py              # counts the tests, keeps the last measured coverage

@@ -39,7 +39,7 @@ Every test runs on `main` every night (the game day once a week), and GitHub ema
 
 | Time | Workflow | What |
 |---|---|---|
-| 02:30 | Deploy · Production | The five checks of **Build and test**. Nothing is deployed. |
+| 02:30 | Deploy · Production | The five checks of **Build and test**, and the job **Test coverage table**: the table of tests per part of the code ([test-scenarios-coverage.md](test-scenarios-coverage.md), part 0) in the summary of the run, with the files in the artifact `test-coverage`. Nothing is deployed. |
 | 02:45 | Test · Screenshots | Compares every screen with its reference image. |
 | 03:00 | Test · UI (emulators) | The instrumented UI tests of both parts on the GitHub emulators. |
 | 03:15 (Sundays only) | Test · Game day · Auto | Weekly, because it costs money. Deploys `main` to staging and plays a tournament: `small` on even weeks of the year, `corners` on odd weeks. |

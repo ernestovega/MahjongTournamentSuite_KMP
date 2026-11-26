@@ -98,6 +98,59 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/node_modules/.bin:$PATH"
           npm run test:integration --prefix firebase/functions
 
+  # The table of tests per part of the code (docs/test-scenarios-coverage.md, part 0), measured again every night: the
+  # merged Kover report of the JVM tests and the backend tests with coverage on the emulators. The table goes to the
+  # summary of the run and the files to an artifact. The job commits nothing, and "Build and test" does not wait for it.
+  coverage:
+    name: Test coverage table
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            firebase/functions/package-lock.json
+
+      - name: Measure the coverage
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix firebase/functions
+          export PATH="$GITHUB_WORKSPACE/node_modules/.bin:$PATH"
+          python3 scripts/test-coverage.py --measure
+
+      - name: Write the table in the summary
+        if: always()
+        run: |
+          {
+            echo "## Tests per part of the code"
+            echo
+            sed -n '/<!-- test-table:start -->/,/<!-- test-table:end -->/p' docs/test-scenarios-coverage.md | grep -v '^<!--'
+            echo
+            echo "To keep these numbers on main, copy docs/test-coverage.json from the artifact and run \`python3 scripts/test-coverage.py\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-coverage
+          path: |
+            docs/test-scenarios-coverage.md
+            docs/test-coverage.json
+          if-no-files-found: ignore
+
   kotlin:
     name: Kotlin tests
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
