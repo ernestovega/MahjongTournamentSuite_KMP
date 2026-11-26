@@ -79,6 +79,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -287,7 +289,8 @@ fun TeamsScreen(
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,
-            contentPadding = PaddingValues(24.dp),
+            // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space.
+            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let {
@@ -390,8 +393,10 @@ fun TeamsScreen(
                     DataTableDivider()
                     LazyColumnWithScrollbar(
                         state = listState,
-                        scrollbar = MtsScrollbar.Margin,
-                        modifier = Modifier.weight(1f, fill = false),
+                        // The list reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+                        scrollbar = MtsScrollbar.Overlay,
+                        modifier = Modifier.weight(1f, fill = false).screenFullBleed(),
+                        contentPadding = screenListPadding(bottom = 24.dp),
                     ) {
                         itemsIndexed(filteredTeams, key = { _, team -> team.id }) { index, team ->
                             val assignedPlayers = playersByTeamId[team.id].orEmpty()

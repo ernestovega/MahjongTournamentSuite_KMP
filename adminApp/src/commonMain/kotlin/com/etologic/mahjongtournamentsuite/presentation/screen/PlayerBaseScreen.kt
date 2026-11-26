@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.PersonAdd
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -74,7 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
@@ -710,10 +711,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        // Only super admins and club admins add players. An editor has no button here, so there is no empty
-        // three-dots menu on a phone.
-        actions = if (canCreate) {
-            { AppTopBarActions(onNewPlayer = ::openNewPlayerDialog) }
+        // Only super admins and club admins add players, with a floating button like New tournament.
+        floatingActionButton = if (canCreate) {
+            {
+                ExtendedFloatingActionButton(onClick = ::openNewPlayerDialog) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = null)
+                    ButtonText(stringResource(Res.string.new_player), Modifier.padding(start = 12.dp))
+                }
+            }
         } else {
             null
         },
@@ -858,6 +863,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             LazyColumnWithScrollbar(
                                 state = playersListState,
                                 modifier = Modifier.weight(1f),
+                                // Room under the last player so the floating button covers none.
+                                contentPadding = PaddingValues(bottom = if (canCreate) FabClearance else 0.dp),
                             ) {
                                 itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
                                     DataTableRow(

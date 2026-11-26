@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -105,6 +106,20 @@ internal fun TableHandsCard(
     // Top of the table inside the scrolled content. It does not change while the page scrolls.
     var tableContentTop by remember { mutableStateOf(0f) }
     var tableHeight by remember { mutableStateOf(0f) }
+    // The top shadow of the scroll goes under the stuck header, not over it.
+    if (stickyHost != null) {
+        DisposableEffect(stickyHost) {
+            stickyHost.pinnedHeaderEnd = {
+                val hidden = stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop)
+                if (hidden <= 0f) {
+                    0f
+                } else {
+                    hidden.coerceIn(0f, (tableHeight - headerHeightPx).coerceAtLeast(0f)) - hidden + headerHeightPx
+                }
+            }
+            onDispose { stickyHost.pinnedHeaderEnd = { 0f } }
+        }
+    }
 
     SectionCard(
         title = stringResource(Res.string.hands),

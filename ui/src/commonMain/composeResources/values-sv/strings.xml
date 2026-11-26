@@ -555,6 +555,7 @@
     <string name="password_reset_invalid_email">Den här e-postadressen ser inte rätt ut.\nKontrollera den och försök igen.</string>
     <string name="dev_menu">DEV</string>
     <string name="dev_versions">Versioner</string>
+    <string name="dev_downloads">Nedladdningar</string>
     <string name="dev_api_docs">API (Swagger)</string>
     <string name="dev_architecture_docs">Arkitektur (GitHub)</string>
     <string name="dev_privacy_policy">Integritetspolicy</string>

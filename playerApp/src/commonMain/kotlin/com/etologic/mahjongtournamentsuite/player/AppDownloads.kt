@@ -247,7 +247,6 @@ fun AppsScreen(navController: NavHostController) {
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             scrollable = true,
-            paddingInsideScroll = true,
         ) {
             SectionCard {
                 Text(stringResource(Res.string.apps_intro), style = MaterialTheme.typography.bodyMedium)

@@ -24,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -168,6 +169,21 @@ internal fun HandDetailsTable(table: PlayerTable, change: HandListChange? = null
     var headerHeight by remember { mutableStateOf(0) }
     var tableHeight by remember { mutableStateOf(0) }
     var headerInTable by remember { mutableStateOf(0) }
+    // The top shadow of the screen goes under the stuck header, not over it.
+    if (screen != null) {
+        DisposableEffect(screen) {
+            screen.pinnedHeaderEnd = {
+                val pushed = screen.state.value - headerTop
+                if (pushed <= 0f) {
+                    0f
+                } else {
+                    val limit = (tableHeight - headerInTable - headerHeight).coerceAtLeast(0).toFloat()
+                    pushed.coerceIn(0f, limit) - pushed + headerHeight
+                }
+            }
+            onDispose { screen.pinnedHeaderEnd = { 0f } }
+        }
+    }
     Column(Modifier.fillMaxWidth().onSizeChanged { tableHeight = it.height }) {
         // The header sticks at the top of the screen while the list scrolls. It stops at the end of the table.
         Column(

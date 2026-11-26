@@ -62,6 +62,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -71,6 +72,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTim
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
@@ -321,7 +324,8 @@ fun ActivityScreen(
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
-            contentPadding = PaddingValues(24.dp),
+            // No bottom margin: the list reaches the bottom of the window, and its own content padding keeps the space.
+            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
@@ -571,7 +575,10 @@ private fun ActivityTable(
     val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("activity"),
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+        // The list reaches the edges of the window, so its shadows take the whole width; the margins go inside.
+        scrollbar = MtsScrollbar.Overlay,
+        modifier = Modifier.fillMaxWidth().screenFullBleed().appFocusGroup(),
+        contentPadding = screenListPadding(bottom = 24.dp),
     ) {
         item(key = "filters") { filters() }
         item(key = "title") {
