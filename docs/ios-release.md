@@ -75,7 +75,17 @@ The backend stays in App Check `monitor` mode (docs/backend.md). The client tag 
 ## CI
 
 `.github/workflows/ios.yml` (Build · iOS) builds the app for the simulator on a macOS runner, opens it and keeps
-screenshots as an artifact. It checks nothing.
+screenshots as an artifact. It checks nothing. Its other job runs `./gradlew iosSimulatorArm64Test`: every
+`commonTest`, the iOS platform tests (`src/iosTest`: files, session, cache, theme and language storage, dates,
+universal links) and the shared UI tests on the iOS simulator.
+
+## Tests
+
+- `src/iosTest` of `data`, `ui` and `suite` test the iOS `actual`s on the simulator.
+- `src/uiTest` of `ui`, `adminApp`, `playerApp` and `designsystem` holds the Compose UI tests that run on the desktop
+  (`jvmTest`) and on the iOS simulator (`iosTest`) alike: the same files, compiled for each. A UI test goes there when
+  it uses only common APIs (`runComposeUiTest`, no `java.*`, `String.format`, `runDesktopComposeUiTest` or JUnit
+  rules); the others stay in `src/jvmTest`. The screenshot tests stay on the desktop.
 
 `.github/workflows/testflight.yml` (Publish · TestFlight), only by hand: archives the Release configuration and uploads
 it to App Store Connect (app "Mahjong Tournament Suite", SKU `mahjongtournamentsuite`). It signs automatically with

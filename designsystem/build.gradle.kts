@@ -38,6 +38,16 @@ kotlin {
     }
 
     sourceSets {
+        // The UI tests that run on the desktop and on the iOS simulator alike (docs/ios-release.md).
+        jvmTest { kotlin.srcDir("src/uiTest/kotlin") }
+        iosTest {
+            kotlin.srcDir("src/uiTest/kotlin")
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.compose.ui.test)
+            }
+        }
         commonMain.dependencies {
             api(libs.compose.runtime)
             api(libs.compose.foundation)

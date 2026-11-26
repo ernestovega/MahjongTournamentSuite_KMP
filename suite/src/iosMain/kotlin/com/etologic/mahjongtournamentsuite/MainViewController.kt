@@ -97,7 +97,7 @@ interface MtsAnalytics {
     fun setUserProperty(name: String, value: String?)
 }
 
-private fun suiteStartOfUrl(url: String): SuiteStart? {
+internal fun suiteStartOfUrl(url: String): SuiteStart? {
     val components = NSURLComponents(string = url)
     val query = components.queryItems.orEmpty()
         .mapNotNull { it as? NSURLQueryItem }

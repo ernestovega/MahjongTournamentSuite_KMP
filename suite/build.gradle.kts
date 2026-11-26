@@ -41,5 +41,8 @@ kotlin {
         iosMain.dependencies {
             implementation(projects.data)
         }
+        iosTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
