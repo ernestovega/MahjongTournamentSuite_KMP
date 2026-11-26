@@ -194,7 +194,7 @@
     <string name="progress_rounds_label">Раунды</string>
     <string name="progress_tables_label">Столы</string>
     <string name="progress_ongoing_label">Идут</string>
-    <string name="tab_stats">Статистика</string>
+    <string name="tab_stats">Статы</string>
     <string name="menu_sign_in">Войти</string>
     <string name="menu_contact">Поддержка</string>
     <string name="menu_privacy">Конфиденциальность</string>
@@ -229,7 +229,8 @@
     <string name="seats_save">Сохранить места</string>
     <string name="seats_restart">Начать заново</string>
     <string name="entry_seats_first">Распределите места за столом, чтобы начать вводить раздачи.</string>
-    <string name="round_starts_at">Начало в</string>
+    <string name="round_will_start_at">Раунд начнётся в %1$s</string>
+    <string name="round_will_start_on_at">Раунд начнётся %1$s в %2$s</string>
     <string name="round_clock_remaining">Осталось: %1$s</string>
     <string name="table_hand_announce_new">Новая раздача %1$d</string>
     <string name="table_hand_announce_edited">Раздача %1$d исправлена</string>

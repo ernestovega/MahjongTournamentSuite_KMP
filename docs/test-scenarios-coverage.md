@@ -13,12 +13,12 @@ untested, in order of priority. The last part lists the test tournaments of the 
 
 | Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `domain`: business rules, use cases | 5,740 | 202 | – | – | – | – | – | 96 % | 87 % |
+| `domain`: business rules, use cases | 5,740 | 196 | – | – | – | – | – | 96 % | 87 % |
 | `data`: repositories, network, telemetry | 7,931 | 441 | – | – | – | – | – | 99 % | 85 % |
-| `designsystem`: theme, base components | 1,812 | – | 20 | 4 | – | – | – | 91 % | 60 % |
-| `ui`: shared Compose components | 17,466 | 85 | 216 | 24 | – | – | – | 90 % | 63 % |
-| `adminApp`: admin screens | 32,148 | 315 | 406 | 91 | – | 175 | 4 | 84 % | 62 % |
-| `playerApp`: player screens | 11,623 | 190 | 123 | 54 | – | 72 | 8 | 89 % | 65 % |
+| `designsystem`: theme, base components | 1,915 | – | 20 | 4 | – | – | – | 91 % | 60 % |
+| `ui`: shared Compose components | 17,474 | 85 | 217 | 24 | – | – | – | 90 % | 63 % |
+| `adminApp`: admin screens | 32,148 | 315 | 420 | 91 | – | 175 | 4 | 84 % | 62 % |
+| `playerApp`: player screens | 11,634 | 190 | 125 | 54 | – | 72 | 8 | 89 % | 65 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 3,996 | 60 | – | – | 293 | – | – | 93 % | 83 % |
 | Backend: services | 16,011 | 371 | – | – | 186 | – | – | 96 % | 87 % |
@@ -26,7 +26,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Backend: maintenance and seed scripts | 4,357 | 2 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,353 | 124 | – | – | – | – | – | – | – |
-| **Total** | **108,960** | **1,822** | **765** | **173** | **479** | **247** | **12** | **91 %** | **69 %** |
+| **Total** | **109,082** | **1,816** | **782** | **173** | **479** | **247** | **12** | **91 %** | **69 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.

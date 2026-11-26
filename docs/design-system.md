@@ -60,7 +60,7 @@ In `designsystem/.../presentation/components`:
 | `MtsOutlinedTag` | A tag with a thin border, like the status of a tournament or the place of the player. |
 | `MtsTintedChip` | A pill tinted with an accent, with an icon and a text, like the way of winning a hand. |
 | `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
-| `Modifier.scrollIndicators`, `verticalScrollWithIndicators`, `horizontalScrollWithIndicators` | The fading edges and the always visible scrollbar of every list (see below). |
+| `Modifier.scrollIndicators`, `verticalScrollWithIndicators`, `horizontalScrollWithIndicators` | The fading edges and the scrollbar of every list (always visible, or while scrolling on a phone) (see below). |
 | `MtsCheckboxRow`, `MtsSwitchRow`, `MtsRadioRow` | A checkbox, switch or radio button with its text, where the whole line is the control (see the rules). |
 | `ButtonText` | The text of a button, drawn in capitals. Screen readers and tests get the text as written. |
 
@@ -94,6 +94,9 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
   the gap between two items, so a list cut there still looks like a list. It grows with the first pixels of the scroll.
 - A **scrollbar that is always visible** while the content can scroll, on every platform (also Android and web). The
   thumb can be dragged (with a finger too) and a tap in the strip takes it there.
+- On a phone (a compact window, under 600 dp) the scrollbar does not stay: it shows over the end edge of the list only
+  while the list scrolls, with no track, and fades out a moment after, like the scrollbars of the system. The list keeps
+  its whole width there, whatever `MtsScrollbar` says (except `None`). The fading edges stay.
 - Where the scrollbar goes (`MtsScrollbar`):
   - `Outside` (default): its own 10 dp strip beside the list (under a horizontal one), outside the content. The strip
     comes the first time the content can scroll (a list that fits keeps all its width) and then stays, so content that

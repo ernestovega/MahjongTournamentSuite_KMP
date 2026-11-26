@@ -460,7 +460,7 @@ internal object MainTab {
         RANKING -> Res.string.tab_ranking
         PLAYERS -> Res.string.scope_players
         TEAMS -> Res.string.ranking_teams
-        STATISTICS -> Res.string.stats_title
+        STATISTICS -> Res.string.tab_stats
         else -> Res.string.tab_info
     }
 

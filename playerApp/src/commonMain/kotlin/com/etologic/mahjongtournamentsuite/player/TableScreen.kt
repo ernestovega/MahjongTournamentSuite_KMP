@@ -99,7 +99,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.hand_self_pick
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
 import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
-import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
+import mahjongtournamentsuite.playerapp.generated.resources.round_will_start_at
+import mahjongtournamentsuite.playerapp.generated.resources.round_will_start_on_at
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
 import mahjongtournamentsuite.playerapp.generated.resources.table_details
@@ -107,6 +108,16 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+
+/**
+ * The rules at hand during the game, and the contact with support as in the other screens. On a phone they go into the
+ * menu, after the account buttons.
+ */
+@Composable
+internal fun TableTopBarActions(navController: NavHostController) {
+    RulesTopBarButton(navController, dividerAbove = true, dividerBelow = true)
+    ContactTopBarButton(navController)
+}
 
 @Composable
 fun TableScreen(navController: NavHostController, tournamentId: String, roundId: Int, tableId: Int) {
@@ -149,8 +160,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             isLoading = view == null && message == null,
             autoFocusFirst = false,
             onBack = { navController.popBackStack() },
-            // The rules at hand during the game. On a phone they go into the menu, after the account buttons.
-            actions = { RulesTopBarButton(navController, dividerAbove = true) },
+            actions = { TableTopBarActions(navController) },
         ) {
             ScreenColumn(
                 maxWidth = 720.dp,
@@ -595,18 +605,19 @@ private fun RoundStartLine(tournament: Tournament, roundId: Int) {
     val time = schedule.startTime?.ifBlank { null } ?: return
     val date = schedule.date?.ifBlank { null }
     val today = tournament.currentVenueDateTime().date.toString()
-    val text = listOfNotNull(
-        date?.takeIf { it != today }?.let { formatLocalizedDate(it, withYear = false) },
-        formatLocalizedTime(time),
-    ).joinToString(" ")
+    // A sentence, not a bare clock: alone above the seats a time did not say what it was (Ernesto, 2026-11-26).
+    val text = when (val day = date?.takeIf { it != today }) {
+        null -> stringResource(Res.string.round_will_start_at, formatLocalizedTime(time))
+        else -> stringResource(Res.string.round_will_start_on_at, formatLocalizedDate(day, withYear = false), formatLocalizedTime(time))
+    }
     val color = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         Modifier.testTag("round-start"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
-        Icon(Icons.Default.Schedule, contentDescription = stringResource(Res.string.round_starts_at), Modifier.size(24.dp), tint = color)
-        Text(text, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
+        Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(24.dp), tint = color)
+        Text(text, style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = color, textAlign = TextAlign.Center)
     }
 }
 

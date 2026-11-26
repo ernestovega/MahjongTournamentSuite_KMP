@@ -223,7 +223,8 @@
     <string name="seats_save">Enregistrer les places</string>
     <string name="seats_restart">Recommencer</string>
     <string name="entry_seats_first">Placez les joueurs de la table pour commencer à ajouter des mains.</string>
-    <string name="round_starts_at">Commence à</string>
+    <string name="round_will_start_at">Le tour commencera à %1$s</string>
+    <string name="round_will_start_on_at">Le tour commencera le %1$s à %2$s</string>
     <string name="round_clock_remaining">Temps restant : %1$s</string>
     <string name="table_hand_announce_new">Nouvelle main %1$d</string>
     <string name="table_hand_announce_edited">Main %1$d corrigée</string>

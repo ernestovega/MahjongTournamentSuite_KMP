@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
@@ -12,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +47,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.LocalMtsWindowWidth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.max
 import kotlin.math.min
 
@@ -65,6 +72,10 @@ val MtsFadingEdgeLength: Dp = 16.dp
  *
  * Without [fadingEdges] it draws only the scrollbar: for a screen whose padding is outside its scroll, with a second
  * [scrollIndicators] without scrollbar inside the padding, so the shadows fall where the content is cut.
+ *
+ * On a phone (a compact window) the scrollbar does not stay: it shows over the end edge of the list only while the list
+ * scrolls, like the scrollbars of the system, and fades out after it stops. The list keeps its whole width (Ernesto,
+ * 2026-11-26: always visible scrollbars looked bad on a phone). The shadows of the edges stay.
  *
  * Put it before the scroll modifier (`Modifier.scrollIndicators(state).verticalScroll(state)`), or in the modifier of
  * a lazy list.
@@ -125,6 +136,26 @@ private fun Modifier.scrollIndicators(
         dragged = scheme.primary,
     )
     val handle = remember(indicator) { ScrollIndicatorHandle(indicator) }
+    val autoHide = scrollbar != MtsScrollbar.None && LocalMtsWindowWidth.current.isCompact
+    // The scrollbar of a phone: shown while the list scrolls or the thumb is dragged, faded out a moment after.
+    val shownScrollbar = if (autoHide) {
+        handle.thumbAlpha = handle.thumbAlpha ?: Animatable(0f)
+        LaunchedEffect(handle) {
+            val alpha = handle.thumbAlpha ?: return@LaunchedEffect
+            snapshotFlow { handle.indicator.state.isScrollInProgress || handle.dragging }.collectLatest { moving ->
+                if (moving) {
+                    alpha.animateTo(1f, tween(150))
+                } else {
+                    delay(800)
+                    alpha.animateTo(0f, tween(400))
+                }
+            }
+        }
+        MtsScrollbar.Overlay
+    } else {
+        handle.thumbAlpha = null
+        scrollbar
+    }
     val drag = if (scrollbar != MtsScrollbar.None) {
         Modifier.pointerInput(handle, orientation) {
             val gutter = MtsScrollbarThickness.toPx()
@@ -133,6 +164,8 @@ private fun Modifier.scrollIndicators(
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                 val vertical = orientation == Orientation.Vertical
                 if (!handle.indicator.canScroll) return@awaitEachGesture
+                // A hidden scrollbar of a phone takes no press: the content under it gets it.
+                if ((handle.thumbAlpha?.value ?: 1f) == 0f) return@awaitEachGesture
                 val inStrip = if (vertical) down.position.x >= size.width - gutter else down.position.y >= size.height - gutter
                 if (!inStrip) return@awaitEachGesture
                 val track = (if (vertical) size.height else size.width).toFloat()
@@ -162,9 +195,9 @@ private fun Modifier.scrollIndicators(
         Modifier
     }
     return this
-        .then(if (scrollbar == MtsScrollbar.Margin) MarginBleedElement(handle, orientation) else Modifier)
+        .then(if (shownScrollbar == MtsScrollbar.Margin) MarginBleedElement(handle, orientation) else Modifier)
         .then(drag)
-        .then(ScrollIndicatorsElement(handle, orientation, scrollbar, colors))
+        .then(ScrollIndicatorsElement(handle, orientation, shownScrollbar, colors))
 }
 
 /** Where the scrollbar of [scrollIndicators] goes. */
@@ -383,6 +416,9 @@ internal class ScrollIndicatorHandle(val indicator: ScrollIndicator) {
 
     /** Whether the strip of an outside scrollbar is in the layout. It comes once and stays (see the measure of the node). */
     var gutterShown = false
+
+    /** How visible the scrollbar of a phone is, from 0 to 1. Null where the scrollbar always shows. */
+    var thumbAlpha: Animatable<Float, *>? = null
 }
 
 /**
@@ -539,6 +575,9 @@ private class ScrollIndicatorsNode(
         val strip = MtsScrollbarThickness.toPx()
         val track = if (vertical) size.height else size.width
         val thumb = indicator.thumb(track) ?: return
+        // The scrollbar of a phone has no track, and its thumb fades in and out with the scroll.
+        val fade = handle.thumbAlpha?.value
+        if (fade == 0f) return
         val inset = 2.dp.toPx()
         val thickness = if (handle.dragging) strip - inset else 4.dp.toPx()
         val radius = CornerRadius(thickness / 2f)
@@ -546,12 +585,13 @@ private class ScrollIndicatorsNode(
         val across = stripStart + (strip - thickness) / 2f
         val trackThickness = 4.dp.toPx()
         val trackAcross = stripStart + (strip - trackThickness) / 2f
+        val thumbColor = (if (handle.dragging) colors.dragged else colors.thumb).let { if (fade != null) it.copy(alpha = it.alpha * fade) else it }
         if (vertical) {
-            drawRoundRect(colors.track, Offset(trackAcross, 0f), Size(trackThickness, track), CornerRadius(trackThickness / 2f))
-            drawRoundRect(if (handle.dragging) colors.dragged else colors.thumb, Offset(across, thumb.start), Size(thickness, thumb.size), radius)
+            if (fade == null) drawRoundRect(colors.track, Offset(trackAcross, 0f), Size(trackThickness, track), CornerRadius(trackThickness / 2f))
+            drawRoundRect(thumbColor, Offset(across, thumb.start), Size(thickness, thumb.size), radius)
         } else {
-            drawRoundRect(colors.track, Offset(0f, trackAcross), Size(track, trackThickness), CornerRadius(trackThickness / 2f))
-            drawRoundRect(if (handle.dragging) colors.dragged else colors.thumb, Offset(thumb.start, across), Size(thumb.size, thickness), radius)
+            if (fade == null) drawRoundRect(colors.track, Offset(0f, trackAcross), Size(track, trackThickness), CornerRadius(trackThickness / 2f))
+            drawRoundRect(thumbColor, Offset(thumb.start, across), Size(thumb.size, thickness), radius)
         }
     }
 

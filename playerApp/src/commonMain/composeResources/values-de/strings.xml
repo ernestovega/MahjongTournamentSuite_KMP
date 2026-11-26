@@ -223,7 +223,8 @@
     <string name="seats_save">Plätze speichern</string>
     <string name="seats_restart">Neu beginnen</string>
     <string name="entry_seats_first">Lege die Plätze des Tisches fest, um Hände einzutragen.</string>
-    <string name="round_starts_at">Beginnt um</string>
+    <string name="round_will_start_at">Die Runde beginnt um %1$s</string>
+    <string name="round_will_start_on_at">Die Runde beginnt am %1$s um %2$s</string>
     <string name="round_clock_remaining">Verbleibende Zeit: %1$s</string>
     <string name="table_hand_announce_new">Neue Hand %1$d</string>
     <string name="table_hand_announce_edited">Hand %1$d korrigiert</string>
