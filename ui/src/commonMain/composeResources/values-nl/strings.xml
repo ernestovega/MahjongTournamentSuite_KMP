@@ -123,8 +123,8 @@
     <string name="stats_empty_message">De statistieken verschijnen zodra de eerste tafel klaar is.</string>
     <string name="stats_hand_stats_missing">Handstatistieken hebben tafels met ingevoerde handen nodig. Geen enkele tafel hier heeft die.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">De handwaarden gebruiken %1$d van %2$d tafel.</item>
-        <item quantity="other">De handwaarden gebruiken %1$d van %2$d tafels.</item>
+        <item quantity="one">De handwaarden gebruiken %1$d van %2$d tafel. De andere hebben alleen de eindscores, zonder hun handen.</item>
+        <item quantity="other">De handwaarden gebruiken %1$d van %2$d tafels. De andere hebben alleen de eindscores, zonder hun handen.</item>
     </plurals>
     <string name="card_fold">Inklappen</string>
     <string name="card_unfold">Uitklappen</string>

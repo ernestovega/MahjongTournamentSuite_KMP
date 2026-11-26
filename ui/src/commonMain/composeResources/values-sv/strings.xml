@@ -123,8 +123,8 @@
     <string name="stats_empty_message">Statistiken visas när första bordet är klart.</string>
     <string name="stats_hand_stats_missing">Handstatistik kräver bord med inmatade händer. Inget bord här har det.</string>
     <plurals name="stats_hand_values_use">
-        <item quantity="one">Handvärdena bygger på %1$d av %2$d bord.</item>
-        <item quantity="other">Handvärdena bygger på %1$d av %2$d bord.</item>
+        <item quantity="one">Handvärdena bygger på %1$d av %2$d bord. De övriga har bara slutpoängen, utan sina händer.</item>
+        <item quantity="other">Handvärdena bygger på %1$d av %2$d bord. De övriga har bara slutpoängen, utan sina händer.</item>
     </plurals>
     <string name="card_fold">Fäll ihop</string>
     <string name="card_unfold">Fäll ut</string>
