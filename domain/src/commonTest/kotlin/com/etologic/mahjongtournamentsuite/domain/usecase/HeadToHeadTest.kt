@@ -131,4 +131,15 @@ class HeadToHeadTest {
 
         assertEquals(listOf(3, 1), headToHead(me, "2", rivalData = null).tables.map { it.mine.roundId })
     }
+
+    @Test
+    fun aRivalWithoutAWonHandHasNoBestHand() {
+        val quiet = person(
+            "2",
+            madrid to listOf(result(madrid, 1, 1, 3, 1.0, "1")),
+            toledo to listOf(result(toledo, 1, 2, 1, 4.0, "1")),
+        )
+
+        assertNull(headToHead(ana, "2", quiet).rival.bestHand)
+    }
 }
