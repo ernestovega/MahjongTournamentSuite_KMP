@@ -157,6 +157,10 @@ The web, the admin app (Android and desktop) and the backend (`firebase/`) have 
 - Compose UI tests run on the JVM (`jvmTest`). Android instrumented UI tests are described in `docs/instrumented-ui-tests.md`.
 - If adding tests, prefer focused common tests before platform-specific ones.
 - Hand scoring and table points exist on the server (`handScoring.ts`), in the admin table editor and in the player hand details. `testdata/scoring-cases.json` holds shared cases with their correct results; `scoringCases.test.ts` and the `ScoringCasesTest` of `adminApp` and `playerApp` check them. When a scoring rule changes, change the cases first, then make every side pass.
+- `docs/test-scenarios-coverage.md` starts with a table of the tests of each part of the code, by kind, with the
+  coverage. `scripts/test-coverage.py` writes it. When you add or remove tests, run `python3 scripts/test-coverage.py`
+  and commit the table with them. Measure the coverage again (`--measure`, about 15 minutes, Java 21) after a large
+  change of tests, and at least once a week. Never edit the table by hand.
 - A push to `main` deploys to production without running the tests (they only run on pull requests, `.github/workflows/firebase.yml`). Run the Kotlin, integration and script tests locally before pushing.
 
 ## Keyboard Focus And Interaction

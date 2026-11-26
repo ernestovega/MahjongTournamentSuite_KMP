@@ -2,8 +2,42 @@
 
 *Audit of 24 November 2026, on `main` at `63f4427` (web 1.0.401, backend 1.0.62).*
 
-This page says which kinds of tests exist, how much code they cover, which features and screen flows have tests, and
-what is still untested, in order of priority. The last part lists the test tournaments of the seed script.
+This page says how many tests each part of the code has and how much of it they run (part 0, kept up to date by
+`scripts/test-coverage.py`), which kinds of tests exist, which features and screen flows have tests, and what is still
+untested, in order of priority. The last part lists the test tournaments of the seed script.
+
+## 0. Tests per part of the code
+
+<!-- test-table:start -->
+<!-- Written by scripts/test-coverage.py. Do not edit by hand. -->
+
+| Part | Code lines | Unit | UI (JVM) | Screenshot | Integration | Android E2E | Web E2E | Lines run | Branches run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `domain`: business rules, use cases | 5,662 | 180 | – | – | – | – | – | 96 % | 87 % |
+| `data`: repositories, network, telemetry | 7,612 | 331 | – | – | – | – | – | 76 % | 35 % |
+| `designsystem`: theme, base components | 1,611 | – | 19 | 4 | – | – | – | 93 % | 66 % |
+| `ui`: shared Compose components | 16,110 | 81 | 209 | 19 | – | – | – | 90 % | 65 % |
+| `adminApp`: admin screens | 31,874 | 315 | 349 | 90 | – | 173 | 4 | 82 % | 60 % |
+| `playerApp`: player screens | 11,129 | 186 | 123 | 50 | – | 70 | 8 | 88 % | 64 % |
+| `androidApp`: Android entry point | 329 | – | – | – | – | – | – | – | – |
+| Backend: API routes and middleware | 3,980 | 58 | – | – | 291 | – | – | 93 % | 82 % |
+| Backend: services | 15,854 | 371 | – | – | 184 | – | – | 96 % | 87 % |
+| Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
+| Backend: maintenance and seed scripts | 4,334 | 2 | – | – | – | – | – | 53 % | 63 % |
+| Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
+| Repository scripts (Game day, smoke, versions) | 6,933 | 118 | – | – | – | – | – | – | – |
+| **Total** | **105,767** | **1,674** | **700** | **163** | **475** | **243** | **12** | **88 %** | **64 %** |
+
+- **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
+  Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
+- **Kinds:** Unit = Kotlin `commonTest`/`jvmTest` without Compose, and Node or Python tests. UI (JVM) = Compose UI
+  tests on the JVM. Screenshot = Roborazzi. Integration = backend tests on the Auth and Firestore emulators.
+  Android E2E = `androidApp/src/androidTest` on emulators. Web E2E = Playwright on the Wasm apps.
+- **Lines run and branches run** come from Kover (JVM tests of each Kotlin module) and from the coverage of Node
+  (backend unit and integration tests, on the compiled JavaScript). They do not count the Android and Web E2E tests,
+  `androidMain`, `wasmJsMain` or `androidApp`. A dash means not measured.
+- Coverage measured on 2026-11-25 at `9f8cab85` with `python3 scripts/test-coverage.py --measure`.
+<!-- test-table:end -->
 
 ## 1. Kinds of tests
 
@@ -14,7 +48,7 @@ what is still untested, in order of priority. The last part lists the test tourn
 | Screenshot tests (Roborazzi) | `*ScreenshotTest`, references in `*/screenshots/` | `docs/screenshot-tests.md` | By hand and Actions > Check · Screenshots |
 | Backend unit tests | `firebase/functions/src/**/*.test.ts` | `npm test` | By hand and on the pull request to `main` |
 | Backend integration tests (Auth and Firestore emulators) | `firebase/functions/src/**/*.integration.test.ts` | `npm run test:integration` | Same |
-| Android instrumented E2E | `androidApp/src/androidTest` (36 classes, journeys included) | `scripts/run-e2e-parallel.py` on the Mac | By hand |
+| Android instrumented E2E | `androidApp/src/androidTest` (36 classes, journeys included) | `scripts/run-e2e-parallel.py` on the Mac | By hand, and every night at 03:00 UTC (Actions > Test · UI) |
 | Game day (bots on staging) | `scripts/rehearsal`, `.github/workflows/scenario.yml`, `rehearsal.yml` | Actions > Test · Game day | By hand |
 | Tests of the Game day scripts | `scripts/rehearsal/test/*.test.mjs` | `node --test scripts/rehearsal/test/*.test.mjs` | By hand |
 | Project rules | `scoringCases` (server, admin, player share `testdata/scoring-cases.json`), `clientContract.test` (app calls match API routes), `CommonCodeIsMultiplatformTest` (no JVM-only APIs in `commonMain`), `AnalyticsCoverageTest`, `LocalizationParityTest`, `DesignTokenRatchetTest`, `ButtonConventionTest`, `ScrollIndicatorsConventionTest` | With the Kotlin and backend tests | Same |
@@ -23,29 +57,20 @@ what is still untested, in order of priority. The last part lists the test tourn
 | Performance | `benchmarks/`, `.github/workflows/benchmark.yml` | Actions | Every morning against production |
 | Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | By hand |
 
-There are no tests of: the web (Wasm) apps in a real browser, the Firestore and Storage rules, load beyond Game day,
-or accessibility.
+There are no tests of load beyond Game day, or of accessibility. The Firestore and Storage rules refuse everything, and
+`securityRules.test.ts` checks that they stay so.
 
 ## 2. Measured coverage
 
 ### Kotlin (Kover, JVM tests only)
 
-`./gradlew koverHtmlReportCoverage koverXmlReportCoverage` (all tests green, 9 min 40 s in the cloud).
-
-| Module | Lines covered |
-| --- | ---: |
-| domain | 94.9 % |
-| designsystem | 93.1 % |
-| ui | 87.8 % |
-| playerApp | 80.1 % |
-| adminApp | 80.0 % |
-| data | 65.6 % |
-| **Total** | **81.4 % of lines, 56.2 % of branches** |
+The lines and branches of each module are in the table of part 0 (merged Kover report of all JVM tests). The HTML
+report shows each file: `./gradlew koverHtmlReportCoverage` (`build/reports/kover/htmlCoverage`).
 
 Kover counts only the JVM build. `androidMain` (~1,000 lines), `wasmJsMain` (~1,000 lines) and `androidApp/src/main`
 (~360 lines) are not measured; the Android E2E tests run part of `androidMain`, nothing runs `wasmJsMain`.
 
-Files with the most untested lines:
+Files with the most untested lines (audit of 24 November; some are covered since):
 
 | File | Lines | Untested lines | What is missing |
 | --- | ---: | ---: | --- |
@@ -68,7 +93,8 @@ Files with the most untested lines:
 
 ### Backend (`npm run test:coverage`, unit and integration tests on the emulators)
 
-1,390 tests, all green. **94.4 % of lines, 85.5 % of branches, 94.5 % of functions.**
+The lines and branches of each part are in the table of part 0. At the audit of 24 November: 1,390 tests, all
+green, 94.4 % of lines, 85.5 % of branches, 94.5 % of functions.
 
 Lowest files:
 
