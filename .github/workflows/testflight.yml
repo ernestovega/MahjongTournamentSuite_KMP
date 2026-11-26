@@ -59,10 +59,8 @@ jobs:
             echo "kotlin.native.jvmArgs=-Xmx5g"
           } >> "$HOME/.gradle/gradle.properties"
 
-      # The release framework for devices, here first so its errors are easy to read.
-      - name: Link the Kotlin framework
-        run: ./gradlew :suite:linkReleaseFrameworkIosArm64
-
+      # The build phase of Xcode links the release framework (about 40 minutes): linking it in a step before would only
+      # do it twice, since Xcode links it again with its own settings.
       - name: Archive
         run: |
           mkdir -p build
