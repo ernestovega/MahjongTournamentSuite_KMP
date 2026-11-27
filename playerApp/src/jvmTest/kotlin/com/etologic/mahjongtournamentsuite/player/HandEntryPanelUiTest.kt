@@ -135,6 +135,8 @@ class HandEntryPanelUiTest {
         seats: Boolean = true,
         controls: List<RoundControl> = emptyList(),
         totalsOnly: Boolean = false,
+        /** The discarder of the done hands, which the winner Player 2 won with 16. Blank leaves them empty. */
+        lastLoser: String = "",
     ): PlayerTournamentView {
         val start = LocalDateTime.parse("2026-10-10T10:00").toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
         val tournament = Tournament(
@@ -153,7 +155,11 @@ class HandEntryPanelUiTest {
         )
         val hands = List(16) { index ->
             TableHand(
-                handId = index + 1, playerWinnerId = "", playerLooserId = "", handScore = "", isChickenHand = false,
+                handId = index + 1,
+                playerWinnerId = if (index < doneHands && lastLoser.isNotBlank()) "2" else "",
+                playerLooserId = if (index < doneHands) lastLoser else "",
+                handScore = if (index < doneHands && lastLoser.isNotBlank()) "16" else "",
+                isChickenHand = false,
                 isDone = index < doneHands, playerEastPenalty = "", playerSouthPenalty = "", playerWestPenalty = "", playerNorthPenalty = "",
             )
         }
@@ -177,8 +183,11 @@ class HandEntryPanelUiTest {
         seats: Boolean = true,
         controls: List<RoundControl> = emptyList(),
         totalsOnly: Boolean = false,
+        lastLoser: String = "",
+        preselectWinner: Int? = null,
+        onSaved: () -> Unit = {},
     ) {
-        val view = view(mode, doneHands, time, started, seats, controls, totalsOnly)
+        val view = view(mode, doneHands, time, started, seats, controls, totalsOnly, lastLoser)
         setContent {
             MtsTheme(useDarkTheme = false) {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(repository) } }) }) {
@@ -189,7 +198,8 @@ class HandEntryPanelUiTest {
                         view = view,
                         table = view.tables.single(),
                         now = LocalDateTime.parse("2026-10-10T$time"),
-                        onSaved = {},
+                        preselectWinner = preselectWinner,
+                        onSaved = onSaved,
                     )
                 }
             }
@@ -752,5 +762,111 @@ class HandEntryPanelUiTest {
 
         onNodeWithText("The seats of this table are not set yet. You can add hands when the four seats are set.").assertIsDisplayed()
         onNodeWithText("Add win").assertDoesNotExist()
+    }
+
+    @Test
+    fun aSeatTappedOnTheTableOpensTheWinWithThatWinner() = runComposeUiTest {
+        var handled = 0
+        val view = view(MatchEndMode.FINISH_HAND, now = "11:00")
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                KoinApplication(application = { modules(module { single { PlayerTablePresenter(RecordingHandRepository()) } }) }) {
+                    HandEntryPanel(
+                        tournamentId = "t",
+                        roundId = 1,
+                        tableId = 1,
+                        view = view,
+                        table = view.tables.single(),
+                        now = LocalDateTime.parse("2026-10-10T11:00"),
+                        preselectWinner = 2,
+                        onPreselectHandled = { handled++ },
+                        onSaved = {},
+                    )
+                }
+            }
+        }
+
+        // The winner is already chosen, so the entry starts at who discarded.
+        awaitText("Who discarded?")
+        assertEquals(1, handled)
+    }
+
+    @Test
+    fun withoutNewTotalsTheEntryEndsAfterAWhile() = runComposeUiTest {
+        val repository = RecordingHandRepository()
+        var saved = 0
+        show(MatchEndMode.FINISH_HAND, "11:00", repository, onSaved = { saved++ })
+
+        enterWin("Player 2", "Self-draw", "8")
+        onNodeWithText("Review").performClick()
+        awaitText("Check hand")
+        mainClock.autoAdvance = false
+        onNodeWithText("Confirm").performClick()
+        mainClock.advanceTimeBy(1_000)
+        // The table of this test never gets the new totals: the dialog waits for them.
+        waitUntil(timeoutMillis = 5_000) { repository.recorded.isNotEmpty() }
+        mainClock.advanceTimeBy(16_000)
+        mainClock.autoAdvance = true
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Check hand").fetchSemanticsNodes().isEmpty() }
+        assertEquals(2, saved)
+    }
+
+    @Test
+    fun aReviewRefusedBecauseTheTableChangedSaysSo() = runComposeUiTest {
+        val repository = RecordingHandRepository().apply { previewError = AppError.Conflict("Table changed") }
+        show(MatchEndMode.FINISH_HAND, "11:00", repository)
+
+        enterWin("Player 3", "Self-draw", "8")
+        onNodeWithText("Review").performClick()
+
+        awaitText("The table changed")
+        onNodeWithText("Player 3 won with 8 (self-draw)").assertExists()
+    }
+
+    @Test
+    fun aDrawRefusedBecauseTheTableChangedShowsTheDraw() = runComposeUiTest {
+        val repository = RecordingHandRepository().apply { recordError = AppError.Conflict("Table changed") }
+        show(MatchEndMode.FINISH_HAND, "11:00", repository, doneHands = 1, lastLoser = "4")
+
+        onNodeWithText("Add draw").performClick()
+        awaitText("Confirm")
+        onNodeWithText("Confirm").performClick()
+
+        awaitText("The table changed")
+        onNodeWithText("Your hand, not saved").assertIsDisplayed()
+        // The last hand of the table: Player 2 won it from Player 4.
+        onNodeWithText("Last hand 1: Player 2 won with 16 from Player 4").assertExists()
+        onNodeWithText("Draw").assertExists()
+    }
+
+    @Test
+    fun editInTheCheckOfAPenaltyGoesBack() = runComposeUiTest {
+        show(MatchEndMode.FINISH_HAND, "11:00")
+
+        onNodeWithText("Add penalty").performClick()
+        awaitText("Penalized player")
+        onAllNodesWithText("Player 2").onFirst().performClick()
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("10")
+        onNodeWithText("Review").performClick()
+        awaitText("Check penalty")
+        onNodeWithText("Edit").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Check penalty").fetchSemanticsNodes().isEmpty() }
+        awaitText("Penalized player")
+    }
+
+    @Test
+    fun aNetworkErrorOnThePenaltyIsShown() = runComposeUiTest {
+        val repository = RecordingHandRepository().apply { penaltyError = AppError.Network }
+        show(MatchEndMode.FINISH_HAND, "11:00", repository)
+
+        onNodeWithText("Add penalty").performClick()
+        awaitText("Penalized player")
+        onAllNodesWithText("Player 2").onFirst().performClick()
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("10")
+        onNodeWithText("Review").performClick()
+        awaitText("Check penalty")
+        onNodeWithText("Confirm").performClick()
+
+        awaitText("Network request failed.")
     }
 }
