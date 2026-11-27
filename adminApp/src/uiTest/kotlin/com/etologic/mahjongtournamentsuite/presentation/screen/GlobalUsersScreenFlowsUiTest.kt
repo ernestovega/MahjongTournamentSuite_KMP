@@ -47,9 +47,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import javax.imageio.ImageIO
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -109,14 +108,12 @@ class GlobalUsersScreenFlowsUiTest {
     private fun world(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN) = World(role, users.toList())
 
     /** A small green PNG, what the photo picker of the account dialog returns. */
-    private val pickedPhoto: SelectedImage = run {
-        val image = BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB)
-        val bytes = ByteArrayOutputStream().use {
-            ImageIO.write(image, "png", it)
-            it.toByteArray()
-        }
-        SelectedImage("ann.png", "image/png", bytes)
-    }
+    @OptIn(ExperimentalEncodingApi::class)
+    private val pickedPhoto = SelectedImage(
+        "ann.png",
+        "image/png",
+        Base64.decode("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEElEQVR4nGNg+M+AHQ0tCQDpMD/B9YBzjgAAAABJRU5ErkJggg=="),
+    )
 
     private fun ComposeUiTest.show(world: World, waitFor: String? = "me@example.test") {
         setContent {
