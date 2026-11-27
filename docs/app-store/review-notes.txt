@@ -13,10 +13,12 @@ Thank you for the review. Here is the information requested.
 - No self sign-up: tournament organizers create the accounts of their players and staff.
 - Every account can delete itself from the Profile dialog.
 - No paid content, in-app purchases, ads or subscriptions.
-- No user-generated content shared between users:
+- Content created by users:
   • No chat, comments or posts.
   • Players only enter the scores of their own table, checked by the organizers.
-  • The optional alias and photo of an account are visible only to that account and to the organizers.
+  • An account may upload its own profile photo, which other users see next to the player's name (for example in tournament registrations).
+  • Administrators can remove any profile photo, and anyone can report a photo or a name through the Contact form of the app.
+  • The optional alias of an account is visible only to that account and to the organizers.
 
 2. PURPOSE AND AUDIENCE
 - MTS (Mahjong Tournament Suite) is a free tool for Riichi and MCR Mahjong tournaments of the European Mahjong Association (EMA) and its national associations.
