@@ -39,6 +39,8 @@ internal class IosTelemetry(
 
     override fun hasConsent(): Boolean = consent
 
+    override fun hasAnswered(): Boolean = defaults.objectForKey(CONSENT_KEY) != null
+
     override fun setConsent(granted: Boolean) {
         consent = granted
         defaults.setBool(granted, CONSENT_KEY)

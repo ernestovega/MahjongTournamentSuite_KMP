@@ -17,7 +17,8 @@ private const val PENDING_CRASH_KEY = "pendingCrash"
 /**
  * Firebase Analytics. It needs the default Firebase app, which the Google services plugin makes from
  * `google-services.json`. Without that file the app has no default Firebase app and this class is not used.
- * The manifest turns the collection off. It starts only after the user accepted, and it stops when the user withdraws.
+ * The manifest turns the collection off. It starts only after the user accepted, and it stops when the user declines
+ * or turns it off in the profile.
  */
 internal class AndroidTelemetry(
     context: Context,
@@ -39,6 +40,8 @@ internal class AndroidTelemetry(
     override val requiresConsent: Boolean = true
 
     override fun hasConsent(): Boolean = consent
+
+    override fun hasAnswered(): Boolean = preferences.contains(CONSENT_KEY)
 
     override fun setConsent(granted: Boolean) {
         consent = granted

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -710,6 +711,58 @@ class TournamentScreenUiTest {
         }
     }
 
+    /** Both tables of the round with their final scores, so the results can be exported. */
+    private fun ScreenHarness.scoreBothTables() {
+        server.seed(syncTable(tableId = 1, useTotalsOnly = true).copy(playerEastScore = "30", playerSouthScore = "10", playerWestScore = "-10", playerNorthScore = "-30"))
+        server.seed(
+            syncTable(tableId = 2, east = "5", useTotalsOnly = true).copy(
+                playerIds = listOf(5, 6, 7, 8),
+                playerSouthId = "6",
+                playerWestId = "7",
+                playerNorthId = "8",
+                playerEastScore = "30",
+                playerSouthScore = "10",
+                playerWestScore = "-10",
+                playerNorthScore = "-30",
+            ),
+        )
+    }
+
+    private fun ComposeUiTest.chooseTheEmaReport() {
+        if (onAllNodes(hasText("More") or hasContentDescription("More")).fetchSemanticsNodes().isNotEmpty()) {
+            onNode(hasText("More") or hasContentDescription("More")).performClick()
+        } else {
+            onNode(hasContentDescription("Menu")).performClick()
+        }
+        waitForIdle()
+        onNodeWithText("EMA report").performClick()
+        waitForIdle()
+    }
+
+    @Test
+    fun theEmaExportNeedsAnEmaPlayerInEverySlot() = runComposeUiTest {
+        with(ScreenHarness()) {
+            scoreBothTables()
+            loadScreen()
+            chooseTheEmaReport()
+            waitForText("Assign an EMA player to every tournament slot before export.")
+        }
+    }
+
+    @Test
+    fun withEverySlotAssignedTheEmaReportIsMadeInTheBackground() = runComposeUiTest {
+        with(ScreenHarness()) {
+            scoreBothTables()
+            server.players = (1..8).map { TournamentPlayer(id = it, name = "Player $it", team = 0, assignedEmaId = "0000000$it") }
+            server.writesSucceed = true
+            loadScreen()
+            chooseTheEmaReport()
+            waitForIdle()
+            onAllNodesWithText("Assign an EMA player", substring = true).assertCountEquals(0)
+            onAllNodesWithText("Official results cannot be exported.", substring = true).assertCountEquals(0)
+        }
+    }
+
     private fun ComposeUiTest.openMore() {
         onNode(hasText("More") or hasContentDescription("More")).performClick()
         waitForIdle()
@@ -803,6 +856,31 @@ class TournamentScreenUiTest {
             waitUntil(timeoutMillis = 5_000) { onAllNodes(hasSetTextAction()).fetchSemanticsNodes().any { true } }
             onAllNodesWithText("Cancel").onLast().performClick()
             waitForIdle()
+        }
+    }
+
+    @Test
+    fun theEditDialogLeadsToTheChangeOfPlayers() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            onNode(hasContentDescription("Edit tournament")).performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Data").fetchSemanticsNodes().isNotEmpty() }
+            onAllNodes(hasText("Data") and hasClickAction()).onFirst().performClick()
+            waitForIdle()
+            onNodeWithTag("changePlayerCount").performScrollTo().performClick()
+            waitForText("Player count of t1")
+        }
+    }
+
+    @Test
+    fun theTimerTheRankingAndTheQrOpenFromTheTopBar() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            listOf("Timer", "Ranking", "QR").forEach { name ->
+                onAllNodes((hasText(name) or hasContentDescription(name)) and hasClickAction()).onFirst().performClick()
+                waitForIdle()
+            }
+            onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
         }
     }
 

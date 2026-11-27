@@ -20,7 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,24 +31,43 @@ import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrol
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import mahjongtournamentsuite.ui.generated.resources.Res
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import org.jetbrains.compose.resources.StringResource
 import mahjongtournamentsuite.ui.generated.resources.consent_accept
-import mahjongtournamentsuite.ui.generated.resources.consent_collects
+import mahjongtournamentsuite.ui.generated.resources.consent_change
+import mahjongtournamentsuite.ui.generated.resources.consent_change_title
 import mahjongtournamentsuite.ui.generated.resources.consent_decline
-import mahjongtournamentsuite.ui.generated.resources.consent_declined_note
-import mahjongtournamentsuite.ui.generated.resources.consent_intro
-import mahjongtournamentsuite.ui.generated.resources.consent_not_collected
-import mahjongtournamentsuite.ui.generated.resources.consent_required
+import mahjongtournamentsuite.ui.generated.resources.consent_message
+import mahjongtournamentsuite.ui.generated.resources.consent_more_details
 import mahjongtournamentsuite.ui.generated.resources.consent_title
+import mahjongtournamentsuite.ui.generated.resources.consent_what
+import mahjongtournamentsuite.ui.generated.resources.consent_what_title
+import mahjongtournamentsuite.ui.generated.resources.consent_where
+import mahjongtournamentsuite.ui.generated.resources.consent_where_title
+import mahjongtournamentsuite.ui.generated.resources.consent_why
+import mahjongtournamentsuite.ui.generated.resources.consent_why_title
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Withdraws the consent of the user. The app then shows the consent screen again and stays closed until the user
- * accepts. It is null when this app does not ask for consent.
+ * The answer of the user to the anonymous analytics, and how to change it. The profile shows it as a switch.
+ * It is null when this app does not ask for consent.
  */
-val LocalWithdrawConsent = staticCompositionLocalOf<(() -> Unit)?> { null }
+class AnalyticsConsent(val enabled: Boolean, val onChange: (Boolean) -> Unit)
+
+val LocalAnalyticsConsent = compositionLocalOf<AnalyticsConsent?> { null }
 
 /**
- * Shows [content] only after the user accepted the anonymous analytics. Without the answer the user cannot enter.
+ * Asks once for the anonymous analytics before [content]. The answer is optional: after "Decline" the app opens the
+ * same way and sends nothing. The user can change the answer in the profile at any time, without leaving the app.
  * A platform that sends no data does not ask, so [content] opens at once.
  */
 @Composable
@@ -58,58 +77,80 @@ fun ConsentGate(content: @Composable () -> Unit) {
         content()
         return
     }
+    var answered by remember(telemetry) { mutableStateOf(telemetry.hasAnswered()) }
     var accepted by remember(telemetry) { mutableStateOf(telemetry.hasConsent()) }
-    if (accepted) {
-        CompositionLocalProvider(
-            LocalWithdrawConsent provides {
-                telemetry.setConsent(false)
-                accepted = false
-            },
-            content = content,
-        )
+    val answer: (Boolean) -> Unit = { granted ->
+        telemetry.setConsent(granted)
+        accepted = granted
+        answered = true
+    }
+    if (answered) {
+        CompositionLocalProvider(LocalAnalyticsConsent provides AnalyticsConsent(accepted, answer), content = content)
     } else {
         val themeController = rememberThemeController()
         MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-            ConsentScreen(onAccept = {
-                telemetry.setConsent(true)
-                accepted = true
-            })
+            ConsentScreen(onAnswer = answer)
         }
     }
 }
 
+/**
+ * One short question, with the details folded under "More details": why, what and where. Accept and Decline are
+ * the same size, so saying no is as easy as saying yes.
+ */
 @Composable
-private fun ConsentScreen(onAccept: () -> Unit) {
-    var declined by remember { mutableStateOf(false) }
+internal fun ConsentScreen(onAnswer: (Boolean) -> Unit, initiallyShowDetails: Boolean = false) {
+    var showDetails by rememberSaveable { mutableStateOf(initiallyShowDetails) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 Modifier
-                    .widthIn(max = 560.dp)
+                    .widthIn(max = 480.dp)
                     .verticalScrollWithIndicators(rememberScrollState(), MtsScrollbar.Overlay)
                     .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(stringResource(Res.string.consent_title), style = MaterialTheme.typography.headlineSmall)
-                Text(stringResource(Res.string.consent_intro), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(Res.string.consent_collects), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(Res.string.consent_not_collected), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(Res.string.consent_required), style = MaterialTheme.typography.bodyLarge)
-                if (declined) {
-                    Text(
-                        stringResource(Res.string.consent_declined_note),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
+                Text(stringResource(Res.string.consent_message), style = MaterialTheme.typography.bodyLarge)
+                FocusedTextButton(
+                    onClick = { showDetails = !showDetails },
+                    buttonModifier = Modifier.testTag(CONSENT_DETAILS_TAG),
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+                ) {
+                    ButtonText(stringResource(Res.string.consent_more_details))
+                    Icon(
+                        if (showDetails) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = 4.dp),
                     )
                 }
+                AnimatedVisibility(showDetails) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ConsentDetail(Res.string.consent_why_title, Res.string.consent_why)
+                        ConsentDetail(Res.string.consent_what_title, Res.string.consent_what)
+                        ConsentDetail(Res.string.consent_where_title, Res.string.consent_where)
+                        ConsentDetail(Res.string.consent_change_title, Res.string.consent_change)
+                    }
+                }
                 Spacer(Modifier.height(4.dp))
-                FocusedButton(onClick = onAccept, modifier = Modifier.fillMaxWidth()) {
+                FocusedButton(onClick = { onAnswer(true) }, modifier = Modifier.fillMaxWidth()) {
                     ButtonText(stringResource(Res.string.consent_accept))
                 }
-                FocusedOutlinedButton(onClick = { declined = true }, modifier = Modifier.fillMaxWidth()) {
+                FocusedOutlinedButton(onClick = { onAnswer(false) }, modifier = Modifier.fillMaxWidth()) {
                     ButtonText(stringResource(Res.string.consent_decline))
                 }
             }
         }
     }
 }
+
+@Composable
+private fun ConsentDetail(title: StringResource, text: StringResource) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(stringResource(title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The "More details" button of the consent screen. */
+const val CONSENT_DETAILS_TAG = "consent-details"

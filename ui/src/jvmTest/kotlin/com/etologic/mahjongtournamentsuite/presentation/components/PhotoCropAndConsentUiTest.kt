@@ -2,11 +2,17 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -15,7 +21,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.AnalyticsConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -29,7 +36,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-/** The crop dialog of a new photo, removing an own photo, and withdrawing the analytics consent from the profile. */
+/** The crop dialog of a new photo, removing an own photo, and the analytics switch of the profile. */
 @OptIn(ExperimentalTestApi::class)
 class PhotoCropAndConsentUiTest {
     private val player = UserProfile(uid = "u1", email = "ada@example.test", alias = "Ada Lovelace", emaId = "10001")
@@ -148,11 +155,12 @@ class PhotoCropAndConsentUiTest {
     }
 
     @Test
-    fun theProfileWithdrawsTheConsentOfAnAppThatAsksForIt() = runComposeUiTest {
-        var withdrawn = 0
+    fun theProfileSwitchesTheAnalyticsOffAndOnAgain() = runComposeUiTest {
+        val answers = mutableListOf<Boolean>()
+        var enabled by mutableStateOf(true)
         setContent {
             ProfileTheme {
-                CompositionLocalProvider(LocalWithdrawConsent provides { withdrawn++ }) {
+                CompositionLocalProvider(LocalAnalyticsConsent provides AnalyticsConsent(enabled) { answers += it; enabled = it }) {
                     ProfileDialog(
                         profile = player,
                         onSavePhoto = { _, _ -> error("unused") },
@@ -165,12 +173,17 @@ class PhotoCropAndConsentUiTest {
             }
         }
 
-        onNodeWithText("Withdraw analytics consent").performScrollTo().performClick()
-        assertEquals(1, withdrawn)
+        onNodeWithText("Send anonymous analytics").assertExists()
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).performScrollTo().assertIsOn().performClick()
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).assertIsOff().performClick()
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).assertIsOn()
+        assertEquals(listOf(false, true), answers)
+        // The dialog stays open: the app does not ask again.
+        onNodeWithText("Profile").assertExists()
     }
 
     @Test
-    fun anAppThatDoesNotAskHasNoWithdrawButton() = runComposeUiTest {
+    fun anAppThatDoesNotAskHasNoAnalyticsSwitch() = runComposeUiTest {
         setContent {
             ProfileTheme {
                 ProfileDialog(player, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
@@ -178,7 +191,8 @@ class PhotoCropAndConsentUiTest {
         }
 
         onNodeWithText("Profile").assertExists()
-        onNodeWithText("Withdraw analytics consent").assertDoesNotExist()
+        onNodeWithText("Send anonymous analytics").assertDoesNotExist()
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).assertDoesNotExist()
     }
 }
 

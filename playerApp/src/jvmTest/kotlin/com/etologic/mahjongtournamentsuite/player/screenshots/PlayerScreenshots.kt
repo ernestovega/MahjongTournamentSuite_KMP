@@ -75,13 +75,14 @@ internal fun playerModules(
     account: UserProfile? = ScreenshotData.playerAccount,
     tournaments: TournamentRepository = ScreenshotTournamentRepository(),
     registrations: RegistrationRepository = ScreenshotRegistrationRepository(),
+    statistics: StatisticsRepository = ScreenshotStatisticsRepository(),
 ): List<Module> = listOf(
     module {
         single { Logger.withTag("screenshot") }
         single<TournamentRepository> { tournaments }
         single<PlayerRepository> { ScreenshotPlayerRepository() }
         single<AuthRepository> { ScreenshotAuthRepository(account) }
-        single<StatisticsRepository> { ScreenshotStatisticsRepository() }
+        single<StatisticsRepository> { statistics }
         single<FeatureFlagsRepository> { ScreenshotFeatureFlagsRepository() }
         single<SupportRepository> { ScreenshotSupportRepository() }
         single<PlayerHandRepository> { NoHands() }

@@ -28,8 +28,34 @@
     }
   }
 
+  // True when the user answered, yes or no. The app asks only until then. Declining is fine: the app works the same.
+  function readAnswered() {
+    try {
+      const stored = localStorage.getItem(CONSENT_KEY);
+      return stored === "1" || stored === "0";
+    } catch (_) {
+      return false;
+    }
+  }
+
   let consent = readConsent();
+  let answered = readAnswered();
   window.mtsTelemetryHasConsent = () => consent;
+  window.mtsTelemetryHasAnswered = () => answered;
+
+  // Google Analytics keeps its ids in the cookies "_ga" and "_ga_<stream>", on this host or on a parent domain.
+  // They are removed when the user says no, so nothing of the old visits stays in the browser.
+  function removeAnalyticsCookies() {
+    try {
+      const names = document.cookie.split(";").map((part) => part.split("=")[0].trim()).filter((name) => /^_ga(_|$)/.test(name));
+      const parts = location.hostname.split(".");
+      const domains = [""];
+      for (let i = 0; i < parts.length - 1; i++) domains.push("; domain=." + parts.slice(i).join("."));
+      for (const name of names) {
+        for (const domain of domains) document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + domain;
+      }
+    } catch (_) {}
+  }
 
   // Facts for the crash report. Kotlin fills in the version and the role.
   const context = {
@@ -63,13 +89,14 @@
 
   function setConsent(granted) {
     consent = configured && granted;
+    answered = true;
     try {
       localStorage.setItem(CONSENT_KEY, consent ? "1" : "0");
     } catch (_) {}
     if (consent) {
       ready = ready.then((api) => api || start().catch(() => null));
     } else {
-      ready.then((api) => api && api.disable()).catch(() => {});
+      ready.then((api) => api && api.disable()).catch(() => {}).then(removeAnalyticsCookies);
       ready = Promise.resolve(null);
     }
   }

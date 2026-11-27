@@ -268,21 +268,11 @@
     <string name="spreadsheet_chooser_filter">CSV- och Excel-filer</string>
     <string name="spreadsheet_error_read">Appen kunde inte läsa filen. Välj en CSV- eller Excel-fil och försök igen.</string>
     <string name="spreadsheet_error_save">Appen kunde inte spara filen. Försök igen.</string>
-    <string name="consent_title">Anonym analys</string>
-    <string name="consent_intro">Den här appen samlar in anonyma data om hur den används och om fel. Teamet använder bara datan för att hitta problem och förbättra appen.</string>
-    <string name="consent_collects">Appen registrerar följande data:\n• Skärmarna, dialogerna och flikarna som du öppnar, och hur länge.\n• Åtgärderna som du använder, till exempel att spara ett bord.\n• Fel och krascher, med tekniska detaljer som typen av fel.</string>
-    <string name="consent_not_collected">Appen registrerar inte ditt namn, din e-postadress, ditt EMA-nummer eller någon text som du skriver. Datan identifierar inte dig.</string>
-    <string name="consent_required">Du kan bara använda appen om du godkänner. Om du inte godkänner kan du inte öppna appen.</string>
-    <string name="consent_accept">Godkänn och fortsätt</string>
-    <string name="consent_decline">Avböj</string>
-    <string name="consent_declined_note">Du kan inte använda appen utan den anonyma analysen. Du kan stänga appen eller godkänna för att fortsätta.</string>
-    <string name="consent_withdraw">Återkalla samtycket till analys</string>
     <string name="profile_delete_account">Radera mitt konto</string>
     <string name="profile_delete_account_title">Radera ditt konto?</string>
     <string name="profile_delete_account_message">Ditt konto raderas för gott: inloggningen, e-postadressen, aliaset och fotot. Din EMA-spelare och dina turneringsresultat finns kvar. Det går inte att ångra.</string>
     <string name="profile_delete_account_confirm">Radera</string>
     <string name="privacy_policy">Integritetspolicy</string>
-    <string name="consent_withdraw_info">Appen stoppar analysen och frågar dig igen. Du kan inte använda appen förrän du godkänner.</string>
     <string name="stat_best_hand_points">Flest poäng på en hand</string>
     <string name="stat_average_hands_per_table">Snitt händer per bord</string>
     <string name="app_switch_to_admin">Managerapp</string>
@@ -791,4 +781,19 @@ Den första som fungerar vinner</string>
     <string name="update_available_later">Senare</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Hämta appen</string>
+    <string name="consent_title">Anonym analys</string>
+    <string name="consent_message">Får appen skicka anonyma data om hur den används och om fel? De hjälper oss att förbättra den. Det är frivilligt: om du avböjer fungerar appen likadant.</string>
+    <string name="consent_more_details">Mer information</string>
+    <string name="consent_why_title">Varför</string>
+    <string name="consent_why">För att hitta fel och se vilka delar av appen som används, så att vi vet vad vi ska rätta och förbättra.</string>
+    <string name="consent_what_title">Vad</string>
+    <string name="consent_what">Skärmarna och åtgärderna som du använder, och felen med tekniska detaljer. Aldrig ditt namn, din e-post, ditt EMA-nummer eller det du skriver.</string>
+    <string name="consent_where_title">Vart</string>
+    <string name="consent_where">Användningen går till Google Analytics for Firebase, som sparar den i 14 månader. Felen går till vår egen logg på Firebase, i EU, som raderar dem efter 30 dagar.</string>
+    <string name="consent_change_title">Ändra senare</string>
+    <string name="consent_change">I din profil, när du vill.</string>
+    <string name="consent_accept">Godkänn</string>
+    <string name="consent_decline">Avböj</string>
+    <string name="profile_analytics">Skicka anonym analys</string>
+    <string name="profile_analytics_info">Anonyma data om hur du använder appen och om dess fel, aldrig ditt namn, din e-post eller ditt EMA-nummer. Stäng av det för att stoppa det direkt. Appen fungerar likadant.</string>
 </resources>
