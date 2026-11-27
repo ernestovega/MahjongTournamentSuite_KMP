@@ -5,9 +5,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -15,7 +17,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.swipe
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -33,10 +37,11 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import kotlin.test.Test
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** The crop dialog of a new photo, removing an own photo, and the analytics switch of the profile. */
 @OptIn(ExperimentalTestApi::class)
@@ -88,6 +93,27 @@ class PhotoCropAndConsentUiTest {
         assertEquals(200, image.width)
         assertEquals(200, image.height)
         assertEquals(false, dismissed)
+    }
+
+    @Test
+    fun aDragOnThePreviewMovesTheCrop() = runComposeUiTest {
+        var cropped: SelectedImage? = null
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                ImageCropDialog(png(300, 200), "Crop photo", "Drag the image", onDismiss = {}, onCropped = { cropped = it }, onError = { error("unexpected $it") })
+            }
+        }
+        waitUntil(timeoutMillis = 10_000) {
+            onAllNodes(hasText("Use crop") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        }
+        // A wide image moves left and right only: up and down has nothing to show.
+        onNodeWithTag(IMAGE_CROP_PREVIEW_TAG).performTouchInput { swipe(center, center + Offset(-80f, -80f)) }
+        waitForIdle()
+        val position = onNodeWithContentDescription("Left / right").fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+        assertTrue(position > 0f, "the image moved by $position")
+
+        onNodeWithText("Use crop").performClick()
+        waitUntil(timeoutMillis = 5_000) { cropped != null }
     }
 
     @Test
