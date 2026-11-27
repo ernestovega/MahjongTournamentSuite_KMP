@@ -17,7 +17,7 @@ export type StoreTester = { email: string; alias: string; role: "SUPER_ADMIN" | 
  */
 export const GOOGLE_PLAY_TESTER: StoreTester = {
   email: "mtsgoogleplaytester@mahjongmadrid.com",
-  alias: "Google Play Testers",
+  alias: "PLAY STORE REVIEWER ACCOUNT",
   role: "SUPER_ADMIN",
   photoPath: resolve(__dirname, "../../assets/google-play-tester.png"),
 };
@@ -29,7 +29,7 @@ export const GOOGLE_PLAY_TESTER: StoreTester = {
  */
 export const APP_STORE_TESTER: StoreTester = {
   email: "mtsappstoretester@mahjongmadrid.com",
-  alias: "App Store Testers",
+  alias: "APP STORE REVIEWER ACCOUNT",
   role: "SUPER_ADMIN",
   photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
 };
@@ -41,7 +41,7 @@ export const APP_STORE_TESTER: StoreTester = {
  */
 export const APP_STORE_DELETE_TESTER: StoreTester = {
   email: "mtsappstoredelete@mahjongmadrid.com",
-  alias: "App Store Delete Test",
+  alias: "APP STORE REVIEWER DISPOSABLE ACCOUNT",
   role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
 };

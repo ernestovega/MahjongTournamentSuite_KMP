@@ -8,7 +8,7 @@ The account is an admin, so it reaches everything without an EMA player. It must
 | Field | Value |
 | --- | --- |
 | Email | `mtsgoogleplaytester@mahjongmadrid.com` |
-| Alias | Google Play Testers |
+| Alias | PLAY STORE REVIEWER ACCOUNT |
 | EMA number | none |
 | Global role | Admin |
 | Photo | `firebase/functions/assets/google-play-tester.png` (the Play Console icon) |
@@ -37,7 +37,7 @@ someone chose stays). An existing account keeps its password.
 ## App Store reviewer account
 
 Apple reviews the iOS app with an account of its own, made the same way: `APP_STORE_TESTER` in
-`firebase/functions/src/services/googlePlayTester.ts` (`mtsappstoretester@mahjongmadrid.com`, alias App Store Testers,
+`firebase/functions/src/services/googlePlayTester.ts` (`mtsappstoretester@mahjongmadrid.com`, alias APP STORE REVIEWER ACCOUNT,
 admin, no EMA number, the app icon as photo, `firebase/functions/assets/app-store-tester.png`).
 
 The workflow Actions > Publish · App Store listing makes or fixes it in production on each run
@@ -49,7 +49,7 @@ needs to know it; to see it, open App Store Connect.
 
 App Review checks the account deletion (Guideline 5.1.1(v)). Deleting the demo account would leave the next review
 without one, so the review notes (`docs/app-store/review-notes.txt`) ask Apple not to delete it and offer a second
-account instead: `APP_STORE_DELETE_TESTER` (`mtsappstoredelete@mahjongmadrid.com`, alias App Store Delete Test,
+account instead: `APP_STORE_DELETE_TESTER` (`mtsappstoredelete@mahjongmadrid.com`, alias APP STORE REVIEWER DISPOSABLE ACCOUNT,
 player, no EMA number). The same workflow creates it again on each run when a review deleted it, with a password that
 also comes from the API key, and writes its email and password into the review notes, never into the repository.
 The notes also explain how the reviewer can create an own account from ADMIN > Users and delete it.
