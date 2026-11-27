@@ -24,6 +24,9 @@ actual fun rememberImagePicker(
 ): ImagePicker {
     val currentOnImageSelected = rememberUpdatedState(onImageSelected)
     val currentOnError = rememberUpdatedState(onError)
+    LocalPickedImageForTests.current?.let { picked ->
+        return remember(picked) { ImagePicker { currentOnImageSelected.value(picked()) } }
+    }
     val chooserTitle = stringResource(Res.string.image_chooser_title)
     val chooserFilter = stringResource(Res.string.image_chooser_filter)
     return remember(chooserTitle, chooserFilter) {
