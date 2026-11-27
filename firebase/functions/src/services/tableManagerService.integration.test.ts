@@ -189,6 +189,18 @@ describe("table save with the Firestore emulator", () => {
     assert.equal((await readTournament(id)).isCompleted, true);
   });
 
+  it("refuses a hand marked done at a table without four seats or without a result", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const done = { playerWinnerId: "1", playerLooserId: "2", handScore: "8", isDone: true };
+    const noSeats = await conflictOf(save(id, 1, 0, { playerEastId: "1" }, [{ handId: 1, patch: done }]));
+    assert.match(noSeats.message, /Hand 1 cannot be done/);
+
+    const seats = { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" };
+    const noResult = await conflictOf(save(id, 1, 0, seats, [{ handId: 1, patch: { playerWinnerId: "1", isDone: true } }]));
+    assert.match(noResult.message, /Hand 1 cannot be done/);
+    assert.equal((await readTable(id, 1, 1)).version, 0);
+  });
+
   it("keeps a table open while a hand is not done, and a totals-only table follows its switch", async () => {
     const seats = { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" };
     const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, seats }, { roundId: 1, tableId: 2 }] });

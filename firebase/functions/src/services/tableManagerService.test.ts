@@ -218,6 +218,8 @@ test("the copy of the hands counts only for the version it was written for", () 
   assert.equal(handsFromCopy(table)?.length, HANDS_PER_TABLE);
   assert.equal(handsFromCopy({ ...table, version: 5 }), null);
   assert.equal(handsFromCopy({ version: 4 }), null);
+  // A table without a version is at version 0.
+  assert.equal(handsFromCopy(handsCopyUpdate(0, sixteenHands()))?.length, HANDS_PER_TABLE);
 });
 
 test("a copy without all the hands is not used", () => {
