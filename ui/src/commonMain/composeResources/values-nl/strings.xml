@@ -794,6 +794,4 @@ De eerste die lukt, wint</string>
     <string name="consent_change">In je profiel, wanneer je wilt.</string>
     <string name="consent_accept">Akkoord</string>
     <string name="consent_decline">Weigeren</string>
-    <string name="profile_analytics">Anonieme analyse versturen</string>
-    <string name="profile_analytics_info">Anonieme gegevens over hoe je de app gebruikt en over de fouten, nooit je naam, je e-mailadres of je EMA-nummer. Zet het uit om het meteen te stoppen. De app werkt precies hetzelfde.</string>
 </resources>

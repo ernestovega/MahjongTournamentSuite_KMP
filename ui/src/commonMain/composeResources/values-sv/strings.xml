@@ -794,6 +794,4 @@ Den första som fungerar vinner</string>
     <string name="consent_change">I din profil, när du vill.</string>
     <string name="consent_accept">Godkänn</string>
     <string name="consent_decline">Avböj</string>
-    <string name="profile_analytics">Skicka anonym analys</string>
-    <string name="profile_analytics_info">Anonyma data om hur du använder appen och om dess fel, aldrig ditt namn, din e-post eller ditt EMA-nummer. Stäng av det för att stoppa det direkt. Appen fungerar likadant.</string>
 </resources>

@@ -795,6 +795,4 @@ Gana el primero que sale bien</string>
     <string name="consent_change">En tu perfil, cuando quieras.</string>
     <string name="consent_accept">Aceptar</string>
     <string name="consent_decline">Rechazar</string>
-    <string name="profile_analytics">Enviar analítica anónima</string>
-    <string name="profile_analytics_info">Datos anónimos de cómo usas la app y de sus errores, nunca tu nombre, tu correo ni tu número EMA. Desactívalo para pararlo al momento. La app funciona igual.</string>
 </resources>

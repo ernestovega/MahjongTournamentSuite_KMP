@@ -795,6 +795,4 @@ Vince la prima che riesce</string>
     <string name="consent_change">Nel tuo profilo, quando vuoi.</string>
     <string name="consent_accept">Accetta</string>
     <string name="consent_decline">Rifiuta</string>
-    <string name="profile_analytics">Invia statistiche anonime</string>
-    <string name="profile_analytics_info">Dati anonimi su come usi l'app e sui suoi errori, mai il tuo nome, la tua email né il tuo numero EMA. Disattivalo per fermarlo subito. L'app funziona allo stesso modo.</string>
 </resources>

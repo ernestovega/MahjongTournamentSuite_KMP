@@ -800,6 +800,4 @@
     <string name="consent_change">В вашем профиле, в любое время.</string>
     <string name="consent_accept">Принять</string>
     <string name="consent_decline">Отклонить</string>
-    <string name="profile_analytics">Отправлять анонимную аналитику</string>
-    <string name="profile_analytics_info">Анонимные данные о том, как вы пользуетесь приложением, и о его ошибках, никогда ваше имя, почта или номер EMA. Выключите, чтобы сразу всё остановить. Приложение работает так же.</string>
 </resources>

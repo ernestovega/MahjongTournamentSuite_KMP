@@ -795,6 +795,4 @@ La première qui marche gagne</string>
     <string name="consent_change">Dans votre profil, à tout moment.</string>
     <string name="consent_accept">Accepter</string>
     <string name="consent_decline">Refuser</string>
-    <string name="profile_analytics">Envoyer des statistiques anonymes</string>
-    <string name="profile_analytics_info">Des données anonymes sur votre utilisation de l'application et ses erreurs, jamais votre nom, votre e-mail ni votre numéro EMA. Désactivez-le pour tout arrêter aussitôt. L'application fonctionne de la même façon.</string>
 </resources>
