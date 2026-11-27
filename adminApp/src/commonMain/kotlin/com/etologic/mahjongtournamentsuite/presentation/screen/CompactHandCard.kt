@@ -56,7 +56,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 /**
  * One hand on a phone. The wide table row does not fit, so the hand is a small card:
  * the number and the checks, then the winner and the loser, then the score and the penalties,
- * and at the end the result of each seat with the running total under it.
+ * and at the end the result of each seat with the running total under it, once the hand counts.
  */
 @Composable
 internal fun CompactHandCard(
@@ -256,7 +256,8 @@ internal fun CompactHandCard(
                 color = MaterialTheme.colorScheme.error,
             )
         }
-        SeatValuesRow(values = result, subtotals = subtotal)
+        // A hand that does not count yet has no running total, so its Σ line is hidden.
+        SeatValuesRow(values = result, subtotals = subtotal.takeIf { it != SeatTextValues.EMPTY })
     }
 }
 

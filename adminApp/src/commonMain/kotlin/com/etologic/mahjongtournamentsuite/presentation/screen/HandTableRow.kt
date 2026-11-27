@@ -309,6 +309,8 @@ internal fun HandTableRow(
         }
     }
 
+    // A hand that does not count yet has no running total, so it has no subtotal line.
+    if (subtotal == SeatTextValues.EMPTY) return
     GridRow(height = HandSubtotalRowHeight) {
         GridCell(modifier = Modifier.width(HandsIndexColumnWidth), last = true) {}
         GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), last = true) {}
