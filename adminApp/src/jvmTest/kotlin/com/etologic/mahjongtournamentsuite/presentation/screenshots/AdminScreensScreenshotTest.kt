@@ -414,9 +414,10 @@ private class BrandedTournamentRepository(
 }
 
 /** [ONGOING] hides its results from round 3 until the prize giving, not revealed yet. */
-private class HiddenResultsTournamentRepository : ScreenshotTournamentRepository(
-    ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(hideResultsFromRound = 3, resultsHiddenFromRound = 3) else it },
-)
+private class HiddenResultsTournamentRepository :
+    ScreenshotTournamentRepository(
+        ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(hideResultsFromRound = 3, resultsHiddenFromRound = 3) else it },
+    )
 
 /** A club logo on disk, so the screenshot needs no network. */
 private val fakeClubLogo: String = checkNotNull(BrandedTournamentRepository::class.java.getResource("/fake-club-logo.png")).toString()
