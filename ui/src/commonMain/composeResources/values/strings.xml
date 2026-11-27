@@ -795,6 +795,4 @@ The first one that works wins</string>
     <string name="consent_change">In your profile, at any time.</string>
     <string name="consent_accept">Accept</string>
     <string name="consent_decline">Decline</string>
-    <string name="profile_analytics">Send anonymous analytics</string>
-    <string name="profile_analytics_info">Anonymous data about how you use the app and about its errors, never your name, your email or your EMA number. Turn it off to stop it at once. The app works the same.</string>
 </resources>
