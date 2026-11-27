@@ -404,3 +404,32 @@ test("a file that looks like a zip but whose entries are broken is not an Excel 
   buffer.writeUInt32LE(46, 46 + 12);
   await assert.rejects(readSpreadsheetRecords("players.xlsx", buffer), (error: { details?: { code?: string } }) => error.details?.code === "NOT_EXCEL");
 });
+
+test("reads empty CSV text, quoted separators and cells of every kind", () => {
+  assert.deepEqual(parseCsv(""), []);
+  assert.deepEqual(parseCsv("single"), [["single"]]);
+  assert.deepEqual(parseCsv("\"a;b\",c\n1,2"), [["a;b", "c"], ["1", "2"]]);
+  assert.equal(cellText(null), "");
+  assert.equal(cellText(undefined), "");
+  assert.equal(cellText(new Date(0)), "1970-01-01T00:00:00.000Z");
+  assert.equal(cellText({ richText: [{ text: "Ana " }, {}, { text: "Ruiz" }] }), "Ana Ruiz");
+  assert.equal(cellText(() => 1), "");
+});
+
+test("refuses a zip whose directory points outside the file or at another record", () => {
+  const end = (entries: number, offset: number) => {
+    const record = Buffer.alloc(22);
+    record.writeUInt32LE(0x06054b50, 0);
+    record.writeUInt16LE(entries, 10);
+    record.writeUInt32LE(offset, 16);
+    return record;
+  };
+  assert.equal(declaredUnpackedBytes(Buffer.concat([Buffer.alloc(10), end(1, 5000)])), null);
+  assert.equal(declaredUnpackedBytes(Buffer.concat([Buffer.alloc(60), end(1, 0)])), null);
+  assert.equal(declaredUnpackedBytes(Buffer.alloc(30)), null);
+});
+
+test("reads rows shorter than the header as empty cells", async () => {
+  const parsed = await parsePlayerImportFile("players.csv", Buffer.from("id,ema id,email,team\n1,12345678\n"));
+  assert.deepEqual(parsed.rows.map((row) => [row.id, row.emaId, row.email, row.team]), [["1", "12345678", "", ""]]);
+});

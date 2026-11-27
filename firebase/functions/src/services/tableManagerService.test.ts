@@ -5,6 +5,7 @@ import {
   calculateTableSummary,
   defaultHand,
   doneStamps,
+  handsFromData,
   HANDS_COPY_FIELD,
   handsCopyUpdate,
   handsCopyVersionUpdate,
@@ -273,4 +274,13 @@ test("the hands read back their done time, or null without one", () => {
   });
   assert.equal(hands?.[0].doneAtMs, 42);
   assert.equal(hands?.[1].doneAtMs, null);
+});
+
+test("reads hands that miss their fields, and stamps hands that are missing before or after a save", () => {
+  const [hand] = handsFromData([{ handId: 2 }]);
+  assert.equal(hand.isDone, false);
+  assert.equal(hand.isChickenHand, false);
+  assert.equal(hand.doneAtMs, null);
+  const stamps = doneStamps(new Map(), new Map([["1", { isDone: true }]]), [1, 2], 500);
+  assert.deepEqual([...stamps.entries()], [[1, 500]]);
 });

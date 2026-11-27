@@ -36,7 +36,8 @@ const COLUMNS: Record<string, RegExp> = {
 /** Splits a CSV text into rows. Commas or semicolons, quotes with doubled quotes inside, CRLF or LF. */
 export function parseCsv(text: string): string[][] {
   const source = text.replace(/^﻿/, "");
-  const firstLine = source.split(/\r?\n/, 1)[0] ?? "";
+  // Splitting always gives at least one line, an empty one for empty text.
+  const firstLine = source.split(/\r?\n/, 1)[0];
   const separator = (firstLine.match(/;/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? ";" : ",";
   const rows: string[][] = [];
   let row: string[] = [];

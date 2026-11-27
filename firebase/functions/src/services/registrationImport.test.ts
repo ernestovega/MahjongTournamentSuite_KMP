@@ -86,4 +86,14 @@ describe("import of the old Google Form", () => {
     const rows = readFormRows([FORM.split("\r\n")[0], `15/09/2026 18:28:56,ana@example.com,Ana,García,10990039,Spain,,${"x".repeat(400)}`].join("\r\n"));
     assert.equal(rows[0].foodRestrictions.length, 300);
   });
+
+  it("reads form times without seconds or without a time, refuses too many rows and reads short rows", () => {
+    assert.equal(parseFormTime("15/09/2026"), Date.UTC(2026, 8, 15));
+    assert.equal(parseFormTime("15/09/2026 18:28"), Date.UTC(2026, 8, 15, 18, 28));
+    assert.deepEqual(parseCsv(""), []);
+    const many = [["EMA"], ...Array.from({ length: 501 }, (_, index) => [String(10_000_000 + index)])];
+    assert.throws(() => readFormRows(many), /At most 500 rows/);
+    const rows = readFormRows([["Email", "Nombre", "EMA"], ["ana@example.test", "", "04290023"], ["solo"]]);
+    assert.deepEqual(rows.map((row) => row.emaId), ["04290023", ""]);
+  });
 });

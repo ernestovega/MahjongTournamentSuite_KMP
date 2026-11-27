@@ -324,3 +324,17 @@ test("a proof reads the logo from Firebase Storage, and keeps a usable card when
     fetching.mock.restore();
   }
 });
+
+test("draws cards without a country, a valid color, a number of rounds or the date of a round", async () => {
+  assert.equal(flagOrPlaceholderSvg(undefined), GUEST_FLAG_SVG);
+  assert.equal(flagSvgFor(undefined), null);
+  assert.deepEqual(buildIdCardBackRows(2, [], [5]).map((row) => row.tableNumber), [5, 0]);
+  const pdf = await buildIdCardsPdf({
+    tournamentShortName: "MMC",
+    year: "2026",
+    primaryColor: "violet",
+    roundSchedules: [{ roundId: 1, date: null, startTime: "10:00" }],
+    players: [{ playerId: 3, name: "ANA", country: "", countryCode: "", teamName: null, tableNumbers: [2, 6] }],
+  });
+  assert.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
+});

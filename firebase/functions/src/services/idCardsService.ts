@@ -750,13 +750,11 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     throw conflict(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`, { code: "ASSIGNMENTS_MISSING", missing: missingAssignments.length });
   }
 
+  // Every slot has an EMA id here, because a missing one stopped the cards above.
   const playerDocuments = await Promise.all(orderedSlots.map((slot) => {
-    const emaId = slot.get("assignedEmaId");
-    return typeof emaId === "string"
-      ? db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()
-      : Promise.resolve(null);
+    return db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(String(slot.get("assignedEmaId"))).get();
   }));
-  if (playerDocuments.some((player) => player != null && !player.exists)) {
+  if (playerDocuments.some((player) => !player.exists)) {
     throw conflict("One or more assigned EMA players no longer exist", { code: "EMA_PLAYERS_GONE" });
   }
 
@@ -783,11 +781,11 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     const player = playerDocuments[index];
     const playerId = Number(slot.get("id") ?? slot.id);
     const teamId = Number(slot.get("team") ?? 0);
-    const countryCode = String(player?.get("country") ?? "").trim().toUpperCase();
+    const countryCode = String(player.get("country") ?? "").trim().toUpperCase();
     const rounds = tablesByPlayer.get(playerId) ?? new Map<number, number>();
     return {
       playerId,
-      name: `${String(player?.get("firstName") ?? "")} ${String(player?.get("lastName") ?? "")}`.trim(),
+      name: `${String(player.get("firstName") ?? "")} ${String(player.get("lastName") ?? "")}`.trim(),
       country: countryNames.get(iso2CountryCode(countryCode) ?? "") ?? countryCode,
       countryCode,
       teamName: tournament.get("isTeams") === true ? teamNames.get(teamId) ?? `Team ${teamId}` : null,

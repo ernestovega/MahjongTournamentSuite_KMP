@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { before, describe, it, mock } from "node:test";
 
-import { DocumentReference } from "firebase-admin/firestore";
+import { DocumentReference, FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
-import { logTableConflict, saveTableState } from "./tableManagerService";
+import { logTableConflict, resetTable, saveTableState } from "./tableManagerService";
 
 /** The writes that follow a table save, and the record of a refused save, when the store fails under them. */
 describe("table saves when the store fails", () => {
@@ -44,5 +44,17 @@ describe("table saves when the store fails", () => {
     } finally {
       broken.mock.restore();
     }
+  });
+
+  it("resets a table that has no version and hands that only have their document id", async () => {
+    const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], withHands: true });
+    const tableRef = db.doc(`tournaments/${tournamentId}/tables/1_1`);
+    await tableRef.update({ version: FieldValue.delete() });
+    const hands = await tableRef.collection("hands").get();
+    await Promise.all(hands.docs.map((hand) => hand.ref.update({ handId: FieldValue.delete() })));
+    await resetTable({ tournamentId, roundId: 1, tableId: 1 });
+    assert.equal((await readTable(tournamentId, 1, 1)).version, 1);
+    const after = await tableRef.collection("hands").get();
+    assert.ok(after.docs.every((hand) => hand.get("handId") === Number(hand.id)), JSON.stringify(after.docs.map((hand) => hand.data())));
   });
 });
