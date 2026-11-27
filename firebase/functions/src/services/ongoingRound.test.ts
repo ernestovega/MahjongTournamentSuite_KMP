@@ -83,3 +83,36 @@ describe("ongoing round", () => {
     assert.throws(() => planOngoingRound(tournament({ isCompleted: true }), [], now), /completed/);
   });
 });
+
+describe("ongoing round of a tournament with missing data", () => {
+  const now = zonedEpochMs("2026-11-20", "11:00", ZONE)!;
+
+  it("refuses a tournament without rounds, without a time zone or without the time of a round", () => {
+    assert.throws(() => planOngoingRound(tournament({ numRounds: undefined }), [], now), /Every round up to 0 has hands/);
+    assert.throws(() => planOngoingRound(tournament({ timeZone: undefined }), [], now), /has no time zone/);
+    const schedules = tournament().roundSchedules as Array<Record<string, unknown>>;
+    assert.throws(
+      () => planOngoingRound(tournament({ roundSchedules: schedules.map((row) => (row.roundId === 2 ? { roundId: 2 } : row)) }), [], now),
+      /Round 2 has no date and start time/,
+    );
+  });
+
+  it("moves agenda items without a title, a date or a valid time, and event dates that are not dates", () => {
+    const plan = planOngoingRound(tournament({
+      agendaItems: [{ date: 5 }, { title: "Late", date: "2026-11-12", startTime: "" }, { title: "Bad", date: "not a date", startTime: "10:00" }],
+      agendaItemsNote: null,
+      eventStartDate: 20261112,
+      eventEndDate: "not a date",
+      matchEndMode: "STOP",
+      roundClocks: null,
+    }), [], now);
+    assert.deepEqual(plan.agendaItems[0], { title: "", date: "", startTime: null });
+    assert.equal(plan.agendaItems[1].startTime, null);
+    assert.deepEqual(plan.agendaItems[2], { title: "Bad", date: "not a date", startTime: "10:00" });
+    assert.deepEqual(plan.clearedClocks, []);
+  });
+
+  it("reads a tournament without agenda items", () => {
+    assert.deepEqual(planOngoingRound(tournament({ agendaItems: "none" }), [], now).agendaItems, []);
+  });
+});

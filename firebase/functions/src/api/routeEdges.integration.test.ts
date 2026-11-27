@@ -136,4 +136,25 @@ describe("route edges", () => {
     const issues = (response.body as { details?: { issues?: Array<{ field: string }> } }).details?.issues ?? [];
     assert.ok(issues.some((issue) => issue.field === "registration"), JSON.stringify(response.body));
   });
+
+  it("reads the rows of a draw and of a change of players that miss fields or are not objects", async () => {
+    const wrong: string[] = [];
+    for (const route of ["draw", "player-count"]) {
+      for (const [body, message] of [
+        [{ players: [null], tables: [] }, /Invalid player id/],
+        [{ players: [{ id: 1 }], tables: [{ roundId: 1, tableId: 1 }] }, /Invalid table playerIds/],
+        [{ players: [{ id: 1 }], tables: [null] }, /Invalid table playerIds/],
+      ] as const) {
+        const response = await server.request("POST", `/tournaments/${tournamentId}/${route}`, { token: admin.token, body });
+        const text = String((response.body as { message?: string }).message);
+        if (response.status !== 400 || !message.test(text)) wrong.push(`${route} ${JSON.stringify(body)}: ${response.status} ${text}`);
+      }
+    }
+    // Without removed slots and waiting people, the change reaches the tournament, which has no players to change.
+    const change = await server.request("POST", `/tournaments/${tournamentId}/player-count`, {
+      token: admin.token, body: { players: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }], tables: [{ roundId: 1, tableId: 1, playerIds: [1, 2, 3, 4] }] },
+    });
+    if (change.status >= 500 || change.status === 200) wrong.push(`player-count: ${change.status} ${JSON.stringify(change.body)}`);
+    assert.deepEqual(wrong, []);
+  });
 });

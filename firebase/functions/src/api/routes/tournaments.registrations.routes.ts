@@ -280,7 +280,7 @@ export function registerRegistrationRoutes(router: Router): void {
         assignments: list(body.assignments, "assignments").map((row) => ({
           playerId: integer(row.playerId, "assignment playerId"), emaId: validateEmaId(row.emaId),
         })),
-        uid: (res.locals.auth as { uid?: string } | undefined)?.uid ?? null,
+        uid: (res.locals.auth as { uid: string }).uid,
       });
       await recordActivity({
         action: "registration.draw", actor: actorFromToken(res.locals.auth), tournamentId, target: tournament.name,
@@ -320,7 +320,7 @@ export function registerRegistrationRoutes(router: Router): void {
         }),
         removedSlotIds: list(body.removedSlotIds ?? [], "removedSlotIds").map((id) => integer(id, "removed slot")),
         waitingEmaIds: list(body.waitingEmaIds ?? [], "waitingEmaIds").map((emaId) => validateEmaId(emaId)),
-        uid: (res.locals.auth as { uid?: string } | undefined)?.uid ?? null,
+        uid: (res.locals.auth as { uid: string }).uid,
       });
       await recordActivity({
         action: "tournament.playerCount", actor: actorFromToken(res.locals.auth), tournamentId, target: result.tournament.name,
