@@ -1,52 +1,62 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocused
-import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasText
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
-import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
-import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
+import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
 import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.sync.ActivityTracker
 import com.etologic.mahjongtournamentsuite.presentation.sync.PollSchedule
@@ -54,22 +64,22 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeControll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 
 /**
  * Drives the real tournament screen with a fake server. The virtual clock of the test moves the polling,
@@ -83,13 +93,20 @@ private class ScreenHarness(
     private val savedTableId: Int? = null,
     /** Tables that take only the final scores, without hands. */
     useTotalsOnly: Boolean = false,
+    /** Opens the screen from the tournament list, so Back has somewhere to go. */
+    private val fromList: Boolean = false,
+    roundCount: Int = 1,
 ) {
     val server = FakeTournamentRepository().apply {
         tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1))
         players = (1..8).map { TournamentPlayer(id = it, name = "Player $it", team = 0) }
-        (1..tableCount).forEach { seed(syncTable(version = 1, roundId = 1, tableId = it, useTotalsOnly = useTotalsOnly)) }
+        rounds = (1..roundCount).map { TournamentRound(it) }
+        for (round in 1..roundCount) {
+            (1..tableCount).forEach { seed(syncTable(version = 1, roundId = round, tableId = it, useTotalsOnly = useTotalsOnly)) }
+        }
     }
     val clock = TestTimeSource()
+    private var openedFromList = 0
     val activity = ActivityTracker(clock)
 
     // The real pace is 10 s, 5 s with edits, slow after 2 minutes and stop after 5. The test pace is much shorter,
@@ -118,6 +135,8 @@ private class ScreenHarness(
                             factory { TournamentsPresenter(get(), get(), get()) }
                             single { AppMemoryStore().also { store -> role?.let { store.adminStatus.value = AdminStatus("u1", it) } } }
                             factory { TablesPresenter(get(), get(), get()) }
+                            single<PlayerAccountRepository> { FakePlayerAccountRepository() }
+                            factory { PlayersPresenter(get(), get(), get(), get()) }
                             factory { TableManagerPresenter(get(), get()) }
                             factory { RankingPresenter(get(), get(), CalculateTournamentRankingsUseCase(), get()) }
                         },
@@ -145,7 +164,19 @@ private class ScreenHarness(
                     MtsTheme(useDarkTheme = false) {
                         // A real graph, so the screens that the tournament screen opens (Round control) open too.
                         val navController = rememberNavController()
-                        NavHost(navController, startDestination = TournamentRoute("t1")) {
+                        NavHost(navController, startDestination = if (fromList) TournamentsRoute else TournamentRoute("t1")) {
+                            // The other screens are stubs that say where the navigation went.
+                            composable<TournamentsRoute> {
+                                Text("Tournament list")
+                                LaunchedEffect(Unit) { if (fromList && openedFromList++ == 0) navController.navigate(TournamentRoute("t1")) }
+                            }
+                            composable<PlayersRoute> { Text("Players of ${it.toRoute<PlayersRoute>().tournamentId}") }
+                            composable<ActivityRoute> { Text("Activity of ${it.toRoute<ActivityRoute>().tournamentId}") }
+                            composable<PlayerCountRoute> { Text("Player count of ${it.toRoute<PlayerCountRoute>().tournamentId}") }
+                            composable<StatisticsRoute> {
+                                val args = it.toRoute<StatisticsRoute>()
+                                Text("Stats ${args.scope} ${args.roundId} ${args.tableId}")
+                            }
                             composable<TournamentRoute> {
                                 TournamentScreen(
                                     navController = navController,
@@ -673,6 +704,168 @@ class TournamentScreenUiTest {
             val tables = server.calls.indexOf("all CACHED")
             assertTrue(manifest >= 0 && tables > manifest, "one check first, then the held tables: ${server.calls}")
             assertTrue(server.calls.none { it == "all FORCE" })
+        }
+    }
+
+    private fun ComposeUiTest.openMore() {
+        onNode(hasText("More") or hasContentDescription("More")).performClick()
+        waitForIdle()
+    }
+
+    private fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) =
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
+
+    @Test
+    fun playersInMoreOpensThePlayersOfTheTournament() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            openMore()
+            onNodeWithText("Players").performClick()
+            waitForText("Players of t1")
+        }
+    }
+
+    @Test
+    fun statsInMoreOpensTheStatsOfTheOpenTable() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            openMore()
+            onNodeWithText("Stats").performClick()
+            waitForText("Stats TABLE 1 1")
+        }
+    }
+
+    @Test
+    fun anAdminOpensTheActivityOfTheTournamentFromMore() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            openMore()
+            onNode(hasText("Activity") or hasContentDescription("Activity")).performClick()
+            waitForText("Activity of t1")
+        }
+    }
+
+    @Test
+    fun tablesIdsInMoreOpensItsDialogAndCloses() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            openMore()
+            onNodeWithText("Tables IDs").performClick()
+            waitForText("One card for each table (2 tables)", substring = true)
+            onAllNodesWithText("Cancel").onLast().performClick()
+            waitForIdle()
+            onAllNodesWithText("One card for each table", substring = true).assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun backGoesToTheScreenBefore() = runComposeUiTest {
+        with(ScreenHarness(fromList = true)) {
+            show()
+            waitForText("Round 1 • Table 1")
+            onAllNodes(hasText("Back") or hasContentDescription("Back")).onFirst().performClick()
+            waitForText("Tournament list")
+        }
+    }
+
+    @Test
+    fun anAdminClearsTheOpenTableAfterConfirming() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            onNodeWithTag("resetTableButton").performClick()
+            waitForText("Clear table 1?")
+            onNodeWithTag("resetTableConfirm").performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Clear table 1?").fetchSemanticsNodes().isEmpty() }
+            assertTrue("reset 1/1" in server.calls, "No reset: ${server.calls}")
+        }
+    }
+
+    @Test
+    fun cancellingTheClearKeepsTheTable() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            onNodeWithTag("resetTableButton").performClick()
+            waitForText("Clear table 1?")
+            onAllNodesWithText("Cancel").onLast().performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Clear table 1?").fetchSemanticsNodes().isEmpty() }
+            assertTrue(server.calls.none { it.startsWith("reset") })
+        }
+    }
+
+    @Test
+    fun thePencilOpensTheEditDialogOfTheTournament() = runComposeUiTest {
+        with(ScreenHarness(role = GlobalUserRole.SUPER_ADMIN)) {
+            loadScreen()
+            onNode(hasContentDescription("Edit tournament")).performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodes(hasSetTextAction()).fetchSemanticsNodes().any { true } }
+            onAllNodesWithText("Cancel").onLast().performClick()
+            waitForIdle()
+        }
+    }
+
+    @Test
+    fun theEmaExportNamesTheTablesThatAreNotReady() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            openMore()
+            onNodeWithText("EMA report").performClick()
+            waitForText("Official results cannot be exported.", substring = true)
+        }
+    }
+
+    @Test
+    fun theNextRoundButtonOpensTheTablesOfTheNextRound() = runComposeUiTest {
+        with(ScreenHarness(roundCount = 2)) {
+            loadScreen()
+            onNode(hasContentDescription("Next round")).performClick()
+            waitForText("Round 2 • Table 1")
+        }
+    }
+
+    @Test
+    fun aFailedListOfRoundsShowsTheError() = runComposeUiTest {
+        with(ScreenHarness()) {
+            server.failRounds = true
+            show()
+            waitForText("Network request failed.")
+        }
+    }
+
+    @Test
+    fun aFailedListOfAllTablesStillOpensTheRoundFromItsOwnList() = runComposeUiTest {
+        with(ScreenHarness()) {
+            server.failTableLists = setOf(null)
+            loadScreen()
+            assertTrue(server.calls.any { it.startsWith("list 1 ") }, "The round did not load its own list: ${server.calls}")
+        }
+    }
+
+    @Test
+    fun aFailedListOfTheRoundShowsTheError() = runComposeUiTest {
+        with(ScreenHarness()) {
+            server.failTableLists = setOf(null, 1)
+            show()
+            waitForText("Network request failed.")
+        }
+    }
+
+    @Test
+    fun withoutTheBatchOfTheRoundEachTableLoadsOnItsOwn() = runComposeUiTest {
+        with(ScreenHarness()) {
+            server.failRoundBatch = true
+            loadScreen()
+            waitUntil(timeoutMillis = 5_000) { server.calls.any { it.startsWith("get 1/2 ") } }
+            assertTrue(server.calls.any { it.startsWith("get 1/1 ") }, "${server.calls}")
+        }
+    }
+
+    @Test
+    fun aTableThatFailsToLoadOnItsOwnShowsTheError() = runComposeUiTest {
+        with(ScreenHarness()) {
+            server.failRoundBatch = true
+            server.failTableReads = 1
+            show()
+            waitForText("Network request failed.")
         }
     }
 }

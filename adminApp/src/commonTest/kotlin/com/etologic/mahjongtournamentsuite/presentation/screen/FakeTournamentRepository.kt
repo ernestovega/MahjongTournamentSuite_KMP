@@ -35,6 +35,15 @@ internal class FakeTournamentRepository : TournamentRepository {
     /** A conflict answer without table data, like an unreadable server body. */
     var conflictWithoutTable = false
 
+    /** Makes the list of rounds fail. */
+    var failRounds = false
+
+    /** Makes the table lists fail: null for the list of all tables, a round id for the tables of that round. */
+    var failTableLists: Set<Int?> = emptySet()
+
+    /** Makes the request for all the tables of a round with their hands fail, as an older backend. */
+    var failRoundBatch = false
+
     var beforeManifest: suspend () -> Unit = {}
     var beforeTableRead: suspend (TableKey) -> Unit = {}
     var beforeSave: suspend (TableKey) -> Unit = {}
@@ -75,6 +84,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         refreshMode: RefreshMode,
     ): AppResult<List<TournamentTable>> {
         calls += "list ${roundId ?: "all"} $refreshMode"
+        if (roundId in failTableLists) return AppResult.Failure(AppError.Network)
         return AppResult.Success(summaries().filter { roundId == null || it.roundId == roundId })
     }
 
@@ -381,7 +391,8 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     private fun <T> writeResult(value: T): AppResult<T> = if (writesSucceed) AppResult.Success(value) else unusedFakeResult()
 
-    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> = AppResult.Success(rounds)
+    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> =
+        if (failRounds) AppResult.Failure(AppError.Network) else AppResult.Success(rounds)
 
     override suspend fun getRoundTablesWithHands(
         tournamentId: String,
@@ -389,6 +400,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         refreshMode: RefreshMode,
     ): AppResult<List<Pair<TableState, List<TableHand>>>> {
         calls += "round $roundId $refreshMode"
+        if (failRoundBatch) return AppResult.Failure(AppError.Network)
         return AppResult.Success(
             tables.entries.filter { it.key.roundId == roundId }.sortedBy { it.key.tableId }.map { it.value },
         )
