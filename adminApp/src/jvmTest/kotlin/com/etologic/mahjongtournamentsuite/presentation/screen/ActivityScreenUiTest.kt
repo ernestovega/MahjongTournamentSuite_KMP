@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -36,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
@@ -44,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeControll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import kotlinx.coroutines.CompletableDeferred
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -127,7 +134,12 @@ class ActivityScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides clock, LocalCompactLayout provides compact) {
+                CompositionLocalProvider(
+                    LocalThemeController provides themeController,
+                    LocalPressTimeSource provides clock,
+                    LocalCompactLayout provides compact,
+                    LocalAppLogo provides ColorPainter(Color.Green),
+                ) {
                     MtsTheme(useDarkTheme = false) {
                         if (widthDp == null) {
                             ActivityScreen(rememberNavController(), initialTournamentId = initialTournamentId)
@@ -191,6 +203,21 @@ class ActivityScreenUiTest {
         val zaragoza = onNodeWithText("Zaragoza Open").fetchSemanticsNode().boundsInRoot.top
         val alicante = onNodeWithText("Alicante Cup").fetchSemanticsNode().boundsInRoot.top
         assertTrue(zaragoza < alicante, "Zaragoza Open ($zaragoza) should be above Alicante Cup ($alicante)")
+    }
+
+    @Test
+    fun aSearchKeepsTheFiltersOnScreenAndShowsTheLogoOnlyInTheList() = runComposeUiTest {
+        val admin = show()
+        val gate = CompletableDeferred<Unit>()
+        admin.activityGate = gate
+        onNodeWithText("Search").performTextInput("José")
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.text == "José" }
+        // The filters stay, and the logo is the small one of the list, not the large one that covers the screen.
+        onNodeWithText("Origin").assertIsDisplayed()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithContentDescription(LOGO).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithContentDescription(LOGO).assertCountEquals(1)[0].assertWidthIsEqualTo(72.dp)
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithContentDescription(LOGO).fetchSemanticsNodes().isEmpty() }
     }
 
     @Test
@@ -273,6 +300,10 @@ class ActivityScreenUiTest {
 
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
         tap("OK")
+    }
+
+    private companion object {
+        const val LOGO = "Mahjong Tournament Suite logo"
     }
 
     private fun tournament(id: String, name: String) = Tournament(id = id, name = name, isTeams = false, numPlayers = 8, numRounds = 5)
