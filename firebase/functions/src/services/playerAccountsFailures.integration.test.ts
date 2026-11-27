@@ -4,7 +4,7 @@ import { before, describe, it, mock } from "node:test";
 
 import { auth, db, storage } from "../firebase";
 import { createAccount, requireAuthEmulator } from "../testing/authFixtures";
-import { deleteEmaPlayers } from "./emaPlayerDeletes";
+import { deleteEmaPlayers, tournamentsOfEmaPlayers } from "./emaPlayerDeletes";
 import * as playerAccountsService from "./playerAccountsService";
 import * as usersService from "./usersService";
 
@@ -124,5 +124,14 @@ describe("player accounts and EMA players that fail", () => {
     await db.doc(`tournaments/${tournamentId}/players/7`).set({ assignedEmaId: emaId, email: "OLD@example.test" });
     const results = await playerAccountsService.savePendingEmails({ tournamentId, items: [{ playerId: 7, email: `${randomUUID()}@example.test` }] });
     assert.deepEqual(results.map((result) => result.outcome), ["SAVED"]);
+  });
+
+  it("names a tournament without a name by its id among the tournaments of an EMA player", async () => {
+    const emaId = randomEmaId();
+    const tournamentId = `nameless-${randomUUID()}`;
+    await db.doc(`tournaments/${tournamentId}`).set({ createdAt: null });
+    await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: emaId });
+    const [player] = await tournamentsOfEmaPlayers([emaId]);
+    assert.deepEqual(player.tournaments, [{ id: tournamentId, name: tournamentId }]);
   });
 });

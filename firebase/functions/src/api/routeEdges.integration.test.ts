@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, describe, it, mock } from "node:test";
 
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import * as playerHandService from "../services/playerHandService";
 import * as roundClockService from "../services/roundClockService";
 import * as usersService from "../services/usersService";
 import { seedOrganization, seedTournament } from "../testing/firestoreFixtures";
-import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
+import { createAccount, requireAuthEmulator, signInTestAccount, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
 const LONG_ID = "x".repeat(201);
 
@@ -167,5 +167,21 @@ describe("route edges", () => {
     assert.equal(response.status, 200);
     const tournaments = (response.body as { tournaments: Array<{ tournamentId: string; playerId: number; teamId: number }> }).tournaments;
     assert.deepEqual(tournaments.find((slot) => slot.tournamentId === other), { tournamentId: other, playerId: 9, teamId: 0 });
+  });
+
+  it("refuses the players list to an account that is no editor and no player, and edits a registry player at the edges", async () => {
+    const email = `${randomUUID()}@example.test`;
+    await auth.createUser({ email, password: "Passw0rd!-test" });
+    const bare = await signInTestAccount(email);
+    assert.equal((await server.request("GET", "/ema-player-registry", { token: bare })).status, 403);
+
+    const emaId = String(10_000_000 + Math.floor(Math.random() * 89_000_000));
+    assert.equal((await server.request("POST", "/ema-player-registry", { token: admin.token, body: { emaId } })).status, 400);
+    assert.equal((await server.request("POST", "/ema-player-registry", { token: admin.token, body: { emaId, firstName: "Ana", lastName: "Gil", country: "ESP" } })).status, 200);
+    const hidden = await server.request("PUT", `/ema-player-registry/${emaId}`, {
+      token: admin.token, body: { firstName: "Ana", lastName: "Gil", country: "ESP", hiddenFromPublic: true },
+    });
+    assert.equal(hidden.status, 200, JSON.stringify(hidden.body));
+    assert.equal((await db.doc(`emaPlayerRegistry/${emaId}`).get()).get("hiddenFromPublic"), true);
   });
 });
