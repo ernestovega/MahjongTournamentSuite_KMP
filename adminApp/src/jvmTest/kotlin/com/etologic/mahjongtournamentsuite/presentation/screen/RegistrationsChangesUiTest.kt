@@ -7,15 +7,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
@@ -49,7 +54,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
 
 /** The registrations of the screenshots, where the changes of the organizer work and are written down. */
-private class ChangingRegistrations : ScreenshotRegistrationRepository() {
+private open class ChangingRegistrations : ScreenshotRegistrationRepository() {
     val calls = mutableListOf<String>()
 
     private suspend fun first(): AdminRegistration = (loadAdminList(ScreenshotData.UPCOMING) as AppResult.Success).value.registrations.first()
@@ -264,5 +269,26 @@ class RegistrationsChangesUiTest {
         click("Export CSV")
         waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK")).fetchSemanticsNodes().isNotEmpty() }
         click("OK")
+    }
+
+    @Test
+    fun aPersonOfTheWaitingListGetsAPlaceAndASharedEmailIsWarned() = runComposeUiTest {
+        val registrations = object : ChangingRegistrations() {
+            override suspend fun loadAdminList(tournamentId: String): AppResult<AdminRegistrations> =
+                (super.loadAdminList(tournamentId) as AppResult.Success).let { loaded ->
+                    AppResult.Success(loaded.value.copy(registrations = loaded.value.registrations.mapIndexed { index, it -> if (index == 0) it.copy(sharedEmail = true) else it }))
+                }
+        }
+        show(registrations)
+        onNodeWithText("Another person uses this email. One account cannot share it.", substring = true).performScrollTo().assertExists()
+
+        val waiting = people[14]
+        val menu = hasContentDescription("More actions for ${waiting.firstName} ${waiting.lastName}".trim())
+        onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(menu)
+        menuOf(14)
+        click("Give a place", last = true)
+
+        waitUntil(timeoutMillis = 5_000) { registrations.calls.isNotEmpty() }
+        assertEquals(true, registrations.calls.single().endsWith(":CONFIRMED"), registrations.calls.toString())
     }
 }
