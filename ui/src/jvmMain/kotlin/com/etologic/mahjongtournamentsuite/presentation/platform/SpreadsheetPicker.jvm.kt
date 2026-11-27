@@ -20,6 +20,14 @@ actual fun rememberSpreadsheetPicker(
     val currentOnSelected = rememberUpdatedState(onSelected)
     val currentOnError = rememberUpdatedState(onError)
     val currentOnCancelled = rememberUpdatedState(onCancelled)
+    LocalPickedSpreadsheetForTests.current?.let { picked ->
+        return remember(picked) {
+            SpreadsheetPicker {
+                val file = picked()
+                if (file == null) currentOnCancelled.value() else currentOnSelected.value(file)
+            }
+        }
+    }
     val chooserTitle = stringResource(Res.string.spreadsheet_chooser_title)
     val chooserFilter = stringResource(Res.string.spreadsheet_chooser_filter)
     return remember(chooserTitle, chooserFilter) {

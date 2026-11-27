@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.platform
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.spreadsheet_error_read
@@ -16,6 +17,13 @@ class SpreadsheetPicker(
 ) {
     fun launch() = launchAction()
 }
+
+/**
+ * Tests give here the file that a picker returns, or null for a chooser closed without a file, in place of the file
+ * chooser of the system, which a test cannot use. Null (the default) opens the chooser. Only the desktop picker reads
+ * it, because the UI tests run there.
+ */
+val LocalPickedSpreadsheetForTests = staticCompositionLocalOf<(() -> SelectedSpreadsheet?)?> { null }
 
 /** Opens the file chooser of the platform for CSV and Excel files. [onCancelled] runs when the user closes the chooser with no file. */
 @Composable
