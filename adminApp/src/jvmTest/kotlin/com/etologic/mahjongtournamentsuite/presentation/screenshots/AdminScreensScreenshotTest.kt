@@ -103,7 +103,7 @@ class AdminScreensScreenshotTest {
     @Test
     fun tournament() = adminScreenshots("tournament", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentScreen(nav, ONGOING) }
 
-    /** The "More" menu of the top bar of a tournament: Players, Tables IDs, Stats, EMA report and Activity. */
+    /** The "More" menu of the top bar of a tournament: Players, Tables IDs, Score sheets, Stats, EMA report and Activity. */
     @Test
     fun tournamentMoreMenu() = adminScreenshots(
         "tournament-more-menu",

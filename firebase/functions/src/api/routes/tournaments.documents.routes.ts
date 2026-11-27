@@ -16,6 +16,7 @@ import {
 import { generateTournamentIdList } from "../../services/idListService";
 import { listIdCardStaffCandidates } from "../../services/idCardStaffCandidates";
 import { generateTableQrCodes, readCardsPerSheet } from "../../services/tableQrService";
+import { generateScoreSheets, readScoreSheetsOptions } from "../../services/scoreSheetsService";
 import { generateEmaReport } from "../../services/emaReportService";
 import { pathParam } from "../pathParam";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
@@ -146,6 +147,20 @@ export function registerDocumentRoutes(router: Router): void {
       );
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-table-qr-codes.pdf"`);
+      res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // The score sheets to print, on A4: one blank sheet (mode=blank) or one for each table of each round with its round and
+  // table (mode=tables); ema=false leaves out the logo of the EMA. See docs/score-sheets.md.
+  router.get("/:tournamentId/score-sheets", requireAuth, requireTournamentPermission("tournament.view"), async (req, res, next) => {
+    try {
+      const options = readScoreSheetsOptions(req.query);
+      const pdf = await generateScoreSheets(pathParam(req, "tournamentId"), options);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-score-sheets-${options.mode}.pdf"`);
       res.status(200).send(pdf);
     } catch (e) {
       next(e);

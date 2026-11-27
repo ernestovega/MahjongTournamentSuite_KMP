@@ -397,7 +397,7 @@ export async function assignTournamentPlayer(params: {
     const tournamentHasProgress = tournamentHasStartedTables(tournament);
     const player = await transaction.get(playerRef);
     if (!player.exists) {
-      throw new Error("Player not found");
+      throw notFound("Player not found");
     }
 
     const previousEmaId = typeof player.get("assignedEmaId") === "string"

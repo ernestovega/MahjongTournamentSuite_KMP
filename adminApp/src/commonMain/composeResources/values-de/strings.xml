@@ -1243,4 +1243,15 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
         <item quantity="other">%1$d Länder</item>
     </plurals>
     <string name="projection_logo_show_while_running">Beim Laufen zeigen</string>
+    <string name="score_sheets_title">Punktezettel</string>
+    <string name="score_sheets_info">Zettel zum Drucken auf A4 und Ausfüllen an den Tischen. Sie sind immer auf Englisch.</string>
+    <string name="score_sheets_blank">Leer</string>
+    <string name="score_sheets_blank_info">Ein Zettel zum Kopieren, so oft wie nötig.</string>
+    <string name="score_sheets_tables">Mit Runde und Tisch</string>
+    <string name="score_sheets_tables_info">Ein Zettel für jeden Tisch jeder Runde, mit Runde und Tisch eingetragen (%1$d Zettel).</string>
+    <string name="score_sheets_no_tables">Das Turnier hat noch keine Tische.</string>
+    <string name="score_sheets_ema_logo">EMA-Logo</string>
+    <string name="score_sheets_chicken_on">Er hat eine Spalte für Chicken Hands, weil das Turnier sie zählt.</string>
+    <string name="score_sheets_chicken_off">Er hat keine Spalte für Chicken Hands, weil das Turnier sie nicht zählt.</string>
+    <string name="score_sheets_save">Punktezettel speichern</string>
 </resources>

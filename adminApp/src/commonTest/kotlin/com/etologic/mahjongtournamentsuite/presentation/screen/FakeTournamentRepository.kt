@@ -337,6 +337,7 @@ internal class FakeTournamentRepository : TournamentRepository {
     override suspend fun saveIdCardStaffNames(tournamentId: String, names: List<String>): AppResult<List<String>> = writeResult(names)
     override suspend fun generateTournamentIdList(tournamentId: String) = writeResult(ByteArray(0))
     override suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int) = writeResult(ByteArray(0))
+    override suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean) = writeResult(ByteArray(0))
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = writeResult(ByteArray(0))
     override suspend fun deleteTournament(tournamentId: String) = unusedFakeResult<Unit>()
 
