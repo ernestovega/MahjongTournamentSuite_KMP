@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { before, describe, it, mock } from "node:test";
 
+import { FieldValue } from "firebase-admin/firestore";
+
 import { db } from "../firebase";
 import { readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
 import { startedClock } from "../testing/schedule";
@@ -43,5 +45,20 @@ describe("closing tables at the end of the time", () => {
       broken.mock.restore();
       quiet.mock.restore();
     }
+  });
+
+  it("has no round to close without a number of rounds, and closes a table that has no version yet", async () => {
+    const bare = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const { numRounds: _omitted, ...withoutRounds } = timed(200);
+    await db.doc(`tournaments/${bare}`).update(withoutRounds);
+    assert.deepEqual(await closeRoundTables(bare, 1), { tournaments: 0, closed: 0 });
+    assert.equal(await closeRoundsEndedByChange({ tournamentId: bare, before: {}, after: withoutRounds, nowMs: Date.now() }), 0);
+
+    const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], withHands: true });
+    await db.doc(`tournaments/${tournamentId}`).update(timed(200));
+    await db.doc(`tournaments/${tournamentId}/tables/1_1`).update({ hasProgress: true, version: FieldValue.delete() });
+    await db.doc(`tournaments/${tournamentId}/tables/1_1/hands/1`).update({ playerWinnerId: "1", playerLooserId: "2", handScore: "8", isDone: true });
+    assert.deepEqual(await closeRoundTables(tournamentId, 1), { tournaments: 1, closed: 1 });
+    assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, true);
   });
 });
