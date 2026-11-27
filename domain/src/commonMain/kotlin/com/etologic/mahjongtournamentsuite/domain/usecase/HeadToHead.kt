@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.domain.usecase
 
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import kotlin.math.max
 
 /** One table where two players sat together. [theirs] is null when the results of the rival are not loaded. */
 data class SharedTable(val tournament: Tournament, val mine: TableResult, val theirs: TableResult?)
@@ -70,7 +71,7 @@ fun headToHead(
             handsWon = theirs?.sumOf { it.handsWon },
             winsOnTheirDiscard = tallies.sumOf { it.discardLosses },
             selfDraws = tallies.sumOf { it.selfDrawLosses },
-            bestHand = theirs?.let { list -> list.maxOf { it.bestHand }.takeIf { it > 0 } },
+            bestHand = theirs?.let { list -> list.fold(0) { best, result -> max(best, result.bestHand) }.takeIf { it > 0 } },
         ),
     )
 }

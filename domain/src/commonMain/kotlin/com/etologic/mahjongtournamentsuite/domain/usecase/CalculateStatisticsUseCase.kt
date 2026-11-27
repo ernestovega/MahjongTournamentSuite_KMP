@@ -10,11 +10,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableScoreSwing
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TableStatistics
-import com.etologic.mahjongtournamentsuite.domain.model.handTimesMs
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.handTimesMs
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
+import kotlin.math.max
 
 /**
  * Builds the statistics of one tournament from its tables and hands.
@@ -123,7 +124,8 @@ class CalculateStatisticsUseCase {
         if (!table.isCompleted || seatIds == null || seatScores.any { it == null }) return empty
 
         val scores = seatScores.map { it!! }
-        val counted = if (table.useTotalsOnly) emptyList() else countedHands(rankingTable.hands, table.isCompleted, seatIds)
+        // Only a completed table gets here, so every hand of it counts, done or not.
+        val counted = if (table.useTotalsOnly) emptyList() else countedHands(rankingTable.hands, seatIds)
         val hasHands = counted.isNotEmpty()
 
         val running = IntArray(4)
@@ -275,8 +277,7 @@ class CalculateStatisticsUseCase {
         return ids.takeIf { it.toSet().size == 4 }
     }
 
-    private fun countedHands(hands: List<TableHand>, tableCompleted: Boolean, seatIds: List<Int>): List<CountedHand> = hands.sortedBy { it.handId }.mapNotNull { hand ->
-        if (!hand.isDone && !tableCompleted) return@mapNotNull null
+    private fun countedHands(hands: List<TableHand>, seatIds: List<Int>): List<CountedHand> = hands.sortedBy { it.handId }.mapNotNull { hand ->
         countedHand(hand, seatIds)
     }
 
@@ -320,7 +321,7 @@ class CalculateStatisticsUseCase {
     private fun penaltyOf(text: String): Int = text.split(';').sumOf { it.trim().toIntOrNull() ?: 0 }
 
     /** The biggest single penalty of a penalty text, as a positive number. Only negative values are penalties. */
-    private fun worstPenaltyOf(text: String): Int = text.split(';').maxOf { -(it.trim().toIntOrNull() ?: 0) }.coerceAtLeast(0)
+    private fun worstPenaltyOf(text: String): Int = text.split(';').fold(0) { worst, part -> max(worst, -(part.trim().toIntOrNull() ?: 0)) }
 
     private companion object {
         const val MIN_HAND_SCORE = 8
