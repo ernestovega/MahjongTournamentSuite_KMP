@@ -1,5 +1,5 @@
 import { removeTournamentStats } from "./statisticsStore";
-import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import { db, storage } from "../firebase";
 import { DEFAULT_PRIMARY_COLOR, organizersOf, readOrganizerIds, type OrganizerView } from "./organizationsService";
@@ -549,26 +549,6 @@ export async function updateTournamentSettings(params: {
   // A shorter match can end a running round at once. No task runs for an end that is past.
   await closeRoundsEndedByChange({ tournamentId: params.tournamentId, before: before.data() ?? {}, after: after.data() ?? {}, nowMs });
   return mapTournamentDoc(after);
-}
-
-function isDocRef(value: DocumentReference | null): value is DocumentReference {
-  return value != null;
-}
-
-export async function listTournamentsForUser(uid: string): Promise<Tournament[]> {
-  const memberSnaps = await db.collectionGroup("members").where("uid", "==", uid).get();
-  const tournamentRefs = memberSnaps.docs
-    .map((m) => m.ref.parent.parent)
-    .filter(isDocRef);
-
-  if (tournamentRefs.length === 0) return [];
-
-  const tournamentSnaps = await db.getAll(...tournamentRefs);
-  return Promise.all(
-    tournamentSnaps
-      .filter((t) => t.exists)
-      .map((d) => mapTournamentDoc(d)),
-  );
 }
 
 export async function deleteTournamentResources(params: {
