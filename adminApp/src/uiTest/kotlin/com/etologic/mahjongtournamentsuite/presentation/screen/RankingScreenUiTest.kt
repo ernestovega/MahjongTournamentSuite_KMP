@@ -284,10 +284,12 @@ class RankingScreenUiTest {
             waitForIdle()
         }
 
-        // Next list from the control screen.
-        onAllNodesWithContentDescription("Next ranking list").onFirst().performClick()
+        // The button of a list puts it on the screen.
+        pressClock += 1.seconds
+        onNodeWithTag("ranking_control_page_chicken-hands").performScrollTo().performClick()
         mainClock.advanceTimeBy(600)
         waitForIdle()
+        onAllNodesWithText("On screen: Chicken hands").onFirst().assertExists()
         RankingDisplayLink.reset()
     }
 

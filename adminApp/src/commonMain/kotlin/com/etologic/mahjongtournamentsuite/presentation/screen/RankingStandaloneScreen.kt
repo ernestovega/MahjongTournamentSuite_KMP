@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -167,6 +169,8 @@ fun RankingStandaloneScreen(
      * ([RankingDisplayLink]). False: the buttons are on the ranking itself, as on Android and iOS.
      */
     separateControls: Boolean = rankingControlsInSeparateScreen,
+    /** How the buttons on the ranking start, when they are there. The screenshot tests set it. */
+    initialControl: RankingDisplayControl = RankingDisplayControl(playing = false),
 ) {
     val themeController = rememberScreenThemeController()
     val linked by RankingDisplayLink.control.collectAsState()
@@ -177,6 +181,7 @@ fun RankingStandaloneScreen(
             tournamentId = tournamentId,
             clock = clock,
             separateControls = separateControls,
+            initialControl = initialControl,
             themePreference = themeController.preference,
             onToggleTheme = themeController.onTogglePreference,
         )
@@ -188,6 +193,7 @@ private fun RankingStandaloneContent(
     tournamentId: String,
     clock: Clock,
     separateControls: Boolean,
+    initialControl: RankingDisplayControl,
     themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
 ) {
@@ -200,7 +206,7 @@ private fun RankingStandaloneContent(
     // What runs the ranking: the control screen in another window ([RankingDisplayLink]), or the buttons of this
     // screen, which start paused.
     val linked by RankingDisplayLink.control.collectAsState()
-    var localControl by remember { mutableStateOf(RankingDisplayControl(playing = false)) }
+    var localControl by remember { mutableStateOf(initialControl) }
     val control = if (separateControls) linked[tournamentId] ?: RankingDisplayControl() else localControl
     fun change(update: (RankingDisplayControl) -> RankingDisplayControl) {
         if (separateControls) RankingDisplayLink.updateControl(tournamentId, update) else localControl = update(localControl)
@@ -208,7 +214,8 @@ private fun RankingStandaloneContent(
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     val rowsPerScroll = control.rowsPerScroll.coerceIn(MIN_ROWS_PER_SCROLL, maxOf(MIN_ROWS_PER_SCROLL, maxRowsPerScreen))
     val intervalSeconds = control.intervalSeconds.coerceAtLeast(MIN_INTERVAL_SECONDS)
-    val showTopThree = control.showTopThree
+    val podiumSecret = snapshot?.podiumSecret == true
+    val showTopThree = control.showsTopThree(podiumSecret)
     // The prize giving: how many of the hidden top three each page shows, from the third up (Ernesto, 2026-11-27).
     val revealedByPage = control.revealed
     // While the public cannot see the results, the room sees them only after the organizer allows it.
@@ -283,6 +290,35 @@ private fun RankingStandaloneContent(
         remainingSeconds = intervalSeconds
     }
 
+    // Which data this screen shows. The screen stays still, so it also says when it loaded.
+    val dataStatusText = snapshot?.let { dataStatus(it.dataRevision, loadedAt, loaded = true).asString() }
+
+    // Which screen of the list the room sees, for the control screen (Ernesto, 2026-11-27).
+    var headSize by remember { mutableIntStateOf(0) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == RANKING_HEAD_KEY }?.size }
+            .collect { size -> if (size != null) headSize = size }
+    }
+    val rowCount = currentPage?.rows?.size ?: 0
+    val scrollPart by remember(rowCount, rowsPerScroll) {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            val rowSize = info.visibleItemsInfo.firstOrNull { it.key != RANKING_HEAD_KEY }?.size ?: 0
+            val viewport = info.viewportEndOffset - info.viewportStartOffset
+            if (rowSize <= 0 || viewport <= 0) {
+                1 to 1
+            } else {
+                rankingScrollPart(
+                    rows = rowCount,
+                    perScroll = rowsPerScroll,
+                    firstScreenRows = ceilDiv((viewport - headSize).coerceAtLeast(0), rowSize),
+                    screenRows = ceilDiv(viewport, rowSize),
+                    firstItem = listState.firstVisibleItemIndex,
+                )
+            }
+        }
+    }
+
     // The control screen shows what the room sees.
     if (separateControls) {
         val status = RankingDisplayStatus(
@@ -292,6 +328,10 @@ private fun RankingStandaloneContent(
             maxRowsPerScroll = maxRowsPerScreen,
             resultsHidden = snapshot?.tournament?.resultsHiddenFromRound != null,
             loading = loading && snapshot == null,
+            dataStatus = dataStatusText,
+            podiumSecret = podiumSecret,
+            part = scrollPart.first,
+            parts = scrollPart.second,
         )
         LaunchedEffect(status) { RankingDisplayLink.setStatus(tournamentId, status) }
         DisposableEffect(tournamentId) {
@@ -309,10 +349,12 @@ private fun RankingStandaloneContent(
                 remainingSeconds -= 1
             }
             val currentPage = pages.getOrNull(pageIndex) ?: break
-            val lastVisibleRow = listState.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index } ?: -1
-            val nextRow = listState.firstVisibleItemIndex + rowsPerScroll
-            if (lastVisibleRow < currentPage.rows.lastIndex && nextRow < currentPage.rows.size) {
-                listState.animateScrollToItem(nextRow)
+            // The first item of the list is its head (the title and the header), so row i is item i + 1.
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index } ?: -1
+            val firstItem = listState.firstVisibleItemIndex
+            val nextItem = firstItem + rowsPerScroll + if (firstItem == 0) 1 else 0
+            if (lastVisibleItem < currentPage.rows.size && nextItem <= currentPage.rows.size) {
+                listState.animateScrollToItem(nextItem)
             } else {
                 pageIndex = (pageIndex + 1) % pages.size
             }
@@ -337,7 +379,15 @@ private fun RankingStandaloneContent(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(if (compact) PaddingValues(start = 8.dp, top = compactTop, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
+                            // On a wide screen the list goes from the top edge to the bottom one, with the title in it
+                            // (Ernesto, 2026-11-27).
+                            .padding(
+                                if (compact) {
+                                    PaddingValues(start = 8.dp, top = compactTop, end = 8.dp, bottom = 132.dp)
+                                } else {
+                                    PaddingValues(horizontal = MtsTheme.spacing.lg)
+                                },
+                            )
                             .appFocusGroup(),
                     ) {
                         error?.let {
@@ -392,10 +442,10 @@ private fun RankingStandaloneContent(
                             RankingTitle(currentPage.title, compact = true)
                         }
                     }
-                    snapshot?.let { held ->
-                        // Which data this screen shows. The screen stays still, so it also says when it loaded.
+                    // With the control screen the room does not see it: the control screen does (Ernesto, 2026-11-27).
+                    dataStatusText?.takeIf { !separateControls }?.let { text ->
                         Text(
-                            text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
+                            text = text,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
@@ -782,7 +832,8 @@ private fun RankingPage(
                 compact -> COMPACT_RANKING_TITLE_HEIGHT
                 else -> RANKING_TITLE_HEIGHT
             }
-            val availableRowsHeight = (maxHeight - titleHeight - headerHeight).coerceAtLeast(0.dp)
+            val titleTop = if (showTitle && !compact) RANKING_TITLE_TOP else 0.dp
+            val availableRowsHeight = (maxHeight - titleTop - titleHeight - headerHeight).coerceAtLeast(0.dp)
             val rowHeight = availableRowsHeight / (rowsPerScroll + ROW_LAYOUT_SAFETY_ROWS).toFloat()
             val fontSize = (rowHeight - ROW_VERTICAL_OVERHEAD).value
                 .coerceIn(MIN_RANKING_FONT_SIZE_SP, MAX_RANKING_FONT_SIZE_SP)
@@ -813,43 +864,25 @@ private fun RankingPage(
             )
             val measuredWidths = rememberRankingColumnWidths(page, textStyle, headerStyle, teamStyle)
             val tableWidth = if (compact) maxWidth else RankingTableWidth
-            val widths = measuredWidths.fitNameTo(tableWidth, spacing, if (page.showPhoto) photoSize else null, compact)
             // When every row fits, the room left goes half between the rows and half above and below, the same on
             // both sides, so a short page fills the screen and stays centered (Ernesto, 2026-11-27).
-            val fill = rankingFill(page.rows.size, photoSize + ROW_BASE_VERTICAL_PADDING * 2, availableRowsHeight)
+            val fill = rankingFill(page.rows.size, photoSize + ROW_BASE_VERTICAL_PADDING * 2, availableRowsHeight - ROW_VERTICAL_OVERHEAD * 2)
+            // The photo takes the whole height of its row without making the row taller, and leaves after it the same
+            // room as the flag leaves before it (Ernesto, 2026-11-27).
+            val shownPhotoSize = if (compact) photoSize else photoSize + ROW_BASE_VERTICAL_PADDING * 2 + fill.extraPerRow
+            val flagMargin = if (compact || !page.showCountry) {
+                0.dp
+            } else {
+                val flagWidth = with(androidx.compose.ui.platform.LocalDensity.current) { rankingFlagWidth(textStyle.fontSize.toDp()) }
+                ((measuredWidths.country - flagWidth) / 2f).coerceAtLeast(0.dp)
+            }
+            val photoColumnWidth = shownPhotoSize + flagMargin
+            val widths = measuredWidths.fitNameTo(tableWidth, spacing, if (page.showPhoto) photoColumnWidth else null, compact)
 
             Column(
                 modifier = Modifier.width(tableWidth).fillMaxHeight().padding(vertical = fill.margin),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (showTitle) {
-                    Box(modifier = Modifier.height(titleHeight), contentAlignment = Alignment.TopCenter) {
-                        RankingTitle(page.title, compact)
-                    }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(headerHeight)
-                        .padding(bottom = 4.dp),
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(
-                        spacing,
-                        Alignment.CenterHorizontally,
-                    ),
-                ) {
-                    // The flag goes right after the position (Ernesto, 2026-11-27), then the photo.
-                    RankingCell("#", widths.position, TextAlign.Center, headerStyle)
-                    if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
-                    if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
-                    RankingCell(page.nameHeader, widths.name, TextAlign.Center, headerStyle)
-                    if (page.extraHeader != null) {
-                        RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
-                    }
-                    if (page.showPoints) RankingCell(stringResource(Res.string.points), widths.points, TextAlign.Center, headerStyle)
-                    if (page.showScore) RankingCell(stringResource(Res.string.score), widths.score, TextAlign.Center, headerStyle)
-                    if (widths.showTeam && page.teamHeader != null) RankingCell(page.teamHeader, widths.team, TextAlign.Center, headerStyle)
-                }
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -857,6 +890,40 @@ private fun RankingPage(
                         .fillMaxWidth()
                         .scrollIndicators(listState),
                 ) {
+                    // The title, the room over it and the header scroll with the rows: the first item of the list
+                    // (Ernesto, 2026-11-27).
+                    item(key = RANKING_HEAD_KEY) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            if (showTitle) {
+                                Box(modifier = Modifier.height(titleTop + titleHeight).padding(top = titleTop), contentAlignment = Alignment.TopCenter) {
+                                    RankingTitle(page.title, compact)
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(headerHeight)
+                                    .padding(bottom = 4.dp),
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    spacing,
+                                    Alignment.CenterHorizontally,
+                                ),
+                            ) {
+                                // The flag goes right after the position (Ernesto, 2026-11-27), then the photo.
+                                RankingCell("#", widths.position, TextAlign.Center, headerStyle)
+                                if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
+                                if (page.showPhoto) RankingCell("", photoColumnWidth, TextAlign.Center, headerStyle)
+                                RankingCell(page.nameHeader, widths.name, TextAlign.Center, headerStyle)
+                                if (page.extraHeader != null) {
+                                    RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
+                                }
+                                if (page.showPoints) RankingCell(stringResource(Res.string.points), widths.points, TextAlign.Center, headerStyle)
+                                if (page.showScore) RankingCell(stringResource(Res.string.score), widths.score, TextAlign.Center, headerStyle)
+                                if (widths.showTeam && page.teamHeader != null) RankingCell(page.teamHeader, widths.team, TextAlign.Center, headerStyle)
+                            }
+                        }
+                    }
                     itemsIndexed(page.rows, key = { _, row -> row.key }) { index, row ->
                         DataTableRow(
                             backgroundColor = if (index % 2 == 0) {
@@ -889,7 +956,9 @@ private fun RankingPage(
                             }
                             if (page.showPhoto) {
                                 // A hidden top three shows the empty photo, so the photo does not tell the name.
-                                PlayerPhoto(if (row.isMasked) null else row.photoUrl, row.name, size = photoSize)
+                                RankingPhoto(photoSize, shownPhotoSize, photoColumnWidth) {
+                                    PlayerPhoto(if (row.isMasked) null else row.photoUrl, row.name, size = shownPhotoSize)
+                                }
                             }
                             RankingCell(
                                 text = if (row.isMasked) "???" else row.name,
@@ -974,6 +1043,21 @@ private fun RankingCountryCell(
             contentDescription = countryCode.ifBlank { stringResource(Res.string.no_country) },
         )
     }
+}
+
+/**
+ * A photo of [shownSize] that takes in its row only the height of a line, [lineHeight], so the row keeps its height: the
+ * photo spreads over the padding of the row. It starts the column of [width].
+ */
+@Composable
+private fun RankingPhoto(lineHeight: Dp, shownSize: Dp, width: Dp, photo: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier.layout { measurable, _ ->
+            val placeable = measurable.measure(androidx.compose.ui.unit.Constraints.fixed(shownSize.roundToPx(), shownSize.roundToPx()))
+            val height = lineHeight.roundToPx()
+            layout(width.roundToPx(), height) { placeable.place(0, (height - placeable.height) / 2) }
+        },
+    ) { photo() }
 }
 
 /** The width of a flag for a text of [fontSize]. */
@@ -1252,6 +1336,8 @@ private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, pla
 
 private fun displayPhoto(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String? = slots[playerId]?.assignedEmaId?.let(players::get)?.publicPhotoUrl?.takeIf { it.isNotBlank() }
 
+private fun ceilDiv(value: Int, divisor: Int): Int = (value + divisor - 1) / divisor
+
 private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 
 private const val MIN_RANKING_FONT_SIZE_SP = 11f
@@ -1262,8 +1348,13 @@ private const val ROW_LAYOUT_SAFETY_ROWS = 1
 private val ROW_BASE_VERTICAL_PADDING = 2.dp
 
 /** The height of the title of a page over the table, with its gap. */
-private val RANKING_TITLE_HEIGHT = 44.dp
+// The title leaves some room above the header of the table (Ernesto, 2026-11-27).
+private val RANKING_TITLE_HEIGHT = 64.dp
 private val COMPACT_RANKING_TITLE_HEIGHT = 36.dp
+
+/** The room over the title on a wide screen, in the list, so it scrolls away with the title. */
+private val RANKING_TITLE_TOP = 16.dp
+private const val RANKING_HEAD_KEY = "ranking-head"
 
 /** How a page whose rows all fit spreads over the screen: more room in each row, and equal margins above and below. */
 private class RankingFill(val extraPerRow: Dp, val margin: Dp)

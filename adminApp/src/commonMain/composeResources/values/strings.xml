@@ -1272,17 +1272,20 @@ Reveal the results at the prize giving from Round control.</string>
     <string name="ranking_control">Ranking control</string>
     <string name="ranking_control_not_open_title">The projected ranking is not open</string>
     <string name="ranking_control_not_open_message">Open it and move its window to the projector. You run it from here.</string>
-    <string name="open_projected_ranking">Open projected ranking</string>
+    <string name="open_projected_ranking">Project ranking</string>
     <string name="ranking_control_on_screen">On screen: %1$s</string>
     <string name="ranking_control_next_in">Next in %1$d s</string>
     <string name="ranking_control_paused">Paused</string>
     <string name="ranking_control_playback">Paging</string>
     <string name="ranking_control_lists">Lists</string>
-    <string name="show_on_screen">Show</string>
     <string name="podium_revealed">Podium revealed</string>
     <string name="ranking_control_show_hidden">Show the ranking in the room</string>
     <string name="ranking_control_display">Display</string>
     <string name="organizer_logo_on_screen">Organizer logo</string>
     <string name="ema_logo_on_screen">EMA logo</string>
     <string name="ranking_control_hidden_message">The public does not see the results of this tournament yet. The room sees this ranking only when you turn this on.</string>
+    <string name="on_screen_badge">On screen</string>
+    <string name="ranking_rows_per_screen">Rows per screen</string>
+    <string name="ranking_seconds_per_page">Seconds per page</string>
+    <string name="ranking_control_part">Part %1$d of %2$d</string>
 </resources>

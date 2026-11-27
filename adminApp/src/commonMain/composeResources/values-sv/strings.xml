@@ -1272,17 +1272,20 @@ Resultaten visas vid prisutdelningen från Omgångskontroll.</string>
     <string name="ranking_control">Styrning av rankingen</string>
     <string name="ranking_control_not_open_title">Den projicerade rankingen är inte öppen</string>
     <string name="ranking_control_not_open_message">Öppna den och dra fönstret till projektorn. Du styr den härifrån.</string>
-    <string name="open_projected_ranking">Öppna projicerad ranking</string>
+    <string name="open_projected_ranking">Projicera rankingen</string>
     <string name="ranking_control_on_screen">På skärmen: %1$s</string>
     <string name="ranking_control_next_in">Nästa om %1$d s</string>
     <string name="ranking_control_paused">Pausad</string>
     <string name="ranking_control_playback">Bläddring</string>
     <string name="ranking_control_lists">Listor</string>
-    <string name="show_on_screen">Visa</string>
     <string name="podium_revealed">Pallen avslöjad</string>
     <string name="ranking_control_show_hidden">Visa rankingen i salen</string>
     <string name="ranking_control_display">Visning</string>
     <string name="organizer_logo_on_screen">Arrangörens logotyp</string>
     <string name="ema_logo_on_screen">EMA:s logotyp</string>
     <string name="ranking_control_hidden_message">Publiken ser ännu inte resultaten i turneringen. Salen ser rankingen först när du slår på detta.</string>
+    <string name="on_screen_badge">På skärmen</string>
+    <string name="ranking_rows_per_screen">Rader per skärm</string>
+    <string name="ranking_seconds_per_page">Sekunder per sida</string>
+    <string name="ranking_control_part">Del %1$d av %2$d</string>
 </resources>

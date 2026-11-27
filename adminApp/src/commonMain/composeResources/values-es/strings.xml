@@ -1272,17 +1272,20 @@ Los resultados se revelan en la entrega de premios desde Control de ronda.</stri
     <string name="ranking_control">Control del ranking</string>
     <string name="ranking_control_not_open_title">El ranking proyectado no está abierto</string>
     <string name="ranking_control_not_open_message">Ábrelo y lleva su ventana al proyector. Lo manejas desde aquí.</string>
-    <string name="open_projected_ranking">Abrir ranking proyectado</string>
+    <string name="open_projected_ranking">Proyectar ranking</string>
     <string name="ranking_control_on_screen">En pantalla: %1$s</string>
     <string name="ranking_control_next_in">Siguiente en %1$d s</string>
     <string name="ranking_control_paused">En pausa</string>
     <string name="ranking_control_playback">Paso de páginas</string>
     <string name="ranking_control_lists">Listas</string>
-    <string name="show_on_screen">Mostrar</string>
     <string name="podium_revealed">Podio revelado</string>
     <string name="ranking_control_show_hidden">Mostrar el ranking en la sala</string>
     <string name="ranking_control_display">Pantalla</string>
     <string name="organizer_logo_on_screen">Logo del organizador</string>
     <string name="ema_logo_on_screen">Logo de la EMA</string>
     <string name="ranking_control_hidden_message">El público aún no ve los resultados de este torneo. La sala solo ve este ranking cuando actives esto.</string>
+    <string name="on_screen_badge">En pantalla</string>
+    <string name="ranking_rows_per_screen">Filas por pantalla</string>
+    <string name="ranking_seconds_per_page">Segundos por página</string>
+    <string name="ranking_control_part">Parte %1$d de %2$d</string>
 </resources>

@@ -400,7 +400,10 @@ class AdminScreensScreenshotTest {
             Thread.sleep(1_500)
             waitForIdle()
         },
-    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false) }
+    ) {
+        // Before the decisive round the top three shows: the organizer hid it for the reveal.
+        RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false, initialControl = RankingDisplayControl(playing = false, showTopThree = false))
+    }
 
     /**
      * The projected ranking run from "Ranking control" in another window: no buttons, the third place revealed. The
@@ -417,7 +420,7 @@ class AdminScreensScreenshotTest {
     ) {
         remember {
             RankingDisplayLink.reset()
-            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false).reveal("players"))
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false, showTopThree = false).reveal("players"))
         }
         RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = true)
     }
@@ -447,6 +450,39 @@ class AdminScreensScreenshotTest {
                     pageIndex = 0,
                     remainingSeconds = 7,
                     resultsHidden = true,
+                    podiumSecret = true,
+                ),
+            )
+        }
+        RankingControlScreen(ONGOING, onOpenProjection = {}, onBack = {})
+    }
+
+    /** The control while the projection pages on its own: the time left of the list on screen, the top three shown. */
+    @Test
+    fun rankingControlPlaying() = adminScreenshots(
+        "ranking-control-playing",
+        ready = {
+            waitForText(adminText("ranking_control_next_in", 5), substring = true)
+            waitForIdle()
+        },
+    ) {
+        val titles = listOf(Res.string.players, Res.string.teams, Res.string.chicken_hands, Res.string.best_hands).map { stringResource(it) }
+        remember {
+            RankingDisplayLink.reset()
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = true))
+            RankingDisplayLink.setStatus(
+                ONGOING,
+                RankingDisplayStatus(
+                    pages = listOf(
+                        RankingDisplayPage("players", titles[0], 3),
+                        RankingDisplayPage("teams", titles[1], 3),
+                        RankingDisplayPage("chicken-hands", titles[2], 3),
+                        RankingDisplayPage("best-hands", titles[3], 3),
+                    ),
+                    pageIndex = 1,
+                    remainingSeconds = 5,
+                    part = 1,
+                    parts = 3,
                 ),
             )
         }
