@@ -1,12 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -79,7 +83,12 @@ class RankingScreenUiTest {
     /** The buttons ignore a second press within a short time; the tests move this clock past it. */
     private val pressClock = TestTimeSource()
 
-    private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository, compact: Boolean = false) {
+    private fun androidx.compose.ui.test.ComposeUiTest.show(
+        server: FakeTournamentRepository,
+        compact: Boolean = false,
+        /** The other window: the control screen beside the projected ranking, which then has no buttons. */
+        withControl: Boolean = false,
+    ) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -96,7 +105,14 @@ class RankingScreenUiTest {
             }
             KoinContext(koin) {
                 CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen, LocalPressTimeSource provides pressClock) {
-                    RankingStandaloneScreen(tournamentId = "t1")
+                    if (withControl) {
+                        Row {
+                            Box(Modifier.weight(1f)) { RankingStandaloneScreen(tournamentId = "t1", separateControls = true) }
+                            Box(Modifier.weight(1f)) { RankingControlScreen(tournamentId = "t1", onOpenProjection = {}, onBack = {}) }
+                        }
+                    } else {
+                        RankingStandaloneScreen(tournamentId = "t1", separateControls = false)
+                    }
                 }
             }
         }
@@ -221,6 +237,43 @@ class RankingScreenUiTest {
 
         assertTrue(shown("PLAYER 1"))
         assertTrue(!shown("Reveal 1st place") && !shown("Reveal 3rd place"))
+    }
+
+    @Test
+    fun theControlScreenRunsTheProjectedRankingThatHasNoButtons() = runComposeUiTest {
+        RankingDisplayLink.reset()
+        show(playedToday(), withControl = true)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+        fun shown(text: String) = onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        fun click(text: String) {
+            onAllNodesWithText(text).onFirst().performClick()
+            pressClock += 1.seconds
+            mainClock.advanceTimeBy(600)
+            waitForIdle()
+        }
+
+        // The projection has no buttons: the control screen holds them, and it starts playing.
+        assertEquals(1, onAllNodesWithText("Show first 3").fetchSemanticsNodes().size)
+        assertTrue(onAllNodesWithContentDescription("Pause automatic paging").fetchSemanticsNodes().size == 1)
+        assertTrue(!shown("PLAYER 1"))
+
+        onNodeWithTag("ranking_control_reveal_players").performClick()
+        pressClock += 1.seconds
+        mainClock.advanceTimeBy(600)
+        waitForIdle()
+        // A reveal stops the paging, so the room keeps looking at the podium.
+        assertTrue(onAllNodesWithContentDescription("Start automatic paging").fetchSemanticsNodes().size == 1)
+        click("Reveal 2nd place")
+        assertTrue(!shown("PLAYER 1"))
+        click("Reveal 1st place")
+        assertTrue(shown("PLAYER 1"))
+        assertTrue(shown("Podium revealed"))
+
+        // Next list from the control screen.
+        onAllNodesWithContentDescription("Next ranking list").onFirst().performClick()
+        mainClock.advanceTimeBy(600)
+        waitForIdle()
+        RankingDisplayLink.reset()
     }
 
     @Test

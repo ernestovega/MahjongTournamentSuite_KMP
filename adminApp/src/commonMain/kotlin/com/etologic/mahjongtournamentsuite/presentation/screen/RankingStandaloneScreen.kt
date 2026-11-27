@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
-import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,9 +21,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.platform.testTag
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
@@ -42,13 +38,14 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -57,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -80,12 +78,15 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
-import com.etologic.mahjongtournamentsuite.presentation.components.EmaLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -131,19 +132,19 @@ import mahjongtournamentsuite.adminapp.generated.resources.player_n
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.points
 import mahjongtournamentsuite.adminapp.generated.resources.previous_ranking_list
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_first_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_second_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_third_place
 import mahjongtournamentsuite.adminapp.generated.resources.rows_count
 import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
 import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
-import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
-import mahjongtournamentsuite.adminapp.generated.resources.reveal_first_place
-import mahjongtournamentsuite.adminapp.generated.resources.reveal_second_place
-import mahjongtournamentsuite.adminapp.generated.resources.reveal_third_place
-import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
-import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
 import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
+import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
 import mahjongtournamentsuite.adminapp.generated.resources.teams
@@ -161,13 +162,21 @@ fun RankingStandaloneScreen(
     tournamentId: String,
     /** The clock of the "loaded at" label. The screenshot tests fix it. */
     clock: Clock = Clock.System,
+    /**
+     * True: the room sees the ranking with no buttons, and "Ranking control" in another window or tab runs it
+     * ([RankingDisplayLink]). False: the buttons are on the ranking itself, as on Android and iOS.
+     */
+    separateControls: Boolean = rankingControlsInSeparateScreen,
 ) {
     val themeController = rememberScreenThemeController()
+    val linked by RankingDisplayLink.control.collectAsState()
+    val linkedDark = if (separateControls) linked[tournamentId]?.dark else null
 
-    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+    MtsTheme(useDarkTheme = linkedDark ?: themeController.isDarkTheme) {
         RankingStandaloneContent(
             tournamentId = tournamentId,
             clock = clock,
+            separateControls = separateControls,
             themePreference = themeController.preference,
             onToggleTheme = themeController.onTogglePreference,
         )
@@ -178,6 +187,7 @@ fun RankingStandaloneScreen(
 private fun RankingStandaloneContent(
     tournamentId: String,
     clock: Clock,
+    separateControls: Boolean,
     themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
 ) {
@@ -187,19 +197,27 @@ private fun RankingStandaloneContent(
     var error by remember { mutableStateOf<UiText?>(null) }
     var loadedAt by remember { mutableStateOf<Instant?>(null) }
     var loading by remember { mutableStateOf(false) }
-    var rowsPerScroll by remember { mutableIntStateOf(DEFAULT_ROWS_PER_SCROLL) }
-    var intervalSeconds by remember { mutableIntStateOf(DEFAULT_INTERVAL_SECONDS) }
+    // What runs the ranking: the control screen in another window ([RankingDisplayLink]), or the buttons of this
+    // screen, which start paused.
+    val linked by RankingDisplayLink.control.collectAsState()
+    var localControl by remember { mutableStateOf(RankingDisplayControl(playing = false)) }
+    val control = if (separateControls) linked[tournamentId] ?: RankingDisplayControl() else localControl
+    fun change(update: (RankingDisplayControl) -> RankingDisplayControl) {
+        if (separateControls) RankingDisplayLink.updateControl(tournamentId, update) else localControl = update(localControl)
+    }
+    var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
+    val rowsPerScroll = control.rowsPerScroll.coerceIn(MIN_ROWS_PER_SCROLL, maxOf(MIN_ROWS_PER_SCROLL, maxRowsPerScreen))
+    val intervalSeconds = control.intervalSeconds.coerceAtLeast(MIN_INTERVAL_SECONDS)
+    val showTopThree = control.showTopThree
+    // The prize giving: how many of the hidden top three each page shows, from the third up (Ernesto, 2026-11-27).
+    val revealedByPage = control.revealed
+    // While the public cannot see the results, the room sees them only after the organizer allows it.
+    val showHiddenResults = control.showHiddenResults
+    val playing = control.playing
+    val showOrganizerLogo = control.showOrganizerLogo
+    val showEmaLogo = control.showEmaLogo
     var pageIndex by remember { mutableIntStateOf(0) }
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
-    var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
-    var showTopThree by rememberSaveable { mutableStateOf(false) }
-    // The prize giving: how many of the hidden top three each page shows, from the third up (Ernesto, 2026-11-27).
-    var revealedByPage by remember { mutableStateOf(mapOf<String, Int>()) }
-    // While the public cannot see the results, this screen asks before it shows them to the room.
-    var showHiddenResults by rememberSaveable { mutableStateOf(false) }
-    var playing by remember { mutableStateOf(false) }
-    var showOrganizerLogo by rememberSaveable { mutableStateOf(true) }
-    var showEmaLogo by rememberSaveable { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
     fun refresh(force: Boolean = false) = scope.launch {
@@ -252,8 +270,34 @@ private fun RankingStandaloneContent(
 
     val currentPage = pages.getOrNull(pageIndex)
 
-    LaunchedEffect(maxRowsPerScreen) {
-        rowsPerScroll = rowsPerScroll.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen)
+    // The control screen asked for a list, or revealed a place of one: the room goes to that list, at its top.
+    LaunchedEffect(control.pageRequest) {
+        if (control.pageRequest == 0) return@LaunchedEffect
+        val index = pages.indexOfFirst { it.key == control.pageKey }
+        if (index < 0) return@LaunchedEffect
+        if (index != pageIndex) {
+            pageIndex = index
+        } else if (listState.layoutInfo.totalItemsCount > 0) {
+            listState.animateScrollToItem(0)
+        }
+        remainingSeconds = intervalSeconds
+    }
+
+    // The control screen shows what the room sees.
+    if (separateControls) {
+        val status = RankingDisplayStatus(
+            pages = pages.map { page -> RankingDisplayPage(page.key, page.title, podium = minOf(3, page.rows.size)) },
+            pageIndex = pageIndex,
+            remainingSeconds = remainingSeconds,
+            maxRowsPerScroll = maxRowsPerScreen,
+            resultsHidden = snapshot?.tournament?.resultsHiddenFromRound != null,
+            loading = loading && snapshot == null,
+        )
+        LaunchedEffect(status) { RankingDisplayLink.setStatus(tournamentId, status) }
+        DisposableEffect(tournamentId) {
+            RankingDisplayLink.hello(tournamentId)
+            onDispose { RankingDisplayLink.closeStatus(tournamentId) }
+        }
     }
 
     LaunchedEffect(playing, pageIndex, intervalSeconds, rowsPerScroll, pages.size) {
@@ -287,7 +331,7 @@ private fun RankingStandaloneContent(
                     // On a phone the title goes between the logos (Ernesto, 2026-11-27), in the band they take: the
                     // logos and, while paused, their switches. The table starts under that band.
                     val hasLogos = snapshot?.tournament != null
-                    val compactBand = if (playing) COMPACT_LOGO_SIZE else COMPACT_LOGO_BAND_WITH_SWITCHES
+                    val compactBand = if (playing || separateControls) COMPACT_LOGO_SIZE else COMPACT_LOGO_BAND_WITH_SWITCHES
                     val compactTop = if (hasLogos) COMPACT_LOGO_TOP + compactBand + 8.dp else 24.dp
                     val showsPage = currentPage != null && !(snapshot?.tournament?.resultsHiddenFromRound != null && !showHiddenResults)
                     Column(
@@ -320,8 +364,10 @@ private fun RankingStandaloneContent(
                                     title = stringResource(Res.string.ranking_hidden_from_public_title),
                                     message = stringResource(Res.string.ranking_hidden_from_public_message),
                                 )
-                                FocusedButton(onClick = { showHiddenResults = true }) {
-                                    ButtonText(stringResource(Res.string.show_ranking_here_anyway))
+                                if (!separateControls) {
+                                    FocusedButton(onClick = { change { it.copy(showHiddenResults = true) } }) {
+                                        ButtonText(stringResource(Res.string.show_ranking_here_anyway))
+                                    }
                                 }
                             }
                             else -> RankingPage(
@@ -360,9 +406,10 @@ private fun RankingStandaloneContent(
                         val logoSize = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE
                         tournament.mainOrganizerLogo()?.let { logoUrl ->
                             ProjectionLogo(
-                                running = playing,
+                                // With the control screen the room never sees the switch: it is there.
+                                running = playing || separateControls,
                                 showWhileRunning = showOrganizerLogo,
-                                onShowWhileRunningChange = { showOrganizerLogo = it },
+                                onShowWhileRunningChange = { show -> change { it.copy(showOrganizerLogo = show) } },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
                                     .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) COMPACT_LOGO_TOP else 40.dp),
@@ -376,9 +423,9 @@ private fun RankingStandaloneContent(
                             }
                         }
                         ProjectionLogo(
-                            running = playing,
+                            running = playing || separateControls,
                             showWhileRunning = showEmaLogo,
-                            onShowWhileRunningChange = { showEmaLogo = it },
+                            onShowWhileRunningChange = { show -> change { it.copy(showEmaLogo = show) } },
                             // On a wide screen at the bottom left, under the controls, so the table keeps its width.
                             modifier = if (compact) {
                                 Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = COMPACT_LOGO_TOP)
@@ -399,46 +446,41 @@ private fun RankingStandaloneContent(
                                 .padding(16.dp),
                         )
                     }
-                    RankingControls(
-                        playing = playing,
-                        themePreference = themePreference,
-                        rowsPerScroll = rowsPerScroll,
-                        maxVisibleRows = maxRowsPerScreen,
-                        intervalSeconds = intervalSeconds,
-                        pageIndex = pageIndex,
-                        pageCount = pages.size,
-                        onTogglePlaying = { playing = !playing },
-                        onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
-                        onIntervalChanged = {
-                            intervalSeconds = it
-                            remainingSeconds = it
-                        },
-                        onPrevious = {
-                            if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
-                        },
-                        onNext = {
-                            if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
-                        },
-                        onToggleTheme = onToggleTheme,
-                        showTopThree = showTopThree,
-                        onShowTopThreeChanged = {
-                            showTopThree = it
-                            revealedByPage = emptyMap()
-                        },
-                        // The place that the next press shows: the lowest hidden one of the page, 3, then 2, then 1.
-                        nextReveal = currentPage?.rows?.take(3)?.indexOfLast { it.isMasked }?.takeIf { it >= 0 }?.plus(1),
-                        onReveal = {
-                            currentPage?.let { page ->
+                    if (!separateControls) {
+                        RankingControls(
+                            playing = playing,
+                            themePreference = themePreference,
+                            rowsPerScroll = rowsPerScroll,
+                            maxVisibleRows = maxRowsPerScreen,
+                            intervalSeconds = intervalSeconds,
+                            pageIndex = pageIndex,
+                            pageCount = pages.size,
+                            onTogglePlaying = { change { it.copy(playing = !it.playing) } },
+                            onRowsChanged = { rows -> change { it.copy(rowsPerScroll = rows.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen)) } },
+                            onIntervalChanged = { seconds ->
+                                change { it.copy(intervalSeconds = seconds) }
+                                remainingSeconds = seconds
+                            },
+                            onPrevious = {
+                                if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
+                            },
+                            onNext = {
+                                if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
+                            },
+                            onToggleTheme = onToggleTheme,
+                            showTopThree = showTopThree,
+                            onShowTopThreeChanged = { show -> change { it.withShowTopThree(show) } },
+                            // The place that the next press shows: the lowest hidden one of the page, 3, then 2, then 1.
+                            nextReveal = currentPage?.rows?.take(3)?.indexOfLast { it.isMasked }?.takeIf { it >= 0 }?.plus(1),
+                            onReveal = {
                                 // The room watches the podium: the paging stops and the page goes back to its top.
-                                playing = false
-                                revealedByPage = revealedByPage + (page.key to ((revealedByPage[page.key] ?: 0) + 1).coerceAtMost(3))
-                                scope.launch { listState.animateScrollToItem(0) }
-                            }
-                        },
-                        modifier = Modifier
-                            .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
-                            .padding(if (compact) 8.dp else 12.dp),
-                    )
+                                currentPage?.let { page -> change { it.reveal(page.key) } }
+                            },
+                            modifier = Modifier
+                                .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
+                                .padding(if (compact) 8.dp else 12.dp),
+                        )
+                    }
                 }
             }
         }
@@ -1212,11 +1254,6 @@ private fun displayPhoto(playerId: Int, slots: Map<Int, TournamentPlayer>, playe
 
 private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 
-private const val DEFAULT_ROWS_PER_SCROLL = 20
-private const val MIN_ROWS_PER_SCROLL = 16
-private const val MAX_ROWS_PER_SCROLL = 50
-private const val DEFAULT_INTERVAL_SECONDS = 7
-private const val MIN_INTERVAL_SECONDS = 1
 private const val MIN_RANKING_FONT_SIZE_SP = 11f
 private const val MAX_RANKING_FONT_SIZE_SP = 54f
 private const val ROW_LAYOUT_SAFETY_ROWS = 1

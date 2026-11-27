@@ -92,6 +92,10 @@ data object ErrorsRoute
 @Serializable
 data class RoundControlRoute(val tournamentId: String, val round: Int = 1)
 
+/** Runs the projected ranking of a tournament from the main window: the room sees only the ranking. */
+@Serializable
+data class RankingControlRoute(val tournamentId: String)
+
 @Serializable
 data class ActivityRoute(val tournamentId: String? = null)
 

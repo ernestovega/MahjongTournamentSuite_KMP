@@ -49,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRan
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RankingControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
@@ -189,6 +190,7 @@ private class ScreenHarness(
                                     pollSchedule = schedule,
                                 )
                             }
+                            composable<RankingControlRoute> { Text("Ranking control of ${it.toRoute<RankingControlRoute>().tournamentId}") }
                             composable<RoundControlRoute> { entry ->
                                 val args = entry.toRoute<RoundControlRoute>()
                                 RoundControlScreen(args.tournamentId, args.round, onBack = { navController.popBackStack() })
@@ -876,11 +878,15 @@ class TournamentScreenUiTest {
     fun theTimerTheRankingAndTheQrOpenFromTheTopBar() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()
-            listOf("Timer", "Ranking", "QR").forEach { name ->
+            listOf("Timer", "QR").forEach { name ->
                 onAllNodes((hasText(name) or hasContentDescription(name)) and hasClickAction()).onFirst().performClick()
                 waitForIdle()
             }
             onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
+            // The ranking opens in a window of its own, and this window goes to its control.
+            onAllNodes((hasText("Ranking") or hasContentDescription("Ranking")) and hasClickAction()).onFirst().performClick()
+            waitForIdle()
+            onNodeWithText("Ranking control of t1").assertExists()
         }
     }
 

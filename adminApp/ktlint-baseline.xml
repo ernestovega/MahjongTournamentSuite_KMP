@@ -967,24 +967,19 @@
         <error line="23" column="1" source="standard:no-unused-imports" />
         <error line="31" column="1" source="standard:no-unused-imports" />
         <error line="33" column="1" source="standard:no-unused-imports" />
-        <error line="69" column="1" source="standard:no-unused-imports" />
-        <error line="118" column="5" source="standard:spacing-between-declarations-with-comments" />
-        <error line="156" column="27" source="standard:argument-list-wrapping" />
-        <error line="156" column="43" source="standard:argument-list-wrapping" />
-        <error line="156" column="60" source="standard:argument-list-wrapping" />
-        <error line="156" column="81" source="standard:argument-list-wrapping" />
-        <error line="383" column="64" source="standard:statement-wrapping" />
-        <error line="383" column="97" source="standard:statement-wrapping" />
-        <error line="383" column="124" source="standard:statement-wrapping" />
-        <error line="467" column="27" source="standard:statement-wrapping" />
-        <error line="467" column="48" source="standard:statement-wrapping" />
-        <error line="467" column="62" source="standard:statement-wrapping" />
-        <error line="467" column="79" source="standard:statement-wrapping" />
-        <error line="526" column="1" source="standard:indent" />
-        <error line="527" column="1" source="standard:indent" />
-        <error line="528" column="1" source="standard:indent" />
-        <error line="529" column="1" source="standard:indent" />
-        <error line="530" column="1" source="standard:indent" />
+        <error line="70" column="1" source="standard:no-unused-imports" />
+        <error line="119" column="5" source="standard:spacing-between-declarations-with-comments" />
+        <error line="157" column="27" source="standard:argument-list-wrapping" />
+        <error line="157" column="43" source="standard:argument-list-wrapping" />
+        <error line="157" column="60" source="standard:argument-list-wrapping" />
+        <error line="157" column="81" source="standard:argument-list-wrapping" />
+        <error line="384" column="64" source="standard:statement-wrapping" />
+        <error line="384" column="97" source="standard:statement-wrapping" />
+        <error line="384" column="124" source="standard:statement-wrapping" />
+        <error line="472" column="27" source="standard:statement-wrapping" />
+        <error line="472" column="48" source="standard:statement-wrapping" />
+        <error line="472" column="62" source="standard:statement-wrapping" />
+        <error line="472" column="79" source="standard:statement-wrapping" />
         <error line="531" column="1" source="standard:indent" />
         <error line="532" column="1" source="standard:indent" />
         <error line="533" column="1" source="standard:indent" />
@@ -1095,6 +1090,11 @@
         <error line="638" column="1" source="standard:indent" />
         <error line="639" column="1" source="standard:indent" />
         <error line="640" column="1" source="standard:indent" />
+        <error line="641" column="1" source="standard:indent" />
+        <error line="642" column="1" source="standard:indent" />
+        <error line="643" column="1" source="standard:indent" />
+        <error line="644" column="1" source="standard:indent" />
+        <error line="645" column="1" source="standard:indent" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TournamentsScreen.kt">
         <error line="15" column="1" source="standard:no-unused-imports" />
@@ -1284,7 +1284,7 @@
         <error line="311" column="139" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screenshots/AdminScreensScreenshotTest.kt">
-        <error line="423" column="88" source="standard:function-signature" />
+        <error line="485" column="88" source="standard:function-signature" />
     </file>
     <file name="src/uiTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/EditTournamentDialogMatchDurationUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -1453,8 +1453,8 @@
         <error line="14" column="1" source="standard:no-unused-imports" />
     </file>
     <file name="src/uiTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TournamentScreenUiTest.kt">
-        <error line="771" column="86" source="standard:function-signature" />
-        <error line="771" column="86" source="standard:function-signature" />
+        <error line="773" column="86" source="standard:function-signature" />
+        <error line="773" column="86" source="standard:function-signature" />
     </file>
     <file name="src/uiTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TournamentsScreenFlowsUiTest.kt">
         <error line="110" column="106" source="standard:function-signature" />
