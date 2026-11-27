@@ -128,7 +128,7 @@ private fun rememberTableQrDownload(presenter: PlayersPresenter): (Tournament, I
     }
 }
 
-private suspend fun exportTableQr(
+internal suspend fun exportTableQr(
     presenter: PlayersPresenter,
     tournament: Tournament,
     perSheet: Int,
