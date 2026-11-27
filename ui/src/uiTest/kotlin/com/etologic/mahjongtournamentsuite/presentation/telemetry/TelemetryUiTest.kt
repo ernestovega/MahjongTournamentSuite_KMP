@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -14,7 +13,10 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -80,8 +82,12 @@ class TelemetryUiTest {
 
     @Test
     fun theDetailsAreFoldedUntilTheUserAsks() = runComposeUiTest {
+        // The buttons ignore a second press within 500 ms: the test moves this clock before each press.
+        val clock = TestTimeSource()
         setContent {
-            CompositionLocalProvider(LocalTelemetry provides FakeTelemetry()) { ConsentGate { Text("Inside the app") } }
+            CompositionLocalProvider(LocalTelemetry provides FakeTelemetry(), LocalPressTimeSource provides clock) {
+                ConsentGate { Text("Inside the app") }
+            }
         }
 
         onNodeWithText("It is optional", substring = true).assertExists()
@@ -93,11 +99,9 @@ class TelemetryUiTest {
         onNodeWithText("Never your name", substring = true).assertExists()
         onNodeWithText("In your profile, at any time.").assertExists()
 
-        // The details fold away with an animation.
+        clock += 1.seconds
         onNodeWithTag(CONSENT_DETAILS_TAG).performClick()
-        waitUntil(timeoutMillis = 5_000) {
-            onAllNodesWithText("Google Analytics for Firebase", substring = true).fetchSemanticsNodes().isEmpty()
-        }
+        onNodeWithText("Google Analytics for Firebase", substring = true).assertDoesNotExist()
     }
 
     @Test
