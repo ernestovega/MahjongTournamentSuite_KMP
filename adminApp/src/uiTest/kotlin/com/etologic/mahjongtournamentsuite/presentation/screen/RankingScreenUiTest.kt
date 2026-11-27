@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -248,5 +249,16 @@ class RankingScreenUiTest {
         assertEquals(0, server.checks())
         pass(20)
         assertEquals(1, server.checks(), "no check after 5 minutes: ${server.calls}")
+    }
+
+    @Test
+    fun aRankingHiddenFromThePublicAsksBeforeItShows() = runComposeUiTest {
+        val server = playedToday().apply { tournaments = tournaments.map { it.copy(hideResultsFromRound = 1, resultsHiddenFromRound = 1) } }
+        show(server)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The results are hidden from the public").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("Points").assertCountEquals(0)
+
+        onNodeWithText("Show here anyway").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
     }
 }
