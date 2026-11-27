@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -199,6 +202,7 @@ fun FocusedButton(
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
+        shape = shape,
     ) {
         Button(
             onClick = thresholdOnClick,
@@ -239,6 +243,7 @@ fun FocusedOutlinedButton(
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
+        shape = shape,
     ) {
         OutlinedButton(
             onClick = thresholdOnClick,
@@ -279,6 +284,7 @@ fun FocusedTextButton(
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
+        shape = shape,
     ) {
         TextButton(
             onClick = thresholdOnClick,
@@ -312,6 +318,7 @@ fun FocusedAssistChip(
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = interactionSource,
+        shape = AssistChipDefaults.shape,
     ) {
         AssistChip(
             onClick = thresholdOnClick,
@@ -343,6 +350,7 @@ fun FocusedIconButton(
         modifier = modifier,
         interactionSource = interactionSource,
         showFocusHighlight = showFocusHighlight,
+        shape = CircleShape,
     ) {
         IconButton(
             onClick = thresholdOnClick,
@@ -359,28 +367,54 @@ fun FocusedIconButton(
 
 private val emptyFunction: () -> Unit = {}
 
+private val FocusRingWidth = 2.dp
+
+/**
+ * Draws a keyboard focus ring in [shape] around the control, in the space of the halo padding. It is a line, not a
+ * fill, so the control still lights up in one place only: its own hover and focus layer.
+ */
+@Composable
+fun Modifier.focusRing(focused: Boolean, shape: Shape): Modifier =
+    if (focused) border(FocusRingWidth, MaterialTheme.colorScheme.primary, shape) else this
+
+/**
+ * The room around a control for its keyboard focus. A control lights up in one place only:
+ *
+ * - With [lightsUpContent] false (the default) the control inside draws its own hover and focus layer, as every
+ *   Material button, chip, card or ripple does. The container then draws nothing on hover, and a thin ring in the
+ *   [shape] of the control on keyboard focus. Before, it also filled a rounded square behind the control, so a round
+ *   icon button showed a circle inside a square.
+ * - With [lightsUpContent] true the control inside has no indication of its own (`indication = null`). The container
+ *   fills its area in [shape] on hover and on focus, and that fill is the only one.
+ */
 @Composable
 fun FocusHighlightContainer(
     modifier: Modifier,
     interactionSource: MutableInteractionSource,
     showFocusHighlight: Boolean = true,
+    shape: Shape = MaterialTheme.shapes.small,
+    lightsUpContent: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
     val hovered by interactionSource.collectIsHoveredAsState()
-    Box(
-        modifier = modifier
+    val boxModifier = if (lightsUpContent) {
+        modifier
             .padding(FocusHaloPadding)
-            .clip(MaterialTheme.shapes.small)
+            .clip(shape)
             .background(
                 if ((showFocusHighlight && focused) || hovered) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                 } else {
-                    androidx.compose.ui.graphics.Color.Transparent
+                    Color.Transparent
                 },
-            ),
-        propagateMinConstraints = true,
-    ) {
+            )
+    } else {
+        modifier
+            .focusRing(showFocusHighlight && focused, shape)
+            .padding(FocusHaloPadding)
+    }
+    Box(modifier = boxModifier, propagateMinConstraints = true) {
         content()
     }
 }

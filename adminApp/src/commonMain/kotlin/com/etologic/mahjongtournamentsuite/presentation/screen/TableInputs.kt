@@ -7,7 +7,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -46,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.focusRing
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.player_n
@@ -110,15 +109,8 @@ internal fun HandToggleControl(
 ) {
     val shape = MaterialTheme.shapes.extraSmall
     var focused by remember { mutableStateOf(false) }
-    val focusModifier = Modifier
-        .clip(shape)
-        .background(
-            if (focused && enabled) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-            } else {
-                Color.Transparent
-            },
-        )
+    // A ring, not a fill: the box already lights up its own circle on focus.
+    val focusModifier = Modifier.focusRing(focused && enabled, shape)
     val checkboxColors = when {
         !enabled -> CheckboxDefaults.colors(
             checkedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),

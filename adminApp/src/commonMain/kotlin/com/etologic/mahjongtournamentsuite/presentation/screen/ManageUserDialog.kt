@@ -681,6 +681,7 @@ private fun TournamentSelectionRow(
     FocusHighlightContainer(
         modifier = Modifier.fillMaxWidth(),
         interactionSource = interactionSource,
+        lightsUpContent = true,
     ) {
         MtsCheckboxRow(
             checked = selected,

@@ -249,7 +249,7 @@ internal fun PermissionChecklist(
 @Composable
 private fun PermissionRow(label: String, hint: String?, checked: Boolean, enabled: Boolean, onToggle: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
+    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource, lightsUpContent = true) {
         MtsCheckboxRow(
             checked = checked,
             onCheckedChange = { onToggle() },
@@ -425,7 +425,7 @@ fun RolesScreen(navController: NavHostController) {
 @Composable
 private fun RoleRow(name: String, details: String, enabled: Boolean, onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
+    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource, lightsUpContent = true) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
