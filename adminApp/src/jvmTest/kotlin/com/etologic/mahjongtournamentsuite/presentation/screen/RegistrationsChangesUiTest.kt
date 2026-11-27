@@ -1,10 +1,14 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
@@ -12,12 +16,15 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationUpdate
@@ -77,7 +84,7 @@ class RegistrationsChangesUiTest {
     @AfterTest
     fun restore() = Locale.setDefault(original)
 
-    private fun ComposeUiTest.show(registrations: ScreenshotRegistrationRepository) {
+    private fun ComposeUiTest.show(registrations: ScreenshotRegistrationRepository, waitForTheList: Boolean = true) {
         setContent {
             val koin = koinApplication {
                 modules(module { single { Logger.withTag("ui-test") } })
@@ -96,7 +103,9 @@ class RegistrationsChangesUiTest {
                 }
             }
         }
-        waitUntil(timeoutMillis = 10_000) { onAllNodesWithText("With problems", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        if (waitForTheList) {
+            waitUntil(timeoutMillis = 10_000) { onAllNodesWithText("With problems", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        }
     }
 
     private fun ComposeUiTest.menuOf(index: Int) {
@@ -148,5 +157,66 @@ class RegistrationsChangesUiTest {
         click("Add a person")
         waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Cancel")).fetchSemanticsNodes().isNotEmpty() }
         click("Cancel", last = true)
+    }
+
+    private fun ComposeUiTest.waitForText(text: String) =
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text, substring = true).fetchSemanticsNodes().isNotEmpty() }
+
+    @Test
+    fun aSearchThatFindsNobodySaysSo() = runComposeUiTest {
+        show(ScreenshotRegistrationRepository())
+        onAllNodes(hasSetTextAction())[0].performTextInput("zzzz nobody")
+        waitForText("Nobody matches the search.")
+    }
+
+    @Test
+    fun theLinkOfTheRegistrationsIsCopied() = runComposeUiTest {
+        show(ScreenshotRegistrationRepository())
+        clock += 1.seconds
+        onNodeWithTag("registrations-copy-link").performScrollTo().performClick()
+        waitForText("Link copied")
+    }
+
+    @Test
+    fun aChangedSettingIsSavedAndTheListLoadsAgain() = runComposeUiTest {
+        show(ScreenshotRegistrationRepository())
+        clock += 1.seconds
+        onNodeWithTag("registrations-edit-places").performScrollTo().performClick()
+        waitForIdle()
+        onNode(hasTestTag("registrations-places-field") and hasSetTextAction()).performTextReplacement("48")
+        clock += 1.seconds
+        onNodeWithTag("registrations-save-setting").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasTestTag("registrations-places-field")).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun withoutRegistrationsTheScreenOffersToAddThePeople() = runComposeUiTest {
+        val empty = object : ScreenshotRegistrationRepository() {
+            override suspend fun loadAdminList(tournamentId: String): AppResult<AdminRegistrations> =
+                (super.loadAdminList(tournamentId) as AppResult.Success).let { AppResult.Success(it.value.copy(registrations = emptyList())) }
+        }
+        show(empty, waitForTheList = false)
+        waitForText("Nobody has registered yet")
+        click("Add a person")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Cancel")).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun theDrawDialogShowsItsProgressAndItsExplanation() = runComposeUiTest {
+        var tries by mutableStateOf<Long?>(null)
+        setContent {
+            CompositionLocalProvider(LocalPressTimeSource provides clock) {
+                MtsTheme(useDarkTheme = false) {
+                    MakeDrawDialog(confirmed = 16, rounds = 4, tries = tries, onConfirm = { tries = 5 }, onDismiss = {}, backup = true)
+                }
+            }
+        }
+        click("How does the draw work?")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasTestTag("drawExplanationDialog")).fetchSemanticsNodes().isNotEmpty() }
+        click("Close", last = true)
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasTestTag("drawExplanationDialog")).fetchSemanticsNodes().isEmpty() }
+        click("Make the draw", last = true)
+        waitForText("5 tries")
+        waitForText("Now the second way is trying, by swaps.")
     }
 }
