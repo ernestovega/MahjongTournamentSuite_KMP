@@ -56,6 +56,11 @@ private class GatedServer {
     var isTeams = false
     var tournamentsResult: (() -> AppResult<List<Tournament>>)? = null
     var tablesFail = false
+    var tables: List<Pair<TableState, List<TableHand>>> = emptyList()
+
+    /** The own tables of the hidden rounds, with their results. Null: the request fails. */
+    var ownHidden: List<Pair<TableState, List<TableHand>>>? = null
+    var ownHiddenCalls = 0
 
     // The revisions request answers at once, unless a test holds it to see what waits for it.
     var holdRevisions = false
@@ -95,7 +100,12 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         tournamentId: String,
         refreshMode: RefreshMode,
     ): AppResult<List<Pair<TableState, List<TableHand>>>> = server.answer("tables", refreshMode) {
-        if (server.tablesFail) AppResult.Failure(AppError.Network) else AppResult.Success(emptyList())
+        if (server.tablesFail) AppResult.Failure(AppError.Network) else AppResult.Success(server.tables)
+    }
+
+    override suspend fun getOwnHiddenTables(tournamentId: String): AppResult<List<Pair<TableState, List<TableHand>>>> {
+        server.ownHiddenCalls++
+        return server.ownHidden?.let { AppResult.Success(it) } ?: AppResult.Failure(AppError.Network)
     }
 
     override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> = server.answer("teams", refreshMode) { AppResult.Success(listOf(TournamentTeam(id = 1, name = "Team", playerIds = listOf(1, 2, 3, 4)))) }
@@ -336,5 +346,47 @@ class PlayerTournamentLoadTest {
         server.manifests["a"] = manifest(tables = 1)
 
         assertNull(presenter.standingsRevision(listOf("a", "missing")))
+    }
+
+    private fun table(tableId: Int, version: Long, eastScore: String, hidden: Boolean) = TableState(
+        version = version, roundId = 1, tableId = tableId, playerIds = listOf(1, 2, 3, 4),
+        playerEastId = "1", playerSouthId = "2", playerWestId = "3", playerNorthId = "4",
+        playerEastScore = eastScore, playerSouthScore = "", playerWestScore = "", playerNorthScore = "",
+        isCompleted = false, useTotalsOnly = false, resultsHidden = hidden,
+    )
+
+    @Test
+    fun theOwnTableOfAHiddenRoundComesWithItsResultsAndACachedLoadKeepsIt() = runTest {
+        server.release()
+        server.tournamentsResult = {
+            AppResult.Success(listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1, resultsHiddenFromRound = 1)))
+        }
+        server.tables = listOf(table(1, version = 3, eastScore = "", hidden = true) to emptyList(), table(2, version = 3, eastScore = "", hidden = true) to emptyList())
+        // The own table 1 has its results. An own copy older than the public table is left out.
+        server.ownHidden = listOf(table(1, version = 3, eastScore = "40", hidden = false) to emptyList(), table(2, version = 2, eastScore = "9", hidden = false) to emptyList())
+
+        val loaded = assertIs<AppResult.Success<PlayerTournamentView>>(presenter.load("t1")).value
+        assertEquals(listOf("40", ""), loaded.tables.map { it.table.playerEastScore })
+
+        // A cached load asks nothing and uses the own tables of the last load; so does a load whose request fails.
+        val cached = assertIs<AppResult.Success<PlayerTournamentView>>(presenter.load("t1", RefreshMode.CACHED)).value
+        assertEquals("40", cached.tables.first().table.playerEastScore)
+        assertEquals(1, server.ownHiddenCalls)
+        server.ownHidden = null
+        val failed = assertIs<AppResult.Success<PlayerTournamentView>>(presenter.load("t1", RefreshMode.FORCE)).value
+        assertEquals("40", failed.tables.first().table.playerEastScore)
+    }
+
+    @Test
+    fun aCachedLoadOfAHiddenTournamentWithoutAnEarlierLoadHasNoOwnTables() = runTest {
+        server.release()
+        server.tournamentsResult = {
+            AppResult.Success(listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1, resultsHiddenFromRound = 1)))
+        }
+        server.tables = listOf(table(1, version = 3, eastScore = "", hidden = true) to emptyList())
+
+        val cached = assertIs<AppResult.Success<PlayerTournamentView>>(presenter.load("t1", RefreshMode.CACHED)).value
+        assertEquals("", cached.tables.single().table.playerEastScore)
+        assertEquals(0, server.ownHiddenCalls)
     }
 }
