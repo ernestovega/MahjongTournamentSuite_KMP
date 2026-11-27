@@ -524,7 +524,7 @@ private fun RankingStandaloneContent(
                             nextReveal = currentPage?.rows?.take(3)?.indexOfLast { it.isMasked }?.takeIf { it >= 0 }?.plus(1),
                             onReveal = {
                                 // The room watches the podium: the paging stops and the page goes back to its top.
-                                currentPage?.let { page -> change { it.reveal(page.key) } }
+                                currentPage?.let { page -> change { it.reveal(page.key, podium = page.rows.size.coerceAtMost(3)) } }
                             },
                             modifier = Modifier
                                 .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)

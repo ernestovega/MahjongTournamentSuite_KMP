@@ -27,10 +27,15 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryRankingControlAction
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.RecordingTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
@@ -87,6 +92,9 @@ class RankingScreenUiTest {
     /** The buttons ignore a second press within a short time; the tests move this clock past it. */
     private val pressClock = TestTimeSource()
 
+    /** The analytics events of the screens under test. */
+    private val telemetry = RecordingTelemetry()
+
     private fun androidx.compose.ui.test.ComposeUiTest.show(
         server: FakeTournamentRepository,
         compact: Boolean = false,
@@ -110,7 +118,13 @@ class RankingScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen, LocalPressTimeSource provides pressClock) {
+                CompositionLocalProvider(
+                    LocalThemeController provides themeController,
+                    LocalCompactLayout provides compact,
+                    LocalLifecycleOwner provides screen,
+                    LocalPressTimeSource provides pressClock,
+                    LocalTelemetry provides telemetry,
+                ) {
                     if (controlOnly) {
                         RankingControlScreen(tournamentId = "t1", onOpenProjection = {}, onBack = {})
                     } else if (withControl) {
@@ -290,6 +304,16 @@ class RankingScreenUiTest {
         mainClock.advanceTimeBy(600)
         waitForIdle()
         onAllNodesWithText("On screen: Chicken hands").onFirst().assertExists()
+        // Each control counts once in the analytics; the theme does not count.
+        assertEquals(
+            listOf(
+                TelemetryRankingControlAction.PLACE_REVEALED,
+                TelemetryRankingControlAction.PLACE_REVEALED,
+                TelemetryRankingControlAction.PLACE_REVEALED,
+                TelemetryRankingControlAction.LIST_SHOWN,
+            ),
+            telemetry.events.filter { it.first == TelemetryEvent.RANKING_CONTROL }.map { it.second[TelemetryParam.ACTION] },
+        )
         RankingDisplayLink.reset()
     }
 

@@ -58,6 +58,9 @@ object TelemetryEvent {
      */
     const val ROUND_CLOCK = "round_clock"
 
+    /** The organizer used Ranking control, the remote of the projected ranking. [TelemetryParam.ACTION] is one word of [TelemetryRankingControlAction]. */
+    const val RANKING_CONTROL = "ranking_control"
+
     /** The support form sent a message. */
     const val SUPPORT_SENT = "support_sent"
 
@@ -123,6 +126,7 @@ object TelemetryEvent {
         PENALTY_ADDED,
         SEATS_ASSIGNED,
         ROUND_CLOCK,
+        RANKING_CONTROL,
         SUPPORT_SENT,
         TABLE_REMINDER,
         LINK_OPENED,
@@ -362,6 +366,39 @@ object TelemetryClockAction {
 
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(STARTED, PAUSED, RESUMED, STARTED_AGO, TIME_SET, RESET, STOPPED)
+}
+
+/** The values of [TelemetryParam.ACTION] in `ranking_control`: the controls of Ranking control (Ernesto, 2026-11-27). */
+object TelemetryRankingControlAction {
+    /** The button that opens the projected ranking in its own window or tab. */
+    const val PROJECTION_OPENED = "projection_opened"
+    const val PLAYED = "played"
+    const val PAUSED = "paused"
+
+    /** A list of the ranking chosen to show now. */
+    const val LIST_SHOWN = "list_shown"
+
+    /** One more place of the hidden top three: third, second, then first. */
+    const val PLACE_REVEALED = "place_revealed"
+    const val TOP_THREE_SHOWN = "top_three_shown"
+    const val TOP_THREE_HIDDEN = "top_three_hidden"
+
+    /** While the public cannot see the results: the room may see the ranking, or not any more. */
+    const val HIDDEN_RESULTS_SHOWN = "hidden_results_shown"
+    const val HIDDEN_RESULTS_HIDDEN = "hidden_results_hidden"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(
+        PROJECTION_OPENED,
+        PLAYED,
+        PAUSED,
+        LIST_SHOWN,
+        PLACE_REVEALED,
+        TOP_THREE_SHOWN,
+        TOP_THREE_HIDDEN,
+        HIDDEN_RESULTS_SHOWN,
+        HIDDEN_RESULTS_HIDDEN,
+    )
 }
 
 /** The values of [TelemetryParam.KIND] in `round_clock`. */

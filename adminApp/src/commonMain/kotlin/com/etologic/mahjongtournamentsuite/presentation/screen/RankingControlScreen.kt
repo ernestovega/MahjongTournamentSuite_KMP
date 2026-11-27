@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Pause
@@ -44,6 +43,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryRankingControlAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
@@ -53,6 +55,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRo
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsSwitchRow
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -104,7 +107,18 @@ fun RankingControlScreen(
     val statuses by RankingDisplayLink.status.collectAsState()
     val control = controls[tournamentId] ?: RankingDisplayControl()
     val status = statuses[tournamentId]
-    fun change(update: (RankingDisplayControl) -> RankingDisplayControl) = RankingDisplayLink.updateControl(tournamentId, update)
+    val telemetry = LocalTelemetry.current
+    fun track(action: String) = telemetry.event(TelemetryEvent.RANKING_CONTROL, mapOf(TelemetryParam.ACTION to action))
+    fun change(update: (RankingDisplayControl) -> RankingDisplayControl) {
+        val before = RankingDisplayLink.control(tournamentId)
+        val after = update(before)
+        RankingDisplayLink.setControl(tournamentId, after)
+        rankingControlActions(before, after, podiumSecret = status?.podiumSecret == true).forEach(::track)
+    }
+    val openProjection = {
+        track(TelemetryRankingControlAction.PROJECTION_OPENED)
+        onOpenProjection()
+    }
 
     // A projection that is already open tells this screen what it shows.
     DisposableEffect(tournamentId) {
@@ -119,7 +133,7 @@ fun RankingControlScreen(
             AppTopBarButton(
                 text = stringResource(Res.string.open_projected_ranking),
                 icon = Icons.AutoMirrored.Filled.OpenInNew,
-                onClick = onOpenProjection,
+                onClick = openProjection,
             )
         },
     ) {
@@ -135,7 +149,7 @@ fun RankingControlScreen(
                     title = stringResource(Res.string.ranking_control_not_open_title),
                 ) {
                     Text(stringResource(Res.string.ranking_control_not_open_message))
-                    FocusedButton(onClick = onOpenProjection) {
+                    FocusedButton(onClick = openProjection) {
                         ButtonText(stringResource(Res.string.open_projected_ranking))
                     }
                 }
@@ -278,7 +292,7 @@ private fun ListsCard(
                         val withText = maxWidth >= ON_SCREEN_TEXT_MIN_WIDTH
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs + MtsTheme.spacing.xxs),
                             modifier = Modifier.testTag("ranking_control_on_screen_${page.key}"),
                         ) {
                             Box(Modifier.size(if (withText) 8.dp else 10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
@@ -296,7 +310,7 @@ private fun ListsCard(
                 val nextReveal = control.nextReveal(page, status.podiumSecret)
                 when {
                     nextReveal != null -> FocusedButton(
-                        onClick = { change { it.reveal(page.key) } },
+                        onClick = { change { it.reveal(page.key, page.podium) } },
                         buttonModifier = Modifier.testTag("ranking_control_reveal_${page.key}"),
                     ) {
                         ButtonText(
@@ -402,7 +416,7 @@ private fun SliderSetting(
     // The chosen value over the thumb, and the minimum and the maximum at the ends (Ernesto, 2026-11-27).
     Column(Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.bodyLarge)
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 28.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = MtsTheme.spacing.xl + MtsTheme.spacing.xs)) {
             Text(valueText(range.first), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Slider(
                 value = value.toFloat(),
@@ -437,7 +451,32 @@ private fun ValueIndicator(text: String) {
                 val placeable = measurable.measure(Constraints())
                 layout(0, 0) { placeable.place(-placeable.width / 2, -placeable.height - 14.dp.roundToPx()) }
             }
-            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
-            .padding(horizontal = 10.dp, vertical = 2.dp),
+            .background(MaterialTheme.colorScheme.primary, MtsTheme.shapes.pill)
+            .padding(horizontal = MtsTheme.spacing.sm + MtsTheme.spacing.xxs, vertical = MtsTheme.spacing.xxs),
     )
+}
+
+/**
+ * The words of `ranking_control` that a change of the control means, one for each control the organizer used. The
+ * sliders, the logos and the theme send nothing.
+ */
+internal fun rankingControlActions(before: RankingDisplayControl, after: RankingDisplayControl, podiumSecret: Boolean): List<String> {
+    val actions = mutableListOf<String>()
+    val revealed = after.revealed.values.sum() > before.revealed.values.sum()
+    when {
+        // A reveal also stops the paging and goes to its list: that is part of the reveal.
+        revealed -> actions += TelemetryRankingControlAction.PLACE_REVEALED
+        after.pageRequest != before.pageRequest -> actions += TelemetryRankingControlAction.LIST_SHOWN
+    }
+    if (!revealed && after.playing != before.playing) {
+        actions += if (after.playing) TelemetryRankingControlAction.PLAYED else TelemetryRankingControlAction.PAUSED
+    }
+    val topThree = after.showsTopThree(podiumSecret)
+    if (after.showTopThree != before.showTopThree && topThree != before.showsTopThree(podiumSecret)) {
+        actions += if (topThree) TelemetryRankingControlAction.TOP_THREE_SHOWN else TelemetryRankingControlAction.TOP_THREE_HIDDEN
+    }
+    if (after.showHiddenResults != before.showHiddenResults) {
+        actions += if (after.showHiddenResults) TelemetryRankingControlAction.HIDDEN_RESULTS_SHOWN else TelemetryRankingControlAction.HIDDEN_RESULTS_HIDDEN
+    }
+    return actions
 }
