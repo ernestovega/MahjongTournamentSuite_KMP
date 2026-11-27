@@ -241,7 +241,9 @@ class TableEditingTest : AdminE2eTest() {
         chooseWinner(players[0], hand = 1)
         chooseLoser(players[1], hand = 1)
         typeScore("13", hand = 1)
-        tagged("hand-1-chicken").performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        // The tag is on a row around the box: the click goes to the box inside it.
+        c.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState) and hasAnyAncestor(hasTestTag("hand-1-chicken")), useUnmergedTree = true)
+            .performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         c.scrollListTo("A chicken hand cannot score more than 12 points.", substring = true)
     }
 
