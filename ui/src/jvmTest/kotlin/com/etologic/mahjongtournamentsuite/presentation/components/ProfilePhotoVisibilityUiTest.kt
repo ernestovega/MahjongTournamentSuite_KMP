@@ -77,12 +77,12 @@ class ProfilePhotoVisibilityUiTest {
         setContent { ProfileTheme { Dialog(player, onSetPublicPhoto = { AppResult.Success(player) }) } }
 
         onNodeWithContentDescription("Edit photo").performClick()
-        onNodeWithText("Your photo will be public").assertExists()
+        onNodeWithText("Good to know").assertExists()
         onNodeWithText("show in rankings", substring = true).assertExists()
         onNodeWithText("EMA player", substring = true).assertExists()
         onNodeWithText("Accept").assertExists()
         onNodeWithText("Cancel").performClick()
-        onNodeWithText("Your photo will be public").assertDoesNotExist()
+        onNodeWithText("Good to know").assertDoesNotExist()
     }
 
     @Test

@@ -114,7 +114,7 @@ export async function listPlayersOfTournaments(tournamentIds: string[]): Promise
   }));
   if (emaIds.size === 0) return [];
   const docs = await db.getAll(...[...emaIds].map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId)));
-  return docs.filter((doc) => doc.exists).map((doc) => toPlayer(doc.id, doc.data() ?? {}))
+  return docs.filter((doc) => doc.exists).map((doc) => toPlayer(doc.id, doc.data() as FirebaseFirestore.DocumentData))
     .sort((left, right) => left.lastName.localeCompare(right.lastName) || left.emaId.localeCompare(right.emaId));
 }
 
@@ -133,7 +133,7 @@ export async function createPlayer(params: { emaId: string; firstName: string; l
   });
   const created = await ref.get();
   await bumpGlobalDataVersion("emaPlayers");
-  return toPlayer(params.emaId, created.data() ?? {});
+  return toPlayer(params.emaId, created.data() as FirebaseFirestore.DocumentData);
 }
 
 export async function updatePlayer(params: {
@@ -177,7 +177,7 @@ export async function updatePlayer(params: {
     .where("assignedEmaId", "==", params.previousEmaId)
     .get();
   const batch = db.batch();
-  const previousData = previousSnapshot.data() ?? {};
+  const previousData = previousSnapshot.data() as FirebaseFirestore.DocumentData;
   batch.create(targetRef, { ...previousData, ...update });
   batch.delete(previousRef);
   // Every tournament keeps a map from EMA number to slot. It must follow the new number, or the same
@@ -232,12 +232,10 @@ function hasValidImageSignature(bytes: Buffer, contentType: string): boolean {
     const signature = bytes.subarray(0, 6).toString("ascii");
     return signature === "GIF87a" || signature === "GIF89a";
   }
-  if (contentType === "image/webp") {
-    return bytes.length >= 12
-      && bytes.subarray(0, 4).toString("ascii") === "RIFF"
-      && bytes.subarray(8, 12).toString("ascii") === "WEBP";
-  }
-  return false;
+  // The last type of photoExtensions: storePhotoFile checks the type before.
+  return bytes.length >= 12
+    && bytes.subarray(0, 4).toString("ascii") === "RIFF"
+    && bytes.subarray(8, 12).toString("ascii") === "WEBP";
 }
 
 /** Checks a photo and saves it in the storage bucket as `<folder>/<id>.<extension>`. Returns the download URL. */
