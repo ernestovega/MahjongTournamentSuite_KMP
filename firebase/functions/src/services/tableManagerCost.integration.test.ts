@@ -54,10 +54,10 @@ describe("save cost and contention", () => {
   });
 
   it("returns the same data that a later read returns", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, seats: { playerSouthId: "1", playerWestId: "2", playerNorthId: "4" } }] });
 
     const saved = await save(id, 1, 0, { playerEastId: "3", manualPlayerEastScore: "10" }, [
-      { handId: 2, patch: { handScore: "12", isDone: true } },
+      { handId: 2, patch: { playerWinnerId: "1", playerLooserId: "2", handScore: "12", isDone: true } },
     ]);
 
     assert.deepEqual(saved, await getTableWithHands({ tournamentId: id, roundId: 1, tableId: 1 }));
@@ -153,10 +153,10 @@ describe("change log", () => {
   before(requireEmulator);
 
   it("records who changed which fields, with the old and the new value", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, seats: { playerSouthId: "1", playerWestId: "2", playerNorthId: "3" } }] });
 
     await save(id, 1, 0, { playerEastId: "4", isCompleted: false }, [
-      { handId: 2, patch: { handScore: "12", isDone: true } },
+      { handId: 2, patch: { playerWinnerId: "1", playerLooserId: "2", handScore: "12", isDone: true } },
     ]);
 
     const [entry] = await readChanges(id);
@@ -166,6 +166,8 @@ describe("change log", () => {
     assert.equal(entry.version, 1);
     assert.deepEqual(entry.tableChanges, [{ field: "playerEastId", from: null, to: "4" }]);
     assert.deepEqual(entry.handChanges, [
+      { handId: 2, field: "playerWinnerId", from: "", to: "1" },
+      { handId: 2, field: "playerLooserId", from: "", to: "2" },
       { handId: 2, field: "handScore", from: "", to: "12" },
       { handId: 2, field: "isDone", from: false, to: true },
     ]);

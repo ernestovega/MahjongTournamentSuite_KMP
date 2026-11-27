@@ -190,7 +190,8 @@ describe("table save with the Firestore emulator", () => {
   });
 
   it("keeps a table open while a hand is not done, and a totals-only table follows its switch", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }, { roundId: 1, tableId: 2 }] });
+    const seats = { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" };
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, seats }, { roundId: 1, tableId: 2 }] });
     const fifteen = Array.from({ length: 15 }, (_, index) => ({ handId: index + 1, patch: { handScore: "0", isDone: true } }));
     await save(id, 1, 0, {}, [...fifteen, { handId: 16, patch: { playerWinnerId: "1", handScore: "8" } }]);
     assert.equal((await readTable(id, 1, 1)).isCompleted, false);
@@ -282,8 +283,8 @@ describe("table reset with the Firestore emulator", () => {
   before(requireEmulator);
 
   it("clears the table and the hands and increments the version", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-    await save(id, 1, 0, { playerEastId: "3", isCompleted: true }, [{ handId: 1, patch: { handScore: "8", isDone: true } }]);
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, seats: { playerSouthId: "1", playerWestId: "2", playerNorthId: "4" } }] });
+    await save(id, 1, 0, { playerEastId: "3", isCompleted: true }, [{ handId: 1, patch: { playerWinnerId: "1", playerLooserId: "2", handScore: "8", isDone: true } }]);
 
     await resetTable({ tournamentId: id, roundId: 1, tableId: 1 });
 
