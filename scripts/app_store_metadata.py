@@ -6,8 +6,10 @@
 writes `<out>/metadata` (texts and URLs of each language, categories, copyright, review notes) and `<out>/screenshots`
 (the images of docs/app-store/<iphone|ipad>/<language>/, which deliver sorts by size). The description of each
 language is the full description of the Google Play listing. It checks the limits of App Store Connect and stops
-on any problem. The workflow Publish · App Store listing runs it.
+on any problem. The workflow Publish · App Store listing runs it, with the values of the review notes in
+APP_REVIEW_VIDEO_URL, APP_REVIEW_DELETE_ACCOUNT_EMAIL and APP_REVIEW_DELETE_ACCOUNT_PASSWORD.
 """
+import os
 import re
 import shutil
 import struct
@@ -34,12 +36,9 @@ LANGUAGES = {
 }
 # The size of the screenshots of each device folder.
 DEVICES = {"iphone": (1320, 2868), "ipad": (2064, 2752)}
-REVIEW_NOTES = (
-    "MTS follows Mahjong tournaments. Without an account the app shows every tournament, its tables, hands, "
-    "rankings and statistics. The demo account is an administrator: after signing in (Profile button, top right), "
-    "the ADMIN button of the top bar opens the management part, where organizers create tournaments, registrations, "
-    "tables and rounds. The tournaments of the list are real tournaments of the European Mahjong Association."
-)
+# The notes for App Review (docs/app-store/review-notes.txt). The workflow gives the values of its placeholders.
+REVIEW_NOTES = APP_STORE / "review-notes.txt"
+REVIEW_VALUES = ("VIDEO_URL", "DELETE_ACCOUNT_EMAIL", "DELETE_ACCOUNT_PASSWORD")
 
 
 def play_descriptions() -> dict[str, str]:
@@ -124,7 +123,15 @@ def main() -> None:
     write(metadata / "primary_category.txt", "SPORTS")
     write(metadata / "secondary_category.txt", "GAMES")
     write(metadata / "secondary_first_sub_category.txt", "GAMES_BOARD")
-    write(metadata / "review_information" / "notes.txt", REVIEW_NOTES)
+    notes = REVIEW_NOTES.read_text().strip()
+    for key in REVIEW_VALUES:
+        value = os.environ.get(f"APP_REVIEW_{key}", "").strip()
+        if not value:
+            problems.append(f"review notes: APP_REVIEW_{key} is not set")
+        notes = notes.replace("{" + key + "}", value)
+    if len(notes) > 4000:
+        problems.append(f"review notes: {len(notes)} characters (max 4000)")
+    write(metadata / "review_information" / "notes.txt", notes)
     if problems:
         raise SystemExit("App Store listing problems:\n" + "\n".join(problems))
     print(f"App Store listing: {len(LANGUAGES)} languages in {out}")

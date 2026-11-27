@@ -4,10 +4,11 @@ import { resolve } from "node:path";
 import { auth, db } from "../firebase";
 import { bumpGlobalDataVersion } from "./dataVersionsService";
 import { setAccountEmaId } from "./playerAccountsService";
+import { getGlobalUserRole } from "../models/globalRole";
 import { createUserProfile, setGlobalUserRole, setUserPhoto } from "./usersService";
 
 /** An account of the reviewers of a store. The paths of the photos work from lib/services and from src/services. */
-export type StoreTester = { email: string; alias: string; role: "SUPER_ADMIN"; photoPath: string };
+export type StoreTester = { email: string; alias: string; role: "SUPER_ADMIN" | "PLAYER"; photoPath: string };
 
 /**
  * The account of the Google Play reviewers (docs/google-play-tester.md). Google needs an account with access to every
@@ -30,6 +31,18 @@ export const APP_STORE_TESTER: StoreTester = {
   email: "mtsappstoretester@mahjongmadrid.com",
   alias: "App Store Testers",
   role: "SUPER_ADMIN",
+  photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
+};
+
+/**
+ * The account that App Review may delete to try the account deletion (Guideline 5.1.1(v)), so that the account of
+ * APP_STORE_TESTER stays. A player with no EMA number. The workflow Publish · App Store listing creates it again on
+ * each run, when a review deleted it, and puts its email and password in the review notes.
+ */
+export const APP_STORE_DELETE_TESTER: StoreTester = {
+  email: "mtsappstoredelete@mahjongmadrid.com",
+  alias: "App Store Delete Test",
+  role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
 };
 
@@ -72,7 +85,7 @@ export async function ensureStoreTester(
 
   const profile = await db.doc(`users/${existing.uid}`).get();
   const accountOk = profile.get("alias") === tester.alias &&
-    (existing.customClaims ?? {}).superAdmin === true &&
+    getGlobalUserRole(existing) === tester.role &&
     !(typeof profile.get("emaId") === "string" && profile.get("emaId") !== "") &&
     hasPhoto(profile);
   if (!accountOk && params.apply) await configureAccount(tester, existing.uid);

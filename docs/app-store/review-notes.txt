@@ -1,0 +1,68 @@
+Thank you for the review. Here is the information requested.
+
+1. SCREEN RECORDING
+- Video: {VIDEO_URL}
+- Recorded on a physical iPhone with the latest iOS, starting at app launch.
+- It shows:
+  • Browsing tournaments without an account.
+  • A live table and its hands.
+  • Ranking and statistics.
+  • Sign-in and profile editing.
+  • The admin area.
+  • In-app account deletion (Profile > Delete my account > Delete).
+- No self sign-up: tournament organizers create the accounts of their players and staff.
+- Every account can delete itself from the Profile dialog.
+- No paid content, in-app purchases, ads or subscriptions.
+- No user-generated content shared between users:
+  • No chat, comments or posts.
+  • Players only enter the scores of their own table, checked by the organizers.
+  • The optional alias and photo of an account are visible only to that account and to the organizers.
+
+2. PURPOSE AND AUDIENCE
+- MTS (Mahjong Tournament Suite) is a free tool for Riichi and MCR Mahjong tournaments of the European Mahjong Association (EMA) and its national associations.
+- Audience: tournament players, spectators and organizers.
+- Problem it solves: tournaments were run on paper and spreadsheets.
+- Value:
+  • Automatic seating draw.
+  • Players enter the hands of their table from their phone.
+  • Live tables, rankings and statistics that anyone can follow.
+
+3. HOW TO USE IT
+- Without an account:
+  • The app opens on the tournament list.
+  • Tap a tournament to see its tables, hands, ranking, statistics and venue.
+- Demo account (credentials in Sign-in Information):
+  • An administrator.
+  • Tap the Profile button (top right) and sign in.
+  • The ADMIN button of the top bar opens the management area (tournaments, registrations, tables, rounds).
+- Account deletion:
+  • Please do not delete the demo account: it is not the last administrator, so it would really be deleted and the next review would have no demo account.
+  • Option A, a disposable account ready to delete: {DELETE_ACCOUNT_EMAIL} / {DELETE_ACCOUNT_PASSWORD}
+    Sign in with it, then Profile > Delete my account > Delete.
+  • Option B, your own account: with the demo account open ADMIN > Users, tap +, enter an email you can read and tap "Save and send password reset".
+    Set the password from the email, sign in with that account, then Profile > Delete my account > Delete.
+- No sample files are needed.
+
+4. EXTERNAL SERVICES
+- Google Firebase:
+  • Authentication (email and password).
+  • Cloud Functions (our API).
+  • Cloud Firestore (database).
+  • Cloud Storage (photos).
+  • Hosting (website and universal links).
+  • App Check with Apple App Attest (API protection).
+  • Google Analytics for Firebase (anonymous, only after consent, no IDFA, no ad tracking).
+- European Mahjong Association public player registry (names, countries, EMA numbers, photos).
+- Email (SMTP) for password resets and the support form.
+- Map link to open the venue address.
+- No payment processors and no AI services.
+
+5. REGIONS
+- Same features and content in every available region.
+- 8 languages: English, Spanish, French, Italian, German, Swedish, Dutch, Russian.
+- Not offered in mainland China.
+
+6. REGULATION AND THIRD-PARTY MATERIAL
+- Not a regulated industry: no gambling, real-money games or prizes.
+- Mahjong is played at the physical tables; the app only records scores.
+- Player registry data comes from the European Mahjong Association, which authorizes its use (documentation available on request).

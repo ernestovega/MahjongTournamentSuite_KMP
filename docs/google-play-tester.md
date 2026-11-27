@@ -44,3 +44,15 @@ The workflow Actions > Publish · App Store listing makes or fixes it in product
 (`npm run seed:app-store-tester:apply -- --set-password`). Its password comes from the App Store Connect API key, so
 it is the same on every run, and the workflow writes it only into App Store Connect (App Review Information). Nobody
 needs to know it; to see it, open App Store Connect.
+
+### Account for the deletion test
+
+App Review checks the account deletion (Guideline 5.1.1(v)). Deleting the demo account would leave the next review
+without one, so the review notes (`docs/app-store/review-notes.txt`) ask Apple not to delete it and offer a second
+account instead: `APP_STORE_DELETE_TESTER` (`mtsappstoredelete@mahjongmadrid.com`, alias App Store Delete Test,
+player, no EMA number). The same workflow creates it again on each run when a review deleted it, with a password that
+also comes from the API key, and writes its email and password into the review notes, never into the repository.
+The notes also explain how the reviewer can create an own account from ADMIN > Users and delete it.
+
+The link to the screen recording of the notes comes from the input `review_video_url` of the workflow, or from the
+repository variable `APP_REVIEW_VIDEO_URL`. The workflow stops when it has none.

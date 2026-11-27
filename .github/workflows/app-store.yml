@@ -3,7 +3,9 @@
 # docs/ios-release.md and docs/app-store/listing.md.
 #
 # It also makes the App Review account (mtsappstoretester@…, docs/google-play-tester.md) in production, with a password
-# that comes from the API key and that only this workflow and App Store Connect know.
+# that comes from the API key and that only this workflow and App Store Connect know, and the account that App Review
+# may delete to try the account deletion (mtsappstoredelete@…), created again on each run, with its email and password
+# in the review notes (docs/app-store/review-notes.txt).
 name: Publish · App Store listing
 
 on:
@@ -13,6 +15,10 @@ on:
         description: "Also submit the version for review (its build must be in App Store Connect already)"
         type: boolean
         default: false
+      review_video_url:
+        description: "Link to the screen recording for App Review (empty: the repository variable APP_REVIEW_VIDEO_URL)"
+        type: string
+        default: ""
 
 concurrency:
   group: app-store
@@ -53,9 +59,6 @@ jobs:
           echo "VERSION=$(sed -nE 's/^admin-versionName = "(.*)"/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_ENV"
           echo "BUILD=$(sed -nE 's/^admin-versionCode = "(.*)"/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_ENV"
 
-      - name: Metadata and screenshots
-        run: python3 scripts/app_store_metadata.py build/app-store
-
       - name: App Store Connect API key and review password
         env:
           API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -70,8 +73,18 @@ jobs:
           PASSWORD="Mts-$(printf 'mts-app-store-tester' | openssl dgst -sha256 -hmac "$API_KEY" | awk '{print $NF}' | cut -c1-20)"
           echo "::add-mask::$PASSWORD"
           echo "APP_STORE_TESTER_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+          DELETE_PASSWORD="Mts-$(printf 'mts-app-store-delete-tester' | openssl dgst -sha256 -hmac "$API_KEY" | awk '{print $NF}' | cut -c1-20)"
+          echo "::add-mask::$DELETE_PASSWORD"
+          echo "APP_STORE_DELETE_TESTER_PASSWORD=$DELETE_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Metadata and screenshots
+        env:
+          APP_REVIEW_VIDEO_URL: ${{ inputs.review_video_url || vars.APP_REVIEW_VIDEO_URL }}
+          APP_REVIEW_DELETE_ACCOUNT_EMAIL: mtsappstoredelete@mahjongmadrid.com
+        run: |
+          APP_REVIEW_DELETE_ACCOUNT_PASSWORD="$APP_STORE_DELETE_TESTER_PASSWORD" python3 scripts/app_store_metadata.py build/app-store
           printf '%s\n' "mtsappstoretester@mahjongmadrid.com" > build/app-store/metadata/review_information/demo_user.txt
-          printf '%s\n' "$PASSWORD" > build/app-store/metadata/review_information/demo_password.txt
+          printf '%s\n' "$APP_STORE_TESTER_PASSWORD" > build/app-store/metadata/review_information/demo_password.txt
 
       - uses: google-github-actions/auth@v3
         with:
@@ -139,4 +152,4 @@ jobs:
 
       - name: Delete the key
         if: always()
-        run: rm -rf "$RUNNER_TEMP/asc" build/app-store/metadata/review_information/demo_password.txt
+        run: rm -rf "$RUNNER_TEMP/asc" build/app-store/metadata/review_information/demo_password.txt build/app-store/metadata/review_information/notes.txt
