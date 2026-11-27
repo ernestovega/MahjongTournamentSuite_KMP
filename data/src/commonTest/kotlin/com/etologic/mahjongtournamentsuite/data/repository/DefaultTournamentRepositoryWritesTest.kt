@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
@@ -174,6 +175,7 @@ class DefaultTournamentRepositoryWritesTest {
             hostCountry = " es ",
             hostCity = " Madrid ",
             venue = TournamentVenue(name = " Club ", address = " Calle 1 ", mapUrl = " https://maps.example/x ", contactEmail = " info@club.es "),
+            matchEndMode = MatchEndMode.FINISH_HAND,
             timeZone = " Europe/Madrid ",
             isPublic = true,
         )
@@ -184,6 +186,7 @@ class DefaultTournamentRepositoryWritesTest {
             """"name":"Madrid Open"""", """"shortName":"MO"""", """"eventStartDate":"2027-02-06"""", """"eventEndDate":"2027-02-07"""",
             """"hostCountry":"ES"""", """"hostCity":"Madrid"""", """"venueName":"Club"""", """"venueAddress":"Calle 1"""",
             """"venueMapUrl":"https://maps.example/x"""", """"contactEmail":"info@club.es"""", """"timeZone":"Europe/Madrid"""", """"isPublic":true""",
+            """"matchEndMode":"FINISH_HAND"""",
         ).forEach { assertTrue(it in body, "$it in $body") }
         repository.listTournaments(RefreshMode.IF_CHANGED)
         assertEquals(2, server.count("GET /tournaments"))

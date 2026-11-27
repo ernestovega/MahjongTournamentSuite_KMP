@@ -116,6 +116,8 @@ class DefaultTournamentRepositoryFailuresTest {
     @Test
     fun aReadOfTheAdminAppNeedsAnAccount() = runTest {
         assertIs<AppResult.Failure>(repository(auth = signedOut).listTournamentPlayers("t1", RefreshMode.FORCE))
+        assertIs<AppResult.Failure>(repository(auth = signedOut).getAllTablesWithHands("t1", RefreshMode.FORCE))
+        assertIs<AppResult.Failure>(repository(auth = signedOut).getTableWithHands("t1", 1, 1, RefreshMode.FORCE))
     }
 
     @Test
