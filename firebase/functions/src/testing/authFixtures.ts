@@ -86,7 +86,8 @@ export async function signInTestAccount(email: string): Promise<string> {
 export type TestServer = {
   baseUrl: string;
   close(): Promise<void>;
-  request(method: string, path: string, options?: { token?: string | null; body?: unknown; headers?: Record<string, string> }): Promise<{ status: number; body: unknown }>;
+  /** [noBody] sends a write without any body, as a client that sends nothing; otherwise a missing [body] is sent as `{}`. */
+  request(method: string, path: string, options?: { token?: string | null; body?: unknown; noBody?: boolean; headers?: Record<string, string> }): Promise<{ status: number; body: unknown }>;
 };
 
 /** Runs the real Express app on a free port. */
@@ -101,11 +102,12 @@ export async function startServer(): Promise<TestServer> {
       const response = await fetch(baseUrl + path, {
         method,
         headers: {
-          "content-type": "application/json",
+          // Without a content type the JSON parser leaves the body undefined, as for a client that sends nothing.
+          ...(options.noBody ? {} : { "content-type": "application/json" }),
           ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
           ...options.headers,
         },
-        body: method === "GET" || method === "DELETE" ? undefined : JSON.stringify(options.body ?? {}),
+        body: method === "GET" || method === "DELETE" || options.noBody ? undefined : JSON.stringify(options.body ?? {}),
       });
       const text = await response.text();
       let body: unknown = text;

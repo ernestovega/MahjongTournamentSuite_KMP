@@ -27,6 +27,12 @@ export function errorHandler(
     return;
   }
 
+  // An account id that Firebase Auth does not know, in the path of a route: the account is not there.
+  if ((err as { code?: unknown } | null)?.code === "auth/user-not-found") {
+    res.status(404).json({ error: "not_found", message: "Account not found", details: null });
+    return;
+  }
+
   console.error(err);
 
   res.status(500).json({
