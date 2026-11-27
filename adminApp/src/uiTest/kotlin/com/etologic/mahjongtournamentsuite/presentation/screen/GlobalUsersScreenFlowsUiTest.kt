@@ -17,10 +17,13 @@ import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
+import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
@@ -62,12 +65,18 @@ class GlobalUsersScreenFlowsUiTest {
         role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN,
         users: List<ManagedUser>,
         val listFails: Boolean = false,
+        /** Every read of the screen fails, also the own access when [statusFails]. */
+        val everythingFails: Boolean = false,
+        val statusFails: Boolean = false,
     ) {
         val admin = FakeAdminRepository(role, users)
         val resets = mutableListOf<String>()
         var resetFails = false
         val repository: AdminRepository = object : AdminRepository by admin {
-            override suspend fun listUsers(refreshMode: RefreshMode) = if (listFails) AppResult.Failure(AppError.Network) else admin.listUsers(refreshMode)
+            override suspend fun listUsers(refreshMode: RefreshMode) = if (listFails || everythingFails) AppResult.Failure(AppError.Network) else admin.listUsers(refreshMode)
+            override suspend fun whoAmI(refreshMode: RefreshMode): AppResult<AdminStatus> = if (statusFails) AppResult.Failure(AppError.Network) else admin.whoAmI(refreshMode)
+            override suspend fun listOrganizations(): AppResult<List<Organization>> = if (everythingFails) AppResult.Failure(AppError.Network) else admin.listOrganizations()
+            override suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = if (everythingFails) AppResult.Failure(AppError.Network) else admin.listAccountRequests()
         }
         val auth: AuthRepository = object : AuthRepository by FakeSignedInAuthRepository() {
             override suspend fun requestPasswordReset(email: String): AppResult<Unit> {
@@ -88,13 +97,28 @@ class GlobalUsersScreenFlowsUiTest {
                         module {
                             single { Logger.withTag("ui-test") }
                             single<TournamentRepository> {
-                                FakeTournamentRepository().apply {
+                                val server = FakeTournamentRepository().apply {
                                     tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1))
+                                }
+                                if (!world.everythingFails) {
+                                    server
+                                } else {
+                                    object : TournamentRepository by server {
+                                        override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = AppResult.Failure(AppError.Network)
+                                    }
                                 }
                             }
                             single<AdminRepository> { world.repository }
                             single<AuthRepository> { world.auth }
-                            single<PlayerRepository> { FakePlayerRepository() }
+                            single<PlayerRepository> {
+                                if (!world.everythingFails) {
+                                    FakePlayerRepository()
+                                } else {
+                                    object : PlayerRepository by FakePlayerRepository() {
+                                        override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = AppResult.Failure(AppError.Network)
+                                    }
+                                }
+                            }
                             single { AppMemoryStore() }
                             factory { UsersPresenter(get(), get(), get(), get()) }
                         },
@@ -315,5 +339,15 @@ class GlobalUsersScreenFlowsUiTest {
         waitForIdle()
         assertEquals(0, count("ann@example.test"))
         onNodeWithText("ed@example.test").assertExists()
+    }
+
+    @Test
+    fun whenNothingLoadsTheFirstErrorShows() = runComposeUiTest {
+        show(World(users = listOf(me), everythingFails = true), waitFor = "Network request failed.")
+    }
+
+    @Test
+    fun withoutTheOwnAccessTheScreenSaysSo() = runComposeUiTest {
+        show(World(users = listOf(me), everythingFails = true, statusFails = true), waitFor = "Network request failed.")
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -16,6 +17,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -26,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
@@ -55,7 +59,7 @@ class TeamsScreenEditUiTest {
         if (started) seed(syncTable(east = "1"))
     }
 
-    private fun ComposeUiTest.show(server: FakeTournamentRepository) {
+    private fun ComposeUiTest.show(server: FakeTournamentRepository, players: PlayerRepository = FakePlayerRepository(registry), waitForTeams: Boolean = true) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -66,7 +70,7 @@ class TeamsScreenEditUiTest {
                             single<TournamentRepository> { server }
                             single<AdminRepository> { FakeAdminRepository(GlobalUserRole.SUPER_ADMIN) }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
-                            single<PlayerRepository> { FakePlayerRepository(registry) }
+                            single<PlayerRepository> { players }
                             single<PlayerAccountRepository> { FakePlayerAccountRepository() }
                             single { AppMemoryStore() }
                             factory { TournamentsPresenter(get(), get(), get()) }
@@ -84,7 +88,7 @@ class TeamsScreenEditUiTest {
                 }
             }
         }
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Aces").fetchSemanticsNodes().isNotEmpty() }
+        if (waitForTeams) waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Aces").fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun ComposeUiTest.openEdit() {
@@ -138,5 +142,21 @@ class TeamsScreenEditUiTest {
         save(server)
 
         assertEquals(listOf("team 1 Bamboo [11, 12, 13, 14]"), server.writes)
+    }
+
+    @Test
+    fun whenNothingLoadsTheFirstErrorShows() = runComposeUiTest {
+        val server = world(started = false).apply {
+            failTeams = true
+            failPlayers = true
+            failTableLists = setOf(null)
+        }
+        val failingRegistry = object : PlayerRepository by FakePlayerRepository(registry) {
+            override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = AppResult.Failure(AppError.Network)
+        }
+        show(server, failingRegistry, waitForTeams = false)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Network request failed.").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("OK").onFirst().performClick()
+        waitForIdle()
     }
 }

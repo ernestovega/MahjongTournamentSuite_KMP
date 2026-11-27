@@ -349,7 +349,10 @@ internal class FakeTournamentRepository : TournamentRepository {
         if (failPlayers) return AppResult.Failure(AppError.Network)
         return AppResult.Success(players)
     }
-    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = AppResult.Success(teams)
+    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> = if (failTeams) AppResult.Failure(AppError.Network) else AppResult.Success(teams)
+
+    /** Makes the list of teams fail. */
+    var failTeams = false
 
     /** The teams that [listTournamentTeams] gives. */
     var teams: List<TournamentTeam> = emptyList()
@@ -391,8 +394,7 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     private fun <T> writeResult(value: T): AppResult<T> = if (writesSucceed) AppResult.Success(value) else unusedFakeResult()
 
-    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> =
-        if (failRounds) AppResult.Failure(AppError.Network) else AppResult.Success(rounds)
+    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> = if (failRounds) AppResult.Failure(AppError.Network) else AppResult.Success(rounds)
 
     override suspend fun getRoundTablesWithHands(
         tournamentId: String,
