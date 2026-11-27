@@ -100,6 +100,7 @@ import com.etologic.mahjongtournamentsuite.presentation.language.AppLanguage
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageController
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.AnalyticsConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentScreen
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
@@ -458,6 +459,16 @@ class UiComponentsScreenshotTest {
         CompositionLocalProvider(LocalLanguageController provides LanguageController(AppLanguage.Spanish, showAiNotice = true) {}) {
             AiTranslationNotice(onContact = {})
         }
+    }
+
+    @Test
+    fun consentScreen() = component("consent-screen", scroll = false, variants = dialogVariants) {
+        ConsentScreen(onAnswer = {})
+    }
+
+    @Test
+    fun consentScreenWithDetails() = component("consent-screen-details", scroll = false, variants = dialogVariants) {
+        ConsentScreen(onAnswer = {}, initiallyShowDetails = true)
     }
 
     @Test

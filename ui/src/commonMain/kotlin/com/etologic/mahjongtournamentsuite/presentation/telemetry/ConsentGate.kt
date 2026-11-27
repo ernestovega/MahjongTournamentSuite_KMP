@@ -99,8 +99,8 @@ fun ConsentGate(content: @Composable () -> Unit) {
  * the same size, so saying no is as easy as saying yes.
  */
 @Composable
-private fun ConsentScreen(onAnswer: (Boolean) -> Unit) {
-    var showDetails by rememberSaveable { mutableStateOf(false) }
+internal fun ConsentScreen(onAnswer: (Boolean) -> Unit, initiallyShowDetails: Boolean = false) {
+    var showDetails by rememberSaveable { mutableStateOf(initiallyShowDetails) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
