@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { addPerson, joinRuns, summaryOf, tournamentsOf } from "./statisticsGroups";
+import { addPerson, groupTournament, joinRuns, loadTournamentSummaries, summaryOf, tournamentsOf } from "./statisticsGroups";
 import type { DigestResult, DigestTable } from "./statisticsDigest";
 
 const run = (best: number, start: number, end: number) => ({ best, start, end });
@@ -74,5 +74,17 @@ describe("statistics groups", () => {
     assert.deepEqual(ids({ tournamentCountry: "ES", from: "2026-01-01" }), ["t2"]);
     assert.deepEqual(ids({ to: "2025-12-31" }), ["t1"]);
     assert.deepEqual(ids({ tournamentIds: ["t3", "t4"] }), ["t3", "t4"]);
+  });
+
+  it("reads digests stored before the best hand and the self draws, and tournaments without a country or a date", async () => {
+    const old = table(1, [result("A", 1, 1)]);
+    const summary = { ...old.summary } as Partial<DigestTable>;
+    delete summary.bestHand;
+    delete summary.selfDraws;
+    const { tables } = summaryOf([{ ...old, summary: summary as DigestTable }]);
+    assert.equal(tables.highestHand, 0);
+    assert.equal(tables.selfDraws, 0);
+    assert.deepEqual(groupTournament({ id: "t" } as never), { id: "t", country: "", startDate: null });
+    assert.deepEqual(await loadTournamentSummaries([]), []);
   });
 });

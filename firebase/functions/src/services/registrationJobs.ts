@@ -37,14 +37,15 @@ async function withoutFullTeam(tournament: TournamentForRegistrations) {
   registrations.forEach((registration) => {
     if (registration.teamId != null) size.set(registration.teamId, (size.get(registration.teamId) ?? 0) + 1);
   });
-  return registrations.filter((registration) => registration.teamId == null || (size.get(registration.teamId) ?? 0) < TEAM_SIZE);
+  return registrations.filter((registration) => registration.teamId == null || size.get(registration.teamId)! < TEAM_SIZE);
 }
 
 async function runOne(tournamentId: string, now: Date): Promise<HourlyResult> {
   const tournament = await loadTournament(tournamentId);
   const result: HourlyResult = { tournamentId, expired: 0, closed: false, teamReminders: 0, weeklyReport: false };
   result.expired = await removeExpiredPending(tournament, now.getTime());
-  const raw = (tournament.data.registration ?? {}) as Record<string, unknown>;
+  // loadTournament refuses a tournament without registrations, so the map is there.
+  const raw = tournament.data.registration as Record<string, unknown>;
   const local = localTime(now, tournament.timeZone);
   const decision = hourlyDecision({
     now: local,
@@ -65,7 +66,8 @@ async function runOne(tournamentId: string, now: Date): Promise<HourlyResult> {
     for (const registration of await withoutFullTeam(tournament)) {
       const sent = await send(registration.email, teamReminderEmail(registration.language, {
         tournament: tournament.name,
-        closesOn: tournament.settings.closesOn ?? "",
+        // The reminder is due only before a closing day.
+        closesOn: tournament.settings.closesOn!,
         link: manageLink(tournament.ref.id, registration.manageToken),
       }));
       if (sent) result.teamReminders++;
