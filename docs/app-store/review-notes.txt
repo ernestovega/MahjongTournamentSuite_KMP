@@ -57,4 +57,4 @@ Thank you for the review. Here is the information requested.
 6. REGULATION AND THIRD-PARTY MATERIAL
 - Not a regulated industry: no gambling, real-money games or prizes.
 - Mahjong is played at the physical tables; the app only records scores.
-- Player registry data comes from the European Mahjong Association, which authorizes its use (documentation available on request).
+- Player registry data is public information published by the European Mahjong Association on its website, used only to run and show EMA tournaments.
