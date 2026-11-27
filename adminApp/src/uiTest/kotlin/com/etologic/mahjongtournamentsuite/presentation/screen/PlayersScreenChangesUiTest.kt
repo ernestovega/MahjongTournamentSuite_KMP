@@ -147,4 +147,33 @@ class PlayersScreenChangesUiTest {
         waitForWrite(server)
         assertEquals(listOf("substitution 1 none"), server.writes)
     }
+
+    @Test
+    fun aSubstitutionTheServerRefusesShowsTheError() = runComposeUiTest {
+        val server = world(assigned, started = true).apply { writesSucceed = false }
+        show(server)
+
+        openMenu()
+        onNodeWithText("Substitute").performClick()
+        waitForIdle()
+        onNodeWithText("The player is ill.").performClick()
+        onNodeWithText("Substitute").performClick()
+
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun theListOpensAtTheFirstSlotWithoutAPlayerFarDown() = runComposeUiTest {
+        val server = FakeTournamentRepository().apply {
+            tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 80, numRounds = 2))
+            players = (1..80).map { id ->
+                TournamentPlayer(id = id, name = "P$id", team = 0, assignedEmaId = if (id < 70) "${100 + id}" else "")
+            }
+        }
+        show(server)
+
+        // Slot 70 is the first without a player: the list opens with it in view, and slot 1 is scrolled away.
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("70").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("1").assertCountEquals(0)
+    }
 }
