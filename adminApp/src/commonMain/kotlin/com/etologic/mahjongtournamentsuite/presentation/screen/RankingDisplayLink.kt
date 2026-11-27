@@ -53,9 +53,13 @@ data class RankingDisplayControl(
         return minOf(page.podium, 3 - shown).takeIf { it > 0 }
     }
 
-    /** Shows one more place of [pageKey]: the projection goes to that list, stops paging and shows its top. */
-    fun reveal(pageKey: String): RankingDisplayControl = copy(
-        revealed = revealed + (pageKey to ((revealed[pageKey] ?: 0) + 1).coerceAtMost(3)),
+    /**
+     * Shows one more place of [pageKey], a list with [podium] places on its podium: the projection goes to that list,
+     * stops paging and shows its top. A list with fewer than three places starts at its own last place, so every press
+     * shows a place.
+     */
+    fun reveal(pageKey: String, podium: Int = 3): RankingDisplayControl = copy(
+        revealed = revealed + (pageKey to (maxOf(revealed[pageKey] ?: 0, 3 - podium.coerceIn(0, 3)) + 1).coerceAtMost(3)),
         playing = false,
         pageKey = pageKey,
         pageRequest = pageRequest + 1,

@@ -81,7 +81,7 @@ class Ga4RulesTest {
         // A parameter value has at most 100 characters. A longer value is cut.
         (TelemetryAction.all + TelemetryOutcome.all).forEach { assertTrue(it.length <= 100, it) }
         TelemetryAction.all.forEach { assertTrue(name.matches(it), "action '$it' must be a lowercase word with underscores") }
-        val values = TelemetryClockAction.all + TelemetryTimerKind.all + TelemetryReminderAction.all + TelemetryReminderMoment.all +
+        val values = TelemetryClockAction.all + TelemetryRankingControlAction.all + TelemetryTimerKind.all + TelemetryReminderAction.all + TelemetryReminderMoment.all +
             TelemetryLink.all + TelemetryProfileAction.all + TelemetryPreference.all + TelemetryRegistrationAction.all
         values.forEach {
             assertTrue(name.matches(it), "value '$it' must be a lowercase word with underscores")
@@ -110,6 +110,7 @@ class Ga4RulesTest {
         assertEquals(constants("TelemetryAction"), TelemetryAction.all.toSet())
         assertEquals(constants("TelemetryOutcome"), TelemetryOutcome.all.toSet())
         assertEquals(constants("TelemetryClockAction"), TelemetryClockAction.all.toSet())
+        assertEquals(constants("TelemetryRankingControlAction"), TelemetryRankingControlAction.all.toSet())
         assertEquals(constants("TelemetryTimerKind"), TelemetryTimerKind.all.toSet())
         assertEquals(constants("TelemetryReminderAction"), TelemetryReminderAction.all.toSet())
         assertEquals(constants("TelemetryReminderMoment"), TelemetryReminderMoment.all.toSet())

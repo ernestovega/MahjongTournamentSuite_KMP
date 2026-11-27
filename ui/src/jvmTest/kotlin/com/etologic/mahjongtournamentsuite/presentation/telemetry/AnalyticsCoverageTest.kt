@@ -162,7 +162,7 @@ class AnalyticsCoverageTest {
         val docs = File("../docs/telemetry.md").readText()
         val notSent = mutableListOf<String>()
         val notDocumented = mutableListOf<String>()
-        listOf("TelemetryEvent", "TelemetryAction", "TelemetryLink", "TelemetryProfileAction", "TelemetryPreference", "TelemetryClockAction", "TelemetryRegistrationAction").forEach { objectName ->
+        listOf("TelemetryEvent", "TelemetryAction", "TelemetryLink", "TelemetryProfileAction", "TelemetryPreference", "TelemetryClockAction", "TelemetryRankingControlAction", "TelemetryRegistrationAction").forEach { objectName ->
             val body = definitionText.substringAfter("object $objectName {").substringBefore("\n}\n")
             Regex("""const val (\w+) = "([^"]+)"""").findAll(body).forEach { match ->
                 val (constant, value) = match.destructured
