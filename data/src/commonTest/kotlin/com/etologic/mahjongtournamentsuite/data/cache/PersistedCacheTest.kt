@@ -215,14 +215,12 @@ class PersistedCacheTest {
     @Test
     fun currentSavedTablesNeedNoLoad() = runTest {
         var fullLoads = 0
-        var fetched = 0
 
         val result = TournamentTableStore().all(
             ownerUid = "u1",
             tournamentId = "t1",
             restore = { listOf(table(1, 1, version = 3) to hands()) },
             verifyRestored = { false },
-            onFetched = { fetched++ },
             fetchAll = {
                 fullLoads++
                 emptyList()
@@ -230,7 +228,6 @@ class PersistedCacheTest {
         )
 
         assertEquals(0, fullLoads)
-        assertEquals(0, fetched)
         assertEquals(3L, result.single().first.version)
     }
 

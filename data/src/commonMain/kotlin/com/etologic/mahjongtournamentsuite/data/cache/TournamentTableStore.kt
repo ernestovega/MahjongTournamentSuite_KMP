@@ -69,7 +69,6 @@ class TournamentTableStore {
      *
      * Before the first load, [restore] can give the tables that were saved on the device. They are checked with
      * [verifyRestored] (or [isOutdated]) before use, also when the caller does not check, because they can be old.
-     * [onFetched] gets every complete load, so the caller can save it.
      *
      * [changedRounds] replaces [isOutdated] when it is given: it gets the same versions and returns the rounds that
      * have a newer table on the server. Up to [MAX_PARTIAL_ROUNDS] of them are reloaded with [fetchRound], one request
@@ -83,7 +82,6 @@ class TournamentTableStore {
         isOutdated: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
         restore: (suspend () -> List<TableWithHands>?)? = null,
         verifyRestored: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
-        onFetched: (suspend (List<TableWithHands>) -> Unit)? = null,
         changedRounds: (suspend (known: Map<TableKey, Long>) -> Set<Int>)? = null,
         fetchRound: (suspend (roundId: Int) -> List<TableWithHands>)? = null,
         fetchAll: suspend () -> List<TableWithHands>,
@@ -121,7 +119,7 @@ class TournamentTableStore {
             }
             else -> (isOutdated ?: verifyRestored.takeIf { restored })?.invoke(known) ?: false
         }
-        val loaded = if (needsLoad) fetchAll().also { onFetched?.invoke(it) } else null
+        val loaded = if (needsLoad) fetchAll() else null
         return mutex.withLock {
             val entry = entries.getOrPut(tournamentId) { Entry() }
             if (loaded != null) {
