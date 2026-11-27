@@ -214,6 +214,18 @@ class DefaultPlayerImportRepositoryTest {
         assertIs<AppError.Unexpected>(errorOf("""{"details":{}}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"details":"x"}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Forbidden), "only a refused file has a file error")
+        assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":null}}"""))
+    }
+
+    @Test
+    fun aBrokenConnectionAndAnUnknownSeverityHaveTheirMeaning() = runTest {
+        assertIs<AppResult.Failure>(repository { error("The connection broke.") }.preview("t1", "p.csv", byteArrayOf(1)))
+
+        val preview = repository {
+            jsonResponse("""{"rows":[{"row":2,"slotId":1,"emaId":"00000001","issues":[{"code":"INVALID_ID","severity":"FROM_THE_FUTURE"}]}]}""")
+        }.preview("t1", "p.csv", byteArrayOf(1))
+
+        assertEquals(ImportIssueSeverity.ERROR, assertIs<AppResult.Success<PlayerImportPreview>>(preview).value.rows.single().issues.single().severity)
     }
 
     @Test

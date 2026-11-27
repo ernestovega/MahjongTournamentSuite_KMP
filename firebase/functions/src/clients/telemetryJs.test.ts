@@ -108,6 +108,50 @@ for (const app of APPS) {
       assert.deepEqual(page.calls.events, []);
     });
 
+    it("knows whether the user answered before, yes or no", () => {
+      assert.equal(loadPage(app).window.mtsTelemetryHasAnswered(), false);
+      assert.equal(loadPage(app, { storedConsent: "1" }).window.mtsTelemetryHasAnswered(), true);
+      const declined = loadPage(app, { storedConsent: "0" });
+      assert.equal(declined.window.mtsTelemetryHasAnswered(), true);
+      assert.equal(declined.window.mtsTelemetryHasConsent(), false);
+    });
+
+    it("saves a decline, so the app does not ask again, and sends nothing", async () => {
+      const page = loadPage(app);
+      page.send("consent", "", { value: false });
+      page.send("event", "login");
+      await settle();
+
+      assert.equal(page.storage.get("mtsAnalyticsConsent"), "0");
+      assert.equal(page.window.mtsTelemetryHasAnswered(), true);
+      assert.equal(page.window.mtsTelemetryHasConsent(), false);
+      assert.deepEqual(page.calls.loaded, []);
+      assert.deepEqual(page.calls.events, []);
+    });
+
+    it("removes the cookies of Google Analytics when the user says no, and keeps the others", async () => {
+      const page = loadPage(app, { storedConsent: "1", cookies: ["_ga", "_ga_TEST", "session", "_gat"] });
+      await settle();
+
+      page.send("consent", "", { value: false });
+      await settle();
+
+      assert.deepEqual([...page.cookies].sort(), ["_gat", "session"]);
+      // On this host and on each parent domain, because Analytics writes them on the top domain.
+      assert.ok(page.calls.cookieWrites.some((write) => write.startsWith("_ga=;") && write.endsWith("domain=.example.test")));
+      assert.ok(page.calls.cookieWrites.every((write) => !write.startsWith("session=")));
+    });
+
+    it("can be turned on again after a decline", async () => {
+      const page = loadPage(app, { storedConsent: "0" });
+      page.send("consent", "", { value: true });
+      page.send("event", "login");
+      await settle();
+
+      assert.equal(page.storage.get("mtsAnalyticsConsent"), "1");
+      assert.deepEqual(page.calls.events, [{ name: "login", params: {} }]);
+    });
+
     it("starts the SDK only once when the user accepts again", async () => {
       const page = loadPage(app, { storedConsent: "1" });
       await settle();
@@ -135,10 +179,12 @@ for (const app of APPS) {
     it("works when the storage is blocked, as in a private window", async () => {
       const page = loadPage(app, { storageThrows: true });
       assert.equal(page.window.mtsTelemetryHasConsent(), false);
+      assert.equal(page.window.mtsTelemetryHasAnswered(), false);
       assert.doesNotThrow(() => page.send("consent", "", { value: true }));
       await settle();
       // The consent holds for this visit even when it cannot be saved.
       assert.equal(page.window.mtsTelemetryHasConsent(), true);
+      assert.equal(page.window.mtsTelemetryHasAnswered(), true);
     });
   });
 

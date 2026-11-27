@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import kotlin.test.AfterTest
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -433,5 +434,40 @@ class PlayerImportDialogUiTest {
         )
 
         awaitText("The first line of the file needs these columns: id, ema id.")
+    }
+
+    @Test
+    fun everyKindOfProblemOfARowHasItsOwnExplanation() = runComposeUiTest {
+        val rows = ImportIssueCode.entries.mapIndexed { index, code -> row(index + 2, error(code, "v$index")) }
+        showDialog(FakeImportRepository(AppResult.Success(preview(*rows.toTypedArray(), isTeams = true)), noResult))
+
+        awaitText("Import (${rows.size})")
+
+        val explanations = onAllNodes(stateStartsWith("Error: ")).fetchSemanticsNodes()
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.StateDescription) }
+            .toSet()
+        assertEquals(ImportIssueCode.entries.size, explanations.size)
+    }
+
+    @Test
+    fun theSavingOfThePlayersShowsItsProgress() = runComposeUiTest {
+        val gate = CompletableDeferred<Unit>()
+        val repository = object : PlayerImportRepository {
+            override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> = error("Not used.")
+
+            override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray) = AppResult.Success(preview(row(2)))
+
+            override suspend fun apply(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<PlayerImportResult> {
+                gate.await()
+                return AppResult.Failure(AppError.Network)
+            }
+        }
+        showDialog(repository)
+
+        awaitText("Import (1)")
+        onNodeWithText("Import (1)").performClick()
+        awaitText("The app is saving the players.")
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The app is saving the players.").fetchSemanticsNodes().isEmpty() }
     }
 }

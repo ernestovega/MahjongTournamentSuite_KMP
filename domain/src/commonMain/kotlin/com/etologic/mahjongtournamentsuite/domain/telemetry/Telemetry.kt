@@ -21,11 +21,17 @@ interface Telemetry {
     /** Sets a property that GA4 adds to every later event of this user. A null [value] removes it. */
     fun userProperty(name: String, value: String?)
 
-    /** True when this platform sends data. Then the user must accept before the app opens. */
+    /** True when this platform sends data. Then the app asks the user once. The answer is optional. */
     val requiresConsent: Boolean
 
     /** True when the user accepted the anonymous analytics. Nothing is sent before that. */
     fun hasConsent(): Boolean
+
+    /**
+     * True when the user answered, yes or no, on this device. The app asks only while it is false. A user who
+     * declined uses the app the same way, and nothing is sent.
+     */
+    fun hasAnswered(): Boolean = hasConsent()
 
     /** Saves the answer of the user. A false answer stops the data at once. */
     fun setConsent(granted: Boolean)
@@ -38,5 +44,6 @@ object NoTelemetry : Telemetry {
     override fun userProperty(name: String, value: String?) = Unit
     override val requiresConsent: Boolean = false
     override fun hasConsent(): Boolean = false
+    override fun hasAnswered(): Boolean = false
     override fun setConsent(granted: Boolean) = Unit
 }

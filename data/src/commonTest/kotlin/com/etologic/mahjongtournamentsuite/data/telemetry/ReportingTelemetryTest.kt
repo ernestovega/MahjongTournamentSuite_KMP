@@ -51,8 +51,13 @@ private class FakeAnalytics : Telemetry {
 
     override fun hasConsent(): Boolean = accepted
 
+    var answered = false
+
+    override fun hasAnswered(): Boolean = answered
+
     override fun setConsent(granted: Boolean) {
         accepted = granted
+        answered = true
     }
 }
 
@@ -160,6 +165,17 @@ class ReportingTelemetryTest {
         assertEquals("crash", report()["kind"]?.jsonPrimitive?.content)
         assertEquals(1, analytics.events.count { it.first == TelemetryEvent.APP_CRASH })
         assertNull(store.saved)
+    }
+
+    @Test
+    fun theAnswerComesFromTheAnalyticsOfThePlatform() = runTest {
+        analytics.answered = false
+        assertFalse(telemetry.hasAnswered())
+
+        telemetry.setConsent(false)
+
+        assertTrue(telemetry.hasAnswered())
+        assertFalse(telemetry.hasConsent())
     }
 
     @Test

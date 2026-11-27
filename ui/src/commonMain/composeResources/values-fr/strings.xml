@@ -520,24 +520,11 @@
     <string name="spreadsheet_chooser_filter">Fichiers CSV et Excel</string>
     <string name="spreadsheet_error_read">L'application n'a pas pu lire le fichier. Choisissez un fichier CSV ou Excel et réessayez.</string>
     <string name="spreadsheet_error_save">L'application n'a pas pu enregistrer le fichier. Réessayez.</string>
-    <string name="consent_title">Analyse anonyme</string>
-    <string name="consent_intro">Cette application collecte des données anonymes sur son utilisation et sur les erreurs. L'équipe utilise ces données uniquement pour trouver des problèmes et pour améliorer l'application.</string>
-    <string name="consent_collects">L'application enregistre les données suivantes :
-• Les écrans, les boîtes de dialogue et les onglets que vous ouvrez, et pendant combien de temps.
-• Les actions que vous utilisez, comme l'enregistrement d'une table.
-• Les erreurs et les plantages, avec des détails techniques comme le type de l'erreur.</string>
-    <string name="consent_not_collected">L'application n'enregistre pas votre nom, votre adresse e-mail, votre numéro EMA ni aucun texte que vous saisissez. Les données ne vous identifient pas.</string>
-    <string name="consent_required">Vous pouvez utiliser l'application seulement si vous acceptez. Si vous n'acceptez pas, vous ne pouvez pas entrer dans l'application.</string>
-    <string name="consent_accept">Accepter et continuer</string>
-    <string name="consent_decline">Refuser</string>
-    <string name="consent_declined_note">Vous ne pouvez pas utiliser l'application sans l'analyse anonyme. Vous pouvez fermer l'application ou accepter pour continuer.</string>
-    <string name="consent_withdraw">Retirer le consentement à l'analyse</string>
     <string name="profile_delete_account">Supprimer mon compte</string>
     <string name="profile_delete_account_title">Supprimer votre compte ?</string>
     <string name="profile_delete_account_message">Votre compte est supprimé définitivement : la connexion, l'e-mail, le pseudo et la photo. Votre joueur EMA et vos résultats de tournois restent. Action irréversible.</string>
     <string name="profile_delete_account_confirm">Supprimer</string>
     <string name="privacy_policy">Politique de confidentialité</string>
-    <string name="consent_withdraw_info">L'application arrête l'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l'application tant que vous n'acceptez pas.</string>
     <string name="stat_best_hand_points">Plus de points en une main</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
     <string name="app_switch_to_admin">App de gestion</string>
@@ -795,4 +782,19 @@ La première qui marche gagne</string>
     <string name="update_available_later">Plus tard</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Télécharger l'app</string>
+    <string name="consent_title">Statistiques anonymes</string>
+    <string name="consent_message">L'application peut-elle envoyer des données anonymes sur son utilisation et ses erreurs ? Elles nous aident à l'améliorer. C'est facultatif : si vous refusez, l'application fonctionne de la même façon.</string>
+    <string name="consent_more_details">Plus de détails</string>
+    <string name="consent_why_title">Pourquoi</string>
+    <string name="consent_why">Pour trouver les erreurs et voir quelles parties de l'application sont utilisées, afin de savoir quoi corriger et améliorer.</string>
+    <string name="consent_what_title">Quoi</string>
+    <string name="consent_what">Les écrans et les actions que vous utilisez, et les erreurs avec des détails techniques. Jamais votre nom, votre e-mail, votre numéro EMA ni ce que vous saisissez.</string>
+    <string name="consent_where_title">Où</string>
+    <string name="consent_where">L'utilisation va à Google Analytics pour Firebase, qui la conserve 14 mois. Les erreurs vont à notre propre journal sur Firebase, dans l'UE, qui les supprime après 30 jours.</string>
+    <string name="consent_change_title">Changer plus tard</string>
+    <string name="consent_change">Dans votre profil, à tout moment.</string>
+    <string name="consent_accept">Accepter</string>
+    <string name="consent_decline">Refuser</string>
+    <string name="profile_analytics">Envoyer des statistiques anonymes</string>
+    <string name="profile_analytics_info">Des données anonymes sur votre utilisation de l'application et ses erreurs, jamais votre nom, votre e-mail ni votre numéro EMA. Désactivez-le pour tout arrêter aussitôt. L'application fonctionne de la même façon.</string>
 </resources>

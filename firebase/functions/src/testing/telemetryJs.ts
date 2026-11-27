@@ -30,6 +30,8 @@ export type PageOptions = {
   storageThrows?: boolean;
   /** True makes the request to the error log fail. */
   fetchFails?: boolean;
+  /** The names of the cookies that the page already holds, like "_ga" from an earlier visit. */
+  cookies?: string[];
 };
 
 /** Everything that the script did with the SDK and with the network. Values are plain host objects. */
@@ -40,6 +42,8 @@ export type PageCalls = {
   properties: Array<Record<string, unknown>>;
   collection: boolean[];
   fetches: Array<{ url: string; init: { method: string; keepalive: boolean; headers: Record<string, string>; body: string } }>;
+  /** Every value that the script wrote to `document.cookie`. */
+  cookieWrites: string[];
 };
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
@@ -57,7 +61,8 @@ export function loadPage(app: TelemetryApp, options: PageOptions = {}) {
     .replace(/apiKey: "[^"]*"/, `apiKey: "${configured ? "test-key" : ""}"`)
     .replace(/appId: "[^"]*"/, `appId: "${configured ? "test-app" : ""}"`)
     .replace(/measurementId: "[^"]*"/, `measurementId: "${configured ? "G-TEST" : ""}"`);
-  const calls: PageCalls = { loaded: [], initialized: [], events: [], properties: [], collection: [], fetches: [] };
+  const calls: PageCalls = { loaded: [], initialized: [], events: [], properties: [], collection: [], fetches: [], cookieWrites: [] };
+  const cookies = new Set(options.cookies ?? []);
   const storage = new Map<string, string>();
   if (options.storedConsent) storage.set("mtsAnalyticsConsent", options.storedConsent);
   const listeners: Record<string, (event: unknown) => unknown> = {};
@@ -104,6 +109,18 @@ export function loadPage(app: TelemetryApp, options: PageOptions = {}) {
     addEventListener: (name: string, listener: (event: unknown) => unknown) => {
       listeners[name] = listener;
     },
+    // A cookie with a date in the past is removed, as in a browser.
+    document: {
+      get cookie() {
+        return [...cookies].map((name) => `${name}=x`).join("; ");
+      },
+      set cookie(value: string) {
+        calls.cookieWrites.push(value);
+        const name = value.split("=")[0].trim();
+        if (/expires=Thu, 01 Jan 1970/.test(value)) cookies.delete(name);
+        else cookies.add(name);
+      },
+    },
   };
   if (options.appCheckToken !== undefined && options.appCheckToken !== null) {
     sandbox.mtsAppCheckToken = async () => options.appCheckToken;
@@ -115,6 +132,7 @@ export function loadPage(app: TelemetryApp, options: PageOptions = {}) {
   return {
     calls,
     storage,
+    cookies,
     window,
     /** The call that the Kotlin code makes. */
     send: (kind: string, name: string, data: unknown = {}) => window.mtsTelemetry(kind, name, JSON.stringify(data)),

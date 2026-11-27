@@ -103,12 +103,20 @@ class DefaultTournamentRepositoryFilesAndTablesTest {
                 score = 10,
                 substitution = PlayerSubstitution(SubstitutionReason.entries.first(), 1, excludedFromEma = true),
             ),
+            PlayerRanking(
+                position = 3,
+                playerId = 9,
+                teamId = 0,
+                points = 1.0,
+                score = 5,
+                substitution = PlayerSubstitution(SubstitutionReason.entries.first(), 1, excludedFromEma = false),
+            ),
         )
 
         assertIs<AppResult.Success<ByteArray>>(repository().generateEmaReport("t1", rankings))
 
         val sent = requests.single { it.startsWith("POST /tournaments/t1/ema-report") }
-        assertTrue(""""playerId":7""" in sent && """"playerId":8""" !in sent, sent)
+        assertTrue(""""playerId":7""" in sent && """"playerId":8""" !in sent && """"playerId":9""" in sent, sent)
     }
 
     @Test
