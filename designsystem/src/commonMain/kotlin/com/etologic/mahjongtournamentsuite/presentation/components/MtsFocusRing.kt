@@ -87,7 +87,13 @@ fun MtsFilterChip(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     shape: Shape = FilterChipDefaults.shape,
-    colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
+    // Selected: the green of a filled button, so the choice stands out (Ernesto, 27-nov-2026).
+    colors: SelectableChipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.primary,
+        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+        selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimary,
+    ),
     elevation: SelectableChipElevation? = FilterChipDefaults.filterChipElevation(),
     border: BorderStroke? = FilterChipDefaults.filterChipBorder(enabled, selected),
     interactionSource: MutableInteractionSource? = null,
@@ -120,7 +126,12 @@ fun MtsInputChip(
     avatar: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     shape: Shape = InputChipDefaults.shape,
-    colors: SelectableChipColors = InputChipDefaults.inputChipColors(),
+    colors: SelectableChipColors = InputChipDefaults.inputChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.primary,
+        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+        selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimary,
+    ),
     border: BorderStroke? = InputChipDefaults.inputChipBorder(enabled, selected),
     interactionSource: MutableInteractionSource? = null,
 ) {
@@ -168,7 +179,10 @@ fun SingleChoiceSegmentedButtonRowScope.MtsSegmentedButton(
     shape: Shape,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: SegmentedButtonColors = SegmentedButtonDefaults.colors(),
+    colors: SegmentedButtonColors = SegmentedButtonDefaults.colors(
+        activeContainerColor = MaterialTheme.colorScheme.primary,
+        activeContentColor = MaterialTheme.colorScheme.onPrimary,
+    ),
     border: BorderStroke = SegmentedButtonDefaults.borderStroke(colors.activeBorderColor),
     contentPadding: PaddingValues = SegmentedButtonDefaults.ContentPadding,
     icon: @Composable () -> Unit = { SegmentedButtonDefaults.Icon(selected) },
