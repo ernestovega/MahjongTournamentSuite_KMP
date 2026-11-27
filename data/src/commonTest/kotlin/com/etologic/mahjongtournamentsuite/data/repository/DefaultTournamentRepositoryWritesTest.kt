@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
@@ -58,7 +59,10 @@ class DefaultTournamentRepositoryWritesTest {
                 path.endsWith("/sync/manifest") -> jsonResponse("""{"resources":{},"globalResources":{},"tableVersions":{}}""")
                 path.endsWith("/members") -> jsonResponse("""{"members":[{"uid":"u1","email":"a@b.c","role":"EDITOR","onlyTournament":true}]}""")
                 path.endsWith("/teams") -> jsonResponse("""{"teams":[{"id":2,"name":"Aces","playerIds":[1,2,3,4]}]}""")
-                path.endsWith("/players") -> jsonResponse("""{"players":[{"id":5,"name":"P5","team":0}]}""")
+                path.endsWith("/players") -> jsonResponse(
+                    """{"players":[{"id":5,"name":"P5","team":0},{"id":6,"name":"P6","team":0,""" +
+                        """"substitution":{"reason":"ILLNESS","fromRound":3,"excludedFromEma":true}}]}""",
+                )
                 path.endsWith("/rounds") -> jsonResponse("""{"rounds":[{"roundId":1},{"roundId":2}]}""")
                 path.endsWith("/complete-open-tables") -> jsonResponse("""{"completed":3}""")
                 path.endsWith("/clock") || path.endsWith("/control") || path.endsWith("/round-clocks") -> jsonResponse(CLOCKS)
@@ -132,8 +136,10 @@ class DefaultTournamentRepositoryWritesTest {
             listOf("""PUT /tournaments/t1/players/5 {"emaId":"10000005"}""", "PUT /tournaments/t1/players/6 {}"),
             server.requests.filter { it.startsWith("PUT") },
         )
-        repository.listTournamentPlayers("t1", RefreshMode.IF_CHANGED)
+        val players = assertIs<AppResult.Success<List<TournamentPlayer>>>(repository.listTournamentPlayers("t1", RefreshMode.IF_CHANGED)).value
         assertEquals(2, server.count("GET /tournaments/t1/players"))
+        assertEquals(listOf(null, SubstitutionReason.ILLNESS), players.map { it.substitution?.reason })
+        assertEquals(3, players.last().substitution?.fromRound)
     }
 
     @Test

@@ -203,10 +203,11 @@ data class PlayerStatistics(
      */
     val skillScore: Double? get() {
         if (handsPlayed < MIN_HANDS_FOR_LEADERBOARD) return null
+        // With hands played, the win rate and the deal-in rate always exist.
         val axes = listOf(
-            (winRate ?: 0.0) / SkillScale.WIN_RATE_FULL,
+            handsWon.toDouble() / handsPlayed / SkillScale.WIN_RATE_FULL,
             (selfDrawRate ?: 0.0) / SkillScale.SELF_DRAW_RATE_FULL,
-            1.0 - (dealInRate ?: 0.0) / SkillScale.DEAL_IN_RATE_FULL,
+            1.0 - dealIns.toDouble() / handsPlayed / SkillScale.DEAL_IN_RATE_FULL,
             ((averageWinningScore ?: SkillScale.HAND_VALUE_EMPTY) - SkillScale.HAND_VALUE_EMPTY) /
                 (SkillScale.HAND_VALUE_FULL - SkillScale.HAND_VALUE_EMPTY),
         )

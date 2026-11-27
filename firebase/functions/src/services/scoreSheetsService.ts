@@ -107,7 +107,7 @@ export function scoreSheetList(roundCount: number, tableCount: number): { round:
 
 /**
  * The columns of the sheet from left to right, in the proportions of the original spreadsheet: #, winner, loser, hand
- * points, chicken hand (only when the tournament counts them), score and penalty of each of the four seats, and Sum 0.
+ * points, chicken hand (only when the tournament counts them), score and penalty of each of the four seats, and Sum 0?.
  */
 export function scoreSheetColumns(chickenHands: boolean, width = A4_WIDTH - MARGIN * 2): ScoreSheetColumns {
   // Without the chicken column its room goes to the ids and the points, so the seats stay where they are.
@@ -273,8 +273,9 @@ function drawSheet(doc: PDFKit.PDFDocument, model: ScoreSheetsDocument, art: She
   const withChicken = scoreSheetColumns(true);
   const titleWidth = withChicken.number + withChicken.winner + withChicken.loser * 0.55;
   const lines = titleLines(model.tournamentName);
-  doc.font(fontFor(model.tournamentName, true)).fillColor(BLACK);
-  const titleSize = fitFontSize(doc, lines, titleWidth - 4, lines.length > 1 ? 17 : 22, 7);
+  // In Gang of Three, the font of the titles of the app (Ernesto 27-nov).
+  doc.font("SheetApp").fillColor(BLACK);
+  const titleSize = fitFontSize(doc, lines, titleWidth - 4, lines.length > 1 ? 23 : 28, 7);
   centeredLines(doc, lines, left, top, titleWidth, headerBottom - top - 4, titleSize);
 
   // The round (the gong) and the table, each with a box, written in when the sheet is for a table.
@@ -307,8 +308,8 @@ function drawSheet(doc: PDFKit.PDFDocument, model: ScoreSheetsDocument, art: She
     doc.text(wind, groupLeft + icon + 4, top + windRow / 2 - 5, { lineBreak: false, height: 100000 });
   });
   doc.font("Helvetica-Bold").fillColor(BLACK);
-  rightAligned(doc, "Name:", seatsLeft - 3, top + windRow + nameRow / 2, 9);
-  rightAligned(doc, "Id:", seatsLeft - 3, top + windRow + nameRow * 1.5, 9);
+  rightAligned(doc, "Name", seatsLeft - 3, top + windRow + nameRow / 2, 9);
+  rightAligned(doc, "Id", seatsLeft - 3, top + windRow + nameRow * 1.5, 9);
   doc.save().lineWidth(THIN).strokeColor(BLACK);
   for (let seat = 0; seat < 4; seat += 1) {
     doc.rect(seatsLeft + seatWidth * seat, top + windRow, seatWidth, nameRow * 2);
@@ -356,7 +357,8 @@ function drawSheet(doc: PDFKit.PDFDocument, model: ScoreSheetsDocument, art: She
     centeredLines(doc, ["Pty."], seatLeft + columns.score, titlesTop, columns.penalty, titlesHeight, 9);
   }
   doc.font("Helvetica-Bold");
-  centeredLines(doc, ["Sum 0"], checkLeft, titlesTop, columns.check, titlesHeight, fitFontSize(doc, ["Sum 0"], columns.check - 3, 9, 5));
+  // "Sum 0?" in two lines, so it keeps the size of the other titles in the narrow column.
+  centeredLines(doc, ["Sum", "0?"], checkLeft, titlesTop, columns.check, titlesHeight, fitFontSize(doc, ["Sum", "0?"], columns.check - 3, 9, 5));
 
   // The hands.
   const checkboxSize = Math.min(10, lineHeight * 0.55);

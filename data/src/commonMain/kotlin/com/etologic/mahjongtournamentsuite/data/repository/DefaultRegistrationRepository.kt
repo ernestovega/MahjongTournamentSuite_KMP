@@ -369,7 +369,7 @@ private fun OwnRegistrationDto.toDomain() = OwnRegistration(
 internal fun Throwable.registrationAppErrorOrNull(): AppError.Registration? {
     if (this !is BackendHttpException || status.value !in 400..499) return null
     val details = runCatching { Json.parseToJsonElement(responseBody).jsonObject["details"]?.jsonObject }.getOrNull() ?: return null
-    val code = details["code"]?.jsonPrimitive?.contentOrNull
+    val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
         ?.let { name -> RegistrationErrorCode.entries.firstOrNull { it.name == name } } ?: return null
     return AppError.Registration(code, details.args(code))
 }
