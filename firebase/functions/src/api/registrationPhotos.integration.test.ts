@@ -6,11 +6,14 @@ import { db } from "../firebase";
 import { createAccount, giveEmaIdToAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 import { seedOrganization } from "../testing/firestoreFixtures";
 import { fullRoundSchedules } from "../testing/schedule";
+import { getGlobalDataVersions } from "../services/dataVersionsService";
+import { photosOf } from "../services/registrationsService";
 
 type Row = { emaId: string; photoUrl?: string | null };
 
 /**
- * The photo of each person of the registrations: the one of its account, or else the one of its EMA player. In a file
+ * The photo of each person of the registrations and of the public registry: the one of its account, or else the one of
+ * its EMA player, and none when the person hides it. In a file
  * of its own: the writes of an address have a limit per minute that the other registration tests use up.
  */
 describe("photos of the registrations", () => {
@@ -83,4 +86,63 @@ describe("photos of the registrations", () => {
     const adminRows = ((await server.request("GET", `/tournaments/${id}/registrations`, { token: admin.token })).body as { registrations: Row[] }).registrations;
     assert.equal(new Map(adminRows.map((row) => [row.emaId, row.photoUrl])).get(withAccount), "https://photos.example.test/account.jpg");
   });
+
+  it("shows the own photo first in the public registry, and no photo of a person who hides it", async () => {
+    // One account with its own photo, one that hides its photo (its EMA player has one), and an EMA player without account.
+    const own = await createAccount({ role: "PLAYER" });
+    const ownEma = await newEma("https://photos.example.test/registry-ema-of-own.jpg");
+    await giveEmaIdToAccount(own.uid, ownEma);
+    const ownUrl = "https://photos.example.test/registry-own.jpg";
+    await db.doc(`users/${own.uid}`).set({ photoUrl: ownUrl }, { merge: true });
+
+    const hidden = await createAccount({ role: "PLAYER" });
+    const hiddenEma = await newEma("https://photos.example.test/registry-ema-of-hidden.jpg");
+    await giveEmaIdToAccount(hidden.uid, hiddenEma);
+    const versionBefore = await emaPlayersRevision();
+    const hide = await server.request("PUT", "/auth/me/photo-visibility", { token: hidden.token, body: { publicPhoto: false } });
+    assert.equal(hide.status, 200, JSON.stringify(hide.body));
+    // The profile still shows the photo to its owner, and says that it is hidden.
+    assert.equal((hide.body as { publicPhoto: boolean }).publicPhoto, false);
+    assert.equal((hide.body as { photoUrl: string }).photoUrl, "https://photos.example.test/registry-ema-of-hidden.jpg");
+    // The apps read the registry again.
+    assert.ok((await emaPlayersRevision()) > versionBefore);
+
+    const emaOnly = await newEma("https://photos.example.test/registry-ema.jpg");
+
+    type RegistryRow = { emaId: string; photoUrl: string | null; publicPhotoUrl: string | null };
+    const publicRows = ((await server.request("GET", "/public/players")).body as { players: RegistryRow[] }).players;
+    const byEma = new Map(publicRows.map((row) => [row.emaId, row]));
+    assert.equal(byEma.get(ownEma)?.photoUrl, ownUrl);
+    assert.equal(byEma.get(hiddenEma)?.photoUrl, null, "the EMA photo of a person who hides it never leaves the server");
+    assert.equal(byEma.get(hiddenEma)?.publicPhotoUrl, null);
+    assert.equal(byEma.get(emaOnly)?.photoUrl, "https://photos.example.test/registry-ema.jpg");
+
+    // The admins keep the EMA photo of the registry, and get the public one apart.
+    const adminRows = ((await server.request("GET", "/ema-player-registry", { token: admin.token })).body as { players: RegistryRow[] }).players;
+    const adminByEma = new Map(adminRows.map((row) => [row.emaId, row]));
+    assert.equal(adminByEma.get(hiddenEma)?.photoUrl, "https://photos.example.test/registry-ema-of-hidden.jpg");
+    assert.equal(adminByEma.get(hiddenEma)?.publicPhotoUrl, null);
+    assert.equal(adminByEma.get(ownEma)?.publicPhotoUrl, ownUrl);
+
+    // Shown again: the EMA photo is back. A value that is not true or false is refused.
+    const show = await server.request("PUT", "/auth/me/photo-visibility", { token: hidden.token, body: { publicPhoto: true } });
+    assert.equal((show.body as { publicPhoto: boolean }).publicPhoto, true);
+    const again = ((await server.request("GET", "/public/players")).body as { players: RegistryRow[] }).players;
+    assert.equal(again.find((row) => row.emaId === hiddenEma)?.photoUrl, "https://photos.example.test/registry-ema-of-hidden.jpg");
+    const wrong = await server.request("PUT", "/auth/me/photo-visibility", { token: hidden.token, body: { publicPhoto: "no" } });
+    assert.equal(wrong.status, 400);
+  });
+
+  it("gives no photo in the registrations of a person who hides it", async () => {
+    const hidden = await createAccount({ role: "PLAYER" });
+    const hiddenEma = await newEma("https://photos.example.test/reg-ema-of-hidden.jpg");
+    await giveEmaIdToAccount(hidden.uid, hiddenEma);
+    await db.doc(`users/${hidden.uid}`).set({ photoUrl: "https://photos.example.test/reg-own-of-hidden.jpg", publicPhoto: false }, { merge: true });
+    const photos = await photosOf([hiddenEma]);
+    assert.equal(photos.has(hiddenEma), false);
+  });
 });
+
+async function emaPlayersRevision(): Promise<number> {
+  return Number((await getGlobalDataVersions()).emaPlayers.revision);
+}

@@ -62,6 +62,8 @@ class PlayerSessionPresenterTest {
         override suspend fun updateAlias(alias: String): AppResult<UserProfile> = answer
         override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = answer
         override suspend fun removePhoto(): AppResult<UserProfile> = answer
+
+        override suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> = answer
         override suspend fun deleteAccount(): AppResult<Unit> = unitAnswer
     }
 

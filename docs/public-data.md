@@ -22,7 +22,7 @@ in its CDN and every viewer of a tournament shares one call to the function.
 | `GET /public/registration-links/:slug` | The tournament of the public link `/<slug>` (and the old `/inscripcion/<slug>`) | 60 s |
 | `GET /public/statistics/overview` | Sums and leaderboards of all tournaments | 60 s |
 | `GET /public/statistics/persons/:emaId` and `.../standings` | The results of one person in the public tournaments | 60 s |
-| `GET /public/players` | The EMA registry: number, name, country and photo | 1 h |
+| `GET /public/players` | The EMA registry: number, name, country and photo (the own photo of the account first, then the EMA one; none when the person turned off "Show my photo publicly" in the profile) | 1 h |
 | `GET /public/countries` | The countries | 1 h |
 | `GET /public/sync/manifest` | The global revisions | 15 s |
 | `GET /me` (token) | The EMA number of the account, its slot and team in each tournament, and its registrations (`CONFIRMED` or `WAITING`) in the tournaments before their draw | none |

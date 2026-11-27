@@ -133,6 +133,7 @@ class DefaultPlayerRepository(
         lastName = lastName,
         country = country.toPlayerCountryCode(),
         photoUrl = photoUrl,
+        publicPhotoUrl = publicPhotoUrl,
         hiddenFromPublic = hiddenFromPublic,
         disabled = disabled,
         createdAt = createdAt,

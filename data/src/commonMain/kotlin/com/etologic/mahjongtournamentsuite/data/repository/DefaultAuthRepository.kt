@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequest
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePhotoVisibilityRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
@@ -187,6 +188,11 @@ class DefaultAuthRepository(
     override suspend fun removePhoto(): AppResult<UserProfile> =
         profilePhotoRequest("Removing the photo") { idToken -> backendApi.removeOwnPhoto(idToken) }
 
+    override suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> =
+        profilePhotoRequest("Changing the photo visibility") { idToken ->
+            backendApi.updateOwnPhotoVisibility(idToken, UpdatePhotoVisibilityRequestDto(publicPhoto = visible))
+        }
+
     override suspend fun deleteAccount(): AppResult<Unit> = runCatching {
         ensureLoadedFromStore()
         check(session != null) { "No active session" }
@@ -232,6 +238,7 @@ internal fun UserProfileDto.toDomain(): UserProfile = UserProfile(
     emaId = emaId?.ifBlank { null },
     photoUrl = photoUrl?.ifBlank { null },
     hasOwnPhoto = hasOwnPhoto,
+    publicPhoto = publicPhoto,
     roles = roles.map { GlobalUserRole.valueOf(it.name) }.toSet(),
 )
 

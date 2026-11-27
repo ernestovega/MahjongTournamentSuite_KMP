@@ -143,7 +143,7 @@ class LoadStatisticsUseCase(
         }
     }
 
-    private fun Player.toProfile() = PlayerProfile(displayName, emaId, country, photoUrl)
+    private fun Player.toProfile() = PlayerProfile(displayName, emaId, country, publicPhotoUrl)
 
     private fun slotNames(slots: List<TournamentPlayer>, registry: List<Player>): Map<Int, String> {
         val byEma = registry.associateBy { it.emaId }

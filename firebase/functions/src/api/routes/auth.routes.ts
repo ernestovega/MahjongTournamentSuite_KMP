@@ -9,7 +9,7 @@ import { getGlobalUserRole, getGlobalUserRoles } from "../../models/globalRole";
 import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
 import { setAccountEmaId } from "../../services/playerAccountsService";
-import { clearUserPhoto, countEnabledSuperAdmins, deleteManagedUser, getOwnProfile, setUserPhoto, updateOwnAlias } from "../../services/usersService";
+import { clearUserPhoto, countEnabledSuperAdmins, deleteManagedUser, getOwnProfile, setOwnPublicPhoto, setUserPhoto, updateOwnAlias } from "../../services/usersService";
 
 /** Turns the error code of the sign-in service into an answer that the apps can show to the user. */
 export function signInError(error: unknown): unknown {
@@ -104,6 +104,18 @@ export function authRouter(): Router {
     try {
       const decoded = res.locals.auth as { uid: string };
       await updateOwnAlias(decoded.uid, req.body?.alias);
+      const [profile, user] = await Promise.all([getOwnProfile(decoded.uid), auth.getUser(decoded.uid)]);
+      res.status(200).json({ ...profile, roles: getGlobalUserRoles(user) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // Whether the person shows a photo publicly (rankings, statistics, registrations).
+  router.put("/me/photo-visibility", requireAuth, async (req, res, next) => {
+    try {
+      const decoded = res.locals.auth as { uid: string };
+      await setOwnPublicPhoto(decoded.uid, req.body?.publicPhoto);
       const [profile, user] = await Promise.all([getOwnProfile(decoded.uid), auth.getUser(decoded.uid)]);
       res.status(200).json({ ...profile, roles: getGlobalUserRoles(user) });
     } catch (e) {

@@ -39,10 +39,16 @@ data class UserProfileDto(
     val emaId: String? = null,
     val photoUrl: String? = null,
     val hasOwnPhoto: Boolean = false,
+    val publicPhoto: Boolean = true,
     val roles: List<GlobalUserRoleDto> = emptyList(),
 )
 
 @Serializable
 data class UpdateOwnAliasRequestDto(
     val alias: String,
+)
+
+@Serializable
+data class UpdatePhotoVisibilityRequestDto(
+    val publicPhoto: Boolean,
 )

@@ -31,8 +31,10 @@ function readVersion(value: unknown): VersionStamp {
  * Added to the stored revision of each resource. Raise one when the answer of a route changes for data that did not
  * change, so the apps drop the copy they saved on the device and read it again.
  * emaPlayers 1: 22-nov-2026, the public registry gives the photos (the saved copies had none).
+ * emaPlayers 2: 27-nov-2026, each player has the photo that everyone sees (publicPhotoUrl): the own photo of the
+ * account first, none when the person hides it.
  */
-const ANSWER_FORMAT: Partial<Record<GlobalDataResource, number>> = { emaPlayers: 1 };
+const ANSWER_FORMAT: Partial<Record<GlobalDataResource, number>> = { emaPlayers: 2 };
 
 function withFormat(resource: GlobalDataResource, stamp: VersionStamp): VersionStamp {
   return { ...stamp, revision: stamp.revision + (ANSWER_FORMAT[resource] ?? 0) };

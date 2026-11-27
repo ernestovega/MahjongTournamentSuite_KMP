@@ -42,6 +42,9 @@
     <string name="profile_alias">Pseudo</string>
     <string name="profile_ema_number">Numéro EMA</string>
     <string name="profile_ema_number_info">Seul un administrateur peut modifier le numéro EMA.\nIl le fait dans l'écran de gestion des utilisateurs.</string>
+    <string name="profile_alias_info">Votre pseudo est privé : seuls vous et les organisateurs le voyez.\nIl sert à distinguer les personnes qui ont le même nom.\nIl n'apparaît jamais dans les classements, les statistiques ni ailleurs en public.</string>
+    <string name="profile_public_photo">Montrer ma photo en public</string>
+    <string name="profile_public_photo_info">Votre photo est visible publiquement dans les classements, les statistiques et les listes d'inscrits.\n\nSans photo à vous, celle de votre joueur EMA est utilisée.\nSans aucune des deux, aucune photo n'est affichée.\n\nDésactivez cette option pour n'afficher aucune photo, ni la vôtre ni celle de l'EMA.</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
     <string name="photo_edit">Modifier la photo</string>

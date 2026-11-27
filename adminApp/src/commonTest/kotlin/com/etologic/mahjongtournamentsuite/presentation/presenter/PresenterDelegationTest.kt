@@ -256,6 +256,8 @@ private class RecordingAuthRepository(
     override suspend fun updateAlias(alias: String) = unusedResult<UserProfile>()
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray) = unusedResult<UserProfile>()
     override suspend fun removePhoto() = unusedResult<UserProfile>()
+
+    override suspend fun setPublicPhoto(visible: Boolean) = unusedResult<UserProfile>()
     override suspend fun deleteAccount() = unusedResult<Unit>()
 }
 

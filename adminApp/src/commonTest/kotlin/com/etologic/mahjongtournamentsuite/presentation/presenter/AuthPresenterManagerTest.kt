@@ -68,6 +68,8 @@ private class ProfileAuthRepository(private val profile: AppResult<UserProfile>)
     override suspend fun updateAlias(alias: String): AppResult<UserProfile> = unused()
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = unused()
     override suspend fun removePhoto(): AppResult<UserProfile> = unused()
+
+    override suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> = unused()
     override suspend fun deleteAccount(): AppResult<Unit> = unused()
 
     private fun <T> unused(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

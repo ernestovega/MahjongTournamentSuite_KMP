@@ -56,12 +56,15 @@ import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
+import mahjongtournamentsuite.ui.generated.resources.profile_alias_info
 import mahjongtournamentsuite.ui.generated.resources.profile_delete_account
 import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_confirm
 import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_message
 import mahjongtournamentsuite.ui.generated.resources.profile_delete_account_title
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
+import mahjongtournamentsuite.ui.generated.resources.profile_public_photo
+import mahjongtournamentsuite.ui.generated.resources.profile_public_photo_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -73,6 +76,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The profile of the signed-in user. The user can change the alias and the photo.
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
+ * The alias is private and the photo is public: an info icon on each says so. [onSetPublicPhoto] hides the photo.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
  * The title is centered. The app version from [LocalAppVersion] sits faint in the top left corner.
  * The account actions (logout, withdraw the analytics consent, delete the account) are red outlined buttons under the form.
@@ -91,12 +95,19 @@ fun ProfileDialog(
     onDeleteAccount: (suspend () -> AppResult<Unit>)? = null,
     /** Runs after the account was deleted. The session has ended. */
     onAccountDeleted: () -> Unit = {},
+    /**
+     * Shows or hides the photo of the person in public places. Without it, or for an account without an EMA number
+     * (its photo is never public), the dialog has no switch. After a save, [onSaved] gets the new profile.
+     */
+    onSetPublicPhoto: (suspend (Boolean) -> AppResult<UserProfile>)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
     var photoProfile by remember(profile.uid) { mutableStateOf(profile) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
+    var savingVisibility by remember { mutableStateOf(false) }
+    var visibilityError by remember { mutableStateOf<UiText?>(null) }
     val trimmedAlias = alias.trim()
     val canSave = !saving && trimmedAlias.isNotEmpty() && trimmedAlias != profile.alias.trim()
 
@@ -127,6 +138,17 @@ fun ProfileDialog(
         }
 
         is AppResult.Failure -> result.error.toUiText()
+    }
+
+    fun setPublicPhoto(visible: Boolean) {
+        val call = onSetPublicPhoto ?: return
+        if (savingVisibility) return
+        savingVisibility = true
+        visibilityError = null
+        scope.launch {
+            savePhoto { call(visible) }?.let { visibilityError = it }
+            savingVisibility = false
+        }
     }
 
     var confirmingDelete by remember { mutableStateOf(false) }
@@ -222,15 +244,7 @@ fun ProfileDialog(
                                     value = emaId,
                                     onValueChange = {},
                                     label = { Text(stringResource(Res.string.profile_ema_number)) },
-                                    trailingIcon = {
-                                        AppTooltipBox(stringResource(Res.string.profile_ema_number_info)) {
-                                            Icon(
-                                                Icons.Outlined.Info,
-                                                contentDescription = stringResource(Res.string.profile_ema_number_info),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    },
+                                    trailingIcon = { InfoIcon(stringResource(Res.string.profile_ema_number_info)) },
                                     readOnly = true,
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
@@ -243,12 +257,34 @@ fun ProfileDialog(
                                     error = null
                                 },
                                 label = { Text(stringResource(Res.string.profile_alias)) },
+                                // The alias is private. The tooltip says who sees it and what it is for.
+                                trailingIcon = { InfoIcon(stringResource(Res.string.profile_alias_info)) },
                                 supportingText = error?.let { message -> { Text(message.asString()) } },
                                 isError = error != null,
                                 singleLine = true,
                                 enabled = !saving,
                                 modifier = Modifier.fillMaxWidth(),
                             )
+                        }
+                    }
+                    // Only the photo of an EMA player shows in public places, so only an account with an EMA number
+                    // chooses. The tooltip says where the photo shows and which one.
+                    if (onSetPublicPhoto != null && profile.emaId != null) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            MtsSwitchRow(
+                                checked = photoProfile.publicPhoto,
+                                onCheckedChange = { setPublicPhoto(it) },
+                                enabled = !saving && !savingVisibility,
+                                switchFirst = true,
+                                gap = 12.dp,
+                                modifier = Modifier.weight(1f, fill = false),
+                            ) {
+                                Text(stringResource(Res.string.profile_public_photo), Modifier.weight(1f, fill = false).padding(end = 12.dp))
+                            }
+                            InfoIcon(stringResource(Res.string.profile_public_photo_info))
+                        }
+                        visibilityError?.let {
+                            Text(it.asString(), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                         }
                     }
                     OutlinedTextField(
@@ -289,6 +325,14 @@ fun ProfileDialog(
             // Save sits under the fields it belongs to, inside the content.
             confirmButton = {},
         )
+    }
+}
+
+/** An info icon that shows [text] in a tooltip. The text is also what a screen reader says. */
+@Composable
+private fun InfoIcon(text: String) {
+    AppTooltipBox(text) {
+        Icon(Icons.Outlined.Info, contentDescription = text, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

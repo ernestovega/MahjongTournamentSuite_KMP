@@ -44,6 +44,9 @@ class TournamentsPresenter(
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto().profileUpdated(TelemetryProfileAction.PHOTO_REMOVED)
 
+    suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> = authRepository.setPublicPhoto(visible)
+        .profileUpdated(if (visible) TelemetryProfileAction.PHOTO_SHOWN else TelemetryProfileAction.PHOTO_HIDDEN)
+
     /** Deletes the own account. On success the session ends. */
     suspend fun deleteAccount(): AppResult<Unit> = authRepository.deleteAccount().profileUpdated(TelemetryProfileAction.ACCOUNT_DELETED)
 

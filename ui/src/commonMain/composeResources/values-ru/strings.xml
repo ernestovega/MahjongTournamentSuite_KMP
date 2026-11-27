@@ -41,6 +41,9 @@
     <string name="profile_alias">Псевдоним</string>
     <string name="profile_ema_number">Номер EMA</string>
     <string name="profile_ema_number_info">Изменить номер EMA может только администратор.\nОн делает это на экране управления пользователями.</string>
+    <string name="profile_alias_info">Ваш псевдоним виден только вам и организаторам.\nОн помогает различать людей с одинаковыми именами.\nОн никогда не показывается в рейтингах, статистике и других публичных местах.</string>
+    <string name="profile_public_photo">Показывать моё фото публично</string>
+    <string name="profile_public_photo_info">Ваше фото видно всем в рейтингах, статистике и списках участников.\n\nЕсли своего фото нет, используется фото вашего игрока EMA.\nЕсли нет ни одного, фото не показывается.\n\nВыключите, чтобы не показывать никакого фото: ни вашего, ни фото EMA.</string>
     <string name="photo_error_type">Выберите изображение JPEG, PNG, WebP или GIF.</string>
     <string name="photo_error_size">Выберите фото размером не более 5 МБ.</string>
     <string name="photo_edit">Изменить фото</string>

@@ -41,6 +41,9 @@
     <string name="profile_alias">Alias</string>
     <string name="profile_ema_number">EMA-Nummer</string>
     <string name="profile_ema_number_info">Nur ein Administrator kann die EMA-Nummer ändern.\nEr macht das in der Benutzerverwaltung.</string>
+    <string name="profile_alias_info">Dein Alias ist privat: Nur du und die Organisatoren sehen ihn.\nEr hilft, Personen mit gleichem Namen zu unterscheiden.\nEr erscheint nie in Ranglisten, Statistiken oder anderen öffentlichen Bereichen.</string>
+    <string name="profile_public_photo">Mein Foto öffentlich zeigen</string>
+    <string name="profile_public_photo_info">Dein Foto ist öffentlich in Ranglisten, Statistiken und Anmeldelisten zu sehen.\n\nOhne eigenes Foto wird das deines EMA-Spielers verwendet.\nOhne beide wird kein Foto gezeigt.\n\nSchalte dies aus, um gar kein Foto zu zeigen, weder deines noch das der EMA.</string>
     <string name="photo_error_type">Wähle ein JPEG-, PNG-, WebP- oder GIF-Bild.</string>
     <string name="photo_error_size">Wähle ein Foto mit höchstens 5 MB.</string>
     <string name="photo_edit">Foto bearbeiten</string>

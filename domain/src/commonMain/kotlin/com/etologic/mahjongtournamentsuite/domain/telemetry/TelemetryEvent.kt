@@ -450,10 +450,14 @@ object TelemetryProfileAction {
     const val ALIAS = "alias"
     const val PHOTO_UPDATED = "photo_updated"
     const val PHOTO_REMOVED = "photo_removed"
+
+    /** The person shows its photo publicly again, or hides it. */
+    const val PHOTO_SHOWN = "photo_shown"
+    const val PHOTO_HIDDEN = "photo_hidden"
     const val ACCOUNT_DELETED = "account_deleted"
 
     /** Every value of this object. A test checks it against the rules of GA4. */
-    val all: List<String> = listOf(ALIAS, PHOTO_UPDATED, PHOTO_REMOVED, ACCOUNT_DELETED)
+    val all: List<String> = listOf(ALIAS, PHOTO_UPDATED, PHOTO_REMOVED, PHOTO_SHOWN, PHOTO_HIDDEN, ACCOUNT_DELETED)
 }
 
 /** The values of [TelemetryParam.KIND] in `preference_changed`. */
