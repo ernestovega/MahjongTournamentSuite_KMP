@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.testTag
@@ -133,7 +134,9 @@ internal fun ConsentScreen(onAnswer: (Boolean) -> Unit, initiallyShowDetails: Bo
                     }
                 }
                 Spacer(Modifier.height(4.dp))
+                // A happy face on Accept asks for the help with a smile (Ernesto, 2026-11-27).
                 FocusedButton(onClick = { onAnswer(true) }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.SentimentVerySatisfied, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
                     ButtonText(stringResource(Res.string.consent_accept))
                 }
                 FocusedOutlinedButton(onClick = { onAnswer(false) }, modifier = Modifier.fillMaxWidth()) {

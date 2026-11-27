@@ -783,7 +783,7 @@ La première qui marche gagne</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Télécharger l'app</string>
     <string name="consent_title">Statistiques anonymes</string>
-    <string name="consent_message">L'application peut-elle envoyer des données anonymes sur son utilisation et ses erreurs ? Elles nous aident à l'améliorer. C'est facultatif : si vous refusez, l'application fonctionne de la même façon.</string>
+    <string name="consent_message">Vous nous aidez à améliorer l'application ? Elle n'envoie que des données anonymes d'utilisation et d'erreurs.</string>
     <string name="consent_more_details">Plus de détails</string>
     <string name="consent_why_title">Pourquoi</string>
     <string name="consent_why">Pour trouver les erreurs et voir quelles parties de l'application sont utilisées, afin de savoir quoi corriger et améliorer.</string>
