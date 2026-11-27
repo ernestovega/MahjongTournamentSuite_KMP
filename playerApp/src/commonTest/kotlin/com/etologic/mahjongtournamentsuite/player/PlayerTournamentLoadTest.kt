@@ -56,6 +56,8 @@ private class GatedServer {
     var isTeams = false
     var tournamentsResult: (() -> AppResult<List<Tournament>>)? = null
     var tablesFail = false
+    var playersFail = false
+    var registryFail = false
     var tables: List<Pair<TableState, List<TableHand>>> = emptyList()
 
     /** The own tables of the hidden rounds, with their results. Null: the request fails. */
@@ -93,7 +95,11 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
     }
 
     override suspend fun listTournamentPlayers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentPlayer>> = server.answer("players", refreshMode) {
-        AppResult.Success((1..4).map { TournamentPlayer(id = it, name = "", team = 1, assignedEmaId = "1000000$it") })
+        if (server.playersFail) {
+            AppResult.Failure(AppError.Network)
+        } else {
+            AppResult.Success((1..4).map { TournamentPlayer(id = it, name = "", team = 1, assignedEmaId = "1000000$it") })
+        }
     }
 
     override suspend fun getAllTablesWithHands(
@@ -185,7 +191,9 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
 }
 
 private class GatedPlayerRepository(private val server: GatedServer) : PlayerRepository {
-    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = server.answer("registry", refreshMode) { AppResult.Success(emptyList()) }
+    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = server.answer("registry", refreshMode) {
+        if (server.registryFail) AppResult.Failure(AppError.Network) else AppResult.Success(emptyList())
+    }
     override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = error("unused")
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
@@ -301,6 +309,22 @@ class PlayerTournamentLoadTest {
     @Test
     fun aFailedRequestFailsTheLoad() = runTest {
         server.tablesFail = true
+        server.release()
+
+        assertEquals(AppError.Network, assertIs<AppResult.Failure>(presenter.load("t1")).error)
+    }
+
+    @Test
+    fun aFailedListOfPlayersFailsTheLoad() = runTest {
+        server.playersFail = true
+        server.release()
+
+        assertEquals(AppError.Network, assertIs<AppResult.Failure>(presenter.load("t1")).error)
+    }
+
+    @Test
+    fun aFailedRegistryFailsTheLoad() = runTest {
+        server.registryFail = true
         server.release()
 
         assertEquals(AppError.Network, assertIs<AppResult.Failure>(presenter.load("t1")).error)

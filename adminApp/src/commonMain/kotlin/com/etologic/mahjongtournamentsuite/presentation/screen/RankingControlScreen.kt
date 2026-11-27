@@ -74,6 +74,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_next_
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_not_open_message
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_not_open_title
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_on_screen
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_part
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_paused
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_playback
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_control_show_hidden
@@ -175,8 +176,10 @@ private fun PlaybackCard(
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
+                // The screen of a long list that the room sees, as "Part 1 of 3" (Ernesto, 2026-11-27).
+                val part = if (status.parts > 1) stringResource(Res.string.ranking_control_part, status.part, status.parts) + " · " else ""
                 Text(
-                    if (control.playing) {
+                    part + if (control.playing) {
                         stringResource(Res.string.ranking_control_next_in, status.remainingSeconds)
                     } else {
                         stringResource(Res.string.ranking_control_paused)

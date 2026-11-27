@@ -10,7 +10,10 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -30,6 +33,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.DrawTournamentScheduleUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
+import com.etologic.mahjongtournamentsuite.presentation.components.SELECT_SEARCH_TAG
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -396,5 +400,53 @@ class CreateTournamentDialogFlowsUiTest {
         create()
         onNodeWithText("Contact email is required.").assertExists()
         assertEquals(emptyList(), world.requests)
+    }
+
+    @Test
+    fun heavyComputingCanBeTurnedOffAgain() = runComposeUiTest {
+        val world = show()
+        fillGeneral()
+        onNode(isToggleable() and hasText("Heavy computing")).performScrollTo().performClick()
+        waitForIdle()
+        pressClock += 1.seconds
+        onNode(isToggleable() and hasText("Heavy computing")).performScrollTo().performClick()
+        waitForIdle()
+        fillVenue()
+        fillSchedule()
+        create()
+        waitUntil(timeoutMillis = 10_000) { world.created.isNotEmpty() }
+    }
+
+    /** Opens the select field with [label], searches [search] when the menu has a search, and picks the option [option]. */
+    private fun ComposeUiTest.pick(label: String, search: String, option: String) {
+        onAllNodes(hasText(label)).onFirst().performScrollTo().performClick()
+        waitForIdle()
+        if (onAllNodesWithTag(SELECT_SEARCH_TAG).fetchSemanticsNodes().isNotEmpty()) {
+            onNodeWithTag(SELECT_SEARCH_TAG).performTextInput(search)
+            waitForIdle()
+        }
+        onAllNodes(hasText(option, substring = true) and !hasSetTextAction()).onFirst().performClick()
+        waitForIdle()
+    }
+
+    @Test
+    fun aSuperAdminPicksTheCountryTheTimeZoneAndTheMainOrganizer() = runComposeUiTest {
+        val world = show(World(access = AdminStatus("me", GlobalUserRole.SUPER_ADMIN)))
+        fillGeneral()
+        fillVenue()
+        pick("Country", "spa", "Spain")
+        pick("Time zone", "Lisbon", "Lisbon")
+        fillSchedule()
+        click("General")
+        create()
+        onNodeWithText("Choose the main organizer.").assertExists()
+
+        pick("Main organizer", "Madrid", "Madrid Club")
+        assertEquals(0, count("Choose the main organizer."))
+        create()
+        waitUntil(timeoutMillis = 10_000) { world.created.isNotEmpty() }
+        val request = world.requests.single()
+        assertEquals(listOf("org-es"), request.organizerIds)
+        assertEquals("Europe/Lisbon", request.timeZone)
     }
 }

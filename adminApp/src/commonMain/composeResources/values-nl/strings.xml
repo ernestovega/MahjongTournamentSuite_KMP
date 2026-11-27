@@ -471,9 +471,6 @@
     <string name="table_points">Tafelpunten</string>
     <string name="score_sum_zero">De vier scores tellen op tot 0.</string>
     <string name="score_sum_manual">De vier scores tellen op tot %1$s in plaats van 0.\nDe handmatige scores worden geaccepteerd zoals ze zijn.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, de som van de straffen</string>
-    <string name="score_sum_mismatch">De vier scores tellen op tot %1$s in plaats van %2$s.</string>
     <string name="score_has_penalty">%1$s heeft een straf van %2$s</string>
     <string name="score_matches_penalty">De scores tellen op tot %1$s in plaats van 0, maar dit klopt met de straffen.\n%2$s heeft een straf van %3$s.</string>
     <string name="score_matches_penalties">De scores tellen op tot %1$s in plaats van 0, maar dit klopt met de straffen.\n%2$s.</string>
@@ -1290,4 +1287,5 @@ De uitslagen worden bij de prijsuitreiking onthuld via Rondebeheer.</string>
     <string name="on_screen_badge">Op het scherm</string>
     <string name="ranking_rows_per_screen">Rijen per scherm</string>
     <string name="ranking_seconds_per_page">Seconden per pagina</string>
+    <string name="ranking_control_part">Deel %1$d van %2$d</string>
 </resources>

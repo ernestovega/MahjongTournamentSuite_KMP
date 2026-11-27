@@ -87,7 +87,29 @@ data class RankingDisplayStatus(
     val podiumSecret: Boolean = false,
     /** Which data the projection shows and when it loaded it, such as "Results r164 · loaded 10:00". */
     val dataStatus: String? = null,
+    /** The screen of the list on show, from 1, when the list takes more than one ([parts]) (Ernesto, 2026-11-27). */
+    val part: Int = 1,
+    val parts: Int = 1,
 )
+
+/**
+ * Which screen of a list of [rows] the room sees, and how many it takes, as the paging goes: [firstScreenRows] rows on
+ * the first screen (under the title), [screenRows] on the others, [perScroll] rows further each time. [firstItem] is
+ * the first item on screen; item 0 is the head of the list, row i is item i + 1.
+ */
+internal fun rankingScrollPart(rows: Int, perScroll: Int, firstScreenRows: Int, screenRows: Int, firstItem: Int): Pair<Int, Int> {
+    val step = perScroll.coerceAtLeast(1)
+    val starts = mutableListOf(0)
+    while (starts.size <= rows) {
+        val start = starts.last()
+        val lastVisibleItem = if (start == 0) firstScreenRows else start + screenRows - 1
+        val next = start + step + if (start == 0) 1 else 0
+        if (lastVisibleItem >= rows || next > rows) break
+        starts += next
+    }
+    val current = starts.indexOfLast { it <= firstItem }.coerceAtLeast(0) + 1
+    return current to starts.size
+}
 
 @Serializable
 internal data class RankingDisplayMessage(

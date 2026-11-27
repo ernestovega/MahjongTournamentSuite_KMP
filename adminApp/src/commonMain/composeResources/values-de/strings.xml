@@ -471,9 +471,6 @@
     <string name="table_points">Tischpunkte</string>
     <string name="score_sum_zero">Die vier Ergebnisse ergeben zusammen 0.</string>
     <string name="score_sum_manual">Die vier Ergebnisse ergeben zusammen %1$s statt 0.\nDie manuellen Ergebnisse werden so akzeptiert.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, die Summe der Strafen</string>
-    <string name="score_sum_mismatch">Die vier Ergebnisse ergeben zusammen %1$s statt %2$s.</string>
     <string name="score_has_penalty">%1$s hat eine Strafe von %2$s</string>
     <string name="score_matches_penalty">Die Ergebnisse ergeben zusammen %1$s statt 0, aber das passt zu den Strafen.\n%2$s hat eine Strafe von %3$s.</string>
     <string name="score_matches_penalties">Die Ergebnisse ergeben zusammen %1$s statt 0, aber das passt zu den Strafen.\n%2$s.</string>
@@ -1290,4 +1287,5 @@ Die Ergebnisse werden bei der Siegerehrung in der Rundensteuerung aufgedeckt.</s
     <string name="on_screen_badge">Auf dem Bildschirm</string>
     <string name="ranking_rows_per_screen">Zeilen pro Bildschirm</string>
     <string name="ranking_seconds_per_page">Sekunden pro Seite</string>
+    <string name="ranking_control_part">Teil %1$d von %2$d</string>
 </resources>

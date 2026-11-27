@@ -457,6 +457,38 @@ class AdminScreensScreenshotTest {
         RankingControlScreen(ONGOING, onOpenProjection = {}, onBack = {})
     }
 
+    /** The control while the projection pages on its own: the time left of the list on screen, the top three shown. */
+    @Test
+    fun rankingControlPlaying() = adminScreenshots(
+        "ranking-control-playing",
+        ready = {
+            waitForText(adminText("ranking_control_next_in", 5), substring = true)
+            waitForIdle()
+        },
+    ) {
+        val titles = listOf(Res.string.players, Res.string.teams, Res.string.chicken_hands, Res.string.best_hands).map { stringResource(it) }
+        remember {
+            RankingDisplayLink.reset()
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = true))
+            RankingDisplayLink.setStatus(
+                ONGOING,
+                RankingDisplayStatus(
+                    pages = listOf(
+                        RankingDisplayPage("players", titles[0], 3),
+                        RankingDisplayPage("teams", titles[1], 3),
+                        RankingDisplayPage("chicken-hands", titles[2], 3),
+                        RankingDisplayPage("best-hands", titles[3], 3),
+                    ),
+                    pageIndex = 1,
+                    remainingSeconds = 5,
+                    part = 1,
+                    parts = 3,
+                ),
+            )
+        }
+        RankingControlScreen(ONGOING, onOpenProjection = {}, onBack = {})
+    }
+
     @Test
     fun rankingStandalone() = adminScreenshots(
         "ranking-standalone",

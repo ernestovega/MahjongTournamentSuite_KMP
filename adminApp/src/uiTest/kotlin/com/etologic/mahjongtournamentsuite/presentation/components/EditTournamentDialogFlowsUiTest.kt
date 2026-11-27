@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -21,6 +22,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -28,6 +30,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -67,7 +70,12 @@ class EditTournamentDialogFlowsUiTest {
         organizerIds = listOf("org-es"),
     )
 
-    private class World(val access: AdminStatus?, organizationsFail: Boolean = false, deleteSucceeds: Boolean = false) {
+    private class World(
+        val access: AdminStatus?,
+        organizationsFail: Boolean = false,
+        deleteSucceeds: Boolean = false,
+        countriesFail: Boolean = false,
+    ) {
         val server = FakeTournamentRepository().apply { writesSucceed = true }
         val deleted = mutableListOf<String>()
         val store = AppMemoryStore().also { it.adminStatus.value = access }
@@ -75,6 +83,12 @@ class EditTournamentDialogFlowsUiTest {
             override suspend fun deleteTournament(tournamentId: String): AppResult<Unit> {
                 deleted += tournamentId
                 return if (deleteSucceeds) AppResult.Success(Unit) else AppResult.Failure(AppError.Network)
+            }
+
+            override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = if (countriesFail) {
+                AppResult.Failure(AppError.Network)
+            } else {
+                server.listCountries(refreshMode)
             }
         }
         val admin: AdminRepository = FakeAdminRepository(access?.role ?: GlobalUserRole.EDITOR).let { fake ->
@@ -368,6 +382,56 @@ class EditTournamentDialogFlowsUiTest {
         onAllNodes(hasClickAction() and hasText("Delete")).let { it[it.fetchSemanticsNodes().lastIndex] }.performClick()
         waitUntil(timeoutMillis = 5_000) { count("Network request failed.") > 0 }
         assertEquals(0, world.deletedCalls)
+    }
+
+    @Test
+    fun aFailedLoadOfTheCountriesShowsTheError() = runComposeUiTest {
+        show(world = World(superAdmin, countriesFail = true))
+        waitUntil(timeoutMillis = 5_000) { count("Network request failed.") > 0 }
+    }
+
+    @Test
+    fun aWrongShortNameAloneIsMarked() = runComposeUiTest {
+        val world = show()
+        field("Short name").performTextReplacement("")
+        save()
+        onNodeWithText("Use 1 to 10 characters.").assertExists()
+        assertEquals(0, world.dismissed)
+    }
+
+    @Test
+    fun aMissingCityAloneOpensTheVenueTab() = runComposeUiTest {
+        val world = show(valid.copy(hostCity = ""))
+        save()
+        onNodeWithText("Host city is required.").assertExists()
+        assertEquals(0, count("Select a host country."))
+        assertEquals(0, world.dismissed)
+    }
+
+    @Test
+    fun aWrongContactEmailOpensTheVenueTab() = runComposeUiTest {
+        val world = show(valid.copy(venue = valid.venue.copy(contactEmail = "not an email")))
+        save()
+        onNodeWithText("Time zone", substring = true).assertExists()
+        assertEquals(0, world.dismissed)
+    }
+
+    @Test
+    fun theVenueAndTheCountryCanBeChanged() = runComposeUiTest {
+        val world = show(valid.copy(hostCountry = ""))
+        save()
+        onNodeWithText("Select a host country.").assertExists()
+        field("Venue name").performScrollTo().performTextReplacement("Casino")
+        onAllNodes(hasText("Country")).onFirst().performScrollTo().performClick()
+        waitUntil(timeoutMillis = 5_000) { count("Italy") > 0 }
+        onNodeWithTag(SELECT_SEARCH_TAG).performTextInput("ital")
+        waitForIdle()
+        onNode(hasText("Italy") and !hasSetTextAction()).performClick()
+        waitForIdle()
+        assertEquals(0, count("Select a host country."))
+        pressClock += 1.seconds
+        save()
+        waitUntil(timeoutMillis = 5_000) { world.dismissed == 1 }
     }
 
     private fun ComposeUiTest.count(text: String, substring: Boolean) = onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().size

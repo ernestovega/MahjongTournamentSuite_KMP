@@ -471,9 +471,6 @@
     <string name="table_points">Bordspoäng</string>
     <string name="score_sum_zero">De fyra resultaten blir tillsammans 0.</string>
     <string name="score_sum_manual">De fyra resultaten blir tillsammans %1$s i stället för 0.\nDe manuella resultaten godtas som de är.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, summan av straffen</string>
-    <string name="score_sum_mismatch">De fyra resultaten blir tillsammans %1$s i stället för %2$s.</string>
     <string name="score_has_penalty">%1$s har ett straff på %2$s</string>
     <string name="score_matches_penalty">Resultaten blir tillsammans %1$s i stället för 0, men det stämmer med straffen.\n%2$s har ett straff på %3$s.</string>
     <string name="score_matches_penalties">Resultaten blir tillsammans %1$s i stället för 0, men det stämmer med straffen.\n%2$s.</string>
@@ -1290,4 +1287,5 @@ Resultaten visas vid prisutdelningen från Omgångskontroll.</string>
     <string name="on_screen_badge">På skärmen</string>
     <string name="ranking_rows_per_screen">Rader per skärm</string>
     <string name="ranking_seconds_per_page">Sekunder per sida</string>
+    <string name="ranking_control_part">Del %1$d av %2$d</string>
 </resources>

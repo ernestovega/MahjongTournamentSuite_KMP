@@ -50,10 +50,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.score_has_penalty
 import mahjongtournamentsuite.adminapp.generated.resources.score_matches_penalties
 import mahjongtournamentsuite.adminapp.generated.resources.score_matches_penalty
 import mahjongtournamentsuite.adminapp.generated.resources.score_sum_manual
-import mahjongtournamentsuite.adminapp.generated.resources.score_sum_mismatch
 import mahjongtournamentsuite.adminapp.generated.resources.score_sum_zero
-import mahjongtournamentsuite.adminapp.generated.resources.score_target_penalties
-import mahjongtournamentsuite.adminapp.generated.resources.score_target_zero
 import mahjongtournamentsuite.adminapp.generated.resources.seat_positions_first
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.table_done
@@ -333,8 +330,8 @@ private sealed interface ScoreCheck {
     /** The seat has a penalty and the sum of the scores matches the penalties. */
     data class Penalty(val amount: Long, val hint: UiText) : ScoreCheck
 
-    /** The scores do not add up as expected. [accepted] is true for manual scores, which any sum may have. */
-    data class Mismatch(val hint: UiText, val accepted: Boolean) : ScoreCheck
+    /** Manual scores that do not add up to zero. They are accepted: manual totals already include the penalties. */
+    data class Mismatch(val hint: UiText) : ScoreCheck
 
     data object None : ScoreCheck
 }
@@ -353,24 +350,13 @@ private fun scoreChecks(
             List(4) { ScoreCheck.Valid(UiText.of(Res.string.score_sum_zero)) }
         } else {
             List(4) {
-                ScoreCheck.Mismatch(
-                    UiText.of(Res.string.score_sum_manual, signedText(sum)),
-                    accepted = true,
-                )
+                ScoreCheck.Mismatch(UiText.of(Res.string.score_sum_manual, signedText(sum)))
             }
         }
     }
+    // A calculated sum always matches the penalties: every hand adds up to zero before its penalties.
     val penalties = editor.seatPenaltyTotals
     val expected = penalties.sum()
-    if (sum != expected) {
-        val target = if (expected == 0L) UiText.of(Res.string.score_target_zero) else UiText.of(Res.string.score_target_penalties, signedText(expected))
-        return List(4) {
-            ScoreCheck.Mismatch(
-                UiText.of(Res.string.score_sum_mismatch, signedText(sum), target),
-                accepted = false,
-            )
-        }
-    }
     if (expected == 0L) return List(4) { ScoreCheck.Valid(UiText.of(Res.string.score_sum_zero)) }
     fun nameOf(seat: Int): UiText = playerNameOrNull(seatIds[seat], playerNamesById) ?: SeatLabelTexts[seat]
     val penalized = (0..3).filter { penalties[it] != 0L }
@@ -413,7 +399,7 @@ private fun ScoreCheckMark(check: ScoreCheck) {
             Icon(
                 Icons.Default.Warning,
                 contentDescription = check.hint.asString(),
-                tint = if (check.accepted) MtsTheme.colors.scoreWarning else MaterialTheme.colorScheme.error,
+                tint = MtsTheme.colors.scoreWarning,
                 modifier = Modifier.size(22.dp),
             )
         }

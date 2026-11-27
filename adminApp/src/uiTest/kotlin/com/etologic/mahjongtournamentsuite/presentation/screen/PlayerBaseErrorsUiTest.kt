@@ -93,6 +93,23 @@ private class PhotoFailingRegistry(private val players: List<Player>) : PlayerRe
     }
 }
 
+/** A registry where the players and their photos save. */
+private class PhotoSavingRegistry(players: List<Player>) : PlayerRepository by PhotoFailingRegistry(players) {
+    val calls = mutableListOf<String>()
+    override suspend fun createPlayer(player: Player): AppResult<Player> {
+        calls += "create:${player.emaId}"
+        return AppResult.Success(player)
+    }
+    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> {
+        calls += "update:${player.emaId}"
+        return AppResult.Success(Unit)
+    }
+    override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> {
+        calls += "photo:$emaId"
+        return AppResult.Success(Player(emaId = emaId, firstName = "Saved", lastName = "Photo", country = "GBR", photoUrl = "https://photos.test/$emaId.png"))
+    }
+}
+
 /** A registry where the check before a delete works and the delete itself fails. */
 private class DeleteFailingRegistry(players: List<Player>) : PlayerRepository by FailingRegistry(players) {
     override suspend fun tournamentsOfEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerTournaments>> = AppResult.Success(emptyList())
@@ -375,5 +392,42 @@ class PlayerBaseErrorsUiTest {
         onAllNodes(hasText("Delete players (1)") and hasClickAction() and hasAnyAncestor(isDialog())).onLast().press()
         awaitText("OK")
         awaitText("10001")
+    }
+
+    @Test
+    fun aPhotoThatUploadsIsSavedWithThePlayer() = runComposeUiTest {
+        val registry = PhotoSavingRegistry(listOf(ada, babbage))
+        show(registry)
+        selectAda()
+        nextImage = SelectedImage("ada.png", "image/png", ByteArray(16))
+        pressChip("Choose new photo")
+        awaitText("ada.png")
+        onAllNodes(hasText("Save") and hasClickAction()).onFirst().pressAction()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Save player changes", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodes(hasText("Save") and hasClickAction()).onLast().press()
+        waitUntil(timeoutMillis = 5_000) { registry.calls.size == 2 }
+        assertEquals(listOf("update:00010001", "photo:00010001"), registry.calls)
+    }
+
+    @Test
+    fun aNewPlayerWithAPhotoIsCreatedWithIt() = runComposeUiTest {
+        val registry = PhotoSavingRegistry(listOf(ada, babbage))
+        show(registry)
+        awaitText("10001")
+        onNodeWithTextClick("New player")
+        awaitText("Add player")
+        nextImage = SelectedImage("grace.png", "image/png", ByteArray(16))
+        onNode(hasText("Choose photo") and hasClickAction() and hasAnyAncestor(isDialog())).press()
+        awaitText("grace.png")
+        dialogField("EMA number").performTextReplacement("99999")
+        dialogField("First name").performTextReplacement("Grace")
+        dialogField("Last name").performTextReplacement("Hopper")
+        onNode(hasText("Country") and hasAnyAncestor(isDialog())).press()
+        awaitText("No country")
+        onAllNodesWithText("No country").onFirst().press()
+        waitForIdle()
+        onNode(hasText("Add player") and hasClickAction() and hasAnyAncestor(isDialog())).pressAction()
+        waitUntil(timeoutMillis = 5_000) { registry.calls.size == 2 }
+        assertEquals(listOf("create:00099999", "photo:00099999"), registry.calls)
     }
 }

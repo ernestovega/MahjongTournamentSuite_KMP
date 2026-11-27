@@ -113,6 +113,8 @@ class PlayerSessionPresenterTest {
         assertEquals("New", (presenter.updateAlias("New") as AppResult.Success).value.alias)
         assertIs<AppResult.Success<UserProfile>>(presenter.updatePhoto("image/png", byteArrayOf(1)))
         assertIs<AppResult.Success<UserProfile>>(presenter.removePhoto())
+        assertIs<AppResult.Success<UserProfile>>(presenter.setPublicPhoto(visible = true))
+        assertIs<AppResult.Success<UserProfile>>(presenter.setPublicPhoto(visible = false))
         assertTrue(telemetry.properties.isNotEmpty())
     }
 

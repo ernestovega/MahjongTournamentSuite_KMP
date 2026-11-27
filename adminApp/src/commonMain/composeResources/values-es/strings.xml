@@ -471,9 +471,6 @@
     <string name="table_points">Puntos de mesa</string>
     <string name="score_sum_zero">Las cuatro puntuaciones suman 0.</string>
     <string name="score_sum_manual">Las cuatro puntuaciones suman %1$s en lugar de 0.\nLas puntuaciones manuales se aceptan tal como están.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, la suma de las penalizaciones</string>
-    <string name="score_sum_mismatch">Las cuatro puntuaciones suman %1$s en lugar de %2$s.</string>
     <string name="score_has_penalty">%1$s tiene una penalización de %2$s</string>
     <string name="score_matches_penalty">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones.\n%2$s tiene una penalización de %3$s.</string>
     <string name="score_matches_penalties">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones.\n%2$s.</string>
@@ -1290,4 +1287,5 @@ Los resultados se revelan en la entrega de premios desde Control de ronda.</stri
     <string name="on_screen_badge">En pantalla</string>
     <string name="ranking_rows_per_screen">Filas por pantalla</string>
     <string name="ranking_seconds_per_page">Segundos por página</string>
+    <string name="ranking_control_part">Parte %1$d de %2$d</string>
 </resources>

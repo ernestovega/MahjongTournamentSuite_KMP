@@ -15,7 +15,7 @@ on:
   push:
     branches: [main]
   # Every night at 02:30 UTC (03:30 in Madrid) every test runs on the default branch (develop), and nothing is deployed. GitHub emails the owner
-  # when it fails. Until the gate below is on (23-dec-2026), this is how a broken test shows up.
+  # when it fails.
   schedule:
     - cron: "30 2 * * *"
   workflow_dispatch:
@@ -42,7 +42,6 @@ jobs:
   # The checks below run at the same time. The job "Build and test" at the end is the one the ruleset of main requires.
   functions:
     name: Functions tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -72,7 +71,6 @@ jobs:
 
   integration:
     name: Functions integration tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -102,7 +100,6 @@ jobs:
 
   kotlin:
     name: Kotlin tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     # A hung UI test must not use a long time.
     timeout-minutes: 20
@@ -134,7 +131,6 @@ jobs:
 
   scripts:
     name: Repository scripts, translations and web start tests
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -164,7 +160,6 @@ jobs:
 
   web:
     name: Build web apps
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -248,13 +243,12 @@ jobs:
             [ "$result" = success ] || exit 1
           done
 
-  # The gate before production (audit 24-nov-2026, item 11). With the repository variable PROD_DEPLOY_GATE = on, a push
-  # to main runs every test, then deploys main to staging, and only then to production. A failed test or staging stops
-  # it. Without the variable (as until production: Ernesto, 2026-11-19) the deploy runs no test and skips staging.
-  # Settings > Secrets and variables > Actions > Variables. See docs/ci-deploy.md.
+  # The gate before production, always on (Ernesto, 2026-11-27): a push to main, or a run by hand on main, runs every
+  # test, then deploys main to staging, and only then to production and Google Play. A failed test or staging stops it.
+  # See docs/ci-deploy.md.
   staging:
     name: Deploy to staging first
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PROD_DEPLOY_GATE == 'on'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [functions, integration, kotlin, scripts, web]
     uses: ./.github/workflows/staging.yml
     with:
@@ -267,12 +261,8 @@ jobs:
   deploy:
     name: Deploy to Firebase
     needs: [functions, integration, kotlin, scripts, web, staging]
-    # !cancelled(): the jobs above are skipped when the gate is off, and a skipped need must not stop the deploy.
-    if: >-
-      !cancelled() && github.event_name != 'pull_request' && github.event_name != 'schedule' && github.ref == 'refs/heads/main' &&
-      (vars.PROD_DEPLOY_GATE != 'on' || github.event_name != 'push' || (
-        needs.functions.result == 'success' && needs.integration.result == 'success' && needs.kotlin.result == 'success' &&
-        needs.scripts.result == 'success' && needs.web.result == 'success' && needs.staging.result == 'success'))
+    # Without a status function, the job runs only when every need above succeeded.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production
@@ -345,6 +335,8 @@ jobs:
   # started by hand on main, from the Actions tab. To publish on every push again, put back `github.event_name != 'pull_request'`.
   play:
     name: Publish to Google Play
+    # Only after every test and staging passed, like the deploy.
+    needs: [functions, integration, kotlin, scripts, web, staging]
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60

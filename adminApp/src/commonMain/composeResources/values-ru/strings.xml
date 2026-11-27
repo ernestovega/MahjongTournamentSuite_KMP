@@ -477,9 +477,6 @@
     <string name="table_points">Очки стола</string>
     <string name="score_sum_zero">Сумма четырёх счетов равна 0.</string>
     <string name="score_sum_manual">Сумма четырёх счетов равна %1$s, а не 0.\nРучной счёт принимается как есть.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, сумме штрафов</string>
-    <string name="score_sum_mismatch">Сумма четырёх счетов равна %1$s, а не %2$s.</string>
     <string name="score_has_penalty">У %1$s штраф %2$s</string>
     <string name="score_matches_penalty">Сумма счетов равна %1$s, а не 0, но это совпадает со штрафами.\nУ %2$s штраф %3$s.</string>
     <string name="score_matches_penalties">Сумма счетов равна %1$s, а не 0, но это совпадает со штрафами.\n%2$s.</string>
@@ -1344,4 +1341,5 @@
     <string name="on_screen_badge">На экране</string>
     <string name="ranking_rows_per_screen">Строк на экране</string>
     <string name="ranking_seconds_per_page">Секунд на страницу</string>
+    <string name="ranking_control_part">Часть %1$d из %2$d</string>
 </resources>
