@@ -444,7 +444,7 @@ private fun OrganizationCard(organization: Organization, details: String, enable
 
 private val OrganizationCardMinWidth = 220.dp
 
-private val OrganizationCardCornerSize = 28.dp
+private val OrganizationCardCornerSize = 40.dp
 
 /** The triangle of the top start corner of a card: its two sides are the edges of the card. */
 private val OrganizationCardCornerShape = GenericShape { size, layoutDirection ->
