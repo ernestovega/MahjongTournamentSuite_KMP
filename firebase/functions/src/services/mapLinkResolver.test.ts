@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 
 import { resolveMapLink, type RedirectFetcher } from "./mapLinkResolver";
 
@@ -59,5 +59,26 @@ describe("resolveMapLink", () => {
 
   it("refuses an empty link", async () => {
     await assert.rejects(resolveMapLink("  ", fetcherFor({})));
+  });
+
+  it("asks Google itself without following the redirect, and refuses a link that cannot be opened", async () => {
+    const asked: Array<{ url: string; redirect?: string }> = [];
+    const answers = [
+      () => new Response(null, { status: 302, headers: { location: "https://www.google.com/maps/place/Club" } }),
+      () => {
+        throw new Error("offline");
+      },
+    ];
+    const fetching = mock.method(globalThis, "fetch", async (url: string, init?: RequestInit) => {
+      asked.push({ url, redirect: init?.redirect });
+      return answers.shift()!();
+    });
+    try {
+      assert.equal(await resolveMapLink("https://maps.app.goo.gl/abc"), "https://www.google.com/maps/place/Club");
+      await assert.rejects(resolveMapLink("https://maps.app.goo.gl/def"), /could not be opened/);
+    } finally {
+      fetching.mock.restore();
+    }
+    assert.deepEqual(asked.map((call) => call.redirect), ["manual", "manual"]);
   });
 });

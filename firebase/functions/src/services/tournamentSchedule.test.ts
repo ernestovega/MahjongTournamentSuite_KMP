@@ -6,6 +6,8 @@ import {
   normalizeMatchDuration,
   normalizeMatchEndMode,
   normalizeRoundSchedules,
+  readStoredRoundSchedules,
+  readStoredAgendaItems,
   readStoredMatchDuration,
   readStoredMatchEndMode,
   requireCompleteRoundSchedules,
@@ -118,4 +120,15 @@ test("refuses round schedules and agenda items that are not valid", () => {
   assert.throws(() => normalizeAgendaItems({ title: "Lunch" }), /must be an array/);
   assert.throws(() => normalizeAgendaItems(Array.from({ length: 101 }, () => ({ title: "x" }))), /at most 100 rows/);
   assert.throws(() => normalizeAgendaItems([{ title: "x".repeat(121), date: "2027-02-06", startTime: "13:00" }]), /at most 120 characters/);
+});
+
+test("refuses rows that are not objects or name a round that does not exist, and reads broken stored rows as empty", () => {
+  assert.throws(() => normalizeRoundSchedules([null], 2, "2027-02-06", "2027-02-07"), /Invalid round schedule$/);
+  assert.throws(() => normalizeRoundSchedules([{ roundId: 3 }], 2, "2027-02-06", "2027-02-07"), /Invalid round schedule id/);
+  assert.throws(() => normalizeAgendaItems(["Lunch"]), /Invalid agenda item/);
+  assert.deepEqual(readStoredRoundSchedules("broken", 2, "2027-02-06", "2027-02-07"), [
+    { roundId: 1, date: null, startTime: null },
+    { roundId: 2, date: null, startTime: null },
+  ]);
+  assert.deepEqual(readStoredAgendaItems("broken"), []);
 });
