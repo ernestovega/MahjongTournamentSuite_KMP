@@ -117,7 +117,7 @@ fun RankingApp(tournamentId: String, modules: List<Module> = adminAppModules) {
         ProvideAppLanguage {
             val themeController = rememberThemeController()
             CompositionLocalProvider(LocalThemeController provides themeController) {
-                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
                     TrackedScreen("Rankings") { RankingStandaloneScreen(tournamentId) }
                 }
             }
@@ -137,7 +137,7 @@ fun TableQrApp(
 ) {
     AppWithModules(modules = modules) {
         ProvideAppLanguage {
-            MtsTheme(useDarkTheme = false) {
+            MtsTheme(useDarkTheme = false, adminApp = true) {
                 TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl, organizerName, organizerColor) }
             }
         }
@@ -203,7 +203,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
         LocalBackgroundExports provides backgroundExports,
     ) {
         TrackPreferenceChanges()
-        MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+        MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
             BackgroundExportsHost(backgroundExports) {
                 NavHost(
                     navController = navController,

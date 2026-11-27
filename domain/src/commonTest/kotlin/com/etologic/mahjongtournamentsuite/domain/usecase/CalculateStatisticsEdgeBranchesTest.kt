@@ -64,6 +64,20 @@ class CalculateStatisticsEdgeBranchesTest {
         assertEquals(1, result.players.first { it.playerId == 3 }.handsWon)
     }
 
+    @Test
+    fun aHandOfOnlyPenaltiesCountsAndAScoreWithoutWinnerDoesNot() {
+        val hands = listOf(
+            hand(1, winner = "1", loser = "2", score = "10"),
+            hand(3, winner = "", loser = "-", score = "0", penalties = listOf("-10", "", "", "")),
+            hand(4, winner = "", loser = "", score = "7"),
+        )
+        val result = calculate(players, listOf(RankingTable(table(scores = listOf("0", "0", "0", "0")), hands)))
+        val east = result.players.first { it.playerId == 1 }
+
+        assertEquals(2, east.handsPlayed, "the won hand and the hand of only a penalty")
+        assertEquals(10, east.highestPenalty)
+    }
+
     private fun table(scores: List<String>) = TableState(
         roundId = 1,
         tableId = 1,

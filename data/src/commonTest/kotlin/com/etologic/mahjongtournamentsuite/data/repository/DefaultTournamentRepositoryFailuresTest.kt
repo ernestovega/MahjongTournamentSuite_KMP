@@ -35,6 +35,7 @@ class DefaultTournamentRepositoryFailuresTest {
     private val requests = mutableListOf<String>()
     private var refuse = false
     private var refuseManifest = false
+    private var manifest = """{"resources":{"tournaments":{"revision":3}},"globalResources":{},"tableVersions":{}}"""
 
     private val signedOut = object : AuthRepository by FakeAuthRepository() {
         override suspend fun currentSession(): AuthSession? = null
@@ -46,7 +47,7 @@ class DefaultTournamentRepositoryFailuresTest {
             requests += "${request.method.value} $path"
             when {
                 path.endsWith("/sync/manifest") && refuseManifest -> respond(ByteReadChannel("{}"), HttpStatusCode.ServiceUnavailable)
-                path.endsWith("/sync/manifest") -> jsonResponse("""{"resources":{"tournaments":{"revision":3}},"globalResources":{},"tableVersions":{}}""")
+                path.endsWith("/sync/manifest") -> jsonResponse(manifest)
                 refuse -> respond(ByteReadChannel("""{"error":"refused"}"""), HttpStatusCode.InternalServerError)
                 path == "/countries" -> jsonResponse("""{"countries":[{"code":"ES","name":"Spain"}]}""")
                 path == "/me" -> jsonResponse("""{"emaId":"1","tournaments":[{"tournamentId":"t1","playerId":3,"teamId":0}]}""")
@@ -120,5 +121,18 @@ class DefaultTournamentRepositoryFailuresTest {
     fun thePlayerAppReadsTheTournamentsWithoutAnAccount() = runTest {
         assertIs<AppResult.Success<*>>(repository(auth = signedOut, publicReads = true).listTournaments(RefreshMode.FORCE))
         assertTrue(requests.any { it.startsWith("GET /public/") }, requests.toString())
+    }
+
+    @Test
+    fun thePublicListLoadsWithoutARevisionWhenTheManifestHasNone() = runTest {
+        manifest = """{"resources":{},"globalResources":{},"tableVersions":{}}"""
+
+        assertIs<AppResult.Success<*>>(repository(auth = signedOut, publicReads = true).listTournaments(RefreshMode.FORCE))
+    }
+
+    @Test
+    fun theGeneratedFilesAndTheListOfTheAdminAppNeedAnAccount() = runTest {
+        assertIs<AppResult.Failure>(repository(auth = signedOut).generateTableQrCodes("t1", perSheet = 6))
+        assertIs<AppResult.Failure>(repository(auth = signedOut).listTournaments(RefreshMode.FORCE))
     }
 }

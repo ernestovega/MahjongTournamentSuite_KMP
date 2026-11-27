@@ -28,7 +28,7 @@ All of them are in `designsystem/src/commonMain/kotlin/com/etologic/mahjongtourn
 | Read | What | Example |
 | --- | --- | --- |
 | `MaterialTheme.colorScheme` | The Material roles: primary, surface, error... | `colorScheme.onSurfaceVariant` |
-| `MtsTheme.colors` | The colors of the domain: gain, warning, info, medals, levels, text on the green header | `MtsTheme.colors.gain`, `MtsTheme.colors.level(level)` (ui) |
+| `MtsTheme.colors` | The colors of the domain: gain, warning, info, medals, levels, the header (top bar and tabs: green in the player app, purple in the admin app) and its text | `MtsTheme.colors.gain`, `MtsTheme.colors.level(level)` (ui) |
 | `MaterialTheme.typography` | The Material type scale: Gang of Three only on the big titles (display, headline, titleLarge, titleMedium); buttons, chips, tabs, fields, small titles and data use the text font | `typography.titleMedium` |
 | `MtsTheme.typography` | `score`, `scoreLarge` (bold, digits of equal width), `emphasis` | `MtsTheme.typography.score` |
 | `MtsTheme.spacing` | `xxs` 2, `xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32, `xxxl` 48 dp | `padding(MtsTheme.spacing.sm)` |
@@ -45,6 +45,11 @@ admin screens read it, so a screen does not write `if (compact) 12.dp else 16.dp
 In light mode the page is light grey (`background` and `surface`, #E9EBEE) and the cards are white
 (`surfaceContainerHigh` and `surfaceContainerHighest`), so a card stands out without a border (Ernesto, 24-nov-2026).
 The dark mode keeps its colors.
+
+No container is pale green (Ernesto, 27-nov-2026, for contrast). The light `secondaryContainer`,
+`tertiaryContainer` and `surfaceVariant` (selected chips, notices, placeholders, tracks, stat tiles) are the grey
+#D5D9DE (`AppLightGrayContainer`), a little darker than the page so they still show on it; the tooltips of the dark
+theme (`inverseSurface`) are the page grey #E9EBEE. The brand green stays for fills, borders and text.
 
 A screen whose content is a single list (Players, Teams, Tournaments, Users, Organizations, App errors) does not
 wrap it in a big card: it uses `SectionCard(container = false)`, which keeps the title, subtitle and actions but
@@ -98,6 +103,10 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
   `verticalScroll`, like the hands of a table), the top shadow goes under the header, where the list goes out of sight,
   not over it. Lazy lists find their pinned header by themselves; a `ScrollState` gets it from `pinnedStart`
   (`ScreenScroll.pinnedHeaderEnd` in a `ScreenColumn`, `StickyHeaderHost.pinnedHeaderEnd` in the admin table editor).
+- **The header tells the app** (Ernesto, 2026-11-27): the top bar and the tabs under it are `MtsTheme.colors.header`,
+  green in the player app and purple in the admin app (`adminHeader`, the purple of the expert level: #8E5CD9 light,
+  #6538AD dark). Every `MtsTheme` of the admin app passes `adminApp = true`. The button of the player app that opens
+  the admin app is filled with `adminHeader` (`AppTopBarButton(containerColor = ...)`).
 - **No gap under the top bar** (Ernesto, 2026-11-26): a list or a scrolling screen starts right under the top bar.
   Its top margin goes inside the scroll (`contentPadding` of a lazy list, the top padding of a scrollable
   `ScreenColumn`), so the content goes out of sight right at the bar and the top shadow starts there. The same at the

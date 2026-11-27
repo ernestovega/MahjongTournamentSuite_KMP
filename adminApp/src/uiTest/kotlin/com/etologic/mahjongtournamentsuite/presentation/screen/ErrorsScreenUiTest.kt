@@ -2,9 +2,14 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
@@ -13,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -22,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorReportEntry
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -29,6 +36,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeControll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import kotlinx.coroutines.CompletableDeferred
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -125,7 +133,11 @@ class ErrorsScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact) {
+                CompositionLocalProvider(
+                    LocalThemeController provides themeController,
+                    LocalCompactLayout provides compact,
+                    LocalAppLogo provides ColorPainter(Color.Green),
+                ) {
                     MtsTheme(useDarkTheme = false) { ErrorsScreen(rememberNavController()) }
                 }
             }
@@ -170,6 +182,22 @@ class ErrorsScreenUiTest {
         waitUntil(timeoutMillis = 5_000) { admin.errorGroupRequests.size >= 2 }
         assertNotNull(admin.errorGroupRequests.last().first)
         assertNull(admin.errorGroupRequests.first().first)
+    }
+
+    @Test
+    fun anotherPeriodKeepsTheFiltersOnScreenAndShowsTheLogoOnlyInTheList() = runComposeUiTest {
+        val admin = show()
+        val gate = CompletableDeferred<Unit>()
+        admin.errorGroupsGate = gate
+        onNodeWithText("Last 24 hours").performClick()
+        waitUntil(timeoutMillis = 5_000) { admin.errorGroupRequests.size >= 2 }
+        // The filters stay, and the logo is the small one of the list, not the large one that covers the screen.
+        onNodeWithText("Last 24 hours").assertIsDisplayed()
+        val logo = "Mahjong Tournament Suite logo"
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithContentDescription(logo).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithContentDescription(logo).assertCountEquals(1)[0].assertWidthIsEqualTo(72.dp)
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithContentDescription(logo).fetchSemanticsNodes().isEmpty() }
     }
 
     @Test

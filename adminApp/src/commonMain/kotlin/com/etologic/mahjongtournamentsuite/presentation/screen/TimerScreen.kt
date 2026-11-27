@@ -131,7 +131,7 @@ fun TimerStandaloneScreen(
     val telemetry = LocalTelemetry.current
     val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
 
-    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+    MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
             // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
             Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {

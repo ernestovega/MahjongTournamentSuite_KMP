@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterListOff
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsDa
 import com.etologic.mahjongtournamentsuite.domain.usecase.headToHead
 import com.etologic.mahjongtournamentsuite.domain.usecase.only
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlin.coroutines.cancellation.CancellationException
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.compare_scope_all
 import mahjongtournamentsuite.ui.generated.resources.compare_scope_together
@@ -39,7 +39,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_message
 import mahjongtournamentsuite.ui.generated.resources.stats_group_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_player_tournaments
 import org.jetbrains.compose.resources.stringResource
-import kotlin.coroutines.cancellation.CancellationException
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /**
  * The statistics of [filters], the same in both apps. The screen loads the data of [StatisticsFilters.view]:

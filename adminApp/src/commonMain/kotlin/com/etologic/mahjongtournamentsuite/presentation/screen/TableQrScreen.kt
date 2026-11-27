@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
@@ -48,6 +46,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
 import com.etologic.mahjongtournamentsuite.domain.model.physicalTableCount
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
@@ -62,20 +61,21 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
+import kotlin.time.Clock
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_card_size
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_hint
-import mahjongtournamentsuite.adminapp.generated.resources.table_qr_open_app
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_no_tables
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_open_app
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_per_sheet
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_print_info
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_save
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_top_bar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import kotlin.time.Clock
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsSegmentedButton as SegmentedButton
 
 /** The cards per A4 sheet that the PDF offers. */
 private val CARDS_PER_SHEET = listOf(1, 2, 4, 6, 8)

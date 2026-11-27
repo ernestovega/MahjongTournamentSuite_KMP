@@ -182,4 +182,46 @@ describe("registration refusals", () => {
   it("does not find a link name that nobody uses", async () => {
     assert.equal((await server.request("GET", `/public/registration-links/nobody-${tag}`)).status, 404);
   });
+
+  it("asks an account without an EMA number for one", async () => {
+    const id = await createTournament();
+    const account = await createAccount({ role: "PLAYER" });
+    const response = await server.request("POST", `/registrations/${id}`, { token: account.token, body: {} });
+    assert.equal(response.status, 400);
+    assert.equal(codeOf(response.body), "NO_EMA_ID");
+  });
+
+  it("lets a registered person change the food restrictions, and a captain rename the team", async () => {
+    const id = await createTournament({ isTeams: true });
+    const person = await signedIn(id);
+
+    const food = await server.request("PUT", `/registrations/${id}/me`, { token: person.account.token, body: { foodRestrictions: "Vegan", consent: true } });
+    assert.equal(food.status, 200, JSON.stringify(food.body));
+
+    const team = `/registrations/${id}/me/team`;
+    assert.equal((await server.request("POST", team, { token: person.account.token, body: { name: "Wind" } })).status, 200);
+    const renamed = await server.request("PUT", team, { token: person.account.token, body: { name: "Water" } });
+    assert.equal(renamed.status, 200, JSON.stringify(renamed.body));
+    const teams = await db.collection(`tournaments/${id}/registrationTeams`).get();
+    assert.ok(teams.docs.some((doc) => doc.get("name") === "Water"), "the team has its new name");
+  });
+
+  it("gives the team of a captain to the new EMA number of the captain", async () => {
+    const id = await createTournament({ isTeams: true });
+    const captain = await signedIn(id);
+    assert.equal((await server.request("POST", `/registrations/${id}/me/team`, { token: captain.account.token, body: { name: "Wind" } })).status, 200);
+    const newEmaId = await newEma();
+
+    const moved = await asAdmin("PUT", `/tournaments/${id}/registrations/${captain.emaId}`, { newEmaId });
+    assert.equal(moved.status, 200, JSON.stringify(moved.body));
+    const stored = await db.doc(`tournaments/${id}/registrations/${newEmaId}`).get();
+    assert.ok(stored.exists);
+  });
+
+  it("refuses an import without a file", async () => {
+    const id = await createTournament();
+    const response = await asAdmin("POST", `/tournaments/${id}/registrations/import`, { fileName: "answers.xlsx" });
+    assert.equal(response.status, 400);
+    assert.equal(codeOf(response.body), "EMPTY_FILE");
+  });
 });

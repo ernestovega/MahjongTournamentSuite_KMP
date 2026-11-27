@@ -64,6 +64,11 @@ describe("tournament and organization refusals", () => {
     { what: "an organization color that is not #RRGGBB", method: "POST", path: "/admin/organizations", body: { ...organization, primaryColor: "green" }, status: 400, message: /RRGGBB/ },
     { what: "a logo type without its data", method: "POST", path: "/admin/organizations", body: { ...organization, logoContentType: "image/png" }, status: 400, message: /go together/ },
     { what: "a change to an organization that does not exist", method: "PUT", path: "/admin/organizations/no-such-organization", body: organization, status: 404, message: /not found/ },
+    { what: "a logo that is not JPEG or PNG", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo GIF", logoContentType: "image/gif", logoDataBase64: "R0lGODlh" }, status: 400, message: /JPEG or PNG/ },
+    { what: "an empty logo", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo empty", logoContentType: "image/png", logoDataBase64: "====" }, status: 400, message: /./ },
+    { what: "a logo over 2 MB", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo big", logoContentType: "image/png", logoDataBase64: Buffer.alloc(2 * 1024 * 1024 + 1).toString("base64") }, status: 400, message: /2 MB/ },
+    { what: "a PNG logo that is not a PNG", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo fake", logoContentType: "image/png", logoDataBase64: Buffer.from("not a png at all").toString("base64") }, status: 400, message: /does not match/ },
+    { what: "a JPEG logo that is not a JPEG", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo fake jpeg", logoContentType: "image/jpeg", logoDataBase64: Buffer.from("nope").toString("base64") }, status: 400, message: /does not match/ },
   ];
 
   it("answers each bad request with its status and a message", async () => {

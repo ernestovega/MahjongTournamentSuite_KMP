@@ -239,6 +239,13 @@ Apply these rules to every new or changed dialog:
   corners. A folding card header is clickable edge to edge, with its margins inside the click area.
 - The hover and focus layers are stronger than the Material default (`MtsRippleConfiguration` in `MtsTheme`), so a
   hovered filled button shows the change.
+- Only one mark at a time, by the last input used (`MtsInputModality`, kept up to date by `InputModalityTracker` in
+  `ui`): with the mouse only the hover shows; with the keyboard only the pink ring (Material's own focus layer is off
+  in `MtsRippleConfiguration`). A mouse press moves the focus to the pressed control (`Modifier.focusOnMousePress`),
+  so Tab and the arrows go on from there. Custom focus marks read `keyboardInUse()`.
+- The ring goes just inside the drawn edge (inset), so no parent clips it. Chips, tabs and segmented buttons use
+  `MtsFilterChip`, `MtsInputChip`, `MtsTab`, `MtsTextTab` and `MtsSegmentedButton` (designsystem `MtsFocusRing.kt`), never
+  the raw Material ones.
 - `SingleHighlightUiTest` and `SingleHighlightConventionTest` (ui jvmTest) guard these rules.
 
 ## Checkboxes, Switches And Radio Buttons

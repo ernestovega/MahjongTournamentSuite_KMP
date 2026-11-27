@@ -4,6 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -22,6 +25,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -34,12 +38,17 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -47,17 +56,15 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsInputModality
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -65,7 +72,7 @@ import kotlin.time.TimeSource
 private val FocusHaloPadding = 3.dp
 
 /** The circle that an icon button draws inside its 48 dp touch area. */
-private val IconButtonVisibleSize = 40.dp
+internal val IconButtonVisibleSize = 40.dp
 private val ButtonPressThreshold = 500.milliseconds
 
 /** Controls buttons in the current app screen. The back button is outside this scope. */
@@ -385,28 +392,46 @@ private val emptyFunction: () -> Unit = {}
 
 private val FocusRingWidth = 2.dp
 
+/** True while the person uses the keyboard. Only then the focus shows (see [MtsInputModality]). */
+@Composable
+fun keyboardInUse(): Boolean {
+    InputModalityTracker()
+    return MtsInputModality.keyboard
+}
+
 /**
- * Draws a keyboard focus ring in [shape] around the control. It is a line in the accent color (pink), not a fill, so
- * the control still lights up in one place only (its own hover and focus layer) and the ring does not mix with the
- * green of the buttons.
+ * Draws a keyboard focus ring in [shape] around the control while it has the focus and the keyboard is in use. It is
+ * a line in the accent color (pink), not a fill, so it does not mix with the green of the controls.
  */
 @Composable
 fun Modifier.focusRing(focused: Boolean, shape: Shape): Modifier =
-    if (focused) border(FocusRingWidth, MaterialTheme.colorScheme.tertiary, shape) else this
+    if (focused && keyboardInUse()) border(FocusRingWidth, MaterialTheme.colorScheme.tertiary, shape) else this
 
 /**
- * The room around a control for its keyboard focus. A control lights up in one place only:
+ * A press of the mouse moves the focus to the control under it, so Tab and the arrows go on from there. A finger does
+ * not: on a phone the focus would leave a text field and close its keyboard.
+ */
+@Composable
+fun Modifier.focusOnMousePress(): Modifier {
+    val requester = remember { FocusRequester() }
+    return focusRequester(requester).pointerInput(requester) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            if (down.type == PointerType.Mouse) runCatching { requester.requestFocus() }
+        }
+    }
+}
+
+/**
+ * The room around a control for its keyboard focus. A control lights up in one place only, and only one mark shows
+ * at a time: the hover while the mouse is in use, the focus while the keyboard is (Ernesto, 27-nov).
  *
- * - With [lightsUpContent] false (the default) the control inside draws its own hover and focus layer, as every
- *   Material button, chip, card or ripple does. The container then draws nothing on hover, and on keyboard focus a
- *   pink ring right on the edge of the control, in its [shape]. Before, it also filled a rounded square behind the
- *   control, so a round icon button showed a circle inside a square.
+ * - With [lightsUpContent] false (the default) the control inside draws its own hover layer, as every Material
+ *   button, chip, card or ripple does. The container draws the pink [keyboardFocusRing] on the edge of the control.
  * - With [lightsUpContent] true the control inside has no indication of its own (`indication = null`). The container
- *   fills its area in [shape] on hover and on focus, and that fill is the only one.
+ *   fills its area in [shape] on hover, and on focus while the keyboard is in use. That fill is the only mark.
  *
- * [visibleHeight] is the height of what the control draws when that is less than its touch area (a Material button is
- * 40 dp high inside a 48 dp touch area). The ring then sits on the drawn edge, not around the touch area. A control as
- * narrow as the touch area (an icon button) is as wide as it is high.
+ * A press of the mouse on the control moves the focus to it ([focusOnMousePress]).
  */
 @Composable
 fun FocusHighlightContainer(
@@ -418,41 +443,20 @@ fun FocusHighlightContainer(
     visibleHeight: Dp? = null,
     content: @Composable () -> Unit,
 ) {
-    val focused by interactionSource.collectIsFocusedAsState()
-    val hovered by interactionSource.collectIsHoveredAsState()
     val boxModifier = if (lightsUpContent) {
+        val focused by interactionSource.collectIsFocusedAsState()
+        val hovered by interactionSource.collectIsHoveredAsState()
+        val lit = (showFocusHighlight && focused && keyboardInUse()) || hovered
         modifier
             .padding(FocusHaloPadding)
             .clip(shape)
-            .background(
-                if ((showFocusHighlight && focused) || hovered) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                } else {
-                    Color.Transparent
-                },
-            )
+            .background(if (lit) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent)
     } else {
-        val ringColor = MaterialTheme.colorScheme.tertiary
-        val touchSize = LocalMinimumInteractiveComponentSize.current
-        val showRing = showFocusHighlight && focused
         modifier
             .padding(FocusHaloPadding)
-            .drawWithContent {
-                drawContent()
-                if (!showRing) return@drawWithContent
-                val stroke = FocusRingWidth.toPx()
-                val drawnHeight = visibleHeight?.toPx()?.coerceAtMost(size.height) ?: size.height
-                val narrow = touchSize.isSpecified && size.width <= touchSize.toPx() + 0.5f
-                val drawnWidth = if (visibleHeight != null && narrow) minOf(size.width, drawnHeight) else size.width
-                // The line goes just outside the drawn edge, touching it.
-                val ringSize = Size(drawnWidth + stroke, drawnHeight + stroke)
-                val outline = shape.createOutline(ringSize, layoutDirection, this)
-                translate((size.width - ringSize.width) / 2f, (size.height - ringSize.height) / 2f) {
-                    drawOutline(outline, ringColor, style = Stroke(stroke))
-                }
-            }
+            .keyboardFocusRing(interactionSource, shape, visibleHeight, enabled = showFocusHighlight)
     }
-    Box(modifier = boxModifier, propagateMinConstraints = true) {
+    Box(modifier = boxModifier.focusOnMousePress(), propagateMinConstraints = true) {
         content()
     }
 }

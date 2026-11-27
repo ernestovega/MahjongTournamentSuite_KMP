@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
@@ -33,14 +34,14 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /** The color of every tab row: the color of the top bar. */
 @Composable
-fun mtsTabRowColor(): Color = MaterialTheme.colorScheme.primaryContainer
+fun mtsTabRowColor(): Color = MtsTheme.colors.header
 
 /** The color of the text, the icons and the indicator of a tab row: the color of the title of the top bar. */
 @Composable
@@ -120,10 +121,12 @@ fun MtsTab(
     icon: (@Composable () -> Unit)? = null,
 ) {
     val content = mtsTabContentColor()
+    val source = remember { MutableInteractionSource() }
     Tab(
         selected = selected,
         onClick = onClick,
-        modifier = modifier.height(if (icon != null) 52.dp else 40.dp),
+        modifier = modifier.height(if (icon != null) 52.dp else 40.dp).keyboardFocusRing(source, MaterialTheme.shapes.small),
+        interactionSource = source,
         selectedContentColor = content,
         unselectedContentColor = content.copy(alpha = 0.7f),
     ) {

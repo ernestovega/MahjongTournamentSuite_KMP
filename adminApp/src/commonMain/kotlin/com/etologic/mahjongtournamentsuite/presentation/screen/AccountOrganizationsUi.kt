@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,6 +27,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AccountRequest
 import com.etologic.mahjongtournamentsuite.domain.model.AccountRequestKind
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
@@ -66,6 +65,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.remove_from_organizat
 import mahjongtournamentsuite.adminapp.generated.resources.remove_from_organizations_request_none
 import mahjongtournamentsuite.adminapp.generated.resources.remove_organization_n
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsInputChip as InputChip
 
 /** The longest reason that the server keeps for a request. */
 private const val MAX_REQUEST_REASON_LENGTH = 1000

@@ -77,7 +77,7 @@ fun UnsavedChangesDialog(
 @Preview(device = Devices.DESKTOP)
 @Composable
 private fun UnsavedChangesDialogPreview() {
-    MtsTheme(useDarkTheme = false) {
+    MtsTheme(useDarkTheme = false, adminApp = true) {
         UnsavedChangesDialog(
             isSaving = false,
             onSave = {},
