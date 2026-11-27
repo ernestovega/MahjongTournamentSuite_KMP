@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_cancel
@@ -87,22 +86,6 @@ fun ChosenStatisticsBar(
             ButtonText(changeLabel, maxLines = 1, softWrap = false)
         }
     }
-}
-
-/** The bar of a chosen player: the flag and the name. A player of the EMA list without country is a guest: the flag is the globe. */
-@Composable
-fun ChosenPlayerBar(profile: PlayerProfile, changeLabel: String, onChange: () -> Unit, maxWidth: Dp) {
-    ChosenStatisticsBar(
-        title = profile.name,
-        changeLabel = changeLabel,
-        onChange = onChange,
-        maxWidth = maxWidth,
-        leading = if (profile.country.isNotBlank() || profile.emaId.isNotBlank()) {
-            { CountryFlag(profile.country, width = 24.dp) }
-        } else {
-            null
-        },
-    )
 }
 
 /**
