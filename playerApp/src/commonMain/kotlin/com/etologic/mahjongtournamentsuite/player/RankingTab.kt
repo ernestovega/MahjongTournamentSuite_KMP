@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -83,6 +86,9 @@ import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_hand
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_short
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_frozen_notice
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_hidden_message
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_hidden_title
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_points_score
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_title_after_round
@@ -134,7 +140,9 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
     val byRound = remember(view) { view.rankingsByRound() }
     val playedRounds = remember(byRound) { byRound.keys.sorted() }
     var afterRound by rememberSaveable { mutableStateOf<Int?>(null) }
-    val round = afterRound?.takeIf { it in byRound }
+    // While the results are hidden, the ranking stays as it was after the last visible round, and says so.
+    val hiddenFrom = view.tournament.resultsHiddenFromRound
+    val round = afterRound?.takeIf { it in byRound } ?: hiddenFrom?.let { it - 1 }?.takeIf { it in byRound }
     val rankings = round?.let(byRound::getValue) ?: view.rankings
     var sharing by remember { mutableStateOf(false) }
     // Before the first hand every player has 0 points: the tab says that the ranking comes later, without the rows.
@@ -241,12 +249,15 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
 
     RankingRows(
         rows,
-        emptyText = stringResource(Res.string.ranking_empty),
+        emptyTitle = if (hiddenFrom != null) stringResource(Res.string.ranking_hidden_title) else stringResource(Res.string.ranking_empty_title),
+        emptyText = if (hiddenFrom != null) stringResource(Res.string.ranking_hidden_message) else stringResource(Res.string.ranking_empty),
+        emptyIcon = if (hiddenFrom != null) Icons.Default.VisibilityOff else Icons.Default.Leaderboard,
         onPlayerClick = onPlayerClick,
         // The choice of the round shows once a round has a ranking. Share needs lines to share.
         roundButton = if (playedRounds.isEmpty()) null else ({ RankingRoundButton(playedRounds, round, { afterRound = it }) }),
         onShare = { sharing = true },
         tabs = {
+            if (hiddenFrom != null && rows.isNotEmpty()) RankingFrozenNotice(hiddenFrom - 1)
             if (kinds.size > 1) {
                 val selectedIndex = kinds.indexOf(kind)
                 HideOnScrollTabs(kinds.size) {
@@ -277,11 +288,29 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
     )
 }
 
+/** The ranking stays as it was after [round]: the tournament hides the later results until the prize giving. */
+@Composable
+private fun RankingFrozenNotice(round: Int) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 16.dp).testTag("ranking_frozen_notice"),
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(Icons.Default.VisibilityOff, contentDescription = null, Modifier.size(18.dp))
+            Text(stringResource(Res.string.ranking_frozen_notice, round), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
 /** The tabs of the rankings, then the list. The button that scrolls to the own line and the search are the first item of the list. */
 @Composable
 private fun RankingRows(
     rows: List<RankingRow>,
+    emptyTitle: String,
     emptyText: String,
+    emptyIcon: ImageVector,
     onPlayerClick: (Int) -> Unit,
     tabs: @Composable () -> Unit,
     /** The button that chooses the ranking of now or of a past round. Null before any round has a ranking. */
@@ -291,7 +320,7 @@ private fun RankingRows(
     if (rows.isEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             tabs()
-            EmptyState(Icons.Default.Leaderboard, stringResource(Res.string.ranking_empty_title), emptyText)
+            EmptyState(emptyIcon, emptyTitle, emptyText)
         }
         return
     }

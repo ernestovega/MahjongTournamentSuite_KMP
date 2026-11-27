@@ -112,7 +112,8 @@ class LoadStatisticsUseCase(
             is AppResult.Success -> result.value
             is AppResult.Failure -> return@coroutineScope result
         }
-        val rankingTables = tables.map { (table, hands) -> RankingTable(table, hands) }
+        // A table whose results the tournament hides until the prize giving has none to count.
+        val rankingTables = tables.filterNot { (table, _) -> table.resultsHidden }.map { (table, hands) -> RankingTable(table, hands) }
         val statistics = calculateStatistics(
             players = slots,
             tables = rankingTables,

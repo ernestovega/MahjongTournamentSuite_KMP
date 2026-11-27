@@ -90,6 +90,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.rounds
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
 import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs
+import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results_from_round
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results_description
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results
 import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs_description
 import mahjongtournamentsuite.adminapp.generated.resources.tab_data
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
@@ -186,6 +190,11 @@ fun EditTournamentDialog(
     var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
     var settingsIsPublic by remember(tournament.id) { mutableStateOf(tournament.isPublic) }
     var settingsShowTableDiffs by remember(tournament.id) { mutableStateOf(tournament.showTableDiffs) }
+    var settingsHideResults by remember(tournament.id) { mutableStateOf(tournament.hideResultsFromRound != null) }
+    // Ernesto: the last round by default, so the final ranking stays secret until the prize giving.
+    var settingsHideFromRound by remember(tournament.id) {
+        mutableStateOf(tournament.hideResultsFromRound ?: tournament.numRounds.coerceAtLeast(1))
+    }
     var settingsMatchDurationText by remember(tournament.id) { mutableStateOf(tournament.matchDurationMinutes.toString()) }
     var settingsMatchExtraText by remember(tournament.id) { mutableStateOf(tournament.matchExtraMinutes.toString()) }
     // An old tournament has no time zone. The form suggests the zone of this device, so the server can check the time.
@@ -395,6 +404,26 @@ fun EditTournamentDialog(
                                         enabled = !isLoading,
                                         onCheckedChange = { settingsShowTableDiffs = it },
                                     )
+                                    TournamentOptionSwitch(
+                                        label = stringResource(Res.string.hide_results),
+                                        description = stringResource(Res.string.hide_results_description),
+                                        checked = settingsHideResults,
+                                        enabled = !isLoading,
+                                        onCheckedChange = { settingsHideResults = it },
+                                    )
+                                    if (settingsHideResults) {
+                                        val roundCount = tournament.numRounds.coerceAtLeast(1)
+                                        SelectField(
+                                            label = stringResource(Res.string.hide_results_from_round),
+                                            options = (1..roundCount).map { round ->
+                                                SelectOption(round, stringResource(Res.string.round_n, round))
+                                            },
+                                            selected = settingsHideFromRound.coerceIn(1, roundCount),
+                                            onSelect = { settingsHideFromRound = it },
+                                            enabled = !isLoading,
+                                            modifier = Modifier.fillMaxWidth().testTag("hide_results_from_round"),
+                                        )
+                                    }
                                 }
                                 EditTournamentTab.VENUE -> {
                                     TournamentPlaceFields(
@@ -795,6 +824,7 @@ fun EditTournamentDialog(
                                         timeZone = settingsTimeZone.trim(),
                                         isPublic = settingsIsPublic,
                                         showTableDiffs = settingsShowTableDiffs,
+                                        hideResultsFromRound = if (settingsHideResults) settingsHideFromRound else 0,
                                     )
                                 ) {
                                     is AppResult.Success -> {
