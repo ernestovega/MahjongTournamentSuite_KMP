@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { applyRoundClockAction as applyEdge, readStoredRoundClock as readEdge } from "./roundClock";
 
 import {
   applyRoundClockAction,
@@ -126,4 +127,10 @@ test("Stop ends the match and the extra time now, also during a pause", () => {
   assert.equal(applyRoundClockAction(stopped, { kind: "stop" }, 120, NOW + 41 * MIN, extra), stopped);
   assert.throws(() => applyRoundClockAction(null, { kind: "stop" }, 120, NOW));
   assert.deepEqual(parseRoundClockAction({ action: "stop" }), { kind: "stop" });
+});
+
+test("a stored clock that is no object or misses its pause is read, and a negative delay is refused", () => {
+  assert.equal(readEdge("12"), null);
+  assert.deepEqual(readEdge({ startedAtMs: 1000 }), { startedAtMs: 1000, pausedAtMs: null, pausedMs: 0, adjustMs: 0 });
+  assert.throws(() => applyEdge(null, { kind: "start", agoMs: -1 }, 120, 5000), /The delay of the action must be zero or more/);
 });

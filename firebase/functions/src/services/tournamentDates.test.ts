@@ -17,3 +17,8 @@ test("rejects invalid dates and reversed periods", () => {
 test("counts both dates in a valid period", () => {
   assert.equal(inclusiveDayCount("2025-02-01", "2025-02-02"), 2);
 });
+
+test("counts no days between dates that are not valid", () => {
+  assert.equal(inclusiveDayCount("2026-02-30", "2026-03-01"), 0);
+  assert.equal(inclusiveDayCount("2026-03-01", "soon"), 0);
+});

@@ -49,3 +49,10 @@ test("the tables to close name their round, count once and come sorted", () => {
   assert.throws(() => parseTablesToComplete({ tables: [{ roundId: 0, tableId: 1 }] }), /tables must be/);
   assert.throws(() => parseTablesToComplete({ tables: [{ roundId: 1 }] }), /tables must be/);
 });
+
+test("reads a change of the seats, refuses too many tables and reads a table that is no object as empty", () => {
+  assert.deepEqual(parseRoundControlChange({ seats: "open" }), { seats: "open" });
+  const many = Array.from({ length: 2001 }, (_, index) => ({ roundId: 1, tableId: index + 1 }));
+  assert.throws(() => parseTablesToComplete({ tables: many }), /At most 2000 tables at once/);
+  assert.throws(() => parseTablesToComplete({ tables: [null] }));
+});

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { normalizeAgendaItems as agendaEdge } from "./tournamentSchedule";
 
 import {
   normalizeAgendaItems,
@@ -131,4 +132,8 @@ test("refuses rows that are not objects or name a round that does not exist, and
     { roundId: 2, date: null, startTime: null },
   ]);
   assert.deepEqual(readStoredAgendaItems("broken"), []);
+});
+
+test("leaves out agenda items without a title and reads a blank date as none", () => {
+  assert.deepEqual(agendaEdge([{}, { title: "Lunch", date: "  ", startTime: null }]), [{ title: "Lunch", date: null, startTime: null }]);
 });

@@ -338,3 +338,11 @@ test("draws cards without a country, a valid color, a number of rounds or the da
   });
   assert.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
 });
+
+test("reads the proof rounds that are not objects or miss their round and date", async () => {
+  const pdf = await buildIdCardProofPdf({
+    shortName: "MMC", year: "2026", primaryColor: "#02B16B",
+    roundSchedules: [null, "x", { roundId: "first" }, { roundId: 2, date: "2026-04-17", startTime: "10:00" }] as never,
+  });
+  assert.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
+});

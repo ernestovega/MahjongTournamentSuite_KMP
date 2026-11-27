@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { calculateBestHandScores as bestEdge } from "./tournamentContentRules";
 
 import {
   blocksAssignmentChangeAfterProgress,
@@ -80,4 +81,8 @@ test("a tournament needs at least 16 players in groups of 4", () => {
   for (const count of [0, 4, 8, 12, 18, 17, -16, 16.5]) assert.equal(isValidPlayerCount(count), false, `${count}`);
   for (const count of [16, 20, 60, 128]) assert.equal(isValidPlayerCount(count), true, `${count}`);
   assert.equal(isValidPlayerCount("16"), false);
+});
+
+test("a done hand without a score gives no best hand", () => {
+  assert.deepEqual(bestEdge([{ isDone: true }]), []);
 });

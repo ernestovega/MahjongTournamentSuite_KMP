@@ -52,3 +52,18 @@ test("ID list contains every value used by the ID cards", async () => {
   assert.equal(sheet.views[0].state, "frozen");
   assert.equal(sheet.autoFilter?.toString(), "A1:K1");
 });
+
+test("lists players without a number of rounds, with missing and empty tables", async () => {
+  const xlsx = await buildIdList({
+    tournamentShortName: "MMC", year: "2026", primaryColor: "#02B16B",
+    players: [
+      { playerId: 1, name: "ANA RUIZ", country: "Spain", countryCode: "ESP", teamName: null, tableNumbers: [3, 0] },
+      { playerId: 2, name: "BEA GIL", country: "", countryCode: "", teamName: null, tableNumbers: [] },
+    ],
+  });
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(xlsx as unknown as ExcelJS.Buffer);
+  const sheet = workbook.getWorksheet("ID list")!;
+  const header = (sheet.getRow(1).values as unknown[]).filter((value) => typeof value === "string" && value.startsWith("Round"));
+  assert.equal(header.length, 2);
+});
