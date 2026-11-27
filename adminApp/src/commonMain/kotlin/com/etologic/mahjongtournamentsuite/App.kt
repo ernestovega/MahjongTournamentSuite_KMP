@@ -89,6 +89,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import org.koin.core.module.Module
 
 /** [appVersion] is the version shown to the user. The web entry point passes the web version. */
 @Composable
@@ -98,8 +99,10 @@ fun App(
     appVersion: String = AppVersion.admin,
     /** True in the Android app of the suite, which also holds the player part. See [AppKoin]. */
     isolatedKoin: Boolean = false,
+    /** The graph of the app. Tests put fakes over the real repositories. */
+    modules: List<Module> = adminAppModules,
 ) {
-    AppWithModules(isolatedKoin) {
+    AppWithModules(isolatedKoin, modules) {
         CompositionLocalProvider(LocalAppVersion provides appVersion) {
             ProvideAppLanguage {
                 MahjongTournamentSuiteApp(sessionStorage)
@@ -109,8 +112,8 @@ fun App(
 }
 
 @Composable
-fun RankingApp(tournamentId: String) {
-    AppWithModules {
+fun RankingApp(tournamentId: String, modules: List<Module> = adminAppModules) {
+    AppWithModules(modules = modules) {
         ProvideAppLanguage {
             val themeController = rememberThemeController()
             CompositionLocalProvider(LocalThemeController provides themeController) {
@@ -124,8 +127,15 @@ fun RankingApp(tournamentId: String) {
 
 /** The QR code of a tournament in a window of its own, to project it. It needs no data: the window gets the link. */
 @Composable
-fun TableQrApp(tournamentName: String, link: String, logoUrl: String? = null, organizerName: String = "", organizerColor: String = "") {
-    AppWithModules {
+fun TableQrApp(
+    tournamentName: String,
+    link: String,
+    logoUrl: String? = null,
+    organizerName: String = "",
+    organizerColor: String = "",
+    modules: List<Module> = adminAppModules,
+) {
+    AppWithModules(modules = modules) {
         ProvideAppLanguage {
             MtsTheme(useDarkTheme = false) {
                 TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl, organizerName, organizerColor) }
@@ -135,8 +145,12 @@ fun TableQrApp(tournamentName: String, link: String, logoUrl: String? = null, or
 }
 
 @Composable
-private fun AppWithModules(isolatedKoin: Boolean = false, content: @Composable () -> Unit) {
-    AppKoin(isolated = isolatedKoin, modules = adminAppModules) {
+private fun AppWithModules(
+    isolatedKoin: Boolean = false,
+    modules: List<Module> = adminAppModules,
+    content: @Composable () -> Unit,
+) {
+    AppKoin(isolated = isolatedKoin, modules = modules) {
         val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
         CompositionLocalProvider(
             LocalTelemetry provides telemetry,
@@ -157,8 +171,8 @@ private fun AppWithModules(isolatedKoin: Boolean = false, content: @Composable (
 }
 
 @Composable
-fun TimerApp(tournamentId: String?, initialRound: Int = 1) {
-    AppWithModules {
+fun TimerApp(tournamentId: String?, initialRound: Int = 1, modules: List<Module> = adminAppModules) {
+    AppWithModules(modules = modules) {
         // The Timer without a tournament has its own name, so the reports tell the two apart.
         TrackedScreen(if (tournamentId == null) "IndependentTimer" else "Timer") {
             TimerStandaloneScreen(tournamentId = tournamentId, initialRound = initialRound)
