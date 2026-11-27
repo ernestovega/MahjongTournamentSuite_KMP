@@ -61,7 +61,7 @@ export async function loadAccountsByEmail(emails: string[]): Promise<Map<string,
     const emaId = profile.get("emaId");
     return [profile.id, typeof emaId === "string" && emaId.length > 0 ? emaId : null] as const;
   }));
-  found.forEach((info, email) => owners.set(email, { ...info, emaId: emaIdOfUid.get(info.uid) ?? null }));
+  found.forEach((info, email) => owners.set(email, { ...info, emaId: emaIdOfUid.get(info.uid) as string | null }));
   return owners;
 }
 
@@ -108,7 +108,8 @@ export async function getPlayerRegistration(
 /** The ids of the tournaments that hold an EMA id in a slot. */
 export async function tournamentIdsOfEmaId(emaId: string): Promise<string[]> {
   const slots = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).get();
-  return slots.docs.flatMap((slot) => (slot.ref.parent.parent == null ? [] : [slot.ref.parent.parent.id]));
+  // A slot of the collection group "players" always lives under a tournament.
+  return slots.docs.map((slot) => slot.ref.parent.parent!.id);
 }
 
 export async function listPlayerTournamentIds(uid: string): Promise<string[]> {
@@ -140,9 +141,7 @@ async function claimEmaId(uid: string, emaId: string): Promise<void> {
 }
 
 /** Releases the EMA id of the account. The slots that hold the id stay, and they have no account any more. */
-async function releaseEmaId(uid: string): Promise<void> {
-  const emaId = await emaIdOfAccount(uid);
-  if (emaId == null) return;
+async function releaseEmaId(uid: string, emaId: string): Promise<void> {
   await db.doc(`emaIdIndex/${emaId}`).delete();
   await db.doc(`users/${uid}`).update({ emaId: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
   await bumpTournamentsOfEmaId(emaId);
@@ -169,7 +168,7 @@ export async function setAccountEmaId(params: { uid: string; emaId: string | nul
   const current = typeof profile.get("emaId") === "string" ? String(profile.get("emaId")) : null;
   if (current === params.emaId) return;
   if (params.emaId != null) await assertEmaIdAvailable(params.emaId, params.uid);
-  if (current != null) await releaseEmaId(params.uid);
+  if (current != null) await releaseEmaId(params.uid, current);
   // The own photo of the account, or its choice to show none, is the public photo of its EMA player.
   const photo = readAccountPhoto(profile.data());
   if (photo.photoUrl != null || !photo.publicPhoto) await bumpGlobalDataVersion("emaPlayers");

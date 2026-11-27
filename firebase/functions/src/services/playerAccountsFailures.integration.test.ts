@@ -72,4 +72,57 @@ describe("player accounts and EMA players that fail", () => {
     }
     assert.equal((await storage.file(`playerPhotos/${withPhoto}.jpg`).exists())[0], false);
   });
+
+  it("reads an account without an email", () => {
+    assert.deepEqual(playerAccountsService.accountInfoOf({ uid: "u", providerData: [] }), { uid: "u", email: null, hasPassword: false });
+  });
+
+  it("finds the owners of emails that have no EMA id or an empty one", async () => {
+    const account = await createAccount({ role: "EDITOR" });
+    const blank = await createAccount({ role: "EDITOR" });
+    await db.doc(`users/${blank.uid}`).set({ emaId: "" }, { merge: true });
+    const owners = await playerAccountsService.loadAccountsByEmail([account.email, blank.email]);
+    assert.deepEqual([owners.get(account.email)?.emaId, owners.get(blank.email)?.emaId], [null, null]);
+  });
+
+  it("gives an EMA id claimed by two accounts at the same time to only one of them", async () => {
+    const [first, second] = [await createAccount({ role: "PLAYER" }), await createAccount({ role: "PLAYER" })];
+    const emaId = randomEmaId();
+    await registryPlayer(emaId);
+    const outcomes = await Promise.allSettled([first, second].map((account) => playerAccountsService.setAccountEmaId({ uid: account.uid, emaId })));
+    const refused = outcomes.filter((outcome) => outcome.status === "rejected") as PromiseRejectedResult[];
+    assert.equal(refused.length, 1, JSON.stringify(outcomes));
+    assert.equal((refused[0].reason as { details?: { code?: string } }).details?.code, "EMA_ID_TAKEN");
+  });
+
+  it("tells the clients about the EMA players when an account with its own photo gets an EMA id", async () => {
+    const account = await createAccount({ role: "PLAYER" });
+    const emaId = randomEmaId();
+    await registryPlayer(emaId);
+    await db.doc(`users/${account.uid}`).set({ photoUrl: "https://example.test/own.jpg" }, { merge: true });
+    const version = async () => JSON.stringify((await db.doc("_meta/dataVersions").get()).get("resources.emaPlayers") ?? null);
+    const before = await version();
+    await playerAccountsService.setAccountEmaId({ uid: account.uid, emaId });
+    assert.notEqual(await version(), before);
+  });
+
+  it("refuses to remind an account without an email, in English when no language is given", async () => {
+    const tournamentId = `accounts-${randomUUID()}`;
+    const emaId = randomEmaId();
+    await registryPlayer(emaId);
+    const user = await auth.createUser({});
+    await playerAccountsService.setAccountEmaId({ uid: user.uid, emaId });
+    await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: emaId });
+    const results = await playerAccountsService.runAccountAction({ tournamentId, items: [{ playerId: 1 }] });
+    assert.deepEqual(results.map((result) => result.reason), ["NO_EMAIL"]);
+  });
+
+  it("saves the pending email of slots that only have their document id", async () => {
+    const tournamentId = `accounts-${randomUUID()}`;
+    const emaId = randomEmaId();
+    await db.doc(`tournaments/${tournamentId}`).set({ name: "Accounts" });
+    await db.doc(`tournaments/${tournamentId}/players/7`).set({ assignedEmaId: emaId, email: "OLD@example.test" });
+    const results = await playerAccountsService.savePendingEmails({ tournamentId, items: [{ playerId: 7, email: `${randomUUID()}@example.test` }] });
+    assert.deepEqual(results.map((result) => result.outcome), ["SAVED"]);
+  });
 });
