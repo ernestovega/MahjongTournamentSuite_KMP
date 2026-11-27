@@ -58,6 +58,7 @@ class DesktopTelemetryTest {
         val telemetry = telemetry()
         assertTrue(telemetry.requiresConsent)
         assertEquals(false, telemetry.hasConsent())
+        assertEquals(false, telemetry.hasAnswered())
 
         telemetry.event("login")
         telemetry.screen("Tournaments")
@@ -147,6 +148,20 @@ class DesktopTelemetryTest {
 
         noMoreHits()
         assertEquals(false, telemetry.hasConsent())
+    }
+
+    @Test
+    fun aDeclineIsAnAnswerThatSurvivesARestartAndSendsNothing() {
+        val first = telemetry()
+        first.setConsent(false)
+        assertTrue(first.hasAnswered())
+
+        val second = telemetry()
+        assertTrue(second.hasAnswered())
+        assertEquals(false, second.hasConsent())
+        second.event("login")
+
+        noMoreHits()
     }
 
     @Test

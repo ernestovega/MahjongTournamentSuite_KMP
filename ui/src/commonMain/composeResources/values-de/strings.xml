@@ -268,21 +268,11 @@
     <string name="spreadsheet_chooser_filter">CSV- und Excel-Dateien</string>
     <string name="spreadsheet_error_read">Die App konnte die Datei nicht lesen. Wähle eine CSV- oder Excel-Datei und versuche es erneut.</string>
     <string name="spreadsheet_error_save">Die App konnte die Datei nicht speichern. Versuche es erneut.</string>
-    <string name="consent_title">Anonyme Analyse</string>
-    <string name="consent_intro">Diese App sammelt anonyme Daten darüber, wie sie genutzt wird, und über Fehler. Das Team nutzt die Daten nur, um Probleme zu finden und die App zu verbessern.</string>
-    <string name="consent_collects">Die App erfasst folgende Daten:\n• Die Bildschirme, Dialoge und Reiter, die du öffnest, und wie lange.\n• Die Aktionen, die du nutzt, zum Beispiel das Speichern eines Tisches.\n• Fehler und Abstürze, mit technischen Details wie der Art des Fehlers.</string>
-    <string name="consent_not_collected">Die App erfasst weder deinen Namen noch deine E-Mail-Adresse, deine EMA-Nummer oder Texte, die du eingibst. Die Daten identifizieren dich nicht.</string>
-    <string name="consent_required">Du kannst die App nur nutzen, wenn du zustimmst. Ohne Zustimmung kannst du die App nicht öffnen.</string>
-    <string name="consent_accept">Zustimmen und weiter</string>
-    <string name="consent_decline">Ablehnen</string>
-    <string name="consent_declined_note">Ohne die anonyme Analyse kannst du die App nicht nutzen. Du kannst die App schließen oder zustimmen, um weiterzumachen.</string>
-    <string name="consent_withdraw">Zustimmung zur Analyse widerrufen</string>
     <string name="profile_delete_account">Mein Konto löschen</string>
     <string name="profile_delete_account_title">Dein Konto löschen?</string>
     <string name="profile_delete_account_message">Dein Konto wird endgültig gelöscht: die Anmeldung, die E-Mail-Adresse, der Alias und das Foto. Dein EMA-Spieler und deine Turnierergebnisse bleiben erhalten. Das kann nicht rückgängig gemacht werden.</string>
     <string name="profile_delete_account_confirm">Löschen</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
-    <string name="consent_withdraw_info">Die App beendet die Analyse und fragt dich erneut. Du kannst die App erst wieder nutzen, wenn du zustimmst.</string>
     <string name="stat_best_hand_points">Meiste Punkte mit einer Hand</string>
     <string name="stat_average_hands_per_table">Ø Hände pro Tisch</string>
     <string name="app_switch_to_admin">Manager-App</string>
@@ -791,4 +781,19 @@ Die erste, die klappt, gewinnt</string>
     <string name="update_available_later">Später</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">App herunterladen</string>
+    <string name="consent_title">Anonyme Analyse</string>
+    <string name="consent_message">Darf die App anonyme Daten über die Nutzung und über Fehler senden? Sie helfen uns, die App zu verbessern. Das ist freiwillig: Wenn du ablehnst, funktioniert die App genauso.</string>
+    <string name="consent_more_details">Mehr Details</string>
+    <string name="consent_why_title">Warum</string>
+    <string name="consent_why">Um Fehler zu finden und zu sehen, welche Teile der App genutzt werden, damit wir wissen, was wir beheben und verbessern sollen.</string>
+    <string name="consent_what_title">Was</string>
+    <string name="consent_what">Die Bildschirme und Aktionen, die du nutzt, und die Fehler mit technischen Details. Nie dein Name, deine E-Mail, deine EMA-Nummer oder was du eingibst.</string>
+    <string name="consent_where_title">Wohin</string>
+    <string name="consent_where">Die Nutzung geht an Google Analytics for Firebase, das sie 14 Monate speichert. Die Fehler gehen in unser eigenes Protokoll auf Firebase, in der EU, das sie nach 30 Tagen löscht.</string>
+    <string name="consent_change_title">Später ändern</string>
+    <string name="consent_change">In deinem Profil, jederzeit.</string>
+    <string name="consent_accept">Zustimmen</string>
+    <string name="consent_decline">Ablehnen</string>
+    <string name="profile_analytics">Anonyme Analyse senden</string>
+    <string name="profile_analytics_info">Anonyme Daten darüber, wie du die App nutzt, und über ihre Fehler, nie dein Name, deine E-Mail oder deine EMA-Nummer. Schalte es aus, um es sofort zu stoppen. Die App funktioniert genauso.</string>
 </resources>
