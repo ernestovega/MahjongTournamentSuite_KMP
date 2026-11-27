@@ -309,7 +309,11 @@ internal fun UserFilters(
                         FilterChip(
                             selected = role in selectedRoles,
                             onClick = { onRoleToggle(role) },
-                            label = { Text(role.label()) },
+                            label = {
+                                // On a phone a two-word role takes two lines, so the four roles fit in one row.
+                                val label = role.label()
+                                Text(if (compact) label.replaceFirst(" ", "\n") else label, textAlign = TextAlign.Center)
+                            },
                         )
                     }
                 }

@@ -21,6 +21,8 @@ import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
@@ -249,6 +251,8 @@ class PlayerBaseErrorsUiTest {
         pressChip("Filter by France")
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("10001", substring = true).fetchSemanticsNodes().isEmpty() }
         pressChip("Remove France country filter")
+        // The list keeps its place, so its first row may sit above the rows that the small test window shows.
+        onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
         awaitText("10001")
 
         selectAda()
