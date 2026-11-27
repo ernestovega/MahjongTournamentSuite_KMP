@@ -258,7 +258,6 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
         roundButton = if (playedRounds.isEmpty()) null else ({ RankingRoundButton(playedRounds, round, { afterRound = it }) }),
         onShare = { sharing = true },
         tabs = {
-            if (hiddenFrom != null && rows.isNotEmpty()) RankingFrozenNotice(hiddenFrom - 1)
             if (kinds.size > 1) {
                 val selectedIndex = kinds.indexOf(kind)
                 HideOnScrollTabs(kinds.size) {
@@ -285,6 +284,8 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                     }
                 }
             }
+            // Under the tabs (Ernesto, 2026-11-27): it is about the list below them.
+            if (hiddenFrom != null && rows.isNotEmpty()) RankingFrozenNotice(hiddenFrom - 1)
         },
     )
 }
