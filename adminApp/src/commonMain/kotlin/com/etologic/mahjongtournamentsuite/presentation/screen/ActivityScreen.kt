@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -51,8 +49,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
@@ -69,9 +69,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -87,6 +87,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -106,7 +108,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_playe
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_import
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_substitute
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_draw
-import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_player_count
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_delete
@@ -124,6 +125,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_team_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_delete
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_player_count
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_rename
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_create
@@ -176,9 +178,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import kotlin.time.Clock
-import kotlin.time.Instant
 import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup as TitledFilterGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 private val WhenColumnWidth = 150.dp
 
@@ -239,6 +240,9 @@ fun ActivityScreen(
     var entries by remember { mutableStateOf<List<ActivityEntry>>(emptyList()) }
     var nextCursor by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
+    // False until the first read ends. Only that read covers the screen with the logo; a search or a filter
+    // keeps the filters on screen and shows the logo in the list, with the bar under the top bar.
+    var loadedOnce by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var tournamentId by rememberSaveable { mutableStateOf(initialTournamentId ?: ALL_TOURNAMENTS) }
@@ -294,6 +298,7 @@ fun ActivityScreen(
             is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
+        loadedOnce = true
     }
 
     // A change of a filter reads the list again from the newest entry.
@@ -313,10 +318,10 @@ fun ActivityScreen(
 
     AppScaffold(
         title = stringResource(Res.string.app_activity),
-        isLoading = loading && entries.isEmpty(),
-        showProgress = loading && entries.isNotEmpty(),
-        showBackgroundLogo = loading && entries.isEmpty(),
-        contentLoading = loading && entries.isEmpty(),
+        isLoading = loading && !loadedOnce,
+        showProgress = loading && loadedOnce,
+        showBackgroundLogo = loading && !loadedOnce,
+        contentLoading = loading && !loadedOnce,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = {
@@ -607,6 +612,9 @@ private fun ColumnScope.ActivityTable(
                 item(key = "empty") {
                     Text(stringResource(Res.string.activity_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            } else {
+                // A search or a filter reads the list again: the logo shows here and the filters stay on screen.
+                item(key = "loading") { AppLoadingCompact(Modifier.fillMaxWidth()) }
             }
             return@LazyColumnWithScrollbar
         }

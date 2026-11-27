@@ -65,7 +65,17 @@ describe("admin refusals", () => {
     assert.equal((await asSuper("PUT", `/admin/users/${editor.uid}/permissions`, { levels: "all" })).status, 400);
   });
 
-  it("needs something to look for", async () => {
+  it("needs something to look for, and finds an account by its email", async () => {
     assert.equal((await asSuper("GET", "/admin/users/lookup?identifier=%20")).status, 400);
+    const noEmail = await asSuper("GET", "/admin/users/lookup?identifier=ana");
+    assert.equal(noEmail.status, 400);
+    assert.match(JSON.stringify(noEmail.body), /email address/);
+    const found = await asSuper("GET", `/admin/users/lookup?identifier=${encodeURIComponent(clubAdmin.email)}`);
+    assert.equal(found.status, 200, JSON.stringify(found.body));
+  });
+
+  it("refuses an empty organization id in the list", async () => {
+    const blank = await newUser({ role: "CLUB_ADMIN", adminOrganizations: [clubA, " "] });
+    assert.equal(blank.status, 400);
   });
 });

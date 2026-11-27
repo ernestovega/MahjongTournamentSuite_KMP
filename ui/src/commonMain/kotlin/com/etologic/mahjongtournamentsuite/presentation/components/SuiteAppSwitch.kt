@@ -19,12 +19,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.app_chooser_hint
 import mahjongtournamentsuite.ui.generated.resources.app_chooser_title
@@ -50,7 +52,13 @@ fun SuiteAppSwitchButton(target: SuiteApp) {
         SuiteApp.PLAYER -> stringResource(Res.string.app_switch_to_player)
         SuiteApp.ADMIN -> stringResource(Res.string.app_switch_to_admin)
     }
-    AppTopBarButton(text = label, icon = target.icon, onClick = { switcher(target) })
+    AppTopBarButton(
+        text = label,
+        icon = target.icon,
+        onClick = { switcher(target) },
+        // The button to the admin app has the purple of its top bar, so the player sees where it goes.
+        containerColor = if (target == SuiteApp.ADMIN) MtsTheme.colors.adminHeader else Color.Unspecified,
+    )
 }
 
 /**

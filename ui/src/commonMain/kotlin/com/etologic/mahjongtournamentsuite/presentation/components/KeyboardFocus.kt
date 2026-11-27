@@ -2,15 +2,11 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.InteractionSource
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerType
-import androidx.compose.ui.input.pointer.pointerInput
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsInputModality
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -29,6 +25,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -41,12 +38,17 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -54,17 +56,15 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsInputModality
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -406,45 +406,6 @@ fun keyboardInUse(): Boolean {
 @Composable
 fun Modifier.focusRing(focused: Boolean, shape: Shape): Modifier =
     if (focused && keyboardInUse()) border(FocusRingWidth, MaterialTheme.colorScheme.tertiary, shape) else this
-
-/**
- * The pink focus ring of a control, right on the edge that the control draws. It shows only while the control has the
- * focus and the keyboard is in use: with the mouse, only the hover shows.
- *
- * [visibleHeight] is the height of what the control draws when that is less than its touch area (a Material button is
- * 40 dp high inside a 48 dp touch area). A control as narrow as the touch area (an icon button) is as wide as it is
- * high. Null means the control draws its whole area.
- */
-@Composable
-fun Modifier.keyboardFocusRing(
-    interactionSource: InteractionSource,
-    shape: Shape,
-    visibleHeight: Dp? = null,
-    enabled: Boolean = true,
-): Modifier {
-    val focused by interactionSource.collectIsFocusedAsState()
-    val showRing = enabled && focused && keyboardInUse()
-    val ringColor = MaterialTheme.colorScheme.tertiary
-    val touchSize = LocalMinimumInteractiveComponentSize.current
-    return drawWithContent {
-        drawContent()
-        if (!showRing) return@drawWithContent
-        val stroke = FocusRingWidth.toPx()
-        val drawnHeight = visibleHeight?.toPx()?.coerceAtMost(size.height) ?: size.height
-        val narrow = touchSize.isSpecified && size.width <= touchSize.toPx() + 0.5f
-        val drawnWidth = if (visibleHeight != null && narrow) minOf(size.width, drawnHeight) else size.width
-        // The line goes just outside the drawn edge, touching it. Without room around the control (a Debounced button
-        // is as big as what it draws) it goes just inside the edge, so no parent clips it.
-        val ringSize = Size(
-            if (drawnWidth + 2 * stroke <= size.width) drawnWidth + stroke else size.width - stroke,
-            if (drawnHeight + 2 * stroke <= size.height) drawnHeight + stroke else size.height - stroke,
-        )
-        val outline = shape.createOutline(ringSize, layoutDirection, this)
-        translate((size.width - ringSize.width) / 2f, (size.height - ringSize.height) / 2f) {
-            drawOutline(outline, ringColor, style = Stroke(stroke))
-        }
-    }
-}
 
 /**
  * A press of the mouse moves the focus to the control under it, so Tab and the arrows go on from there. A finger does

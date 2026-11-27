@@ -243,7 +243,7 @@ internal fun TournamentContent(
 @Preview(device = Devices.DESKTOP)
 @Composable
 private fun TournamentContentPreview() {
-    MtsTheme(useDarkTheme = false) {
+    MtsTheme(useDarkTheme = false, adminApp = true) {
         val editor = remember { previewTableManagerEditorState() }
         val tables = listOf(1, 2, 3).map { id ->
             TournamentTable(

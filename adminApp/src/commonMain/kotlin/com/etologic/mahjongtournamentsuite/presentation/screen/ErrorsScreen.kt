@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -50,6 +48,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorReportEntry
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
@@ -65,15 +64,15 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
-import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.StaggeredColumns
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
@@ -84,6 +83,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_errors
@@ -137,9 +138,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import kotlin.time.Clock
-import kotlin.time.Instant
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 private const val MILLIS_PER_HOUR = 3_600_000L
 private val PERIOD_HOURS = listOf(24, 24 * 7, 24 * 30)
@@ -155,6 +155,9 @@ fun ErrorsScreen(navController: NavHostController) {
     val presenter = koinInject<ErrorsPresenter>()
     var groups by remember { mutableStateOf<List<ErrorGroup>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    // False until the first read ends. Only that read covers the screen with the logo; a change of the period
+    // keeps the figures and the filters on screen and shows the logo in the list, with the bar under the top bar.
+    var loadedOnce by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var query by rememberSaveable { mutableStateOf("") }
     var periodHours by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -190,6 +193,7 @@ fun ErrorsScreen(navController: NavHostController) {
             }
         } while (cursor != null)
         loading = false
+        loadedOnce = true
     }
 
     val now = Clock.System.now().toEpochMilliseconds()
@@ -216,7 +220,9 @@ fun ErrorsScreen(navController: NavHostController) {
         title = stringResource(Res.string.app_errors),
         isLoading = loading,
         // The list fills in while it loads, so the logo with a progress covers it only until the first problems.
-        contentLoading = loading && groups.isEmpty(),
+        contentLoading = loading && !loadedOnce && groups.isEmpty(),
+        // A later read shows the small logo in the list, so the large faint one does not show behind it.
+        showBackgroundLogo = loading && !loadedOnce,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
@@ -428,7 +434,12 @@ private fun ErrorGroupsTable(
     onOpen: (ErrorGroup) -> Unit,
 ) {
     if (groups.isEmpty()) {
-        if (showEmpty) Text(emptyText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showEmpty) {
+            Text(emptyText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            // A change of the period reads the list again: the logo shows here and the filters stay on screen.
+            AppLoadingCompact(Modifier.fillMaxWidth())
+        }
         return
     }
     val compact = LocalCompactLayout.current

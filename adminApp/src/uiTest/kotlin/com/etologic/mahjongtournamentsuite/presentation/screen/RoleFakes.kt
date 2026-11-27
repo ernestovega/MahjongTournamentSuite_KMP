@@ -182,8 +182,12 @@ internal class FakeAdminRepository(
     var errorNextReportPages: Map<String, ErrorGroupDetail> = emptyMap()
     val errorDetailRequests = mutableListOf<Pair<String, ErrorLogCursor?>>()
 
+    /** When set, every read of the error log waits for it, so a test can look at the screen while it loads. */
+    var errorGroupsGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
     override suspend fun loadErrorGroups(sinceMillis: Long?, cursor: ErrorLogCursor?): AppResult<ErrorGroupsPage> {
         errorGroupRequests += sinceMillis to cursor
+        errorGroupsGate?.await()
         errorGroupsFailure?.let { return AppResult.Failure(it) }
         val matching = errorGroups.filter { sinceMillis == null || it.lastSeen >= sinceMillis }
         val start = cursor?.id?.toIntOrNull() ?: 0
@@ -200,8 +204,12 @@ internal class FakeAdminRepository(
     /** When set, every read of the write log fails with it. */
     var activityError: AppError? = null
 
+    /** When set, every read of the write log waits for it, so a test can look at the screen while it loads. */
+    var activityGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> {
         activityRequests += filter to cursor
+        activityGate?.await()
         activityError?.let { return AppResult.Failure(it) }
         val matching = activity.filter { entry ->
             (filter.tournamentId == null || entry.tournamentId == filter.tournamentId) &&

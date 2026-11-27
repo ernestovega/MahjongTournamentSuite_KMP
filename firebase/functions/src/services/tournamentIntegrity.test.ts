@@ -171,3 +171,67 @@ test("a copy of the hands that differs from the hand documents is an error, and 
   table.data.version = 1;
   assert.ok(!codes(input).includes("counters.handsCopy"), "a copy of an older version is not used, so it is not checked");
 });
+
+test("the data of the tournament, its schedule and its agenda are checked", () => {
+  const input = valid();
+  Object.assign(input.tournament, {
+    hostCountry: "Spain",
+    venueMapUrl: "http://maps.test/place",
+    roundSchedules: [
+      { roundId: 1, date: "2026-13-45", startTime: "9h" },
+      { roundId: 2, date: "2026-12-01", startTime: "10:00" },
+      { roundId: 3, date: "2026-10-01", startTime: "08:00" },
+    ],
+    agendaItems: [
+      { title: "", date: "2026-02-31", startTime: "25:99" },
+      { title: "Lunch", date: "2026-12-24", startTime: "" },
+    ],
+  });
+  const found = codes(input);
+  for (const code of ["info.hostCountry", "info.venueMapUrl", "schedule.date", "schedule.time", "schedule.range", "agenda.title", "agenda.date", "agenda.time", "agenda.range"]) {
+    assert.ok(found.includes(code), `${code} in ${found.join(", ")}`);
+  }
+
+  Object.assign(input.tournament, { venueMapUrl: "not a link" });
+  assert.ok(checkTournamentIntegrity("t", input).findings.some((f) => f.code === "info.venueMapUrl" && f.message.includes("not a valid")));
+});
+
+test("the slots, the teams and the rounds are checked", () => {
+  const input = valid();
+  input.tournament.isTeams = true;
+  input.players[0] = { id: "1", data: { id: 99, name: "", team: 1, assignedEmaId: "123", assignedCountry: "FR" } };
+  input.players[1] = { id: "2", data: { id: 2, name: "P2", team: 0, assignedEmaId: ema(2), assignedCountry: "FR" } };
+  input.players[2] = { id: "3", data: { id: 2, name: "P3", team: 2, assignedEmaId: ema(3) } };
+  input.players.slice(3).forEach((slot) => { (slot.data as Record<string, unknown>).team = 1; });
+  input.teams = [
+    { id: "1", data: { id: 1, name: "", playerIds: [1, 2] } },
+    { id: "3", data: { id: 3, name: "Empty" } },
+  ];
+  input.rounds = [{ id: "1", data: { roundId: 1 } }, { id: "1b", data: { roundId: 1 } }];
+  const found = codes(input);
+  for (const code of [
+    "players.id", "players.duplicateId", "players.name", "players.emaFormat", "players.country", "players.team",
+    "teams.missing", "teams.name", "teams.playerIds", "teams.empty", "teams.sizes", "rounds.count", "rounds.duplicate",
+  ]) {
+    assert.ok(found.includes(code), `${code} in ${found.join(", ")}`);
+  }
+
+  const noRounds = valid();
+  noRounds.rounds = [];
+  assert.ok(codes(noRounds).includes("rounds.missing"));
+
+  const teamsWithoutMode = valid();
+  teamsWithoutMode.teams = [{ id: "1", data: { id: 1, name: "Wind" } }];
+  assert.ok(codes(teamsWithoutMode).includes("teams.unused"));
+});
+
+test("after 25 findings of one kind the rest are only counted", () => {
+  const input = valid();
+  input.players.forEach((slot) => { (slot.data as Record<string, unknown>).name = ""; });
+  const many = { ...input, players: [...input.players, ...Array.from({ length: 20 }, (_, index) => ({ id: String(100 + index), data: { id: 100 + index, name: "", team: 0 } }))] };
+
+  const report = checkTournamentIntegrity("t", many);
+  const names = report.findings.filter((finding) => finding.code === "players.name");
+  assert.equal(names.length, 26);
+  assert.ok(names.some((finding) => finding.message.includes("more findings of this kind are not listed")));
+});

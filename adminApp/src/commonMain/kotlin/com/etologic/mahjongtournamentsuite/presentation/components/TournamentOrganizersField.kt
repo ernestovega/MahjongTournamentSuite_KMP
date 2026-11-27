@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_locked
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers_none
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsInputChip as InputChip
 
 /**
  * The organizers of a tournament: the main one first, then the co-organizers. The tournament shows the logo and the

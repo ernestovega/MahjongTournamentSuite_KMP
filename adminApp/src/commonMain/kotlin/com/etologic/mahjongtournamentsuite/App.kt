@@ -203,7 +203,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
         LocalBackgroundExports provides backgroundExports,
     ) {
         TrackPreferenceChanges()
-        MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+        MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
             BackgroundExportsHost(backgroundExports) {
                 NavHost(
                     navController = navController,

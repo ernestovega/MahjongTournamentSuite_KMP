@@ -19,6 +19,8 @@ import androidx.compose.ui.text.TextStyle
 @Composable
 fun MtsTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
+    /** True in the admin app: its header (top bar and tabs) is purple instead of green. See [MtsColors.header]. */
+    adminApp: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val fontFamily = GangOfThreeFontFamily()
@@ -40,7 +42,9 @@ fun MtsTheme(
         shapes = MtsMaterialShapes,
     ) {
         CompositionLocalProvider(
-            LocalMtsColors provides if (useDarkTheme) DarkMtsColors else LightMtsColors,
+            LocalMtsColors provides (if (useDarkTheme) DarkMtsColors else LightMtsColors).let { colors ->
+                if (adminApp) colors.copy(header = colors.adminHeader) else colors
+            },
             LocalMtsTypography provides mtsTypography,
             LocalMtsWindowWidth provides windowWidth,
             LocalRippleConfiguration provides MtsRippleConfiguration,
@@ -70,6 +74,15 @@ private val MahjongRed = Color(0xFFFA6868)
 private val ErrorTextLight = Color(0xFFC62828)
 private val ErrorTextDark = Color(0xFFFF8A80)
 private val MahjongAccent = Color(0xFFFF00A7)
+/** The grey of the light pages, and the tooltips of the dark theme. */
+internal val AppLightGray = Color(0xFFE9EBEE)
+
+/**
+ * The light containers (selected chips and segments, notices, placeholders, tracks, stat tiles) since 2026-11-27,
+ * where a pale green was before (Ernesto: the pale green lowered the contrast). A little darker than [AppLightGray],
+ * as dark as the old green, so a container still shows when it sits on the grey page and not on a white card.
+ */
+internal val AppLightGrayContainer = Color(0xFFD5D9DE)
 private val AppDarkGray = Color(0xFF414141)
 internal val AppDarkGraySurface = Color(0xFF363636)
 private val AppDarkGrayVariant = Color(0xFF4D4D4D)
@@ -80,11 +93,11 @@ private val LightColors = lightColorScheme(
     onPrimaryContainer = Color.White,
     secondary = MahjongGreenDark,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFCDEADD),
+    secondaryContainer = AppLightGrayContainer,
     onSecondaryContainer = Color(0xFF062114),
     tertiary = MahjongAccent,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFA5EFCF),
+    tertiaryContainer = AppLightGrayContainer,
     onTertiaryContainer = Color(0xFF002115),
     // Error texts and icons. Fills of destructive buttons use errorContainer, the red of the brand.
     error = ErrorTextLight,
@@ -92,9 +105,9 @@ private val LightColors = lightColorScheme(
     errorContainer = MahjongRed,
     onErrorContainer = Color.White,
     // Light grey behind white cards (Ernesto, 24-nov-2026: option G2), so a card stands out from the page.
-    background = Color(0xFFE9EBEE),
+    background = AppLightGray,
     onBackground = Color(0xFF002115),
-    surface = Color(0xFFE9EBEE),
+    surface = AppLightGray,
     onSurface = Color(0xFF002115),
     surfaceBright = Color(0xFFFFFFFF),
     surfaceContainerLowest = Color(0xFFFFFFFF),
@@ -103,7 +116,7 @@ private val LightColors = lightColorScheme(
     surfaceContainerHigh = Color(0xFFFFFFFF),
     surfaceContainerHighest = Color(0xFFFFFFFF),
     surfaceDim = Color(0xFFDDE0E4),
-    surfaceVariant = Color(0xFFD6E8DE),
+    surfaceVariant = AppLightGrayContainer,
     onSurfaceVariant = Color(0xFF3E4C45),
     outline = Color(0xFF6F8078),
     outlineVariant = Color(0xFFBECBC3),
@@ -141,7 +154,7 @@ private val DarkColors = darkColorScheme(
     outline = Color(0xFF9E9E9E),
     outlineVariant = Color(0xFF5A5A5A),
     scrim = Color(0xFF000000),
-    inverseSurface = Color(0xFFB8F5DA),
+    inverseSurface = AppLightGray,
     inverseOnSurface = Color(0xFF002115),
     inversePrimary = MahjongGreen,
     surfaceTint = MahjongGreen,

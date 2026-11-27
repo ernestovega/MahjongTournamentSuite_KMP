@@ -81,6 +81,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.organizationColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.scrollIndicators
 import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
@@ -89,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapsho
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
 import com.etologic.mahjongtournamentsuite.presentation.sync.waitOrUntilHidden
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsBrandTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
@@ -251,85 +253,88 @@ private fun RankingStandaloneContent(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-        // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
-        Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-            Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-                val compact = LocalCompactLayout.current
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
-                        .appFocusGroup(),
-                ) {
-                    error?.let {
-                        AppErrorDialog(
-                            message = it,
-                            onDismiss = { error = null },
-                        )
-                    }
-                    when {
-                        loading && snapshot == null -> AppLoading(Modifier.weight(1f), containerColor = Color.Transparent)
-                        currentPage == null -> AppEmptyState(
-                            icon = Icons.Default.Leaderboard,
-                            title = stringResource(Res.string.no_ranking_yet),
-                            message = stringResource(Res.string.the_ranking_shows_when_the_first),
-                            modifier = Modifier.weight(1f),
-                        )
-                        else -> RankingPage(
-                            page = currentPage,
-                            listState = listState,
-                            rowsPerScroll = rowsPerScroll,
-                            onMaxRowsChanged = { maxRowsPerScreen = it },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-                snapshot?.let { held ->
-                    // Which data this screen shows. The screen stays still, so it also says when it loaded.
-                    Text(
-                        text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                    )
-                }
-                if (playing) {
-                    Text(
-                        text = remainingSeconds.toString(),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold).inTextFont(),
+    // The room sees the color of the main organizer of the tournament, not the green of the suite.
+    MtsBrandTheme(snapshot?.tournament?.let { organizationColor(it.primaryColor) }) {
+        Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+            // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
+            Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+                    val compact = LocalCompactLayout.current
+                    Column(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp),
+                            .fillMaxSize()
+                            .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
+                            .appFocusGroup(),
+                    ) {
+                        error?.let {
+                            AppErrorDialog(
+                                message = it,
+                                onDismiss = { error = null },
+                            )
+                        }
+                        when {
+                            loading && snapshot == null -> AppLoading(Modifier.weight(1f), containerColor = Color.Transparent)
+                            currentPage == null -> AppEmptyState(
+                                icon = Icons.Default.Leaderboard,
+                                title = stringResource(Res.string.no_ranking_yet),
+                                message = stringResource(Res.string.the_ranking_shows_when_the_first),
+                                modifier = Modifier.weight(1f),
+                            )
+                            else -> RankingPage(
+                                page = currentPage,
+                                listState = listState,
+                                rowsPerScroll = rowsPerScroll,
+                                onMaxRowsChanged = { maxRowsPerScreen = it },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    snapshot?.let { held ->
+                        // Which data this screen shows. The screen stays still, so it also says when it loaded.
+                        Text(
+                            text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                        )
+                    }
+                    if (playing) {
+                        Text(
+                            text = remainingSeconds.toString(),
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold).inTextFont(),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(16.dp),
+                        )
+                    }
+                    RankingControls(
+                        playing = playing,
+                        themePreference = themePreference,
+                        rowsPerScroll = rowsPerScroll,
+                        maxVisibleRows = maxRowsPerScreen,
+                        intervalSeconds = intervalSeconds,
+                        pageIndex = pageIndex,
+                        pageCount = pages.size,
+                        onTogglePlaying = { playing = !playing },
+                        onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
+                        onIntervalChanged = {
+                            intervalSeconds = it
+                            remainingSeconds = it
+                        },
+                        onPrevious = {
+                            if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
+                        },
+                        onNext = {
+                            if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
+                        },
+                        onToggleTheme = onToggleTheme,
+                        showTopThree = showTopThree,
+                        onShowTopThreeChanged = { showTopThree = it },
+                        modifier = Modifier
+                            .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
+                            .padding(if (compact) 8.dp else 12.dp),
                     )
                 }
-                RankingControls(
-                    playing = playing,
-                    themePreference = themePreference,
-                    rowsPerScroll = rowsPerScroll,
-                    maxVisibleRows = maxRowsPerScreen,
-                    intervalSeconds = intervalSeconds,
-                    pageIndex = pageIndex,
-                    pageCount = pages.size,
-                    onTogglePlaying = { playing = !playing },
-                    onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
-                    onIntervalChanged = {
-                        intervalSeconds = it
-                        remainingSeconds = it
-                    },
-                    onPrevious = {
-                        if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
-                    },
-                    onNext = {
-                        if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
-                    },
-                    onToggleTheme = onToggleTheme,
-                    showTopThree = showTopThree,
-                    onShowTopThreeChanged = { showTopThree = it },
-                    modifier = Modifier
-                        .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
-                        .padding(if (compact) 8.dp else 12.dp),
-                )
             }
         }
     }

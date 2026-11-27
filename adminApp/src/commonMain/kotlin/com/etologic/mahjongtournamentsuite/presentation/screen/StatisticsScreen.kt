@@ -76,6 +76,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     var group by remember { mutableStateOf<GroupStatisticsData?>(null) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    // False until the first statistics load. Only that load covers the screen with the logo; another filter keeps
+    // the filters on screen and shows the logo in place of the statistics.
+    var loadedOnce by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         (presenter.tournaments() as? AppResult.Success)?.let { tournaments = it.value }
@@ -114,13 +117,14 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             }
         }
         isLoading = false
+        loadedOnce = true
     }
 
     AppScaffold(
         title = stringResource(Res.string.statistics),
         isLoading = isLoading,
-        showBackgroundLogo = isLoading && tournament == null && person == null && group == null,
-        contentLoading = isLoading && tournament == null && person == null && group == null,
+        showBackgroundLogo = isLoading && !loadedOnce,
+        contentLoading = isLoading && !loadedOnce,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {

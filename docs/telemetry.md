@@ -17,7 +17,8 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 ## Consent
 
-- On the first start the app shows the screen "Anonymous analytics": one short question, and "More details" folds out
+- On the first start the app shows the screen "Anonymous analytics": one short question that asks for help (a happy face
+  on Accept, Ernesto 2026-11-27), and "More details" folds out
   why, what and where the data goes. "Accept" and "Decline" are the same size (GDPR art. 7(4), App Store 5.1.1).
 - Both answers open the app. After "Decline" nothing is sent: no events, no error log, and on the web the SDK is not
   even loaded. The app does not ask again (`Telemetry.hasAnswered`).

@@ -151,6 +151,34 @@ class PersistedCacheTest {
     }
 
     @Test
+    fun aSavedAnswerThatTheScreenCannotReadIsLoadedAgain() = runTest {
+        persisted.write("u1", persistence.name, 1, Answer.serializer(), Answer(listOf("a", "b")))
+
+        assertEquals("load 1", startApp().read(Server()))
+    }
+
+    @Test
+    fun anAnswerLoadedWhileAWriteChangedTheDataIsNotSaved() = runTest {
+        val server = Server()
+        val cache = startApp()
+        val value = cache.getOrLoadPersisted(
+            ownerUid = "u1",
+            key = "global:emaPlayers",
+            refreshMode = RefreshMode.IF_CHANGED,
+            revision = { server.revision },
+            persistence = persistence,
+            load = {
+                cache.markStale("global:emaPlayers")
+                server.answer()
+            },
+            map = { it.names.single() },
+        )
+
+        assertEquals("load 1", value)
+        assertNull(persisted.read("u1", persistence.name, persistence.serializer))
+    }
+
+    @Test
     fun anAnswerSavedByAnOlderAppWithOtherFieldsIsIgnored() = runTest {
         persisted.write("u1", "people", 1, PeopleV1.serializer(), PeopleV1(listOf(Person("Ana"))))
 
