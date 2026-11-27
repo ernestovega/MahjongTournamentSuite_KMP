@@ -41,7 +41,8 @@ export function registerStatisticsRoutes(router: Router): void {
     const access = await loadAccess(decoded.uid);
     if (access.superAdmin && !access.disabled) return null;
     const visible = await publicTournamentIds();
-    if (!access.disabled && isStaff(access)) ((await visibleTournamentIdSet(access)) ?? []).forEach((id) => visible.add(id));
+    // An enabled super admin left above, so the set is there.
+    if (!access.disabled && isStaff(access)) (await visibleTournamentIdSet(access))!.forEach((id) => visible.add(id));
     return visible;
   };
 
@@ -54,13 +55,13 @@ export function registerStatisticsRoutes(router: Router): void {
     if (hidden.size === 0) return hidden;
     const access = await loadAccess(decoded.uid);
     if (access.superAdmin && !access.disabled) return new Map();
-    const managed = !access.disabled && isStaff(access) ? new Set((await visibleTournamentIdSet(access)) ?? []) : new Set<string>();
+    const managed = !access.disabled && isStaff(access) ? (await visibleTournamentIdSet(access))! : new Set<string>();
     managed.forEach((id) => hidden.delete(id));
     return hidden;
   };
 
-  const readEmaParam = (value: unknown): string => {
-    const emaId = String(value ?? "").trim();
+  const readEmaParam = (value: string): string => {
+    const emaId = value.trim();
     if (emaId === "" || emaId.length > 64) throw badRequest("Invalid EMA id");
     return emaId;
   };
