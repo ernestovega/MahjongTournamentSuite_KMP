@@ -883,10 +883,15 @@ class TournamentScreenUiTest {
                 waitForIdle()
             }
             onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
-            // The ranking opens in a window of its own, and this window goes to its control.
+            // The ranking opens in a window of its own, and this window goes to its control (desktop and web). On iOS
+            // and Android the ranking has its controls inside, so the tournament stays.
             onAllNodes((hasText("Ranking") or hasContentDescription("Ranking")) and hasClickAction()).onFirst().performClick()
             waitForIdle()
-            onNodeWithText("Ranking control of t1").assertExists()
+            if (rankingControlsInSeparateScreen) {
+                onNodeWithText("Ranking control of t1").assertExists()
+            } else {
+                onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
+            }
         }
     }
 
