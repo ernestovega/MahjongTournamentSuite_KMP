@@ -26,6 +26,14 @@ import { assertSafeDocumentId, badRequest, notFound } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { rateLimit } from "../middleware/rateLimit";
 import { pathParam } from "../pathParam";
+import {
+  hiddenFromRound,
+  hiddenRoundsByTournament,
+  maskTable,
+  maskTablesWithHands,
+  maskTableSummaries,
+  withoutHiddenRounds,
+} from "../../services/resultsVisibility";
 
 /**
  * Seconds that Firebase Hosting keeps a public answer in its CDN.
@@ -109,7 +117,13 @@ export function publicRouter(): Router {
       }
       // The routes below use this read, so the tournament is read once per request.
       res.locals.tournamentSnapshot = snapshot;
-      res.locals.publicCacheSeconds = snapshot.get("isCompleted") === true
+      // The first round whose results are hidden now, or null. The table routes mask those rounds.
+      res.locals.hiddenFromRound = hiddenFromRound({
+        hideResultsFromRound: snapshot.get("hideResultsFromRound"),
+        resultsRevealed: snapshot.get("resultsRevealed"),
+      });
+      // While the results are hidden, the long cache of a completed tournament would delay the reveal.
+      res.locals.publicCacheSeconds = snapshot.get("isCompleted") === true && res.locals.hiddenFromRound == null
         ? PUBLIC_CACHE_SECONDS.completed
         : PUBLIC_CACHE_SECONDS.live;
       next();
@@ -117,6 +131,7 @@ export function publicRouter(): Router {
   });
   const tournamentCache = (res: Response) => cacheFor(res, Number(res.locals.publicCacheSeconds ?? PUBLIC_CACHE_SECONDS.live));
   // The hands: what polling reads during play. A completed tournament keeps its long cache.
+  const hiddenFrom = (res: Response) => (res.locals.hiddenFromRound as number | null | undefined) ?? null;
   const handsCache = (res: Response) => cacheFor(
     res,
     res.locals.publicCacheSeconds === PUBLIC_CACHE_SECONDS.completed ? PUBLIC_CACHE_SECONDS.completed : PUBLIC_CACHE_SECONDS.playing,
@@ -196,20 +211,20 @@ export function publicRouter(): Router {
 
   router.get("/tournaments/:tournamentId/tables", handle(async (req, res) => {
     const roundId = req.query.roundId == null ? null : readPositiveInt(req.query.roundId, "roundId");
-    const tables = await listTournamentTables(pathParam(req, "tournamentId"), roundId);
+    const tables = maskTableSummaries(await listTournamentTables(pathParam(req, "tournamentId"), roundId), hiddenFrom(res));
     handsCache(res);
     res.status(200).json({ tables });
   }));
 
   router.get("/tournaments/:tournamentId/tables-with-hands", handle(async (req, res) => {
-    const tables = await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") });
+    const tables = maskTablesWithHands(await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") }), hiddenFrom(res));
     handsCache(res);
     res.status(200).json({ tables });
   }));
 
   router.get("/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", handle(async (req, res) => {
     const roundId = readPositiveInt(pathParam(req, "roundId"), "roundId");
-    const tables = await getRoundTablesWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId });
+    const tables = maskTablesWithHands(await getRoundTablesWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId }), hiddenFrom(res));
     handsCache(res);
     res.status(200).json({ tables });
   }));
@@ -218,8 +233,9 @@ export function publicRouter(): Router {
     const roundId = readPositiveInt(pathParam(req, "roundId"), "roundId");
     const tableId = readPositiveInt(pathParam(req, "tableId"), "tableId");
     const data = await getTableWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId, tableId });
+    const fromRound = hiddenFrom(res);
     handsCache(res);
-    res.status(200).json(data);
+    res.status(200).json(fromRound != null && roundId >= fromRound ? maskTable(data.table) : data);
   }));
 
   // The sums and leaderboards of all tournaments.
@@ -233,7 +249,10 @@ export function publicRouter(): Router {
   router.get("/statistics/groups", handle(async (req, res) => {
     const filter = readGroupFilter(req.query as Record<string, unknown>);
     const [tournaments, hidden] = await Promise.all([listAllTournaments(), listHiddenEmaIds()]);
-    const visible = tournaments.filter((tournament) => tournament.isPublic).map(groupTournament);
+    // A tournament that hides its results now stays out until the reveal.
+    const visible = tournaments
+      .filter((tournament) => tournament.isPublic && tournament.resultsHiddenFromRound == null)
+      .map(groupTournament);
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
     res.status(200).json(await loadGroupStatistics(visible, filter, hidden));
   }));
@@ -243,7 +262,9 @@ export function publicRouter(): Router {
     const emaId = readEmaParam(pathParam(req, "emaId"));
     if ((await listHiddenEmaIds()).has(emaId)) throw notFound("Player not found");
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
-    res.status(200).json(await loadPersonStatistics(emaId, await publicTournamentIds()));
+    const [allowed, hiddenRounds] = await Promise.all([publicTournamentIds(), hiddenRoundsByTournament()]);
+    // The hidden rounds of a tournament stay out until the reveal.
+    res.status(200).json(withoutHiddenRounds(await loadPersonStatistics(emaId, allowed), hiddenRounds));
   }));
 
   router.get("/statistics/persons/:emaId/standings", handle(async (req, res) => {
@@ -251,9 +272,10 @@ export function publicRouter(): Router {
     const ids = String(req.query.tournaments ?? "").split(",").map((id) => id.trim()).filter((id) => id !== "");
     if (ids.length > MAX_STANDINGS_PER_REQUEST) throw badRequest("Too many tournaments", { max: MAX_STANDINGS_PER_REQUEST });
     if ((await listHiddenEmaIds()).has(emaId)) throw notFound("Player not found");
-    const allowed = await publicTournamentIds();
+    const [allowed, hiddenRounds] = await Promise.all([publicTournamentIds(), hiddenRoundsByTournament()]);
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
-    res.status(200).json({ standings: await loadStandings(emaId, ids.filter((id) => allowed.has(id))) });
+    // The final place of a tournament that hides its results waits for the reveal.
+    res.status(200).json({ standings: await loadStandings(emaId, ids.filter((id) => allowed.has(id) && !hiddenRounds.has(id))) });
   }));
 
   // The EMA registry: name, country, number and photo. The photo is the own photo of the account of the person, or else

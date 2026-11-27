@@ -305,6 +305,8 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     override suspend fun renameTournament(tournamentId: String, name: String) = writeResult(Unit)
 
+    override suspend fun setResultsRevealed(tournamentId: String, revealed: Boolean) = writeResult(Unit)
+
     override suspend fun updateTournamentSettings(
         tournamentId: String,
         name: String,
@@ -325,6 +327,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         timeZone: String?,
         isPublic: Boolean?,
         showTableDiffs: Boolean?,
+        hideResultsFromRound: Int?,
     ): AppResult<Tournament> {
         savedIsPublic = isPublic
         return writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0, isPublic = isPublic ?: true))

@@ -1242,4 +1242,19 @@ Cambia las plazas en Inscripciones.</string>
         <item quantity="one">%1$d país</item>
         <item quantity="other">%1$d países</item>
     </plurals>
+    <string name="hide_results">Ocultar resultados hasta la entrega de premios</string>
+    <string name="hide_results_description">Desde la ronda elegida, los jugadores y el público ven las mesas sin resultados, y la clasificación se queda como estaba antes de esa ronda. Cada jugador sigue viendo su propia mesa. Los administradores lo ven todo.
+Los resultados se revelan en la entrega de premios desde Control de ronda.</string>
+    <string name="hide_results_from_round">Ocultar desde la ronda</string>
+    <string name="results_hidden_notice">Los jugadores y el público no ven los resultados desde la ronda %1$d. Solo los administradores los ven.</string>
+    <string name="results_revealed_notice">Los resultados están revelados: todos ven la clasificación.</string>
+    <string name="reveal_results">Revelar resultados</string>
+    <string name="reveal_results_confirm_title">¿Revelar los resultados?</string>
+    <string name="reveal_results_confirm_message">Los jugadores y el público verán la clasificación final y todos los resultados en menos de un minuto.</string>
+    <string name="hide_results_again">Volver a ocultar</string>
+    <string name="hide_results_again_confirm_title">¿Volver a ocultar los resultados?</string>
+    <string name="hide_results_again_confirm_message">Para un revelado por error. Quien ya vio la clasificación ya la conoce.</string>
+    <string name="ranking_hidden_from_public_title">Los resultados están ocultos al público</string>
+    <string name="ranking_hidden_from_public_message">Si esta pantalla está en la sala, todos verán la clasificación. Revela los resultados desde Control de ronda en la entrega de premios.</string>
+    <string name="show_ranking_here_anyway">Mostrar aquí de todos modos</string>
 </resources>

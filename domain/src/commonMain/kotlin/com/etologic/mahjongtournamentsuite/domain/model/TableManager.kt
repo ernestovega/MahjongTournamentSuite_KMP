@@ -21,6 +21,11 @@ data class TableState(
     val useTotalsOnly: Boolean,
     /** Slot id of a substitute who left during this session. That seat gets 0 table points. Empty for most tables. */
     val forcedZeroPlayerId: String = "",
+    /**
+     * True when the server left out the results of this table: the tournament hides them until the prize giving.
+     * The rankings and the statistics leave such a table out. Only the public reads give it.
+     */
+    val resultsHidden: Boolean = false,
 )
 
 data class TableHand(

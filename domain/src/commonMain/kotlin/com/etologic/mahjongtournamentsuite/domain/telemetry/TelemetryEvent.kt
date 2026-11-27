@@ -194,6 +194,9 @@ object TelemetryOutcome {
 object TelemetryAction {
     const val TOURNAMENT_RENAMED = "tournament_renamed"
     const val TOURNAMENT_SETTINGS_UPDATED = "tournament_settings_updated"
+
+    /** The hidden results of a tournament were revealed at the prize giving, or hidden again. */
+    const val RESULTS_VISIBILITY_CHANGED = "results_visibility_changed"
     const val PLAYER_ASSIGNED = "player_assigned"
     const val PLAYER_UNASSIGNED = "player_unassigned"
     const val PLAYER_SUBSTITUTED = "player_substituted"
@@ -258,6 +261,7 @@ object TelemetryAction {
     val all: List<String> = listOf(
         TOURNAMENT_RENAMED,
         TOURNAMENT_SETTINGS_UPDATED,
+        RESULTS_VISIBILITY_CHANGED,
         PLAYER_ASSIGNED,
         PLAYER_UNASSIGNED,
         PLAYER_SUBSTITUTED,

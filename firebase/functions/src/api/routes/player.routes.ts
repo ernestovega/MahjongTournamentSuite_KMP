@@ -13,6 +13,7 @@ import {
   recordHand,
 } from "../../services/playerHandService";
 import { pathParam } from "../pathParam";
+import { ownHiddenTables } from "../../services/resultsVisibility";
 
 /** Routes for signed-in player accounts. */
 export function playerRouter(): Router {
@@ -37,6 +38,17 @@ export function playerRouter(): Router {
     return { tournamentId: pathParam(req, "tournamentId"), roundId, tableId };
   };
   const uidOf = (res: Response) => (res.locals.auth as { uid: string }).uid;
+
+  // While the results are hidden (see resultsVisibility), the own tables of the player with their results.
+  router.get("/tournaments/:tournamentId/my-hidden-tables", requireAuth, requireRegisteredPlayer, async (req, res, next) => {
+    try {
+      const registration = res.locals.playerRegistration as { playerId: number };
+      res.setHeader("Cache-Control", "private, no-store");
+      res.status(200).json({ tables: await ownHiddenTables(pathParam(req, "tournamentId"), registration.playerId) });
+    } catch (e) {
+      next(e);
+    }
+  });
 
   // The app shows this result to the table first. Nothing is written.
   router.post(`${tableRoute}/hands/preview`, requireAuth, requireRegisteredPlayer, async (req, res, next) => {

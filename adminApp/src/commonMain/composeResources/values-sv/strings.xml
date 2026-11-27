@@ -1242,4 +1242,19 @@ Antalet spelare kan bara ändras före den första given.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d länder</item>
     </plurals>
+    <string name="hide_results">Dölj resultaten till prisutdelningen</string>
+    <string name="hide_results_description">Från den valda omgången ser spelarna och publiken borden utan resultat, och rankingen stannar som den var före den omgången. Varje spelare ser fortfarande sitt eget bord. Administratörer ser allt.
+Resultaten visas vid prisutdelningen från Omgångskontroll.</string>
+    <string name="hide_results_from_round">Dölj från omgång</string>
+    <string name="results_hidden_notice">Spelarna och publiken ser inte resultaten från omgång %1$d. Bara administratörer ser dem.</string>
+    <string name="results_revealed_notice">Resultaten är visade: alla ser rankingen.</string>
+    <string name="reveal_results">Visa resultaten</string>
+    <string name="reveal_results_confirm_title">Visa resultaten?</string>
+    <string name="reveal_results_confirm_message">Spelarna och publiken ser slutrankingen och alla resultat på mindre än en minut.</string>
+    <string name="hide_results_again">Dölj igen</string>
+    <string name="hide_results_again_confirm_title">Dölja resultaten igen?</string>
+    <string name="hide_results_again_confirm_message">Om resultaten visades av misstag. Den som redan såg rankingen känner till den.</string>
+    <string name="ranking_hidden_from_public_title">Resultaten är dolda för publiken</string>
+    <string name="ranking_hidden_from_public_message">Om den här skärmen står i salen ser alla rankingen. Visa resultaten vid prisutdelningen från Omgångskontroll.</string>
+    <string name="show_ranking_here_anyway">Visa här ändå</string>
 </resources>

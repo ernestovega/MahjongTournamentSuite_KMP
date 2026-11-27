@@ -8,6 +8,7 @@ import { listHiddenEmaIds } from "../../services/playersService";
 import { getUserProfile } from "../../services/usersService";
 import { pathParam } from "../pathParam";
 import { readGroupFilter } from "../groupFilter";
+import { hiddenRoundsByTournament, withoutHiddenRounds } from "../../services/resultsVisibility";
 import { groupTournament, loadGroupStatistics } from "../../services/statisticsGroups";
 import {
   loadOverview,
@@ -44,6 +45,20 @@ export function registerStatisticsRoutes(router: Router): void {
     return visible;
   };
 
+  /**
+   * The hidden results (see resultsVisibility) that this account cannot see: those of the tournaments it does not
+   * manage. A super admin sees them all.
+   */
+  const hiddenForAccount = async (decoded: { uid: string }): Promise<Map<string, number>> => {
+    const hidden = await hiddenRoundsByTournament();
+    if (hidden.size === 0) return hidden;
+    const access = await loadAccess(decoded.uid);
+    if (access.superAdmin && !access.disabled) return new Map();
+    const managed = !access.disabled && isStaff(access) ? new Set((await visibleTournamentIdSet(access)) ?? []) : new Set<string>();
+    managed.forEach((id) => hidden.delete(id));
+    return hidden;
+  };
+
   const readEmaParam = (value: unknown): string => {
     const emaId = String(value ?? "").trim();
     if (emaId === "" || emaId.length > 64) throw badRequest("Invalid EMA id");
@@ -71,7 +86,8 @@ export function registerStatisticsRoutes(router: Router): void {
         res.status(200).json({ emaId, tournaments: [] });
         return;
       }
-      res.status(200).json(await loadPersonStatistics(emaId, await visibleTournamentIds(decoded)));
+      const [statistics, hidden] = await Promise.all([loadPersonStatistics(emaId, await visibleTournamentIds(decoded)), hiddenForAccount(decoded)]);
+      res.status(200).json(withoutHiddenRounds(statistics, hidden));
     } catch (e) {
       next(e);
     }
@@ -82,8 +98,8 @@ export function registerStatisticsRoutes(router: Router): void {
     try {
       const decoded = res.locals.auth as { uid: string };
       const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
-      const allowed = await visibleTournamentIds(decoded);
-      const ids = readTournamentIds(req.query.tournaments).filter((id) => allowed == null || allowed.has(id));
+      const [allowed, hidden] = await Promise.all([visibleTournamentIds(decoded), hiddenForAccount(decoded)]);
+      const ids = readTournamentIds(req.query.tournaments).filter((id) => (allowed == null || allowed.has(id)) && !hidden.has(id));
       res.status(200).json({ standings: emaId === "" ? [] : await loadStandings(emaId, ids) });
     } catch (e) {
       next(e);
@@ -95,8 +111,12 @@ export function registerStatisticsRoutes(router: Router): void {
     try {
       const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
       const filter = readGroupFilter(req.query as Record<string, unknown>);
-      const [tournaments, allowed] = await Promise.all([listAllTournaments(), visibleTournamentIds(decoded)]);
-      const visible = tournaments.filter((tournament) => allowed == null || allowed.has(tournament.id)).map(groupTournament);
+      const [tournaments, allowed, hiddenResults] = await Promise.all([
+        listAllTournaments(), visibleTournamentIds(decoded), hiddenForAccount(decoded),
+      ]);
+      const visible = tournaments
+        .filter((tournament) => (allowed == null || allowed.has(tournament.id)) && !hiddenResults.has(tournament.id))
+        .map(groupTournament);
       // An administrator also sees the people who asked not to be shown publicly.
       const hidden = allowed == null ? new Set<string>() : await listHiddenEmaIds();
       res.status(200).json(await loadGroupStatistics(visible, filter, hidden));

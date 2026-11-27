@@ -1242,4 +1242,19 @@ Change the places in Registrations.</string>
         <item quantity="one">%1$d country</item>
         <item quantity="other">%1$d countries</item>
     </plurals>
+    <string name="hide_results">Hide results until the prize giving</string>
+    <string name="hide_results_description">From the chosen round on, players and the public see the tables without their results, and the ranking stays as it was before that round. Each player still sees their own table. Admins see everything.
+Reveal the results at the prize giving from Round control.</string>
+    <string name="hide_results_from_round">Hide from round</string>
+    <string name="results_hidden_notice">Players and the public do not see the results from round %1$d on. Only admins see them.</string>
+    <string name="results_revealed_notice">The results are revealed: everyone sees the ranking.</string>
+    <string name="reveal_results">Reveal results</string>
+    <string name="reveal_results_confirm_title">Reveal the results?</string>
+    <string name="reveal_results_confirm_message">Players and the public will see the final ranking and every result in less than a minute.</string>
+    <string name="hide_results_again">Hide again</string>
+    <string name="hide_results_again_confirm_title">Hide the results again?</string>
+    <string name="hide_results_again_confirm_message">For a reveal by mistake. Whoever already saw the ranking keeps what they saw.</string>
+    <string name="ranking_hidden_from_public_title">The results are hidden from the public</string>
+    <string name="ranking_hidden_from_public_message">If this screen is in the room, everyone will see the ranking. Reveal the results from Round control at the prize giving.</string>
+    <string name="show_ranking_here_anyway">Show here anyway</string>
 </resources>

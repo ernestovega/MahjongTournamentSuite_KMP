@@ -66,7 +66,22 @@ interface TournamentRepository {
         isPublic: Boolean? = null,
         /** Null keeps the stored value. */
         showTableDiffs: Boolean? = null,
+        /** The first round with hidden results (see [Tournament.hideResultsFromRound]). 0 turns it off. Null keeps it. */
+        hideResultsFromRound: Int? = null,
     ): AppResult<Tournament>
+
+    /**
+     * Reveals the hidden results of the tournament at the prize giving, or hides them again after a reveal by mistake.
+     */
+    suspend fun setResultsRevealed(tournamentId: String, revealed: Boolean): AppResult<Unit> =
+        AppResult.Failure(AppError.Unexpected("Revealing results is not supported"))
+
+    /**
+     * While the results are hidden, the tables of the hidden rounds where the signed-in player plays, with their
+     * results. The public tables of those rounds have none. Empty when nothing is hidden.
+     */
+    suspend fun getOwnHiddenTables(tournamentId: String): AppResult<List<Pair<TableState, List<TableHand>>>> =
+        AppResult.Success(emptyList())
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
     suspend fun generateTournamentIdCards(

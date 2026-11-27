@@ -349,4 +349,9 @@ Men en e-post kan bara ha ett konto i appen: den som vill ha ett eget konto beh�
     <string name="apps_notice_later">Du hittar dem senare i menyn Mer, under Hämta appen.</string>
     <string name="apps_notice_close">Stäng</string>
     <string name="apps_notice_never">Visa inte igen</string>
+    <string name="ranking_hidden_title">Rankingen är dold till prisutdelningen</string>
+    <string name="ranking_hidden_message">Arrangören håller resultaten hemliga och visar dem vid prisutdelningen.</string>
+    <string name="ranking_frozen_notice">Rankingen är fryst efter omgång %1$d. Slutresultaten kommer vid prisutdelningen.</string>
+    <string name="table_results_hidden_title">Resultaten är dolda till prisutdelningen</string>
+    <string name="table_results_hidden_message">Bara spelarna vid det här bordet ser dess händer tills arrangören visar resultaten.</string>
 </resources>

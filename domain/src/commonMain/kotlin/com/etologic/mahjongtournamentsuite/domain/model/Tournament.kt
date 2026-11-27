@@ -54,6 +54,15 @@ data class Tournament(
     val isPublic: Boolean = true,
     /** False hides the differences button on the table screen of the player app. */
     val showTableDiffs: Boolean = true,
+    /**
+     * From this round on, the public sees the tables without results until an admin reveals them at the prize giving.
+     * Null: the results are always visible.
+     */
+    val hideResultsFromRound: Int? = null,
+    /** True after an admin revealed the hidden results. */
+    val resultsRevealed: Boolean = false,
+    /** The first round whose results the public cannot see now, or null. */
+    val resultsHiddenFromRound: Int? = null,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,
