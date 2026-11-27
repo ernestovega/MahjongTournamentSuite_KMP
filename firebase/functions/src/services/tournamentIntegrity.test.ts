@@ -277,3 +277,17 @@ test("two tables with the same four players are repeated opponents", () => {
   input.tables.push(...input.tables.map((table) => ({ ...table, id: `2_${table.data.tableId}`, data: { ...table.data, roundId: 2 } })));
   assert.ok(codes(input).includes("tables.repeatOpponents"));
 });
+
+test("reads a team document without its id field, and a penalty that is no number as none in the sum", () => {
+  const teams = valid();
+  teams.tournament.isTeams = true;
+  teams.players = teams.players.map((player) => ({ ...player, data: { ...player.data, team: Math.ceil(Number(player.id) / 4) } }));
+  teams.teams = [1, 2, 3, 4].map((team) => ({ id: String(team), data: { name: `Team ${team}` } }));
+  assert.ok(!codes(teams).includes("teams.missing"), JSON.stringify(codes(teams)));
+
+  const penalty = valid();
+  const table = penalty.tables[0];
+  table.data = { ...table.data, playerEastScore: "-5", playerSouthScore: "0", playerWestScore: "0", playerNorthScore: "0", hasProgress: true };
+  table.hands = hands([hand(1, { playerEastPenalty: "x" })]);
+  assert.ok(codes(penalty).includes("tables.sumNotZero"), JSON.stringify(codes(penalty)));
+});
