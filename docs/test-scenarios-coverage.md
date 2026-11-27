@@ -16,17 +16,17 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | `domain`: business rules, use cases | 5,777 | 240 | – | – | – | – | – | 100 % | 95 % |
 | `data`: repositories, network, telemetry | 7,951 | 468 | – | – | – | – | – | 99 % | 90 % |
 | `designsystem`: theme, base components | 1,928 | – | 34 | 4 | – | – | – | 94 % | 61 % |
-| `ui`: shared Compose components | 17,922 | 93 | 322 | 24 | – | – | – | 97 % | 72 % |
-| `adminApp`: admin screens | 32,673 | 322 | 620 | 91 | – | 175 | 5 | 93 % | 72 % |
-| `playerApp`: player screens | 12,072 | 200 | 183 | 56 | – | 72 | 8 | 95 % | 69 % |
+| `ui`: shared Compose components | 18,082 | 96 | 331 | 24 | – | – | – | 97 % | 72 % |
+| `adminApp`: admin screens | 32,598 | 328 | 620 | 91 | – | 175 | 5 | 93 % | 72 % |
+| `playerApp`: player screens | 12,093 | 200 | 185 | 56 | – | 73 | 8 | 95 % | 69 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 4,013 | 60 | – | – | 322 | – | – | 93 % | 86 % |
-| Backend: services | 16,159 | 376 | – | – | 195 | – | – | 96 % | 88 % |
+| Backend: services | 16,084 | 372 | – | – | 193 | – | – | 96 % | 88 % |
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
-| Backend: maintenance and seed scripts | 4,380 | 2 | – | – | – | – | – | 53 % | 63 % |
+| Backend: maintenance and seed scripts | 2,900 | 6 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,377 | 124 | – | – | – | – | – | – | – |
-| **Total** | **110,775** | **1,917** | **1,159** | **175** | **517** | **247** | **13** | **95 %** | **76 %** |
+| **Total** | **109,326** | **1,926** | **1,170** | **175** | **515** | **248** | **13** | **95 %** | **76 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
